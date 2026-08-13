@@ -47,7 +47,7 @@ test.describe("E1: ДКП → предпросмотр → скачать PDF", 
 
     const downloadPromise = page.waitForEvent("download");
     await page
-      .getByRole("button", { name: "Скачать документ", exact: true })
+      .getByRole("button", { name: "Скачать", exact: true })
       .click();
     const download = await downloadPromise;
 
@@ -123,5 +123,24 @@ test.describe("E4: черновик сохраняется и восстанав
 
     await page.getByRole("button", { name: "Продавец" }).click();
     await expect(page.locator("#seller_fio")).toHaveValue(demo);
+  });
+});
+
+test.describe("E5: мобильный viewport (360px) — форма и предпросмотр", () => {
+  test.use({ viewport: { width: 360, height: 800 } });
+
+  test("форма в одну колонку, предпросмотр доступен", async ({ page }) => {
+    await gotoDkp(page);
+
+    await page.getByRole("button", { name: "Продавец" }).click();
+    await page.locator("#seller_fio").fill("Иванов Иван Иванович");
+
+    await page.getByRole("button", { name: "Предпросмотр документа" }).click();
+    await expect(
+      page.getByRole("heading", { name: "Предварительный просмотр" })
+    ).toBeVisible();
+
+    await page.getByRole("button", { name: "Вернуться к форме" }).click();
+    await expect(page.locator("#seller_fio")).toBeVisible();
   });
 });
