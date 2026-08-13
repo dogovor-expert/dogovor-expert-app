@@ -1,0 +1,6 @@
+.next
+node_modules
+dev-server.log
+dev.log
+tsconfig.tsbuildinfo
+.vercelout
