@@ -1,0 +1,18 @@
+{
+  "name": "Dogovor — конструктор договоров",
+  "short_name": "Dogovor",
+  "description": "Бесплатный конструктор юридических документов онлайн",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#4f46e5",
+  "lang": "ru",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

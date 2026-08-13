@@ -1,0 +1,146 @@
+"use client";
+import { useRef, useState } from "react";
+import { Image as ImageIcon, Loader2, Download, Check, X } from "lucide-react";
+import { downloadBytes, formatBytes } from "@/lib/converter/download";
+
+const A4 = { width: 595.28, height: 841.89 };
+
+export default function ImagesToPdf() {
+  const [files, setFiles] = useState<File[]>([]);
+  const [orientation, setOrientation] = useState<"auto" | "portrait" | "landscape">("auto");
+  const [margin, setMargin] = useState(12);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [done, setDone] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const addFiles = (list: FileList | null) => {
+    if (!list) return;
+    const imgs = Array.from(list).filter((f) => f.type.startsWith("image/"));
+    setFiles((prev) => [...prev, ...imgs]);
+    setError(null);
+    setDone(false);
+  };
+
+  const removeFile = (i: number) => {
+    setFiles((prev) => prev.filter((_, idx) => idx !== i));
+    setDone(false);
+  };
+
+  const convert = async () => {
+    if (!files.length) return;
+    setBusy(true);
+    setError(null);
+    setDone(false);
+    try {
+      const { PDFDocument, degrees } = await import("pdf-lib");
+      const doc = await PDFDocument.create();
+      for (const file of files) {
+        const bytes = new Uint8Array(await file.arrayBuffer());
+        const img = file.type === "image/png" ? await doc.embedPng(bytes) : await doc.embedJpg(bytes);
+        const { width, height } = img.scale(1);
+        const isLandscape = width > height;
+        const useLandscape = orientation === "landscape" || (orientation === "auto" && isLandscape);
+        const page = doc.addPage(useLandscape ? [A4.height, A4.width] : [A4.width, A4.height]);
+        const maxW = page.getWidth() - margin * 2;
+        const maxH = page.getHeight() - margin * 2;
+        const scale = Math.min(maxW / width, maxH / height, 1);
+        const w = width * scale;
+        const h = height * scale;
+        page.drawImage(img, {
+          x: (page.getWidth() - w) / 2,
+          y: (page.getHeight() - h) / 2,
+          width: w,
+          height: h,
+        });
+      }
+      const saved = await doc.save({ useObjectStreams: true });
+      downloadBytes(saved, "images.pdf");
+      setDone(true);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Не удалось создать PDF");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="space-y-4">
+      <input
+        ref={inputRef}
+        type="file"
+        accept="image/jpeg,image/png,image/webp,image/bmp,.jpg,.jpeg,.png,.webp,.bmp"
+        multiple
+        className="hidden"
+        onChange={(e) => { addFiles(e.target.files); e.target.value = ""; }}
+      />
+
+      {files.length === 0 ? (
+        <button
+          onClick={() => inputRef.current?.click()}
+          className="w-full border-2 border-dashed border-gray-200 rounded-xl p-10 flex flex-col items-center gap-3 hover:border-brand-400 hover:bg-brand-50/30 transition-all cursor-pointer group"
+        >
+          <div className="w-12 h-12 rounded-2xl bg-brand-50 border border-brand-100 flex items-center justify-center group-hover:bg-brand-100 transition-colors">
+            <ImageIcon className="w-6 h-6 text-brand-500" />
+          </div>
+          <div className="text-sm font-semibold text-gray-900">Выберите изображения</div>
+          <div className="text-xs text-gray-500">JPG, PNG, WEBP. Каждая картинка — на отдельной странице A4. Данные не покидают ваш браузер.</div>
+        </button>
+      ) : (
+        <div className="space-y-3">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+            {files.map((f, i) => (
+              <div key={`${f.name}-${i}`} className="relative bg-gray-50 border border-gray-200 rounded-xl p-3 group">
+                <p className="text-[11px] font-medium text-gray-800 truncate pr-5">{f.name}</p>
+                <p className="text-[10px] text-gray-400">{formatBytes(f.size)}</p>
+                <button onClick={() => removeFile(i)}
+                  className="absolute top-1.5 right-1.5 p-1 rounded-lg hover:bg-red-50 text-red-400 hover:text-red-600 cursor-pointer">
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            ))}
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1">
+              <label className="text-[10px] font-mono text-gray-500 uppercase">Ориентация страницы</label>
+              <select value={orientation} onChange={(e) => setOrientation(e.target.value as typeof orientation)}
+                className="w-full bg-gray-50 border border-gray-200 text-xs py-2.5 px-3 rounded-lg text-gray-900 outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500">
+                <option value="auto">По изображению</option>
+                <option value="portrait">Книжная</option>
+                <option value="landscape">Альбомная</option>
+              </select>
+            </div>
+            <div className="space-y-1">
+              <label className="text-[10px] font-mono text-gray-500 uppercase">Поля (мм) — {margin}</label>
+              <input type="range" min={0} max={30} value={margin} onChange={(e) => setMargin(Number(e.target.value))}
+                className="w-full accent-brand-500" />
+            </div>
+          </div>
+
+          <div className="flex gap-2">
+            <button onClick={() => inputRef.current?.click()}
+              className="px-4 py-2 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 font-medium text-sm transition cursor-pointer">
+              + Добавить
+            </button>
+            <button onClick={convert} disabled={busy}
+              className="flex-1 py-2.5 bg-brand-500 text-white rounded-xl hover:bg-brand-600 font-bold text-sm transition disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer">
+              {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+              {busy ? "Создание PDF..." : "Создать PDF"}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {done && (
+        <div className="rounded-xl p-3 flex items-center gap-2.5 text-xs bg-emerald-50 border border-emerald-200 text-emerald-700">
+          <Check className="w-4 h-4 text-emerald-500" />
+          PDF создан и скачан
+        </div>
+      )}
+      {error && (
+        <div className="rounded-xl p-3 text-xs bg-red-50 border border-red-200 text-red-700">{error}</div>
+      )}
+    </div>
+  );
+}
