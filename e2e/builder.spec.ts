@@ -153,6 +153,34 @@ test.describe("E4: черновик сохраняется и восстанав
   });
 });
 
+test.describe("E6: DOCX-экспорт для free-пользователя = paywall", () => {
+  test("клик DOCX показывает модалку PRO, PDF скачивается", async ({ page }) => {
+    await gotoDkp(page);
+
+    await fillFields(page, DKP_FIELDS);
+
+    await page.getByRole("button", { name: "Предпросмотр документа" }).click();
+    await expect(
+      page.getByRole("heading", { name: "Предварительный просмотр" })
+    ).toBeVisible();
+
+    await page.getByRole("button", { name: "Скачать", exact: true }).hover();
+    await page.getByRole("button", { name: "Скачать DOCX" }).click();
+    await expect(
+      page.getByRole("heading", { name: "Экспорт в DOCX — функция PRO" })
+    ).toBeVisible();
+    await page.getByRole("button", { name: "Пока нет" }).click();
+    await expect(
+      page.getByRole("heading", { name: "Экспорт в DOCX — функция PRO" })
+    ).toHaveCount(0);
+
+    const downloadPromise = page.waitForEvent("download");
+    await page.getByRole("button", { name: "Скачать", exact: true }).click();
+    const download = await downloadPromise;
+    expect(download.suggestedFilename().toLowerCase()).toMatch(/\.pdf$/);
+  });
+});
+
 test.describe("E5: мобильный viewport (360px) — форма и предпросмотр", () => {
   test.use({ viewport: { width: 360, height: 800 } });
 
