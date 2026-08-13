@@ -1,0 +1,12 @@
+User-Agent: *
+Allow: /
+Disallow: /login
+Disallow: /billing
+Disallow: /dashboard
+Disallow: /documents
+Disallow: /settings
+Disallow: /trash
+Disallow: /preview
+Disallow: /api/
+
+Sitemap: https://dogovor-templates.vercel.app/sitemap.xml

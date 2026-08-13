@@ -1,0 +1,202 @@
+import type { LegalTemplate } from "../types";
+
+export const TEMPLATES_POSTAL: LegalTemplate[] = [
+{
+    id: "postal-power-of-attorney",
+    name: "Доверенность на получение почтовых отправлений",
+    category: "postal",
+    actSource: "ст. 185-189 ГК РФ, ФЗ-176 «О почтовой связи»",
+    lastUpdated: "Август 2026",
+    description: "Доверенность на получение почтовых отправлений в отделении Почты России: ФИО и паспорт представителя, перечень отправлений, срок действия. Может удостоверяться оператором бесплатно.",
+    suggestedDocs: ["power-of-attorney-docs"],
+    printInstruction: "Печать на листе А4; может быть удостоверена оператором отделения почтовой связи бесплатно; без даты выдачи ничтожна (ст. 186 ГК РФ)",
+    fields: [
+      { id: "city", label: "Город", type: "text", defaultValue: "Москва", category: "contract" },
+      { id: "date", label: "Дата выдачи", type: "date", defaultValue: "2026-08-10", category: "contract" },
+      { id: "postal_office", label: "Почтовое отделение (индекс)", type: "text", defaultValue: "отделение почтовой связи 123456 г. Москвы", category: "other", validation: { required: true } },
+      { id: "principal_fio", label: "Доверитель (ФИО)", type: "text", defaultValue: "Иванов Иван Иванович", category: "principal", validation: { required: true } },
+      { id: "principal_passport", label: "Паспорт доверителя", type: "text", defaultValue: "45 10 987654, выдан ОВД «Тверской» г. Москвы", category: "principal" },
+      { id: "principal_address", label: "Адрес доверителя", type: "text", defaultValue: "г. Москва, ул. Ленина, д. 10, кв. 25", category: "principal" },
+      { id: "agent_fio", label: "Представитель (ФИО)", type: "text", defaultValue: "Петров Пётр Петрович", category: "agent", validation: { required: true } },
+      { id: "agent_passport", label: "Паспорт представителя", type: "text", defaultValue: "45 09 654321, выдан ОВД «Басманный» г. Москвы", category: "agent" },
+      { id: "agent_address", label: "Адрес представителя", type: "text", defaultValue: "г. Москва, ул. Пушкина, д. 20, кв. 8", category: "agent" },
+      { id: "items_list", label: "Какие отправления получать", type: "text", defaultValue: "письма, бандероли, посылки, ценные отправления, извещения", category: "items" },
+      { id: "valid_until", label: "Срок действия", type: "text", defaultValue: "6 месяцев с даты выдачи", category: "contract" },
+      { id: "has_substitution", label: "Право передоверия", type: "select", defaultValue: "без права передоверия", category: "contract", options: [
+        { label: "Без права передоверия", value: "без права передоверия" },
+        { label: "С правом передоверия", value: "с правом передоверия" },
+      ] },
+    ],
+    previewTemplate: `
+<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
+  <div class="text-center font-bold text-base mb-6 text-black uppercase">Доверенность на получение почтовых отправлений</div>
+  <div class="flex justify-between mb-6 text-xs font-semibold">
+    <div>г. {{{city}}}</div>
+    <div>«{{{date}}}»</div>
+  </div>
+  <p class="mb-4 text-justify">
+    Я, <strong>{{{principal_fio}}}</strong> (паспорт: {{{principal_passport}}}, адрес: {{{principal_address}}}),
+    настоящей доверенностью уполномочиваю <strong>{{{agent_fio}}}</strong> (паспорт: {{{agent_passport}},
+    адрес: {{{agent_address}}}) получить в {{{postal_office}}}: {{{items_list}}}, а также
+    расписываться за меня и выполнять все действия, связанные с данным поручением (ст. 185 ГК РФ).
+  </p>
+  <p class="mb-3 text-justify">Доверенность выдана {{{has_substitution}}} на срок {{{valid_until}}}.</p>
+  <p class="mb-3 text-justify">Содержание статей 185-189 ГК РФ мне известно. Доверенность может быть отменена в любое время (ст. 188 ГК РФ).</p>
+  <div class="mt-8 text-xs border-t border-zinc-300 pt-4">
+    <p class="mb-1">Доверитель: {{{principal_fio}}}</p>
+    <div class="border-b border-zinc-950 w-56 h-5 mt-5 mb-1"></div>
+    <p class="text-zinc-400 text-[10px]">подпись</p>
+  </div>
+</div>`,
+  },
+{
+    id: "postal-search-app",
+    name: "Заявление на розыск почтового отправления",
+    category: "postal",
+    actSource: "ст. 37 ФЗ-176 «О почтовой связи»",
+    lastUpdated: "Август 2026",
+    description: "Заявление о розыске почтового отправления в отделении Почты России: трек-номер, дата отправки, адреса отправителя и получателя, сумма объявленной ценности.",
+    suggestedDocs: ["postal-power-of-attorney"],
+    printInstruction: "Печать на листе А4; заявление подаётся в течение 6 месяцев с даты отправки (ст. 37 ФЗ-176); приложите квитанцию об отправке",
+    fields: [
+      { id: "city", label: "Город", type: "text", defaultValue: "Москва", category: "contract" },
+      { id: "date", label: "Дата заявления", type: "date", defaultValue: "2026-08-10", category: "contract" },
+      { id: "postal_office", label: "Отделение, куда подаётся", type: "text", defaultValue: "Отделение почтовой связи 123456 г. Москвы", category: "other", validation: { required: true } },
+      { id: "sender_fio", label: "Отправитель (ФИО)", type: "text", defaultValue: "Иванов Иван Иванович", category: "sender", validation: { required: true } },
+      { id: "sender_address", label: "Адрес отправителя", type: "text", defaultValue: "г. Москва, ул. Ленина, д. 10, кв. 25", category: "sender" },
+      { id: "receiver_fio", label: "Получатель (ФИО)", type: "text", defaultValue: "Петров Пётр Петрович", category: "recipient", validation: { required: true } },
+      { id: "receiver_address", label: "Адрес получателя", type: "text", defaultValue: "г. Москва, ул. Пушкина, д. 20, кв. 8", category: "recipient" },
+      { id: "track_number", label: "Трек-номер отправления", type: "text", defaultValue: "RA123456789RU", category: "other", validation: { required: true } },
+      { id: "send_date", label: "Дата отправки", type: "date", defaultValue: "2026-07-20", category: "contract" },
+      { id: "item_type", label: "Вид отправления", type: "text", defaultValue: "посылка с объявленной ценностью 5000 руб., без наложенного платежа", category: "items" },
+      { id: "receipt_info", label: "Квитанция об отправке", type: "text", defaultValue: "квитанция № 1234 от 20.07.2026", category: "other" },
+      { id: "search_claim", label: "Требование", type: "text", defaultValue: "провести розыск и сообщить о результатах в письменной форме", category: "items" },
+    ],
+    previewTemplate: `
+<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
+  <div class="flex justify-between mb-6 text-xs font-semibold">
+    <div>г. {{{city}}}</div>
+    <div>«{{{date}}}»</div>
+  </div>
+  <div class="text-center font-bold text-base mb-6 text-black uppercase">Заявление о розыске почтового отправления</div>
+  <p class="mb-4 text-justify">В {{{postal_office}}}</p>
+  <p class="mb-1 text-justify">Отправитель: {{{sender_fio}}}, адрес: {{{sender_address}}}</p>
+  <p class="mb-4 text-justify">Получатель: {{{receiver_fio}}}, адрес: {{{receiver_address}}}</p>
+  <div class="font-bold mb-2 text-black text-xs uppercase">Заявление</div>
+  <p class="mb-3 text-justify">1. «{{{send_date}}}» мною было отправлено почтовое отправление: {{{item_type}}}, трек-номер {{{track_number}}} ({{{receipt_info}}}).</p>
+  <p class="mb-3 text-justify">2. В установленный контрольный срок отправление адресату не доставлено.</p>
+  <p class="mb-3 text-justify">3. На основании ст. 37 ФЗ-176 «О почтовой связи» прошу: {{{search_claim}}}. Заявление подаётся в течение 6 месяцев с даты отправки.</p>
+  <div class="mt-8 text-xs border-t border-zinc-300 pt-4">
+    <p class="mb-1">Отправитель: {{{sender_fio}}}</p>
+    <div class="border-b border-zinc-950 w-56 h-5 mt-5 mb-1"></div>
+    <p class="text-zinc-400 text-[10px]">подпись</p>
+  </div>
+</div>`,
+  },
+{
+    id: "mail-notice",
+    name: "Уведомление о получении почтового отправления",
+    category: "postal",
+    actSource: "Правила оказания услуг почтовой связи (Приказ Минцифры России)",
+    lastUpdated: "Август 2026",
+    description: "Уведомление отправителя о получении почтового отправления адресатом с указанием номера отправления и даты получения.",
+    suggestedDocs: ["postal-power-of-attorney","postal-search-app"],
+    supportsOcr: true,
+    printInstruction: "Печать на одном листе А4",
+    fields: [
+      { id: "city", label: "Город составления", type: "text", defaultValue: "Москва", category: "contract", validation: { required: true } },
+      { id: "date", label: "Дата договора", type: "date", defaultValue: "2026-08-11", category: "contract", validation: { required: true } },
+      { id: "applicant_fio", label: "ФИО отправителя", type: "text", defaultValue: "Зайцев Олег Викторович", category: "sender", validation: { required: true } },
+      { id: "recipient", label: "Получатель", type: "text", defaultValue: "Зайцева Наталья Олеговна", category: "recipient", validation: { required: true } },
+      { id: "tracking", label: "Трек-номер отправления", type: "text", defaultValue: "12345678901234", category: "contract", validation: { required: true } },
+      { id: "mail_type", label: "Вид отправления", type: "text", defaultValue: "заказное письмо с уведомлением", category: "contract" },
+      { id: "sent_date", label: "Дата отправки", type: "date", defaultValue: "2026-07-01", category: "contract" },
+      { id: "received_date", label: "Дата получения", type: "date", defaultValue: "2026-07-07", category: "contract", validation: { required: true } },
+      { id: "post_office", label: "Отделение почтовой связи", type: "text", defaultValue: "ОПС 123456, г. Москва", category: "contract" },
+      { id: "note", label: "Примечание", type: "text", defaultValue: "отправление вручено адресату лично", category: "contract" },
+    ],
+    previewTemplate: `<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
+  <div class="text-center font-bold text-base mb-6 text-black uppercase">Уведомление о получении почтового отправления</div>
+  <div class="flex justify-between mb-6 text-xs font-semibold">
+    <div>г. {{{city}}}</div>
+    <div>«{{{date}}}»</div>
+  </div>
+
+  <div class="font-bold mb-2 text-black text-xs uppercase">1. Уведомление</div>
+  <p class="mb-4 text-justify">1.1. Настоящим уведомляю, что {{{mail_type}}} {{{tracking}}}, отправленное «{{{sent_date}}}» в адрес {{{recipient}}}, получено адресатом «{{{received_date}}}» в {{{post_office}}}.</p>
+  <p class="mb-4 text-justify">1.2. {{{note}}}.</p>
+  <div class="font-bold mb-2 text-black text-xs uppercase">2. Подтверждение</div>
+  <p class="mb-4 text-justify">2.1. Факт получения подтверждается отметкой оператора почтовой связи и подписью получателя.</p>
+  <p class="mb-4 text-justify">2.2. Документы, подтверждающие вручение, могут быть предоставлены по требованию.</p>
+
+  <div class="font-bold mb-2 text-black text-xs uppercase">3. Форс-мажор</div>
+  <p class="mb-4 text-justify">3.1. Стороны освобождаются от ответственности за частичное или полное неисполнение обязательств по настоящему договору, если оно явилось следствием обстоятельств непреодолимой силы (форс-мажора): стихийных бедствий, пожаров, наводнений, землетрясений, эпидемий, военных действий, решений органов государственной власти, а также иных обстоятельств, которые стороны не могли предвидеть и предотвратить разумными мерами.</p>
+  <p class="mb-4 text-justify">3.2. Сторона, для которой создалась невозможность исполнения обязательств, обязана незамедлительно, но не позднее 10 (десяти) календарных дней с момента наступления таких обстоятельств, письменно уведомить другую сторону об их возникновении. Неуведомление лишает сторону права ссылаться на форс-мажор.</p>
+  <p class="mb-4 text-justify">3.3. Если обстоятельства непреодолимой силы действуют более 60 (шестидесяти) календарных дней, каждая из сторон вправе в одностороннем порядке отказаться от исполнения настоящего договора, письменно уведомив другую сторону.</p>
+
+  <div class="font-bold mb-2 text-black text-xs uppercase">4. Порядок разрешения споров</div>
+  <p class="mb-4 text-justify">4.1. Все споры и разногласия, возникающие из настоящего договора или в связи с ним, стороны разрешают путём переговоров. Срок рассмотрения письменной претензии — 10 (десять) календарных дней с момента её получения.</p>
+  <p class="mb-4 text-justify">4.2. При недостижении согласия споры разрешаются в судебном порядке в соответствии с действующим законодательством Российской Федерации.</p>
+  <div class="mt-8 border-t border-zinc-300 pt-4 text-xs">
+    <div>
+      <div class="font-bold mb-2 uppercase text-black">Заявитель:</div>
+      <p class="mb-1"><strong>{{{applicant_fio}}}</strong></p>
+      <div class="mt-8 border-b border-zinc-900 w-44 h-5 flex justify-end items-end text-[10px] text-zinc-400">Подпись</div>
+    </div>
+  </div>
+</div>`,
+  },
+{
+    id: "mail-return-app",
+    name: "Заявление на возврат почтового отправления",
+    category: "postal",
+    actSource: "Правила оказания услуг почтовой связи (Приказ Минцифры России)",
+    lastUpdated: "Август 2026",
+    description: "Заявление отправителя о возврате почтового отправления отправителю либо об изменении адреса доставки.",
+    suggestedDocs: ["postal-search-app","postal-power-of-attorney"],
+    supportsOcr: true,
+    printInstruction: "Печать на одном листе А4",
+    fields: [
+      { id: "city", label: "Город составления", type: "text", defaultValue: "Москва", category: "contract", validation: { required: true } },
+      { id: "date", label: "Дата договора", type: "date", defaultValue: "2026-08-11", category: "contract", validation: { required: true } },
+      { id: "applicant_fio", label: "ФИО отправителя", type: "text", defaultValue: "Щукина Виктория Денисовна", category: "sender", validation: { required: true } },
+      { id: "passport", label: "Паспорт", type: "text", defaultValue: "4513 147258, выдан ОУФМС России по г. Москве 02.02.2017, к.п. 770-002", category: "applicant", validation: { required: true } },
+      { id: "tracking", label: "Трек-номер", type: "text", defaultValue: "12345678901234", category: "contract", validation: { required: true } },
+      { id: "sent_date", label: "Дата отправки", type: "date", defaultValue: "2026-07-20", category: "contract" },
+      { id: "post_office", label: "Отделение", type: "text", defaultValue: "ОПС 123456, г. Москва", category: "contract", validation: { required: true } },
+      { id: "action", label: "Действие", type: "select", defaultValue: "возврат отправителю", category: "contract", options: [ { label: "Возврат отправителю", value: "возврат отправителю" }, { label: "Изменение адреса доставки", value: "изменение адреса доставки" }, { label: "Переадресация", value: "переадресация" }, { label: "Выдача получателю при невручении", value: "выдача получателю при невручении" } ], validation: { required: true } },
+      { id: "new_address", label: "Новый адрес (при переадресации)", type: "text", defaultValue: "г. Санкт-Петербург, Невский пр-т, д. 10", category: "contract" },
+      { id: "reason", label: "Причина", type: "text", defaultValue: "получатель отказался от получения отправления", category: "contract" },
+    ],
+    previewTemplate: `<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
+  <div class="text-center font-bold text-base mb-6 text-black uppercase">Заявление на возврат почтового отправления</div>
+  <div class="flex justify-between mb-6 text-xs font-semibold">
+    <div>г. {{{city}}}</div>
+    <div>«{{{date}}}»</div>
+  </div>
+
+  <div class="font-bold mb-2 text-black text-xs uppercase">1. Прошу</div>
+  <p class="mb-4 text-justify">1.1. Прошу произвести следующее действие с почтовым отправлением {{{tracking}}}, отправленным «{{{sent_date}}}»: {{{action}}}.</p>
+  <p class="mb-4 text-justify">1.2. {{{reason}}}. {{{new_address}}}.</p>
+  <div class="font-bold mb-2 text-black text-xs uppercase">2. Подтверждение</div>
+  <p class="mb-4 text-justify">2.1. Отправление находится в {{{post_office}}}.</p>
+  <p class="mb-4 text-justify">2.2. Заявление подано лично, подпись удостоверена оператором почтовой связи.</p>
+
+  <div class="font-bold mb-2 text-black text-xs uppercase">3. Форс-мажор</div>
+  <p class="mb-4 text-justify">3.1. Стороны освобождаются от ответственности за частичное или полное неисполнение обязательств по настоящему договору, если оно явилось следствием обстоятельств непреодолимой силы (форс-мажора): стихийных бедствий, пожаров, наводнений, землетрясений, эпидемий, военных действий, решений органов государственной власти, а также иных обстоятельств, которые стороны не могли предвидеть и предотвратить разумными мерами.</p>
+  <p class="mb-4 text-justify">3.2. Сторона, для которой создалась невозможность исполнения обязательств, обязана незамедлительно, но не позднее 10 (десяти) календарных дней с момента наступления таких обстоятельств, письменно уведомить другую сторону об их возникновении. Неуведомление лишает сторону права ссылаться на форс-мажор.</p>
+  <p class="mb-4 text-justify">3.3. Если обстоятельства непреодолимой силы действуют более 60 (шестидесяти) календарных дней, каждая из сторон вправе в одностороннем порядке отказаться от исполнения настоящего договора, письменно уведомив другую сторону.</p>
+
+  <div class="font-bold mb-2 text-black text-xs uppercase">4. Порядок разрешения споров</div>
+  <p class="mb-4 text-justify">4.1. Все споры и разногласия, возникающие из настоящего договора или в связи с ним, стороны разрешают путём переговоров. Срок рассмотрения письменной претензии — 10 (десять) календарных дней с момента её получения.</p>
+  <p class="mb-4 text-justify">4.2. При недостижении согласия споры разрешаются в судебном порядке в соответствии с действующим законодательством Российской Федерации.</p>
+  <div class="mt-8 border-t border-zinc-300 pt-4 text-xs">
+    <div>
+      <div class="font-bold mb-2 uppercase text-black">Заявитель:</div>
+      <p class="mb-1"><strong>{{{applicant_fio}}}</strong></p>
+      <div class="mt-8 border-b border-zinc-900 w-44 h-5 flex justify-end items-end text-[10px] text-zinc-400">Подпись</div>
+    </div>
+  </div>
+</div>`,
+  }
+];
