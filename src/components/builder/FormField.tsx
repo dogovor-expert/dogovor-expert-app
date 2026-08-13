@@ -22,6 +22,24 @@ interface FormFieldProps {
   onInnBlur: (fieldId: string) => void;
 }
 
+const AUTOCOMPLETE_HINTS: Record<string, string> = {
+  fio: "name",
+  address: "street-address",
+  city: "address-level2",
+  phone: "tel",
+  email: "email",
+  inn: "organization",
+};
+
+function getInputHints(field: TemplateField) {
+  const id = field.id.toLowerCase();
+  const key = Object.keys(AUTOCOMPLETE_HINTS).find((k) => id.includes(k));
+  return {
+    autoComplete: key ? AUTOCOMPLETE_HINTS[key] : undefined,
+    inputMode: field.type === "number" ? ("numeric" as const) : undefined,
+  };
+}
+
 export default function FormField({
   field,
   value,
@@ -135,6 +153,7 @@ export default function FormField({
           />
           <span className="text-xs text-gray-700">{field.label}</span>
         </label>
+        {fieldMessage}
       </div>
     );
   }
@@ -299,6 +318,8 @@ export default function FormField({
     );
   }
 
+  const { autoComplete, inputMode } = getInputHints(field);
+
   return (
     <div>
       <label htmlFor={field.id} className="block text-xs font-medium text-gray-700 mb-1">
@@ -316,6 +337,8 @@ export default function FormField({
         }
         value={value}
         placeholder={field.placeholder}
+        autoComplete={autoComplete}
+        inputMode={inputMode}
         onChange={(e) => onChange(field.id, applyFieldFormat(field, e.target.value))}
         onBlur={() => {
           if (field.type === "text") {
