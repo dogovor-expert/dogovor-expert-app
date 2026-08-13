@@ -12,6 +12,7 @@ import {
   Calculator,
   Eye,
   Wrench,
+  Crown,
 } from "lucide-react";
 import { LEGAL_TEMPLATES } from "@/data/legalTemplates";
 import type { LegalTemplate, TemplateField } from "@/data/types";
@@ -44,6 +45,7 @@ import DadataPanel from "@/components/builder/DadataPanel";
 import ContractorsPanel from "@/components/builder/ContractorsPanel";
 import EsignPanel from "@/components/builder/EsignPanel";
 import SigningPanel from "@/components/builder/SigningPanel";
+import PaywallModal from "@/components/builder/PaywallModal";
 import ChecklistPanel from "@/components/builder/ChecklistPanel";
 import AuditPanel from "@/components/builder/AuditPanel";
 import CostsPanel from "@/components/builder/CostsPanel";
@@ -180,6 +182,7 @@ function HomeContent() {
 
   const [dadataKey, setDadataKey] = useState<string>("");
   const [subscriptionActive, setSubscriptionActive] = useState(false);
+  const [paywallOpen, setPaywallOpen] = useState(false);
   useEffect(() => {
     fetch("/api/subscription-status")
       .then((r) => r.json())
@@ -809,6 +812,30 @@ function HomeContent() {
           ? `Паспорт_сделки_${todayStr()}`
           : `${template.name}_${todayStr()}`;
       let exportSheets = sheets;
+      if (!subscriptionActive) {
+        exportSheets = sheets.map((sheet) => {
+          const copy = sheet.cloneNode(true) as HTMLElement;
+          const badge = document.createElement("div");
+          badge.textContent =
+            "Сформировано бесплатно на сервисе Dogovor — PRO-версия без пометки";
+          Object.assign(badge.style, {
+            position: "absolute",
+            left: "0",
+            right: "0",
+            bottom: "0",
+            textAlign: "center",
+            fontSize: "10px",
+            letterSpacing: "0.02em",
+            color: "#8a8a94",
+            backgroundColor: "#ffffff",
+            paddingTop: "2px",
+            lineHeight: "14px",
+            zIndex: "10",
+          } as CSSStyleDeclaration);
+          copy.appendChild(badge);
+          return copy;
+        });
+      }
       let coverEl: HTMLElement | null = null;
       if (packTemplates.length > 1) {
         coverEl = await buildCoverSheet();
@@ -972,6 +999,10 @@ function HomeContent() {
   };
 
   const handleExportDocx = async () => {
+    if (!subscriptionActive) {
+      setPaywallOpen(true);
+      return;
+    }
     if (!flatRef.current) return;
     setIsExporting(true);
     try {
@@ -1551,6 +1582,10 @@ function HomeContent() {
           onClose={() => setDrawingFor(null)}
           onSave={saveDrawnSign}
         />
+      )}
+
+      {paywallOpen && (
+        <PaywallModal onClose={() => setPaywallOpen(false)} />
       )}
     </div>
   );
