@@ -10,6 +10,8 @@ import {
   Clock,
   Copy,
   Calculator,
+  Eye,
+  Wrench,
 } from "lucide-react";
 import { LEGAL_TEMPLATES } from "@/data/legalTemplates";
 import type { LegalTemplate, TemplateField } from "@/data/types";
@@ -31,6 +33,7 @@ import TemplateSelector from "@/components/builder/TemplateSelector";
 import OcrScanner from "@/components/builder/OcrScanner";
 import FormSection from "@/components/builder/FormSection";
 import PreviewStage from "@/components/builder/PreviewStage";
+import LivePreviewPanel from "@/components/builder/LivePreviewPanel";
 import Collapsible from "@/components/builder/Collapsible";
 import DraftsPanel from "@/components/builder/DraftsPanel";
 import RelatedDocsPanel from "@/components/builder/RelatedDocsPanel";
@@ -83,6 +86,7 @@ function HomeContent() {
   const [templateSearch, setTemplateSearch] = useState("");
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
   const [viewMode, setViewMode] = useState<"form" | "preview">("form");
+  const [sidebarTab, setSidebarTab] = useState<"preview" | "tools">("preview");
   const [previewBlocked, setPreviewBlocked] =
     useState<AuditResult[] | null>(null);
   // Поля, где пользователь явно убрал демо-значение (defaultValue-образец).
@@ -1052,7 +1056,13 @@ function HomeContent() {
     ).slice(0, 4);
   }, [template.id, template.category, template.suggestedDocs]);
 
-  const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({});
+  const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>(() => ({
+    about: true,
+    dadata: true,
+    contractors: true,
+    esign: true,
+    signing: true,
+  }));
 
   const toggleSection = (id: string) =>
     setCollapsedSections((prev) => ({ ...prev, [id]: !prev[id] }));
@@ -1224,9 +1234,9 @@ function HomeContent() {
 
       {/* Main Content */}
       {wizardStep === "form" && (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-          {/* Left: Form + Preview */}
-          <div className={`${viewMode === "preview" ? "lg:col-span-3" : "lg:col-span-2"} space-y-4`}>
+        <div className="grid grid-cols-1 xl:grid-cols-5 gap-5">
+          {/* Left: Form + Full Preview */}
+          <div className={`${viewMode === "preview" ? "xl:col-span-5" : "xl:col-span-3"} space-y-4`}>
             {viewMode === "form" && (<>
               {previewBlocked && (
                 <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-start gap-3">
@@ -1265,15 +1275,6 @@ function HomeContent() {
                   </button>
                 </div>
               )}
-              {/* Scanner — only for OCR-capable templates */}
-              {template.supportsOcr && (
-                <OcrScanner
-                  isScanning={isScanning}
-                  scanSuccess={scanSuccess}
-                  fileInputRef={fileInputRef}
-                  onPhotoUpload={handlePhotoUpload}
-                />
-              )}
               {/* Form */}
               <FormSection
                 template={template}
@@ -1291,6 +1292,16 @@ function HomeContent() {
                 onAudit={handleAudit}
                 tabProgress={tabProgress}
               />
+              {/* About template — footer of the form */}
+              <Collapsible
+                id="about"
+                title="О шаблоне"
+                icon={<Shield className="w-4 h-4 text-brand-600" />}
+                collapsed={!!collapsedSections["about"]}
+                onToggle={toggleSection}
+              >
+                <TemplateInfoPanel template={template} />
+              </Collapsible>
             </>)}
             {viewMode === "preview" && (
               <PreviewStage
@@ -1310,201 +1321,235 @@ function HomeContent() {
             )}
           </div>
 
-          {/* Right Column */}
-          {viewMode === "form" && (<div className="space-y-4">
-            {draftInfos.length > 0 && (
-              <Collapsible
-                id="drafts"
-                title="Мои черновики"
-                icon={<Clock className="w-4 h-4 text-brand-600" />}
-                collapsed={!!collapsedSections["drafts"]}
-                onToggle={toggleSection}
-              >
-                <DraftsPanel
-                  draftInfos={draftInfos}
-                  selectedTemplateId={selectedTemplateId}
-                  onCreateVersion={() => {
-                    pushDraftVersion(template.id, formValues, checklist, activeTab);
-                    lastVersionRef.current = Date.now();
-                    setDraftInfos(getAllDrafts());
-                    setShowSaved(true);
-                    setTimeout(() => setShowSaved(false), 2000);
-                  }}
-                  onOpenDraft={openDraft}
-                  onRemoveDraft={removeDraft}
-                />
-              </Collapsible>
-            )}
-            {getRelatedDocs().length > 0 && (
-              <Collapsible
-                id="related"
-                title="Связанные документы"
-                collapsed={!!collapsedSections["related"]}
-                onToggle={toggleSection}
-              >
-                <RelatedDocsPanel
-                  relatedDocs={getRelatedDocs()}
-                  packTemplateIds={packTemplateIds}
-                  onTogglePack={togglePack}
-                  onSelectTemplate={selectRelatedTemplate}
-                />
-              </Collapsible>
-            )}
+          {/* Right Column: Live preview / Tools */}
+          {viewMode === "form" && (<div className="xl:col-span-2 space-y-4">
+            <div className="flex items-center gap-2 bg-white rounded-xl border border-gray-100 shadow-sm p-1.5">
+              {(
+                [
+                  ["preview", "Предпросмотр", <Eye key="preview" />],
+                  ["tools", "Документы и инструменты", <Wrench key="tools" />],
+                ] as const
+              ).map(([id, label, icon]) => (
+                <button
+                  key={id}
+                  onClick={() => setSidebarTab(id)}
+                  className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-all ${
+                    sidebarTab === id
+                      ? "bg-brand-50 text-brand-700 border border-brand-200"
+                      : "text-gray-500 hover:bg-gray-50 border border-transparent"
+                  }`}
+                >
+                  {icon}
+                  {label}
+                </button>
+              ))}
+            </div>
 
-            <Collapsible
-              id="approval"
-              title="Согласование с контрагентом"
-              icon={<Shield className="w-4 h-4 text-brand-600" />}
-              collapsed={!!collapsedSections["approval"]}
-              onToggle={toggleSection}
-            >
-              <ApprovalPanel
-                templateId={template.id}
-                approvalMode={approvalMode}
-                onModeChange={setApprovalMode}
-                approvalBusy={approvalBusy}
-                approvalMsg={approvalMsg}
-                myApprovals={myApprovals}
-                approvalQr={approvalQr}
-                onCreate={createApproval}
-                onRefresh={loadMyApprovals}
-                onApply={applyApproval}
-                onCopyLink={copyApprovalLink}
-                onToggleQr={showApprovalQr}
-              />
-            </Collapsible>
-
-            <Collapsible
-              id="about"
-              title="О шаблоне"
-              icon={<Shield className="w-4 h-4 text-brand-600" />}
-              collapsed={!!collapsedSections["about"]}
-              onToggle={toggleSection}
-            >
-              <TemplateInfoPanel template={template} />
-            </Collapsible>
-
-            {similarTemplates.length > 0 && (
-              <Collapsible
-                id="similar"
-                title="Похожие шаблоны"
-                icon={<Copy className="w-4 h-4 text-brand-600" />}
-                collapsed={!!collapsedSections["similar"]}
-                onToggle={toggleSection}
-              >
-                <SimilarTemplatesPanel
-                  similarTemplates={similarTemplates}
-                  onSelectTemplate={selectRelatedTemplate}
-                />
-              </Collapsible>
-            )}
-
-            <Collapsible
-              id="dadata"
-              title="Автозаполнение по ИНН (DADATA)"
-              collapsed={!!collapsedSections["dadata"]}
-              onToggle={toggleSection}
-            >
-              <DadataPanel
-                subscriptionActive={subscriptionActive}
-                dadataKey={dadataKey}
-                onKeyChange={setDadataKey}
-                partyQuery={partyQuery}
-                onQueryChange={setPartyQuery}
-                partyResults={partyResults}
-                partyAnalyzing={partyAnalyzing}
-                dadataLoading={dadataLoading}
-                dadataMsg={dadataMsg}
-                onSearch={searchParty}
-                onApplyResult={applyPartyResult}
-                onClearResults={() => setPartyResults([])}
-              />
-            </Collapsible>
-
-            <Collapsible
-              id="contractors"
-              title="Контрагенты"
-              collapsed={!!collapsedSections["contractors"]}
-              onToggle={toggleSection}
-            >
-              <ContractorsPanel
+            {sidebarTab === "preview" ? (<>
+              <LivePreviewPanel
                 template={template}
-                contractors={contractors}
-                contractorsMsg={contractorsMsg}
-                onApply={applyContractor}
-                onDelete={deleteContractor}
-                onSave={saveContractor}
+                renderPreview={() => renderPreview()}
+                onOpenFullPreview={goToPreview}
+                onPagesChange={() => {}}
               />
-            </Collapsible>
 
-            <Collapsible
-              id="esign"
-              title="Подписи сторон (e-sign)"
-              collapsed={!!collapsedSections["esign"]}
-              onToggle={toggleSection}
-            >
-              <EsignPanel
-                signSeller={signSeller}
-                signBuyer={signBuyer}
-                onClear={clearSign}
-                onUpload={handleSignUpload}
-                onDraw={setDrawingFor}
-              />
-            </Collapsible>
+              {showAudit && auditResults && (
+                <Collapsible
+                  id="audit"
+                  title="Правовой аудит"
+                  icon={<Shield className="w-4 h-4 text-brand-600" />}
+                  collapsed={!!collapsedSections["audit"]}
+                  onToggle={toggleSection}
+                >
+                  <AuditPanel results={auditResults} />
+                </Collapsible>
+              )}
 
-            <Collapsible
-              id="signing"
-              title="Подписание и протокол (ПЭП)"
-              collapsed={!!collapsedSections["signing"]}
-              onToggle={toggleSection}
-            >
-              <SigningPanel
-                signSheetEnabled={signSheetEnabled}
-                onToggle={setSignSheetEnabled}
-              />
-            </Collapsible>
-
-            <Collapsible
-              id="checklist"
-              title="Чек-лист перед сделкой"
-              collapsed={!!collapsedSections["checklist"]}
-              onToggle={toggleSection}
-            >
-              <ChecklistPanel
-                checklist={checklist}
-                onChange={(item, checked) =>
-                  setChecklist((prev) => ({ ...prev, [item]: checked }))
-                }
-              />
-            </Collapsible>
-
-            {showAudit && auditResults && (
               <Collapsible
-                id="audit"
-                title="Правовой аудит"
-                icon={<Shield className="w-4 h-4 text-brand-600" />}
-                collapsed={!!collapsedSections["audit"]}
+                id="checklist"
+                title="Чек-лист перед сделкой"
+                collapsed={!!collapsedSections["checklist"]}
                 onToggle={toggleSection}
               >
-                <AuditPanel results={auditResults} />
-              </Collapsible>
-            )}
-
-            {hasContractPrice && (
-              <Collapsible
-                id="costs"
-                title="Расходы на сделку"
-                icon={<Calculator className="w-4 h-4 text-brand-600" />}
-                collapsed={!!collapsedSections["costs"]}
-                onToggle={toggleSection}
-              >
-                <CostsPanel
-                  costCalc={costCalc}
-                  ownershipYears={ownershipYears}
-                  onOwnershipYearsChange={setOwnershipYears}
+                <ChecklistPanel
+                  checklist={checklist}
+                  onChange={(item, checked) =>
+                    setChecklist((prev) => ({ ...prev, [item]: checked }))
+                  }
                 />
               </Collapsible>
-            )}
+
+              {hasContractPrice && (
+                <Collapsible
+                  id="costs"
+                  title="Расходы на сделку"
+                  icon={<Calculator className="w-4 h-4 text-brand-600" />}
+                  collapsed={!!collapsedSections["costs"]}
+                  onToggle={toggleSection}
+                >
+                  <CostsPanel
+                    costCalc={costCalc}
+                    ownershipYears={ownershipYears}
+                    onOwnershipYearsChange={setOwnershipYears}
+                  />
+                </Collapsible>
+              )}
+            </>) : (<>
+              {/* Document assembly tools */}
+              {template.supportsOcr && (
+                <OcrScanner
+                  isScanning={isScanning}
+                  scanSuccess={scanSuccess}
+                  fileInputRef={fileInputRef}
+                  onPhotoUpload={handlePhotoUpload}
+                />
+              )}
+              {getRelatedDocs().length > 0 && (
+                <Collapsible
+                  id="related"
+                  title="Связанные документы"
+                  collapsed={!!collapsedSections["related"]}
+                  onToggle={toggleSection}
+                >
+                  <RelatedDocsPanel
+                    relatedDocs={getRelatedDocs()}
+                    packTemplateIds={packTemplateIds}
+                    onTogglePack={togglePack}
+                    onSelectTemplate={selectRelatedTemplate}
+                  />
+                </Collapsible>
+              )}
+              {draftInfos.length > 0 && (
+                <Collapsible
+                  id="drafts"
+                  title="Мои черновики"
+                  icon={<Clock className="w-4 h-4 text-brand-600" />}
+                  collapsed={!!collapsedSections["drafts"]}
+                  onToggle={toggleSection}
+                >
+                  <DraftsPanel
+                    draftInfos={draftInfos}
+                    selectedTemplateId={selectedTemplateId}
+                    onCreateVersion={() => {
+                      pushDraftVersion(template.id, formValues, checklist, activeTab);
+                      lastVersionRef.current = Date.now();
+                      setDraftInfos(getAllDrafts());
+                      setShowSaved(true);
+                      setTimeout(() => setShowSaved(false), 2000);
+                    }}
+                    onOpenDraft={openDraft}
+                    onRemoveDraft={removeDraft}
+                  />
+                </Collapsible>
+              )}
+              <Collapsible
+                id="approval"
+                title="Согласование с контрагентом"
+                icon={<Shield className="w-4 h-4 text-brand-600" />}
+                collapsed={!!collapsedSections["approval"]}
+                onToggle={toggleSection}
+              >
+                <ApprovalPanel
+                  templateId={template.id}
+                  approvalMode={approvalMode}
+                  onModeChange={setApprovalMode}
+                  approvalBusy={approvalBusy}
+                  approvalMsg={approvalMsg}
+                  myApprovals={myApprovals}
+                  approvalQr={approvalQr}
+                  onCreate={createApproval}
+                  onRefresh={loadMyApprovals}
+                  onApply={applyApproval}
+                  onCopyLink={copyApprovalLink}
+                  onToggleQr={showApprovalQr}
+                />
+              </Collapsible>
+              {similarTemplates.length > 0 && (
+                <Collapsible
+                  id="similar"
+                  title="Похожие шаблоны"
+                  icon={<Copy className="w-4 h-4 text-brand-600" />}
+                  collapsed={!!collapsedSections["similar"]}
+                  onToggle={toggleSection}
+                >
+                  <SimilarTemplatesPanel
+                    similarTemplates={similarTemplates}
+                    onSelectTemplate={selectRelatedTemplate}
+                  />
+                </Collapsible>
+              )}
+
+              {/* Data & signatures */}
+              <div className="pt-1 pb-0.5">
+                <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide px-1">
+                  Данные и подписи
+                </p>
+              </div>
+              <Collapsible
+                id="dadata"
+                title="Автозаполнение по ИНН (DADATA)"
+                collapsed={!!collapsedSections["dadata"]}
+                onToggle={toggleSection}
+              >
+                <DadataPanel
+                  subscriptionActive={subscriptionActive}
+                  dadataKey={dadataKey}
+                  onKeyChange={setDadataKey}
+                  partyQuery={partyQuery}
+                  onQueryChange={setPartyQuery}
+                  partyResults={partyResults}
+                  partyAnalyzing={partyAnalyzing}
+                  dadataLoading={dadataLoading}
+                  dadataMsg={dadataMsg}
+                  onSearch={searchParty}
+                  onApplyResult={applyPartyResult}
+                  onClearResults={() => setPartyResults([])}
+                />
+              </Collapsible>
+
+              <Collapsible
+                id="contractors"
+                title="Контрагенты"
+                collapsed={!!collapsedSections["contractors"]}
+                onToggle={toggleSection}
+              >
+                <ContractorsPanel
+                  template={template}
+                  contractors={contractors}
+                  contractorsMsg={contractorsMsg}
+                  onApply={applyContractor}
+                  onDelete={deleteContractor}
+                  onSave={saveContractor}
+                />
+              </Collapsible>
+
+              <Collapsible
+                id="esign"
+                title="Подписи сторон (e-sign)"
+                collapsed={!!collapsedSections["esign"]}
+                onToggle={toggleSection}
+              >
+                <EsignPanel
+                  signSeller={signSeller}
+                  signBuyer={signBuyer}
+                  onClear={clearSign}
+                  onUpload={handleSignUpload}
+                  onDraw={setDrawingFor}
+                />
+              </Collapsible>
+
+              <Collapsible
+                id="signing"
+                title="Подписание и протокол (ПЭП)"
+                collapsed={!!collapsedSections["signing"]}
+                onToggle={toggleSection}
+              >
+                <SigningPanel
+                  signSheetEnabled={signSheetEnabled}
+                  onToggle={setSignSheetEnabled}
+                />
+              </Collapsible>
+            </>)}
           </div>)}
         </div>
       )}

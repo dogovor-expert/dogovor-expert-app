@@ -114,6 +114,7 @@ test.describe("E4: черновик сохраняется и восстанав
       page.getByRole("button", { name: "Продавец" })
     ).toBeVisible({ timeout: 30_000 });
 
+    await page.getByRole("button", { name: "Документы и инструменты" }).click();
     const draftRow = page
       .getByRole("button", { name: /Договор купли-продажи автомобиля.*\d{2}\.\d{2}\.\d{4}/ })
       .first();
