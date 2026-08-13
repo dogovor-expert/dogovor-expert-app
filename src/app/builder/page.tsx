@@ -613,7 +613,11 @@ function HomeContent() {
       return;
     }
     const t = setTimeout(() => {
-      setLiveAudit(runLegalAudit(template, formValuesRef.current));
+      setLiveAudit(
+        runLegalAudit(template, formValuesRef.current).filter(
+          (r) => r.type === "error" && r.field !== "_all"
+        )
+      );
     }, 400);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1156,15 +1160,6 @@ function HomeContent() {
     ownershipYears ? Number(ownershipYears) : undefined
   );
 
-  const tabProgress = (tab: TemplateField["category"]) => {
-    const tabFields = template.fields.filter(
-      (f) => f.category === tab && isFieldVisible(f, formValues)
-    );
-    const required = tabFields.filter((f) => f.validation?.required);
-    const filled = required.filter((f) => formValues[f.id]?.trim()).length;
-    return { required: required.length, filled };
-  };
-
   const hasContractPrice = template.fields.some((f) => f.id === "contract_price");
 
   return (
@@ -1278,9 +1273,6 @@ function HomeContent() {
               {/* Form */}
               <FormSection
                 template={template}
-                tabs={tabs}
-                activeTab={activeTab}
-                onTabChange={setActiveTab}
                 formValues={formValues}
                 liveAudit={liveAudit}
                 demoDismissed={demoDismissed}
@@ -1290,7 +1282,6 @@ function HomeContent() {
                 onInnBlur={onInnBlur}
                 onGoToPreview={goToPreview}
                 onAudit={handleAudit}
-                tabProgress={tabProgress}
               />
               {/* About template — footer of the form */}
               <Collapsible
