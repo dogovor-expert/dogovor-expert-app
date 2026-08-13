@@ -164,20 +164,11 @@ export default function PreviewStage({
             <ArrowLeft className="w-4 h-4" />
             Вернуться к форме
           </button>
-          <button
-            onClick={onExportPdf}
-            disabled={isExporting}
-            className="inline-flex items-center justify-center font-medium transition-all px-4 py-2 text-sm rounded-xl gap-2 bg-brand-500 text-white hover:bg-brand-600 disabled:opacity-50"
-          >
-            {isExporting ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <Download className="w-4 h-4" />
-            )}
+          <span className="text-xs text-gray-400">
             {packTemplates.length > 1
-              ? `Скачать пакет (${packTemplates.length})`
-              : "Скачать документ"}
-          </button>
+              ? `Пакет: ${packTemplates.length} документов`
+              : "Экспорт — кнопка вверху"}
+          </span>
         </div>
       </div>
     </>
