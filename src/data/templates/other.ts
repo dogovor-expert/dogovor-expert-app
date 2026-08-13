@@ -13,21 +13,21 @@ export const TEMPLATES_OTHER: LegalTemplate[] = [
     printInstruction: "Печатать на одном листе А4 с двух сторон",
     fields: [
 
-      { id: "date", label: "Дата составления", type: "date", defaultValue: "2026-08-11", category: "contract" },      {
+      { id: "date", label: "Дата составления", type: "date", defaultValue: "", category: "contract" },      {
         id: "department", label: "Наименование подразделения", type: "text",
-        defaultValue: "ГУВМ МВД России по г. Москве", category: "contract",
+        defaultValue: "", category: "contract",
         validation: { required: true },
       },
       {
-        id: "fio", label: "ФИО заявителя", type: "text", defaultValue: "Иванов Иван Иванович",
+        id: "fio", label: "ФИО заявителя", type: "text", defaultValue: "",
         category: "applicant", validation: { required: true },
       },
       {
-        id: "birthday", label: "Дата рождения", type: "date", defaultValue: "1990-01-15",
+        id: "birthday", label: "Дата рождения", type: "date", defaultValue: "",
         category: "applicant", validation: { required: true },
       },
       {
-        id: "birthplace", label: "Место рождения", type: "text", defaultValue: "г. Москва, РСФСР",
+        id: "birthplace", label: "Место рождения", type: "text", defaultValue: "",
         category: "applicant", validation: { required: true },
       },
       {
@@ -35,32 +35,32 @@ export const TEMPLATES_OTHER: LegalTemplate[] = [
         options: ["М", "Ж"],
       },
       {
-        id: "citizenship", label: "Гражданство", type: "text", defaultValue: "Российская Федерация",
+        id: "citizenship", label: "Гражданство", type: "text", defaultValue: "",
         category: "applicant",
       },
       {
-        id: "passport_series", label: "Паспорт (Серия)", type: "text", defaultValue: "4510",
+        id: "passport_series", label: "Паспорт (Серия)", type: "text", defaultValue: "",
         category: "applicant", validation: { minLength: 4, maxLength: 4 },
       },
       {
-        id: "passport_number", label: "Паспорт (Номер)", type: "text", defaultValue: "123456",
+        id: "passport_number", label: "Паспорт (Номер)", type: "text", defaultValue: "",
         category: "applicant", validation: { minLength: 6, maxLength: 6 },
       },
       {
-        id: "passport_date", label: "Дата выдачи паспорта", type: "date", defaultValue: "2010-09-15",
+        id: "passport_date", label: "Дата выдачи паспорта", type: "date", defaultValue: "",
         category: "applicant",
       },
       {
         id: "passport_issued_by", label: "Кем выдан паспорт", type: "text",
-        defaultValue: "ГУ МВД по г. Москве", category: "applicant",
+        defaultValue: "", category: "applicant",
       },
       {
         id: "registration_address", label: "Адрес регистрации", type: "text",
-        defaultValue: "г. Москва, ул. Тверская, д. 10, кв. 5", category: "applicant",
+        defaultValue: "", category: "applicant",
         validation: { required: true },
       },
       {
-        id: "phone", label: "Телефон", type: "text", defaultValue: "+7 (495) 123-45-67",
+        id: "phone", label: "Телефон", type: "text", defaultValue: "",
         category: "applicant",
       },
       {
@@ -124,50 +124,50 @@ export const TEMPLATES_OTHER: LegalTemplate[] = [
     printInstruction: "Печатать на одном листе А4",
     fields: [
 
-      { id: "date", label: "Дата составления", type: "date", defaultValue: "2026-08-11", category: "contract" },      {
+      { id: "date", label: "Дата составления", type: "date", defaultValue: "", category: "contract" },      {
         id: "department", label: "Наименование ИФНС", type: "text",
-        defaultValue: "ИФНС России № 15 по г. Москве", category: "contract",
+        defaultValue: "", category: "contract",
         validation: { required: true },
       },
       {
-        id: "fio", label: "ФИО заявителя", type: "text", defaultValue: "Иванов Иван Иванович",
+        id: "fio", label: "ФИО заявителя", type: "text", defaultValue: "",
         category: "applicant", validation: { required: true },
       },
       {
-        id: "birthday", label: "Дата рождения", type: "date", defaultValue: "1990-01-15",
+        id: "birthday", label: "Дата рождения", type: "date", defaultValue: "",
         category: "applicant", validation: { required: true },
       },
       {
-        id: "birthplace", label: "Место рождения", type: "text", defaultValue: "г. Москва, РСФСР",
+        id: "birthplace", label: "Место рождения", type: "text", defaultValue: "",
         category: "applicant",
       },
       {
-        id: "citizenship", label: "Гражданство", type: "text", defaultValue: "Российская Федерация",
+        id: "citizenship", label: "Гражданство", type: "text", defaultValue: "",
         category: "applicant",
       },
       {
-        id: "passport_series", label: "Паспорт (Серия)", type: "text", defaultValue: "4510",
+        id: "passport_series", label: "Паспорт (Серия)", type: "text", defaultValue: "",
         category: "applicant", validation: { minLength: 4, maxLength: 4 },
       },
       {
-        id: "passport_number", label: "Паспорт (Номер)", type: "text", defaultValue: "123456",
+        id: "passport_number", label: "Паспорт (Номер)", type: "text", defaultValue: "",
         category: "applicant", validation: { minLength: 6, maxLength: 6 },
       },
       {
-        id: "passport_date", label: "Дата выдачи паспорта", type: "date", defaultValue: "2010-09-15",
+        id: "passport_date", label: "Дата выдачи паспорта", type: "date", defaultValue: "",
         category: "applicant",
       },
       {
         id: "passport_issued_by", label: "Кем выдан", type: "text",
-        defaultValue: "ГУ МВД по г. Москве", category: "applicant",
+        defaultValue: "", category: "applicant",
       },
       {
         id: "registration_address", label: "Адрес регистрации", type: "text",
-        defaultValue: "г. Москва, ул. Тверская, д. 10, кв. 5", category: "applicant",
+        defaultValue: "", category: "applicant",
         validation: { required: true },
       },
       {
-        id: "phone", label: "Телефон", type: "text", defaultValue: "+7 (495) 123-45-67",
+        id: "phone", label: "Телефон", type: "text", defaultValue: "",
         category: "applicant",
       },
       {
@@ -210,49 +210,49 @@ export const TEMPLATES_OTHER: LegalTemplate[] = [
     printInstruction: "Печатать в 2-х экземплярах",
     fields: [
       {
-        id: "city", label: "Город составления", type: "text", defaultValue: "Москва",
+        id: "city", label: "Город составления", type: "text", defaultValue: "",
         category: "contract",
       },
       {
-        id: "date", label: "Дата договора", type: "date", defaultValue: "2026-07-20",
+        id: "date", label: "Дата договора", type: "date", defaultValue: "",
         category: "contract",
       },
       {
         id: "depositor_fio", label: "ФИО Поклажедателя", type: "text",
-        defaultValue: "Фёдоров Олег Иванович", category: "sender", validation: { required: true },
+        defaultValue: "", category: "sender", validation: { required: true },
       },
       {
         id: "depositor_passport", label: "Паспорт Поклажедателя", type: "text",
-        defaultValue: "серия 4510 № 112233", category: "sender",
+        defaultValue: "", category: "sender",
       },
       {
         id: "keeper_fio", label: "ФИО Хранителя", type: "text",
-        defaultValue: "Гусева Татьяна Сергеевна", category: "recipient", validation: { required: true },
+        defaultValue: "", category: "recipient", validation: { required: true },
       },
       {
         id: "keeper_passport", label: "Паспорт Хранителя", type: "text",
-        defaultValue: "серия 4510 № 445566", category: "recipient",
+        defaultValue: "", category: "recipient",
       },
       {
         id: "item_description", label: "Передаваемое имущество", type: "textarea", rows: 4,
-        defaultValue: "Мебель: диван-книжка, шкаф 2-дверный; бытовая техника: холодильник, стиральная машина",
+        defaultValue: "",
         category: "items", validation: { required: true },
       },
       {
         id: "storage_address", label: "Адрес хранения", type: "text",
-        defaultValue: "г. Москва, ул. Заводская, д. 8", category: "contract",
+        defaultValue: "", category: "contract",
       },
       {
-        id: "storage_start", label: "Начало хранения", type: "date", defaultValue: "2026-08-01",
+        id: "storage_start", label: "Начало хранения", type: "date", defaultValue: "",
         category: "contract",
       },
       {
-        id: "storage_end", label: "Окончание хранения", type: "date", defaultValue: "2026-11-30",
+        id: "storage_end", label: "Окончание хранения", type: "date", defaultValue: "",
         category: "contract",
       },
       {
         id: "storage_price", label: "Вознаграждение за месяц (руб., 0 — безвозмездно)", type: "number",
-        defaultValue: "5000", category: "payment",
+        defaultValue: "", category: "payment",
       },
       {
         id: "liability", label: "Ответственность Хранителя", type: "select",
@@ -339,60 +339,60 @@ export const TEMPLATES_OTHER: LegalTemplate[] = [
     printInstruction: "Печатать в 2-х экземплярах, оформить товарно-транспортную накладную",
     fields: [
       {
-        id: "city", label: "Город составления", type: "text", defaultValue: "Москва",
+        id: "city", label: "Город составления", type: "text", defaultValue: "",
         category: "contract",
       },
       {
-        id: "date", label: "Дата договора", type: "date", defaultValue: "2026-07-20",
+        id: "date", label: "Дата договора", type: "date", defaultValue: "",
         category: "contract",
       },
       {
         id: "shipper_company", label: "Наименование Отправителя", type: "text",
-        defaultValue: 'ООО "ГрузоЛогистик"', category: "sender", validation: { required: true },
+        defaultValue: "", category: "sender", validation: { required: true },
       },
       {
-        id: "shipper_inn", label: "ИНН Отправителя", type: "text", defaultValue: "7701112223",
+        id: "shipper_inn", label: "ИНН Отправителя", type: "text", defaultValue: "",
         category: "sender",
       },
       {
         id: "shipper_director", label: "Директор Отправителя", type: "text",
-        defaultValue: "Петров П.П.", category: "sender",
+        defaultValue: "", category: "sender",
       },
       {
         id: "carrier_company", label: "Наименование Перевозчика", type: "text",
-        defaultValue: 'ООО "АвтоРейс"', category: "recipient", validation: { required: true },
+        defaultValue: "", category: "recipient", validation: { required: true },
       },
       {
-        id: "carrier_inn", label: "ИНН Перевозчика", type: "text", defaultValue: "7703334445",
+        id: "carrier_inn", label: "ИНН Перевозчика", type: "text", defaultValue: "",
         category: "recipient",
       },
       {
         id: "carrier_director", label: "Директор Перевозчика", type: "text",
-        defaultValue: "Иванов И.И.", category: "recipient",
+        defaultValue: "", category: "recipient",
       },
       {
         id: "cargo_description", label: "Описание груза", type: "textarea", rows: 3,
-        defaultValue: "Бытовая техника, 120 мест, общий вес 2,4 т",
+        defaultValue: "",
         category: "items", validation: { required: true },
       },
       {
-        id: "route_from", label: "Пункт отправления", type: "text", defaultValue: "г. Москва, ул. Складочная, д. 1",
+        id: "route_from", label: "Пункт отправления", type: "text", defaultValue: "",
         category: "contract", validation: { required: true },
       },
       {
-        id: "route_to", label: "Пункт назначения", type: "text", defaultValue: "г. Санкт-Петербург, ул. Двинская, д. 10",
+        id: "route_to", label: "Пункт назначения", type: "text", defaultValue: "",
         category: "contract", validation: { required: true },
       },
       {
-        id: "loading_date", label: "Дата погрузки", type: "date", defaultValue: "2026-07-25",
+        id: "loading_date", label: "Дата погрузки", type: "date", defaultValue: "",
         category: "contract",
       },
       {
-        id: "delivery_date", label: "Срок доставки", type: "date", defaultValue: "2026-07-27",
+        id: "delivery_date", label: "Срок доставки", type: "date", defaultValue: "",
         category: "contract",
       },
       {
-        id: "freight_cost", label: "Стоимость перевозки (руб.)", type: "number", defaultValue: "45000",
+        id: "freight_cost", label: "Стоимость перевозки (руб.)", type: "number", defaultValue: "",
         category: "payment", validation: { required: true },
       },
       {
@@ -406,7 +406,7 @@ export const TEMPLATES_OTHER: LegalTemplate[] = [
       },
       {
         id: "compensation_note", label: "Компенсация при утрате груза", type: "text",
-        defaultValue: "В размере объявленной стоимости груза",
+        defaultValue: "",
         category: "payment",
       },
     ],
@@ -482,48 +482,48 @@ export const TEMPLATES_OTHER: LegalTemplate[] = [
     suggestedDocs: [],
     fields: [
       {
-        id: "city", label: "Город составления", type: "text", defaultValue: "Москва",
+        id: "city", label: "Город составления", type: "text", defaultValue: "",
         category: "contract",
       },
       {
-        id: "date", label: "Дата выдачи", type: "date", defaultValue: "2026-08-10",
+        id: "date", label: "Дата выдачи", type: "date", defaultValue: "",
         category: "contract",
       },
       {
-        id: "principal_fio", label: "ФИО доверителя", type: "text", defaultValue: "Иванов Иван Иванович",
+        id: "principal_fio", label: "ФИО доверителя", type: "text", defaultValue: "",
         category: "owner", validation: { required: true },
       },
       {
         id: "principal_passport", label: "Паспорт доверителя (серия №)", type: "text",
-        defaultValue: "4510 123456", category: "owner",
+        defaultValue: "", category: "owner",
       },
       {
         id: "principal_address", label: "Адрес регистрации доверителя", type: "text",
-        defaultValue: "г. Москва, ул. Ленина, д. 1, кв. 10", category: "owner",
+        defaultValue: "", category: "owner",
       },
       {
-        id: "agent_fio", label: "ФИО представителя", type: "text", defaultValue: "Петров Петр Петрович",
+        id: "agent_fio", label: "ФИО представителя", type: "text", defaultValue: "",
         category: "representative", validation: { required: true },
       },
       {
         id: "agent_passport", label: "Паспорт представителя (серия №)", type: "text",
-        defaultValue: "4520 654321", category: "representative",
+        defaultValue: "", category: "representative",
       },
       {
         id: "agent_address", label: "Адрес регистрации представителя", type: "text",
-        defaultValue: "г. Москва, ул. Пушкина, д. 2, кв. 20", category: "representative",
+        defaultValue: "", category: "representative",
       },
       {
-        id: "org_name", label: "Наименование организации", type: "text", defaultValue: "МФЦ города Москвы",
+        id: "org_name", label: "Наименование организации", type: "text", defaultValue: "",
         category: "recipient", validation: { required: true },
       },
       {
         id: "docs_list", label: "Какие документы получать", type: "textarea", rows: 3,
-        defaultValue: "справку о составе семьи, справку о задолженности по оплате ЖКУ, свидетельство о регистрации права",
+        defaultValue: "",
         category: "contract", validation: { required: true },
       },
       {
-        id: "valid_until", label: "Действительна до", type: "date", defaultValue: "2026-11-10",
+        id: "valid_until", label: "Действительна до", type: "date", defaultValue: "",
         category: "contract",
       },
       {
@@ -557,11 +557,11 @@ export const TEMPLATES_OTHER: LegalTemplate[] = [
     suggestedDocs: ["Публичная оферта", "Согласие на обработку персональных данных"],
     fields: [
 
-      { id: "date", label: "Дата составления", type: "date", defaultValue: "2026-08-11", category: "contract" },
-      { id: "city", label: "Город составления", type: "text", defaultValue: "Москва", category: "contract" },      { id: "operator_name", label: "Оператор", type: "text", defaultValue: "ИП Иванов И.И.", category: "executor" },
-      { id: "site_url", label: "Сайт", type: "text", defaultValue: "https://example.ru", category: "contract" },
-      { id: "pd_types", label: "Состав персональных данных", type: "text", defaultValue: "ФИО, телефон, e-mail", category: "contract" },
-      { id: "pd_purpose", label: "Цели обработки", type: "text", defaultValue: "заключение и исполнение договоров, обратная связь", category: "contract" },
+      { id: "date", label: "Дата составления", type: "date", defaultValue: "", category: "contract" },
+      { id: "city", label: "Город составления", type: "text", defaultValue: "", category: "contract" },      { id: "operator_name", label: "Оператор", type: "text", defaultValue: "", category: "executor" },
+      { id: "site_url", label: "Сайт", type: "text", defaultValue: "", category: "contract" },
+      { id: "pd_types", label: "Состав персональных данных", type: "text", defaultValue: "", category: "contract" },
+      { id: "pd_purpose", label: "Цели обработки", type: "text", defaultValue: "", category: "contract" },
     ],
     previewTemplate: `
 <div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
@@ -591,26 +591,26 @@ export const TEMPLATES_OTHER: LegalTemplate[] = [
     suggestedDocs: ["act-transfer-auto", "raspiska-money"],
     printInstruction: "Печать на листе А4; состояние техники при передаче и возврате фиксируется актами",
     fields: [
-      { id: "city", label: "Город", type: "text", defaultValue: "Москва", category: "contract" },
-      { id: "date", label: "Дата договора", type: "date", defaultValue: "2026-08-10", category: "contract" },
-      { id: "lessor_fio", label: "Арендодатель (ФИО/компания)", type: "text", defaultValue: "ИП Иванов Иван Иванович", category: "landlord", validation: { required: true } },
-      { id: "lessor_inn", label: "ИНН арендодателя", type: "text", defaultValue: "770123456789", category: "landlord" },
-      { id: "lessee_fio", label: "Арендатор (ФИО/компания)", type: "text", defaultValue: "ООО «СтройИнвест»", category: "tenant", validation: { required: true } },
-      { id: "lessee_inn", label: "ИНН арендатора", type: "text", defaultValue: "7701112223", category: "tenant" },
-      { id: "equipment_desc", label: "Описание техники/оборудования", type: "textarea", defaultValue: "экскаватор-погрузчик JCB 3CX, гос. № 1234АА777, 2021 г.в., наработка 8500 м/ч", category: "object", rows: 2, validation: { required: true } },
+      { id: "city", label: "Город", type: "text", defaultValue: "", category: "contract" },
+      { id: "date", label: "Дата договора", type: "date", defaultValue: "", category: "contract" },
+      { id: "lessor_fio", label: "Арендодатель (ФИО/компания)", type: "text", defaultValue: "", category: "landlord", validation: { required: true } },
+      { id: "lessor_inn", label: "ИНН арендодателя", type: "text", defaultValue: "", category: "landlord" },
+      { id: "lessee_fio", label: "Арендатор (ФИО/компания)", type: "text", defaultValue: "", category: "tenant", validation: { required: true } },
+      { id: "lessee_inn", label: "ИНН арендатора", type: "text", defaultValue: "", category: "tenant" },
+      { id: "equipment_desc", label: "Описание техники/оборудования", type: "textarea", defaultValue: "", category: "object", rows: 2, validation: { required: true } },
       { id: "crew_type", label: "Условие об экипаже", type: "select", defaultValue: "без экипажа", category: "object", options: [
         { label: "Без экипажа (ст. 642-649 ГК)", value: "без экипажа" },
         { label: "С экипажем (ст. 632-641 ГК)", value: "с экипажем" },
       ] },
-      { id: "rent_price", label: "Арендная плата", type: "text", defaultValue: "1500 руб./час, минимум 8 часов в смену", category: "payment", validation: { required: true } },
+      { id: "rent_price", label: "Арендная плата", type: "text", defaultValue: "", category: "payment", validation: { required: true } },
       { id: "fuel_by", label: "ГСМ и расходные материалы за счёт", type: "select", defaultValue: "Арендатора", category: "payment", options: [
         { label: "Арендатора", value: "Арендатора" },
         { label: "Арендодателя", value: "Арендодателя" },
       ] },
-      { id: "start_date", label: "Дата передачи техники", type: "date", defaultValue: "2026-08-15", category: "contract" },
-      { id: "end_date", label: "Дата возврата", type: "date", defaultValue: "2026-10-15", category: "contract" },
-      { id: "use_purpose", label: "Цель использования", type: "text", defaultValue: "строительные работы на объекте: г. Москва, ул. Строителей, д. 1", category: "items" },
-      { id: "penalty", label: "Неустойка за просрочку оплаты", type: "text", defaultValue: "0,1% в день", category: "contract" },
+      { id: "start_date", label: "Дата передачи техники", type: "date", defaultValue: "", category: "contract" },
+      { id: "end_date", label: "Дата возврата", type: "date", defaultValue: "", category: "contract" },
+      { id: "use_purpose", label: "Цель использования", type: "text", defaultValue: "", category: "items" },
+      { id: "penalty", label: "Неустойка за просрочку оплаты", type: "text", defaultValue: "", category: "contract" },
     ],
     previewTemplate: `
 <div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
@@ -680,19 +680,19 @@ export const TEMPLATES_OTHER: LegalTemplate[] = [
     suggestedDocs: ["transport-agreement", "act-services", "invoice"],
     printInstruction: "Печать на листе А4; поручение экспедитору и экспедиторская расписка оформляются как приложения",
     fields: [
-      { id: "city", label: "Город", type: "text", defaultValue: "Москва", category: "contract" },
-      { id: "date", label: "Дата договора", type: "date", defaultValue: "2026-08-10", category: "contract" },
-      { id: "forwarder_company", label: "Экспедитор", type: "text", defaultValue: "ООО «ЛогистикПро»", category: "executor", validation: { required: true } },
-      { id: "forwarder_inn", label: "ИНН экспедитора", type: "text", defaultValue: "7701234567", category: "executor" },
-      { id: "client_company", label: "Клиент", type: "text", defaultValue: "ООО «ТоргСнаб»", category: "customer", validation: { required: true } },
-      { id: "client_inn", label: "ИНН клиента", type: "text", defaultValue: "7701112223", category: "customer" },
-      { id: "cargo_desc", label: "Описание груза", type: "textarea", defaultValue: "бытовая техника, 15 паллет, общий вес 3,2 т, объём 18 м³, упаковка: паллеты, стрейч-плёнка", category: "items", rows: 2, validation: { required: true } },
-      { id: "route", label: "Маршрут перевозки", type: "text", defaultValue: "г. Москва — г. Казань", category: "items", validation: { required: true } },
-      { id: "delivery_date", label: "Срок доставки", type: "date", defaultValue: "2026-08-15", category: "contract" },
-      { id: "freight_cost", label: "Стоимость экспедирования (руб.)", type: "text", defaultValue: "45000", category: "payment", validation: { required: true } },
-      { id: "cargo_value", label: "Объявленная стоимость груза (руб.)", type: "text", defaultValue: "800000", category: "payment" },
-      { id: "payment_order", label: "Порядок оплаты", type: "text", defaultValue: "100% по факту доставки", category: "payment" },
-      { id: "insurance", label: "Страхование груза", type: "text", defaultValue: "за счёт Клиента, по отдельному договору", category: "other" },
+      { id: "city", label: "Город", type: "text", defaultValue: "", category: "contract" },
+      { id: "date", label: "Дата договора", type: "date", defaultValue: "", category: "contract" },
+      { id: "forwarder_company", label: "Экспедитор", type: "text", defaultValue: "", category: "executor", validation: { required: true } },
+      { id: "forwarder_inn", label: "ИНН экспедитора", type: "text", defaultValue: "", category: "executor" },
+      { id: "client_company", label: "Клиент", type: "text", defaultValue: "", category: "customer", validation: { required: true } },
+      { id: "client_inn", label: "ИНН клиента", type: "text", defaultValue: "", category: "customer" },
+      { id: "cargo_desc", label: "Описание груза", type: "textarea", defaultValue: "", category: "items", rows: 2, validation: { required: true } },
+      { id: "route", label: "Маршрут перевозки", type: "text", defaultValue: "", category: "items", validation: { required: true } },
+      { id: "delivery_date", label: "Срок доставки", type: "date", defaultValue: "", category: "contract" },
+      { id: "freight_cost", label: "Стоимость экспедирования (руб.)", type: "text", defaultValue: "", category: "payment", validation: { required: true } },
+      { id: "cargo_value", label: "Объявленная стоимость груза (руб.)", type: "text", defaultValue: "", category: "payment" },
+      { id: "payment_order", label: "Порядок оплаты", type: "text", defaultValue: "", category: "payment" },
+      { id: "insurance", label: "Страхование груза", type: "text", defaultValue: "", category: "other" },
     ],
     previewTemplate: `
 <div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
@@ -761,17 +761,17 @@ export const TEMPLATES_OTHER: LegalTemplate[] = [
     suggestedDocs: ["act-services", "invoice"],
     printInstruction: "Печать на листе А4; объём и периодичность вывоза оформляются приложением к договору",
     fields: [
-      { id: "city", label: "Город", type: "text", defaultValue: "Москва", category: "contract" },
-      { id: "date", label: "Дата договора", type: "date", defaultValue: "2026-08-10", category: "contract" },
-      { id: "operator_company", label: "Региональный оператор", type: "text", defaultValue: "ООО «Эко-Оператор»", category: "executor", validation: { required: true } },
-      { id: "operator_inn", label: "ИНН оператора", type: "text", defaultValue: "7701234567", category: "executor" },
-      { id: "customer_company", label: "Потребитель", type: "text", defaultValue: "ООО «ТоргСнаб»", category: "customer", validation: { required: true } },
-      { id: "customer_inn", label: "ИНН потребителя", type: "text", defaultValue: "7701112223", category: "customer" },
-      { id: "object_address", label: "Адрес объекта", type: "text", defaultValue: "г. Москва, ул. Строителей, д. 7", category: "object", validation: { required: true } },
-      { id: "volume", label: "Объём накопления ТКО", type: "text", defaultValue: "4,0 м³ в месяц (1 контейнер 0,75 м³, вывоз 2 раза в неделю)", category: "items" },
-      { id: "rate", label: "Тариф (руб./м³ или руб./мес)", type: "text", defaultValue: "720 руб./м³", category: "payment", validation: { required: true } },
-      { id: "payment_terms", label: "Порядок расчётов", type: "text", defaultValue: "до 10 числа месяца, следующего за расчётным", category: "payment" },
-      { id: "start_date", label: "Начало оказания услуг", type: "date", defaultValue: "2026-09-01", category: "contract" },
+      { id: "city", label: "Город", type: "text", defaultValue: "", category: "contract" },
+      { id: "date", label: "Дата договора", type: "date", defaultValue: "", category: "contract" },
+      { id: "operator_company", label: "Региональный оператор", type: "text", defaultValue: "", category: "executor", validation: { required: true } },
+      { id: "operator_inn", label: "ИНН оператора", type: "text", defaultValue: "", category: "executor" },
+      { id: "customer_company", label: "Потребитель", type: "text", defaultValue: "", category: "customer", validation: { required: true } },
+      { id: "customer_inn", label: "ИНН потребителя", type: "text", defaultValue: "", category: "customer" },
+      { id: "object_address", label: "Адрес объекта", type: "text", defaultValue: "", category: "object", validation: { required: true } },
+      { id: "volume", label: "Объём накопления ТКО", type: "text", defaultValue: "", category: "items" },
+      { id: "rate", label: "Тариф (руб./м³ или руб./мес)", type: "text", defaultValue: "", category: "payment", validation: { required: true } },
+      { id: "payment_terms", label: "Порядок расчётов", type: "text", defaultValue: "", category: "payment" },
+      { id: "start_date", label: "Начало оказания услуг", type: "date", defaultValue: "", category: "contract" },
       { id: "contract_type", label: "Тип договора", type: "select", defaultValue: "публичный (типовой)", category: "contract", options: [
         { label: "Публичный (типовой)", value: "публичный (типовой)" },
         { label: "Индивидуальный", value: "индивидуальный" },
@@ -844,13 +844,13 @@ export const TEMPLATES_OTHER: LegalTemplate[] = [
     suggestedDocs: [],
     printInstruction: "Печать на листе А4; подаётся в МВД в течение 90 дней со дня наступления основания (иначе штраф по ст. 19.15 КоАП); прилагаются 2 фото 35×45 мм и квитанция об оплате госпошлины",
     fields: [
-      { id: "city", label: "Город", type: "text", defaultValue: "Москва", category: "contract" },
-      { id: "date", label: "Дата подачи", type: "date", defaultValue: "2026-08-10", category: "contract" },
-      { id: "applicant_fio", label: "Заявитель (ФИО)", type: "text", defaultValue: "Петров Пётр Петрович", category: "applicant", validation: { required: true } },
-      { id: "applicant_birthday", label: "Дата рождения", type: "date", defaultValue: "1980-05-15", category: "applicant" },
-      { id: "applicant_birthplace", label: "Место рождения", type: "text", defaultValue: "г. Москва", category: "applicant" },
-      { id: "applicant_address", label: "Адрес регистрации", type: "text", defaultValue: "г. Москва, ул. Пушкина, д. 20, кв. 8", category: "applicant" },
-      { id: "old_passport", label: "Заменяемый паспорт", type: "text", defaultValue: "45 09 654321, выдан ОВД «Басманный» г. Москвы 15.06.2010", category: "other" },
+      { id: "city", label: "Город", type: "text", defaultValue: "", category: "contract" },
+      { id: "date", label: "Дата подачи", type: "date", defaultValue: "", category: "contract" },
+      { id: "applicant_fio", label: "Заявитель (ФИО)", type: "text", defaultValue: "", category: "applicant", validation: { required: true } },
+      { id: "applicant_birthday", label: "Дата рождения", type: "date", defaultValue: "", category: "applicant" },
+      { id: "applicant_birthplace", label: "Место рождения", type: "text", defaultValue: "", category: "applicant" },
+      { id: "applicant_address", label: "Адрес регистрации", type: "text", defaultValue: "", category: "applicant" },
+      { id: "old_passport", label: "Заменяемый паспорт", type: "text", defaultValue: "", category: "other" },
       { id: "replace_reason", label: "Причина замены", type: "select", defaultValue: "достижение 45 лет", category: "other", options: [
         { label: "Достижение 45 лет", value: "достижение 45 лет" },
         { label: "Достижение 20 лет", value: "достижение 20 лет" },
@@ -863,7 +863,7 @@ export const TEMPLATES_OTHER: LegalTemplate[] = [
         { label: "300 руб. — замена", value: "300" },
         { label: "1500 руб. — взамен утраченного/испорченного", value: "1500" },
       ] },
-      { id: "attach_docs", label: "Прилагаемые документы", type: "textarea", defaultValue: "заменяемый паспорт, 2 фото 35×45 мм, квитанция об оплате госпошлины, военный билет, свидетельство о браке, свидетельства о рождении детей", category: "other", rows: 2 },
+      { id: "attach_docs", label: "Прилагаемые документы", type: "textarea", defaultValue: "", category: "other", rows: 2 },
     ],
     previewTemplate: `
 <div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
@@ -898,19 +898,19 @@ export const TEMPLATES_OTHER: LegalTemplate[] = [
     suggestedDocs: ["dkp-flat"],
     printInstruction: "Печать на листе А4; подаётся в ФНС с декларацией 3-НДФЛ, договором, платёжными документами и справкой о доходах; срок возврата — до 3 месяцев",
     fields: [
-      { id: "city", label: "Город", type: "text", defaultValue: "Москва", category: "contract" },
-      { id: "date", label: "Дата заявления", type: "date", defaultValue: "2026-08-10", category: "contract" },
-      { id: "tax_office", label: "Налоговый орган", type: "text", defaultValue: "ИФНС России № 14 по г. Москве", category: "other", validation: { required: true } },
-      { id: "applicant_fio", label: "Заявитель (ФИО)", type: "text", defaultValue: "Петров Пётр Петрович", category: "applicant", validation: { required: true } },
-      { id: "applicant_inn", label: "ИНН", type: "text", defaultValue: "771234567890", category: "applicant" },
-      { id: "applicant_passport", label: "Паспорт", type: "text", defaultValue: "45 09 654321, выдан ОВД «Басманный» г. Москвы", category: "applicant" },
-      { id: "applicant_address", label: "Адрес", type: "text", defaultValue: "г. Москва, ул. Пушкина, д. 20, кв. 8", category: "applicant" },
-      { id: "tax_year", label: "Налоговый период (год)", type: "text", defaultValue: "2025", category: "contract" },
-      { id: "deduction_base", label: "Основание вычета", type: "textarea", defaultValue: "приобретение квартиры по договору купли-продажи от 15.03.2025 по адресу: г. Москва, ул. Ленина, д. 10, кв. 25, стоимостью 9 500 000 руб.", category: "items", rows: 2, validation: { required: true } },
-      { id: "deduction_amount", label: "Сумма вычета (руб.)", type: "text", defaultValue: "2000000", category: "payment" },
-      { id: "refund_amount", label: "Сумма к возврату (руб.)", type: "text", defaultValue: "260000", category: "payment", validation: { required: true } },
-      { id: "bank_details", label: "Банковские реквизиты для возврата", type: "textarea", defaultValue: "счёт 40817810000000000001 в ПАО «Сбербанк», БИК 044525225", category: "payment", rows: 2 },
-      { id: "attachments", label: "Приложения", type: "text", defaultValue: "декларация 3-НДФЛ, договор купли-продажи, платёжные документы, справка о доходах", category: "other" },
+      { id: "city", label: "Город", type: "text", defaultValue: "", category: "contract" },
+      { id: "date", label: "Дата заявления", type: "date", defaultValue: "", category: "contract" },
+      { id: "tax_office", label: "Налоговый орган", type: "text", defaultValue: "", category: "other", validation: { required: true } },
+      { id: "applicant_fio", label: "Заявитель (ФИО)", type: "text", defaultValue: "", category: "applicant", validation: { required: true } },
+      { id: "applicant_inn", label: "ИНН", type: "text", defaultValue: "", category: "applicant" },
+      { id: "applicant_passport", label: "Паспорт", type: "text", defaultValue: "", category: "applicant" },
+      { id: "applicant_address", label: "Адрес", type: "text", defaultValue: "", category: "applicant" },
+      { id: "tax_year", label: "Налоговый период (год)", type: "text", defaultValue: "", category: "contract" },
+      { id: "deduction_base", label: "Основание вычета", type: "textarea", defaultValue: "", category: "items", rows: 2, validation: { required: true } },
+      { id: "deduction_amount", label: "Сумма вычета (руб.)", type: "text", defaultValue: "", category: "payment" },
+      { id: "refund_amount", label: "Сумма к возврату (руб.)", type: "text", defaultValue: "", category: "payment", validation: { required: true } },
+      { id: "bank_details", label: "Банковские реквизиты для возврата", type: "textarea", defaultValue: "", category: "payment", rows: 2 },
+      { id: "attachments", label: "Приложения", type: "text", defaultValue: "", category: "other" },
     ],
     previewTemplate: `
 <div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
@@ -946,15 +946,15 @@ export const TEMPLATES_OTHER: LegalTemplate[] = [
     supportsOcr: true,
     printInstruction: "Печать на одном листе А4",
     fields: [
-      { id: "city", label: "Город составления", type: "text", defaultValue: "Москва", category: "contract", validation: { required: true } },
-      { id: "date", label: "Дата договора", type: "date", defaultValue: "2026-08-11", category: "contract", validation: { required: true } },
-      { id: "applicant_fio", label: "Организация / ФИО", type: "text", defaultValue: "ООО «Альфа-Трейд», ИНН 7701234567, ОГРН 1027700123456", category: "contract", validation: { required: true } },
-      { id: "recipient", label: "Кому", type: "text", defaultValue: "ООО «Бета-Логистика», ИНН 7707654321", category: "recipient", validation: { required: true } },
-      { id: "guarantee_subject", label: "Предмет гарантии", type: "text", defaultValue: "оплата поставленной продукции по договору поставки № 45 от 20.05.2026", category: "contract", validation: { required: true } },
-      { id: "amount", label: "Сумма (руб.)", type: "number", defaultValue: "450000", category: "payment", validation: { required: true } },
-      { id: "amount_words", label: "Сумма прописью", type: "text", defaultValue: "Четыреста пятьдесят тысяч рублей 00 копеек", category: "payment" },
-      { id: "deadline", label: "Срок оплаты", type: "text", defaultValue: "не позднее 30.09.2026", category: "contract", validation: { required: true } },
-      { id: "bank_details", label: "Реквизиты", type: "text", defaultValue: "р/с 40702810000000000000 в ПАО «Сбербанк», БИК 044525225, к/с 30101810400000000225", category: "payment", validation: { required: true } },
+      { id: "city", label: "Город составления", type: "text", defaultValue: "", category: "contract", validation: { required: true } },
+      { id: "date", label: "Дата договора", type: "date", defaultValue: "", category: "contract", validation: { required: true } },
+      { id: "applicant_fio", label: "Организация / ФИО", type: "text", defaultValue: "", category: "contract", validation: { required: true } },
+      { id: "recipient", label: "Кому", type: "text", defaultValue: "", category: "recipient", validation: { required: true } },
+      { id: "guarantee_subject", label: "Предмет гарантии", type: "text", defaultValue: "", category: "contract", validation: { required: true } },
+      { id: "amount", label: "Сумма (руб.)", type: "number", defaultValue: "", category: "payment", validation: { required: true } },
+      { id: "amount_words", label: "Сумма прописью", type: "text", defaultValue: "", category: "payment" },
+      { id: "deadline", label: "Срок оплаты", type: "text", defaultValue: "", category: "contract", validation: { required: true } },
+      { id: "bank_details", label: "Реквизиты", type: "text", defaultValue: "", category: "payment", validation: { required: true } },
     ],
     previewTemplate: `<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
   <div class="text-center font-bold text-base mb-6 text-black uppercase">Гарантийное письмо</div>
@@ -1000,16 +1000,16 @@ export const TEMPLATES_OTHER: LegalTemplate[] = [
     supportsOcr: true,
     printInstruction: "Печать на одном листе А4",
     fields: [
-      { id: "city", label: "Город составления", type: "text", defaultValue: "Москва", category: "contract", validation: { required: true } },
-      { id: "date", label: "Дата договора", type: "date", defaultValue: "2026-08-11", category: "contract", validation: { required: true } },
-      { id: "applicant_fio", label: "ФИО", type: "text", defaultValue: "Орлова Анна Викторовна", category: "applicant", validation: { required: true } },
-      { id: "applicant_birth", label: "Дата рождения", type: "date", defaultValue: "1990-09-14", category: "applicant", validation: { required: true } },
-      { id: "passport", label: "Паспорт", type: "text", defaultValue: "4513 789012, выдан ОУФМС России по г. Москве 22.11.2016, к.п. 770-002", category: "applicant", validation: { required: true } },
-      { id: "inn", label: "ИНН", type: "text", defaultValue: "771234567890", category: "applicant", validation: { required: true } },
-      { id: "phone", label: "Телефон", type: "text", defaultValue: "+7 (926) 111-22-33", category: "applicant" },
-      { id: "activity", label: "Вид деятельности", type: "text", defaultValue: "репетиторство (частные уроки английского языка)", category: "contract", validation: { required: true } },
-      { id: "registration_region", label: "Регион постановки на учёт", type: "text", defaultValue: "г. Москва", category: "contract", validation: { required: true } },
-      { id: "reg_method", label: "Способ постановки на учёт", type: "text", defaultValue: "через приложение «Мой налог»", category: "contract" },
+      { id: "city", label: "Город составления", type: "text", defaultValue: "", category: "contract", validation: { required: true } },
+      { id: "date", label: "Дата договора", type: "date", defaultValue: "", category: "contract", validation: { required: true } },
+      { id: "applicant_fio", label: "ФИО", type: "text", defaultValue: "", category: "applicant", validation: { required: true } },
+      { id: "applicant_birth", label: "Дата рождения", type: "date", defaultValue: "", category: "applicant", validation: { required: true } },
+      { id: "passport", label: "Паспорт", type: "text", defaultValue: "", category: "applicant", validation: { required: true } },
+      { id: "inn", label: "ИНН", type: "text", defaultValue: "", category: "applicant", validation: { required: true } },
+      { id: "phone", label: "Телефон", type: "text", defaultValue: "", category: "applicant" },
+      { id: "activity", label: "Вид деятельности", type: "text", defaultValue: "", category: "contract", validation: { required: true } },
+      { id: "registration_region", label: "Регион постановки на учёт", type: "text", defaultValue: "", category: "contract", validation: { required: true } },
+      { id: "reg_method", label: "Способ постановки на учёт", type: "text", defaultValue: "", category: "contract" },
     ],
     previewTemplate: `<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
   <div class="text-center font-bold text-base mb-6 text-black uppercase">Заявление о постановке на учёт в качестве налогоплательщика НПД</div>
@@ -1055,17 +1055,17 @@ export const TEMPLATES_OTHER: LegalTemplate[] = [
     supportsOcr: true,
     printInstruction: "Печать на одном листе А4",
     fields: [
-      { id: "city", label: "Город составления", type: "text", defaultValue: "Москва", category: "contract", validation: { required: true } },
-      { id: "date", label: "Дата договора", type: "date", defaultValue: "2026-08-11", category: "contract", validation: { required: true } },
-      { id: "applicant_fio", label: "ФИО", type: "text", defaultValue: "Гусев Андрей Владимирович", category: "applicant", validation: { required: true } },
-      { id: "applicant_birth", label: "Дата рождения", type: "date", defaultValue: "1985-01-30", category: "applicant", validation: { required: true } },
-      { id: "passport", label: "Паспорт", type: "text", defaultValue: "4508 654321, выдан ОУФМС России по г. Москве 05.05.2008, к.п. 770-001", category: "applicant", validation: { required: true } },
-      { id: "inn", label: "ИНН", type: "text", defaultValue: "771023456789", category: "applicant", validation: { required: true } },
-      { id: "address", label: "Адрес регистрации", type: "text", defaultValue: "г. Москва, ул. Предпринимательская, д. 6, кв. 31", category: "applicant", validation: { required: true } },
-      { id: "phone", label: "Телефон", type: "text", defaultValue: "+7 (903) 555-66-77", category: "applicant" },
-      { id: "activity", label: "Основной вид деятельности (код ОКВЭД)", type: "text", defaultValue: "62.09 — Деятельность в области информационных технологий", category: "contract", validation: { required: true } },
-      { id: "tax_system", label: "Налоговый режим", type: "text", defaultValue: "УСН «доходы» 6%", category: "contract", validation: { required: true } },
-      { id: "submission", label: "Способ подачи", type: "text", defaultValue: "в электронном виде через сайт ФНС России", category: "contract" },
+      { id: "city", label: "Город составления", type: "text", defaultValue: "", category: "contract", validation: { required: true } },
+      { id: "date", label: "Дата договора", type: "date", defaultValue: "", category: "contract", validation: { required: true } },
+      { id: "applicant_fio", label: "ФИО", type: "text", defaultValue: "", category: "applicant", validation: { required: true } },
+      { id: "applicant_birth", label: "Дата рождения", type: "date", defaultValue: "", category: "applicant", validation: { required: true } },
+      { id: "passport", label: "Паспорт", type: "text", defaultValue: "", category: "applicant", validation: { required: true } },
+      { id: "inn", label: "ИНН", type: "text", defaultValue: "", category: "applicant", validation: { required: true } },
+      { id: "address", label: "Адрес регистрации", type: "text", defaultValue: "", category: "applicant", validation: { required: true } },
+      { id: "phone", label: "Телефон", type: "text", defaultValue: "", category: "applicant" },
+      { id: "activity", label: "Основной вид деятельности (код ОКВЭД)", type: "text", defaultValue: "", category: "contract", validation: { required: true } },
+      { id: "tax_system", label: "Налоговый режим", type: "text", defaultValue: "", category: "contract", validation: { required: true } },
+      { id: "submission", label: "Способ подачи", type: "text", defaultValue: "", category: "contract" },
     ],
     previewTemplate: `<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
   <div class="text-center font-bold text-base mb-6 text-black uppercase">Заявление о государственной регистрации в качестве индивидуального предпринимателя</div>
@@ -1113,16 +1113,16 @@ export const TEMPLATES_OTHER: LegalTemplate[] = [
     supportsOcr: true,
     printInstruction: "Печать на одном листе А4",
     fields: [
-      { id: "city", label: "Город составления", type: "text", defaultValue: "Москва", category: "contract", validation: { required: true } },
-      { id: "date", label: "Дата договора", type: "date", defaultValue: "2026-08-11", category: "contract", validation: { required: true } },
-      { id: "applicant_fio", label: "ФИО субъекта ПДн", type: "text", defaultValue: "Громова Алина Сергеевна", category: "applicant", validation: { required: true } },
-      { id: "passport", label: "Паспорт", type: "text", defaultValue: "4513 852963, выдан ОУФМС России по г. Москве 14.07.2016, к.п. 770-002", category: "applicant", validation: { required: true } },
-      { id: "address", label: "Адрес", type: "text", defaultValue: "г. Москва, ул. Персональная, д. 2, кв. 66", category: "applicant" },
-      { id: "operator", label: "Оператор", type: "text", defaultValue: "ООО «Данные-Сервис», ИНН 7712345678, адрес: г. Москва, ул. Серверная, д. 1", category: "other", validation: { required: true } },
-      { id: "purpose", label: "Цели обработки", type: "textarea", defaultValue: "заключение и исполнение договора, оказание услуг, рассылка уведомлений", category: "contract", validation: { required: true } },
-      { id: "data_list", label: "Перечень данных", type: "textarea", defaultValue: "ФИО, дата рождения, паспортные данные, адрес, телефон, e-mail, сведения об образовании и доходах", category: "contract", validation: { required: true } },
-      { id: "term", label: "Срок действия", type: "text", defaultValue: "5 лет с даты подписания либо до отзыва", category: "contract", validation: { required: true } },
-      { id: "transfer", label: "Передача третьим лицам", type: "text", defaultValue: "не передаются (передаются только в случаях, предусмотренных законом)", category: "contract" },
+      { id: "city", label: "Город составления", type: "text", defaultValue: "", category: "contract", validation: { required: true } },
+      { id: "date", label: "Дата договора", type: "date", defaultValue: "", category: "contract", validation: { required: true } },
+      { id: "applicant_fio", label: "ФИО субъекта ПДн", type: "text", defaultValue: "", category: "applicant", validation: { required: true } },
+      { id: "passport", label: "Паспорт", type: "text", defaultValue: "", category: "applicant", validation: { required: true } },
+      { id: "address", label: "Адрес", type: "text", defaultValue: "", category: "applicant" },
+      { id: "operator", label: "Оператор", type: "text", defaultValue: "", category: "other", validation: { required: true } },
+      { id: "purpose", label: "Цели обработки", type: "textarea", defaultValue: "", category: "contract", validation: { required: true } },
+      { id: "data_list", label: "Перечень данных", type: "textarea", defaultValue: "", category: "contract", validation: { required: true } },
+      { id: "term", label: "Срок действия", type: "text", defaultValue: "", category: "contract", validation: { required: true } },
+      { id: "transfer", label: "Передача третьим лицам", type: "text", defaultValue: "", category: "contract" },
     ],
     previewTemplate: `<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
   <div class="text-center font-bold text-base mb-6 text-black uppercase">Согласие на обработку персональных данных</div>
@@ -1170,14 +1170,14 @@ export const TEMPLATES_OTHER: LegalTemplate[] = [
     supportsOcr: true,
     printInstruction: "Печать на одном листе А4",
     fields: [
-      { id: "city", label: "Город составления", type: "text", defaultValue: "Москва", category: "contract", validation: { required: true } },
-      { id: "date", label: "Дата договора", type: "date", defaultValue: "2026-08-11", category: "contract", validation: { required: true } },
-      { id: "applicant_fio", label: "ФИО работника", type: "text", defaultValue: "Панина Оксана Витальевна", category: "applicant", validation: { required: true } },
-      { id: "position", label: "Должность", type: "text", defaultValue: "бухгалтер", category: "employee", validation: { required: true } },
-      { id: "employer", label: "Работодатель", type: "text", defaultValue: "генеральный директор ООО «Вектор» Смирнов А.И.", category: "employer", validation: { required: true } },
-      { id: "last_day", label: "Дата увольнения", type: "date", defaultValue: "2026-08-25", category: "contract", validation: { required: true } },
-      { id: "reason", label: "Причина", type: "text", defaultValue: "в связи с переездом в другой город", category: "contract" },
-      { id: "workout", label: "Отработка", type: "text", defaultValue: "предупреждаю об увольнении за 14 календарных дней", category: "contract" },
+      { id: "city", label: "Город составления", type: "text", defaultValue: "", category: "contract", validation: { required: true } },
+      { id: "date", label: "Дата договора", type: "date", defaultValue: "", category: "contract", validation: { required: true } },
+      { id: "applicant_fio", label: "ФИО работника", type: "text", defaultValue: "", category: "applicant", validation: { required: true } },
+      { id: "position", label: "Должность", type: "text", defaultValue: "", category: "employee", validation: { required: true } },
+      { id: "employer", label: "Работодатель", type: "text", defaultValue: "", category: "employer", validation: { required: true } },
+      { id: "last_day", label: "Дата увольнения", type: "date", defaultValue: "", category: "contract", validation: { required: true } },
+      { id: "reason", label: "Причина", type: "text", defaultValue: "", category: "contract" },
+      { id: "workout", label: "Отработка", type: "text", defaultValue: "", category: "contract" },
     ],
     previewTemplate: `<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
   <div class="text-center font-bold text-base mb-6 text-black uppercase">Заявление об увольнении по собственному желанию</div>
