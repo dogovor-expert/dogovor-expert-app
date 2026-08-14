@@ -6,6 +6,7 @@ import {
   Search,
   Trash2,
 } from "lucide-react";
+import { useState } from "react";
 import type { TemplateField } from "@/data/types";
 import { normalizeOptions, type AuditResult } from "@/lib/validation";
 import { applyFieldFormat } from "@/lib/format";
@@ -15,9 +16,7 @@ interface FormFieldProps {
   field: TemplateField;
   value: string;
   audit: AuditResult[];
-  isDemo: boolean;
   onChange: (fieldId: string, value: string) => void;
-  onDismissDemo: (fieldId: string) => void;
   onBlurNormalize: (fieldId: string) => void;
   onInnBlur: (fieldId: string) => void;
 }
@@ -44,12 +43,11 @@ export default function FormField({
   field,
   value,
   audit,
-  isDemo,
   onChange,
-  onDismissDemo,
   onBlurNormalize,
   onInnBlur,
 }: FormFieldProps) {
+  const [focused, setFocused] = useState(false);
   const hasError = audit.some((r) => r.type === "error");
   const hasWarn = !hasError && audit.some((r) => r.type === "warning");
   const errorMsg = audit.find((r) => r.type === "error")?.message;
@@ -80,21 +78,14 @@ export default function FormField({
     )) ||
     null;
 
-  const demoBadge = isDemo ? (
-    <div className="flex items-start gap-1.5 mt-1 text-[11px] text-amber-700">
-      <AlertTriangle className="w-3 h-3 flex-shrink-0 mt-0.5" />
-      <span className="flex-1">
-        Это значение по умолчанию (образец) — укажите реальные данные.
-      </span>
-      <button
-        type="button"
-        onClick={() => onDismissDemo(field.id)}
-        className="underline underline-offset-2 hover:text-amber-900 whitespace-nowrap"
-      >
-        Убрать
-      </button>
-    </div>
-  ) : null;
+  const exampleHint =
+    value === "" &&
+    field.defaultValue !== "" &&
+    (field.type === "text" || field.type === "number" || field.type === "textarea") ? (
+      <p className="text-[10px] text-gray-400 mt-0.5">
+        Пример: {field.defaultValue}
+      </p>
+    ) : null;
 
   const baseInputClass = `w-full px-3 py-2 text-sm bg-gray-50 border rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all ${
     hasError
@@ -111,7 +102,7 @@ export default function FormField({
   if (field.type === "radio" && field.options) {
     const opts = normalizeOptions(field.options);
     return (
-      <div className="col-span-2">
+      <div data-field={field.id} className="col-span-2">
         <label className="block text-xs font-medium text-gray-700 mb-2">
           {field.label}
           {requiredMark}
@@ -141,7 +132,7 @@ export default function FormField({
 
   if (field.type === "checkbox") {
     return (
-      <div className="col-span-2">
+      <div data-field={field.id} className="col-span-2">
         <label className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors">
           <input
             type="checkbox"
@@ -161,7 +152,7 @@ export default function FormField({
   if (field.type === "select" && field.options) {
     const opts = normalizeOptions(field.options);
     return (
-      <div>\n        <label className="block text-xs font-medium text-gray-700 mb-1">
+      <div data-field={field.id}>\n        <label className="block text-xs font-medium text-gray-700 mb-1">
           {field.label}
           {requiredMark}
         </label>
@@ -184,14 +175,14 @@ export default function FormField({
           </p>
         )}
         {fieldMessage}
-        {demoBadge}
+        {exampleHint}
       </div>
     );
   }
 
   if (field.type === "textarea") {
     return (
-      <div className="col-span-2">
+      <div data-field={field.id} className="col-span-2">
         <label className="block text-xs font-medium text-gray-700 mb-1">
           {field.label}
           {requiredMark}
@@ -211,7 +202,7 @@ export default function FormField({
           </p>
         )}
         {fieldMessage}
-        {demoBadge}
+        {exampleHint}
       </div>
     );
   }
@@ -253,7 +244,7 @@ export default function FormField({
     const total = items.reduce((sum, item) => sum + Number(item.sum || 0), 0);
 
     return (
-      <div className="col-span-2">
+      <div data-field={field.id} className="col-span-2">
         <label className="block text-xs font-medium text-gray-700 mb-2">
           {field.label}
         </label>
@@ -321,7 +312,7 @@ export default function FormField({
   const { autoComplete, inputMode } = getInputHints(field);
 
   return (
-    <div>
+    <div data-field={field.id}>
       <label htmlFor={field.id} className="block text-xs font-medium text-gray-700 mb-1">
         {field.label}
         {requiredMark}
@@ -341,11 +332,13 @@ export default function FormField({
         inputMode={inputMode}
         onChange={(e) => onChange(field.id, applyFieldFormat(field, e.target.value))}
         onBlur={() => {
+          setFocused(false);
           if (field.type === "text") {
             onBlurNormalize(field.id);
             if (field.id.includes("inn")) onInnBlur(field.id);
           }
         }}
+        onFocus={() => setFocused(true)}
         aria-invalid={hasError || undefined}
         className={baseInputClass}
       />
@@ -355,9 +348,13 @@ export default function FormField({
         </p>
       )}
       {fieldMessage}
-      {demoBadge}
+      {exampleHint}
       {field.type === "text" && field.id.includes("fio") && value.trim().split(/\s+/).length >= 2 && (
-        <FioDeclineHint fio={value} />
+        <FioDeclineHint
+          fio={value}
+          focused={focused}
+          onInsert={(v) => onChange(field.id, v)}
+        />
       )}
       {field.type === "text" && field.id.includes("inn") && (
         <a

@@ -19,15 +19,21 @@ export function buildTemplateDefaults(template: LegalTemplate): Record<string, s
   const now = todayStr();
   const defaults: Record<string, string> = {};
   template.fields.forEach((f) => {
-    if (
-      f.type === "date" &&
-      /^\d{4}-\d{2}-\d{2}$/.test(f.defaultValue) &&
-      f.defaultValue < now
-    ) {
-      defaults[f.id] = now;
-    } else {
-      defaults[f.id] = f.defaultValue;
+    if (f.type === "date") {
+      // Валидная дата договора: подставляем сегодня, если образец устарел.
+      defaults[f.id] =
+        /^\d{4}-\d{2}-\d{2}$/.test(f.defaultValue) && f.defaultValue < now
+          ? now
+          : "";
+      return;
     }
+    if (f.type === "text" || f.type === "number" || f.type === "textarea") {
+      // Значение-образец не подставляется в форму — показывается как
+      // подсказка «Пример: …» под полем (см. FormField).
+      defaults[f.id] = "";
+      return;
+    }
+    defaults[f.id] = f.defaultValue;
   });
   return defaults;
 }

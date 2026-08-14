@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/Table";
 import { useCallback, useEffect, useState } from "react";
-import { Banknote, CreditCard, CheckCircle2, Clock, AlertCircle, ShieldCheck, Lock } from "lucide-react";
+import { Banknote, CreditCard, CheckCircle2, Clock, AlertCircle, ShieldCheck, Lock, RefreshCw, CalendarClock } from "lucide-react";
 
 interface PaymentRow {
   id: string;
@@ -20,11 +20,17 @@ const PRO_PRICE = 990;
 export default function BillingPage() {
   const [plan, setPlan] = useState("free");
   const [active, setActive] = useState(false);
+  const [periodEnd, setPeriodEnd] = useState<string | null>(null);
+  const [autoRenewal, setAutoRenewal] = useState(false);
+  const [hasPaymentMethod, setHasPaymentMethod] = useState(false);
   const [payments, setPayments] = useState<PaymentRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [paying, setPaying] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const [justPaid, setJustPaid] = useState(false);
+  const [justRenewed, setJustRenewed] = useState(false);
+  const [renewing, setRenewing] = useState(false);
+  const [togglingAuto, setTogglingAuto] = useState(false);
   const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(null), 3500); };
 
   const load = useCallback(async () => {
@@ -33,6 +39,9 @@ export default function BillingPage() {
       const s = await sRes.json();
       setPlan(s.plan ?? "free");
       setActive(!!s.subscription_active);
+      setPeriodEnd(s.period_end ?? null);
+      setAutoRenewal(!!s.auto_renewal);
+      setHasPaymentMethod(!!s.has_payment_method);
     }
     const hRes = await fetch("/api/billing/history").catch(() => null);
     if (hRes?.ok) {
@@ -44,8 +53,13 @@ export default function BillingPage() {
 
   useEffect(() => {
     load();
-    if (new URLSearchParams(window.location.search).get("success")) {
+    const q = new URLSearchParams(window.location.search);
+    if (q.get("success")) {
       setJustPaid(true);
+      window.history.replaceState({}, "", "/billing");
+    }
+    if (q.get("renewed")) {
+      setJustRenewed(true);
       window.history.replaceState({}, "", "/billing");
     }
   }, [load]);
@@ -69,6 +83,50 @@ export default function BillingPage() {
     } catch {
       showToast("Сервис временно недоступен. Попробуйте ещё раз");
       setPaying(false);
+    }
+  };
+
+  const toggleAutoRenewal = async () => {
+    setTogglingAuto(true);
+    try {
+      const res = await fetch("/api/billing/auto-renewal", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ enabled: !autoRenewal }),
+      });
+      const json = await res.json().catch(() => null);
+      if (!res.ok) {
+        showToast(json?.message ?? "Не удалось изменить автопродление");
+        return;
+      }
+      setAutoRenewal(!!json.auto_renewal);
+      showToast(json.auto_renewal ? "Автопродление включено" : "Автопродление отключено");
+    } finally {
+      setTogglingAuto(false);
+    }
+  };
+
+  const renewNow = async () => {
+    setRenewing(true);
+    try {
+      const res = await fetch("/api/billing/auto-renew", { method: "POST" });
+      const json = await res.json().catch(() => null);
+      if (!res.ok) {
+        showToast(
+          json?.error === "no_saved_payment_method"
+            ? "Нет сохранённой карты. Оформите подписку заново — карта сохранится автоматически."
+            : "Не удалось продлить подписку. Попробуйте позже"
+        );
+        return;
+      }
+      if (json.status === "succeeded") {
+        showToast("Подписка продлена");
+        load();
+      } else {
+        showToast("Ожидается списание средств — подтверждение обычно занимает пару минут");
+      }
+    } finally {
+      setRenewing(false);
     }
   };
 
@@ -96,6 +154,23 @@ export default function BillingPage() {
         <div className="mb-6 flex items-center gap-2 bg-emerald-50 border border-emerald-200 rounded-xl p-4">
           <CheckCircle2 className="w-5 h-5 text-emerald-500 flex-shrink-0" />
           <p className="text-sm text-emerald-800">Оплата получена. Подписка PRO активируется после подтверждения платежа — обычно в течение пары минут.</p>
+        </div>
+      )}
+
+      {justRenewed && (
+        <div className="mb-6 flex items-center gap-2 bg-emerald-50 border border-emerald-200 rounded-xl p-4">
+          <RefreshCw className="w-5 h-5 text-emerald-500 flex-shrink-0" />
+          <p className="text-sm text-emerald-800">Запрос на продление отправлен — подписка продлится после подтверждения платежа.</p>
+        </div>
+      )}
+
+      {activePlan && periodEnd && new Date(periodEnd).getTime() - Date.now() < 5 * 86400000 && new Date(periodEnd).getTime() >= Date.now() && (
+        <div className="mb-6 flex items-center gap-2 bg-amber-50 border border-amber-200 rounded-xl p-4">
+          <AlertCircle className="w-5 h-5 text-amber-500 flex-shrink-0" />
+          <p className="text-sm text-amber-800">
+            Подписка PRO истекает {new Date(periodEnd).toLocaleDateString("ru-RU", { day: "numeric", month: "long" })}.
+            {autoRenewal ? " Продлите в один клик ниже." : " Включите автопродление или продлите подписку ниже."}
+          </p>
         </div>
       )}
 
@@ -136,9 +211,56 @@ export default function BillingPage() {
                   <CreditCard className="w-4 h-4" />
                   {paying ? "Создаём платёж…" : activePlan ? "Подписка активна" : `Оформить PRO за 990 ₽`}
                 </Button>
+
+                {activePlan && (
+                  <div className="mt-4 p-4 rounded-xl border border-gray-200 bg-gray-50 space-y-3">
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-2 text-sm text-gray-700">
+                        <RefreshCw className="w-4 h-4 text-brand-500" />
+                        Автопродление
+                      </div>
+                      <button
+                        onClick={toggleAutoRenewal}
+                        disabled={togglingAuto}
+                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${autoRenewal ? "bg-emerald-500" : "bg-gray-300"} disabled:opacity-50`}
+                        title={autoRenewal ? "Выключить автопродление" : "Включить автопродление"}
+                      >
+                        <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${autoRenewal ? "translate-x-5" : "translate-x-0.5"}`} />
+                      </button>
+                    </div>
+                    {autoRenewal && hasPaymentMethod && (
+                      <button
+                        onClick={renewNow}
+                        disabled={renewing}
+                        className="w-full inline-flex items-center justify-center gap-2 px-3 py-2 text-xs font-medium rounded-lg border border-gray-200 bg-white hover:bg-gray-50 transition-colors disabled:opacity-50"
+                      >
+                        <CalendarClock className="w-3.5 h-3.5 text-brand-500" />
+                        {renewing ? "Продлеваем…" : "Продлить сейчас (списание с сохранённой карты)"}
+                      </button>
+                    )}
+                    {periodEnd && (
+                      <p className="text-xs text-gray-500">
+                        Действует до:{" "}
+                        <span className="font-medium text-gray-700">
+                          {new Date(periodEnd).toLocaleDateString("ru-RU", {
+                            day: "numeric",
+                            month: "long",
+                            year: "numeric",
+                          })}
+                        </span>
+                      </p>
+                    )}
+                    <p className="text-[11px] text-gray-400">
+                      {autoRenewal
+                        ? "Карта сохранена в ЮKassa. Продление в один клик — без повторного ввода данных карты. Отключить можно в любой момент."
+                        : "Включите автопродление, чтобы продлевать PRO в один клик. Карта сохранится в ЮKassa (безопасное хранение)."}
+                    </p>
+                  </div>
+                )}
+
                 <p className="text-[11px] text-gray-400 mt-3 flex items-start gap-1.5">
                   <Lock className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
-                  Оплата через ЮKassa: МИР, Visa, Mastercard, СБП. Подписка продлевается вручную — автопродление не настроено.
+                  Оплата через ЮKassa: МИР, Visa, Mastercard, СБП.
                 </p>
               </Card>
             </div>

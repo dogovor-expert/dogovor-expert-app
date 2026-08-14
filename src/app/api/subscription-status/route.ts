@@ -12,7 +12,7 @@ export async function GET() {
 
   const { data: subs } = await supabase
     .from("subscriptions")
-    .select("plan, status, period_end")
+    .select("plan, status, period_end, auto_renewal, yookassa_payment_method_id")
     .eq("user_id", user.id)
     .order("period_start", { ascending: false, nullsFirst: false })
     .limit(10);
@@ -25,5 +25,9 @@ export async function GET() {
   return NextResponse.json({
     subscription_active: !!active,
     plan: active?.plan ?? (subs?.[0]?.plan ?? "free"),
+    period_end: active?.period_end ?? null,
+    auto_renewal: active?.auto_renewal ?? false,
+    has_payment_method: !!active?.yookassa_payment_method_id,
+    renew_link_available: !!active?.auto_renewal && !!active?.yookassa_payment_method_id,
   });
 }

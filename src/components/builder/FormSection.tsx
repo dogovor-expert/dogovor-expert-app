@@ -56,9 +56,7 @@ interface FormSectionProps {
   template: LegalTemplate;
   formValues: Record<string, string>;
   liveAudit: AuditResult[];
-  demoDismissed: Record<string, boolean>;
   onFieldChange: (fieldId: string, value: string) => void;
-  onDismissDemo: (fieldId: string) => void;
   onBlurNormalize: (fieldId: string) => void;
   onInnBlur: (fieldId: string) => void;
   onGoToPreview: () => void;
@@ -69,9 +67,7 @@ export default function FormSection({
   template,
   formValues,
   liveAudit,
-  demoDismissed,
   onFieldChange,
-  onDismissDemo,
   onBlurNormalize,
   onInnBlur,
   onGoToPreview,
@@ -102,16 +98,7 @@ export default function FormSection({
         field={field}
         value={formValues[field.id] || ""}
         audit={liveAudit.filter((r) => r.field === field.id)}
-        isDemo={
-          !demoDismissed[field.id] &&
-          field.defaultValue !== "" &&
-          formValues[field.id] === field.defaultValue &&
-          field.type !== "checkbox" &&
-          field.type !== "radio" &&
-          field.type !== "repeating"
-        }
         onChange={onFieldChange}
-        onDismissDemo={onDismissDemo}
         onBlurNormalize={onBlurNormalize}
         onInnBlur={onInnBlur}
       />

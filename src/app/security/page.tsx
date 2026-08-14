@@ -1,253 +1,322 @@
 "use client";
+import { useCallback, useEffect, useState } from "react";
 import { Card } from "@/components/ui/Card";
-import { Badge } from "@/components/ui/Badge";
+import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/Table";
-import { useState, useEffect } from "react";
-import { Shield, Key, Smartphone, Clock, Eye, EyeOff, Check, AlertTriangle, LogOut, Monitor, Globe } from "lucide-react";
+import { Badge } from "@/components/ui/Badge";
+import { createClient } from "@/lib/supabase/client";
+import {
+  KeyRound,
+  Loader2,
+  ShieldCheck,
+  ShieldOff,
+  Smartphone,
+  CheckCircle2,
+  Copy,
+  Check,
+  LogOut,
+} from "lucide-react";
 
-interface Session {
-  id: number;
-  device: string;
-  browser: string;
-  location: string;
-  ip: string;
-  lastActive: string;
-  current: boolean;
+function translateMfaError(message: string): string {
+  const m = message.toLowerCase();
+  if (m.includes("invalid")) return "Неверный код. Проверьте цифры и попробуйте снова.";
+  if (m.includes("expired") || m.includes("timeout")) return "Код устарел. Запросите новый.";
+  if (m.includes("not found") || m.includes("factor")) return "Фактор не найден. Обновите страницу.";
+  return message;
 }
-
-interface LoginEvent {
-  id: number;
-  action: string;
-  location: string;
-  device: string;
-  time: string;
-  success: boolean;
-}
-
-const sessions: Session[] = [
-  { id: 1, device: "Windows 11", browser: "Chrome 125", location: "Москва, РФ", ip: "192.168.1.1", lastActive: "Сейчас", current: true },
-  { id: 2, device: "iPhone 15 Pro", browser: "Safari", location: "Москва, РФ", ip: "192.168.1.2", lastActive: "2 часа назад", current: false },
-  { id: 3, device: "macOS Sonoma", browser: "Firefox 127", location: "Санкт-Петербург, РФ", ip: "192.168.1.3", lastActive: "2 дня назад", current: false },
-  { id: 4, device: "Android 14", browser: "Chrome Mobile", location: "Казань, РФ", ip: "192.168.1.4", lastActive: "5 дней назад", current: false },
-];
-
-const loginHistory: LoginEvent[] = [
-  { id: 1, action: "Успешный вход", location: "Москва, РФ", device: "Chrome / Windows", time: "27.05.2026 14:30", success: true },
-  { id: 2, action: "Успешный вход", location: "Москва, РФ", device: "Safari / iOS", time: "27.05.2026 10:15", success: true },
-  { id: 3, action: "Неудачная попытка", location: "Санкт-Петербург, РФ", device: "Firefox / Linux", time: "26.05.2026 23:45", success: false },
-  { id: 4, action: "Успешный вход", location: "Москва, РФ", device: "Chrome / Windows", time: "26.05.2026 09:00", success: true },
-  { id: 5, action: "Смена пароля", location: "Москва, РФ", device: "Chrome / Windows", time: "25.05.2026 16:20", success: true },
-  { id: 6, action: "Неудачная попытка", location: "Новосибирск, РФ", device: "Edge / Windows", time: "24.05.2026 08:10", success: false },
-];
 
 export default function SecurityPage() {
-  const [twoFactor, setTwoFactor] = useState(() => {
-    if (typeof window === "undefined") return false;
-    try { return localStorage.getItem("dogovor_2fa") === "true"; } catch { return false; }
-  });
-  const [showPassword, setShowPassword] = useState(false);
-  const [passwordForm, setPasswordForm] = useState({ current: "", newPass: "", confirm: "" });
-  const [passwordChanged, setPasswordChanged] = useState(false);
+  const supabase = createClient();
+  const [loading, setLoading] = useState(true);
+  const [factorId, setFactorId] = useState<string | null>(null);
+
+  const [passwordForm, setPasswordForm] = useState({ newPass: "", confirm: "" });
+  const [passwordBusy, setPasswordBusy] = useState(false);
+  const [passwordDone, setPasswordDone] = useState(false);
+
+  const [qrCode, setQrCode] = useState<string | null>(null);
+  const [secret, setSecret] = useState<string | null>(null);
+  const [pendingFactorId, setPendingFactorId] = useState<string | null>(null);
+  const [otpCode, setOtpCode] = useState("");
+  const [enrollBusy, setEnrollBusy] = useState(false);
+  const [enrollError, setEnrollError] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
-  const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(null), 3000); };
+  const showToast = (msg: string) => {
+    setToast(msg);
+    setTimeout(() => setToast(null), 3000);
+  };
+
+  const loadFactors = useCallback(async () => {
+    const { data } = await supabase.auth.mfa.listFactors();
+    const verified = data?.totp.find((f) => f.status === "verified");
+    setFactorId(verified?.id ?? null);
+    setLoading(false);
+  }, [supabase]);
 
   useEffect(() => {
-    try { localStorage.setItem("dogovor_2fa", String(twoFactor)); } catch {}
-  }, [twoFactor]);
+    void loadFactors();
+  }, [loadFactors]);
 
-  const handlePasswordChange = () => {
-    if (!passwordForm.current || !passwordForm.newPass || !passwordForm.confirm) return;
-    if (passwordForm.newPass !== passwordForm.confirm) return;
-    setPasswordChanged(true);
-    setPasswordForm({ current: "", newPass: "", confirm: "" });
-    setTimeout(() => setPasswordChanged(false), 3000);
+  const handlePasswordChange = async () => {
+    setPasswordDone(false);
+    if (passwordForm.newPass.length < 8) {
+      showToast("Пароль должен содержать не менее 8 символов");
+      return;
+    }
+    if (passwordForm.newPass !== passwordForm.confirm) {
+      showToast("Пароли не совпадают");
+      return;
+    }
+    setPasswordBusy(true);
+    const { error } = await supabase.auth.updateUser({ password: passwordForm.newPass });
+    setPasswordBusy(false);
+    if (error) {
+      showToast(error.message);
+      return;
+    }
+    setPasswordForm({ newPass: "", confirm: "" });
+    setPasswordDone(true);
   };
 
-  const handleEndSession = (sessionId: number) => {
-    showToast(`Сессия #${sessionId} завершена`);
+  const handleEnable = async () => {
+    setEnrollError(null);
+    setEnrollBusy(true);
+    const { data, error } = await supabase.auth.mfa.enroll({ factorType: "totp" });
+    setEnrollBusy(false);
+    if (error || !data) {
+      setEnrollError(error?.message ?? "Не удалось начать настройку");
+      return;
+    }
+    setPendingFactorId(data.id);
+    setQrCode(data.totp.qr_code);
+    setSecret(data.totp.secret);
   };
 
-  const handleEndAllSessions = () => {
-    showToast("Все сессии кроме текущей завершены");
+  const handleConfirmEnroll = async () => {
+    setEnrollError(null);
+    if (!pendingFactorId || otpCode.length < 6) {
+      setEnrollError("Введите 6 цифр из приложения");
+      return;
+    }
+    setEnrollBusy(true);
+    const { data: challenge, error: challengeError } = await supabase.auth.mfa.challenge({
+      factorId: pendingFactorId,
+    });
+    if (challengeError || !challenge) {
+      setEnrollBusy(false);
+      setEnrollError(translateMfaError(challengeError?.message ?? "Ошибка"));
+      return;
+    }
+    const { error: verifyError } = await supabase.auth.mfa.verify({
+      factorId: pendingFactorId,
+      challengeId: challenge.id,
+      code: otpCode,
+    });
+    setEnrollBusy(false);
+    if (verifyError) {
+      setEnrollError(translateMfaError(verifyError.message));
+      return;
+    }
+    await supabase.auth.updateUser({ data: { mfa_enabled: true } });
+    setPendingFactorId(null);
+    setQrCode(null);
+    setSecret(null);
+    setOtpCode("");
+    await loadFactors();
+    showToast("Двухфакторная аутентификация включена");
+  };
+
+  const handleDisable = async () => {
+    if (!factorId) return;
+    setEnrollBusy(true);
+    const { error } = await supabase.auth.mfa.unenroll({ factorId });
+    setEnrollBusy(false);
+    if (error) {
+      setEnrollError(translateMfaError(error.message));
+      return;
+    }
+    await supabase.auth.updateUser({ data: { mfa_enabled: false } });
+    setFactorId(null);
+    showToast("Двухфакторная аутентификация отключена");
+  };
+
+  const handleSignOutAll = async () => {
+    await supabase.auth.signOut({ scope: "global" });
+    window.location.href = "/login";
+  };
+
+  const copySecret = async () => {
+    if (!secret) return;
+    try {
+      await navigator.clipboard.writeText(secret);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      showToast("Не удалось скопировать — скопируйте секрет вручную");
+    }
   };
 
   return (
     <div className="p-6 max-w-7xl mx-auto">
       <div className="flex items-center gap-4 mb-8">
         <div className="w-12 h-12 rounded-xl bg-brand-100 flex items-center justify-center">
-          <Shield className="w-6 h-6 text-brand-600" />
+          <ShieldCheck className="w-6 h-6 text-brand-600" />
         </div>
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Безопасность</h1>
-          <p className="text-gray-500 text-sm">Управление безопасностью вашего аккаунта</p>
+          <p className="text-gray-500 text-sm">Пароль, двухфакторная аутентификация и сеансы</p>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
         <Card variant="default" padding="md">
           <h2 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
-            <Key className="w-5 h-5 text-brand-600" />
+            <KeyRound className="w-5 h-5 text-brand-600" />
             Изменить пароль
           </h2>
-          {passwordChanged && (
+          {passwordDone && (
             <div className="mb-4 p-3 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center gap-2 text-sm text-emerald-700">
-              <Check className="w-4 h-4" />
+              <CheckCircle2 className="w-4 h-4" />
               Пароль успешно изменён
             </div>
           )}
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Текущий пароль</label>
-              <div className="relative">
-                <input
-                  type={showPassword ? "text" : "password"} value={passwordForm.current}
-                  onChange={e => setPasswordForm(p => ({ ...p, current: e.target.value }))}
-                  className="w-full px-4 py-2.5 text-sm border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500"
-                  placeholder="Введите текущий пароль"
-                />
-              </div>
-            </div>
-            <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">Новый пароль</label>
-              <input
-                type={showPassword ? "text" : "password"} value={passwordForm.newPass}
-                onChange={e => setPasswordForm(p => ({ ...p, newPass: e.target.value }))}
-                className="w-full px-4 py-2.5 text-sm border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500"
+              <Input
+                type="password"
+                value={passwordForm.newPass}
+                onChange={(e) => setPasswordForm((p) => ({ ...p, newPass: e.target.value }))}
                 placeholder="Минимум 8 символов"
+                autoComplete="new-password"
               />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">Подтвердите пароль</label>
-              <input
-                type={showPassword ? "text" : "password"} value={passwordForm.confirm}
-                onChange={e => setPasswordForm(p => ({ ...p, confirm: e.target.value }))}
-                className="w-full px-4 py-2.5 text-sm border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500"
+              <Input
+                type="password"
+                value={passwordForm.confirm}
+                onChange={(e) => setPasswordForm((p) => ({ ...p, confirm: e.target.value }))}
                 placeholder="Повторите новый пароль"
+                autoComplete="new-password"
               />
             </div>
-            <div className="flex items-center justify-between">
-              <button
-                onClick={() => setShowPassword(!showPassword)}
-                className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700"
-              >
-                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                {showPassword ? "Скрыть" : "Показать"} пароли
-              </button>
-              <Button variant="primary" size="sm" onClick={handlePasswordChange}>Сохранить пароль</Button>
-            </div>
+            <Button variant="primary" size="sm" onClick={handlePasswordChange} disabled={passwordBusy}>
+              {passwordBusy ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+              Сохранить пароль
+            </Button>
           </div>
         </Card>
 
         <Card variant="default" padding="md">
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-semibold text-gray-900 flex items-center gap-2">
-              <Shield className="w-5 h-5 text-brand-600" />
+              <Smartphone className="w-5 h-5 text-brand-600" />
               Двухфакторная аутентификация
             </h2>
-            <button
-              onClick={() => { const next = !twoFactor; setTwoFactor(next); showToast(next ? "2FA включена" : "2FA отключена"); }}
-              className={`relative w-11 h-6 rounded-full transition-colors ${twoFactor ? "bg-brand-500" : "bg-gray-200"}`}
-            >
-              <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${twoFactor ? "translate-x-5" : "translate-x-0"}`} />
-            </button>
+            {!loading && (factorId ? (
+              <Badge variant="green" size="sm" dot>Включена</Badge>
+            ) : (
+              <Badge variant="gray" size="sm">Выключена</Badge>
+            ))}
           </div>
-          <p className="text-sm text-gray-500 mb-4">
-            {twoFactor ? "2FA включена. Используйте приложение-аутентификатор для входа." : "Включите двухфакторную аутентификацию для дополнительной защиты."}
-          </p>
-          {twoFactor && (
-            <div className="space-y-2">
-              {[
-                { name: "TOTP (Google Authenticator, Authy)", done: true },
-                { name: "SMS-коды", done: false },
-                { name: "Ключи безопасности (YubiKey)", done: false },
-              ].map((m, i) => (
-                <div key={i} className="flex items-center justify-between p-3 rounded-xl bg-gray-50 border border-gray-100">
-                  <span className="text-sm text-gray-700">{m.name}</span>
-                  {m.done ? (
-                    <Badge variant="green" size="sm" dot>Подключено</Badge>
-                  ) : (
-                    <Button variant="ghost" size="sm" onClick={() => showToast(`Настройка: ${m.name}`)}>Настроить</Button>
-                  )}
-                </div>
-              ))}
+
+          {loading ? (
+            <div className="flex justify-center py-8">
+              <Loader2 className="w-6 h-6 text-brand-500 animate-spin" />
+            </div>
+          ) : factorId ? (
+            <div className="space-y-4">
+              <p className="text-sm text-gray-500">
+                При входе потребуется 6-значный код из приложения-аутентификатора (Google Authenticator, Authy и другие).
+              </p>
+              <Button variant="danger" size="sm" onClick={handleDisable} disabled={enrollBusy}>
+                {enrollBusy ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShieldOff className="w-4 h-4" />}
+                Отключить 2FA
+              </Button>
+            </div>
+          ) : qrCode ? (
+            <div className="space-y-4">
+              <p className="text-sm text-gray-500">
+                Отсканируйте QR-код приложением-аутентификатором или введите секрет вручную, затем введите 6-значный код.
+              </p>
+              <div className="flex justify-center">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={qrCode} alt="QR-код для настройки 2FA" className="w-48 h-48 rounded-xl border border-gray-200" />
+              </div>
+              <div className="flex items-center justify-between p-3 rounded-xl bg-gray-50 border border-gray-100">
+                <span className="font-mono text-sm text-gray-700 break-all pr-2">{secret}</span>
+                <button
+                  onClick={copySecret}
+                  className="shrink-0 inline-flex items-center gap-1 text-sm text-brand-600 hover:text-brand-700"
+                >
+                  {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                  {copied ? "Скопировано" : "Копировать"}
+                </button>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Код из приложения</label>
+                <Input
+                  value={otpCode}
+                  onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                  placeholder="••••••"
+                  inputMode="numeric"
+                />
+              </div>
+              {enrollError && <p className="text-sm text-red-600">{enrollError}</p>}
+              <div className="flex gap-2">
+                <Button variant="primary" size="sm" onClick={handleConfirmEnroll} disabled={enrollBusy}>
+                  {enrollBusy ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+                  Подтвердить и включить
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    if (pendingFactorId) void supabase.auth.mfa.unenroll({ factorId: pendingFactorId });
+                    setPendingFactorId(null);
+                    setQrCode(null);
+                    setSecret(null);
+                    setEnrollError(null);
+                  }}
+                >
+                  Отмена
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <p className="text-sm text-gray-500">
+                Двухфакторная аутентификация защищает аккаунт: даже если пароль или код из письма станут известны,
+                войти без кода из вашего приложения не получится.
+              </p>
+              <Button variant="primary" size="sm" onClick={handleEnable} disabled={enrollBusy}>
+                {enrollBusy ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShieldCheck className="w-4 h-4" />}
+                Включить 2FA
+              </Button>
             </div>
           )}
         </Card>
       </div>
 
-      <Card variant="default" padding="md" className="mb-6">
+      <Card variant="default" padding="md">
         <div className="flex items-center justify-between mb-4">
           <h2 className="font-semibold text-gray-900 flex items-center gap-2">
-            <Monitor className="w-5 h-5 text-brand-600" />
-            Активные сессии
+            <LogOut className="w-5 h-5 text-brand-600" />
+            Сеансы
           </h2>
-          <Button variant="ghost" size="sm" onClick={handleEndAllSessions}>
+          <Button variant="ghost" size="sm" onClick={handleSignOutAll}>
             <LogOut className="w-4 h-4" />
-            Завершить все
+            Выйти на всех устройствах
           </Button>
         </div>
-        <div className="space-y-3">
-          {sessions.map(session => (
-            <div key={session.id} className={`flex items-center justify-between p-4 rounded-xl border ${session.current ? "border-brand-200 bg-brand-50/50" : "border-gray-100 hover:bg-gray-50/50"} transition-colors`}>
-              <div className="flex items-center gap-3">
-                <div className={`w-9 h-9 rounded-lg ${session.current ? "bg-brand-100" : "bg-gray-100"} flex items-center justify-center`}>
-                  <Smartphone className={`w-4 h-4 ${session.current ? "text-brand-600" : "text-gray-500"}`} />
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium text-gray-900">{session.device}</span>
-                    {session.current && <Badge variant="blue" size="sm">Текущая</Badge>}
-                  </div>
-                  <p className="text-xs text-gray-500 flex items-center gap-1">
-                    <Globe className="w-3 h-3" />
-                    {session.location} • {session.browser} • {session.lastActive}
-                  </p>
-                </div>
-              </div>
-              {!session.current && (
-                <Button variant="ghost" size="sm" onClick={() => handleEndSession(session.id)}>
-                  <LogOut className="w-4 h-4" />
-                  Завершить
-                </Button>
-              )}
-            </div>
-          ))}
-        </div>
+        <p className="text-sm text-gray-500">
+          Завершит все активные сеансы, включая этот. После этого потребуется войти заново и подтвердить вход кодом 2FA,
+          если она включена.
+        </p>
       </Card>
 
-      <Card variant="default" padding="md">
-        <h2 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
-          <Clock className="w-5 h-5 text-brand-600" />
-          История входов
-        </h2>
-        <Table variant="default">
-          <TableHead>
-            <TableRow>
-              <TableHeader>Действие</TableHeader>
-              <TableHeader>Местоположение</TableHeader>
-              <TableHeader>Устройство</TableHeader>
-              <TableHeader>Время</TableHeader>
-              <TableHeader>Статус</TableHeader>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {loginHistory.map(event => (
-              <TableRow key={event.id}>
-                <TableCell className="font-medium text-gray-900">{event.action}</TableCell>
-                <TableCell className="text-gray-600">{event.location}</TableCell>
-                <TableCell className="text-gray-600">{event.device}</TableCell>
-                <TableCell className="text-gray-500">{event.time}</TableCell>
-                <TableCell>
-                  <Badge variant={event.success ? "green" : "red"} size="sm" dot>
-                    {event.success ? "Успех" : "Ошибка"}
-                  </Badge>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </Card>
       {toast && (
         <div className="fixed bottom-6 right-6 bg-gray-900 text-white px-5 py-3 rounded-xl shadow-lg text-sm font-medium z-50 animate-fade-in">
           {toast}

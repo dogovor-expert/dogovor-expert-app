@@ -188,6 +188,13 @@ export default function DashboardPage() {
               Неограниченные расчёты, экспорт в PDF, история, все калькуляторы без рекламы.
             </p>
           </div>
+          {profile?.is_admin && (
+            <Link href="/admin">
+              <Button variant="secondary" size="md">
+                Админ-панель
+              </Button>
+            </Link>
+          )}
           <Link href="/billing">
             <Button variant="primary" size="md">
               <CreditCard className="w-4 h-4" />

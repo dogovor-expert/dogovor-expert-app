@@ -68,6 +68,14 @@ export async function PATCH(req: Request) {
     .single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  // Синхронизируем full_name с auth-метаданными, чтобы JWT/данные сессии не устаревали.
+  if (update.full_name && update.full_name !== (user.user_metadata?.full_name ?? "")) {
+    await supabase.auth.updateUser({
+      data: { full_name: update.full_name },
+    });
+  }
+
   return NextResponse.json({ data });
 }
 
