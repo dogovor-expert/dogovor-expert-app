@@ -232,25 +232,6 @@ export function runLegalAudit(
 
     if (!val.trim()) continue;
 
-    // Демо-данные по умолчанию: предупреждаем, если в поле всё ещё образец,
-    // а не реальные данные пользователя.
-    const demoImportant =
-      /fio|company|inn|bank|account|price|bik|vin|plate|passport|name/.test(
-        field.id
-      );
-    if (
-      (field.validation?.required || demoImportant) &&
-      ["text", "number", "date", "textarea", "select"].includes(field.type) &&
-      field.defaultValue !== "" &&
-      val === field.defaultValue
-    ) {
-      results.push({
-        type: "warning",
-        field: field.id,
-        message: `${field.label}: указано значение по умолчанию (образец) — проверьте или замените на реальные данные`,
-      });
-    }
-
     if (v?.minLength && val.length < v.minLength) {
       results.push({
         type: "error",

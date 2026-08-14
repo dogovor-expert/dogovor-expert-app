@@ -77,13 +77,12 @@ describe("runLegalAudit", () => {
     expect(sellerFio?.message).toContain("обязательно");
   });
 
-  it("значение по умолчанию (образец) в важном поле → warning", () => {
+  it("образец-данные больше не дают warning (подсказка «Пример» вне поля)", () => {
     const results = runLegalAudit(dkpLikeTemplate, {
       seller_fio: "Иванов Иван Иванович",
     });
     const sellerFio = results.find((r) => r.field === "seller_fio");
-    expect(sellerFio?.type).toBe("warning");
-    expect(sellerFio?.message).toContain("значение по умолчанию");
+    expect(sellerFio).toBeUndefined();
   });
 
   it("реальные данные в required → нет error", () => {

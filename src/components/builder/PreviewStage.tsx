@@ -61,10 +61,20 @@ export default function PreviewStage({
       <div className="bg-white rounded-xl border border-gray-100 shadow-sm">
         <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Eye className="w-4 h-4 text-emerald-600" />
-            <h2 className="text-sm font-semibold text-gray-900">
-              Предварительный просмотр
-            </h2>
+            <button
+              onClick={onBackToForm}
+              className="inline-flex items-center gap-1.5 px-2 py-1.5 text-xs font-medium text-gray-500 hover:text-gray-900 hover:bg-gray-50 rounded-lg transition-colors"
+              title="Вернуться к форме"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" />
+              Вернуться к форме
+            </button>
+            <div className="flex items-center gap-3">
+              <Eye className="w-4 h-4 text-emerald-600" />
+              <h2 className="text-sm font-semibold text-gray-900">
+                Предварительный просмотр
+              </h2>
+            </div>
           </div>
           <div className="flex items-center gap-2">
             <button

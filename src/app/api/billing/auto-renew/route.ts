@@ -18,6 +18,25 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "payment_unavailable" }, { status: 503 });
   }
 
+  const { data: subs } = await supabase
+    .from("subscriptions")
+    .select("id, status, period_end, auto_renewal, yookassa_payment_method_id")
+    .eq("user_id", user.id)
+    .order("period_end", { ascending: false })
+    .limit(5);
+
+  const now = new Date();
+  const active = (subs ?? []).find(
+    (s) => s.status === "active" && s.period_end && new Date(String(s.period_end)) >= now
+  );
+
+  if (!active || !active.auto_renewal) {
+    return NextResponse.json({ error: "no_active_auto_renewal" }, { status: 400 });
+  }
+  if (!active.yookassa_payment_method_id) {
+    return NextResponse.json({ error: "no_saved_payment_method" }, { status: 400 });
+  }
+
   const host = req.headers.get("host") ?? "dogovor-templates.vercel.app";
   const proto = host.includes("localhost") || host.includes("127.0.0.1") ? "http" : "https";
 
@@ -31,13 +50,9 @@ export async function POST(req: Request) {
     body: JSON.stringify({
       amount: { value: PRO_PRICE.toFixed(2), currency: "RUB" },
       capture: true,
-      confirmation: {
-        type: "redirect",
-        return_url: `${proto}://${host}/billing?success=1`,
-      },
-      description: "PRO-подписка · 30 дней",
-      metadata: { user_id: user.id, plan: "pro" },
-      save_payment_method: true,
+      payment_method_id: active.yookassa_payment_method_id,
+      description: "PRO-подписка · 30 дней · автопродление",
+      metadata: { user_id: user.id, plan: "pro", auto_renewal: "true" },
     }),
   });
 
@@ -45,27 +60,21 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "provider_error" }, { status: 502 });
   }
   const payment = await res.json();
-  if (payment.status !== "pending" || !payment.confirmation?.confirmation_url) {
-    return NextResponse.json({ error: "provider_unexpected" }, { status: 502 });
-  }
 
   const admin = createAdminClient();
-  const { data, error } = await admin
-    .from("payments")
-    .insert({
-      user_id: user.id,
-      amount: PRO_PRICE,
-      provider: "yookassa",
-      provider_id: payment.id,
-      status: "pending",
-      meta: { plan: "pro" },
-    })
-    .select()
-    .single();
+  await admin.from("payments").insert({
+    user_id: user.id,
+    amount: PRO_PRICE,
+    provider: "yookassa",
+    provider_id: payment.id,
+    status: "pending",
+    meta: { plan: "pro", auto_renewal: true },
+  });
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({
-    confirmation_url: payment.confirmation.confirmation_url,
-    payment_id: data.id,
+    ok: true,
+    status: payment.status,
+    payment_id: payment.id,
+    return_url: `${proto}://${host}/billing?renewed=1`,
   });
 }

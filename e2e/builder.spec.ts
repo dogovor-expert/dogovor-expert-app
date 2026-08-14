@@ -102,7 +102,7 @@ test.describe("E1: ДКП → предпросмотр → скачать PDF", 
     expect(fs.statSync(filePath!).size).toBeGreaterThan(0);
 
     await page.waitForTimeout(3_500);
-    await page.getByRole("button", { name: "Вернуться к форме" }).click();
+    await page.getByRole("button", { name: "Вернуться к форме" }).first().click();
     await expect(page.locator("#seller_fio")).toBeVisible();
   });
 });
@@ -181,6 +181,60 @@ test.describe("E6: DOCX-экспорт для free-пользователя = pa
   });
 });
 
+test.describe("E7: демо-подсказки вместо демо-значений", () => {
+  test("text-поля пустые без демо-бейджа, select/checkbox предзаполнены", async ({
+    page,
+  }) => {
+    await gotoDkp(page);
+    await expect(page.locator("#seller_fio")).toHaveValue("");
+    await expect(
+      page.getByText("значение по умолчанию (образец)")
+    ).toHaveCount(0);
+    await expect(page.locator("#copies_count")).toHaveValue("3");
+
+    const sameAddress = page
+      .locator("label")
+      .filter({ hasText: "Адрес проживания совпадает" })
+      .locator("input");
+    await expect(sameAddress).toBeChecked();
+  });
+
+  test("компактное склонение: видно после blur, скрыто при фокусе", async ({
+    page,
+  }) => {
+    await gotoDkp(page);
+
+    const fio = page.locator("#seller_fio");
+    await fio.click();
+    await fio.fill("Тестов Тест Тестович");
+    await expect(page.getByText("Склонение:")).toHaveCount(0);
+
+    await fio.blur();
+    const hint = page.getByText("Род.: Тестова Теста Тестовича");
+    await expect(hint).toBeVisible();
+    await expect(
+      page.getByText("Предл.: Тестове Тесте Тестовиче")
+    ).toBeVisible();
+
+    await fio.click();
+    await expect(page.getByText("Склонение:")).toHaveCount(0);
+  });
+
+  test("клик по ошибке аудита скроллит и фокусирует поле", async ({ page }) => {
+    await page.addInitScript(() => localStorage.clear());
+    await gotoDkp(page);
+
+    await page.getByRole("button", { name: "Проверить документ" }).click();
+    const errorRow = page
+      .getByRole("button")
+      .filter({ hasText: /Город.*обязательно/ });
+    await expect(errorRow).toBeVisible();
+    await errorRow.click();
+
+    await expect(page.locator("#city")).toBeFocused();
+  });
+});
+
 test.describe("E5: мобильный viewport (360px) — форма и предпросмотр", () => {
   test.use({ viewport: { width: 360, height: 800 } });
 
@@ -198,7 +252,7 @@ test.describe("E5: мобильный viewport (360px) — форма и пре�
       page.getByRole("heading", { name: "Предварительный просмотр" })
     ).toBeVisible();
 
-    await page.getByRole("button", { name: "Вернуться к форме" }).click();
+    await page.getByRole("button", { name: "Вернуться к форме" }).first().click();
     await expect(page.locator("#seller_fio")).toBeVisible();
   });
 });

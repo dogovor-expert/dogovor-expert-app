@@ -34,7 +34,6 @@ import TemplateSelector from "@/components/builder/TemplateSelector";
 import OcrScanner from "@/components/builder/OcrScanner";
 import FormSection from "@/components/builder/FormSection";
 import PreviewStage from "@/components/builder/PreviewStage";
-import LivePreviewPanel from "@/components/builder/LivePreviewPanel";
 import Collapsible from "@/components/builder/Collapsible";
 import DraftsPanel from "@/components/builder/DraftsPanel";
 import RelatedDocsPanel from "@/components/builder/RelatedDocsPanel";
@@ -91,8 +90,6 @@ function HomeContent() {
   const [sidebarTab, setSidebarTab] = useState<"preview" | "tools">("preview");
   const [previewBlocked, setPreviewBlocked] =
     useState<AuditResult[] | null>(null);
-  // Поля, где пользователь явно убрал демо-значение (defaultValue-образец).
-  const [demoDismissed, setDemoDismissed] = useState<Record<string, boolean>>({});
   const fileInputRef = useRef<HTMLInputElement>(null);
   const printRef = useRef<HTMLDivElement>(null);
   const flatRef = useRef<HTMLDivElement>(null);
@@ -575,7 +572,6 @@ function HomeContent() {
     setAuditResults(null);
     setShowAudit(false);
     setLiveAudit([]);
-    setDemoDismissed({});
     setDraftInfos(getAllDrafts());
   }, [selectedTemplateId, tabs, template]);
 
@@ -626,6 +622,14 @@ function HomeContent() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [formValues, template.id, viewMode]);
 
+  // Overlay-предпросмотр: блокируем прокрутку страницы под ним.
+  useEffect(() => {
+    document.body.style.overflow = viewMode === "preview" ? "hidden" : "";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [viewMode]);
+
   const selectRelatedTemplate = (templateId: string) => {
     if (templateId === selectedTemplateId) return;
     const prevValues = formValuesRef.current;
@@ -645,7 +649,6 @@ function HomeContent() {
     if (d.templateId === selectedTemplateId) {
       setFormValues(d.values);
       setChecklist(d.checklist);
-      setDemoDismissed({});
       setActiveTab(
         (d.activeTab || tabs[0]) as TemplateField["category"]
       );
@@ -692,9 +695,14 @@ function HomeContent() {
     void lookupInn(fieldId);
   };
 
-  const onDismissDemo = (fieldId: string) => {
-    handleFieldChange(fieldId, "");
-    setDemoDismissed((prev) => ({ ...prev, [fieldId]: true }));
+  const handleAuditResultClick = (fieldId: string) => {
+    const el = document.querySelector(`[data-field="${fieldId}"]`);
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "center" });
+    const focusable = el.querySelector(
+      "input, select, textarea"
+    ) as HTMLElement | null;
+    focusable?.focus({ preventScroll: true });
   };
 
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -769,6 +777,12 @@ function HomeContent() {
   const handleAudit = () => {
     setAuditResults(runLegalAudit(template, formValues));
     setShowAudit(true);
+    setSidebarTab("preview");
+    setTimeout(() => {
+      document
+        .getElementById("builder-sidebar")
+        ?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 50);
   };
 
   const handlePrint = () => {
@@ -1260,9 +1274,13 @@ function HomeContent() {
 
       {/* Main Content */}
       {wizardStep === "form" && (
-        <div className="grid grid-cols-1 xl:grid-cols-5 gap-5">
-          {/* Left: Form + Full Preview */}
-          <div className={`${viewMode === "preview" ? "xl:col-span-5" : "xl:col-span-3"} space-y-4`}>
+        <div
+          className={`grid grid-cols-1 xl:grid-cols-5 gap-5 ${
+            viewMode === "preview" ? "print:hidden" : ""
+          }`}
+        >
+          {/* Left: Form */}
+          <div className="xl:col-span-3 space-y-4">
             {viewMode === "form" && (<>
               {previewBlocked && (
                 <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-start gap-3">
@@ -1306,9 +1324,7 @@ function HomeContent() {
                 template={template}
                 formValues={formValues}
                 liveAudit={liveAudit}
-                demoDismissed={demoDismissed}
                 onFieldChange={handleFieldChange}
-                onDismissDemo={onDismissDemo}
                 onBlurNormalize={onBlurNormalize}
                 onInnBlur={onInnBlur}
                 onGoToPreview={goToPreview}
@@ -1326,29 +1342,31 @@ function HomeContent() {
               </Collapsible>
             </>)}
             {viewMode === "preview" && (
-              <PreviewStage
-                template={template}
-                packTemplates={packTemplates}
-                isExporting={isExporting}
-                exportPages={exportPages}
-                printRef={printRef}
-                flatRef={flatRef}
-                renderPreview={renderPreview}
-                onPrint={handlePrint}
-                onCopyJson={handleCopyJson}
-                onExportPdf={handleExportPdf}
-                onExportDocx={handleExportDocx}
-                onBackToForm={backToForm}
-              />
+              <div className="fixed inset-0 z-40 bg-white overflow-y-auto">
+                <PreviewStage
+                  template={template}
+                  packTemplates={packTemplates}
+                  isExporting={isExporting}
+                  exportPages={exportPages}
+                  printRef={printRef}
+                  flatRef={flatRef}
+                  renderPreview={renderPreview}
+                  onPrint={handlePrint}
+                  onCopyJson={handleCopyJson}
+                  onExportPdf={handleExportPdf}
+                  onExportDocx={handleExportDocx}
+                  onBackToForm={backToForm}
+                />
+              </div>
             )}
           </div>
 
           {/* Right Column: Live preview / Tools */}
-          {viewMode === "form" && (<div className="xl:col-span-2 space-y-4">
+          {viewMode === "form" && (<div id="builder-sidebar" className="xl:col-span-2 space-y-4">
             <div className="flex items-center gap-2 bg-white rounded-xl border border-gray-100 shadow-sm p-1.5">
               {(
                 [
-                  ["preview", "Предпросмотр", <Eye key="preview" />],
+                  ["preview", "Аудит и чек-лист", <Eye key="preview" />],
                   ["tools", "Документы и инструменты", <Wrench key="tools" />],
                 ] as const
               ).map(([id, label, icon]) => (
@@ -1368,13 +1386,6 @@ function HomeContent() {
             </div>
 
             {sidebarTab === "preview" ? (<>
-              <LivePreviewPanel
-                template={template}
-                renderPreview={() => renderPreview()}
-                onOpenFullPreview={goToPreview}
-                onPagesChange={() => {}}
-              />
-
               {showAudit && auditResults && (
                 <Collapsible
                   id="audit"
@@ -1383,7 +1394,10 @@ function HomeContent() {
                   collapsed={!!collapsedSections["audit"]}
                   onToggle={toggleSection}
                 >
-                  <AuditPanel results={auditResults} />
+                  <AuditPanel
+                    results={auditResults}
+                    onResultClick={handleAuditResultClick}
+                  />
                 </Collapsible>
               )}
 

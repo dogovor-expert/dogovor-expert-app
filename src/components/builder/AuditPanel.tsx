@@ -67,29 +67,53 @@ function getAuditBg(type: string) {
   }
 }
 
-export default function AuditPanel({ results }: { results: AuditResult[] }) {
+export default function AuditPanel({
+  results,
+  onResultClick,
+}: {
+  results: AuditResult[];
+  onResultClick?: (fieldId: string) => void;
+}) {
   return (
     <div className="space-y-2">
       <RiskHeatmap results={results} />
-      {results.map((r, i) => (
-        <div
-          key={i}
-          className={`flex items-start gap-2 p-2.5 rounded-lg border text-xs ${getAuditBg(r.type)}`}
-        >
-          {getAuditIcon(r.type)}
-          <span
-            className={
-              r.type === "success"
-                ? "text-emerald-700"
-                : r.type === "error"
-                  ? "text-red-700"
-                  : "text-amber-700"
-            }
+      {results.map((r, i) => {
+        const clickable = !!onResultClick && r.field !== "_all";
+        const row = (
+          <>
+            {getAuditIcon(r.type)}
+            <span
+              className={
+                r.type === "success"
+                  ? "text-emerald-700"
+                  : r.type === "error"
+                    ? "text-red-700"
+                    : "text-amber-700"
+              }
+            >
+              {r.message}
+            </span>
+          </>
+        );
+        return clickable ? (
+          <button
+            key={i}
+            type="button"
+            onClick={() => onResultClick(r.field)}
+            title="Перейти к полю"
+            className={`w-full flex items-start gap-2 p-2.5 rounded-lg border text-xs text-left transition-colors ${getAuditBg(r.type)} hover:bg-white`}
           >
-            {r.message}
-          </span>
-        </div>
-      ))}
+            {row}
+          </button>
+        ) : (
+          <div
+            key={i}
+            className={`flex items-start gap-2 p-2.5 rounded-lg border text-xs ${getAuditBg(r.type)}`}
+          >
+            {row}
+          </div>
+        );
+      })}
     </div>
   );
 }

@@ -4,7 +4,7 @@ import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { createClient } from "@/lib/supabase/client";
-import { KeyRound, Lock, Loader2, LogOut, CheckCircle2 } from "lucide-react";
+import { KeyRound, Lock, Loader2, LogOut, CheckCircle2, ShieldCheck } from "lucide-react";
 
 export default function SecurityTab() {
   const [password, setPassword] = useState("");
@@ -114,6 +114,27 @@ export default function SecurityTab() {
           <LogOut className="w-4 h-4" />
           Выйти из аккаунта
         </Button>
+      </Card>
+
+      <Card variant="elevated" padding="lg">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-9 h-9 rounded-xl bg-brand-50 flex items-center justify-center">
+            <ShieldCheck className="w-4.5 h-4.5 text-brand-600" />
+          </div>
+          <div>
+            <h3 className="font-semibold text-gray-900">Двухфакторная аутентификация</h3>
+            <p className="text-sm text-gray-500">
+              Защитите аккаунт кодом из приложения-аутентификатора
+            </p>
+          </div>
+        </div>
+        <a
+          href="/security"
+          className="inline-flex items-center gap-2 text-sm font-medium text-brand-600 hover:text-brand-700"
+        >
+          <ShieldCheck className="w-4 h-4" />
+          Настроить 2FA на странице безопасности
+        </a>
       </Card>
 
       <p className="text-xs text-gray-400 px-2">
