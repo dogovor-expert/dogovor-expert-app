@@ -234,7 +234,7 @@ class Renderer {
     this.margin = margin;
     this.page = doc.addPage([A4.w, A4.h]);
     this.pages.push(this.page);
-    this.y = margin.top;
+    this.y = A4.h - margin.top;
   }
 
   private get availWidth(): number {
@@ -242,12 +242,11 @@ class Renderer {
   }
 
   ensureSpace(needed: number) {
-    const bottom = A4.h - this.margin.bottom;
-    if (this.y + needed > bottom) {
+    if (this.y - needed < this.margin.bottom) {
       this.page = this.doc.addPage([A4.w, A4.h]);
       this.pages.push(this.page);
       this.pageIndex++;
-      this.y = this.margin.top;
+      this.y = A4.h - this.margin.top;
     }
   }
 
@@ -296,7 +295,7 @@ class Renderer {
   private paragraph(block: Extract<Block, { kind: "paragraph" }>) {
     const words = toWords(block.runs);
     if (words.length === 0) {
-      this.y += block.fontSize;
+      this.y -= block.fontSize;
       return;
     }
     const indent = block.indent;
@@ -307,13 +306,13 @@ class Renderer {
       const isLast = i === lines.length - 1;
       this.ensureSpace(lineHeight);
       const x = this.margin.left + indent + (block.bullet ? block.fontSize * 1.2 : 0);
-      this.drawLineOfWords(line, block.fontSize, x, this.y + block.fontSize, block.align, isLast || block.align !== "justify", maxWidth - (block.bullet ? block.fontSize * 1.2 : 0), block.color === "brand" ? BRAND : undefined);
+      this.drawLineOfWords(line, block.fontSize, x, this.y - block.fontSize, block.align, isLast || block.align !== "justify", maxWidth - (block.bullet ? block.fontSize * 1.2 : 0), block.color === "brand" ? BRAND : undefined);
       if (block.bullet && i === 0) {
-        this.page.drawText("•", { x: this.margin.left + indent, y: this.y + block.fontSize, size: block.fontSize, font: this.fonts.regular, ...(block.color === "brand" ? { color: BRAND } : {}) });
+        this.page.drawText("•", { x: this.margin.left + indent, y: this.y - block.fontSize, size: block.fontSize, font: this.fonts.regular, ...(block.color === "brand" ? { color: BRAND } : {}) });
       }
-      this.y += lineHeight;
+      this.y -= lineHeight;
     });
-    this.y += block.marginBottom;
+    this.y -= block.marginBottom;
   }
 
   private row(block: Extract<Block, { kind: "row" }>) {
@@ -327,7 +326,7 @@ class Renderer {
     const maxLines = Math.max(leftLines.length, rightLines.length);
     for (let i = 0; i < maxLines; i++) {
       this.ensureSpace(lineHeight);
-      const y = this.y + fontSize;
+      const y = this.y - fontSize;
       const left = leftLines[i];
       const right = rightLines[i];
       if (left) this.drawLineOfWords(left, fontSize, this.margin.left, y, "left", true, this.availWidth * 0.5);
@@ -337,9 +336,9 @@ class Renderer {
         const rightX = xRight - width;
         this.drawLineOfWords(right, fontSize, rightX, y, "right", true, width);
       }
-      this.y += lineHeight;
+      this.y -= lineHeight;
     }
-    this.y += block.marginBottom;
+    this.y -= block.marginBottom;
   }
 
   private columns(block: Extract<Block, { kind: "columns" }>) {
@@ -367,7 +366,7 @@ class Renderer {
       this.y = startY;
       col.forEach((b) => this.renderBlockWithWidth(b, x, colWidth));
     });
-    this.y = startY + maxColHeight + block.marginBottom;
+    this.y = startY - maxColHeight - block.marginBottom;
   }
 
   private renderBlockWithWidth(block: Block, x: number, width: number) {
@@ -378,22 +377,22 @@ class Renderer {
       lines.forEach((line, i) => {
         const isLast = i === lines.length - 1;
         const indent = block.indent + (block.bullet ? block.fontSize * 1.2 : 0);
-        this.drawLineOfWords(line, block.fontSize, x + indent, this.y + block.fontSize, block.align, isLast || block.align !== "justify", width - indent, block.color === "brand" ? BRAND : undefined);
+        this.drawLineOfWords(line, block.fontSize, x + indent, this.y - block.fontSize, block.align, isLast || block.align !== "justify", width - indent, block.color === "brand" ? BRAND : undefined);
         if (block.bullet && i === 0) {
-          this.page.drawText("•", { x: x + block.indent, y: this.y + block.fontSize, size: block.fontSize, font: this.fonts.regular, ...(block.color === "brand" ? { color: BRAND } : {}) });
+          this.page.drawText("•", { x: x + block.indent, y: this.y - block.fontSize, size: block.fontSize, font: this.fonts.regular, ...(block.color === "brand" ? { color: BRAND } : {}) });
         }
-        this.y += lineHeight;
+        this.y -= lineHeight;
       });
-      this.y += block.marginBottom;
+      this.y -= block.marginBottom;
     } else if (block.kind === "line") {
       const lineHeight = block.fontSize * 1.4;
-      const ly = this.y + lineHeight + 8;
+      const ly = this.y - lineHeight - 8;
       this.page.drawLine({ start: { x, y: ly }, end: { x: x + Math.min(width, 120), y: ly }, thickness: 0.7, color: rgb(0.1, 0.1, 0.1) });
-      this.drawLabel(block.label, x, this.y + block.fontSize, block.fontSize, rgb(0.45, 0.45, 0.5));
-      this.y += lineHeight + block.marginBottom + 12;
+      this.drawLabel(block.label, x, this.y - block.fontSize, block.fontSize, rgb(0.45, 0.45, 0.5));
+      this.y -= lineHeight + block.marginBottom + 12;
     } else if (block.kind === "image") {
-      this.page.drawImage(block.img, { x, y: this.y, width: block.width, height: block.height });
-      this.y += block.height + block.marginBottom;
+      this.page.drawImage(block.img, { x, y: this.y - block.height, width: block.width, height: block.height });
+      this.y -= block.height + block.marginBottom;
     } else if (block.kind === "table") {
       this.table(block, x, width);
     } else if (block.kind === "sides") {
@@ -429,20 +428,20 @@ class Renderer {
     const drawCol = (title: string, blocks: Block[], x: number) => {
       this.page.drawRectangle({
         x,
-        y: startY,
+        y: startY - titleHeight,
         width: colWidth,
         height: titleHeight,
         color: SIDE_FILL,
       });
-      const ty = startY + (titleHeight - 10) / 2;
+      const ty = startY - (titleHeight + 10) / 2;
       this.page.drawText(title, { x: x + 6, y: ty, size: 10, font: this.fonts.bold, color: BRAND });
-      this.y = startY + titleHeight;
+      this.y = startY - titleHeight;
       blocks.forEach((b) => this.renderBlockWithWidth(b, x, colWidth));
     };
     drawCol(block.leftTitle, block.leftBlocks, x0);
     this.y = startY;
     drawCol(block.rightTitle, block.rightBlocks, x0 + colWidth + gap);
-    this.y = startY + titleHeight + maxColHeight + block.marginBottom;
+    this.y = startY - titleHeight - maxColHeight - block.marginBottom;
   }
 
   private pricebox(block: Extract<Block, { kind: "pricebox" }>, fixedX: number | null = null, fixedWidth: number | null = null) {
@@ -455,16 +454,16 @@ class Renderer {
     this.ensureSpace(height);
     this.page.drawRectangle({
       x: x0,
-      y: this.y,
+      y: this.y - height,
       width,
       height,
       borderColor: BRAND,
       borderWidth: 0.8,
     });
     lines.forEach((line, i) => {
-      this.drawLineOfWords(line, block.fontSize, x0 + pad, this.y + pad + block.fontSize + i * block.fontSize * 1.4, "left", true, width - pad * 2, BRAND);
+      this.drawLineOfWords(line, block.fontSize, x0 + pad, this.y - pad - block.fontSize - i * block.fontSize * 1.4, "left", true, width - pad * 2, BRAND);
     });
-    this.y += height + block.marginBottom;
+    this.y -= height + block.marginBottom;
   }
 
   private table(block: Extract<Block, { kind: "table" }>, fixedX: number | null = null, fixedWidth: number | null = null) {
@@ -484,12 +483,12 @@ class Renderer {
       const rowHeight = Math.max(lineHeight, ...rowLines.map((l) => l.length * lineHeight)) + cellPad * 2;
       this.ensureSpace(rowHeight);
       const yTop = this.y;
-      const yBottom = this.y + rowHeight;
+      const yBottom = this.y - rowHeight;
       cells.forEach((cell, ci) => {
         const cx = x0 + ci * colWidth;
         this.page.drawRectangle({
           x: cx,
-          y: yTop,
+          y: yBottom,
           width: colWidth,
           height: rowHeight,
           borderColor: rgb(0.6, 0.6, 0.6),
@@ -497,13 +496,13 @@ class Renderer {
         });
         const lines = rowLines[ci];
         lines.forEach((line, li) => {
-          const ly = yTop + cellPad + lineHeight * li + block.fontSize;
+          const ly = yTop - cellPad - lineHeight * li - block.fontSize;
           this.drawLineOfWords(line, block.fontSize, cx + cellPad, ly, "left", true, colWidth - cellPad * 2);
         });
       });
       this.y = yBottom;
     });
-    this.y += block.marginBottom;
+    this.y -= block.marginBottom;
   }
 
   renderBlock(block: Block) {
@@ -522,17 +521,17 @@ class Renderer {
         break;
       case "image": {
         this.ensureSpace(block.height);
-        this.page.drawImage(block.img, { x: this.margin.left, y: this.y, width: block.width, height: block.height });
-        this.y += block.height + block.marginBottom;
+        this.page.drawImage(block.img, { x: this.margin.left, y: this.y - block.height, width: block.width, height: block.height });
+        this.y -= block.height + block.marginBottom;
         break;
       }
       case "line": {
         const lineHeight = block.fontSize * 1.4;
         this.ensureSpace(lineHeight + 12);
-        const ly = this.y + lineHeight + 8;
+        const ly = this.y - lineHeight - 8;
         this.page.drawLine({ start: { x: this.margin.left, y: ly }, end: { x: this.margin.left + Math.min(this.availWidth, 120), y: ly }, thickness: 0.7, color: rgb(0.1, 0.1, 0.1) });
-        this.drawLabel(block.label, this.margin.left, this.y + block.fontSize, block.fontSize, rgb(0.45, 0.45, 0.5));
-        this.y += lineHeight + block.marginBottom + 12;
+        this.drawLabel(block.label, this.margin.left, this.y - block.fontSize, block.fontSize, rgb(0.45, 0.45, 0.5));
+        this.y -= lineHeight + block.marginBottom + 12;
         break;
       }
       case "sides":
