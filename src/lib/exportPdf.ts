@@ -31,6 +31,8 @@ export interface ExportPdfOptions {
   pageNumbers?: boolean;
   /** Поля страницы в миллиметрах. По умолчанию как в шаблоне договора. */
   margin?: Partial<Margin>;
+  /** Название документа (Title в свойствах PDF). */
+  title?: string;
 }
 
 interface Run {
@@ -270,6 +272,19 @@ class Renderer {
     if (align === "center") x += (maxWidth - lineWidth) / 2;
     if (align === "right") x += maxWidth - lineWidth;
 
+    const sameStyle = line.words.every(
+      (w) => w.bold === line.words[0].bold && w.italic === line.words[0].italic
+    );
+    if (sameStyle) {
+      const first = line.words[0];
+      const font = first.italic && first.bold ? this.fonts.bolditalic : first.italic ? this.fonts.italic : first.bold ? this.fonts.bold : this.fonts.regular;
+      this.page.drawText(
+        line.words.map((w) => w.text).join(" "),
+        { x, y, size: fontSize, font, ...(color ? { color } : {}) }
+      );
+      return;
+    }
+
     let cursor = x;
     line.words.forEach((w, i) => {
       const font = w.italic && w.bold ? this.fonts.bolditalic : w.italic ? this.fonts.italic : w.bold ? this.fonts.bold : this.fonts.regular;
@@ -374,7 +389,7 @@ class Renderer {
       const lineHeight = block.fontSize * 1.4;
       const ly = this.y + lineHeight + 8;
       this.page.drawLine({ start: { x, y: ly }, end: { x: x + Math.min(width, 120), y: ly }, thickness: 0.7, color: rgb(0.1, 0.1, 0.1) });
-      this.page.drawText(block.label, { x, y: this.y + block.fontSize, size: block.fontSize, font: this.fonts.regular, color: rgb(0.45, 0.45, 0.5) });
+      this.drawLabel(block.label, x, this.y + block.fontSize, block.fontSize, rgb(0.45, 0.45, 0.5));
       this.y += lineHeight + block.marginBottom + 12;
     } else if (block.kind === "image") {
       this.page.drawImage(block.img, { x, y: this.y, width: block.width, height: block.height });
@@ -516,7 +531,7 @@ class Renderer {
         this.ensureSpace(lineHeight + 12);
         const ly = this.y + lineHeight + 8;
         this.page.drawLine({ start: { x: this.margin.left, y: ly }, end: { x: this.margin.left + Math.min(this.availWidth, 120), y: ly }, thickness: 0.7, color: rgb(0.1, 0.1, 0.1) });
-        this.page.drawText(block.label, { x: this.margin.left, y: this.y + block.fontSize, size: block.fontSize, font: this.fonts.regular, color: rgb(0.45, 0.45, 0.5) });
+        this.drawLabel(block.label, this.margin.left, this.y + block.fontSize, block.fontSize, rgb(0.45, 0.45, 0.5));
         this.y += lineHeight + block.marginBottom + 12;
         break;
       }
@@ -527,6 +542,18 @@ class Renderer {
         this.pricebox(block);
         break;
     }
+  }
+
+  private drawLabel(
+    text: string,
+    x: number,
+    y: number,
+    fontSize: number,
+    color?: RGB
+  ) {
+    const words = toWords([{ text, bold: false, italic: false }]);
+    const lines = layoutLines(words, fontSize, this.availWidth);
+    lines.forEach((line) => this.drawLineOfWords(line, fontSize, x, y, "left", true, this.availWidth, color));
   }
 
   finalize(watermark?: string, pageNumbers = true) {
@@ -741,7 +768,7 @@ function collectBlocks(root: HTMLElement, imgResolver: (src: string) => Promise<
         return;
       }
 
-      if (children.length === 0 || ownText) {
+      if (children.length === 0) {
         const runs = nodeRuns(el);
         if (runs.length || ownText) {
           const align = cls.includes("text-center") ? "center" : cls.includes("text-right") ? "right" : "justify";
@@ -761,7 +788,23 @@ function collectBlocks(root: HTMLElement, imgResolver: (src: string) => Promise<
         return;
       }
 
-      // Контейнер с детьми — рекурсивно
+      // Контейнер с детьми: собственный (прямой) текст — отдельным абзацем,
+      // затем дети рекурсивно.
+      const clone = el.cloneNode(true) as HTMLElement;
+      Array.from(clone.children).forEach((c) => c.remove());
+      const directRuns = nodeRuns(clone);
+      if (directRuns.length) {
+        const align = cls.includes("text-center") ? "center" : cls.includes("text-right") ? "right" : "justify";
+        target.push({
+          kind: "paragraph",
+          runs: directRuns,
+          align,
+          indent: 0,
+          bullet: false,
+          fontSize: fontSizeFrom(el, 12),
+          marginBottom: marginFrom(el, 6),
+        });
+      }
       for (const child of children) {
         await collectInto(child, target);
       }
@@ -810,6 +853,14 @@ export async function buildPdf(
 
   const pdfDoc = await PDFDocument.create();
   pdfDoc.registerFontkit(fontkit);
+  pdfDoc.setTitle(options.title || "Договор");
+  pdfDoc.setAuthor("Dogovor.expert");
+  pdfDoc.setCreator("Dogovor.expert");
+  pdfDoc.setProducer("pdf-lib");
+  pdfDoc.setSubject("Юридический документ, сформированный на Dogovor.expert");
+  pdfDoc.setKeywords(["договор", "документ", "dogovor"]);
+  pdfDoc.setCreationDate(new Date());
+  pdfDoc.setModificationDate(new Date());
   const { regular, bold, italic, bolditalic } = await getFontBytes();
   const fonts: FontSet = {
     regular: await pdfDoc.embedFont(regular, { subset: true }),
