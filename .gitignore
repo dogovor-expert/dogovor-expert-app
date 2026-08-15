@@ -38,3 +38,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# personal notes (not tracked)
+TODO_zoho_email.md
+prompt-для-нейросети.md
+СКОРО_растаможка.md
+на-потом.md
