@@ -169,6 +169,15 @@ export default function FormField({
             </option>
           ))}
         </select>
+        {field.obsoleteValues?.includes(value) && (
+          <p className="flex items-start gap-1.5 mt-1 text-[11px] text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-2.5 py-1.5">
+            <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0 mt-px" />
+            <span>
+              Устаревшая версия бланка. Проверьте, что ваш документ примут к
+              рассмотрению — рекомендуется действующая редакция.
+            </span>
+          </p>
+        )}
         {field.validation?.helpText && (
           <p className="text-[10px] text-gray-400 mt-0.5">
             {field.validation.helpText}
@@ -340,8 +349,20 @@ export default function FormField({
         }}
         onFocus={() => setFocused(true)}
         aria-invalid={hasError || undefined}
+        list={
+          field.suggestions && field.suggestions.length > 0
+            ? `datalist-${field.id}`
+            : undefined
+        }
         className={baseInputClass}
       />
+      {field.suggestions && field.suggestions.length > 0 && (
+        <datalist id={`datalist-${field.id}`}>
+          {field.suggestions.map((s) => (
+            <option key={s} value={s} />
+          ))}
+        </datalist>
+      )}
       {field.validation?.helpText && (
         <p className="text-[10px] text-gray-400 mt-0.5">
           {field.validation.helpText}

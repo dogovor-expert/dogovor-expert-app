@@ -13,6 +13,9 @@ import {
   Eye,
   Wrench,
   Crown,
+  Mail,
+  X,
+  Loader2,
 } from "lucide-react";
 import { LEGAL_TEMPLATES } from "@/data/legalTemplates";
 import type { LegalTemplate, TemplateField } from "@/data/types";
@@ -26,7 +29,7 @@ import { saveDraft, loadDraft, clearDraft, clearDraftVersions, getAllDrafts, pus
 import { syncDraft, syncDelete, setUserFlag } from "@/lib/sync";
 import { createClient } from "@/lib/supabase/client";
 import { renderTemplateDocument, buildPackValues } from "@/lib/renderDocument";
-import { exportToPdf } from "@/lib/exportPdf";
+import { exportToPdf, buildPdf } from "@/lib/exportPdf";
 import { exportToDocx } from "@/lib/exportDocx";
 import { buildTemplateDefaults, getGreeting, normalizeTypography, todayStr } from "@/lib/format";
 import ProgressSteps from "@/components/builder/ProgressSteps";
@@ -180,6 +183,13 @@ function HomeContent() {
   const [dadataKey, setDadataKey] = useState<string>("");
   const [subscriptionActive, setSubscriptionActive] = useState(false);
   const [paywallOpen, setPaywallOpen] = useState(false);
+  const [emailModalOpen, setEmailModalOpen] = useState(false);
+  const [emailAddress, setEmailAddress] = useState("");
+  const [emailSending, setEmailSending] = useState(false);
+  const [emailStatus, setEmailStatus] = useState<{
+    kind: "ok" | "error";
+    text: string;
+  } | null>(null);
   useEffect(() => {
     fetch("/api/subscription-status")
       .then((r) => r.json())
@@ -637,8 +647,9 @@ function HomeContent() {
       LEGAL_TEMPLATES.find((t) => t.id === templateId) ||
       LEGAL_TEMPLATES[0];
     const merged = buildTemplateDefaults(nextTemplate);
+    const pack = buildPackValues(nextTemplate, prevValues);
     nextTemplate.fields.forEach((f) => {
-      const val = prevValues[f.id];
+      const val = pack[f.id];
       if (val !== undefined && val.trim() !== "") merged[f.id] = val;
     });
     pendingMergeRef.current = merged;
@@ -815,75 +826,38 @@ function HomeContent() {
   };
 
   const handleExportPdf = async () => {
-    const sheets = Array.from(
-      printRef.current?.querySelectorAll<HTMLElement>(".a4-sheet") || []
-    );
-    if (sheets.length === 0) return;
     setIsExporting(true);
     try {
       const fileName =
         packTemplates.length > 1
           ? `Паспорт_сделки_${todayStr()}`
           : `${template.name}_${todayStr()}`;
-      let exportSheets = sheets;
-      if (!subscriptionActive) {
-        exportSheets = sheets.map((sheet) => {
-          const copy = sheet.cloneNode(true) as HTMLElement;
-          const badge = document.createElement("div");
-          badge.textContent =
-            "Сформировано бесплатно на сервисе Dogovor — PRO-версия без пометки";
-          Object.assign(badge.style, {
-            position: "absolute",
-            left: "0",
-            right: "0",
-            bottom: "0",
-            textAlign: "center",
-            fontSize: "10px",
-            letterSpacing: "0.02em",
-            color: "#8a8a94",
-            backgroundColor: "#ffffff",
-            paddingTop: "2px",
-            lineHeight: "14px",
-            zIndex: "10",
-          } as CSSStyleDeclaration);
-          copy.appendChild(badge);
-          return copy;
-        });
-      }
-      let coverEl: HTMLElement | null = null;
+      const docs: string[] = [];
       if (packTemplates.length > 1) {
-        coverEl = await buildCoverSheet();
-        if (coverEl) {
-          coverEl.style.position = "absolute";
-          coverEl.style.left = "-10000px";
-          coverEl.style.top = "0";
-          document.body.appendChild(coverEl);
-          exportSheets = [coverEl, ...sheets];
-        }
+        const coverHtml = await buildCoverHtml();
+        if (coverHtml) docs.push(coverHtml);
       }
-      let signEl: HTMLElement | null = null;
+      for (const t of packTemplates) {
+        docs.push(renderPreview(t));
+      }
       if (signSheetEnabled) {
-        signEl = await buildSignSheet();
-        if (signEl) {
-          signEl.style.position = "absolute";
-          signEl.style.left = "-10000px";
-          signEl.style.top = "0";
-          document.body.appendChild(signEl);
-          exportSheets = [...sheets, signEl];
-        }
+        const signHtml = await buildSignHtml();
+        if (signHtml) docs.push(signHtml);
       }
-      const pages = await exportToPdf(exportSheets, fileName);
+      const pages = await exportToPdf(docs, fileName, {
+        watermark: subscriptionActive
+          ? undefined
+          : "Сформировано бесплатно на сервисе Dogovor — PRO-версия без пометки",
+      });
       setExportPages(pages);
       setTimeout(() => setExportPages(0), 3000);
-      signEl?.remove();
-      coverEl?.remove();
     } catch (err) {
       console.error("PDF export error:", err);
     }
     setIsExporting(false);
   };
 
-  const buildCoverSheet = async (): Promise<HTMLElement | null> => {
+  const buildCoverHtml = async (): Promise<string | null> => {
     try {
       const rows: string[] = [];
       for (const [i, t] of packTemplates.entries()) {
@@ -904,46 +878,30 @@ function HomeContent() {
         formValues.customer_name ||
         "___________";
 
-      const el = document.createElement("div");
-      el.className =
-        "a4-sheet flex flex-col font-serif text-[14px] leading-relaxed text-gray-900";
-      el.style.padding = "48px 56px";
-      el.innerHTML = `
-        <h1 style="font-size:18px;font-weight:700;text-align:center;margin:0 0 8px;">
-          ПАСПОРТ СДЕЛКИ
-        </h1>
-        <p style="text-align:center;margin:0 0 28px;font-size:12px;color:#52525b;">
-          Состав и контрольные хеши пакета документов от ${todayStr()}
-        </p>
+      return `<div class="flex flex-col font-serif text-[14px] leading-relaxed text-gray-900" style="padding:48px 56px;">
+        <div class="text-center font-bold text-[18px] mb-2">ПАСПОРТ СДЕЛКИ</div>
+        <div class="text-center text-xs mb-6">Состав и контрольные хеши пакета документов от ${todayStr()}</div>
         <table style="width:100%;border-collapse:collapse;margin-bottom:24px;">
           <thead>
             <tr>
-              <th style="padding:8px 10px;border:1px solid #d4d4d8;text-align:left;font-size:11px;color:#71717a;">№</th>
-              <th style="padding:8px 10px;border:1px solid #d4d4d8;text-align:left;font-size:11px;color:#71717a;">Документ</th>
-              <th style="padding:8px 10px;border:1px solid #d4d4d8;text-align:left;font-size:11px;color:#71717a;">SHA-256</th>
+              <th style="padding:8px 10px;border:1px solid #d4d4d8;text-align:left;font-size:11px;">№</th>
+              <th style="padding:8px 10px;border:1px solid #d4d4d8;text-align:left;font-size:11px;">Документ</th>
+              <th style="padding:8px 10px;border:1px solid #d4d4d8;text-align:left;font-size:11px;">SHA-256</th>
             </tr>
           </thead>
           <tbody>${rows.join("")}</tbody>
         </table>
-        <p style="margin:0 0 6px;font-size:13px;">
-          <b>Продавец / Исполнитель:</b> ${seller}
-        </p>
-        <p style="margin:0 0 24px;font-size:13px;">
-          <b>Покупатель / Заказчик:</b> ${buyer}
-        </p>
-        <p style="margin:0;font-size:12px;color:#52525b;text-align:justify;">
-          Хеши рассчитаны по итоговому HTML-содержимому каждого документа на момент
-          формирования пакета и позволяют зафиксировать неизменность редакций
-          (сравнение с актуальным состоянием — на странице «Предпросмотр»).
-        </p>`;
-      return el;
+        <div class="mb-1"><b>Продавец / Исполнитель:</b> ${seller}</div>
+        <div class="mb-6"><b>Покупатель / Заказчик:</b> ${buyer}</div>
+        <div class="text-xs text-justify">Хеши рассчитаны по итоговому HTML-содержимому каждого документа на момент формирования пакета и позволяют зафиксировать неизменность редакций (сравнение с актуальным состоянием — на странице «Предпросмотр»).</div>
+      </div>`;
     } catch (err) {
       console.error("Cover sheet error:", err);
       return null;
     }
   };
 
-  const buildSignSheet = async (): Promise<HTMLElement | null> => {
+  const buildSignHtml = async (): Promise<string | null> => {
     try {
       const sellerName =
         formValues.seller_fio || formValues.seller_company || "___________";
@@ -959,53 +917,28 @@ function HomeContent() {
       const hash = await sha256Hex(docHtml);
       const stamp = new Date().toLocaleString("ru-RU");
 
-      const el = document.createElement("div");
-      el.className =
-        "a4-sheet flex flex-col font-serif text-[14px] leading-relaxed text-gray-900";
-      el.style.padding = "48px 56px";
-      el.innerHTML = `
-        <h1 style="font-size:16px;font-weight:700;text-align:center;margin:0 0 24px;">
-          ЛИСТ ПОДПИСАНИЯ И ПРОТОКОЛ ПЭП
-        </h1>
-        <p style="margin:0 0 6px;">
-          Документ: <b>${docList}</b> от ${todayStr()}
-        </p>
-        <p style="margin:0 0 18px;">
-          Хеш SHA-256 содержимого документа: <code style="font-size:11px;word-break:break-all;">${hash}</code>
-        </p>
-        <p style="margin:0 0 18px;text-align:justify;">
-          Настоящий лист составлен в соответствии со ст. 6 и ст. 9 Федерального закона
-          от 06.04.2011 № 63-ФЗ «Об электронной подписи». Документы подписаны сторонами
-          простой электронной подписью (ПЭП) — по соглашению сторон такая подпись
-          признаётся равнозначной собственноручной (п. 2 ст. 160 ГК РФ, п. 2 ст. 6
-          63-ФЗ).
-        </p>
-        <div style="flex:1;"></div>
-        <div style="display:flex;justify-content:space-between;gap:32px;margin-bottom:36px;">
-          <div style="flex:1;">
-            <p style="margin:0 0 4px;font-weight:600;">Продавец / Исполнитель</p>
-            <p style="margin:0 0 32px;">${sellerName}</p>
-            <div style="border-bottom:1px solid #333;margin-bottom:6px;"></div>
-            <p style="margin:0;font-size:12px;color:#666;">подпись и расшифровка</p>
+      return `<div class="flex flex-col font-serif text-[14px] leading-relaxed text-gray-900" style="padding:48px 56px;">
+        <div class="text-center font-bold text-[16px] mb-6">ЛИСТ ПОДПИСАНИЯ И ПРОТОКОЛ ПЭП</div>
+        <div class="mb-1">Документ: <b>${docList}</b> от ${todayStr()}</div>
+        <div class="mb-4">Хеш SHA-256 содержимого документа: <span style="font-size:11px;word-break:break-all;">${hash}</span></div>
+        <div class="mb-4 text-justify">Настоящий лист составлен в соответствии со ст. 6 и ст. 9 Федерального закона от 06.04.2011 № 63-ФЗ «Об электронной подписи». Документы подписаны сторонами простой электронной подписью (ПЭП) — по соглашению сторон такая подпись признаётся равнозначной собственноручной (п. 2 ст. 160 ГК РФ, п. 2 ст. 6 63-ФЗ).</div>
+        <div class="grid grid-cols-2 gap-8 mb-6">
+          <div>
+            <div class="font-bold mb-1">Продавец / Исполнитель</div>
+            <div class="mb-8">${sellerName}</div>
+            <div class="border-b"></div>
+            <div class="text-xs">подпись и расшифровка</div>
           </div>
-          <div style="flex:1;">
-            <p style="margin:0 0 4px;font-weight:600;">Покупатель / Заказчик</p>
-            <p style="margin:0 0 32px;">${buyerName}</p>
-            <div style="border-bottom:1px solid #333;margin-bottom:6px;"></div>
-            <p style="margin:0;font-size:12px;color:#666;">подпись и расшифровка</p>
+          <div>
+            <div class="font-bold mb-1">Покупатель / Заказчик</div>
+            <div class="mb-8">${buyerName}</div>
+            <div class="border-b"></div>
+            <div class="text-xs">подпись и расшифровка</div>
           </div>
         </div>
-        <p style="margin:0 0 4px;font-size:12px;color:#666;">
-          Стороны подтверждают, что ознакомились с содержанием указанных документов,
-          согласны с их условиями и подписывают их в день составления.
-        </p>
-        <p style="margin:0;font-size:12px;color:#666;">
-          Протокол сформирован: ${stamp}. Документ может быть направлен по электронной почте
-          или мессенджеру; факт подписания стороны фиксируют собственноручными подписями
-          на бумажной копии либо письменным соглашением о ПЭП.
-        </p>
-      `;
-      return el;
+        <div class="text-xs mb-1">Стороны подтверждают, что ознакомились с содержанием указанных документов, согласны с их условиями и подписывают их в день составления.</div>
+        <div class="text-xs">Протокол сформирован: ${stamp}. Документ может быть направлен по электронной почте или мессенджеру; факт подписания стороны фиксируют собственноручными подписями на бумажной копии либо письменным соглашением о ПЭП.</div>
+      </div>`;
     } catch (err) {
       console.error("Sign sheet error:", err);
       return null;
@@ -1028,6 +961,75 @@ function HomeContent() {
       console.error("DOCX export error:", err);
     }
     setIsExporting(false);
+  };
+
+  const handleExportEmail = () => {
+    setEmailStatus(null);
+    setEmailModalOpen(true);
+  };
+
+  const handleSendEmail = async () => {
+    const address = emailAddress.trim();
+    if (!address) {
+      setEmailStatus({ kind: "error", text: "Укажите адрес электронной почты" });
+      return;
+    }
+    setEmailSending(true);
+    setEmailStatus(null);
+    try {
+      const fileName =
+        packTemplates.length > 1
+          ? `Паспорт_сделки_${todayStr()}`
+          : `${template.name}_${todayStr()}`;
+      const docs: string[] = [];
+      if (packTemplates.length > 1) {
+        const coverHtml = await buildCoverHtml();
+        if (coverHtml) docs.push(coverHtml);
+      }
+      for (const t of packTemplates) {
+        docs.push(renderPreview(t));
+      }
+      if (signSheetEnabled) {
+        const signHtml = await buildSignHtml();
+        if (signHtml) docs.push(signHtml);
+      }
+      const { blob } = await buildPdf(docs, {
+        watermark: subscriptionActive
+          ? undefined
+          : "Сформировано бесплатно на сервисе Dogovor — PRO-версия без пометки",
+      });
+      const buf = await blob.arrayBuffer();
+      let bin = "";
+      const bytes = new Uint8Array(buf);
+      const CHUNK = 0x8000;
+      for (let i = 0; i < bytes.length; i += CHUNK) {
+        bin += String.fromCharCode.apply(null, Array.from(bytes.subarray(i, i + CHUNK)));
+      }
+      const pdfBase64 = btoa(bin);
+
+      const res = await fetch("/api/export/email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: address, filename: fileName, pdfBase64 }),
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok) {
+        setEmailStatus({
+          kind: "error",
+          text:
+            res.status === 501
+              ? "Отправка на почту временно недоступна. Скачайте документ и отправьте самостоятельно."
+              : data?.error || "Не удалось отправить письмо",
+        });
+        return;
+      }
+      setEmailStatus({ kind: "ok", text: "Документ отправлен на указанную почту" });
+    } catch (err) {
+      console.error("Email export error:", err);
+      setEmailStatus({ kind: "error", text: "Не удалось отправить письмо" });
+    } finally {
+      setEmailSending(false);
+    }
   };
 
   const renderPreview = (forTemplate?: LegalTemplate): string => {
@@ -1228,6 +1230,10 @@ function HomeContent() {
             <Clock className="w-3 h-3 inline mr-1" />
             {template.actSource}
           </span>
+          <span className="hidden sm:inline-flex items-center gap-1 text-[10px] text-gray-400">
+            <Shield className="w-3 h-3" />
+            Данные обрабатываются локально в браузере
+          </span>
         </div>
       </div>
 
@@ -1355,6 +1361,8 @@ function HomeContent() {
                   onCopyJson={handleCopyJson}
                   onExportPdf={handleExportPdf}
                   onExportDocx={handleExportDocx}
+                  onOpenEmailModal={handleExportEmail}
+                  emailSending={emailSending}
                   onBackToForm={backToForm}
                 />
               </div>
@@ -1600,6 +1608,77 @@ function HomeContent() {
 
       {paywallOpen && (
         <PaywallModal onClose={() => setPaywallOpen(false)} />
+      )}
+
+      {emailModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="w-full max-w-md bg-white rounded-2xl shadow-xl">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+              <div className="flex items-center gap-2">
+                <Mail className="w-4 h-4 text-emerald-600" />
+                <h3 className="text-sm font-semibold text-gray-900">
+                  Отправить документ на email
+                </h3>
+              </div>
+              <button
+                onClick={() => setEmailModalOpen(false)}
+                className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-400 transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="px-5 py-4">
+              <label
+                htmlFor="email-address"
+                className="block text-xs font-medium text-gray-600 mb-1.5"
+              >
+                Адрес электронной почты
+              </label>
+              <input
+                id="email-address"
+                type="email"
+                value={emailAddress}
+                onChange={(e) => setEmailAddress(e.target.value)}
+                placeholder="you@example.com"
+                className="w-full px-3 py-2 text-sm rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+              />
+              {emailStatus && (
+                <p
+                  className={`mt-2 text-xs ${
+                    emailStatus.kind === "ok"
+                      ? "text-emerald-600"
+                      : "text-red-600"
+                  }`}
+                >
+                  {emailStatus.text}
+                </p>
+              )}
+              <p className="mt-3 text-[11px] text-gray-400">
+                На почту придёт PDF с документом ({packTemplates.length}{" "}
+                {packTemplates.length > 1 ? "документов" : "документ"}). Ссылки
+                для скачивания активны всегда.
+              </p>
+            </div>
+            <div className="px-5 py-4 border-t border-gray-100 flex items-center justify-end gap-2">
+              <button
+                onClick={() => setEmailModalOpen(false)}
+                className="inline-flex items-center justify-center font-medium px-4 py-2 text-sm rounded-xl bg-white text-gray-700 hover:bg-gray-50 border border-gray-200"
+              >
+                Отмена
+              </button>
+              <button
+                onClick={handleSendEmail}
+                disabled={emailSending}
+                className="inline-flex items-center justify-center font-medium px-4 py-2 text-sm rounded-xl gap-2 bg-emerald-500 text-white hover:bg-emerald-600 disabled:opacity-50"
+              >
+                {emailSending && (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                )}
+                Отправить
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

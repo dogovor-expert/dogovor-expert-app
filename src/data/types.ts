@@ -64,6 +64,10 @@ export interface TemplateField {
     | "spouse2";
   options?: TemplateFieldOption[] | string[];
   rows?: number;
+  /** Значения select/radio, которые считаются устаревшими (для версий бланков). */
+  obsoleteValues?: string[];
+  /** Подсказки для автокомплита (нативный <datalist>). */
+  suggestions?: string[];
   dependsOn?: TemplateFieldDependency;
   validation?: {
     required?: boolean;

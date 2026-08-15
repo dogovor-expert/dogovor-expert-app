@@ -8,6 +8,7 @@ import {
   FileImage,
   FileText,
   Loader2,
+  Mail,
   Printer,
 } from "lucide-react";
 import type { LegalTemplate } from "@/data/types";
@@ -26,6 +27,8 @@ interface PreviewStageProps {
   onCopyJson: () => void;
   onExportPdf: () => void;
   onExportDocx: () => void;
+  onOpenEmailModal: () => void;
+  emailSending: boolean;
   onBackToForm: () => void;
 }
 
@@ -41,6 +44,8 @@ export default function PreviewStage({
   onCopyJson,
   onExportPdf,
   onExportDocx,
+  onOpenEmailModal,
+  emailSending,
   onBackToForm,
 }: PreviewStageProps) {
   return (
@@ -124,10 +129,22 @@ export default function PreviewStage({
                 <button
                   onClick={onExportDocx}
                   disabled={isExporting}
-                  className="w-full flex items-center gap-2 px-3 py-2 text-xs text-gray-700 hover:bg-gray-50 rounded-b-xl transition-colors"
+                  className="w-full flex items-center gap-2 px-3 py-2 text-xs text-gray-700 hover:bg-gray-50 transition-colors"
                 >
                   <FileText className="w-3.5 h-3.5 text-blue-500" />
                   Скачать DOCX
+                </button>
+                <button
+                  onClick={onOpenEmailModal}
+                  disabled={emailSending}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-xs text-gray-700 hover:bg-gray-50 rounded-b-xl transition-colors"
+                >
+                  {emailSending ? (
+                    <Loader2 className="w-3.5 h-3.5 text-emerald-500 animate-spin" />
+                  ) : (
+                    <Mail className="w-3.5 h-3.5 text-emerald-500" />
+                  )}
+                  Отправить на email
                 </button>
               </div>
             </div>
