@@ -36,7 +36,8 @@ export default function DocPreview({
     if (!html) return;
 
     const measure = document.createElement("div");
-    measure.style.cssText = `position:absolute;left:-100000px;top:0;width:${A4_W}px;visibility:hidden;pointer-events:none;`;
+    measure.className = "a4-sheet";
+    measure.style.cssText = `position:absolute;left:-100000px;top:0;visibility:hidden;pointer-events:none;`;
     measure.innerHTML = html;
     document.body.appendChild(measure);
 
@@ -53,23 +54,56 @@ export default function DocPreview({
       let group: string[] = [];
       let used = 0;
 
-      children.forEach((child) => {
-        const h = child.offsetHeight;
-        // Слишком высокий блок (напр., длинная таблица) — отдельная страница.
-        if (h > usable) {
-          if (group.length) {
+      const isHeadingBlock = (el: HTMLElement | null): boolean => {
+        if (!el) return false;
+        const cls = el.className || "";
+        return cls.includes("font-bold") && (cls.includes("uppercase") || cls.includes("text-xs"));
+      };
+      const blockHeight = (el: HTMLElement): number => {
+        const style = window.getComputedStyle(el);
+        return (
+          el.offsetHeight +
+          (parseFloat(style.marginTop) || 0) +
+          (parseFloat(style.marginBottom) || 0)
+        );
+      };
+
+      children.forEach((child, idx) => {
+        const h = blockHeight(child);
+        const isLast = idx === children.length - 1;
+        const tooBig = h > usable;
+        const overflow = group.length > 0 && used + h > usable;
+
+        if (!tooBig && !overflow) {
+          group.push(child.outerHTML);
+          used += h;
+          return;
+        }
+
+        // Закрываем текущую группу.
+        if (group.length > 0) {
+          const prevEl = child.previousElementSibling as HTMLElement | null;
+          // Висячий заголовок: не оставляем его последним на странице,
+          // уносим на следующую вместе с идущим за ним блоком.
+          if (isHeadingBlock(prevEl) && overflow && !tooBig && !isLast && prevEl) {
+            const hdr = group.pop()!;
+            used -= blockHeight(prevEl);
+            collected.push({ rootClass: root.className, html: group.join("") });
+            group = [hdr];
+            used = blockHeight(prevEl);
+          } else {
             collected.push({ rootClass: root.className, html: group.join("") });
             group = [];
             used = 0;
           }
+        }
+
+        // Слишком высокий блок (напр., длинная таблица) — отдельная страница.
+        if (tooBig) {
           collected.push({ rootClass: root.className, html: child.outerHTML });
           return;
         }
-        if (used + h > usable && group.length) {
-          collected.push({ rootClass: root.className, html: group.join("") });
-          group = [];
-          used = 0;
-        }
+
         group.push(child.outerHTML);
         used += h;
       });

@@ -848,6 +848,7 @@ function HomeContent() {
         if (signHtml) docs.push(signHtml);
       }
       const pages = await exportToPdf(docs, fileName, {
+        title: packTemplates.length > 1 ? "Паспорт сделки" : template.name,
         watermark: subscriptionActive
           ? undefined
           : "Сформировано бесплатно на сервисе Dogovor — PRO-версия без пометки",
@@ -997,6 +998,7 @@ function HomeContent() {
         if (signHtml) docs.push(signHtml);
       }
       const { blob } = await buildPdf(docs, {
+        title: packTemplates.length > 1 ? "Паспорт сделки" : template.name,
         watermark: subscriptionActive
           ? undefined
           : "Сформировано бесплатно на сервисе Dogovor — PRO-версия без пометки",
