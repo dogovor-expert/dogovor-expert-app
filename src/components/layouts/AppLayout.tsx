@@ -184,7 +184,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
             <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-brand-500 to-purple-600 flex items-center justify-center text-white text-sm font-bold shadow-sm">
               D
             </div>
-            <span className="font-semibold text-gray-900 group-hover:text-brand-600 transition-colors">Dogovor.fun</span>
+            <span className="font-semibold text-gray-900 group-hover:text-brand-600 transition-colors">Dogovor.expert</span>
           </Link>
           <button onClick={() => setOpen(false)} className="lg:hidden p-1 hover:bg-gray-100 rounded-lg">
             <X className="w-5 h-5 text-gray-500" />

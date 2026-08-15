@@ -162,7 +162,7 @@ function PreviewContent() {
             Вперёд →
           </button>
         </div>
-        <span className="text-xs text-gray-400">Подготовлено в Dogovor.fun</span>
+        <span className="text-xs text-gray-400">Подготовлено в Dogovor.expert</span>
       </footer>
     </div>
   );

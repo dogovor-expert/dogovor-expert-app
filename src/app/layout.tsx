@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
     default: SITE_NAME,
-    template: `%s | Dogovor.fun`,
+    template: `%s | Dogovor.expert`,
   },
   description: SITE_DESCRIPTION,
   keywords: SITE_KEYWORDS,
@@ -25,7 +25,7 @@ export const metadata: Metadata = {
     type: "website",
     locale: "ru_RU",
     url: SITE_URL,
-    siteName: "Dogovor.fun",
+    siteName: "Dogovor.expert",
     title: SITE_NAME,
     description: SITE_DESCRIPTION,
     images: [
@@ -33,7 +33,7 @@ export const metadata: Metadata = {
         url: "/og-image.png",
         width: 1200,
         height: 630,
-        alt: "Dogovor.fun — конструктор договоров онлайн",
+        alt: "Dogovor.expert — конструктор договоров онлайн",
       },
     ],
   },

@@ -20,7 +20,7 @@ export function TopNav({ children, title, subtitle, accentColor = "brand", navLi
               <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center text-white text-sm font-bold", `bg-${accentColor}-500`)}>
                 D
               </div>
-              <span className="font-semibold text-white">Dogovor.fun</span>
+              <span className="font-semibold text-white">Dogovor.expert</span>
             </div>
             {navLinks && (
               <nav className="hidden md:flex items-center gap-1">

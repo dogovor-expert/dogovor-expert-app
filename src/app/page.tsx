@@ -304,7 +304,7 @@ export default function HomePage() {
       {/* ======================= FOOTER ======================= */}
       <footer className="max-w-7xl mx-auto px-6 pt-16">
         <div className="border-t border-gray-200 pt-8 pb-6 flex flex-wrap justify-between gap-6 text-xs text-gray-400">
-          <span>© 2026 «Dogovor.fun». Не является юридической консультацией.</span>
+          <span>© 2026 «Dogovor.expert». Не является юридической консультацией.</span>
           <div className="flex items-center gap-2 text-gray-400">
             <ShieldCheck className="w-4 h-4 text-emerald-500" />
             152-ФЗ · данные защищены

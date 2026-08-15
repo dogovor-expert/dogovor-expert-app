@@ -175,7 +175,7 @@ export default function HelpPage() {
                 <MessageCircle className="w-4 h-4" />
                 Чат с поддержкой
               </button>
-              <button onClick={() => showToast("Отправить письмо на hello@dogovor.fun")} className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-white/20 rounded-xl text-sm hover:bg-white/30 transition-colors">
+              <button onClick={() => showToast("Отправить письмо на hello@dogovor.expert")} className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-white/20 rounded-xl text-sm hover:bg-white/30 transition-colors">
                 <Mail className="w-4 h-4" />
                 Отправить письмо
               </button>

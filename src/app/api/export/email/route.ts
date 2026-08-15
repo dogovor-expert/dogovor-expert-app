@@ -4,7 +4,7 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const BODY_HTML = (safeFilename: string) => `<div style="font-family:Arial,sans-serif;max-width:520px;margin:0 auto;padding:24px;">
   <h2 style="margin:0 0 12px;color:#111827;">Ваш документ готов</h2>
-  <p style="margin:0 0 16px;color:#374151;">Здравствуйте! Во вложении — сформированный на сервисе <b>Dogovor.fun</b> документ <b>${safeFilename}</b>.</p>
+  <p style="margin:0 0 16px;color:#374151;">Здравствуйте! Во вложении — сформированный на сервисе <b>Dogovor.expert</b> документ <b>${safeFilename}</b>.</p>
   <p style="margin:0 0 16px;color:#374151;">Документ носит справочный характер и не заменяет консультацию юриста по вопросам, требующим квалифицированной проверки.</p>
   <p style="margin:0;color:#6b7280;font-size:12px;">Письмо отправлено автоматически. Отвечать на него не нужно.</p>
 </div>`;
@@ -40,8 +40,8 @@ export async function POST(req: Request) {
   const safeFilename =
     filename.replace(/[^а-яА-Яa-zA-Z0-9 _-]/g, "").slice(0, 120) + ".pdf";
   const fromRaw =
-    process.env.EMAIL_FROM || "no-reply@dogovor.fun";
-  const fromName = process.env.EMAIL_FROM_NAME || "Dogovor.fun";
+    process.env.EMAIL_FROM || "no-reply@dogovor.expert";
+  const fromName = process.env.EMAIL_FROM_NAME || "Dogovor.expert";
 
   let res: Response;
   if (zeptoToken) {
@@ -54,7 +54,7 @@ export async function POST(req: Request) {
       body: JSON.stringify({
         from: { address: fromRaw, name: fromName },
         to: [{ email_address: { address: email } }],
-        subject: "Ваш документ с Dogovor.fun",
+        subject: "Ваш документ с Dogovor.expert",
         htmlbody: BODY_HTML(safeFilename),
         attachments: [
           {
@@ -75,7 +75,7 @@ export async function POST(req: Request) {
       body: JSON.stringify({
         from: `${fromName} <${fromRaw}>`,
         to: [email],
-        subject: "Ваш документ с Dogovor.fun",
+        subject: "Ваш документ с Dogovor.expert",
         html: BODY_HTML(safeFilename),
         attachments: [{ filename: safeFilename, content: pdfBase64 }],
       }),
