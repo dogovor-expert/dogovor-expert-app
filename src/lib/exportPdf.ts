@@ -1,4 +1,4 @@
-import { PDFDocument, PDFFont, PDFImage, rgb, type PDFPage } from "pdf-lib";
+import { PDFDocument, PDFFont, PDFImage, rgb, type RGB, type PDFPage } from "pdf-lib";
 import fontkit from "@pdf-lib/fontkit";
 import { saveAs } from "file-saver";
 
@@ -14,10 +14,15 @@ interface Margin {
 
 const DEFAULT_MARGIN: Margin = {
   top: 20 * MM,
-  bottom: 19 * MM,
-  left: 35 * MM,
-  right: 8 * MM,
+  bottom: 20 * MM,
+  left: 20 * MM,
+  right: 15 * MM,
 };
+
+/** Фирменный цвет #1a3c6c (тёмно-синий). */
+const BRAND = rgb(0x1a / 255, 0x3c / 255, 0x6c / 255);
+/** Светло-серый фон заголовков «Стороны» (#eef1f7). */
+const SIDE_FILL = rgb(0xee / 255, 0xf1 / 255, 0xf7 / 255);
 
 export interface ExportPdfOptions {
   /** Водяной знак для free-пользователя (рисуется внизу каждой страницы). */
@@ -41,35 +46,40 @@ interface Word {
 }
 
 type Block =
-  | { kind: "paragraph"; runs: Run[]; align: "left" | "center" | "right" | "justify"; indent: number; bullet: boolean; fontSize: number; marginBottom: number }
+  | { kind: "paragraph"; runs: Run[]; align: "left" | "center" | "right" | "justify"; indent: number; bullet: boolean; fontSize: number; marginBottom: number; color?: "brand" }
   | { kind: "row"; leftRuns: Run[]; rightRuns: Run[]; fontSize: number; marginBottom: number }
   | { kind: "columns"; cols: Block[][]; fontSize: number; marginBottom: number }
   | { kind: "table"; rows: { cells: { runs: Run[]; bold: boolean }[] }[]; fontSize: number; marginBottom: number }
   | { kind: "image"; img: PDFImage; width: number; height: number; marginBottom: number }
-  | { kind: "line"; label: string; fontSize: number; marginBottom: number };
+  | { kind: "line"; label: string; fontSize: number; marginBottom: number }
+  | { kind: "sides"; leftTitle: string; leftBlocks: Block[]; rightTitle: string; rightBlocks: Block[]; marginBottom: number }
+  | { kind: "pricebox"; runs: Run[]; fontSize: number; marginBottom: number };
 
-let fontBytesCache: { regular?: ArrayBuffer; bold?: ArrayBuffer; italic?: ArrayBuffer } = {};
+let fontBytesCache: { regular?: ArrayBuffer; bold?: ArrayBuffer; italic?: ArrayBuffer; bolditalic?: ArrayBuffer } = {};
 
 async function getFontBytes(): Promise<{
   regular: ArrayBuffer;
   bold: ArrayBuffer;
   italic: ArrayBuffer;
+  bolditalic: ArrayBuffer;
 }> {
   if (!fontBytesCache.regular) {
-    const [regular, bold, italic] = await Promise.all([
-      fetch("/fonts/times.ttf").then((r) => r.arrayBuffer()),
-      fetch("/fonts/timesbd.ttf").then((r) => r.arrayBuffer()),
-      fetch("/fonts/timesi.ttf").then((r) => r.arrayBuffer()),
+    const [regular, bold, italic, bolditalic] = await Promise.all([
+      fetch("/fonts/pt-serif-regular.ttf").then((r) => r.arrayBuffer()),
+      fetch("/fonts/pt-serif-bold.ttf").then((r) => r.arrayBuffer()),
+      fetch("/fonts/pt-serif-italic.ttf").then((r) => r.arrayBuffer()),
+      fetch("/fonts/pt-serif-bolditalic.ttf").then((r) => r.arrayBuffer()),
     ]);
-    fontBytesCache = { regular, bold, italic };
+    fontBytesCache = { regular, bold, italic, bolditalic };
   }
-  return fontBytesCache as { regular: ArrayBuffer; bold: ArrayBuffer; italic: ArrayBuffer };
+  return fontBytesCache as { regular: ArrayBuffer; bold: ArrayBuffer; italic: ArrayBuffer; bolditalic: ArrayBuffer };
 }
 
 interface FontSet {
   regular: PDFFont;
   bold: PDFFont;
   italic: PDFFont;
+  bolditalic: PDFFont;
 }
 
 let measurer: CanvasRenderingContext2D | null = null;
@@ -86,7 +96,7 @@ function getMeasurer(): CanvasRenderingContext2D {
 
 function measureText(text: string, fontSize: number, bold: boolean, italic: boolean): number {
   const ctx = getMeasurer();
-  const style = `${italic ? "italic " : ""}${bold ? "bold " : ""}${fontSize}px "Times New Roman", serif`;
+  const style = `${italic ? "italic " : ""}${bold ? "bold " : ""}${fontSize}px "PT Serif", serif`;
   ctx.font = style;
   return ctx.measureText(text).width;
 }
@@ -246,7 +256,8 @@ class Renderer {
     y: number,
     align: "left" | "center" | "right" | "justify",
     isLastLine: boolean,
-    maxWidth: number
+    maxWidth: number,
+    color?: RGB
   ) {
     const spaceWidth = measureText(" ", fontSize, false, false);
     const spaces = line.words.length - 1;
@@ -261,8 +272,8 @@ class Renderer {
 
     let cursor = x;
     line.words.forEach((w, i) => {
-      const font = w.italic ? this.fonts.italic : w.bold ? this.fonts.bold : this.fonts.regular;
-      this.page.drawText(w.text, { x: cursor, y, size: fontSize, font });
+      const font = w.italic && w.bold ? this.fonts.bolditalic : w.italic ? this.fonts.italic : w.bold ? this.fonts.bold : this.fonts.regular;
+      this.page.drawText(w.text, { x: cursor, y, size: fontSize, font, ...(color ? { color } : {}) });
       cursor += line.widths[i] + (i < line.words.length - 1 ? spaceWidth + extraSpace : 0);
     });
   }
@@ -281,9 +292,9 @@ class Renderer {
       const isLast = i === lines.length - 1;
       this.ensureSpace(lineHeight);
       const x = this.margin.left + indent + (block.bullet ? block.fontSize * 1.2 : 0);
-      this.drawLineOfWords(line, block.fontSize, x, this.y + block.fontSize, block.align, isLast || block.align !== "justify", maxWidth - (block.bullet ? block.fontSize * 1.2 : 0));
+      this.drawLineOfWords(line, block.fontSize, x, this.y + block.fontSize, block.align, isLast || block.align !== "justify", maxWidth - (block.bullet ? block.fontSize * 1.2 : 0), block.color === "brand" ? BRAND : undefined);
       if (block.bullet && i === 0) {
-        this.page.drawText("•", { x: this.margin.left + indent, y: this.y + block.fontSize, size: block.fontSize, font: this.fonts.regular });
+        this.page.drawText("•", { x: this.margin.left + indent, y: this.y + block.fontSize, size: block.fontSize, font: this.fonts.regular, ...(block.color === "brand" ? { color: BRAND } : {}) });
       }
       this.y += lineHeight;
     });
@@ -328,6 +339,8 @@ class Renderer {
         if (b.kind === "line") return acc + b.fontSize * 1.4 + 12 + b.marginBottom;
         if (b.kind === "image") return acc + b.height + b.marginBottom;
         if (b.kind === "table") return acc + b.rows.length * (b.fontSize * 1.3 + 8) + b.marginBottom;
+        if (b.kind === "sides") return acc + 120 + b.marginBottom;
+        if (b.kind === "pricebox") return acc + layoutLines(toWords(b.runs), b.fontSize, colWidth).length * b.fontSize * 1.4 + 16 + b.marginBottom;
         return acc + b.fontSize * 1.4 + b.marginBottom;
       }, 0);
     const colHeights = block.cols.map((col) => estimateHeight(col));
@@ -350,9 +363,9 @@ class Renderer {
       lines.forEach((line, i) => {
         const isLast = i === lines.length - 1;
         const indent = block.indent + (block.bullet ? block.fontSize * 1.2 : 0);
-        this.drawLineOfWords(line, block.fontSize, x + indent, this.y + block.fontSize, block.align, isLast || block.align !== "justify", width - indent);
+        this.drawLineOfWords(line, block.fontSize, x + indent, this.y + block.fontSize, block.align, isLast || block.align !== "justify", width - indent, block.color === "brand" ? BRAND : undefined);
         if (block.bullet && i === 0) {
-          this.page.drawText("•", { x: x + block.indent, y: this.y + block.fontSize, size: block.fontSize, font: this.fonts.regular });
+          this.page.drawText("•", { x: x + block.indent, y: this.y + block.fontSize, size: block.fontSize, font: this.fonts.regular, ...(block.color === "brand" ? { color: BRAND } : {}) });
         }
         this.y += lineHeight;
       });
@@ -368,7 +381,75 @@ class Renderer {
       this.y += block.height + block.marginBottom;
     } else if (block.kind === "table") {
       this.table(block, x, width);
+    } else if (block.kind === "sides") {
+      this.sides(block, x, width);
+    } else if (block.kind === "pricebox") {
+      this.pricebox(block, x, width);
     }
+  }
+
+  private sides(block: Extract<Block, { kind: "sides" }>, fixedX: number | null = null, fixedWidth: number | null = null) {
+    const x0 = fixedX ?? this.margin.left;
+    const width = fixedWidth ?? this.availWidth;
+    const gap = 10;
+    const colWidth = (width - gap) / 2;
+    const estimateHeight = (blocks: Block[]): number =>
+      blocks.reduce((acc, b) => {
+        if (b.kind === "paragraph") {
+          const lines = layoutLines(toWords(b.runs), b.fontSize, colWidth - b.indent);
+          return acc + lines.length * b.fontSize * 1.4 + b.marginBottom;
+        }
+        if (b.kind === "line") return acc + b.fontSize * 1.4 + 12 + b.marginBottom;
+        if (b.kind === "image") return acc + b.height + b.marginBottom;
+        if (b.kind === "table") return acc + b.rows.length * (b.fontSize * 1.3 + 8) + b.marginBottom;
+        if (b.kind === "pricebox") return acc + layoutLines(toWords(b.runs), b.fontSize, colWidth).length * b.fontSize * 1.4 + 12 + b.marginBottom;
+        if (b.kind === "sides") return acc + 120 + b.marginBottom;
+        return acc + b.fontSize * 1.4 + b.marginBottom;
+      }, 0);
+    const titleHeight = 10 * 1.4 + 8;
+    const colHeights = [block.leftBlocks, block.rightBlocks].map((c) => estimateHeight(c));
+    const maxColHeight = Math.max(0, ...colHeights);
+    this.ensureSpace(titleHeight + maxColHeight);
+    const startY = this.y;
+    const drawCol = (title: string, blocks: Block[], x: number) => {
+      this.page.drawRectangle({
+        x,
+        y: startY,
+        width: colWidth,
+        height: titleHeight,
+        color: SIDE_FILL,
+      });
+      const ty = startY + (titleHeight - 10) / 2;
+      this.page.drawText(title, { x: x + 6, y: ty, size: 10, font: this.fonts.bold, color: BRAND });
+      this.y = startY + titleHeight;
+      blocks.forEach((b) => this.renderBlockWithWidth(b, x, colWidth));
+    };
+    drawCol(block.leftTitle, block.leftBlocks, x0);
+    this.y = startY;
+    drawCol(block.rightTitle, block.rightBlocks, x0 + colWidth + gap);
+    this.y = startY + titleHeight + maxColHeight + block.marginBottom;
+  }
+
+  private pricebox(block: Extract<Block, { kind: "pricebox" }>, fixedX: number | null = null, fixedWidth: number | null = null) {
+    const x0 = fixedX ?? this.margin.left;
+    const width = fixedWidth ?? this.availWidth;
+    const pad = 8;
+    const words = toWords(block.runs);
+    const lines = layoutLines(words, block.fontSize, width - pad * 2);
+    const height = Math.max(24, lines.length * block.fontSize * 1.4 + pad * 2);
+    this.ensureSpace(height);
+    this.page.drawRectangle({
+      x: x0,
+      y: this.y,
+      width,
+      height,
+      borderColor: BRAND,
+      borderWidth: 0.8,
+    });
+    lines.forEach((line, i) => {
+      this.drawLineOfWords(line, block.fontSize, x0 + pad, this.y + pad + block.fontSize + i * block.fontSize * 1.4, "left", true, width - pad * 2, BRAND);
+    });
+    this.y += height + block.marginBottom;
   }
 
   private table(block: Extract<Block, { kind: "table" }>, fixedX: number | null = null, fixedWidth: number | null = null) {
@@ -382,7 +463,7 @@ class Renderer {
     block.rows.forEach((row) => {
       const cells = row.cells;
       const rowLines = cells.map((cell) => {
-        const words = toWords(cell.runs);
+        const words = toWords(cell.runs).map((w) => (cell.bold ? { ...w, bold: true } : w));
         return layoutLines(words, block.fontSize, colWidth - cellPad * 2);
       });
       const rowHeight = Math.max(lineHeight, ...rowLines.map((l) => l.length * lineHeight)) + cellPad * 2;
@@ -402,11 +483,7 @@ class Renderer {
         const lines = rowLines[ci];
         lines.forEach((line, li) => {
           const ly = yTop + cellPad + lineHeight * li + block.fontSize;
-          const font = cell.bold ? this.fonts.bold : this.fonts.regular;
-          this.page.drawText(
-            line.words.map((w) => w.text).join(" "),
-            { x: cx + cellPad, y: ly, size: block.fontSize, font }
-          );
+          this.drawLineOfWords(line, block.fontSize, cx + cellPad, ly, "left", true, colWidth - cellPad * 2);
         });
       });
       this.y = yBottom;
@@ -443,6 +520,12 @@ class Renderer {
         this.y += lineHeight + block.marginBottom + 12;
         break;
       }
+      case "sides":
+        this.sides(block);
+        break;
+      case "pricebox":
+        this.pricebox(block);
+        break;
     }
   }
 
@@ -450,14 +533,24 @@ class Renderer {
     this.pageCount = this.pages.length;
     this.pages.forEach((page, i) => {
       if (pageNumbers) {
-        page.drawText(`Стр. ${i + 1} из ${this.pageCount}`, {
-          x: this.margin.left,
+        const label = `Стр. ${i + 1} из ${this.pageCount}`;
+        const lw = measureText(label, 7.5, false, false);
+        page.drawText(label, {
+          x: A4.w - this.margin.right - lw,
           y: 14,
           size: 7.5,
           font: this.fonts.regular,
           color: rgb(0.5, 0.5, 0.5),
         });
       }
+      const brand = "Сформировано на Dogovor.expert";
+      page.drawText(brand, {
+        x: this.margin.left,
+        y: 14,
+        size: 7.5,
+        font: this.fonts.regular,
+        color: rgb(0.45, 0.45, 0.55),
+      });
       if (watermark) {
         page.drawText(watermark, {
           x: this.margin.left,
@@ -485,7 +578,7 @@ function collectBlocks(root: HTMLElement, imgResolver: (src: string) => Promise<
     return out;
   };
 
-  const collect = async (el: HTMLElement): Promise<void> => {
+  const collectInto = async (el: HTMLElement, target: Block[]): Promise<void> => {
     const tag = el.tagName.toLowerCase();
     if (tag === "script" || tag === "style") return;
 
@@ -499,7 +592,7 @@ function collectBlocks(root: HTMLElement, imgResolver: (src: string) => Promise<
         rows.push({ cells });
       });
       if (rows.length) {
-        blocks.push({ kind: "table", rows, fontSize: 9, marginBottom: 12 });
+        target.push({ kind: "table", rows, fontSize: 9, marginBottom: 12 });
       }
       return;
     }
@@ -511,14 +604,14 @@ function collectBlocks(root: HTMLElement, imgResolver: (src: string) => Promise<
         const w = img.width || 140;
         const h = img.height || 40;
         const scale = Math.min(1, 140 / Math.max(w, 1));
-        blocks.push({ kind: "image", img, width: w * scale, height: h * scale, marginBottom: 4 });
+        target.push({ kind: "image", img, width: w * scale, height: h * scale, marginBottom: 4 });
       }
       return;
     }
 
     if (tag === "ul" || tag === "ol") {
       el.querySelectorAll(":scope > li").forEach((li) => {
-        blocks.push({
+        target.push({
           kind: "paragraph",
           runs: nodeRuns(li),
           align: "left",
@@ -528,7 +621,7 @@ function collectBlocks(root: HTMLElement, imgResolver: (src: string) => Promise<
           marginBottom: 4,
         });
       });
-      blocks.push({ kind: "paragraph", runs: [{ text: "", bold: false, italic: false }], align: "left", indent: 0, bullet: false, fontSize: 4, marginBottom: 4 });
+      target.push({ kind: "paragraph", runs: [{ text: "", bold: false, italic: false }], align: "left", indent: 0, bullet: false, fontSize: 4, marginBottom: 4 });
       return;
     }
 
@@ -539,10 +632,52 @@ function collectBlocks(root: HTMLElement, imgResolver: (src: string) => Promise<
       const children = extractChildren(el);
       const ownText = (el.textContent || "").trim();
 
+      if (hasClass(el, "doc-sides")) {
+        const parts = children.filter((c) => (c.textContent || "").trim());
+        const mid = Math.ceil(parts.length / 2);
+        const buildCol = async (arr: HTMLElement[]) => {
+          const colBlocks: Block[] = [];
+          let title = "";
+          for (const c of arr) {
+            if (hasClass(c, "doc-sides-title")) {
+              if (!title) title = c.textContent || "";
+              continue;
+            }
+            const t = c.querySelector?.(".doc-sides-title") as HTMLElement | null;
+            if (t && !title) title = t.textContent || "";
+            const clone = c.cloneNode(true) as HTMLElement;
+            clone.querySelectorAll(".doc-sides-title").forEach((n) => n.remove());
+            await collectInto(clone, colBlocks);
+          }
+          return { title, blocks: colBlocks };
+        };
+        const left = await buildCol(parts.slice(0, mid));
+        const right = await buildCol(parts.slice(mid));
+        if (left.blocks.length || right.blocks.length) {
+          target.push({
+            kind: "sides",
+            leftTitle: left.title,
+            leftBlocks: left.blocks,
+            rightTitle: right.title,
+            rightBlocks: right.blocks,
+            marginBottom: 12,
+          });
+        }
+        return;
+      }
+
+      if (hasClass(el, "doc-price")) {
+        const runs = nodeRuns(el);
+        if (runs.length) {
+          target.push({ kind: "pricebox", runs, fontSize: fontSizeFrom(el, 11), marginBottom: 12 });
+        }
+        return;
+      }
+
       if (cls.includes("flex") && cls.includes("justify-between")) {
         const parts = children.filter((c) => (c.textContent || "").trim());
         if (parts.length >= 2) {
-          blocks.push({
+          target.push({
             kind: "row",
             leftRuns: nodeRuns(parts[0]),
             rightRuns: nodeRuns(parts[parts.length - 1]),
@@ -591,7 +726,7 @@ function collectBlocks(root: HTMLElement, imgResolver: (src: string) => Promise<
         };
         await Promise.all(children.map((c, i) => addInline(c, i % n)));
         if (cols.some((c) => c.length)) {
-          blocks.push({ kind: "columns", cols, fontSize: 9, marginBottom: 12 });
+          target.push({ kind: "columns", cols, fontSize: 9, marginBottom: 12 });
         }
         return;
       }
@@ -599,9 +734,10 @@ function collectBlocks(root: HTMLElement, imgResolver: (src: string) => Promise<
       const isSubheading =
         cls.includes("font-bold") && cls.includes("uppercase") && (cls.includes("text-black") || cls.includes("mb-2"));
       const isHeading = cls.includes("text-center") && cls.includes("font-bold");
+      const isDocTitle = hasClass(el, "doc-title");
 
       if (hasClass(el, "border-b")) {
-        blocks.push({ kind: "line", label: (el.textContent || "").trim(), fontSize: fontSizeFrom(el, 8.25), marginBottom: marginFrom(el, 6) });
+        target.push({ kind: "line", label: (el.textContent || "").trim(), fontSize: fontSizeFrom(el, 8.25), marginBottom: marginFrom(el, 6) });
         return;
       }
 
@@ -609,16 +745,17 @@ function collectBlocks(root: HTMLElement, imgResolver: (src: string) => Promise<
         const runs = nodeRuns(el);
         if (runs.length || ownText) {
           const align = cls.includes("text-center") ? "center" : cls.includes("text-right") ? "right" : "justify";
-          const boldAll = cls.includes("font-bold");
+          const boldAll = cls.includes("font-bold") || isDocTitle;
           if (boldAll) runs.forEach((r) => (r.bold = true));
-          blocks.push({
+          target.push({
             kind: "paragraph",
             runs,
-            align,
+            align: isDocTitle ? "center" : align,
             indent: 0,
             bullet: false,
-            fontSize: isSubheading || isHeading ? fontSizeFrom(el, 10.5) : fontSizeFrom(el, 12),
+            fontSize: isDocTitle ? 14 : isSubheading || isHeading ? fontSizeFrom(el, 10.5) : fontSizeFrom(el, 12),
             marginBottom: marginFrom(el, 12),
+            color: isDocTitle || isHeading || isSubheading ? "brand" : undefined,
           });
         }
         return;
@@ -626,7 +763,7 @@ function collectBlocks(root: HTMLElement, imgResolver: (src: string) => Promise<
 
       // Контейнер с детьми — рекурсивно
       for (const child of children) {
-        await collect(child);
+        await collectInto(child, target);
       }
       return;
     }
@@ -634,7 +771,8 @@ function collectBlocks(root: HTMLElement, imgResolver: (src: string) => Promise<
     if (tag === "p" || tag === "h1" || tag === "h2" || tag === "h3" || tag === "h4") {
       const runs = nodeRuns(el);
       if (runs.length) {
-        blocks.push({
+        const cls = el.className || "";
+        target.push({
           kind: "paragraph",
           runs,
           align: "justify",
@@ -649,11 +787,11 @@ function collectBlocks(root: HTMLElement, imgResolver: (src: string) => Promise<
 
     // Прочие — рекурсивно по детям.
     el.childNodes.forEach((n) => {
-      if (n.nodeType === Node.ELEMENT_NODE) void collect(n as HTMLElement);
+      if (n.nodeType === Node.ELEMENT_NODE) void collectInto(n as HTMLElement, target);
     });
   };
 
-  return collect(root).then(() => blocks);
+  return collectInto(root, blocks).then(() => blocks);
 }
 
 export interface PdfResult {
@@ -672,11 +810,12 @@ export async function buildPdf(
 
   const pdfDoc = await PDFDocument.create();
   pdfDoc.registerFontkit(fontkit);
-  const { regular, bold, italic } = await getFontBytes();
+  const { regular, bold, italic, bolditalic } = await getFontBytes();
   const fonts: FontSet = {
     regular: await pdfDoc.embedFont(regular, { subset: true }),
     bold: await pdfDoc.embedFont(bold, { subset: true }),
     italic: await pdfDoc.embedFont(italic, { subset: true }),
+    bolditalic: await pdfDoc.embedFont(bolditalic, { subset: true }),
   };
   const margin: Margin = {
     top: options.margin?.top ?? DEFAULT_MARGIN.top,

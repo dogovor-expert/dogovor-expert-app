@@ -4,6 +4,35 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
+@font-face {
+  font-family: "PT Serif";
+  src: url('/fonts/pt-serif-regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "PT Serif";
+  src: url('/fonts/pt-serif-bold.ttf') format('truetype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "PT Serif";
+  src: url('/fonts/pt-serif-italic.ttf') format('truetype');
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: "PT Serif";
+  src: url('/fonts/pt-serif-bolditalic.ttf') format('truetype');
+  font-weight: 700;
+  font-style: italic;
+  font-display: swap;
+}
+
 @layer base {
   body {
     @apply antialiased;
@@ -55,7 +84,7 @@
     animation: floatUp 5s ease-in-out infinite;
   }
 
-  .a4-sheet {
+.a4-sheet {
     position: relative;
     width: 794px;
     height: 1123px;
@@ -65,12 +94,30 @@
     flex-shrink: 0;
     print-color-adjust: exact;
     -webkit-print-color-adjust: exact;
-    font-family: "Times New Roman", Times, Georgia, serif;
+    font-family: "PT Serif", Georgia, "Times New Roman", serif;
   }
 
   .a4-sheet .font-serif,
   .a4-sheet [class*="font-serif"] {
-    font-family: "Times New Roman", Times, Georgia, serif !important;
+    font-family: "PT Serif", Georgia, "Times New Roman", serif !important;
+  }
+
+  .a4-sheet .doc-title {
+    color: #1a3c6c;
+    font-weight: 700;
+  }
+
+  .a4-sheet .doc-sides-title {
+    background: #eef1f7;
+    color: #1a3c6c;
+    font-weight: 700;
+    padding: 6px 10px;
+    margin-bottom: 6px;
+  }
+
+  .a4-sheet .doc-price {
+    border: 1px solid #1a3c6c;
+    padding: 8px 10px;
   }
 
   .a4-page-number {
@@ -117,7 +164,7 @@
     transform: none !important;
   }
 
-  .a4-sheet {
+.a4-sheet {
     width: 210mm;
     height: 297mm;
     margin: 0;
@@ -127,12 +174,12 @@
     page-break-after: always;
     break-after: page;
     overflow: hidden;
-    font-family: "Times New Roman", Times, Georgia, serif;
+    font-family: "PT Serif", Georgia, "Times New Roman", serif;
   }
 
   .a4-sheet .font-serif,
   .a4-sheet [class*="font-serif"] {
-    font-family: "Times New Roman", Times, Georgia, serif;
+    font-family: "PT Serif", Georgia, "Times New Roman", serif;
   }
 
   .a4-sheet table {

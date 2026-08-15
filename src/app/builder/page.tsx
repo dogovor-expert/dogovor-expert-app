@@ -560,24 +560,27 @@ function HomeContent() {
   }, [activeTab, tabs]);
 
   useEffect(() => {
-    const draft = loadDraft(template.id);
-    if (draft) {
-      setFormValues(draft.values);
-      setChecklist(draft.checklist);
-      const draftTab = draft.activeTab as TemplateField["category"];
-      setActiveTab(
-        (tabs.includes(draftTab) ? draftTab : tabs[0]) as TemplateField["category"]
-      );
-    } else if (pendingMergeRef.current) {
-      // Переход по «Связанным документам»: переносим совпадающие поля.
+    if (pendingMergeRef.current) {
+      // Явный переход (связанные документы, переключатель Полный/Краткий):
+      // переносим совпадающие поля в приоритете над черновиком.
       setFormValues(pendingMergeRef.current);
       pendingMergeRef.current = null;
       setChecklist({});
       setActiveTab(tabs[0]);
     } else {
-      setFormValues(buildTemplateDefaults(template));
-      setChecklist({});
-      setActiveTab(tabs[0]);
+      const draft = loadDraft(template.id);
+      if (draft) {
+        setFormValues(draft.values);
+        setChecklist(draft.checklist);
+        const draftTab = draft.activeTab as TemplateField["category"];
+        setActiveTab(
+          (tabs.includes(draftTab) ? draftTab : tabs[0]) as TemplateField["category"]
+        );
+      } else {
+        setFormValues(buildTemplateDefaults(template));
+        setChecklist({});
+        setActiveTab(tabs[0]);
+      }
     }
     setAuditResults(null);
     setShowAudit(false);
@@ -1326,6 +1329,42 @@ function HomeContent() {
                 </div>
               )}
               {/* Form */}
+              {template.id === "dkp-auto" || template.id === "dkp-auto-short" ? (
+                <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
+                  <div className="flex items-center justify-between gap-3 flex-wrap">
+                    <div>
+                      <p className="text-sm font-semibold text-gray-900">
+                        Форма договора
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        Выберите версию документа
+                      </p>
+                    </div>
+                    <div className="flex rounded-lg border border-gray-200 p-1 bg-gray-50">
+                      <button
+                        onClick={() => selectRelatedTemplate("dkp-auto")}
+                        className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                          template.id === "dkp-auto"
+                            ? "bg-brand-500 text-white shadow-sm"
+                            : "text-gray-600 hover:bg-white"
+                        }`}
+                      >
+                        Полный
+                      </button>
+                      <button
+                        onClick={() => selectRelatedTemplate("dkp-auto-short")}
+                        className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                          template.id === "dkp-auto-short"
+                            ? "bg-brand-500 text-white shadow-sm"
+                            : "text-gray-600 hover:bg-white"
+                        }`}
+                      >
+                        Краткий (1 стр.)
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ) : null}
               <FormSection
                 template={template}
                 formValues={formValues}

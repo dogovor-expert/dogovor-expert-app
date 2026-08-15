@@ -256,3 +256,25 @@ test.describe("E5: мобильный viewport (360px) — форма и пре�
     await expect(page.locator("#seller_fio")).toBeVisible();
   });
 });
+
+test.describe("E8: переключатель Полный/Краткий ДКП", () => {
+  test("переключение шаблона сохраняет значения", async ({ page }) => {
+    await gotoDkp(page);
+
+    await expect(page.getByRole("button", { name: "Полный" })).toBeVisible();
+
+    await page.locator("#seller_fio").fill("Иванов Иван Иванович");
+    await page.locator("#city").fill("Москва");
+    await page.locator("#contract_price").fill("1500000");
+    await page.locator("#car_brand").fill("Toyota Camry");
+    await page.locator("#car_vin").fill("JTNBE3BK203456789");
+    await page.locator("#car_sts").fill("99 12 345678");
+
+    await page.getByRole("button", { name: "Краткий (1 стр.)" }).click();
+    await expect(page.locator("#car_vin")).toBeVisible();
+
+    await page.getByRole("button", { name: "Полный" }).click();
+    await expect(page.locator("#seller_fio")).toHaveValue("Иванов Иван Иванович");
+    await expect(page.locator("#contract_price")).toHaveValue("1500000");
+  });
+});

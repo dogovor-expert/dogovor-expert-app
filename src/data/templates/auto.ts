@@ -349,71 +349,77 @@ export const TEMPLATES_AUTO: LegalTemplate[] = [
       },
     ],
     previewTemplate: `
-<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
-  <div class="text-center font-bold text-base mb-6 text-black uppercase">
-    Договор купли-продажи транспортного средства № {{{car_plate}}}
-  </div>
+<div class="pl-[20mm] pr-[15mm] pt-[20mm] pb-[20mm] font-serif text-base leading-normal text-zinc-900 bg-white">
   <div class="flex justify-between mb-6 text-xs font-semibold">
     <div>г. {{{city}}}</div>
     <div>«{{{date}}}»</div>
   </div>
+  <div class="doc-title text-center font-bold text-base uppercase mb-2">Договор купли-продажи транспортного средства</div>
+  <div class="text-center text-xs mb-6">№ {{{car_plate}}}</div>
+  <div class="border-b border-zinc-300 mb-6"></div>
+
+  <div class="doc-sides grid grid-cols-2 gap-6 mb-6">
+    <div>
+      <div class="doc-sides-title">Продавец</div>
+      <p class="mb-1 text-sm"><strong>{{{seller_fio}}}</strong></p>
+      <p class="text-xs mb-0.5">Паспорт: {{{seller_passport_series}}} {{{seller_passport_number}}}</p>
+      <p class="text-xs mb-0.5">Выдан: {{{seller_passport_issued_by}}} {{{seller_passport_code}}}</p>
+      <p class="text-xs mb-0.5">Зарегистрирован: {{{seller_address}}}</p>
+      <p class="text-xs mb-0.5">Телефон: {{{seller_phone}}}</p>
+    </div>
+    <div>
+      <div class="doc-sides-title">Покупатель</div>
+      <p class="mb-1 text-sm"><strong>{{{buyer_fio}}}</strong></p>
+      <p class="text-xs mb-0.5">Паспорт: {{{buyer_passport_series}}} {{{buyer_passport_number}}}</p>
+      <p class="text-xs mb-0.5">Выдан: {{{buyer_passport_issued_by}}} {{{buyer_passport_code}}}</p>
+      <p class="text-xs mb-0.5">Зарегистрирован: {{{buyer_address}}}</p>
+      <p class="text-xs mb-0.5">Телефон: {{{buyer_phone}}}</p>
+    </div>
+  </div>
+
   <p class="mb-4 text-justify">
-    Гражданин <strong>{{{seller_fio}}}</strong>, зарегистрированный по адресу: {{{seller_address}}}, паспорт серии {{{seller_passport_series}}} № {{{seller_passport_number}}}, выдан {{{seller_passport_issued_by}}} {{{seller_passport_code}}}, именуемый в дальнейшем «Продавец», с одной стороны, и
+    Продавец передает в собственность Покупателю, а Покупатель принимает и оплачивает транспортное средство:
   </p>
-  <p class="mb-4 text-justify">
-    Гражданин <strong>{{{buyer_fio}}}</strong>, зарегистрированный по адресу: {{{buyer_address}}}, паспорт серии {{{buyer_passport_series}}} № {{{buyer_passport_number}}}, выдан {{{buyer_passport_issued_by}}} {{{buyer_passport_code}}}, именуемый в дальнейшем «Покупатель», с другой стороны, заключили настоящий договор о нижеследующем:
-  </p>
+
+  <table class="w-full border-collapse mb-4 text-xs">
+    <tr><th class="border border-zinc-400 p-1 text-left">Марка, модель</th><td class="border border-zinc-400 p-1">{{{car_brand}}}</td></tr>
+    <tr><th class="border border-zinc-400 p-1 text-left">Год выпуска</th><td class="border border-zinc-400 p-1">{{{car_year}}}</td></tr>
+    <tr><th class="border border-zinc-400 p-1 text-left">Идентификационный номер (VIN)</th><td class="border border-zinc-400 p-1">{{{car_vin}}}</td></tr>
+    <tr><th class="border border-zinc-400 p-1 text-left">Государственный регистрационный знак</th><td class="border border-zinc-400 p-1">{{{car_plate}}}</td></tr>
+    <tr><th class="border border-zinc-400 p-1 text-left">Цвет</th><td class="border border-zinc-400 p-1">{{{car_color}}}</td></tr>
+    <tr><th class="border border-zinc-400 p-1 text-left">Двигатель №</th><td class="border border-zinc-400 p-1">{{{car_engine}}}</td></tr>
+    <tr><th class="border border-zinc-400 p-1 text-left">Шасси (рама) №</th><td class="border border-zinc-400 p-1">{{{car_chassis}}}</td></tr>
+    {{#car_pts}}<tr><th class="border border-zinc-400 p-1 text-left">Паспорт ТС (ПТС)</th><td class="border border-zinc-400 p-1">{{{car_pts}}}</td></tr>{{/car_pts}}
+    {{#car_epts}}<tr><th class="border border-zinc-400 p-1 text-left">Электронный паспорт ТС (ЭПТС)</th><td class="border border-zinc-400 p-1">{{{car_epts}}}</td></tr>{{/car_epts}}
+    <tr><th class="border border-zinc-400 p-1 text-left">Свидетельство о регистрации (СТС)</th><td class="border border-zinc-400 p-1">{{{car_sts}}}</td></tr>
+  </table>
+
+  <div class="doc-price mb-4">
+    <p class="text-sm">Цена договора: <strong>{{{contract_price}}} рублей</strong></p>
+    <p class="text-xs text-zinc-600">(прописью: <em>{{{contract_price_words}}}</em>)</p>
+  </div>
+
   <div class="font-bold mb-2 text-black text-xs uppercase">1. Предмет договора</div>
   <p class="mb-4 text-justify">
-    1.1. Продавец передает в собственность Покупателю, а Покупатель принимает и оплачивает транспортное средство:
-  </p>
-  <ul class="list-disc pl-6 mb-4 text-xs space-y-1">
-    <li>Марка, модель ТС: <strong>{{{car_brand}}}</strong></li>
-    <li>Год выпуска: <strong>{{{car_year}}}</strong></li>
-    <li>Идентификационный номер (VIN): <strong>{{{car_vin}}}</strong></li>
-    <li>Государственный регистрационный знак: <strong>{{{car_plate}}}</strong></li>
-    <li>Цвет: {{{car_color}}}</li>
-    <li>Двигатель №: {{{car_engine}}}</li>
-    <li>Шасси (рама) №: {{{car_chassis}}}</li>
-    {{#car_pts}}<li>Паспорт транспортного средства (ПТС): {{{car_pts}}}</li>{{/car_pts}}
-    {{#car_epts}}<li>Электронный паспорт ТС (ЭПТС): {{{car_epts}}}</li>{{/car_epts}}
-    <li>Свидетельство о регистрации ТС (СТС): {{{car_sts}}}</li>
-  </ul>
-  <p class="mb-4 text-justify">
-    1.2. Продавец гарантирует, что на момент заключения настоящего Договора Транспортное средство не находится в залоге, под арестом, не состоит под запретом на регистрационные действия в органах ГИБДД, не обременено правами третьих лиц.
+    1.1. Продавец гарантирует, что на момент заключения настоящего Договора Транспортное средство не находится в залоге, под арестом, не состоит под запретом на регистрационные действия в органах ГИБДД, не обременено правами третьих лиц.
   </p>
   <div class="font-bold mb-2 text-black text-xs uppercase">2. Условия оплаты и цена договора</div>
   <p class="mb-4 text-justify">
-    2.1. Указанное в п. 1.1 настоящего Договора Транспортное средство оценивается сторонами в размере <strong>{{{contract_price}}} рублей</strong> (прописью: <em>{{{contract_price_words}}}</em>).
+    2.1. Стороны договорились, что стоимость Транспортного средства составляет сумму, указанную в п. «Цена договора».
   </p>
   <p class="mb-4 text-justify">
-    2.2. Покупатель обязуется передать сумму, указанную в п. 2.1 настоящего Договора, в качестве оплаты за Транспортное средство Продавцу непосредственно при подписании настоящего договора.
+    2.2. Покупатель обязуется передать указанную сумму в качестве оплаты за Транспортное средство Продавцу непосредственно при подписании настоящего договора.
   </p>
   <div class="font-bold mb-2 text-black text-xs uppercase">3. Передача транспортного средства</div>
   <p class="mb-4 text-justify">
     3.1. Передача ТС осуществляется по соответствующему Акту приема-передачи ТС, являющемуся неотъемлемой частью Договора.
   </p>
   <div class="font-bold mb-2 text-black text-xs uppercase">4. Реквизиты и подписи сторон</div>
-  
-  <div class="font-bold mb-2 text-black text-xs uppercase">5. Форс-мажор</div>
   <p class="mb-4 text-justify">
-    5.1. Стороны освобождаются от ответственности за частичное или полное неисполнение обязательств по настоящему договору, если оно явилось следствием обстоятельств непреодолимой силы (форс-мажора): стихийных бедствий, пожаров, наводнений, землетрясений, эпидемий, военных действий, решений органов государственной власти, а также иных обстоятельств, которые стороны не могли предвидеть и предотвратить разумными мерами.
-  </p>
-  <p class="mb-4 text-justify">
-    5.2. Сторона, для которой создалась невозможность исполнения обязательств, обязана незамедлительно, но не позднее 10 (десяти) календарных дней с момента наступления таких обстоятельств, письменно уведомить другую сторону об их возникновении. Неуведомление либо несвоевременное уведомление лишает сторону права ссылаться на форс-мажор как на основание освобождения от ответственности.
-  </p>
-  <p class="mb-4 text-justify">
-    5.3. Если обстоятельства непреодолимой силы действуют более 60 (шестидесяти) календарных дней, каждая из сторон вправе в одностороннем порядке отказаться от исполнения настоящего договора, письменно уведомив другую сторону.
+    4.1. Настоящий договор составлен в {{{copies_count}}} экземплярах, имеющих равную юридическую силу, по одному для каждой из сторон.
   </p>
 
-  <div class="font-bold mb-2 text-black text-xs uppercase">6. Порядок разрешения споров</div>
-  <p class="mb-4 text-justify">
-    6.1. Все споры и разногласия, возникающие из настоящего договора или в связи с ним, стороны разрешают путём переговоров. Срок рассмотрения письменной претензии — 10 (десять) календарных дней с момента её получения.
-  </p>
-  <p class="mb-4 text-justify">
-    6.2. При недостижении согласия споры разрешаются в судебном порядке в соответствии с действующим законодательством Российской Федерации.
-  </p>
-<div class="grid grid-cols-2 gap-6 mt-8 text-xs border-t border-zinc-300 pt-4">
+  <div class="grid grid-cols-2 gap-6 mt-6 text-xs">
     <div>
       <div class="font-bold mb-2 uppercase text-black">Продавец:</div>
       <p class="mb-1"><strong>{{{seller_fio}}}</strong></p>
@@ -4531,6 +4537,98 @@ export const TEMPLATES_AUTO: LegalTemplate[] = [
       <p class="text-zinc-500 text-[11px]">Паспорт: {{{buyer_passport}}}</p>
       <p class="text-zinc-500 text-[11px]">Адрес: {{{buyer_addr}}}</p>
       <div class="mt-8 border-b border-zinc-900 w-44 h-5 flex justify-end items-end text-[10px] text-zinc-400">Подпись</div>
+    </div>
+  </div>
+</div>`,
+  },
+  {
+    id: "dkp-auto-short",
+    name: "ДКП авто — Краткий (1 стр.)",
+    category: "auto",
+    actSource: "ст. 454 Гражданского кодекса РФ",
+    lastUpdated: "Август 2026",
+    description:
+      "Краткая форма договора купли-продажи автомобиля на одной странице. Содержит только обязательные сведения: стороны, транспортное средство и цену.",
+    suggestedDocs: ["act-transfer-auto", "raspiska-money"],
+    supportsOcr: true,
+    printInstruction: "Печатается на одном листе А4",
+    fields: [
+      { id: "city", label: "Город составления", type: "text", defaultValue: "", category: "contract", validation: { required: true } },
+      { id: "date", label: "Дата договора", type: "date", defaultValue: "", category: "contract", validation: { required: true } },
+      { id: "seller_fio", label: "ФИО Продавца", type: "text", defaultValue: "", category: "seller", validation: { required: true } },
+      { id: "seller_passport", label: "Паспорт продавца", type: "text", placeholder: "4512 123456", defaultValue: "", category: "seller", validation: { required: true } },
+      { id: "seller_address", label: "Адрес регистрации продавца", type: "text", defaultValue: "", category: "seller", validation: { required: true } },
+      { id: "buyer_fio", label: "ФИО Покупателя", type: "text", defaultValue: "", category: "buyer", validation: { required: true } },
+      { id: "buyer_passport", label: "Паспорт покупателя", type: "text", placeholder: "4615 987654", defaultValue: "", category: "buyer", validation: { required: true } },
+      { id: "buyer_address", label: "Адрес регистрации покупателя", type: "text", defaultValue: "", category: "buyer", validation: { required: true } },
+      { id: "car_brand", label: "Марка и модель ТС", type: "text", defaultValue: "", category: "vehicle", validation: { required: true } },
+      { id: "car_year", label: "Год выпуска ТС", type: "number", defaultValue: "", category: "vehicle", validation: { required: true } },
+      { id: "car_vin", label: "VIN номер ТС", type: "text", placeholder: "17 символов", defaultValue: "", category: "vehicle", validation: { minLength: 17, maxLength: 17, required: true } },
+      { id: "car_plate", label: "Гос. регистрационный знак", type: "text", defaultValue: "", category: "vehicle" },
+      { id: "car_color", label: "Цвет ТС", type: "text", defaultValue: "", category: "vehicle" },
+      { id: "car_pts", label: "ПТС (серия, номер)", type: "text", defaultValue: "", category: "pts" },
+      { id: "car_sts", label: "СТС (серия, номер)", type: "text", defaultValue: "", category: "sts", validation: { required: true } },
+      { id: "contract_price", label: "Стоимость ТС (суммой)", type: "number", defaultValue: "", category: "contract", validation: { required: true } },
+      { id: "contract_price_words", label: "Стоимость прописью", type: "text", defaultValue: "", category: "contract" },
+    ],
+    previewTemplate: `
+<div class="pl-[20mm] pr-[15mm] pt-[20mm] pb-[20mm] font-serif text-base leading-normal text-zinc-900 bg-white">
+  <div class="flex justify-between mb-6 text-xs font-semibold">
+    <div>г. {{{city}}}</div>
+    <div>«{{{date}}}»</div>
+  </div>
+  <div class="doc-title text-center font-bold text-base uppercase mb-2">Договор купли-продажи транспортного средства</div>
+  <div class="text-center text-xs mb-6">№ {{{car_plate}}}</div>
+  <div class="border-b border-zinc-300 mb-6"></div>
+
+  <div class="doc-sides grid grid-cols-2 gap-6 mb-6">
+    <div>
+      <div class="doc-sides-title">Продавец</div>
+      <p class="mb-1 text-sm"><strong>{{{seller_fio}}}</strong></p>
+      <p class="text-xs mb-0.5">Паспорт: {{{seller_passport}}}</p>
+      <p class="text-xs mb-0.5">Адрес: {{{seller_address}}}</p>
+    </div>
+    <div>
+      <div class="doc-sides-title">Покупатель</div>
+      <p class="mb-1 text-sm"><strong>{{{buyer_fio}}}</strong></p>
+      <p class="text-xs mb-0.5">Паспорт: {{{buyer_passport}}}</p>
+      <p class="text-xs mb-0.5">Адрес: {{{buyer_address}}}</p>
+    </div>
+  </div>
+
+  <p class="mb-4 text-justify">
+    Продавец передает в собственность Покупателю, а Покупатель принимает и оплачивает транспортное средство:
+  </p>
+
+  <table class="w-full border-collapse mb-4 text-xs">
+    <tr><th class="border border-zinc-400 p-1 text-left">Марка, модель</th><td class="border border-zinc-400 p-1">{{{car_brand}}}</td></tr>
+    <tr><th class="border border-zinc-400 p-1 text-left">Год выпуска</th><td class="border border-zinc-400 p-1">{{{car_year}}}</td></tr>
+    <tr><th class="border border-zinc-400 p-1 text-left">Идентификационный номер (VIN)</th><td class="border border-zinc-400 p-1">{{{car_vin}}}</td></tr>
+    <tr><th class="border border-zinc-400 p-1 text-left">Государственный регистрационный знак</th><td class="border border-zinc-400 p-1">{{{car_plate}}}</td></tr>
+    <tr><th class="border border-zinc-400 p-1 text-left">Цвет</th><td class="border border-zinc-400 p-1">{{{car_color}}}</td></tr>
+    {{#car_pts}}<tr><th class="border border-zinc-400 p-1 text-left">Паспорт ТС (ПТС)</th><td class="border border-zinc-400 p-1">{{{car_pts}}}</td></tr>{{/car_pts}}
+    <tr><th class="border border-zinc-400 p-1 text-left">Свидетельство о регистрации (СТС)</th><td class="border border-zinc-400 p-1">{{{car_sts}}}</td></tr>
+  </table>
+
+  <div class="doc-price mb-4">
+    <p class="text-sm">Цена договора: <strong>{{{contract_price}}} рублей</strong></p>
+    <p class="text-xs text-zinc-600">(прописью: <em>{{{contract_price_words}}}</em>)</p>
+  </div>
+
+  <p class="mb-4 text-justify text-xs">
+    Продавец гарантирует, что Транспортное средство не находится в залоге, под арестом, не обременено правами третьих лиц. Деньги за ТС переданы Продавцу полностью при подписании настоящего договора. Настоящий договор составлен в двух экземплярах, имеющих равную юридическую силу.
+  </p>
+
+  <div class="grid grid-cols-2 gap-6 mt-8 text-xs">
+    <div>
+      <div class="font-bold mb-2 uppercase text-black">Продавец:</div>
+      <p class="mb-1"><strong>{{{seller_fio}}}</strong></p>
+      <div class="mt-8 border-b border-zinc-900 w-44 h-5 flex justify-end items-end text-[10px] text-zinc-400">Подпись Продавца</div>
+    </div>
+    <div>
+      <div class="font-bold mb-2 uppercase text-black">Покупатель:</div>
+      <p class="mb-1"><strong>{{{buyer_fio}}}</strong></p>
+      <div class="mt-8 border-b border-zinc-900 w-44 h-5 flex justify-end items-end text-[10px] text-zinc-400">Подпись Покупателя</div>
     </div>
   </div>
 </div>`,
