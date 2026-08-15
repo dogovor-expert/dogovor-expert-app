@@ -1,4 +1,4 @@
-import {
+﻿import {
   Document,
   Paragraph,
   TextRun,
@@ -28,7 +28,7 @@ function parseHtmlToDocx(html: string): (Paragraph | Table)[] {
       if (text) {
         elements.push(
           new Paragraph({
-            children: [new TextRun({ text, size: 24, font: "PT Serif" })],
+            children: [new TextRun({ text, size: 24, font: "PT Astra Sans" })],
             spacing: { after: 100, line: 360 },
           })
         );
@@ -53,7 +53,7 @@ function parseHtmlToDocx(html: string): (Paragraph | Table)[] {
             children.push(
               new TextRun({
                 text: t,
-                size: 24, font: "PT Serif",
+                size: 24, font: "PT Astra Sans",
                 bold: isHeading ||
                   (inlineNode.parentElement as HTMLElement)?.tagName === "STRONG" ||
                   (inlineNode.parentElement as HTMLElement)?.tagName === "B",
@@ -84,7 +84,7 @@ function parseHtmlToDocx(html: string): (Paragraph | Table)[] {
                   })
                 );
               } catch {
-                // пропускаем битые изображения
+                // РїСЂРѕРїСѓСЃРєР°РµРј Р±РёС‚С‹Рµ РёР·РѕР±СЂР°Р¶РµРЅРёСЏ
               }
             }
             return;
@@ -98,7 +98,7 @@ function parseHtmlToDocx(html: string): (Paragraph | Table)[] {
               children.push(
                 new TextRun({
                   text: t,
-                  size: 24, font: "PT Serif",
+                  size: 24, font: "PT Astra Sans",
                   bold: isBold,
                   italics: isItalic,
                   color: isHeading ? "1A3C6C" : undefined,
@@ -112,7 +112,7 @@ function parseHtmlToDocx(html: string): (Paragraph | Table)[] {
       el.childNodes.forEach(processInline);
 
       if (children.length === 0 && text) {
-        children.push(new TextRun({ text, size: 24, font: "PT Serif" }));
+        children.push(new TextRun({ text, size: 24, font: "PT Astra Sans" }));
       }
 
       if (children.length > 0) {
@@ -142,7 +142,7 @@ function parseHtmlToDocx(html: string): (Paragraph | Table)[] {
                   children: [
                     new TextRun({
                       text: td.textContent?.trim() || "",
-                      size: 22, font: "PT Serif",
+                      size: 22, font: "PT Astra Sans",
                       bold: td.tagName === "TH",
                     }),
                   ],

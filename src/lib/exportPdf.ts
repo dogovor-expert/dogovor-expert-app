@@ -65,10 +65,10 @@ async function getFontBytes(): Promise<{
 }> {
   if (!fontBytesCache.regular) {
     const [regular, bold, italic, bolditalic] = await Promise.all([
-      fetch("/fonts/pt-serif-regular.ttf").then((r) => r.arrayBuffer()),
-      fetch("/fonts/pt-serif-bold.ttf").then((r) => r.arrayBuffer()),
-      fetch("/fonts/pt-serif-italic.ttf").then((r) => r.arrayBuffer()),
-      fetch("/fonts/pt-serif-bolditalic.ttf").then((r) => r.arrayBuffer()),
+      fetch("/fonts/pt-astra-regular.ttf").then((r) => r.arrayBuffer()),
+      fetch("/fonts/pt-astra-bold.ttf").then((r) => r.arrayBuffer()),
+      fetch("/fonts/pt-astra-italic.ttf").then((r) => r.arrayBuffer()),
+      fetch("/fonts/pt-astra-bolditalic.ttf").then((r) => r.arrayBuffer()),
     ]);
     fontBytesCache = { regular, bold, italic, bolditalic };
   }
@@ -96,7 +96,7 @@ function getMeasurer(): CanvasRenderingContext2D {
 
 function measureText(text: string, fontSize: number, bold: boolean, italic: boolean): number {
   const ctx = getMeasurer();
-  const style = `${italic ? "italic " : ""}${bold ? "bold " : ""}${fontSize}px "PT Serif", serif`;
+  const style = `${italic ? "italic " : ""}${bold ? "bold " : ""}${fontSize}px "PT Astra Sans", sans-serif`;
   ctx.font = style;
   return ctx.measureText(text).width;
 }

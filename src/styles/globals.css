@@ -5,29 +5,29 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
 @font-face {
-  font-family: "PT Serif";
-  src: url('/fonts/pt-serif-regular.ttf') format('truetype');
+  font-family: "PT Astra Sans";
+  src: url('/fonts/pt-astra-regular.ttf') format('truetype');
   font-weight: 400;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
-  font-family: "PT Serif";
-  src: url('/fonts/pt-serif-bold.ttf') format('truetype');
+  font-family: "PT Astra Sans";
+  src: url('/fonts/pt-astra-bold.ttf') format('truetype');
   font-weight: 700;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
-  font-family: "PT Serif";
-  src: url('/fonts/pt-serif-italic.ttf') format('truetype');
+  font-family: "PT Astra Sans";
+  src: url('/fonts/pt-astra-italic.ttf') format('truetype');
   font-weight: 400;
   font-style: italic;
   font-display: swap;
 }
 @font-face {
-  font-family: "PT Serif";
-  src: url('/fonts/pt-serif-bolditalic.ttf') format('truetype');
+  font-family: "PT Astra Sans";
+  src: url('/fonts/pt-astra-bolditalic.ttf') format('truetype');
   font-weight: 700;
   font-style: italic;
   font-display: swap;
@@ -94,12 +94,12 @@
     flex-shrink: 0;
     print-color-adjust: exact;
     -webkit-print-color-adjust: exact;
-    font-family: "PT Serif", Georgia, "Times New Roman", serif;
+    font-family: "PT Astra Sans", "Times New Roman", serif;
   }
 
   .a4-sheet .font-serif,
   .a4-sheet [class*="font-serif"] {
-    font-family: "PT Serif", Georgia, "Times New Roman", serif !important;
+    font-family: "PT Astra Sans", "Times New Roman", serif !important;
   }
 
   .a4-sheet .doc-title {
@@ -174,12 +174,12 @@
     page-break-after: always;
     break-after: page;
     overflow: hidden;
-    font-family: "PT Serif", Georgia, "Times New Roman", serif;
+    font-family: "PT Astra Sans", "Times New Roman", serif;
   }
 
   .a4-sheet .font-serif,
   .a4-sheet [class*="font-serif"] {
-    font-family: "PT Serif", Georgia, "Times New Roman", serif;
+    font-family: "PT Astra Sans", "Times New Roman", serif;
   }
 
   .a4-sheet table {
