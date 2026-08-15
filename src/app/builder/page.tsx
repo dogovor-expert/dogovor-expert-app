@@ -851,7 +851,7 @@ function HomeContent() {
         title: packTemplates.length > 1 ? "Паспорт сделки" : template.name,
         watermark: subscriptionActive
           ? undefined
-          : "Сформировано бесплатно на сервисе Dogovor — PRO-версия без пометки",
+          : "Сформировано бесплатно на сервисе Dogovor",
       });
       setExportPages(pages);
       setTimeout(() => setExportPages(0), 3000);
@@ -1001,7 +1001,7 @@ function HomeContent() {
         title: packTemplates.length > 1 ? "Паспорт сделки" : template.name,
         watermark: subscriptionActive
           ? undefined
-          : "Сформировано бесплатно на сервисе Dogovor — PRO-версия без пометки",
+          : "Сформировано бесплатно на сервисе Dogovor",
       });
       const buf = await blob.arrayBuffer();
       let bin = "";
