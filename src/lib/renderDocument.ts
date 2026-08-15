@@ -42,7 +42,7 @@ export interface RenderOptions {
  * значения — поля основной формы по приоритету.
  */
 const PACK_FIELD_ALIASES: Record<string, string[]> = {
-  seller_fio: ["recipient_fio", "donor_fio", "owner_fio", "lessor_fio", "landlord_fio", "principal_fio", "payer_fio", "party1_fio", "executor_fio", "guardian_fio"],
+  seller_fio: ["recipient_fio", "donor_fio", "owner_fio", "lessor_fio", "landlord_fio", "principal_fio", "payer_fio", "party1_fio", "executor_fio", "guardian_fio", "applicant_fio"],
   buyer_fio: ["sender_fio", "donee_fio", "customer_fio", "borrower_fio", "lessee_fio", "tenant_fio", "agent_fio", "receiver_fio", "party2_fio", "keeper_fio"],
   seller_passport: ["recipient_passport", "donor_passport", "owner_passport", "landlord_passport", "principal_passport", "payer_passport", "party1_passport"],
   buyer_passport: ["sender_passport", "donee_passport", "customer_passport", "borrower_passport", "tenant_passport", "agent_passport", "receiver_passport", "party2_passport"],
@@ -50,6 +50,10 @@ const PACK_FIELD_ALIASES: Record<string, string[]> = {
   buyer_address: ["recipient_address", "customer_address", "borrower_address", "tenant_address", "agent_address"],
   seller_phone: ["sender_phone", "landlord_phone", "owner_phone", "principal_phone"],
   buyer_phone: ["recipient_phone", "tenant_phone", "agent_phone", "customer_phone"],
+  applicant_fio: ["seller_fio", "owner_fio", "recipient_fio"],
+  owner_phone: ["seller_phone"],
+  car_brand: ["car_brand", "car_make", "car_model"],
+  car_make: ["car_brand"],
   seller_company: ["executor_company", "supplier_company", "lender_company", "lessor_company", "landlord_company", "dev_company"],
   buyer_company: ["customer_company", "borrower_company", "lessee_company", "tenant_company", "client_company", "debtor_company"],
   seller_inn: ["executor_inn", "supplier_inn", "lender_inn", "dev_inn", "landlord_inn"],
@@ -62,7 +66,6 @@ const PACK_FIELD_ALIASES: Record<string, string[]> = {
   seller_corr_account: ["executor_corr_account"],
   contract_price: ["amount", "car_price", "loan_amount", "rent_amount", "storage_price", "freight_cost", "shoot_price", "service_price", "uc_amount", "loan_sum", "contract_sum"],
   contract_date: ["date", "dkp_date"],
-  car_brand: ["car_brand"],
   car_vin: ["car_vin"],
   car_plate: ["car_plate"],
   car_year: ["car_year"],
