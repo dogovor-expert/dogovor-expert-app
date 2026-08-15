@@ -32,7 +32,7 @@ export function SidebarLeft({ children, navItems, accentColor = "brand", user }:
             <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center text-white text-sm font-bold", `bg-${accentColor}-500`)}>
               D
             </div>
-            <span className="font-semibold text-gray-900">Dogovor.fun</span>
+            <span className="font-semibold text-gray-900">Dogovor.expert</span>
           </div>
           <button onClick={() => setOpen(false)} className="lg:hidden p-1 hover:bg-gray-100 rounded-lg">
             <X className="w-5 h-5 text-gray-500" />
