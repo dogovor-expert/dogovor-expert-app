@@ -2,9 +2,17 @@ import { NextResponse } from "next/server";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+const BODY_HTML = (safeFilename: string) => `<div style="font-family:Arial,sans-serif;max-width:520px;margin:0 auto;padding:24px;">
+  <h2 style="margin:0 0 12px;color:#111827;">Ваш документ готов</h2>
+  <p style="margin:0 0 16px;color:#374151;">Здравствуйте! Во вложении — сформированный на сервисе <b>Dogovor.fun</b> документ <b>${safeFilename}</b>.</p>
+  <p style="margin:0 0 16px;color:#374151;">Документ носит справочный характер и не заменяет консультацию юриста по вопросам, требующим квалифицированной проверки.</p>
+  <p style="margin:0;color:#6b7280;font-size:12px;">Письмо отправлено автоматически. Отвечать на него не нужно.</p>
+</div>`;
+
 export async function POST(req: Request) {
-  const apiKey = process.env.RESEND_API_KEY;
-  if (!apiKey) {
+  const zeptoToken = process.env.ZEPTOMAIL_TOKEN;
+  const resendKey = process.env.RESEND_API_KEY;
+  if (!zeptoToken && !resendKey) {
     return NextResponse.json(
       { error: "email_not_configured" },
       { status: 501 }
@@ -31,28 +39,48 @@ export async function POST(req: Request) {
 
   const safeFilename =
     filename.replace(/[^а-яА-Яa-zA-Z0-9 _-]/g, "").slice(0, 120) + ".pdf";
-  const from =
-    process.env.EMAIL_FROM || "Dogovor.fun <no-reply@dogovor.fun>";
+  const fromRaw =
+    process.env.EMAIL_FROM || "no-reply@dogovor.fun";
+  const fromName = process.env.EMAIL_FROM_NAME || "Dogovor.fun";
 
-  const res = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      from,
-      to: [email],
-      subject: "Ваш документ с Dogovor.fun",
-      html: `<div style="font-family:Arial,sans-serif;max-width:520px;margin:0 auto;padding:24px;">
-        <h2 style="margin:0 0 12px;color:#111827;">Ваш документ готов</h2>
-        <p style="margin:0 0 16px;color:#374151;">Здравствуйте! Во вложении — сформированный на сервисе <b>Dogovor.fun</b> документ <b>${safeFilename}</b>.</p>
-        <p style="margin:0 0 16px;color:#374151;">Документ носит справочный характер и не заменяет консультацию юриста по вопросам, требующим квалифицированной проверки.</p>
-        <p style="margin:0;color:#6b7280;font-size:12px;">Письмо отправлено автоматически. Отвечать на него не нужно.</p>
-      </div>`,
-      attachments: [{ filename: safeFilename, content: pdfBase64 }],
-    }),
-  });
+  let res: Response;
+  if (zeptoToken) {
+    res = await fetch("https://api.zeptomail.com/v1.1/email/single", {
+      method: "POST",
+      headers: {
+        Authorization: `Zoho-enczapikey ${zeptoToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        from: { address: fromRaw, name: fromName },
+        to: [{ email_address: { address: email } }],
+        subject: "Ваш документ с Dogovor.fun",
+        htmlbody: BODY_HTML(safeFilename),
+        attachments: [
+          {
+            base64: pdfBase64,
+            filename: safeFilename,
+            mime_type: "application/pdf",
+          },
+        ],
+      }),
+    });
+  } else {
+    res = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${resendKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        from: `${fromName} <${fromRaw}>`,
+        to: [email],
+        subject: "Ваш документ с Dogovor.fun",
+        html: BODY_HTML(safeFilename),
+        attachments: [{ filename: safeFilename, content: pdfBase64 }],
+      }),
+    });
+  }
 
   const data = await res.json().catch(() => null);
   if (!res.ok) {
@@ -61,5 +89,7 @@ export async function POST(req: Request) {
       { status: 502 }
     );
   }
-  return NextResponse.json({ data: { id: data?.id } });
+  return NextResponse.json({
+    data: { id: data?.id || (data?.message_id ?? null) },
+  });
 }
