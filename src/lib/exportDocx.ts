@@ -28,7 +28,7 @@ function parseHtmlToDocx(html: string): (Paragraph | Table)[] {
       if (text) {
         elements.push(
           new Paragraph({
-            children: [new TextRun({ text, size: 24, font: "Times New Roman" })],
+            children: [new TextRun({ text, size: 24, font: "PT Serif" })],
             spacing: { after: 100, line: 360 },
           })
         );
@@ -44,6 +44,7 @@ function parseHtmlToDocx(html: string): (Paragraph | Table)[] {
 
     if (tag === "div" || tag === "p" || tag === "li") {
       const children: (TextRun | ImageRun)[] = [];
+      const isHeading = tag === "div" && el.className?.includes("font-bold");
 
       const processInline = (inlineNode: Node) => {
         if (inlineNode.nodeType === Node.TEXT_NODE) {
@@ -52,16 +53,18 @@ function parseHtmlToDocx(html: string): (Paragraph | Table)[] {
             children.push(
               new TextRun({
                 text: t,
-                size: 24, font: "Times New Roman",
-                bold: (inlineNode.parentElement as HTMLElement)?.tagName === "STRONG" ||
+                size: 24, font: "PT Serif",
+                bold: isHeading ||
+                  (inlineNode.parentElement as HTMLElement)?.tagName === "STRONG" ||
                   (inlineNode.parentElement as HTMLElement)?.tagName === "B",
+                color: isHeading ? "1A3C6C" : undefined,
               })
             );
           }
         } else if (inlineNode.nodeType === Node.ELEMENT_NODE) {
           const inlineEl = inlineNode as HTMLElement;
           const isBold =
-            inlineEl.tagName === "STRONG" || inlineEl.tagName === "B";
+            isHeading || inlineEl.tagName === "STRONG" || inlineEl.tagName === "B";
           const isItalic =
             inlineEl.tagName === "EM" || inlineEl.tagName === "I";
 
@@ -95,9 +98,10 @@ function parseHtmlToDocx(html: string): (Paragraph | Table)[] {
               children.push(
                 new TextRun({
                   text: t,
-                  size: 24, font: "Times New Roman",
+                  size: 24, font: "PT Serif",
                   bold: isBold,
                   italics: isItalic,
+                  color: isHeading ? "1A3C6C" : undefined,
                 })
               );
             }
@@ -108,7 +112,7 @@ function parseHtmlToDocx(html: string): (Paragraph | Table)[] {
       el.childNodes.forEach(processInline);
 
       if (children.length === 0 && text) {
-        children.push(new TextRun({ text, size: 24, font: "Times New Roman" }));
+        children.push(new TextRun({ text, size: 24, font: "PT Serif" }));
       }
 
       if (children.length > 0) {
@@ -138,7 +142,7 @@ function parseHtmlToDocx(html: string): (Paragraph | Table)[] {
                   children: [
                     new TextRun({
                       text: td.textContent?.trim() || "",
-                      size: 22, font: "Times New Roman",
+                      size: 22, font: "PT Serif",
                       bold: td.tagName === "TH",
                     }),
                   ],
@@ -186,14 +190,14 @@ export async function exportToDocx(
     sections: [
       {
         properties: {
-          page: {
-            margin: {
-              top: 1134, // 1 inch = 1440 twips
-              right: 454,
-              bottom: 1077,
-              left: 1984,
+page: {
+              margin: {
+                top: 1134, // 20 mm = 1134 twips
+                right: 851, // 15 mm
+                bottom: 1134, // 20 mm
+                left: 1134, // 20 mm
+              },
             },
-          },
         },
         children: docElements,
       },
