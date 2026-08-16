@@ -1,6 +1,7 @@
 "use client";
 import { useMemo, useState } from "react";
 import { Calculator, Shield, AlertTriangle, Check } from "lucide-react";
+import PampaduWidget from "@/components/osago/PampaduWidget";
 
 const TB_MIN = 1399;
 const TB_MAX = 8665;
@@ -98,6 +99,19 @@ export default function OsagoPage() {
           <h1 className="text-xl font-bold text-gray-900">Калькулятор ОСАГО 2026</h1>
           <p className="text-sm text-gray-500">Расчёт по тарифам Указания Банка России № 7204-У (с 09.12.2025)</p>
         </div>
+      </div>
+
+      <div className="bg-white border border-gray-200 rounded-xl p-6 space-y-5">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-indigo-50 border border-indigo-200 flex items-center justify-center text-indigo-500">
+            <Shield className="h-5 w-5" />
+          </div>
+          <div>
+            <h2 className="text-base font-bold text-gray-900">ОСАГО онлайн — расчёт и оформление</h2>
+            <p className="text-xs text-gray-500">Сравните предложения страховых компаний и оформите полис за пару минут.</p>
+          </div>
+        </div>
+        <PampaduWidget />
       </div>
 
       <div className="bg-white border border-gray-200 rounded-xl p-6 space-y-5">

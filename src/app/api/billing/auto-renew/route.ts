@@ -37,7 +37,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "no_saved_payment_method" }, { status: 400 });
   }
 
-  const host = req.headers.get("host") ?? "dogovor-templates.vercel.app";
+  const host = req.headers.get("host") ?? "dogovor.expert";
   const proto = host.includes("localhost") || host.includes("127.0.0.1") ? "http" : "https";
 
   const res = await fetch("https://api.yookassa.ru/v3/payments", {

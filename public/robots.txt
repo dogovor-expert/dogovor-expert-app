@@ -9,4 +9,4 @@ Disallow: /trash
 Disallow: /preview
 Disallow: /api/
 
-Sitemap: https://dogovor-templates.vercel.app/sitemap.xml
+Sitemap: https://dogovor.expert/sitemap.xml
