@@ -1,7 +1,7 @@
 "use client";
 import { useMemo, useState } from "react";
 import { Calculator, Shield, AlertTriangle, Check } from "lucide-react";
-import PampaduWidget from "@/components/osago/PampaduWidget";
+import InzuroWidget from "@/components/osago/InzuroWidget";
 
 const TB_MIN = 1399;
 const TB_MAX = 8665;
@@ -111,7 +111,7 @@ export default function OsagoPage() {
             <p className="text-xs text-gray-500">Сравните предложения страховых компаний и оформите полис за пару минут.</p>
           </div>
         </div>
-        <PampaduWidget />
+        <InzuroWidget />
       </div>
 
       <div className="bg-white border border-gray-200 rounded-xl p-6 space-y-5">
