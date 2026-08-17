@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Landmark, Check, X as XIcon, Calculator, Hash,
   Scale, Percent, Banknote, Home, Baby, FileWarning, TrendingUp, ShieldCheck,
@@ -120,6 +120,10 @@ return (
 export default function UtilsPage() {
   const [group, setGroup] = useState("law");
   const [active, setActive] = useState("docs");
+  const [today, setToday] = useState("");
+  useEffect(() => {
+    setToday(new Date().toLocaleDateString("ru-RU"));
+  }, []);
   const currentGroup = GROUPS.find((g) => g.id === group)!;
   const current = currentGroup.tools.find((t) => t.id === active)!;
   const Icon = current.icon;
@@ -144,7 +148,7 @@ export default function UtilsPage() {
       <div className="rounded-xl p-3 flex items-start gap-2.5 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs">
         <ShieldCheck className="w-4 h-4 mt-0.5 flex-shrink-0 text-emerald-500" />
         <span>
-          <b>Актуальные данные на {new Date().toLocaleDateString("ru-RU")}:</b> ключевая ставка ЦБ (сейчас 14,00%), взносы ИП 2026 (57 390 ₽), МРОТ 27 093 ₽, НДС 22% (с 2026), ставки по НК/TK/ЖК/СК РФ.
+          <b>Актуальные данные на {today}:</b> ключевая ставка ЦБ (сейчас 14,00%), взносы ИП 2026 (57 390 ₽), МРОТ 27 093 ₽, НДС 22% (с 2026), ставки по НК/TK/ЖК/СК РФ.
         </span>
       </div>
 

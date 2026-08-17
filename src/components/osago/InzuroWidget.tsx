@@ -48,10 +48,10 @@ export default function InzuroWidget() {
   return (
     <div className="space-y-3">
       <div className="flex items-center gap-2">
-        <span className="inline-flex items-center gap-1 text-[10px] font-mono font-semibold uppercase tracking-wide text-amber-700 bg-amber-50 border border-amber-200 rounded px-2 py-0.5">
+        <span className="inline-flex items-center gap-1 text-[10px] font-mono font-semibold uppercase tracking-wide text-white bg-brand-600 border border-brand-700 rounded px-2.5 py-1 shadow-sm">
           Партнёрский сервис
         </span>
-        <span className="text-[10px] text-gray-400">расчёт и оформление выполняет Инзуро (inzuro.ru)</span>
+        <span className="text-[11px] text-gray-400">расчёт и оформление выполняет Инзуро (inzuro.ru)</span>
       </div>
 
       {consented ? (
@@ -63,13 +63,13 @@ export default function InzuroWidget() {
           />
         </div>
       ) : (
-        <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 space-y-3">
+        <div className="bg-gradient-to-b from-white to-brand-50/50 border border-brand-200 rounded-xl p-5 space-y-3">
           <p className="text-xs text-gray-600 leading-relaxed">
             Этот блок — партнёрский сервис. Расчёт стоимости полиса ОСАГО и его оформление выполняет
             компания <b>Инзуро</b> через встроенный калькулятор. Для расчёта вам потребуется ввести
             государственный номер, VIN и паспортные данные —{" "}
             <b>эти данные передаются партнёру Инзуро и страховым компаниям</b> и не хранятся на
-            серверах Dogovor. Наш собственный справочный калькулятор доступен ниже на этой странице.
+            серверах Dogovor. Проверить свой коэффициент КБМ по реестру РСА можно ниже на этой странице.
           </p>
           <label className="flex items-start gap-2.5 text-xs text-gray-700 cursor-pointer select-none">
             <input
@@ -90,7 +90,7 @@ export default function InzuroWidget() {
           <button
             onClick={accept}
             disabled={!checked}
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-xs font-semibold text-white bg-brand-600 hover:bg-brand-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold text-white bg-gradient-to-r from-brand-500 to-brand-600 hover:from-brand-600 hover:to-brand-700 shadow-md shadow-brand-500/30 disabled:bg-gray-300 disabled:from-gray-300 disabled:to-gray-300 disabled:shadow-none disabled:cursor-not-allowed transition-all"
           >
             <Shield className="w-4 h-4" />
             Открыть калькулятор ОСАГО
