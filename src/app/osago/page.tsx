@@ -1,7 +1,6 @@
 "use client";
 import { Calculator, Shield } from "lucide-react";
 import InzuroWidget from "@/components/osago/InzuroWidget";
-import KbmFrame from "@/components/osago/KbmFrame";
 
 export default function OsagoPage() {
   return (
@@ -11,9 +10,9 @@ export default function OsagoPage() {
           <Calculator className="h-6 w-6" />
         </div>
         <div>
-          <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">ОСАГО и КБМ</h1>
-          <p className="text-sm text-gray-500">
-            Расчёт и оформление полиса у партнёра и проверка коэффициента бонус-малус по реестру РСА.
+          <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">ОСАГО</h1>
+          <p className="text-sm text-gray-600">
+            Расчёт и оформление полиса у партнёра онлайн.
           </p>
         </div>
       </div>
@@ -34,8 +33,6 @@ export default function OsagoPage() {
           <InzuroWidget />
         </div>
       </div>
-
-      <KbmFrame />
     </div>
   );
 }

@@ -104,7 +104,7 @@ export default function KaskoQuote() {
           ] as const
         ).map((q) => (
           <div key={q.label} className="space-y-1">
-            <label className="text-[10px] font-mono text-gray-500">{q.label}</label>
+            <label className="text-[10px] font-mono text-gray-600">{q.label}</label>
             <div className="grid gap-1.5" style={{ gridTemplateColumns: `repeat(${q.opts.length}, minmax(0, 1fr))` }}>
               {q.opts.map((o) => (
                 <button key={o.id} onClick={() => { q.set(o.id as never); setResult(null); }}
@@ -125,10 +125,10 @@ export default function KaskoQuote() {
         <div className="bg-gray-50 rounded-xl p-4 border border-gray-200 space-y-2">
           <div className="flex items-center gap-2">
             <Check className="w-4 h-4 text-emerald-500" />
-            <span className="text-[10px] font-mono text-gray-500">Оценочная премия КАСКО — тариф {result.rate.toLocaleString("ru-RU")}%</span>
+            <span className="text-[10px] font-mono text-gray-600">Оценочная премия КАСКО — тариф {result.rate.toLocaleString("ru-RU")}%</span>
           </div>
           <p className="text-2xl font-bold text-gray-900">{fmt(result.min)} – {fmt(result.max)} ₽/год</p>
-          <p className="text-[11px] text-gray-500">Диапазон по рынку: {fmt(result.min)}…{fmt(result.max)} ₽ в год. Точный тариф устанавливает страховая компания.</p>
+          <p className="text-[11px] text-gray-600">Диапазон по рынку: {fmt(result.min)}…{fmt(result.max)} ₽ в год. Точный тариф устанавливает страховая компания.</p>
         </div>
       )}
 
@@ -162,13 +162,13 @@ export default function KaskoQuote() {
             Скоро
           </span>
           <p className="text-sm font-bold text-gray-800">Подбор КАСКО у партнёров-страховщиков</p>
-          <p className="text-[11px] text-gray-500 max-w-md mx-auto leading-relaxed">
+          <p className="text-[11px] text-gray-600 max-w-md mx-auto leading-relaxed">
             Оценка премии уже работает. Подбор полиса от нескольких страховых компаний — запустим в ближайшее время.
           </p>
         </div>
       )}
 
-      <p className="text-[11px] text-gray-400 leading-relaxed flex items-start gap-1.5">
+      <p className="text-[11px] text-gray-600 leading-relaxed flex items-start gap-1.5">
         <ShieldQuestion className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
         КАСКО — добровольное страхование от ущерба и хищения. Тариф зависит от возраста и стажа водителя, стоимости авто, региона и франшизы: в среднем 3–11% от стоимости авто в год. Расчёт оценочный, окончательную цену определяет страховая компания.
       </p>

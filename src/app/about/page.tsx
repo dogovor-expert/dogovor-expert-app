@@ -5,7 +5,7 @@ import { SITE_NAME } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: "О сервисе",
-  description: `${SITE_NAME} — бесплатный конструктор договоров с работой в браузере: как устроен сервис, принципы приватности, что в плане развития.`,
+  description: `${SITE_NAME} — конструктор договоров в браузере: как устроен сервис, принципы приватности, планы развития.`,
   alternates: { canonical: "/about" },
 };
 
@@ -25,7 +25,7 @@ export default function AboutPage() {
         </div>
         <div>
           <h1 className="text-2xl font-bold text-gray-900">О сервисе</h1>
-          <p className="text-gray-500 text-sm">Простой путь от идеи до готового документа</p>
+          <p className="text-gray-600 text-sm">Простой путь от идеи до готового документа</p>
         </div>
       </div>
       <div className="mb-8">
@@ -35,7 +35,7 @@ export default function AboutPage() {
       <Card variant="default" padding="md" className="mb-6">
         <h2 className="font-semibold text-gray-900 mb-3">Что это</h2>
         <p className="text-sm text-gray-600 leading-relaxed">
-          {SITE_NAME} — бесплатный онлайн-конструктор документов. Выбираете шаблон, заполняете форму —
+          Бесплатный онлайн-конструктор документов: выбираете шаблон, заполняете форму —
           получаете готовый документ: договор купли-продажи, аренды, подряда, расписку, счёт. Без регистрации,
           без установки и — что главное — без передачи данных на сервер.
         </p>

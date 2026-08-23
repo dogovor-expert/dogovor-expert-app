@@ -2,7 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
 const AUTH_PAGES = new Set(["/login"]);
-const PROTECTED_PREFIXES = ["/dashboard", "/documents", "/settings", "/trash", "/billing", "/security"];
+const PROTECTED_PREFIXES = ["/dashboard", "/settings", "/trash", "/billing", "/security", "/debug"];
 
 function decodeB64url(input: string): string {
   const b64 = input.replace(/-/g, "+").replace(/_/g, "/");
@@ -16,11 +16,15 @@ function sessionAal(request: NextRequest): "aal1" | "aal2" | null {
   const cookie = request.cookies.getAll().find((c) => c.name.endsWith("-auth-token"));
   if (!cookie) return null;
   try {
+    // @supabase/ssr хранит сессию в формате "base64-<base64url(JSON)>".
+    const value = cookie.value.startsWith("base64-")
+      ? cookie.value.slice("base64-".length)
+      : cookie.value;
     let json: string;
     try {
-      json = decodeB64url(cookie.value);
+      json = decodeB64url(value);
     } catch {
-      json = cookie.value;
+      json = value;
     }
     const parsed = JSON.parse(json) as { access_token?: string };
     const token = parsed.access_token ?? "";
@@ -60,7 +64,10 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const isProtected = PROTECTED_PREFIXES.some((p) => pathname.startsWith(p));
+  const isProtected =
+    PROTECTED_PREFIXES.some((p) => pathname.startsWith(p)) ||
+    pathname === "/documents" ||
+    pathname === "/documents/";
   const isAdminPage = pathname.startsWith("/admin");
 
   if (isAdminPage) {
@@ -72,6 +79,23 @@ export async function middleware(request: NextRequest) {
       .single();
     if (!profile?.is_admin) {
       return NextResponse.redirect(new URL("/dashboard", request.url));
+    }
+    // Вторая линия защиты: требуем 2FA (aal2).
+    // - всегда, если у админа включена MFA;
+    // - либо принудительно для всех админов, если ADMIN_REQUIRE_2FA=true.
+    const mfaEnabled = user.user_metadata?.mfa_enabled === true;
+    const force2fa = process.env.ADMIN_REQUIRE_2FA === "true";
+    if ((mfaEnabled || force2fa) && sessionAal(request) !== "aal2") {
+      if (mfaEnabled) {
+        const url = new URL("/login", request.url);
+        url.searchParams.set("mfa", "1");
+        url.searchParams.set("next", pathname);
+        return NextResponse.redirect(url);
+      }
+      // 2FA принудительно требуется, но ещё не настроена — отправляем на настройку.
+      const url = new URL("/settings/security", request.url);
+      url.searchParams.set("enforce_2fa", "1");
+      return NextResponse.redirect(url);
     }
     return response;
   }
@@ -110,5 +134,6 @@ export const config = {
     "/billing/:path*",
     "/security/:path*",
     "/admin/:path*",
+    "/debug/:path*",
   ],
 };

@@ -142,17 +142,35 @@ export function isFieldVisible(
   values: Record<string, string>
 ): boolean {
   if (!field.dependsOn) return true;
-  const depValue = values[field.dependsOn.fieldId] || "";
-  if (field.dependsOn.values) {
-    return field.dependsOn.values.includes(depValue);
-  }
-  return depValue === field.dependsOn.value;
+  const deps = Array.isArray(field.dependsOn)
+    ? field.dependsOn
+    : [field.dependsOn];
+  return deps.every((d) => {
+    const depValue = values[d.fieldId] || "";
+    if (d.values) {
+      return d.values.includes(depValue);
+    }
+    return depValue === d.value;
+  });
+}
+
+/** №9 аудита: прогресс заполнения обязательных полей (для индикатора в визарде). */
+export function requiredProgress(
+  template: LegalTemplate,
+  values: Record<string, string>
+): { filled: number; total: number } {
+  const req = template.fields.filter(
+    (f) => f.validation?.required && isFieldVisible(f, values)
+  );
+  return {
+    filled: req.filter((f) => values[f.id]?.trim()).length,
+    total: req.length,
+  };
 }
 
 export function normalizeOptions(
   options?: TemplateField["options"]
-): { label: string; value: string }[] {
-  if (!options) return [];
+): { label: string; value: string }[] {  if (!options) return [];
   return options.map((o) =>
     typeof o === "string" ? { label: o, value: o } : o
   );

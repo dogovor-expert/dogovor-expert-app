@@ -27,7 +27,7 @@ export default function SettingsHub() {
     <div>
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900">Настройки</h1>
-        <p className="text-gray-500 mt-1">Профиль, безопасность, уведомления и ваши данные</p>
+        <p className="text-gray-600 mt-1">Профиль, безопасность, уведомления и ваши данные</p>
       </div>
 
       <div className="flex gap-1 border-b border-gray-100 mb-6 overflow-x-auto scrollbar-thin">
@@ -41,7 +41,7 @@ export default function SettingsHub() {
               className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium whitespace-nowrap border-b-2 -mb-px transition-colors ${
                 isActive
                   ? "border-brand-500 text-brand-700"
-                  : "border-transparent text-gray-500 hover:text-gray-800"
+                  : "border-transparent text-gray-600 hover:text-gray-800"
               }`}
             >
               <Icon className="w-4 h-4" />

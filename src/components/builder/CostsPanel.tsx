@@ -14,7 +14,7 @@ export default function CostsPanel({
   return (
     <>
       <div className="mb-3">
-        <label className="block text-[10px] font-medium text-gray-500 mb-1">
+        <label className="block text-[10px] font-medium text-gray-600 mb-1">
           Срок владения (лет)
         </label>
         <select
@@ -50,7 +50,7 @@ export default function CostsPanel({
             >
               {item.label}
               {item.pending && (
-                <span className="block text-[10px] text-amber-600 font-normal">
+                <span className="block text-[10px] text-amber-700 font-normal">
                   {item.note}
                 </span>
               )}
@@ -60,7 +60,7 @@ export default function CostsPanel({
                 item.type === "total"
                   ? "text-brand-700"
                   : item.pending
-                    ? "text-amber-500"
+                    ? "text-amber-700"
                     : item.amount === 0
                       ? "text-emerald-600"
                       : "text-gray-900"

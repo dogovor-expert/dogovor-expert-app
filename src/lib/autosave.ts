@@ -9,6 +9,8 @@ export interface DraftData {
   activeTab: string;
   selectedVersion?: string;
   savedAt: string;
+  /** Сканы документов: слот -> dataURL (хранится только локально). */
+  photos?: Record<string, string[]>;
 }
 
 export interface DraftVersion {
@@ -24,7 +26,8 @@ export function saveDraft(
   values: Record<string, string>,
   checklist: Record<string, boolean>,
   activeTab: string,
-  selectedVersion?: string
+  selectedVersion?: string,
+  photos?: Record<string, string[]>
 ): void {
   const data: DraftData = {
     templateId,
@@ -33,6 +36,7 @@ export function saveDraft(
     activeTab,
     selectedVersion,
     savedAt: new Date().toISOString(),
+    photos,
   };
   try {
     localStorage.setItem(STORAGE_PREFIX + templateId, JSON.stringify(data));

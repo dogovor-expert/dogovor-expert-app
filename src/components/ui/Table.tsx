@@ -34,7 +34,7 @@ export function TableRow({ className, ...props }: HTMLAttributes<HTMLTableRowEle
 export function TableHeader({ className, ...props }: ThHTMLAttributes<HTMLTableHeaderCellElement>) {
   return (
     <th
-      className={cn("px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider", className)}
+      className={cn("px-4 py-3 text-xs font-semibold text-gray-600 uppercase tracking-wider", className)}
       {...props}
     />
   );

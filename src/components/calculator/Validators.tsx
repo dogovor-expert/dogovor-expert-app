@@ -51,14 +51,14 @@ export default function Validators() {
 
       <div className="space-y-3">
         <div className="space-y-1">
-          <label className="text-[10px] font-mono text-gray-500">{current.label}</label>
+          <label className="text-[10px] font-mono text-gray-600">{current.label}</label>
           <input type="text" value={value} onChange={(e) => { setValue(e.target.value); setResult(null); }}
             placeholder={current.placeholder}
             className="w-full bg-gray-50 border border-gray-200 text-xs py-2.5 px-3 rounded-lg text-gray-900 outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 font-mono" />
         </div>
         {current.needBik && (
           <div className="space-y-1">
-            <label className="text-[10px] font-mono text-gray-500">БИК банка</label>
+            <label className="text-[10px] font-mono text-gray-600">БИК банка</label>
             <input type="text" value={bik} onChange={(e) => setBik(e.target.value.replace(/\D/g, ""))}
               placeholder="044525225"
               className="w-full bg-gray-50 border border-gray-200 text-xs py-2.5 px-3 rounded-lg text-gray-900 outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 font-mono" />
@@ -79,7 +79,7 @@ export default function Validators() {
         </div>
       )}
 
-      <p className="text-[11px] text-gray-400 leading-relaxed flex items-start gap-1.5">
+      <p className="text-[11px] text-gray-600 leading-relaxed flex items-start gap-1.5">
         <Fingerprint className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
         СНИЛС — контроль по весам 9..1 (mod 101); ОГРН — (12 цифр mod 11) mod 10; ОГРНИП — (14 цифр mod 13) mod 10; расчётный счёт — веса 7,1,3 (mod 10) с учётом БИК; карты — алгоритм Луна.
       </p>

@@ -45,20 +45,20 @@ export default function Vacation() {
 
       <div className="space-y-3">
         <div className="space-y-1">
-          <label className="text-[10px] font-mono text-gray-500">Зарплата за 12 месяцев до отпуска (₽)</label>
+          <label className="text-[10px] font-mono text-gray-600">Зарплата за 12 месяцев до отпуска (₽)</label>
           <input type="number" value={salary12} onChange={(e) => setSalary12(e.target.value)}
             placeholder="Например 900000"
             className="w-full bg-gray-50 border border-gray-200 text-xs py-2.5 px-3 rounded-lg text-gray-900 outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500" />
         </div>
         {mode === "pay" ? (
           <div className="space-y-1">
-            <label className="text-[10px] font-mono text-gray-500">Дней отпуска</label>
+            <label className="text-[10px] font-mono text-gray-600">Дней отпуска</label>
             <input type="number" value={days} onChange={(e) => setDays(e.target.value)}
               className="w-full bg-gray-50 border border-gray-200 text-xs py-2.5 px-3 rounded-lg text-gray-900 outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500" />
           </div>
         ) : (
           <div className="space-y-1">
-            <label className="text-[10px] font-mono text-gray-500">Отработано месяцев (неполный месяц от 15 дней — за полный)</label>
+            <label className="text-[10px] font-mono text-gray-600">Отработано месяцев (неполный месяц от 15 дней — за полный)</label>
             <input type="number" value={months} onChange={(e) => setMonths(e.target.value)}
               className="w-full bg-gray-50 border border-gray-200 text-xs py-2.5 px-3 rounded-lg text-gray-900 outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500" />
           </div>
@@ -75,14 +75,14 @@ export default function Vacation() {
         <div className="bg-gray-50 rounded-xl p-4 border border-gray-200 space-y-1.5">
           <div className="flex items-center gap-2">
             <Check className="w-4 h-4 text-emerald-500" />
-            <span className="text-[10px] font-mono text-gray-500">Средний дневной заработок — ст. 139 ТК РФ (29,3)</span>
+            <span className="text-[10px] font-mono text-gray-600">Средний дневной заработок — ст. 139 ТК РФ (29,3)</span>
           </div>
           <p className="text-2xl font-bold text-gray-900">{fmtMoney(result.pay)}</p>
-          <p className="text-[11px] text-gray-500">СДЗ: {fmtMoney(result.sdz)} · {result.daysUsed !== undefined ? `${result.daysUsed} неиспользованных дней (2,33 дн./мес)` : `${days} дней отпуска`}</p>
+          <p className="text-[11px] text-gray-600">СДЗ: {fmtMoney(result.sdz)} · {result.daysUsed !== undefined ? `${result.daysUsed} неиспользованных дней (2,33 дн./мес)` : `${days} дней отпуска`}</p>
         </div>
       )}
 
-      <p className="text-[11px] text-gray-400 leading-relaxed flex items-start gap-1.5">
+      <p className="text-[11px] text-gray-600 leading-relaxed flex items-start gap-1.5">
         <Plane className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
         Формула: СДЗ = сумма выплат за 12 мес ÷ (29,3 × 12). Основной отпуск — 28 календарных дней (ст. 115 ТК). Компенсация: 2,33 дня за каждый месяц работы, округление в пользу работника.
       </p>

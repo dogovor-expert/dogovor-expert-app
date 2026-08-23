@@ -44,19 +44,19 @@ export default function NdflSale() {
     <div className="space-y-4">
       <div className="space-y-3">
         <div className="space-y-1">
-          <label className="text-[10px] font-mono text-gray-500">Цена продажи (₽)</label>
+          <label className="text-[10px] font-mono text-gray-600">Цена продажи (₽)</label>
           <input type="number" min="0" value={sell} onChange={(e) => setSell(e.target.value)}
             placeholder="Например 1200000"
             className="w-full bg-gray-50 border border-gray-200 text-xs py-2.5 px-3 rounded-lg text-gray-900 outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500" />
         </div>
         <div className="space-y-1">
-          <label className="text-[10px] font-mono text-gray-500">Цена покупки по договору (₽, опционально)</label>
+          <label className="text-[10px] font-mono text-gray-600">Цена покупки по договору (₽, опционально)</label>
           <input type="number" min="0" value={buy} onChange={(e) => setBuy(e.target.value)}
             placeholder="Например 900000 — если есть ДКП"
             className="w-full bg-gray-50 border border-gray-200 text-xs py-2.5 px-3 rounded-lg text-gray-900 outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500" />
         </div>
         <div className="space-y-1">
-          <label className="text-[10px] font-mono text-gray-500">Срок владения</label>
+          <label className="text-[10px] font-mono text-gray-600">Срок владения</label>
           <div className="grid grid-cols-2 gap-1.5">
             <button onClick={() => { setOwnedLong(false); setResult(null); }}
               className={`py-2 rounded-lg border text-[11px] font-semibold transition-colors cursor-pointer ${ownedLong === false ? "border-brand-500 bg-brand-50 text-brand-700" : "border-gray-200 text-gray-600 hover:border-brand-300 bg-white"}`}>
@@ -92,10 +92,10 @@ export default function NdflSale() {
           <div className="bg-gray-50 rounded-xl p-4 border border-gray-200 space-y-2">
             <div className="flex items-center gap-2">
               <Check className="w-4 h-4 text-emerald-500" />
-              <span className="text-[10px] font-mono text-gray-500">3-НДФЛ при продаже авто — ст. 220, 224 НК РФ</span>
+              <span className="text-[10px] font-mono text-gray-600">3-НДФЛ при продаже авто — ст. 220, 224 НК РФ</span>
             </div>
             <p className="text-2xl font-bold text-gray-900">{fmtMoney(result.tax)}</p>
-            <p className="text-[11px] text-gray-500">
+            <p className="text-[11px] text-gray-600">
               Налоговая база: {fmtMoney(result.taxableBase)} · {deductionLabel} ({fmtMoney(result.deductionUsed)}) · ставка {result.rate.toLocaleString("ru-RU")}%
             </p>
             <p className="text-[11px] text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-2 flex items-start gap-1.5">
@@ -113,14 +113,14 @@ export default function NdflSale() {
                   Скоро
                 </span>
                 <p className="text-[11px] font-bold text-gray-800">Декларация 3-НДФЛ под ключ — 4 990 ₽</p>
-                <p className="text-[10px] text-gray-500 leading-relaxed">Заполнение декларации, вычеты и подача через личный кабинет ФНС — запустим в ближайшее время.</p>
+                <p className="text-[10px] text-gray-600 leading-relaxed">Заполнение декларации, вычеты и подача через личный кабинет ФНС — запустим в ближайшее время.</p>
               </div>
             )}
           </div>
         )
       )}
 
-      <p className="text-[11px] text-gray-400 leading-relaxed flex items-start gap-1.5">
+      <p className="text-[11px] text-gray-600 leading-relaxed flex items-start gap-1.5">
         <CarTaxiFront className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
         При продаже авто, бывшего в собственности менее 3 лет, доход можно уменьшить на {fmtMoney(CAR_DEDUCTION)} (фиксированный вычет) либо на подтверждённые расходы на покупку — что выгоднее. Ставка — прогрессивная 13–22% по ст. 224 НК.
       </p>

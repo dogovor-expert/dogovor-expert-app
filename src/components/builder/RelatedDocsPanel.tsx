@@ -1,6 +1,6 @@
 import { FileText, X } from "lucide-react";
 import type { LegalTemplate } from "@/data/types";
-import { LEGAL_TEMPLATES } from "@/data/legalTemplates";
+import { TEMPLATE_META } from "@/data/templatesMeta";
 
 interface RelatedDocsPanelProps {
   relatedDocs: LegalTemplate[];
@@ -17,13 +17,16 @@ export default function RelatedDocsPanel({
 }: RelatedDocsPanelProps) {
   return (
     <div className="space-y-2">
+      <p className="text-[10.5px] text-slate-600 leading-snug">
+        Добавьте документы в пакет — при экспорте они соберутся в один PDF.
+      </p>
       {packTemplateIds.length > 0 && (
         <div className="flex flex-wrap items-center gap-1.5 pb-1.5 border-b border-gray-100">
-          <span className="text-[10px] font-medium text-gray-400 uppercase tracking-wide">
+          <span className="text-[10px] font-medium text-gray-600 uppercase tracking-wide">
             В пакете:
           </span>
           {packTemplateIds.map((id) => {
-            const packDoc = LEGAL_TEMPLATES.find(
+            const packDoc = TEMPLATE_META.find(
               (x) => x.id === id
             );
             return (
@@ -44,7 +47,7 @@ export default function RelatedDocsPanel({
           })}
         </div>
       )}
-      <p className="text-[10px] text-gray-500 pb-1">
+      <p className="text-[10px] text-gray-600 pb-1">
         Отметьте документы — они соберутся в один PDF-файл.
       </p>
       {relatedDocs.map((doc) => (
@@ -54,9 +57,9 @@ export default function RelatedDocsPanel({
         >
           <button
             onClick={() => onSelectTemplate(doc.id)}
-            className="flex-1 flex items-center gap-3 px-3 py-2.5 rounded-xl bg-gray-50 hover:bg-brand-50 text-left transition-colors"
+            className="flex-1 flex items-center gap-3 px-3 py-2.5 rounded-xl bg-white border border-slate-100 hover:border-brand-200 hover:bg-brand-50/50 text-left transition-colors"
           >
-            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white flex-shrink-0">
+            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center text-white flex-shrink-0">
               <FileText className="w-3.5 h-3.5" />
             </div>
             <div>
@@ -65,13 +68,13 @@ export default function RelatedDocsPanel({
                   ? doc.name.slice(0, 32) + "..."
                   : doc.name}
               </p>
-              <p className="text-[10px] text-gray-500">
+              <p className="text-[10px] text-gray-600">
                 {doc.actSource}
               </p>
             </div>
           </button>
           <label
-            className="flex items-center gap-1 text-[10px] text-gray-400 cursor-pointer shrink-0"
+            className="flex items-center gap-1 text-[10px] text-gray-600 cursor-pointer shrink-0"
             title="Добавить в пакет документов"
           >
             <input

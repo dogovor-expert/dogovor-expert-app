@@ -57,7 +57,7 @@ export default function SecurityTab() {
           </div>
           <div>
             <h3 className="font-semibold text-gray-900">Пароль</h3>
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-gray-600">
               Установите или смените пароль для входа по email и паролю
             </p>
           </div>
@@ -107,7 +107,7 @@ export default function SecurityTab() {
           </div>
           <div>
             <h3 className="font-semibold text-gray-900">Сеанс</h3>
-            <p className="text-sm text-gray-500">Завершите текущий сеанс на этом устройстве</p>
+            <p className="text-sm text-gray-600">Завершите текущий сеанс на этом устройстве</p>
           </div>
         </div>
         <Button type="button" variant="secondary" onClick={handleSignOut}>
@@ -123,7 +123,7 @@ export default function SecurityTab() {
           </div>
           <div>
             <h3 className="font-semibold text-gray-900">Двухфакторная аутентификация</h3>
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-gray-600">
               Защитите аккаунт кодом из приложения-аутентификатора
             </p>
           </div>
@@ -137,7 +137,7 @@ export default function SecurityTab() {
         </a>
       </Card>
 
-      <p className="text-xs text-gray-400 px-2">
+      <p className="text-xs text-gray-600 px-2">
         Вход по одноразовому коду остаётся доступным всегда. Пароль — ещё один способ входа,
         который не требует почты.
       </p>

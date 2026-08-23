@@ -165,7 +165,7 @@ export default function SecurityPage() {
         </div>
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Безопасность</h1>
-          <p className="text-gray-500 text-sm">Пароль, двухфакторная аутентификация и сеансы</p>
+          <p className="text-gray-600 text-sm">Пароль, двухфакторная аутентификация и сеансы</p>
         </div>
       </div>
 
@@ -228,7 +228,7 @@ export default function SecurityPage() {
             </div>
           ) : factorId ? (
             <div className="space-y-4">
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-gray-600">
                 При входе потребуется 6-значный код из приложения-аутентификатора (Google Authenticator, Authy и другие).
               </p>
               <Button variant="danger" size="sm" onClick={handleDisable} disabled={enrollBusy}>
@@ -238,7 +238,7 @@ export default function SecurityPage() {
             </div>
           ) : qrCode ? (
             <div className="space-y-4">
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-gray-600">
                 Отсканируйте QR-код приложением-аутентификатором или введите секрет вручную, затем введите 6-значный код.
               </p>
               <div className="flex justify-center">
@@ -287,7 +287,7 @@ export default function SecurityPage() {
             </div>
           ) : (
             <div className="space-y-4">
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-gray-600">
                 Двухфакторная аутентификация защищает аккаунт: даже если пароль или код из письма станут известны,
                 войти без кода из вашего приложения не получится.
               </p>
@@ -311,7 +311,7 @@ export default function SecurityPage() {
             Выйти на всех устройствах
           </Button>
         </div>
-        <p className="text-sm text-gray-500">
+        <p className="text-sm text-gray-600">
           Завершит все активные сеансы, включая этот. После этого потребуется войти заново и подтвердить вход кодом 2FA,
           если она включена.
         </p>

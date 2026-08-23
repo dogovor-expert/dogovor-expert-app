@@ -1,6 +1,10 @@
 import type { Metadata } from "next";
+import dynamic from "next/dynamic";
 import { Card } from "@/components/ui/Card";
-import { SITE_CONTACT_EMAIL, SITE_NAME, SITE_LEGAL_INN } from "@/lib/site";
+import { SUPPORT_EMAIL, PARTNERS_EMAIL, PRESS_EMAIL, SITE_NAME, SITE_LEGAL_INN } from "@/lib/site";
+
+// Форма (с зависимостями) — отдельным чанком, вне основного бандла страницы.
+const FeedbackForm = dynamic(() => import("@/components/feedback/FeedbackForm"));
 
 export const metadata: Metadata = {
   title: "Контакты",
@@ -9,9 +13,9 @@ export const metadata: Metadata = {
 };
 
 const contactCards = [
-  { title: "Поддержка пользователей", desc: "Вопросы по работе сервиса, ошибки, идеи по шаблонам", value: SITE_CONTACT_EMAIL, href: `mailto:${SITE_CONTACT_EMAIL}` },
-  { title: "Сотрудничество и партнёрство", desc: "Предложения об интеграциях, обзорах и партнёрских программах", value: SITE_CONTACT_EMAIL, href: `mailto:${SITE_CONTACT_EMAIL}` },
-  { title: "Пресс-релизы и СМИ", desc: "Запросы для публикаций о сервисе", value: SITE_CONTACT_EMAIL, href: `mailto:${SITE_CONTACT_EMAIL}` },
+  { title: "Поддержка пользователей", desc: "Вопросы по работе сервиса, ошибки, идеи по шаблонам", value: SUPPORT_EMAIL, href: `mailto:${SUPPORT_EMAIL}` },
+  { title: "Сотрудничество и партнёрство", desc: "Предложения об интеграциях, обзорах и партнёрских программах", value: PARTNERS_EMAIL, href: `mailto:${PARTNERS_EMAIL}` },
+  { title: "Пресс-релизы и СМИ", desc: "Запросы для публикаций о сервисе", value: PRESS_EMAIL, href: `mailto:${PRESS_EMAIL}` },
 ];
 
 export default function ContactsPage() {
@@ -23,7 +27,7 @@ export default function ContactsPage() {
         </div>
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Контакты</h1>
-          <p className="text-gray-500 text-sm">Мы отвечаем в течение 24 часов в рабочие дни</p>
+          <p className="text-gray-600 text-sm">Мы отвечаем в течение 24 часов в рабочие дни</p>
         </div>
       </div>
 
@@ -31,7 +35,7 @@ export default function ContactsPage() {
         {contactCards.map((c) => (
           <Card key={c.title} variant="default" padding="md">
             <h2 className="font-semibold text-gray-900 mb-1">{c.title}</h2>
-            <p className="text-xs text-gray-500 mb-3">{c.desc}</p>
+            <p className="text-xs text-gray-600 mb-3">{c.desc}</p>
             <a href={c.href} className="text-sm font-medium text-brand-600 hover:text-brand-700">
               {c.value}
             </a>
@@ -42,13 +46,19 @@ export default function ContactsPage() {
       <Card variant="default" padding="md" className="mb-6">
         <h2 className="font-semibold text-gray-900 mb-3">Реквизиты</h2>
         <div className="space-y-2 text-sm text-gray-600">
-          <p><span className="text-gray-500">ИНН:</span> {SITE_LEGAL_INN}</p>
+          <p><span className="text-gray-600">ИНН:</span> {SITE_LEGAL_INN}</p>
         </div>
       </Card>
 
       <div className="p-4 bg-brand-50 border border-brand-100 rounded-2xl text-sm text-gray-600 leading-relaxed">
         <p>Прежде чем писать: проверили ли вы <a href="/help" className="text-brand-600 hover:underline">раздел помощи</a>? Большинство вопросов (печать в PDF, сохранение готовых документов, поиск по каталогу) решаются там.</p>
       </div>
+
+      <section id="feedback" className="mt-8 scroll-mt-24">
+        <Card variant="default" padding="lg">
+          <FeedbackForm />
+        </Card>
+      </section>
     </div>
   );
 }

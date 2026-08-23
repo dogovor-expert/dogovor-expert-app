@@ -31,19 +31,19 @@ export default function TransportTax() {
       <div className="space-y-3">
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-1">
-            <label className="text-[10px] font-mono text-gray-500">Мощность (л.с.)</label>
+            <label className="text-[10px] font-mono text-gray-600">Мощность (л.с.)</label>
             <input type="number" value={power} onChange={(e) => setPower(e.target.value)}
               placeholder="Например 149"
               className="w-full bg-gray-50 border border-gray-200 text-xs py-2.5 px-3 rounded-lg text-gray-900 outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500" />
           </div>
           <div className="space-y-1">
-            <label className="text-[10px] font-mono text-gray-500">Месяцев владения в году</label>
+            <label className="text-[10px] font-mono text-gray-600">Месяцев владения в году</label>
             <input type="number" value={months} onChange={(e) => setMonths(e.target.value)}
               className="w-full bg-gray-50 border border-gray-200 text-xs py-2.5 px-3 rounded-lg text-gray-900 outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500" />
           </div>
         </div>
         <div className="space-y-1">
-          <label className="text-[10px] font-mono text-gray-500">Регион</label>
+          <label className="text-[10px] font-mono text-gray-600">Регион</label>
           <select value={region} onChange={(e) => setRegion(e.target.value as keyof typeof TRANSPORT_REGIONS)}
             className="w-full bg-gray-50 border border-gray-200 text-xs py-2.5 px-3 rounded-lg text-gray-900 outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500">
             {Object.entries(TRANSPORT_REGIONS).map(([k, v]) => (
@@ -53,13 +53,13 @@ export default function TransportTax() {
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-1">
-            <label className="text-[10px] font-mono text-gray-500">Средняя стоимость авто (₽, дорогие авто)</label>
+            <label className="text-[10px] font-mono text-gray-600">Средняя стоимость авто (₽, дорогие авто)</label>
             <input type="number" value={price} onChange={(e) => setPrice(e.target.value)}
               placeholder="Например 6000000"
               className="w-full bg-gray-50 border border-gray-200 text-xs py-2.5 px-3 rounded-lg text-gray-900 outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500" />
           </div>
           <div className="space-y-1">
-            <label className="text-[10px] font-mono text-gray-500">Возраст авто (лет)</label>
+            <label className="text-[10px] font-mono text-gray-600">Возраст авто (лет)</label>
             <input type="number" value={age} onChange={(e) => setAge(e.target.value)}
               placeholder="Например 2"
               className="w-full bg-gray-50 border border-gray-200 text-xs py-2.5 px-3 rounded-lg text-gray-900 outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500" />
@@ -77,10 +77,10 @@ export default function TransportTax() {
         <div className="bg-gray-50 rounded-xl p-4 border border-gray-200 space-y-1.5">
           <div className="flex items-center gap-2">
             <Check className="w-4 h-4 text-emerald-500" />
-            <span className="text-[10px] font-mono text-gray-500">Транспортный налог — ст. 361, 362 НК РФ</span>
+            <span className="text-[10px] font-mono text-gray-600">Транспортный налог — ст. 361, 362 НК РФ</span>
           </div>
           <p className="text-2xl font-bold text-gray-900">{fmtMoney(result.tax)}</p>
-          <p className="text-[11px] text-gray-500">Ставка {result.rate.toLocaleString("ru-RU")} ₽/л.с. · {months} мес. · повышающий коэффициент {result.luxury === 1 ? "не применяется" : "×" + result.luxury.toLocaleString("ru-RU")}</p>
+          <p className="text-[11px] text-gray-600">Ставка {result.rate.toLocaleString("ru-RU")} ₽/л.с. · {months} мес. · повышающий коэффициент {result.luxury === 1 ? "не применяется" : "×" + result.luxury.toLocaleString("ru-RU")}</p>
           <a href="/builder?id=claim-generic"
             className="inline-block mt-1 py-2 px-3 rounded-lg bg-white border border-brand-300 text-brand-600 font-bold text-[11px] hover:bg-brand-50 transition">
             Спор по налогу →
@@ -88,7 +88,7 @@ export default function TransportTax() {
         </div>
       )}
 
-      <p className="text-[11px] text-gray-400 leading-relaxed flex items-start gap-1.5">
+      <p className="text-[11px] text-gray-600 leading-relaxed flex items-start gap-1.5">
         <Car className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
         Регионы вправе менять федеральные ставки (2,5–15 ₽/л.с.) в 10 раз. Повышающие коэффициенты: 3–5 млн ₽ (до 3 лет) ×1,1; 5–10 млн (до 5 лет) ×2; 10–15 млн (до 10 лет) ×3; 15+ млн (до 20 лет) ×3.
       </p>

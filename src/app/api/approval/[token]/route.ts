@@ -1,15 +1,20 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { limiters, clientIp, checkRateLimit, rateLimitResponse } from "@/lib/ratelimit";
 
 export async function GET(
-  _req: Request,
-  { params }: { params: { token: string } }
+  req: Request,
+  { params }: { params: Promise<{ token: string }> }
 ) {
+  const { token } = await params;
+  const rl = await checkRateLimit(limiters.publicForm, clientIp(req) + ":" + token);
+  if (!rl.ok) return rateLimitResponse(rl.retryAfter);
+
   const admin = createAdminClient();
   const { data, error } = await admin
     .from("approvals")
     .select("id, token, template_id, mode, values, checklist, expires_at, changed, opened_count")
-    .eq("token", params.token)
+    .eq("token", token)
     .single();
 
   if (error || !data) {
@@ -36,8 +41,12 @@ export async function GET(
 
 export async function PUT(
   req: Request,
-  { params }: { params: { token: string } }
+  { params }: { params: Promise<{ token: string }> }
 ) {
+  const { token } = await params;
+  const rl = await checkRateLimit(limiters.publicForm, clientIp(req) + ":" + token);
+  if (!rl.ok) return rateLimitResponse(rl.retryAfter);
+
   const body = await req.json().catch(() => null);
   if (!body || typeof body !== "object") {
     return NextResponse.json({ error: "bad body" }, { status: 400 });
@@ -49,7 +58,7 @@ export async function PUT(
   const { data: existing, error: findError } = await admin
     .from("approvals")
     .select("id, expires_at")
-    .eq("token", params.token)
+    .eq("token", token)
     .single();
 
   if (findError || !existing) {

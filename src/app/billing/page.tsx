@@ -4,7 +4,9 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/Table";
 import { useCallback, useEffect, useState } from "react";
-import { Banknote, CreditCard, CheckCircle2, Clock, AlertCircle, ShieldCheck, Lock, RefreshCw, CalendarClock } from "lucide-react";
+import { Banknote, CreditCard, CheckCircle2, Clock, AlertCircle, ShieldCheck, Lock, RefreshCw, CalendarClock, Flame } from "lucide-react";
+import { currentProPrice, PRO_PRICE_OLD, PRO_PRICE, PROMO_LABEL, isPromoActive, promoCountdownTarget, formatRub } from "@/lib/pricing";
+import CountdownTimer from "@/components/billing/CountdownTimer";
 
 interface PaymentRow {
   id: string;
@@ -14,8 +16,6 @@ interface PaymentRow {
   meta: { plan?: string } | null;
   created_at: string;
 }
-
-const PRO_PRICE = 990;
 
 export default function BillingPage() {
   const [plan, setPlan] = useState("free");
@@ -131,6 +131,9 @@ export default function BillingPage() {
   };
 
   const activePlan = active && plan !== "free";
+  const promo = isPromoActive();
+  const price = currentProPrice();
+  const savings = PRO_PRICE_OLD - PRO_PRICE;
   const statusConfig: Record<string, { label: string; variant: "green" | "amber" | "red" | "gray"; icon: typeof CheckCircle2 }> = {
     paid: { label: "Оплачен", variant: "green", icon: CheckCircle2 },
     pending: { label: "Ожидает", variant: "amber", icon: Clock },
@@ -146,7 +149,7 @@ export default function BillingPage() {
         </div>
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Платежи и счета</h1>
-          <p className="text-gray-500 text-sm">Подписка PRO и история оплат</p>
+          <p className="text-gray-600 text-sm">Подписка PRO и история оплат</p>
         </div>
       </div>
 
@@ -166,7 +169,7 @@ export default function BillingPage() {
 
       {activePlan && periodEnd && new Date(periodEnd).getTime() - Date.now() < 5 * 86400000 && new Date(periodEnd).getTime() >= Date.now() && (
         <div className="mb-6 flex items-center gap-2 bg-amber-50 border border-amber-200 rounded-xl p-4">
-          <AlertCircle className="w-5 h-5 text-amber-500 flex-shrink-0" />
+          <AlertCircle className="w-5 h-5 text-amber-700 flex-shrink-0" />
           <p className="text-sm text-amber-800">
             Подписка PRO истекает {new Date(periodEnd).toLocaleDateString("ru-RU", { day: "numeric", month: "long" })}.
             {autoRenewal ? " Продлите в один клик ниже." : " Включите автопродление или продлите подписку ниже."}
@@ -175,7 +178,7 @@ export default function BillingPage() {
       )}
 
       {loading ? (
-        <p className="text-sm text-gray-400 py-10 text-center">Загрузка…</p>
+        <p className="text-sm text-gray-600 py-10 text-center">Загрузка…</p>
       ) : (
         <>
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
@@ -189,9 +192,39 @@ export default function BillingPage() {
                   {activePlan && <Badge variant="green" size="sm" dot>Активен</Badge>}
                 </div>
                 <div className={`p-4 rounded-xl mb-4 ${activePlan ? "bg-gradient-to-br from-emerald-500 to-teal-600" : "bg-gradient-to-br from-brand-500 to-brand-600"} text-white`}>
-                  <p className="text-sm font-medium opacity-90">{activePlan ? "PRO" : "Бесплатный"}</p>
-                  <p className="text-2xl font-bold mt-1">{activePlan ? "990 ₽" : "0 ₽"}<span className="text-base font-normal opacity-80"> / месяц</span></p>
-                  {!activePlan && <p className="text-sm opacity-80 mt-1">Переходите на PRO — оформите за минуту</p>}
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-sm font-medium opacity-90">{activePlan ? "PRO" : "Бесплатный"}</p>
+                    {!activePlan && promo && (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-400 text-amber-950 text-[10px] font-bold">
+                        <Flame className="w-3 h-3" />
+                        Акция {PROMO_LABEL}
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-2xl font-bold mt-1">
+                    {formatRub(price)}
+                    <span className="text-base font-normal opacity-80"> / месяц</span>
+                    {!activePlan && promo && (
+                      <span className="ml-2 text-lg font-semibold opacity-60 line-through">
+                        {formatRub(PRO_PRICE_OLD)}
+                      </span>
+                    )}
+                  </p>
+                  {!activePlan && (
+                    <p className="text-sm opacity-80 mt-1">
+                      {promo
+                        ? `Выгода ${formatRub(savings)} при оформлении сегодня`
+                        : "Переходите на PRO — оформите за минуту"}
+                    </p>
+                  )}
+                  {!activePlan && promo && (
+                    <div className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1">
+                      <span className="text-xs opacity-90">
+                        Обычная цена {formatRub(PRO_PRICE_OLD)} вернётся через:
+                      </span>
+                      <CountdownTimer endsAt={promoCountdownTarget()} compact className="text-sm font-bold tabular-nums" />
+                    </div>
+                  )}
                 </div>
                 <ul className="space-y-2 mb-4">
                   {[
@@ -209,8 +242,14 @@ export default function BillingPage() {
                 </ul>
                 <Button variant="primary" size="md" onClick={pay} disabled={paying || activePlan} className="w-full">
                   <CreditCard className="w-4 h-4" />
-                  {paying ? "Создаём платёж…" : activePlan ? "Подписка активна" : `Оформить PRO за 990 ₽`}
+                  {paying ? "Создаём платёж…" : activePlan ? "Подписка активна" : `Оформить PRO за ${formatRub(price)}`}
                 </Button>
+                {!activePlan && promo && (
+                  <p className="text-[11px] text-gray-600 mt-2 flex items-start gap-1.5">
+                    <CheckCircle2 className="w-3.5 h-3.5 mt-0.5 text-emerald-500 flex-shrink-0" />
+                    Отмена в любой момент без комиссий. После окончания акции цена вернётся к {formatRub(PRO_PRICE_OLD)}/мес.
+                  </p>
+                )}
 
                 {activePlan && (
                   <div className="mt-4 p-4 rounded-xl border border-gray-200 bg-gray-50 space-y-3">
@@ -239,7 +278,7 @@ export default function BillingPage() {
                       </button>
                     )}
                     {periodEnd && (
-                      <p className="text-xs text-gray-500">
+                      <p className="text-xs text-gray-600">
                         Действует до:{" "}
                         <span className="font-medium text-gray-700">
                           {new Date(periodEnd).toLocaleDateString("ru-RU", {
@@ -250,7 +289,7 @@ export default function BillingPage() {
                         </span>
                       </p>
                     )}
-                    <p className="text-[11px] text-gray-400">
+                    <p className="text-[11px] text-gray-600">
                       {autoRenewal
                         ? "Карта сохранена в ЮKassa. Продление в один клик — без повторного ввода данных карты. Отключить можно в любой момент."
                         : "Включите автопродление, чтобы продлевать PRO в один клик. Карта сохранится в ЮKassa (безопасное хранение)."}
@@ -258,7 +297,7 @@ export default function BillingPage() {
                   </div>
                 )}
 
-                <p className="text-[11px] text-gray-400 mt-3 flex items-start gap-1.5">
+                <p className="text-[11px] text-gray-600 mt-3 flex items-start gap-1.5">
                   <Lock className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
                   Оплата через ЮKassa: МИР, Visa, Mastercard, СБП.
                 </p>
@@ -268,11 +307,11 @@ export default function BillingPage() {
             <Card variant="default" padding="md" className="h-full">
               <h2 className="font-semibold text-gray-900 mb-4">Текущий тариф</h2>
               <div className="p-4 rounded-xl bg-gray-50 border border-gray-200 mb-4">
-                <p className="text-xs text-gray-500">Ваш план</p>
+                <p className="text-xs text-gray-600">Ваш план</p>
                 <p className="text-xl font-bold text-gray-900 mt-0.5 capitalize">{plan}</p>
-                <p className="text-xs text-gray-400 mt-0.5">{activePlan ? "действует сейчас" : "удобный старт — бесплатно"}</p>
+                <p className="text-xs text-gray-600 mt-0.5">{activePlan ? "действует сейчас" : "удобный старт — бесплатно"}</p>
               </div>
-              <p className="text-xs text-gray-500 leading-relaxed">
+              <p className="text-xs text-gray-600 leading-relaxed">
                 В PRO входят все калькуляторы: НДС, штрафы ГИБДД, утильсбор, растаможка, КАСКО и другие — без ограничений.
               </p>
             </Card>
@@ -281,10 +320,10 @@ export default function BillingPage() {
           <Card variant="default" padding="none">
             <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
               <h2 className="font-semibold text-gray-900">История платежей</h2>
-              <span className="text-xs text-gray-500">Всего: {payments.length}</span>
+              <span className="text-xs text-gray-600">Всего: {payments.length}</span>
             </div>
             {payments.length === 0 ? (
-              <p className="text-sm text-gray-400 py-8 text-center">Платежей пока нет — оформите PRO, и история появится здесь</p>
+              <p className="text-sm text-gray-600 py-8 text-center">Платежей пока нет — оформите PRO, и история появится здесь</p>
             ) : (
               <Table variant="default">
                 <TableHead>

@@ -4,3 +4,21 @@ dev-server.log
 dev.log
 tsconfig.tsbuildinfo
 .vercelout
+
+# служебные документы — не нужны на сервере при деплое
+**/*.md
+*.pdf
+*.log
+
+# служебные env (прод использует .env.production — его не трогаем)
+vercel.env
+.env.local
+.env.development
+
+# тестовые артефакты
+playwright-report
+test-results
+coverage
+samples
+playwright.config.ts
+playwright.prod.config.ts

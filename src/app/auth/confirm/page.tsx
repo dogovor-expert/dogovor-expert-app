@@ -17,17 +17,18 @@ async function needsMfa(supabase: Awaited<ReturnType<typeof createClient>>): Pro
 export default async function AuthConfirmPage({
   searchParams,
 }: {
-  searchParams: { token_hash?: string; type?: string; code?: string; next?: string };
+  searchParams: Promise<{ token_hash?: string; type?: string; code?: string; next?: string }>;
 }) {
-  const supabase = createClient();
-  const next = safeNext(searchParams.next);
+  const sp = await searchParams;
+  const supabase = await createClient();
+  const next = safeNext(sp.next);
 
-  if (searchParams.token_hash && typeof searchParams.type === "string") {
+  if (sp.token_hash && typeof sp.type === "string") {
     const { error } = await supabase.auth.verifyOtp({
-      type: searchParams.type,
-      token_hash: searchParams.token_hash,
+      type: sp.type,
+      token_hash: sp.token_hash,
     });
-    if (!error && !searchParams.type.startsWith("recovery")) {
+    if (!error && !sp.type.startsWith("recovery")) {
       if (await needsMfa(supabase)) {
         redirect(`/login?mfa=1&next=${encodeURIComponent(next)}`);
       }
@@ -36,8 +37,8 @@ export default async function AuthConfirmPage({
     if (!error) {
       redirect("/login/reset");
     }
-  } else if (searchParams.code) {
-    const { error } = await supabase.auth.exchangeCodeForSession(searchParams.code);
+  } else if (sp.code) {
+    const { error } = await supabase.auth.exchangeCodeForSession(sp.code);
     if (!error) {
       if (await needsMfa(supabase)) {
         redirect(`/login?mfa=1&next=${encodeURIComponent(next)}`);

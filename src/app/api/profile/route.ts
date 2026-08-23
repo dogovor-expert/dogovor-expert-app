@@ -6,7 +6,7 @@ import { isValidInn } from "@/lib/inn";
 const FIELDS = ["full_name", "phone", "company", "inn", "avatar_url", "signature"];
 
 export async function GET() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -23,7 +23,7 @@ export async function GET() {
 }
 
 export async function PATCH(req: Request) {
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -80,7 +80,7 @@ export async function PATCH(req: Request) {
 }
 
 export async function DELETE() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();

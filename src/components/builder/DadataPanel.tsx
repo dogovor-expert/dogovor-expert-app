@@ -55,7 +55,7 @@ export default function DadataPanel({
         />
       )}
       <div className="space-y-2">
-        <label className="block text-[10px] font-medium text-gray-500">
+        <label className="block text-[10px] font-medium text-gray-600">
           Поиск организации по названию или ИНН
         </label>
         <div className="flex gap-1.5">
@@ -98,7 +98,7 @@ export default function DadataPanel({
                 <p className="text-[11px] font-medium text-gray-800 truncate">
                   {r.value}
                 </p>
-                <p className="text-[10px] text-gray-400">
+                <p className="text-[10px] text-gray-600">
                   {r.data?.inn || "ИНН —"}
                   {r.data?.kpp ? ` • КПП ${r.data.kpp}` : ""}
                 </p>
@@ -108,7 +108,7 @@ export default function DadataPanel({
         )}
       </div>
       {dadataLoading && (
-        <p className="text-[10px] text-gray-400">
+        <p className="text-[10px] text-gray-600">
           Загрузка данных ЕГРЮЛ...
         </p>
       )}
@@ -121,7 +121,7 @@ export default function DadataPanel({
           {dadataMsg.text}
         </p>
       )}
-      <p className="text-[10px] leading-relaxed text-gray-400">
+      <p className="text-[10px] leading-relaxed text-gray-600">
         {subscriptionActive
           ? "Запросы обрабатываются серверным прокси (ключ на сервере)."
           : "Бесплатный план: подстановка по ИНН работает через ваш ключ (бесплатный тариф dadata.ru → «Профиль» → API-ключ). При покупке подписки поле исчезает и всё работает автоматически."}

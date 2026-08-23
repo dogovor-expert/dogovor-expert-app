@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
-import { LEGAL_TEMPLATES } from "@/data/legalTemplates";
+import { TEMPLATE_META } from "@/data/templatesMeta";
 
 export const metadata: Metadata = {
   title: "Каталог шаблонов договоров",
-  description: `${LEGAL_TEMPLATES.length} готовых шаблонов юридических документов: договор купли-продажи автомобиля и квартиры, аренды, подряда, расписки, счёт на оплату. Заполнение онлайн, автопроверка полей, экспорт в PDF и DOCX бесплатно.`,
+  description: `Готовые шаблоны договоров: ДКП авто и квартиры, аренда, подряд, расписка, счёт. Заполнение онлайн, автопроверка, экспорт в PDF и DOCX.`,
   alternates: { canonical: "/templates" },
 };
 

@@ -2,11 +2,10 @@ import { NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-
-const PRO_PRICE = 990;
+import { currentProPrice } from "@/lib/pricing";
 
 export async function POST(req: Request) {
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -20,6 +19,7 @@ export async function POST(req: Request) {
 
   const host = req.headers.get("host") ?? "dogovor.expert";
   const proto = host.includes("localhost") || host.includes("127.0.0.1") ? "http" : "https";
+  const price = currentProPrice();
 
   const res = await fetch("https://api.yookassa.ru/v3/payments", {
     method: "POST",
@@ -29,7 +29,7 @@ export async function POST(req: Request) {
       Authorization: "Basic " + Buffer.from(`${shopId}:${secretKey}`).toString("base64"),
     },
     body: JSON.stringify({
-      amount: { value: PRO_PRICE.toFixed(2), currency: "RUB" },
+      amount: { value: price.toFixed(2), currency: "RUB" },
       capture: true,
       confirmation: {
         type: "redirect",
@@ -54,7 +54,7 @@ export async function POST(req: Request) {
     .from("payments")
     .insert({
       user_id: user.id,
-      amount: PRO_PRICE,
+      amount: price,
       provider: "yookassa",
       provider_id: payment.id,
       status: "pending",

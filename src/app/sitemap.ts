@@ -1,0 +1,57 @@
+import type { MetadataRoute } from "next";
+import { LEGAL_TEMPLATES } from "@/data/templates";
+import { BLOG_POSTS } from "@/data/blog/posts";
+
+const SITE_URL = "https://dogovor.expert";
+const MONTHS: Record<string, number> = {
+  января: 1, февраля: 2, марта: 3, апреля: 4, мая: 5, июня: 6,
+  июля: 7, августа: 8, сентября: 9, октября: 10, ноября: 11, декабря: 12,
+  январь: 1, февраль: 2, март: 3, апрель: 4, май: 5, июнь: 6,
+  июль: 7, август: 8, сентябрь: 9, октябрь: 10, ноябрь: 11, декабрь: 12,
+};
+
+function parseLastUpdated(s: string): string | undefined {
+  const m = s.match(/([А-Яа-яё]+)\s+(\d{4})/);
+  if (!m) return undefined;
+  const month = MONTHS[m[1].toLowerCase()];
+  if (!month) return undefined;
+  return `${m[2]}-${String(month).padStart(2, "0")}-01`;
+}
+
+export default function sitemap(): MetadataRoute.Sitemap {
+  const staticPages: MetadataRoute.Sitemap = [
+    { url: SITE_URL, changeFrequency: "weekly", priority: 1 },
+    { url: `${SITE_URL}/templates`, changeFrequency: "weekly", priority: 0.9 },
+    { url: `${SITE_URL}/builder`, changeFrequency: "weekly", priority: 0.8 },
+    { url: `${SITE_URL}/dkp`, changeFrequency: "monthly", priority: 0.8 },
+    { url: `${SITE_URL}/osago`, changeFrequency: "monthly", priority: 0.6 },
+    { url: `${SITE_URL}/autoteka`, changeFrequency: "monthly", priority: 0.6 },
+    { url: `${SITE_URL}/tahograph`, changeFrequency: "monthly", priority: 0.5 },
+    { url: `${SITE_URL}/techosmotr`, changeFrequency: "monthly", priority: 0.5 },
+    { url: `${SITE_URL}/converter`, changeFrequency: "monthly", priority: 0.5 },
+    { url: `${SITE_URL}/utils`, changeFrequency: "monthly", priority: 0.6 },
+    { url: `${SITE_URL}/help`, changeFrequency: "monthly", priority: 0.5 },
+    { url: `${SITE_URL}/security`, changeFrequency: "monthly", priority: 0.5 },
+    { url: `${SITE_URL}/privacy`, changeFrequency: "yearly", priority: 0.3 },
+    { url: `${SITE_URL}/terms`, changeFrequency: "yearly", priority: 0.3 },
+    { url: `${SITE_URL}/about`, changeFrequency: "monthly", priority: 0.3 },
+    { url: `${SITE_URL}/contacts`, changeFrequency: "monthly", priority: 0.4 },
+    { url: `${SITE_URL}/blog`, changeFrequency: "weekly", priority: 0.8 },
+  ];
+
+  const documents: MetadataRoute.Sitemap = LEGAL_TEMPLATES.map((t) => ({
+    url: `${SITE_URL}/documents/${t.id}`,
+    changeFrequency: "monthly" as const,
+    priority: 0.7,
+    lastModified: parseLastUpdated(t.lastUpdated),
+  }));
+
+  const blog: MetadataRoute.Sitemap = BLOG_POSTS.map((p) => ({
+    url: `${SITE_URL}/blog/${p.slug}`,
+    changeFrequency: "monthly" as const,
+    priority: 0.6,
+    lastModified: parseLastUpdated(p.updatedAt),
+  }));
+
+  return [...staticPages, ...documents, ...blog];
+}

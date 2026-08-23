@@ -173,14 +173,14 @@ export default function OcrTool() {
             <ScanText className="w-6 h-6 text-brand-500" />
           </div>
           <div className="text-sm font-semibold text-gray-900">Скан договора или PDF → текст</div>
-          <div className="text-xs text-gray-500">PDF, JPG, PNG, WEBP. Распознавание русского текста (tesseract.js) прямо в браузере — документ никуда не загружается.</div>
+          <div className="text-xs text-gray-600">PDF, JPG, PNG, WEBP. Распознавание русского текста (tesseract.js) прямо в браузере — документ никуда не загружается.</div>
         </button>
       ) : (
         <div className="space-y-4">
           <div className="flex items-center gap-3 bg-gray-50 border border-gray-200 rounded-xl px-4 py-3">
             <div className="flex-1 min-w-0">
               <p className="text-xs font-medium text-gray-900 truncate">{file.name}</p>
-              <p className="text-[10px] text-gray-400">{formatBytes(file.size)} · {pageCount} стр.</p>
+              <p className="text-[10px] text-gray-600">{formatBytes(file.size)} · {pageCount} стр.</p>
             </div>
             <button onClick={() => { setFile(null); setResult(null); setPageCount(0); setPages([]); }}
               className="p-1.5 rounded-lg hover:bg-red-50 text-red-400 hover:text-red-600 cursor-pointer" title="Удалить">
@@ -191,7 +191,7 @@ export default function OcrTool() {
           {pageCount > 1 && (
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <label className="text-[10px] font-mono text-gray-500 uppercase">Страницы для распознавания</label>
+                <label className="text-[10px] font-mono text-gray-600 uppercase">Страницы для распознавания</label>
                 <button onClick={selectAll} className="text-[10px] text-brand-600 hover:underline cursor-pointer font-medium">Все ({pageCount})</button>
               </div>
               <div className="flex flex-wrap gap-1.5">
@@ -200,7 +200,7 @@ export default function OcrTool() {
                     className={`w-9 h-9 rounded-lg border text-xs font-mono transition cursor-pointer ${
                       pages.includes(n)
                         ? "border-brand-500 bg-brand-50 text-brand-700 font-bold"
-                        : "border-gray-200 text-gray-400 hover:border-gray-300"
+                        : "border-gray-200 text-gray-600 hover:border-gray-300"
                     }`}>
                     {n}
                   </button>

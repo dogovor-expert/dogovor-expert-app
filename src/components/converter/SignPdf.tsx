@@ -158,14 +158,14 @@ export default function SignPdf() {
           className="border-2 border-dashed border-gray-200 rounded-xl p-6 flex flex-col items-center gap-2 hover:border-brand-400 hover:bg-brand-50/30 transition-all cursor-pointer"
         >
           <span className="text-xs font-semibold text-gray-900">1. PDF для подписи</span>
-          <span className="text-[11px] text-gray-500">{file ? file.name : "Выберите файл"}</span>
+          <span className="text-[11px] text-gray-600">{file ? file.name : "Выберите файл"}</span>
         </button>
         <button
           onClick={() => signInput.current?.click()}
           className="border-2 border-dashed border-gray-200 rounded-xl p-6 flex flex-col items-center gap-2 hover:border-brand-400 hover:bg-brand-50/30 transition-all cursor-pointer"
         >
           <span className="text-xs font-semibold text-gray-900">2. Изображение подписи</span>
-          <span className="text-[11px] text-gray-500">{sign ? "Подпись загружена ✓" : "PNG или JPG (подпись с прозрачным фоном — лучше PNG)"}</span>
+          <span className="text-[11px] text-gray-600">{sign ? "Подпись загружена ✓" : "PNG или JPG (подпись с прозрачным фоном — лучше PNG)"}</span>
         </button>
       </div>
 
@@ -183,13 +183,13 @@ export default function SignPdf() {
         <div className="space-y-3">
           <div className="flex items-center gap-4">
             <div className="space-y-1 flex-1">
-              <label className="text-[10px] font-mono text-gray-500 uppercase">Страница — {page} из {pageCount}</label>
+              <label className="text-[10px] font-mono text-gray-600 uppercase">Страница — {page} из {pageCount}</label>
               <input type="range" min={1} max={pageCount} value={page}
                 onChange={(e) => setPage(Number(e.target.value))}
                 className="w-full accent-brand-500" />
             </div>
             <div className="space-y-1 flex-1">
-              <label className="text-[10px] font-mono text-gray-500 uppercase">Размер — {signScale}%</label>
+              <label className="text-[10px] font-mono text-gray-600 uppercase">Размер — {signScale}%</label>
               <input type="range" min={10} max={100} value={signScale}
                 onChange={(e) => setSignScale(Number(e.target.value))}
                 className="w-full accent-brand-500" />
@@ -203,7 +203,7 @@ export default function SignPdf() {
             style={{ touchAction: "none" }}
           />
 
-          <div className="text-[10px] text-gray-400 text-center">Подпись можно перетащить мышью на нужное место. Подписанный документ скачается без загрузки на сервер.</div>
+          <div className="text-[10px] text-gray-600 text-center">Подпись можно перетащить мышью на нужное место. Подписанный документ скачается без загрузки на сервер.</div>
 
           <button onClick={apply} disabled={busy || !sign}
             className="w-full py-2.5 bg-brand-500 text-white rounded-xl hover:bg-brand-600 font-bold text-sm transition disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer">

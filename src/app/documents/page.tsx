@@ -17,7 +17,9 @@ import {
   X,
 } from "lucide-react";
 import { getAllDrafts, clearDraft, clearDraftVersions, getDraftVersions, restoreDraftVersion, type DraftData, type DraftVersion } from "@/lib/autosave";
-import { LEGAL_TEMPLATES } from "@/data/legalTemplates";
+import { TEMPLATE_META } from "@/data/templatesMeta";
+import Highlight from "@/components/ui/Highlight";
+import { tokenGroups, textMatchesTokens, scoreText } from "@/lib/search";
 
 interface ServerDoc {
   id: string;
@@ -67,7 +69,7 @@ export default function DocumentsPage() {
   const perPage = 10;
 
   const toDocItem = useCallback((id: string, fields: Record<string, string>, savedAt: string): DocItem => {
-    const tpl = LEGAL_TEMPLATES.find((t) => t.id === id);
+    const tpl = TEMPLATE_META.find((t) => t.id === id);
     const filledCount = Object.values(fields).filter(
       (v) => v && v.trim() !== ""
     ).length;
@@ -77,7 +79,7 @@ export default function DocumentsPage() {
       typeName: tpl?.category || "Прочее",
       category: tpl?.category || "other",
       savedAt,
-      fieldCount: tpl?.fields.length || 0,
+      fieldCount: tpl?.fieldCount || 0,
       filledCount,
       raw: { templateId: id, values: fields, checklist: {}, activeTab: "", savedAt },
     };
@@ -108,7 +110,7 @@ export default function DocumentsPage() {
     setImportCount(notImported);
     if (serverIds.size === 0 && local.length > 0) {
       const items: DocItem[] = local.map((d) => {
-        const tpl = LEGAL_TEMPLATES.find((t) => t.id === d.templateId);
+        const tpl = TEMPLATE_META.find((t) => t.id === d.templateId);
         const filledCount = Object.values(d.values).filter(
           (v) => v && v.trim() !== ""
         ).length;
@@ -118,7 +120,7 @@ export default function DocumentsPage() {
           typeName: tpl?.category || "Прочее",
           category: tpl?.category || "other",
           savedAt: d.savedAt,
-          fieldCount: tpl?.fields.length || 0,
+          fieldCount: tpl?.fieldCount || 0,
           filledCount,
           raw: d,
         };
@@ -157,8 +159,18 @@ export default function DocumentsPage() {
   }, [loadDocs]);
 
   const filtered = docs
-    .filter((d) => d.name.toLowerCase().includes(search.toLowerCase()))
-    .filter((d) => typeFilter === "all" || d.typeName === typeFilter)
+    .filter((d) => {
+      if (typeFilter !== "all" && d.typeName !== typeFilter) return false;
+      const tokens = tokenGroups(search);
+      if (tokens.length === 0) return true;
+      const content = [
+        d.name,
+        d.typeName,
+        d.category,
+        ...Object.values(d.raw?.values ?? {}),
+      ].join(" ");
+      return textMatchesTokens(content, tokens);
+    })
     .sort((a, b) =>
       sortBy === "date"
         ? new Date(b.savedAt).getTime() - new Date(a.savedAt).getTime()
@@ -240,7 +252,7 @@ export default function DocumentsPage() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Мои документы</h1>
-          <p className="text-gray-500 mt-1">
+          <p className="text-gray-600 mt-1">
             {docs.length === 0
               ? "Пока нет документов — создайте первый"
               : `${docs.length} документов в ${docs.length === 1 ? "черновике" : "черновиках"}`}
@@ -252,7 +264,7 @@ export default function DocumentsPage() {
             className="p-2.5 rounded-xl border border-gray-200 hover:bg-gray-50 transition-colors"
             title="Обновить"
           >
-            <RefreshCw className={`w-4 h-4 text-gray-500 ${loading ? "animate-spin" : ""}`} />
+            <RefreshCw className={`w-4 h-4 text-gray-600 ${loading ? "animate-spin" : ""}`} />
           </button>
           <Link href="/builder">
             <Button variant="primary" size="md">
@@ -273,7 +285,7 @@ export default function DocumentsPage() {
               <p className="text-sm font-medium text-gray-900">
                 В этом браузере найдено {importCount} {importCount === 1 ? "черновик" : importCount < 5 ? "черновика" : "черновиков"}
               </p>
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-gray-600">
                 Созданные до входа в аккаунт. Перенесите их, чтобы они были всегда с вами.
               </p>
             </div>
@@ -299,7 +311,7 @@ export default function DocumentsPage() {
           <h3 className="text-lg font-semibold text-gray-900 mb-2">
             Нет сохранённых документов
           </h3>
-          <p className="text-sm text-gray-500 mb-6 max-w-sm mx-auto">
+          <p className="text-sm text-gray-600 mb-6 max-w-sm mx-auto">
             Начните заполнять форму в разделе «Создать документ» — документы автоматически сохраняются в черновики
           </p>
           <Link href="/builder">
@@ -314,7 +326,7 @@ export default function DocumentsPage() {
           <div className="p-5 border-b border-gray-100 space-y-4">
             <div className="flex flex-col sm:flex-row gap-3">
               <div className="relative flex-1">
-                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-600" />
                 <input
                   type="text"
                   placeholder="Поиск документов..."
@@ -383,7 +395,7 @@ export default function DocumentsPage() {
                             <FileText className="w-4 h-4 text-brand-500" />
                           </div>
                           <span className="font-medium text-gray-900 text-sm">
-                            {doc.name}
+                            <Highlight text={doc.name} query={search} />
                           </span>
                         </div>
                       </TableCell>
@@ -406,13 +418,13 @@ export default function DocumentsPage() {
                               style={{ width: `${progress}%` }}
                             />
                           </div>
-                          <span className="text-xs text-gray-500">
+                          <span className="text-xs text-gray-600">
                             {doc.filledCount}/{doc.fieldCount}
                           </span>
                         </div>
                       </TableCell>
                       <TableCell>
-                        <div className="flex items-center gap-1 text-xs text-gray-500">
+                        <div className="flex items-center gap-1 text-xs text-gray-600">
                           <Clock className="w-3 h-3" />
                           {formatDate(doc.savedAt)}
                         </div>
@@ -435,14 +447,14 @@ export default function DocumentsPage() {
                           </button>
                           <button
                             onClick={() => openHistory(doc)}
-                            className="p-1.5 hover:bg-brand-50 rounded-lg text-gray-400 hover:text-brand-500 transition-colors"
+                            className="p-1.5 hover:bg-brand-50 rounded-lg text-gray-600 hover:text-brand-500 transition-colors"
                             title="История версий"
                           >
                             <Clock className="w-4 h-4" />
                           </button>
                           <button
                             onClick={() => handleDelete(doc.id)}
-                            className="p-1.5 hover:bg-red-50 rounded-lg text-gray-400 hover:text-red-500 transition-colors"
+                            className="p-1.5 hover:bg-red-50 rounded-lg text-gray-600 hover:text-red-500 transition-colors"
                             title="Удалить"
                           >
                             <Trash2 className="w-4 h-4" />
@@ -457,7 +469,7 @@ export default function DocumentsPage() {
           </div>
 
           {totalPages > 1 && (
-            <div className="px-5 py-4 border-t border-gray-100 flex items-center justify-between text-sm text-gray-500">
+            <div className="px-5 py-4 border-t border-gray-100 flex items-center justify-between text-sm text-gray-600">
               <span>
                 {(page - 1) * perPage + 1}–
                 {Math.min(page * perPage, filtered.length)} из {filtered.length}
@@ -512,13 +524,13 @@ export default function DocumentsPage() {
                 <h3 className="text-sm font-semibold text-gray-900 mb-0.5">
                   История версий — {historyDoc.name}
                 </h3>
-                <p className="text-[11px] text-gray-400">
+                <p className="text-[11px] text-gray-600">
                   Версии создаются автоматически при работе с документом
                 </p>
               </div>
               <button
                 onClick={() => setHistoryDoc(null)}
-                className="p-1 hover:bg-gray-100 rounded-lg text-gray-400 transition-colors"
+                className="p-1 hover:bg-gray-100 rounded-lg text-gray-600 transition-colors"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -527,7 +539,7 @@ export default function DocumentsPage() {
             {historyVersions.length === 0 ? (
               <div className="text-center py-8">
                 <Clock className="w-8 h-8 text-gray-300 mx-auto mb-2" />
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-gray-600">
                   Версий пока нет. Откройте документ и сохраните изменения —
                   версии появятся автоматически.
                 </p>
@@ -552,7 +564,7 @@ export default function DocumentsPage() {
                         <p className="text-xs font-medium text-gray-800">
                           {i === 0 ? "Последняя версия" : `Версия от ${formatVersionTime(v.savedAt)}`}
                         </p>
-                        <p className="text-[10px] text-gray-500">
+                        <p className="text-[10px] text-gray-600">
                           {filled} полей заполнено
                         </p>
                       </div>

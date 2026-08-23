@@ -33,6 +33,23 @@ describe("renderTemplateDocument", () => {
     expect(html).toContain("lt;script");
   });
 
+  it("не экранирует повторно: & выводится ровно один раз", () => {
+    const html = renderTemplateDocument(dkpLikeTemplate, {
+      comment: "Иванов & Петров",
+    });
+    expect(html).toContain("Иванов &amp; Петров");
+    expect(html).not.toContain("&amp;amp;");
+  });
+
+  it("слэши и кавычки экранируются ровно один раз", () => {
+    const html = renderTemplateDocument(dkpLikeTemplate, {
+      comment: `O"Brien <b>&</b>`,
+    });
+    expect(html).toContain("&quot;");
+    expect(html).not.toContain("&amp;quot;");
+    expect(html).toContain("&lt;b&gt;");
+  });
+
   it("дата рендерится словесно-цифровым способом", () => {
     const html = renderTemplateDocument(dkpLikeTemplate, { date: "2026-05-27" });
     expect(html).toContain("27\u00A0мая\u00A02026\u00A0г.");
@@ -57,9 +74,64 @@ describe("renderTemplateDocument", () => {
     expect(html).toContain("ДА");
   });
 
-  it("checkbox false не рендерит секцию", () => {
+it("checkbox false не рендерит секцию", () => {
     const html = renderTemplateDocument(dkpLikeTemplate, { agreed: "false" });
     expect(html).not.toContain("ДА");
+  });
+
+  it("radio: label выбранной опции доступен как field_label", () => {
+    const tpl = {
+      ...dkpLikeTemplate,
+      fields: [
+        ...dkpLikeTemplate.fields,
+        {
+          id: "seller_status",
+          label: "Статус",
+          type: "radio" as const,
+          defaultValue: "person",
+          category: "seller" as const,
+          options: [
+            { label: "Физическое лицо", value: "person" },
+            { label: "Юридическое лицо", value: "legal" },
+          ],
+        },
+      ],
+      previewTemplate:
+        dkpLikeTemplate.previewTemplate +
+        '<div class="s-label">{{{seller_status_label}}}</div>',
+    };
+    const html = renderTemplateDocument(tpl, { seller_status: "legal" });
+    expect(html).toContain("Юридическое лицо");
+  });
+
+  it("radio: boolean-флаг field_is_value позволяет условные секции", () => {
+    const tpl = {
+      ...dkpLikeTemplate,
+      fields: [
+        ...dkpLikeTemplate.fields,
+        {
+          id: "seller_status",
+          label: "Статус",
+          type: "radio" as const,
+          defaultValue: "person",
+          category: "seller" as const,
+          options: [
+            { label: "Физическое лицо", value: "person" },
+            { label: "Юридическое лицо", value: "legal" },
+          ],
+        },
+      ],
+      previewTemplate:
+        dkpLikeTemplate.previewTemplate +
+        "{{#seller_status_is_legal}}<div class='legal-block'>юрлицо</div>{{/seller_status_is_legal}}" +
+        "{{#seller_status_is_person}}<div class='person-block'>физлицо</div>{{/seller_status_is_person}}",
+    };
+    const legal = renderTemplateDocument(tpl, { seller_status: "legal" });
+    expect(legal).toContain("legal-block");
+    expect(legal).not.toContain("person-block");
+    const person = renderTemplateDocument(tpl, { seller_status: "person" });
+    expect(person).toContain("person-block");
+    expect(person).not.toContain("legal-block");
   });
 
   it("repeating: элементы с нумерацией", () => {

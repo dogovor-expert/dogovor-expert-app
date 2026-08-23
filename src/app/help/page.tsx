@@ -4,6 +4,9 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { useState } from "react";
 import { Search, ChevronDown, ChevronRight, MessageCircle, Mail, HelpCircle, Star, FileText, Car, Shield, FileCheck, CreditCard, BookOpen } from "lucide-react";
+import { tokenGroups, textMatchesTokens } from "@/lib/search";
+import { openChat } from "@/components/support/ChatWidget";
+import { SUPPORT_EMAIL } from "@/lib/site";
 
 const faqItems = [
   {
@@ -17,8 +20,8 @@ const faqItems = [
     category: "VIN",
   },
   {
-    q: "Как рассчитать стоимость ОСАГО и проверить КБМ?",
-    a: "В разделе «ОСАГО & КБМ» встроен партнёрский калькулятор Инзуро: укажите данные автомобиля, и система сравнит предложения страховых компаний и поможет оформить полис онлайн. Там же можно бесплатно проверить свой коэффициент бонус-малус (КБМ) по официальному реестру РСА — для этого нужны ФИО, дата рождения и водительское удостоверение.",
+    q: "Как рассчитать стоимость ОСАГО?",
+    a: "В разделе «ОСАГО» встроен партнёрский калькулятор Инзуро: укажите данные автомобиля, и система сравнит предложения страховых компаний и поможет оформить полис онлайн.",
     category: "ОСАГО",
   },
   {
@@ -66,8 +69,9 @@ export default function HelpPage() {
 
   const filteredFaq = faqItems.filter(item => {
     if (categoryFilter && item.category !== categoryFilter) return false;
-    const q = search.toLowerCase();
-    return item.q.toLowerCase().includes(q) || item.a.toLowerCase().includes(q);
+    const tokens = tokenGroups(search);
+    if (tokens.length === 0) return true;
+    return textMatchesTokens(`${item.q} ${item.a} ${item.category}`, tokens);
   });
 
   return (
@@ -77,9 +81,9 @@ export default function HelpPage() {
           <HelpCircle className="w-6 h-6 text-brand-600" />
         </div>
         <h1 className="text-2xl font-bold text-gray-900 mb-2">Центр помощи</h1>
-        <p className="text-gray-500 mb-6">Найдите ответы на ваши вопросы или свяжитесь с поддержкой</p>
+        <p className="text-gray-600 mb-6">Найдите ответы на ваши вопросы или свяжитесь с поддержкой</p>
         <div className="relative max-w-xl mx-auto">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-600" />
           <input
             type="text" placeholder="Поиск по вопросам и статьям..." value={search}
             onChange={e => setSearch(e.target.value)}
@@ -124,7 +128,7 @@ export default function HelpPage() {
                   {openFaq === i ? (
                     <ChevronDown className="w-4 h-4 text-brand-500 flex-shrink-0" />
                   ) : (
-                    <ChevronRight className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                    <ChevronRight className="w-4 h-4 text-gray-600 flex-shrink-0" />
                   )}
                 </button>
                 {openFaq === i && (
@@ -137,7 +141,7 @@ export default function HelpPage() {
             {filteredFaq.length === 0 && (
               <div className="text-center py-12 bg-white rounded-xl border border-gray-100">
                 <HelpCircle className="w-10 h-10 text-gray-300 mx-auto mb-3" />
-                <p className="text-gray-500">Ничего не найдено. Попробуйте другой запрос.</p>
+                <p className="text-gray-600">Ничего не найдено. Попробуйте другой запрос.</p>
               </div>
             )}
           </div>
@@ -146,7 +150,7 @@ export default function HelpPage() {
         <div className="space-y-6">
           <Card variant="default" padding="md">
             <div className="flex items-center gap-2 mb-4">
-              <Star className="w-4 h-4 text-amber-500 fill-amber-500" />
+              <Star className="w-4 h-4 text-amber-700 fill-amber-500" />
               <h3 className="font-semibold text-gray-900">Популярные статьи</h3>
             </div>
             <div className="space-y-2">
@@ -171,14 +175,14 @@ export default function HelpPage() {
             <h3 className="font-semibold mb-2">Не нашли ответ?</h3>
             <p className="text-white/80 text-sm mb-4">Мы отвечаем в течение 24 часов в рабочие дни</p>
             <div className="space-y-2">
-              <button onClick={() => showToast("Открыть чат с поддержкой")} className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-white/20 rounded-xl text-sm hover:bg-white/30 transition-colors">
+              <button onClick={() => openChat()} className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-white/20 rounded-xl text-sm hover:bg-white/30 transition-colors">
                 <MessageCircle className="w-4 h-4" />
                 Чат с поддержкой
               </button>
-              <button onClick={() => showToast("Отправить письмо на hello@dogovor.expert")} className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-white/20 rounded-xl text-sm hover:bg-white/30 transition-colors">
+              <a href={`mailto:${SUPPORT_EMAIL}`} className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-white/20 rounded-xl text-sm hover:bg-white/30 transition-colors">
                 <Mail className="w-4 h-4" />
-                Отправить письмо
-              </button>
+                Написать на {SUPPORT_EMAIL}
+              </a>
             </div>
           </Card>
         </div>

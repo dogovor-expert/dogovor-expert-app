@@ -35,7 +35,7 @@ export function SidebarLeft({ children, navItems, accentColor = "brand", user }:
             <span className="font-semibold text-gray-900">Dogovor.expert</span>
           </div>
           <button onClick={() => setOpen(false)} className="lg:hidden p-1 hover:bg-gray-100 rounded-lg">
-            <X className="w-5 h-5 text-gray-500" />
+            <X className="w-5 h-5 text-gray-600" />
           </button>
         </div>
         <nav className="p-4 space-y-1">
@@ -68,7 +68,7 @@ export function SidebarLeft({ children, navItems, accentColor = "brand", user }:
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-gray-900 truncate">{user.name}</p>
-                <p className="text-xs text-gray-500 truncate">{user.email}</p>
+                <p className="text-xs text-gray-600 truncate">{user.email}</p>
               </div>
             </div>
           </div>
@@ -81,12 +81,12 @@ export function SidebarLeft({ children, navItems, accentColor = "brand", user }:
               <Menu className="w-5 h-5 text-gray-600" />
             </button>
             <div className="relative max-w-md hidden sm:block">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-600" />
               <input type="text" placeholder="Поиск..." className="w-full pl-10 pr-4 py-2 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500" />
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <button className="relative p-2 hover:bg-gray-100 rounded-xl text-gray-500">
+            <button className="relative p-2 hover:bg-gray-100 rounded-xl text-gray-600">
               <Bell className="w-5 h-5" />
               <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full" />
             </button>
@@ -94,7 +94,7 @@ export function SidebarLeft({ children, navItems, accentColor = "brand", user }:
               <div className="w-7 h-7 rounded-full bg-gray-200 flex items-center justify-center text-xs font-medium text-gray-600">
                 {user?.name?.[0] ?? "U"}
               </div>
-              <ChevronDown className="w-4 h-4 text-gray-400 hidden sm:block" />
+              <ChevronDown className="w-4 h-4 text-gray-600 hidden sm:block" />
             </button>
           </div>
         </header>

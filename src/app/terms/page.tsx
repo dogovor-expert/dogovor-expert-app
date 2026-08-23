@@ -5,7 +5,7 @@ import { SITE_CONTACT_EMAIL, SITE_NAME, SITE_LEGAL_NAME, SITE_LEGAL_INN } from "
 
 export const metadata: Metadata = {
   title: "Пользовательское соглашение",
-  description: `Пользовательское соглашение сервиса ${SITE_NAME}: условия использования, ответственность сторон, порядок предоставления доступа.`,
+  description: `Пользовательское соглашение Dogovor.expert: условия использования, ответственность сторон, порядок доступа.`,
   alternates: { canonical: "/terms" },
 };
 
@@ -98,7 +98,7 @@ export default function TermsPage() {
         </div>
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Пользовательское соглашение</h1>
-          <p className="text-gray-500 text-sm">Обновлено: 16.08.2026</p>
+          <p className="text-gray-600 text-sm">Обновлено: 16.08.2026</p>
         </div>
       </div>
       <div className="mb-8">

@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+import { createClient } from "@/lib/supabase/server";
+import { limiters, clientIp, checkRateLimit, rateLimitResponse } from "@/lib/ratelimit";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -10,6 +12,15 @@ const BODY_HTML = (safeFilename: string) => `<div style="font-family:Arial,sans-
 </div>`;
 
 export async function POST(req: Request) {
+  const rl = await checkRateLimit(limiters.emailSend, clientIp(req));
+  if (!rl.ok) return rateLimitResponse(rl.retryAfter);
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+
   const zeptoToken = process.env.ZEPTOMAIL_TOKEN;
   const resendKey = process.env.RESEND_API_KEY;
   if (!zeptoToken && !resendKey) {

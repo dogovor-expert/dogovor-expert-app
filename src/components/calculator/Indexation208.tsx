@@ -23,19 +23,19 @@ export default function Indexation208() {
     <div className="space-y-4">
       <div className="space-y-3">
         <div className="space-y-1">
-          <label className="text-[10px] font-mono text-gray-500">Присуждённая судом сумма (₽)</label>
+          <label className="text-[10px] font-mono text-gray-600">Присуждённая судом сумма (₽)</label>
           <input type="number" min="0" value={sum} onChange={(e) => setSum(e.target.value)}
             placeholder="Например 300000"
             className="w-full bg-gray-50 border border-gray-200 text-xs py-2.5 px-3 rounded-lg text-gray-900 outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500" />
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-1">
-            <label className="text-[10px] font-mono text-gray-500">Дата вынесения решения</label>
+            <label className="text-[10px] font-mono text-gray-600">Дата вынесения решения</label>
             <input type="date" value={decision} onChange={(e) => setDecision(e.target.value)}
               className="w-full bg-gray-50 border border-gray-200 text-xs py-2.5 px-3 rounded-lg text-gray-900 outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500" />
           </div>
           <div className="space-y-1">
-            <label className="text-[10px] font-mono text-gray-500">Дата фактического исполнения</label>
+            <label className="text-[10px] font-mono text-gray-600">Дата фактического исполнения</label>
             <input type="date" value={paid} onChange={(e) => setPaid(e.target.value)}
               className="w-full bg-gray-50 border border-gray-200 text-xs py-2.5 px-3 rounded-lg text-gray-900 outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500" />
           </div>
@@ -52,7 +52,7 @@ export default function Indexation208() {
         <div className="bg-gray-50 rounded-xl p-4 border border-gray-200 space-y-3">
           <div className="flex items-center gap-2">
             <Check className="w-4 h-4 text-emerald-500" />
-            <span className="text-[10px] font-mono text-gray-500">Индексация по ст. 208 ГПК РФ — по ключевой ставке ЦБ</span>
+            <span className="text-[10px] font-mono text-gray-600">Индексация по ст. 208 ГПК РФ — по ключевой ставке ЦБ</span>
           </div>
           <p className="text-2xl font-bold text-gray-900">{fmtMoney(result.total)}</p>
           {result.periods.length > 0 && (
@@ -72,7 +72,7 @@ export default function Indexation208() {
         </div>
       )}
 
-      <p className="text-[11px] text-gray-400 leading-relaxed flex items-start gap-1.5">
+      <p className="text-[11px] text-gray-600 leading-relaxed flex items-start gap-1.5">
         <TrendingUp className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
         Ст. 208 ГПК РФ (в ред. ФЗ от 19.12.2022 № 59-ФЗ): индексация присуждённых сумм взыскивается со дня вынесения решения до дня фактического исполнения исходя из ключевой ставки ЦБ РФ. Заявление подаётся в суд, вынесший решение.
       </p>

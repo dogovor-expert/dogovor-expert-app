@@ -1,6 +1,7 @@
 import { ArrowRight, Eye, Shield } from "lucide-react";
 import type { LegalTemplate, TemplateField } from "@/data/types";
 import { isFieldVisible, type AuditResult } from "@/lib/validation";
+import { resolveFieldLabel, tabRoleLabel } from "@/lib/roleLabels";
 import FormField from "./FormField";
 
 const TAB_LABELS: Record<string, string> = {
@@ -61,6 +62,7 @@ interface FormSectionProps {
   onInnBlur: (fieldId: string) => void;
   onGoToPreview: () => void;
   onAudit: () => void;
+  onSuggestFill?: (pairs: Record<string, string>) => void;
 }
 
 export default function FormSection({
@@ -72,6 +74,7 @@ export default function FormSection({
   onInnBlur,
   onGoToPreview,
   onAudit,
+  onSuggestFill,
 }: FormSectionProps) {
   const errorCount = liveAudit.filter(
     (r) => r.type === "error" && r.field !== "_all"
@@ -82,7 +85,6 @@ export default function FormSection({
   const tabs = Array.from(
     new Set(template.fields.map((f) => f.category))
   ) as TemplateField["category"][];
-  const simple = template.fields.length <= 20;
 
   const progress = visibleFields.filter(
     (f) => f.validation?.required && formValues[f.id]?.trim()
@@ -95,12 +97,13 @@ export default function FormSection({
     fields.map((field) => (
       <FormField
         key={field.id}
-        field={field}
+        field={{ ...field, label: resolveFieldLabel(template.id, field) }}
         value={formValues[field.id] || ""}
         audit={liveAudit.filter((r) => r.field === field.id)}
         onChange={onFieldChange}
         onBlurNormalize={onBlurNormalize}
         onInnBlur={onInnBlur}
+        onSuggestFill={onSuggestFill}
       />
     ));
 
@@ -109,9 +112,10 @@ export default function FormSection({
     const required = fields.filter((f) => f.validation?.required);
     const filled = required.filter((f) => formValues[f.id]?.trim());
     const done = required.length > 0 && filled.length === required.length;
+    const heading = tabRoleLabel(template.id, tab, TAB_LABELS[tab] || tab);
     return (
       <h3 className="flex items-center gap-2 text-sm font-semibold text-gray-800">
-        {TAB_LABELS[tab] || tab}
+        {heading}
         {required.length > 0 && (
           <span
             className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${
@@ -129,29 +133,21 @@ export default function FormSection({
 
   return (
     <div className="bg-white rounded-xl border border-gray-100 shadow-sm">
-      <div className="p-5">
-        {simple ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {renderFields(visibleFields)}
-          </div>
-        ) : (
-          <div className="space-y-6">
-            {tabs.map((tab) => (
-              <section key={tab} className="space-y-4">
-                <div className="flex items-center gap-3">
-                  <span className="w-1 h-4 rounded-full bg-brand-400" />
-                  {sectionHeading(tab)}
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {renderFields(visibleFields.filter((f) => f.category === tab))}
-                </div>
-              </section>
-            ))}
-          </div>
-        )}
+      <div className="p-5 space-y-6">
+        {tabs.map((tab) => (
+          <section key={tab} className="space-y-4">
+            <div className="flex items-center gap-3">
+              <span className="w-1 h-4 rounded-full bg-brand-500" />
+              {sectionHeading(tab)}
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {renderFields(visibleFields.filter((f) => f.category === tab))}
+            </div>
+          </section>
+        ))}
       </div>
       <div className="px-5 pb-5 flex flex-wrap items-center justify-between gap-3">
-        <span className="text-xs text-gray-400">
+        <span className="text-xs text-gray-600">
           {progress} / {progressTotal} обязательных
         </span>
         <div className="flex items-center gap-2">

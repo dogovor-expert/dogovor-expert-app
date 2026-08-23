@@ -139,71 +139,7 @@ export const TEMPLATES_REALTY: LegalTemplate[] = [
         dependsOn: { fieldId: "seller_has_spouse", value: "true" },
       },
     ],
-    previewTemplate: `
-<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
-  <div class="text-center font-bold text-base mb-6 text-black uppercase">Договор купли-продажи квартиры</div>
-  <div class="flex justify-between mb-6 text-xs font-semibold">
-    <div>г. {{{city}}}</div>
-    <div>«{{{date}}}»</div>
-  </div>
-  <p class="mb-4 text-justify">
-    Гражданин <strong>{{{seller_fio}}}</strong>, {{{seller_birthday}}} года рождения, паспорт {{{seller_passport_series}}} № {{{seller_passport_number}}}, выдан {{{seller_passport_issued_by}}} {{{seller_passport_date}}}, зарегистрированный по адресу: {{{seller_address}}}, именуемый в дальнейшем «Продавец», с одной стороны, и
-  </p>
-  <p class="mb-4 text-justify">
-    Гражданин <strong>{{{buyer_fio}}}</strong>, {{{buyer_birthday}}} года рождения, паспорт {{{buyer_passport_series}}} № {{{buyer_passport_number}}}, выдан {{{buyer_passport_issued_by}}} {{{buyer_passport_date}}}, зарегистрированный по адресу: {{{buyer_address}}}, именуемый в дальнейшем «Покупатель», с другой стороны, заключили настоящий договор о нижеследующем:
-  </p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">1. Предмет договора</div>
-  <p class="mb-4 text-justify">
-    1.1. Продавец продал, а Покупатель купил квартиру, расположенную по адресу: <strong>{{{flat_address}}}</strong>, общей площадью {{{flat_area}}} кв.м, жилой площадью {{{flat_living_area}}} кв.м, {{{flat_rooms}}}-комнатную, этаж {{{flat_floor}}}, кадастровый номер {{{flat_cadastral_number}}}.
-  </p>
-  <p class="mb-4 text-justify">
-    1.2. Указанная квартира принадлежит Продавцу на основании {{{flat_doc_basis}}}.
-  </p>
-  <p class="mb-4 text-justify">1.3. Квартира не обременена правами третьих лиц: {{{flat_encumbrances}}}.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">2. Цена договора и порядок оплаты</div>
-  <p class="mb-4 text-justify">
-    2.1. Стоимость квартиры составляет <strong>{{{contract_price}}} рублей</strong> (прописью: {{{contract_price_words}}}).
-  </p>
-  <p class="mb-4 text-justify">
-    2.2. Оплата производится путём {{{payment_method}}} в срок до подписания настоящего договора.
-  </p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">3. Реквизиты и подписи сторон</div>
-  
-  <div class="font-bold mb-2 text-black text-xs uppercase">4. Форс-мажор</div>
-  <p class="mb-4 text-justify">
-    4.1. Стороны освобождаются от ответственности за частичное или полное неисполнение обязательств по настоящему договору, если оно явилось следствием обстоятельств непреодолимой силы (форс-мажора): стихийных бедствий, пожаров, наводнений, землетрясений, эпидемий, военных действий, решений органов государственной власти, а также иных обстоятельств, которые стороны не могли предвидеть и предотвратить разумными мерами.
-  </p>
-  <p class="mb-4 text-justify">
-    4.2. Сторона, для которой создалась невозможность исполнения обязательств, обязана незамедлительно, но не позднее 10 (десяти) календарных дней с момента наступления таких обстоятельств, письменно уведомить другую сторону об их возникновении. Неуведомление либо несвоевременное уведомление лишает сторону права ссылаться на форс-мажор как на основание освобождения от ответственности.
-  </p>
-  <p class="mb-4 text-justify">
-    4.3. Если обстоятельства непреодолимой силы действуют более 60 (шестидесяти) календарных дней, каждая из сторон вправе в одностороннем порядке отказаться от исполнения настоящего договора, письменно уведомив другую сторону.
-  </p>
-
-  <div class="font-bold mb-2 text-black text-xs uppercase">5. Порядок разрешения споров</div>
-  <p class="mb-4 text-justify">
-    5.1. Все споры и разногласия, возникающие из настоящего договора или в связи с ним, стороны разрешают путём переговоров. Срок рассмотрения письменной претензии — 10 (десять) календарных дней с момента её получения.
-  </p>
-  <p class="mb-4 text-justify">
-    5.2. При недостижении согласия споры разрешаются в судебном порядке в соответствии с действующим законодательством Российской Федерации.
-  </p>
-<div class="grid grid-cols-2 gap-6 mt-8 text-xs border-t border-zinc-300 pt-4">
-    <div>
-      <div class="font-bold mb-2 uppercase text-black">Продавец:</div>
-      <p class="mb-1"><strong>{{{seller_fio}}}</strong></p>
-      <p class="text-zinc-500 text-[11px]">Паспорт: {{{seller_passport_series}}} {{{seller_passport_number}}}</p>
-      <p class="text-zinc-500 text-[11px]">Адрес: {{{seller_address}}}</p>
-      <div class="mt-8 border-b border-zinc-900 w-44 h-5 flex justify-end items-end text-[10px] text-zinc-400">Подпись Продавца</div>
-    </div>
-    <div>
-      <div class="font-bold mb-2 uppercase text-black">Покупатель:</div>
-      <p class="mb-1"><strong>{{{buyer_fio}}}</strong></p>
-      <p class="text-zinc-500 text-[11px]">Паспорт: {{{buyer_passport_series}}} {{{buyer_passport_number}}}</p>
-      <p class="text-zinc-500 text-[11px]">Адрес: {{{buyer_address}}}</p>
-      <div class="mt-8 border-b border-zinc-900 w-44 h-5 flex justify-end items-end text-[10px] text-zinc-400">Подпись Покупателя</div>
-    </div>
-  </div>
-</div>`,
+    
   },
 {
     id: "rental-flat",
@@ -251,6 +187,15 @@ export const TEMPLATES_REALTY: LegalTemplate[] = [
         defaultValue: "", category: "tenant",
       },
       {
+        id: "residents", label: "Проживающие члены семьи", type: "repeating",
+        defaultValue: "", category: "tenant",
+        hint: "Лица, которые будут проживать вместе с нанимателем (для учёта в договоре)",
+        repeatingFields: [
+          { id: "res_fio", label: "ФИО", type: "text", defaultValue: "" },
+          { id: "res_relation", label: "Родство", type: "text", defaultValue: "" },
+        ],
+      },
+      {
         id: "flat_address", label: "Адрес квартиры", type: "text",
         defaultValue: "", category: "object",
         validation: { required: true },
@@ -289,66 +234,7 @@ export const TEMPLATES_REALTY: LegalTemplate[] = [
         category: "payment",
       },
     ],
-    previewTemplate: `
-<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
-  <div class="text-center font-bold text-base mb-6 text-black uppercase">Договор найма (аренды) квартиры</div>
-  <div class="flex justify-between mb-6 text-xs font-semibold">
-    <div>г. {{{city}}}</div>
-    <div>«{{{date}}}»</div>
-  </div>
-  <p class="mb-4 text-justify">
-    Гражданин <strong>{{{landlord_fio}}}</strong>, паспорт {{{landlord_passport}}}, именуемый в дальнейшем «Арендодатель», с одной стороны, и
-  </p>
-  <p class="mb-4 text-justify">
-    Гражданин <strong>{{{tenant_fio}}}</strong>, паспорт {{{tenant_passport}}}, именуемый в дальнейшем «Арендатор», с другой стороны, заключили настоящий договор о нижеследующем:
-  </p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">1. Предмет договора</div>
-  <p class="mb-4 text-justify">
-    1.1. Арендодатель передаёт, а Арендатор принимает во временное пользование квартиру по адресу: <strong>{{{flat_address}}}</strong>, площадью {{{flat_area}}} кв.м.
-  </p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">2. Срок и плата</div>
-  <p class="mb-4 text-justify">
-    2.1. Срок аренды: с «{{{lease_start}}}» по «{{{lease_end}}}»
-  </p>
-  <p class="mb-4 text-justify">
-    2.2. Арендная плата составляет <strong>{{{rent_amount}}} руб./мес.</strong>, оплата не позднее {{{payment_day}}}-го числа каждого месяца.
-  </p>
-  <p class="mb-4 text-justify">2.3. Залоговый платёж: {{{deposit_amount}}} руб.</p>
-  <p class="mb-4 text-justify">2.4. Коммунальные услуги: {{#utilities_included}}включены в арендную плату ({{{utilities_amount}}} руб./мес.){{/utilities_included}}{{^utilities_included}}оплачиваются отдельно в размере {{{utilities_amount}}} руб./мес.{{/utilities_included}}</p>
-  
-  <div class="font-bold mb-2 text-black text-xs uppercase">3. Форс-мажор</div>
-  <p class="mb-4 text-justify">
-    3.1. Стороны освобождаются от ответственности за частичное или полное неисполнение обязательств по настоящему договору, если оно явилось следствием обстоятельств непреодолимой силы (форс-мажора): стихийных бедствий, пожаров, наводнений, землетрясений, эпидемий, военных действий, решений органов государственной власти, а также иных обстоятельств, которые стороны не могли предвидеть и предотвратить разумными мерами.
-  </p>
-  <p class="mb-4 text-justify">
-    3.2. Сторона, для которой создалась невозможность исполнения обязательств, обязана незамедлительно, но не позднее 10 (десяти) календарных дней с момента наступления таких обстоятельств, письменно уведомить другую сторону об их возникновении. Неуведомление либо несвоевременное уведомление лишает сторону права ссылаться на форс-мажор как на основание освобождения от ответственности.
-  </p>
-  <p class="mb-4 text-justify">
-    3.3. Если обстоятельства непреодолимой силы действуют более 60 (шестидесяти) календарных дней, каждая из сторон вправе в одностороннем порядке отказаться от исполнения настоящего договора, письменно уведомив другую сторону.
-  </p>
-
-  <div class="font-bold mb-2 text-black text-xs uppercase">4. Порядок разрешения споров</div>
-  <p class="mb-4 text-justify">
-    4.1. Все споры и разногласия, возникающие из настоящего договора или в связи с ним, стороны разрешают путём переговоров. Срок рассмотрения письменной претензии — 10 (десять) календарных дней с момента её получения.
-  </p>
-  <p class="mb-4 text-justify">
-    4.2. При недостижении согласия споры разрешаются в судебном порядке в соответствии с действующим законодательством Российской Федерации.
-  </p>
-<div class="grid grid-cols-2 gap-6 mt-8 text-xs border-t border-zinc-300 pt-4">
-    <div>
-      <div class="font-bold mb-2 uppercase text-black">Арендодатель:</div>
-      <p class="mb-1"><strong>{{{landlord_fio}}}</strong></p>
-      <p class="text-zinc-500 text-[11px]">Тел: {{{landlord_phone}}}</p>
-      <div class="mt-8 border-b border-zinc-900 w-44 h-5 flex justify-end items-end text-[10px] text-zinc-400">Подпись</div>
-    </div>
-    <div>
-      <div class="font-bold mb-2 uppercase text-black">Арендатор:</div>
-      <p class="mb-1"><strong>{{{tenant_fio}}}</strong></p>
-      <p class="text-zinc-500 text-[11px]">Тел: {{{tenant_phone}}}</p>
-      <div class="mt-8 border-b border-zinc-900 w-44 h-5 flex justify-end items-end text-[10px] text-zinc-400">Подпись</div>
-    </div>
-  </div>
-</div>`,
+    
   },
 {
     id: "dsp",
@@ -378,6 +264,17 @@ export const TEMPLATES_REALTY: LegalTemplate[] = [
         defaultValue: "", category: "tenant",
       },
       {
+        id: "family_members", label: "Члены семьи с правом пользования", type: "repeating",
+        defaultValue: "", category: "family", validation: { required: true },
+        hint: "ст. 60 ЖК РФ: при приватизации указываются все члены семьи, приобретающие право пользования",
+        repeatingFields: [
+          { id: "fm_fio", label: "ФИО", type: "text", defaultValue: "" },
+          { id: "fm_relation", label: "Степень родства", type: "text", defaultValue: "" },
+          { id: "fm_birthdate", label: "Дата рождения (ДД.ММ.ГГГГ)", type: "text", defaultValue: "" },
+          { id: "fm_passport", label: "Паспортные данные", type: "text", defaultValue: "" },
+        ],
+      },
+      {
         id: "flat_address", label: "Адрес квартиры", type: "text",
         defaultValue: "", category: "object",
         validation: { required: true },
@@ -403,58 +300,7 @@ export const TEMPLATES_REALTY: LegalTemplate[] = [
         defaultValue: "", category: "contract",
       },
     ],
-    previewTemplate: `
-<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
-  <div class="text-center font-bold text-base mb-6 text-black uppercase">Договор передачи квартиры в собственность граждан</div>
-  <div class="flex justify-between mb-6 text-xs font-semibold">
-    <div>г. {{{city}}}</div>
-    <div>«{{{date}}}»</div>
-  </div>
-  <p class="mb-4 text-justify">
-    <strong>{{{municipality}}}</strong> в лице уполномоченного органа, с одной стороны, и гражданин <strong>{{{tenant_fio}}}</strong>, паспорт {{{tenant_passport}}}, с другой стороны, заключили договор о нижеследующем:
-  </p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">1. Предмет договора</div>
-  <p class="mb-4 text-justify">
-    1.1. Муниципальное образование передаёт, а гражданин принимает в собственность бесплатно квартиру по адресу: <strong>{{{flat_address}}}</strong>, общей площадью {{{flat_area}}} кв.м, кадастровый номер {{{flat_cadastral_number}}}.
-  </p>
-  <p class="mb-4 text-justify">
-    1.2. Основание: Распоряжение {{{order_number}}} от «{{{order_date}}}»
-  </p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">2. Переход права собственности</div>
-  <p class="mb-4 text-justify">
-    2.1. Право собственности возникает с момента государственной регистрации в ЕГРН.
-  </p>
-  <div class="flex justify-between items-center text-xs mt-12 border-t border-zinc-300 pt-4">
-    <div>
-      <div class="font-bold mb-1">Наниматель:</div>
-      <p><strong>{{{tenant_fio}}}</strong></p>
-      <div class="mt-8 border-b border-zinc-950 w-44 h-5"></div>
-    </div>
-    <div class="text-right">
-      <div class="font-bold mb-1">Уполномоченный орган:</div>
-      <div class="mt-8 border-b border-zinc-950 w-44 h-5"></div>
-    </div>
-  </div>
-
-  <div class="font-bold mb-2 text-black text-xs uppercase">3. Форс-мажор</div>
-  <p class="mb-4 text-justify">
-    3.1. Стороны освобождаются от ответственности за частичное или полное неисполнение обязательств по настоящему договору, если оно явилось следствием обстоятельств непреодолимой силы (форс-мажора): стихийных бедствий, пожаров, наводнений, землетрясений, эпидемий, военных действий, решений органов государственной власти, а также иных обстоятельств, которые стороны не могли предвидеть и предотвратить разумными мерами.
-  </p>
-  <p class="mb-4 text-justify">
-    3.2. Сторона, для которой создалась невозможность исполнения обязательств, обязана незамедлительно, но не позднее 10 (десяти) календарных дней с момента наступления таких обстоятельств, письменно уведомить другую сторону об их возникновении. Неуведомление либо несвоевременное уведомление лишает сторону права ссылаться на форс-мажор как на основание освобождения от ответственности.
-  </p>
-  <p class="mb-4 text-justify">
-    3.3. Если обстоятельства непреодолимой силы действуют более 60 (шестидесяти) календарных дней, каждая из сторон вправе в одностороннем порядке отказаться от исполнения настоящего договора, письменно уведомив другую сторону.
-  </p>
-
-  <div class="font-bold mb-2 text-black text-xs uppercase">4. Порядок разрешения споров</div>
-  <p class="mb-4 text-justify">
-    4.1. Все споры и разногласия, возникающие из настоящего договора или в связи с ним, стороны разрешают путём переговоров. Срок рассмотрения письменной претензии — 10 (десять) календарных дней с момента её получения.
-  </p>
-  <p class="mb-4 text-justify">
-    4.2. При недостижении согласия споры разрешаются в судебном порядке в соответствии с действующим законодательством Российской Федерации.
-  </p>
-</div>`,
+    
   },
 {
     id: "rental-commercial",
@@ -541,69 +387,7 @@ export const TEMPLATES_REALTY: LegalTemplate[] = [
         category: "contract",
       },
     ],
-    previewTemplate: `
-<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
-  <div class="text-center font-bold text-base mb-6 text-black uppercase">Договор аренды нежилого помещения</div>
-  <div class="flex justify-between mb-6 text-xs font-semibold">
-    <div>г. {{{city}}}</div>
-    <div>«{{{date}}}»</div>
-  </div>
-  <p class="mb-4 text-justify">
-    <strong>{{{landlord_company}}}</strong>, ИНН {{{landlord_inn}}}, в лице директора {{{landlord_director}}}, именуемый «Арендодатель», с одной стороны, и
-  </p>
-  <p class="mb-4 text-justify">
-    <strong>{{{tenant_company}}}</strong>, ИНН {{{tenant_inn}}}, в лице директора {{{tenant_director}}}, именуемый «Арендатор», с другой стороны, заключили договор о нижеследующем:
-  </p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">1. Предмет договора</div>
-  <p class="mb-4 text-justify">
-    1.1. Арендодатель передаёт, а Арендатор принимает во временное владение и пользование помещение площадью {{{area_sqm}}} кв.м по адресу: <strong>{{{premises_address}}}</strong>, для цели: {{{purpose}}}.
-  </p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">2. Арендная плата</div>
-  <p class="mb-4 text-justify">
-    2.1. Арендная плата составляет <strong>{{{rent_price_month}}} руб.</strong> в месяц ({{{rent_price_month_words}}}), НДС не облагается.
-  </p>
-  <p class="mb-4 text-justify">
-    2.2. {{{utilities}}}. Обеспечительный платёж: {{{deposit}}} месячной арендной платы, возвращается при окончании срока.
-  </p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">3. Срок аренды</div>
-  <p class="mb-4 text-justify">
-    3.1. Срок аренды: {{{term_months}}} месяцев с «{{{start_date}}}».
-  </p>
-  <p class="mb-4 text-justify">
-    3.2. Досрочное расторжение — по письменному уведомлению за {{{notice_days}}} дней.
-  </p>
-  
-  <div class="font-bold mb-2 text-black text-xs uppercase">4. Форс-мажор</div>
-  <p class="mb-4 text-justify">
-    4.1. Стороны освобождаются от ответственности за частичное или полное неисполнение обязательств по настоящему договору, если оно явилось следствием обстоятельств непреодолимой силы (форс-мажора): стихийных бедствий, пожаров, наводнений, землетрясений, эпидемий, военных действий, решений органов государственной власти, а также иных обстоятельств, которые стороны не могли предвидеть и предотвратить разумными мерами.
-  </p>
-  <p class="mb-4 text-justify">
-    4.2. Сторона, для которой создалась невозможность исполнения обязательств, обязана незамедлительно, но не позднее 10 (десяти) календарных дней с момента наступления таких обстоятельств, письменно уведомить другую сторону об их возникновении. Неуведомление либо несвоевременное уведомление лишает сторону права ссылаться на форс-мажор как на основание освобождения от ответственности.
-  </p>
-  <p class="mb-4 text-justify">
-    4.3. Если обстоятельства непреодолимой силы действуют более 60 (шестидесяти) календарных дней, каждая из сторон вправе в одностороннем порядке отказаться от исполнения настоящего договора, письменно уведомив другую сторону.
-  </p>
-
-  <div class="font-bold mb-2 text-black text-xs uppercase">5. Порядок разрешения споров</div>
-  <p class="mb-4 text-justify">
-    5.1. Все споры и разногласия, возникающие из настоящего договора или в связи с ним, стороны разрешают путём переговоров. Срок рассмотрения письменной претензии — 10 (десять) календарных дней с момента её получения.
-  </p>
-  <p class="mb-4 text-justify">
-    5.2. При недостижении согласия споры разрешаются в судебном порядке в соответствии с действующим законодательством Российской Федерации.
-  </p>
-<div class="grid grid-cols-2 gap-6 mt-8 text-xs border-t border-zinc-300 pt-4">
-    <div>
-      <div class="font-bold mb-1">Арендодатель:</div>
-      <p><strong>{{{landlord_company}}}</strong></p>
-      <div class="mt-8 border-b border-zinc-950 w-44 h-5"></div>
-    </div>
-    <div>
-      <div class="font-bold mb-1">Арендатор:</div>
-      <p><strong>{{{tenant_company}}}</strong></p>
-      <div class="mt-8 border-b border-zinc-950 w-44 h-5"></div>
-    </div>
-  </div>
-</div>`,
+    
   },
 {
     id: "exchange-agreement",
@@ -680,66 +464,7 @@ export const TEMPLATES_REALTY: LegalTemplate[] = [
         defaultValue: "Простая письменная форма", category: "contract",
       },
     ],
-    previewTemplate: `
-<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
-  <div class="text-center font-bold text-base mb-6 text-black uppercase">Договор мены</div>
-  <div class="flex justify-between mb-6 text-xs font-semibold">
-    <div>г. {{{city}}}</div>
-    <div>«{{{date}}}»</div>
-  </div>
-  <p class="mb-4 text-justify">
-    Гражданин <strong>{{{party1_fio}}}</strong>, паспорт {{{party1_passport}}}, именуемый «Сторона 1», и гражданин <strong>{{{party2_fio}}}</strong>, паспорт {{{party2_passport}}}, именуемый «Сторона 2», заключили договор о нижеследующем:
-  </p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">1. Предмет договора</div>
-  <p class="mb-4 text-justify">
-    1.1. Сторона 1 передаёт в собственность Стороны 2: <strong>{{{party1_flat}}}</strong>, кадастровый номер {{{party1_cadastral}}}.
-  </p>
-  <p class="mb-4 text-justify">
-    1.2. Сторона 2 передаёт в собственность Стороны 1: <strong>{{{party2_flat}}}</strong>, кадастровый номер {{{party2_cadastral}}}.
-  </p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">2. Доплата</div>
-  <p class="mb-4 text-justify">
-    2.1. Ввиду неравноценности обмениваемого имущества {{{surcharge_payer}}} уплачивает доплату в размере <strong>{{{surcharge}}} руб.</strong> ({{{surcharge_words}}}).
-  </p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">3. Переход права собственности</div>
-  <p class="mb-4 text-justify">
-    3.1. Право собственности переходит с момента государственной регистрации в Росреестре.
-  </p>
-  <p class="mb-4 text-justify">
-    3.2. {{{notary_note}}}.
-  </p>
-  
-  <div class="font-bold mb-2 text-black text-xs uppercase">4. Форс-мажор</div>
-  <p class="mb-4 text-justify">
-    4.1. Стороны освобождаются от ответственности за частичное или полное неисполнение обязательств по настоящему договору, если оно явилось следствием обстоятельств непреодолимой силы (форс-мажора): стихийных бедствий, пожаров, наводнений, землетрясений, эпидемий, военных действий, решений органов государственной власти, а также иных обстоятельств, которые стороны не могли предвидеть и предотвратить разумными мерами.
-  </p>
-  <p class="mb-4 text-justify">
-    4.2. Сторона, для которой создалась невозможность исполнения обязательств, обязана незамедлительно, но не позднее 10 (десяти) календарных дней с момента наступления таких обстоятельств, письменно уведомить другую сторону об их возникновении. Неуведомление либо несвоевременное уведомление лишает сторону права ссылаться на форс-мажор как на основание освобождения от ответственности.
-  </p>
-  <p class="mb-4 text-justify">
-    4.3. Если обстоятельства непреодолимой силы действуют более 60 (шестидесяти) календарных дней, каждая из сторон вправе в одностороннем порядке отказаться от исполнения настоящего договора, письменно уведомив другую сторону.
-  </p>
-
-  <div class="font-bold mb-2 text-black text-xs uppercase">5. Порядок разрешения споров</div>
-  <p class="mb-4 text-justify">
-    5.1. Все споры и разногласия, возникающие из настоящего договора или в связи с ним, стороны разрешают путём переговоров. Срок рассмотрения письменной претензии — 10 (десять) календарных дней с момента её получения.
-  </p>
-  <p class="mb-4 text-justify">
-    5.2. При недостижении согласия споры разрешаются в судебном порядке в соответствии с действующим законодательством Российской Федерации.
-  </p>
-<div class="grid grid-cols-2 gap-6 mt-8 text-xs border-t border-zinc-300 pt-4">
-    <div>
-      <div class="font-bold mb-1">Сторона 1:</div>
-      <p>{{{party1_fio}}}</p>
-      <div class="mt-8 border-b border-zinc-950 w-44 h-5"></div>
-    </div>
-    <div>
-      <div class="font-bold mb-1">Сторона 2:</div>
-      <p>{{{party2_fio}}}</p>
-      <div class="mt-8 border-b border-zinc-950 w-44 h-5"></div>
-    </div>
-  </div>
-</div>`,
+    
   },
 {
     id: "akt-priema-kvartiry",
@@ -800,27 +525,7 @@ export const TEMPLATES_REALTY: LegalTemplate[] = [
         category: "contract",
       },
     ],
-    previewTemplate: `
-<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
-  <div class="text-center font-bold text-base mb-6 text-black uppercase">Акт приёма-передачи квартиры</div>
-  <div class="flex justify-between mb-6 text-xs font-semibold">
-    <div>г. {{{city}}}</div>
-    <div>«{{{date}}}»</div>
-  </div>
-  <p class="mb-4 text-justify">
-    Настоящий акт составлен о том, что Продавец <strong>{{{seller_fio}}}</strong> передал, а Покупатель <strong>{{{buyer_fio}}}</strong> принял в соответствии с договором купли-продажи от «{{{contract_date}}}» квартиру, расположенную по адресу: <strong>{{{flat_address}}}</strong>, общей площадью {{{flat_area}}} кв.м, кадастровый номер {{{flat_cadastral_number}}}.
-  </p>
-  <p class="mb-4 text-justify">
-    Вместе с квартирой переданы ключи в количестве {{{keys_qty}}} комплекта. Показания приборов учёта: {{{meters_note}}}.
-  </p>
-  <p class="mb-4 text-justify">
-    Стороны {{{claim_note}}}. Обязательства по договору купли-продажи сторонами исполнены; с момента подписания акта квартира считается переданной.
-  </p>
-  <div class="grid grid-cols-2 gap-6 mt-12 text-xs border-t border-zinc-300 pt-4">
-    <div><div class="font-bold mb-1">Сдал Продавец:</div><p class="mb-6"><strong>{{{seller_fio}}}</strong></p><div class="border-b border-zinc-950 w-44 h-5"></div></div>
-    <div><div class="font-bold mb-1">Принял Покупатель:</div><p class="mb-6"><strong>{{{buyer_fio}}}</strong></p><div class="border-b border-zinc-950 w-44 h-5"></div></div>
-  </div>
-</div>`,
+    
   },
 {
     id: "lease-house",
@@ -898,52 +603,7 @@ export const TEMPLATES_REALTY: LegalTemplate[] = [
         category: "contract",
       },
     ],
-    previewTemplate: `
-<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
-  <div class="text-center font-bold text-base mb-6 text-black uppercase">Договор аренды жилого дома</div>
-  <div class="flex justify-between mb-6 text-xs font-semibold">
-    <div>г. {{{city}}}</div>
-    <div>«{{{date}}}»</div>
-  </div>
-  <p class="mb-4 text-justify">
-    <strong>{{{landlord_fio}}}</strong>, паспорт {{{landlord_passport}}}, именуемый(ая) в дальнейшем «Арендодатель», с одной стороны, и <strong>{{{tenant_fio}}}</strong>, паспорт {{{tenant_passport}}}, именуемый(ая) в дальнейшем «Арендатор», с другой стороны, заключили настоящий договор о нижеследующем:
-  </p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">1. Предмет договора</div>
-  <p class="mb-4 text-justify">
-    1.1. Арендодатель передаёт, а Арендатор принимает во временное владение и пользование жилой дом, расположенный по адресу: <strong>{{{house_address}}}</strong>, общей площадью {{{house_area}}} кв.м на земельном участке {{{plot_area}}} соток.
-  </p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">2. Арендная плата</div>
-  <p class="mb-4 text-justify">
-    2.1. Арендная плата составляет <strong>{{{rent_amount}}} рублей</strong> ({{{rent_amount_words}}}) в месяц. Коммунальные платежи: {{{utilities_payer}}}.
-  </p>
-  <p class="mb-4 text-justify">2.2. Обеспечительный платёж в размере {{{deposit_amount}}} рублей вносится при подписании договора и возвращается при отсутствии задолженности.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">3. Срок аренды</div>
-  <p class="mb-4 text-justify">3.1. Договор заключён на срок с {{{rent_start}}} по {{{rent_end}}} и может быть продлён по соглашению сторон.</p>
-  <p class="mb-4 text-justify">3.2. {{#guests_allowed}}Проживание с домашними животными разрешено.{{/guests_allowed}}{{^guests_allowed}}Проживание с домашними животными запрещено.{{/guests_allowed}}</p>
-  
-  <div class="font-bold mb-2 text-black text-xs uppercase">4. Форс-мажор</div>
-  <p class="mb-4 text-justify">
-    4.1. Стороны освобождаются от ответственности за частичное или полное неисполнение обязательств по настоящему договору, если оно явилось следствием обстоятельств непреодолимой силы (форс-мажора): стихийных бедствий, пожаров, наводнений, землетрясений, эпидемий, военных действий, решений органов государственной власти, а также иных обстоятельств, которые стороны не могли предвидеть и предотвратить разумными мерами.
-  </p>
-  <p class="mb-4 text-justify">
-    4.2. Сторона, для которой создалась невозможность исполнения обязательств, обязана незамедлительно, но не позднее 10 (десяти) календарных дней с момента наступления таких обстоятельств, письменно уведомить другую сторону об их возникновении. Неуведомление либо несвоевременное уведомление лишает сторону права ссылаться на форс-мажор как на основание освобождения от ответственности.
-  </p>
-  <p class="mb-4 text-justify">
-    4.3. Если обстоятельства непреодолимой силы действуют более 60 (шестидесяти) календарных дней, каждая из сторон вправе в одностороннем порядке отказаться от исполнения настоящего договора, письменно уведомив другую сторону.
-  </p>
-
-  <div class="font-bold mb-2 text-black text-xs uppercase">5. Порядок разрешения споров</div>
-  <p class="mb-4 text-justify">
-    5.1. Все споры и разногласия, возникающие из настоящего договора или в связи с ним, стороны разрешают путём переговоров. Срок рассмотрения письменной претензии — 10 (десять) календарных дней с момента её получения.
-  </p>
-  <p class="mb-4 text-justify">
-    5.2. При недостижении согласия споры разрешаются в судебном порядке в соответствии с действующим законодательством Российской Федерации.
-  </p>
-<div class="grid grid-cols-2 gap-6 mt-8 text-xs border-t border-zinc-300 pt-4">
-    <div><div class="font-bold mb-1">Арендодатель:</div><p class="mb-1"><strong>{{{landlord_fio}}}</strong></p><div class="border-b border-zinc-950 w-44 h-5 mt-8"></div></div>
-    <div><div class="font-bold mb-1">Арендатор:</div><p class="mb-1"><strong>{{{tenant_fio}}}</strong></p><div class="border-b border-zinc-950 w-44 h-5 mt-8"></div></div>
-  </div>
-</div>`,
+    
   },
 {
     id: "parking-lease",
@@ -1008,50 +668,7 @@ export const TEMPLATES_REALTY: LegalTemplate[] = [
         category: "payment",
       },
     ],
-    previewTemplate: `
-<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
-  <div class="text-center font-bold text-base mb-6 text-black uppercase">Договор аренды машиноместа</div>
-  <div class="flex justify-between mb-6 text-xs font-semibold">
-    <div>г. {{{city}}}</div>
-    <div>«{{{date}}}»</div>
-  </div>
-  <p class="mb-4 text-justify">
-    <strong>{{{landlord_company}}}</strong>, именуемое в дальнейшем «Арендодатель», и <strong>{{{tenant_fio}}}</strong> (телефон {{{tenant_phone}}}), именуемый в дальнейшем «Арендатор», заключили настоящий договор о нижеследующем:
-  </p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">1. Предмет договора</div>
-  <p class="mb-4 text-justify">
-    1.1. Арендодатель передаёт Арендатору во временное пользование машиноместо № <strong>{{{spot_number}}}</strong>, расположенное по адресу: {{{parking_address}}}, для размещения транспортного средства {{{car_brand}}}, гос. номер {{{car_plate}}}.
-  </p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">2. Арендная плата</div>
-  <p class="mb-4 text-justify">
-    2.1. Арендная плата составляет <strong>{{{rent_amount}}} рублей</strong> ({{{rent_amount_words}}}) в месяц и вносится ежемесячно не позднее {{{payment_day}}}-го числа текущего месяца.
-  </p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">3. Срок договора</div>
-  <p class="mb-4 text-justify">3.1. Договор заключён на срок с {{{rent_start}}} по {{{rent_end}}}.</p>
-  
-  <div class="font-bold mb-2 text-black text-xs uppercase">4. Форс-мажор</div>
-  <p class="mb-4 text-justify">
-    4.1. Стороны освобождаются от ответственности за частичное или полное неисполнение обязательств по настоящему договору, если оно явилось следствием обстоятельств непреодолимой силы (форс-мажора): стихийных бедствий, пожаров, наводнений, землетрясений, эпидемий, военных действий, решений органов государственной власти, а также иных обстоятельств, которые стороны не могли предвидеть и предотвратить разумными мерами.
-  </p>
-  <p class="mb-4 text-justify">
-    4.2. Сторона, для которой создалась невозможность исполнения обязательств, обязана незамедлительно, но не позднее 10 (десяти) календарных дней с момента наступления таких обстоятельств, письменно уведомить другую сторону об их возникновении. Неуведомление либо несвоевременное уведомление лишает сторону права ссылаться на форс-мажор как на основание освобождения от ответственности.
-  </p>
-  <p class="mb-4 text-justify">
-    4.3. Если обстоятельства непреодолимой силы действуют более 60 (шестидесяти) календарных дней, каждая из сторон вправе в одностороннем порядке отказаться от исполнения настоящего договора, письменно уведомив другую сторону.
-  </p>
-
-  <div class="font-bold mb-2 text-black text-xs uppercase">5. Порядок разрешения споров</div>
-  <p class="mb-4 text-justify">
-    5.1. Все споры и разногласия, возникающие из настоящего договора или в связи с ним, стороны разрешают путём переговоров. Срок рассмотрения письменной претензии — 10 (десять) календарных дней с момента её получения.
-  </p>
-  <p class="mb-4 text-justify">
-    5.2. При недостижении согласия споры разрешаются в судебном порядке в соответствии с действующим законодательством Российской Федерации.
-  </p>
-<div class="grid grid-cols-2 gap-6 mt-8 text-xs border-t border-zinc-300 pt-4">
-    <div><div class="font-bold mb-1">Арендодатель:</div><p class="mb-1"><strong>{{{landlord_company}}}</strong></p><div class="border-b border-zinc-950 w-44 h-5 mt-8"></div></div>
-    <div><div class="font-bold mb-1">Арендатор:</div><p class="mb-1"><strong>{{{tenant_fio}}}</strong></p><div class="border-b border-zinc-950 w-44 h-5 mt-8"></div></div>
-  </div>
-</div>`,
+    
   },
 {
     id: "realty-services",
@@ -1089,61 +706,7 @@ export const TEMPLATES_REALTY: LegalTemplate[] = [
         { label: "Да", value: "да" },
       ] },
     ],
-    previewTemplate: `
-<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
-  <div class="flex justify-between mb-6 text-xs font-semibold">
-    <div>г. {{{city}}}</div>
-    <div>«{{{date}}}»</div>
-  </div>
-  <div class="text-center font-bold text-base mb-6 text-black uppercase">Договор оказания риэлторских услуг</div>
-  <p class="mb-4 text-justify">
-    <strong>{{{agent_fio}}}</strong> ({{{agent_company}}}, {{{agent_license}}}), именуемый «Агент», с одной стороны, и
-    <strong>{{{client_fio}}}</strong> (паспорт {{{client_passport}}}), именуемый «Заказчик», с другой стороны,
-    заключили настоящий договор (ст. 779 ГК РФ):
-  </p>
-  <p class="font-bold mb-2">1. Предмет договора</p>
-  <p class="mb-3 text-justify">1.1. Агент обязуется оказать услуги по {{deal_type}} объекта недвижимости: {{{object_type}}} {{{#object_address}}}({{{object_address}}}){{{/object_address}}} с бюджетом {{{budget}}} руб.: подбор вариантов, организация показов, проверка юридической чистоты, сопровождение сделки.</p>
-  <p class="font-bold mb-2">2. Вознаграждение</p>
-  <p class="mb-3 text-justify">2.1. Вознаграждение Агента составляет <strong>{{{service_price}} руб.</strong>} ({{{service_price_words}}}). Вознаграждение выплачивается после заключения сделки.</p>
-  <p class="mb-3 text-justify">2.2. Эксклюзивность: {{{exclusive}}}. Договор носит эксклюзивный характер, если это указано в поле «Эксклюзивность».</p>
-  <p class="font-bold mb-2">3. Срок действия</p>
-  <p class="mb-3 text-justify">3.1. Договор действует {{{service_period}}} с даты подписания.</p>
-  <p class="font-bold mb-2">4. Ответственность</p>
-  <p class="mb-3 text-justify">4.1. Агент несёт ответственность за достоверность предоставленной информации и качество услуг в соответствии с законодательством РФ.</p>
-  
-  <p class="font-bold mb-2">5. Форс-мажор</p>
-  <p class="mb-3 text-justify">
-    5.1. Стороны освобождаются от ответственности за частичное или полное неисполнение обязательств по настоящему договору, если оно явилось следствием обстоятельств непреодолимой силы (форс-мажора): стихийных бедствий, пожаров, наводнений, землетрясений, эпидемий, военных действий, решений органов государственной власти, а также иных обстоятельств, которые стороны не могли предвидеть и предотвратить разумными мерами.
-  </p>
-  <p class="mb-3 text-justify">
-    5.2. Сторона, для которой создалась невозможность исполнения обязательств, обязана незамедлительно, но не позднее 10 (десяти) календарных дней с момента наступления таких обстоятельств, письменно уведомить другую сторону об их возникновении. Неуведомление либо несвоевременное уведомление лишает сторону права ссылаться на форс-мажор как на основание освобождения от ответственности.
-  </p>
-  <p class="mb-3 text-justify">
-    5.3. Если обстоятельства непреодолимой силы действуют более 60 (шестидесяти) календарных дней, каждая из сторон вправе в одностороннем порядке отказаться от исполнения настоящего договора, письменно уведомив другую сторону.
-  </p>
-
-  <p class="font-bold mb-2">6. Порядок разрешения споров</p>
-  <p class="mb-3 text-justify">
-    6.1. Все споры и разногласия, возникающие из настоящего договора или в связи с ним, стороны разрешают путём переговоров. Срок рассмотрения письменной претензии — 10 (десять) календарных дней с момента её получения.
-  </p>
-  <p class="mb-3 text-justify">
-    6.2. При недостижении согласия споры разрешаются в судебном порядке в соответствии с действующим законодательством Российской Федерации.
-  </p>
-<div class="flex justify-between mt-10 text-xs">
-    <div class="w-1/2 pr-4">
-      <p class="font-bold mb-1">Агент:</p>
-      <p class="mb-6">{{{agent_fio}}}</p>
-      <div class="border-b border-zinc-950 w-56 h-5 mb-1"></div>
-      <p class="text-zinc-400 text-[10px]">подпись</p>
-    </div>
-    <div class="w-1/2 pl-4">
-      <p class="font-bold mb-1">Заказчик:</p>
-      <p class="mb-6">{{{client_fio}}}</p>
-      <div class="border-b border-zinc-950 w-56 h-5 mb-1"></div>
-      <p class="text-zinc-400 text-[10px]">подпись</p>
-    </div>
-  </div>
-</div>`,
+    
   },
 {
     id: "repair-contract",
@@ -1169,60 +732,7 @@ export const TEMPLATES_REALTY: LegalTemplate[] = [
       { id: "penalty_rate", label: "Неустойка за просрочку (% в день)", type: "text", defaultValue: "", category: "contract" },
       { id: "warranty", label: "Гарантийный срок", type: "text", defaultValue: "", category: "contract" },
     ],
-    previewTemplate: `
-<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
-  <div class="flex justify-between mb-6 text-xs font-semibold">
-    <div>г. {{{city}}}</div>
-    <div>«{{{date}}}»</div>
-  </div>
-  <div class="text-center font-bold text-base mb-6 text-black uppercase">Договор подряда на ремонт квартиры</div>
-  <p class="mb-4 text-justify">
-    <strong>{{{contractor_fio}}}</strong> (ИНН {{{contractor_inn}}}), именуемый «Подрядчик», с одной стороны, и
-    <strong>{{{customer_fio}}}</strong>, именуемый «Заказчик», с другой стороны, заключили настоящий договор (ст. 702, 740 ГК РФ):
-  </p>
-  <p class="font-bold mb-2">1. Предмет договора</p>
-  <p class="mb-3 text-justify">1.1. Подрядчик обязуется выполнить ремонтно-отделочные работы в квартире по адресу: {{{flat_address}}}: {{{works_scope}}}, а Заказчик — принять результат и оплатить.</p>
-  <p class="font-bold mb-2">2. Стоимость и порядок расчётов</p>
-  <p class="mb-3 text-justify">2.1. Стоимость работ: <strong>{{{repair_price}} руб.</strong>} ({{{repair_price_words}}}), материалов: {{{materials_price}}} руб. График платежей: {{{payment_schedule}}}.</p>
-  <p class="font-bold mb-2">3. Сроки выполнения</p>
-  <p class="mb-3 text-justify">3.1. Начало: «{{{start_date}}}», окончание: «{{{end_date}}}». За просрочку Подрядчик уплачивает неустойку {{{penalty_rate}}}% от стоимости работ за каждый день просрочки (ст. 708 ГК РФ).</p>
-  <p class="font-bold mb-2">4. Гарантии качества</p>
-  <p class="mb-3 text-justify">4.1. Гарантийный срок: {{{warranty}}}. Недостатки, обнаруженные в этот период, устраняются Подрядчиком за свой счёт (ст. 723, 755 ГК РФ).</p>
-  <p class="mb-3 text-justify">4.2. Работы считаются принятыми с момента подписания акта выполненных работ.</p>
-  
-  <p class="font-bold mb-2">5. Форс-мажор</p>
-  <p class="mb-3 text-justify">
-    5.1. Стороны освобождаются от ответственности за частичное или полное неисполнение обязательств по настоящему договору, если оно явилось следствием обстоятельств непреодолимой силы (форс-мажора): стихийных бедствий, пожаров, наводнений, землетрясений, эпидемий, военных действий, решений органов государственной власти, а также иных обстоятельств, которые стороны не могли предвидеть и предотвратить разумными мерами.
-  </p>
-  <p class="mb-3 text-justify">
-    5.2. Сторона, для которой создалась невозможность исполнения обязательств, обязана незамедлительно, но не позднее 10 (десяти) календарных дней с момента наступления таких обстоятельств, письменно уведомить другую сторону об их возникновении. Неуведомление либо несвоевременное уведомление лишает сторону права ссылаться на форс-мажор как на основание освобождения от ответственности.
-  </p>
-  <p class="mb-3 text-justify">
-    5.3. Если обстоятельства непреодолимой силы действуют более 60 (шестидесяти) календарных дней, каждая из сторон вправе в одностороннем порядке отказаться от исполнения настоящего договора, письменно уведомив другую сторону.
-  </p>
-
-  <p class="font-bold mb-2">6. Порядок разрешения споров</p>
-  <p class="mb-3 text-justify">
-    6.1. Все споры и разногласия, возникающие из настоящего договора или в связи с ним, стороны разрешают путём переговоров. Срок рассмотрения письменной претензии — 10 (десять) календарных дней с момента её получения.
-  </p>
-  <p class="mb-3 text-justify">
-    6.2. При недостижении согласия споры разрешаются в судебном порядке в соответствии с действующим законодательством Российской Федерации.
-  </p>
-<div class="flex justify-between mt-10 text-xs">
-    <div class="w-1/2 pr-4">
-      <p class="font-bold mb-1">Подрядчик:</p>
-      <p class="mb-6">{{{contractor_fio}}}</p>
-      <div class="border-b border-zinc-950 w-56 h-5 mb-1"></div>
-      <p class="text-zinc-400 text-[10px]">подпись</p>
-    </div>
-    <div class="w-1/2 pl-4">
-      <p class="font-bold mb-1">Заказчик:</p>
-      <p class="mb-6">{{{customer_fio}}}</p>
-      <div class="border-b border-zinc-950 w-56 h-5 mb-1"></div>
-      <p class="text-zinc-400 text-[10px]">подпись</p>
-    </div>
-  </div>
-</div>`,
+    
   },
 {
     id: "dkp-nonresidential",
@@ -1247,61 +757,7 @@ export const TEMPLATES_REALTY: LegalTemplate[] = [
       { id: "transfer_date", label: "Дата передачи", type: "date", defaultValue: "", category: "contract" },
       { id: "encumbrances", label: "Обременения", type: "textarea", defaultValue: "", category: "realty", rows: 2 },
     ],
-    previewTemplate: `
-<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
-  <div class="flex justify-between mb-6 text-xs font-semibold">
-    <div>г. {{{city}}}</div>
-    <div>«{{{date}}}»</div>
-  </div>
-  <div class="text-center font-bold text-base mb-6 text-black uppercase">Договор купли-продажи нежилого помещения</div>
-  <p class="mb-4 text-justify">
-    <strong>{{{seller_fio}}}</strong> (ИНН {{{seller_inn}}}), именуемый «Продавец», с одной стороны, и
-    <strong>{{{buyer_fio}}}</strong> (ИНН {{{buyer_inn}}}), именуемый «Покупатель», с другой стороны,
-    заключили настоящий договор (ст. 454, 549-558 ГК РФ):
-  </p>
-  <p class="font-bold mb-2">1. Предмет договора</p>
-  <p class="mb-3 text-justify">1.1. Продавец обязуется передать в собственность Покупателя нежилое помещение, расположенное по адресу: {{{premises_address}}}, общей площадью {{{premises_area}}} кв. м, кадастровый номер {{{cadastral_number}}}, а Покупатель — принять и оплатить его.</p>
-  <p class="mb-3 text-justify">1.2. Обременения: {{{encumbrances}}}.</p>
-  <p class="font-bold mb-2">2. Цена договора</p>
-  <p class="mb-3 text-justify">2.1. Цена помещения: <strong>{{{dkp_price}} руб.</strong>} ({{{dkp_price_words}}}). Порядок расчётов: {{{payment_order}}}.</p>
-  <p class="font-bold mb-2">3. Передача помещения</p>
-  <p class="mb-3 text-justify">3.1. Помещение передаётся по передаточному акту не позднее «{{{transfer_date}}}» (ст. 556 ГК РФ).</p>
-  <p class="font-bold mb-2">4. Государственная регистрация</p>
-  <p class="mb-3 text-justify">4.1. Переход права собственности подлежит государственной регистрации в Росреестре (ст. 551 ГК РФ).</p>
-  
-  <p class="font-bold mb-2">5. Форс-мажор</p>
-  <p class="mb-3 text-justify">
-    5.1. Стороны освобождаются от ответственности за частичное или полное неисполнение обязательств по настоящему договору, если оно явилось следствием обстоятельств непреодолимой силы (форс-мажора): стихийных бедствий, пожаров, наводнений, землетрясений, эпидемий, военных действий, решений органов государственной власти, а также иных обстоятельств, которые стороны не могли предвидеть и предотвратить разумными мерами.
-  </p>
-  <p class="mb-3 text-justify">
-    5.2. Сторона, для которой создалась невозможность исполнения обязательств, обязана незамедлительно, но не позднее 10 (десяти) календарных дней с момента наступления таких обстоятельств, письменно уведомить другую сторону об их возникновении. Неуведомление либо несвоевременное уведомление лишает сторону права ссылаться на форс-мажор как на основание освобождения от ответственности.
-  </p>
-  <p class="mb-3 text-justify">
-    5.3. Если обстоятельства непреодолимой силы действуют более 60 (шестидесяти) календарных дней, каждая из сторон вправе в одностороннем порядке отказаться от исполнения настоящего договора, письменно уведомив другую сторону.
-  </p>
-
-  <p class="font-bold mb-2">6. Порядок разрешения споров</p>
-  <p class="mb-3 text-justify">
-    6.1. Все споры и разногласия, возникающие из настоящего договора или в связи с ним, стороны разрешают путём переговоров. Срок рассмотрения письменной претензии — 10 (десять) календарных дней с момента её получения.
-  </p>
-  <p class="mb-3 text-justify">
-    6.2. При недостижении согласия споры разрешаются в судебном порядке в соответствии с действующим законодательством Российской Федерации.
-  </p>
-<div class="flex justify-between mt-10 text-xs">
-    <div class="w-1/2 pr-4">
-      <p class="font-bold mb-1">Продавец:</p>
-      <p class="mb-6">{{{seller_fio}}}</p>
-      <div class="border-b border-zinc-950 w-56 h-5 mb-1"></div>
-      <p class="text-zinc-400 text-[10px]">подпись</p>
-    </div>
-    <div class="w-1/2 pl-4">
-      <p class="font-bold mb-1">Покупатель:</p>
-      <p class="mb-6">{{{buyer_fio}}}</p>
-      <div class="border-b border-zinc-950 w-56 h-5 mb-1"></div>
-      <p class="text-zinc-400 text-[10px]">подпись</p>
-    </div>
-  </div>
-</div>`,
+    
   },
 {
     id: "gift-flat",
@@ -1328,61 +784,7 @@ export const TEMPLATES_REALTY: LegalTemplate[] = [
         { label: "Нет, не сохраняется", value: "нет, не сохраняется" },
       ] },
     ],
-    previewTemplate: `
-<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
-  <div class="flex justify-between mb-6 text-xs font-semibold">
-    <div>г. {{{city}}}</div>
-    <div>«{{{date}}}»</div>
-  </div>
-  <div class="text-center font-bold text-base mb-6 text-black uppercase">Договор дарения квартиры</div>
-  <p class="mb-4 text-justify">
-    Гражданка <strong>{{{donor_fio}}}</strong> (паспорт {{{donor_passport}}}), именуемая «Даритель», с одной стороны, и
-    гражданин <strong>{{{donee_fio}}}</strong> (паспорт {{{donee_passport}}}), именуемый «Одаряемый», с другой стороны,
-    заключили настоящий договор (ст. 572-581 ГК РФ):
-  </p>
-  <p class="font-bold mb-2">1. Предмет договора</p>
-  <p class="mb-3 text-justify">1.1. Даритель безвозмездно передаёт в собственность Одаряемого квартиру, расположенную по адресу: {{{flat_address}}}, общей площадью {{{flat_area}}} кв. м, кадастровый номер {{{cadastral_number}}}.</p>
-  <p class="mb-3 text-justify">1.2. Обременения: {{{encumbrances}}}.</p>
-  <p class="font-bold mb-2">2. Право проживания</p>
-  <p class="mb-3 text-justify">2.1. {{{retention_right}}}.</p>
-  <p class="font-bold mb-2">3. Стороны</p>
-  <p class="mb-3 text-justify">3.1. Стороны: {{{relationship}}}. Настоящий договор не может быть расторгнут по требованию Дарителя, за исключением случаев, предусмотренных ст. 578 ГК РФ.</p>
-  <p class="font-bold mb-2">4. Регистрация</p>
-  <p class="mb-3 text-justify">4.1. Переход права собственности подлежит государственной регистрации в Росреестре (ст. 574 ГК РФ).</p>
-  
-  <p class="font-bold mb-2">5. Форс-мажор</p>
-  <p class="mb-3 text-justify">
-    5.1. Стороны освобождаются от ответственности за частичное или полное неисполнение обязательств по настоящему договору, если оно явилось следствием обстоятельств непреодолимой силы (форс-мажора): стихийных бедствий, пожаров, наводнений, землетрясений, эпидемий, военных действий, решений органов государственной власти, а также иных обстоятельств, которые стороны не могли предвидеть и предотвратить разумными мерами.
-  </p>
-  <p class="mb-3 text-justify">
-    5.2. Сторона, для которой создалась невозможность исполнения обязательств, обязана незамедлительно, но не позднее 10 (десяти) календарных дней с момента наступления таких обстоятельств, письменно уведомить другую сторону об их возникновении. Неуведомление либо несвоевременное уведомление лишает сторону права ссылаться на форс-мажор как на основание освобождения от ответственности.
-  </p>
-  <p class="mb-3 text-justify">
-    5.3. Если обстоятельства непреодолимой силы действуют более 60 (шестидесяти) календарных дней, каждая из сторон вправе в одностороннем порядке отказаться от исполнения настоящего договора, письменно уведомив другую сторону.
-  </p>
-
-  <p class="font-bold mb-2">6. Порядок разрешения споров</p>
-  <p class="mb-3 text-justify">
-    6.1. Все споры и разногласия, возникающие из настоящего договора или в связи с ним, стороны разрешают путём переговоров. Срок рассмотрения письменной претензии — 10 (десять) календарных дней с момента её получения.
-  </p>
-  <p class="mb-3 text-justify">
-    6.2. При недостижении согласия споры разрешаются в судебном порядке в соответствии с действующим законодательством Российской Федерации.
-  </p>
-<div class="flex justify-between mt-10 text-xs">
-    <div class="w-1/2 pr-4">
-      <p class="font-bold mb-1">Даритель:</p>
-      <p class="mb-6">{{{donor_fio}}}</p>
-      <div class="border-b border-zinc-950 w-56 h-5 mb-1"></div>
-      <p class="text-zinc-400 text-[10px]">подпись</p>
-    </div>
-    <div class="w-1/2 pl-4">
-      <p class="font-bold mb-1">Одаряемый:</p>
-      <p class="mb-6">{{{donee_fio}}}</p>
-      <div class="border-b border-zinc-950 w-56 h-5 mb-1"></div>
-      <p class="text-zinc-400 text-[10px]">подпись</p>
-    </div>
-  </div>
-</div>`,
+    
   },
 {
     id: "gift-land",
@@ -1405,59 +807,7 @@ export const TEMPLATES_REALTY: LegalTemplate[] = [
       { id: "buildings", label: "Строения на участке", type: "text", defaultValue: "", category: "realty" },
       { id: "relationship", label: "Степень родства", type: "text", defaultValue: "", category: "family" },
     ],
-    previewTemplate: `
-<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
-  <div class="flex justify-between mb-6 text-xs font-semibold">
-    <div>г. {{{city}}}</div>
-    <div>«{{{date}}}»</div>
-  </div>
-  <div class="text-center font-bold text-base mb-6 text-black uppercase">Договор дарения земельного участка</div>
-  <p class="mb-4 text-justify">
-    Гражданин <strong>{{{donor_fio}}}</strong>, именуемый «Даритель», с одной стороны, и
-    гражданка <strong>{{{donee_fio}}}</strong>, именуемая «Одаряемый», с другой стороны,
-    заключили настоящий договор (ст. 572-581 ГК РФ):
-  </p>
-  <p class="font-bold mb-2">1. Предмет договора</p>
-  <p class="mb-3 text-justify">1.1. Даритель безвозмездно передаёт в собственность Одаряемого земельный участок, расположенный по адресу: {{{land_address}}}, площадью {{{land_area}}}, кадастровый номер {{{cadastral_number}}}, категория земель: {{{land_category}}}, вид разрешённого использования: {{{permitted_use}}}.</p>
-  <p class="mb-3 text-justify">1.2. На участке расположены: {{{buildings}}}.</p>
-  <p class="font-bold mb-2">2. Стороны</p>
-  <p class="mb-3 text-justify">2.1. Стороны: {{{relationship}}}. Участок не обременён правами третьих лиц.</p>
-  <p class="font-bold mb-2">3. Регистрация</p>
-  <p class="mb-3 text-justify">3.1. Переход права собственности подлежит государственной регистрации в Росреестре (ст. 574 ГК РФ).</p>
-  
-  <p class="font-bold mb-2">4. Форс-мажор</p>
-  <p class="mb-3 text-justify">
-    4.1. Стороны освобождаются от ответственности за частичное или полное неисполнение обязательств по настоящему договору, если оно явилось следствием обстоятельств непреодолимой силы (форс-мажора): стихийных бедствий, пожаров, наводнений, землетрясений, эпидемий, военных действий, решений органов государственной власти, а также иных обстоятельств, которые стороны не могли предвидеть и предотвратить разумными мерами.
-  </p>
-  <p class="mb-3 text-justify">
-    4.2. Сторона, для которой создалась невозможность исполнения обязательств, обязана незамедлительно, но не позднее 10 (десяти) календарных дней с момента наступления таких обстоятельств, письменно уведомить другую сторону об их возникновении. Неуведомление либо несвоевременное уведомление лишает сторону права ссылаться на форс-мажор как на основание освобождения от ответственности.
-  </p>
-  <p class="mb-3 text-justify">
-    4.3. Если обстоятельства непреодолимой силы действуют более 60 (шестидесяти) календарных дней, каждая из сторон вправе в одностороннем порядке отказаться от исполнения настоящего договора, письменно уведомив другую сторону.
-  </p>
-
-  <p class="font-bold mb-2">5. Порядок разрешения споров</p>
-  <p class="mb-3 text-justify">
-    5.1. Все споры и разногласия, возникающие из настоящего договора или в связи с ним, стороны разрешают путём переговоров. Срок рассмотрения письменной претензии — 10 (десять) календарных дней с момента её получения.
-  </p>
-  <p class="mb-3 text-justify">
-    5.2. При недостижении согласия споры разрешаются в судебном порядке в соответствии с действующим законодательством Российской Федерации.
-  </p>
-<div class="flex justify-between mt-10 text-xs">
-    <div class="w-1/2 pr-4">
-      <p class="font-bold mb-1">Даритель:</p>
-      <p class="mb-6">{{{donor_fio}}}</p>
-      <div class="border-b border-zinc-950 w-56 h-5 mb-1"></div>
-      <p class="text-zinc-400 text-[10px]">подпись</p>
-    </div>
-    <div class="w-1/2 pl-4">
-      <p class="font-bold mb-1">Одаряемый:</p>
-      <p class="mb-6">{{{donee_fio}}}</p>
-      <div class="border-b border-zinc-950 w-56 h-5 mb-1"></div>
-      <p class="text-zinc-400 text-[10px]">подпись</p>
-    </div>
-  </div>
-</div>`,
+    
   },
 {
     id: "gift-house",
@@ -1479,59 +829,7 @@ export const TEMPLATES_REALTY: LegalTemplate[] = [
       { id: "relationship", label: "Степень родства", type: "text", defaultValue: "", category: "family" },
       { id: "encumbrances", label: "Обременения", type: "textarea", defaultValue: "", category: "realty", rows: 2 },
     ],
-    previewTemplate: `
-<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
-  <div class="flex justify-between mb-6 text-xs font-semibold">
-    <div>г. {{{city}}}</div>
-    <div>«{{{date}}}»</div>
-  </div>
-  <div class="text-center font-bold text-base mb-6 text-black uppercase">Договор дарения жилого дома</div>
-  <p class="mb-4 text-justify">
-    Гражданин <strong>{{{donor_fio}}}</strong>, именуемый «Даритель», с одной стороны, и
-    гражданка <strong>{{{donee_fio}}}</strong>, именуемая «Одаряемый», с другой стороны,
-    заключили настоящий договор (ст. 572-581 ГК РФ):
-  </p>
-  <p class="font-bold mb-2">1. Предмет договора</p>
-  <p class="mb-3 text-justify">1.1. Даритель безвозмездно передаёт в собственность Одаряемого жилой дом, расположенный по адресу: {{{house_address}}}, общей площадью {{{house_area}}} кв. м, а также земельный участок площадью {{{land_area}}} соток, кадастровый номер {{{cadastral_number}}}, на котором расположен дом.</p>
-  <p class="mb-3 text-justify">1.2. Обременения: {{{encumbrances}}}.</p>
-  <p class="font-bold mb-2">2. Стороны</p>
-  <p class="mb-3 text-justify">2.1. Стороны: {{{relationship}}}. Договор заключён безвозмездно (ст. 572 ГК РФ).</p>
-  <p class="font-bold mb-2">3. Регистрация</p>
-  <p class="mb-3 text-justify">3.1. Переход права собственности подлежит государственной регистрации в Росреестре.</p>
-  
-  <p class="font-bold mb-2">4. Форс-мажор</p>
-  <p class="mb-3 text-justify">
-    4.1. Стороны освобождаются от ответственности за частичное или полное неисполнение обязательств по настоящему договору, если оно явилось следствием обстоятельств непреодолимой силы (форс-мажора): стихийных бедствий, пожаров, наводнений, землетрясений, эпидемий, военных действий, решений органов государственной власти, а также иных обстоятельств, которые стороны не могли предвидеть и предотвратить разумными мерами.
-  </p>
-  <p class="mb-3 text-justify">
-    4.2. Сторона, для которой создалась невозможность исполнения обязательств, обязана незамедлительно, но не позднее 10 (десяти) календарных дней с момента наступления таких обстоятельств, письменно уведомить другую сторону об их возникновении. Неуведомление либо несвоевременное уведомление лишает сторону права ссылаться на форс-мажор как на основание освобождения от ответственности.
-  </p>
-  <p class="mb-3 text-justify">
-    4.3. Если обстоятельства непреодолимой силы действуют более 60 (шестидесяти) календарных дней, каждая из сторон вправе в одностороннем порядке отказаться от исполнения настоящего договора, письменно уведомив другую сторону.
-  </p>
-
-  <p class="font-bold mb-2">5. Порядок разрешения споров</p>
-  <p class="mb-3 text-justify">
-    5.1. Все споры и разногласия, возникающие из настоящего договора или в связи с ним, стороны разрешают путём переговоров. Срок рассмотрения письменной претензии — 10 (десять) календарных дней с момента её получения.
-  </p>
-  <p class="mb-3 text-justify">
-    5.2. При недостижении согласия споры разрешаются в судебном порядке в соответствии с действующим законодательством Российской Федерации.
-  </p>
-<div class="flex justify-between mt-10 text-xs">
-    <div class="w-1/2 pr-4">
-      <p class="font-bold mb-1">Даритель:</p>
-      <p class="mb-6">{{{donor_fio}}}</p>
-      <div class="border-b border-zinc-950 w-56 h-5 mb-1"></div>
-      <p class="text-zinc-400 text-[10px]">подпись</p>
-    </div>
-    <div class="w-1/2 pl-4">
-      <p class="font-bold mb-1">Одаряемый:</p>
-      <p class="mb-6">{{{donee_fio}}}</p>
-      <div class="border-b border-zinc-950 w-56 h-5 mb-1"></div>
-      <p class="text-zinc-400 text-[10px]">подпись</p>
-    </div>
-  </div>
-</div>`,
+    
   },
 {
     id: "land-lease",
@@ -1557,60 +855,7 @@ export const TEMPLATES_REALTY: LegalTemplate[] = [
       { id: "payment_day", label: "Срок оплаты", type: "text", defaultValue: "", category: "payment" },
       { id: "penalty", label: "Неустойка (% в день)", type: "text", defaultValue: "", category: "contract" },
     ],
-    previewTemplate: `
-<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
-  <div class="flex justify-between mb-6 text-xs font-semibold">
-    <div>г. {{{city}}}</div>
-    <div>«{{{date}}}»</div>
-  </div>
-  <div class="text-center font-bold text-base mb-6 text-black uppercase">Договор аренды земельного участка</div>
-  <p class="mb-4 text-justify">
-    <strong>{{{landlord_fio}}}</strong> (ИНН {{{landlord_inn}}}), именуемый «Арендодатель», с одной стороны, и
-    <strong>{{{tenant_fio}}}</strong> (ИНН {{{tenant_inn}}}), именуемый «Арендатор», с другой стороны,
-    заключили настоящий договор (ст. 606-625 ГК РФ, ст. 22 ЗК РФ):
-  </p>
-  <p class="font-bold mb-2">1. Предмет договора</p>
-  <p class="mb-3 text-justify">1.1. Арендодатель предоставляет Арендатору за плату во временное владение и пользование земельный участок, расположенный по адресу: {{{land_address}}}, площадью {{{land_area}}} кв. м, кадастровый номер {{{cadastral_number}}}, для использования в целях: {{{land_use}}}.</p>
-  <p class="font-bold mb-2">2. Арендная плата</p>
-  <p class="mb-3 text-justify">2.1. Арендная плата составляет <strong>{{{rent_amount}} руб.</strong>} в месяц, вносится {{{payment_day}}}. За просрочку начисляется неустойка {{{penalty}}}% в день (ст. 614 ГК РФ).</p>
-  <p class="font-bold mb-2">3. Срок аренды</p>
-  <p class="mb-3 text-justify">3.1. Срок аренды: {{{rent_period}}}. Договор подлежит государственной регистрации, если срок аренды составляет более года (ст. 26 ЗК РФ, ст. 651 ГК РФ).</p>
-  <p class="font-bold mb-2">4. Обязанности Арендатора</p>
-  <p class="mb-3 text-justify">4.1. Арендатор обязан использовать участок по целевому назначению, соблюдать требования законодательства, не допускать ухудшения состояния земель (ст. 42 ЗК РФ).</p>
-  
-  <p class="font-bold mb-2">5. Форс-мажор</p>
-  <p class="mb-3 text-justify">
-    5.1. Стороны освобождаются от ответственности за частичное или полное неисполнение обязательств по настоящему договору, если оно явилось следствием обстоятельств непреодолимой силы (форс-мажора): стихийных бедствий, пожаров, наводнений, землетрясений, эпидемий, военных действий, решений органов государственной власти, а также иных обстоятельств, которые стороны не могли предвидеть и предотвратить разумными мерами.
-  </p>
-  <p class="mb-3 text-justify">
-    5.2. Сторона, для которой создалась невозможность исполнения обязательств, обязана незамедлительно, но не позднее 10 (десяти) календарных дней с момента наступления таких обстоятельств, письменно уведомить другую сторону об их возникновении. Неуведомление либо несвоевременное уведомление лишает сторону права ссылаться на форс-мажор как на основание освобождения от ответственности.
-  </p>
-  <p class="mb-3 text-justify">
-    5.3. Если обстоятельства непреодолимой силы действуют более 60 (шестидесяти) календарных дней, каждая из сторон вправе в одностороннем порядке отказаться от исполнения настоящего договора, письменно уведомив другую сторону.
-  </p>
-
-  <p class="font-bold mb-2">6. Порядок разрешения споров</p>
-  <p class="mb-3 text-justify">
-    6.1. Все споры и разногласия, возникающие из настоящего договора или в связи с ним, стороны разрешают путём переговоров. Срок рассмотрения письменной претензии — 10 (десять) календарных дней с момента её получения.
-  </p>
-  <p class="mb-3 text-justify">
-    6.2. При недостижении согласия споры разрешаются в судебном порядке в соответствии с действующим законодательством Российской Федерации.
-  </p>
-<div class="flex justify-between mt-10 text-xs">
-    <div class="w-1/2 pr-4">
-      <p class="font-bold mb-1">Арендодатель:</p>
-      <p class="mb-6">{{{landlord_fio}}}</p>
-      <div class="border-b border-zinc-950 w-56 h-5 mb-1"></div>
-      <p class="text-zinc-400 text-[10px]">подпись</p>
-    </div>
-    <div class="w-1/2 pl-4">
-      <p class="font-bold mb-1">Арендатор:</p>
-      <p class="mb-6">{{{tenant_fio}}}</p>
-      <div class="border-b border-zinc-950 w-56 h-5 mb-1"></div>
-      <p class="text-zinc-400 text-[10px]">подпись</p>
-    </div>
-  </div>
-</div>`,
+    
   },
 {
     id: "sublease",
@@ -1635,61 +880,7 @@ export const TEMPLATES_REALTY: LegalTemplate[] = [
       { id: "rent_period", label: "Срок субаренды", type: "text", defaultValue: "", category: "contract" },
       { id: "use_purpose", label: "Цель использования", type: "text", defaultValue: "", category: "contract" },
     ],
-    previewTemplate: `
-<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
-  <div class="flex justify-between mb-6 text-xs font-semibold">
-    <div>г. {{{city}}}</div>
-    <div>«{{{date}}}»</div>
-  </div>
-  <div class="text-center font-bold text-base mb-6 text-black uppercase">Договор субаренды нежилого помещения</div>
-  <p class="mb-4 text-justify">
-    <strong>{{{tenant_fio}}}</strong> (ИНН {{{tenant_inn}}}), именуемый «Арендатор», с одной стороны, и
-    <strong>{{{subtenant_fio}}}</strong> (ИНН {{{subtenant_inn}}}), именуемый «Субарендатор», с другой стороны,
-    заключили настоящий договор (ст. 615 ГК РФ):
-  </p>
-  <p class="font-bold mb-2">1. Предмет договора</p>
-  <p class="mb-3 text-justify">1.1. Арендатор передаёт Субарендатору во временное пользование нежилое помещение по адресу: {{{premises_address}}}, площадью {{{premises_area}}} кв. м, для использования в целях: {{{use_purpose}}}.</p>
-  <p class="mb-3 text-justify">1.2. Помещение находится в аренде у Арендатора по договору {{{main_lease}}}. Согласие арендодателя на субаренду: {{{consent}}} (ст. 615 ГК РФ).</p>
-  <p class="font-bold mb-2">2. Плата</p>
-  <p class="mb-3 text-justify">2.1. Субарендная плата: <strong>{{{rent_amount}} руб.</strong>} в месяц, включая коммунальные услуги.</p>
-  <p class="font-bold mb-2">3. Срок</p>
-  <p class="mb-3 text-justify">3.1. Срок субаренды: {{{rent_period}}}. Договор субаренды прекращается при прекращении основного договора аренды.</p>
-  <p class="font-bold mb-2">4. Ответственность</p>
-  <p class="mb-3 text-justify">4.1. За неисполнение обязательств стороны несут ответственность в соответствии с законодательством РФ.</p>
-  
-  <p class="font-bold mb-2">5. Форс-мажор</p>
-  <p class="mb-3 text-justify">
-    5.1. Стороны освобождаются от ответственности за частичное или полное неисполнение обязательств по настоящему договору, если оно явилось следствием обстоятельств непреодолимой силы (форс-мажора): стихийных бедствий, пожаров, наводнений, землетрясений, эпидемий, военных действий, решений органов государственной власти, а также иных обстоятельств, которые стороны не могли предвидеть и предотвратить разумными мерами.
-  </p>
-  <p class="mb-3 text-justify">
-    5.2. Сторона, для которой создалась невозможность исполнения обязательств, обязана незамедлительно, но не позднее 10 (десяти) календарных дней с момента наступления таких обстоятельств, письменно уведомить другую сторону об их возникновении. Неуведомление либо несвоевременное уведомление лишает сторону права ссылаться на форс-мажор как на основание освобождения от ответственности.
-  </p>
-  <p class="mb-3 text-justify">
-    5.3. Если обстоятельства непреодолимой силы действуют более 60 (шестидесяти) календарных дней, каждая из сторон вправе в одностороннем порядке отказаться от исполнения настоящего договора, письменно уведомив другую сторону.
-  </p>
-
-  <p class="font-bold mb-2">6. Порядок разрешения споров</p>
-  <p class="mb-3 text-justify">
-    6.1. Все споры и разногласия, возникающие из настоящего договора или в связи с ним, стороны разрешают путём переговоров. Срок рассмотрения письменной претензии — 10 (десять) календарных дней с момента её получения.
-  </p>
-  <p class="mb-3 text-justify">
-    6.2. При недостижении согласия споры разрешаются в судебном порядке в соответствии с действующим законодательством Российской Федерации.
-  </p>
-<div class="flex justify-between mt-10 text-xs">
-    <div class="w-1/2 pr-4">
-      <p class="font-bold mb-1">Арендатор:</p>
-      <p class="mb-6">{{{tenant_fio}}}</p>
-      <div class="border-b border-zinc-950 w-56 h-5 mb-1"></div>
-      <p class="text-zinc-400 text-[10px]">подпись</p>
-    </div>
-    <div class="w-1/2 pl-4">
-      <p class="font-bold mb-1">Субарендатор:</p>
-      <p class="mb-6">{{{subtenant_fio}}}</p>
-      <div class="border-b border-zinc-950 w-56 h-5 mb-1"></div>
-      <p class="text-zinc-400 text-[10px]">подпись</p>
-    </div>
-  </div>
-</div>`,
+    
   },
 {
     id: "tenancy-room",
@@ -1715,60 +906,7 @@ export const TEMPLATES_REALTY: LegalTemplate[] = [
       { id: "utilities", label: "Коммунальные платежи", type: "text", defaultValue: "", category: "payment" },
       { id: "guests", label: "Проживание гостей", type: "text", defaultValue: "", category: "contract" },
     ],
-    previewTemplate: `
-<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
-  <div class="flex justify-between mb-6 text-xs font-semibold">
-    <div>г. {{{city}}}</div>
-    <div>«{{{date}}}»</div>
-  </div>
-  <div class="text-center font-bold text-base mb-6 text-black uppercase">Договор найма комнаты</div>
-  <p class="mb-4 text-justify">
-    Гражданка <strong>{{{landlord_fio}}}</strong> (паспорт {{{landlord_passport}}}), именуемая «Наймодатель», с одной стороны, и
-    гражданин <strong>{{{tenant_fio}}}</strong> (паспорт {{{tenant_passport}}}), именуемый «Наниматель», с другой стороны,
-    заключили настоящий договор (ст. 671-688 ГК РФ):
-  </p>
-  <p class="font-bold mb-2">1. Предмет договора</p>
-  <p class="mb-3 text-justify">1.1. Наймодатель предоставляет Нанимателю за плату во владение и пользование жилое помещение: {{{room_desc}}}, расположенное по адресу: {{{room_address}}}.</p>
-  <p class="font-bold mb-2">2. Плата</p>
-  <p class="mb-3 text-justify">2.1. Плата за жилое помещение: <strong>{{{rent_amount}} руб.</strong>} в месяц, вносится {{{payment_day}}}. Коммунальные платежи: {{{utilities}}}. Залог: {{{deposit}}} руб., возвращается при выезде с учётом состояния помещения.</p>
-  <p class="font-bold mb-2">3. Срок найма</p>
-  <p class="mb-3 text-justify">3.1. Срок найма: {{{rent_period}}} (ст. 683 ГК РФ). Наймодатель вправе предупредить о расторжении договора за 3 месяца (ст. 684 ГК РФ).</p>
-  <p class="font-bold mb-2">4. Обязанности Нанимателя</p>
-  <p class="mb-3 text-justify">4.1. Наниматель обязан использовать помещение по назначению, соблюдать правила общежития, {{{guests}}}, поддерживать помещение в исправном состоянии.</p>
-  
-  <p class="font-bold mb-2">5. Форс-мажор</p>
-  <p class="mb-3 text-justify">
-    5.1. Стороны освобождаются от ответственности за частичное или полное неисполнение обязательств по настоящему договору, если оно явилось следствием обстоятельств непреодолимой силы (форс-мажора): стихийных бедствий, пожаров, наводнений, землетрясений, эпидемий, военных действий, решений органов государственной власти, а также иных обстоятельств, которые стороны не могли предвидеть и предотвратить разумными мерами.
-  </p>
-  <p class="mb-3 text-justify">
-    5.2. Сторона, для которой создалась невозможность исполнения обязательств, обязана незамедлительно, но не позднее 10 (десяти) календарных дней с момента наступления таких обстоятельств, письменно уведомить другую сторону об их возникновении. Неуведомление либо несвоевременное уведомление лишает сторону права ссылаться на форс-мажор как на основание освобождения от ответственности.
-  </p>
-  <p class="mb-3 text-justify">
-    5.3. Если обстоятельства непреодолимой силы действуют более 60 (шестидесяти) календарных дней, каждая из сторон вправе в одностороннем порядке отказаться от исполнения настоящего договора, письменно уведомив другую сторону.
-  </p>
-
-  <p class="font-bold mb-2">6. Порядок разрешения споров</p>
-  <p class="mb-3 text-justify">
-    6.1. Все споры и разногласия, возникающие из настоящего договора или в связи с ним, стороны разрешают путём переговоров. Срок рассмотрения письменной претензии — 10 (десять) календарных дней с момента её получения.
-  </p>
-  <p class="mb-3 text-justify">
-    6.2. При недостижении согласия споры разрешаются в судебном порядке в соответствии с действующим законодательством Российской Федерации.
-  </p>
-<div class="flex justify-between mt-10 text-xs">
-    <div class="w-1/2 pr-4">
-      <p class="font-bold mb-1">Наймодатель:</p>
-      <p class="mb-6">{{{landlord_fio}}}</p>
-      <div class="border-b border-zinc-950 w-56 h-5 mb-1"></div>
-      <p class="text-zinc-400 text-[10px]">подпись</p>
-    </div>
-    <div class="w-1/2 pl-4">
-      <p class="font-bold mb-1">Наниматель:</p>
-      <p class="mb-6">{{{tenant_fio}}}</p>
-      <div class="border-b border-zinc-950 w-56 h-5 mb-1"></div>
-      <p class="text-zinc-400 text-[10px]">подпись</p>
-    </div>
-  </div>
-</div>`,
+    
   },
 {
     id: "tenancy-house",
@@ -1800,64 +938,11 @@ export const TEMPLATES_REALTY: LegalTemplate[] = [
         { label: "Запрещены", value: "запрещены" },
       ] },
     ],
-    previewTemplate: `
-<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
-  <div class="flex justify-between mb-6 text-xs font-semibold">
-    <div>г. {{{city}}}</div>
-    <div>«{{{date}}}»</div>
-  </div>
-  <div class="text-center font-bold text-base mb-6 text-black uppercase">Договор найма дома</div>
-  <p class="mb-4 text-justify">
-    Гражданин <strong>{{{landlord_fio}}}</strong>, именуемый «Наймодатель», с одной стороны, и
-    гражданка <strong>{{{tenant_fio}}}</strong>, именуемая «Наниматель», с другой стороны,
-    заключили настоящий договор (ст. 671-688 ГК РФ):
-  </p>
-  <p class="font-bold mb-2">1. Предмет договора</p>
-  <p class="mb-3 text-justify">1.1. Наймодатель предоставляет Нанимателю за плату во владение и пользование жилой дом: {{{house_desc}}}, расположенный по адресу: {{{house_address}}}, для проживания {{{tenants_count}}} человек.</p>
-  <p class="font-bold mb-2">2. Плата</p>
-  <p class="mb-3 text-justify">2.1. Плата: <strong>{{{rent_amount}} руб.</strong>} в месяц, вносится {{{payment_day}}}. Коммунальные платежи: {{{utilities}}}. Залог: {{{deposit}}} руб.</p>
-  <p class="font-bold mb-2">3. Срок найма</p>
-  <p class="mb-3 text-justify">3.1. Срок найма: {{{rent_period}}} (ст. 683 ГК РФ). При отсутствии новых условий договор считается продлённым на тот же срок (ст. 684 ГК РФ).</p>
-  <p class="font-bold mb-2">4. Особые условия</p>
-  <p class="mb-3 text-justify">4.1. Домашние животные: {{{pets}}}. Наниматель обязан поддерживать дом и участок в надлежащем состоянии, производить текущий ремонт за свой счёт.</p>
-  
-  <p class="font-bold mb-2">5. Форс-мажор</p>
-  <p class="mb-3 text-justify">
-    5.1. Стороны освобождаются от ответственности за частичное или полное неисполнение обязательств по настоящему договору, если оно явилось следствием обстоятельств непреодолимой силы (форс-мажора): стихийных бедствий, пожаров, наводнений, землетрясений, эпидемий, военных действий, решений органов государственной власти, а также иных обстоятельств, которые стороны не могли предвидеть и предотвратить разумными мерами.
-  </p>
-  <p class="mb-3 text-justify">
-    5.2. Сторона, для которой создалась невозможность исполнения обязательств, обязана незамедлительно, но не позднее 10 (десяти) календарных дней с момента наступления таких обстоятельств, письменно уведомить другую сторону об их возникновении. Неуведомление либо несвоевременное уведомление лишает сторону права ссылаться на форс-мажор как на основание освобождения от ответственности.
-  </p>
-  <p class="mb-3 text-justify">
-    5.3. Если обстоятельства непреодолимой силы действуют более 60 (шестидесяти) календарных дней, каждая из сторон вправе в одностороннем порядке отказаться от исполнения настоящего договора, письменно уведомив другую сторону.
-  </p>
-
-  <p class="font-bold mb-2">6. Порядок разрешения споров</p>
-  <p class="mb-3 text-justify">
-    6.1. Все споры и разногласия, возникающие из настоящего договора или в связи с ним, стороны разрешают путём переговоров. Срок рассмотрения письменной претензии — 10 (десять) календарных дней с момента её получения.
-  </p>
-  <p class="mb-3 text-justify">
-    6.2. При недостижении согласия споры разрешаются в судебном порядке в соответствии с действующим законодательством Российской Федерации.
-  </p>
-<div class="flex justify-between mt-10 text-xs">
-    <div class="w-1/2 pr-4">
-      <p class="font-bold mb-1">Наймодатель:</p>
-      <p class="mb-6">{{{landlord_fio}}}</p>
-      <div class="border-b border-zinc-950 w-56 h-5 mb-1"></div>
-      <p class="text-zinc-400 text-[10px]">подпись</p>
-    </div>
-    <div class="w-1/2 pl-4">
-      <p class="font-bold mb-1">Наниматель:</p>
-      <p class="mb-6">{{{tenant_fio}}}</p>
-      <div class="border-b border-zinc-950 w-56 h-5 mb-1"></div>
-      <p class="text-zinc-400 text-[10px]">подпись</p>
-    </div>
-  </div>
-</div>`,
+    
   },
 {
     id: "free-use-contract",
-    name: "Договор безвозмездного пользования (ссуда)",
+    name: "Договор безвозмездного пользования имуществом (простая ссуда)",
     category: "realty",
     actSource: "ст. 689-701 ГК РФ",
     lastUpdated: "Август 2026",
@@ -1877,60 +962,7 @@ export const TEMPLATES_REALTY: LegalTemplate[] = [
       { id: "repair_order", label: "Ремонт", type: "text", defaultValue: "", category: "contract" },
       { id: "responsibility", label: "Ответственность за ущерб", type: "text", defaultValue: "", category: "contract" },
     ],
-    previewTemplate: `
-<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
-  <div class="flex justify-between mb-6 text-xs font-semibold">
-    <div>г. {{{city}}}</div>
-    <div>«{{{date}}}»</div>
-  </div>
-  <div class="text-center font-bold text-base mb-6 text-black uppercase">Договор безвозмездного пользования (ссуда)</div>
-  <p class="mb-4 text-justify">
-    <strong>{{{lender_fio}}}</strong> (ИНН {{{lender_inn}}}), именуемый «Ссудодатель», с одной стороны, и
-    <strong>{{{borrower_fio}}}</strong> (ИНН {{{borrower_inn}}}), именуемый «Ссудополучатель», с другой стороны,
-    заключили настоящий договор (ст. 689-701 ГК РФ):
-  </p>
-  <p class="font-bold mb-2">1. Предмет договора</p>
-  <p class="mb-3 text-justify">1.1. Ссудодатель передаёт в безвозмездное временное пользование Ссудополучателю: {{{thing_desc}}}, для использования в целях: {{{use_purpose}}}.</p>
-  <p class="font-bold mb-2">2. Срок</p>
-  <p class="mb-3 text-justify">2.1. Срок безвозмездного пользования: {{{loan_period}}}. Каждая сторона вправе отказаться от договора, предупредив другую сторону за 1 месяц (ст. 699 ГК РФ).</p>
-  <p class="font-bold mb-2">3. Расходы и ремонт</p>
-  <p class="mb-3 text-justify">3.1. Эксплуатационные расходы: {{{operating_costs}}}. Ремонт: {{{repair_order}}} (ст. 695 ГК РФ).</p>
-  <p class="font-bold mb-2">4. Ответственность</p>
-  <p class="mb-3 text-justify">4.1. {{{responsibility}}}.</p>
-  
-  <p class="font-bold mb-2">5. Форс-мажор</p>
-  <p class="mb-3 text-justify">
-    5.1. Стороны освобождаются от ответственности за частичное или полное неисполнение обязательств по настоящему договору, если оно явилось следствием обстоятельств непреодолимой силы (форс-мажора): стихийных бедствий, пожаров, наводнений, землетрясений, эпидемий, военных действий, решений органов государственной власти, а также иных обстоятельств, которые стороны не могли предвидеть и предотвратить разумными мерами.
-  </p>
-  <p class="mb-3 text-justify">
-    5.2. Сторона, для которой создалась невозможность исполнения обязательств, обязана незамедлительно, но не позднее 10 (десяти) календарных дней с момента наступления таких обстоятельств, письменно уведомить другую сторону об их возникновении. Неуведомление либо несвоевременное уведомление лишает сторону права ссылаться на форс-мажор как на основание освобождения от ответственности.
-  </p>
-  <p class="mb-3 text-justify">
-    5.3. Если обстоятельства непреодолимой силы действуют более 60 (шестидесяти) календарных дней, каждая из сторон вправе в одностороннем порядке отказаться от исполнения настоящего договора, письменно уведомив другую сторону.
-  </p>
-
-  <p class="font-bold mb-2">6. Порядок разрешения споров</p>
-  <p class="mb-3 text-justify">
-    6.1. Все споры и разногласия, возникающие из настоящего договора или в связи с ним, стороны разрешают путём переговоров. Срок рассмотрения письменной претензии — 10 (десять) календарных дней с момента её получения.
-  </p>
-  <p class="mb-3 text-justify">
-    6.2. При недостижении согласия споры разрешаются в судебном порядке в соответствии с действующим законодательством Российской Федерации.
-  </p>
-<div class="flex justify-between mt-10 text-xs">
-    <div class="w-1/2 pr-4">
-      <p class="font-bold mb-1">Ссудодатель:</p>
-      <p class="mb-6">{{{lender_fio}}}</p>
-      <div class="border-b border-zinc-950 w-56 h-5 mb-1"></div>
-      <p class="text-zinc-400 text-[10px]">подпись</p>
-    </div>
-    <div class="w-1/2 pl-4">
-      <p class="font-bold mb-1">Ссудополучатель:</p>
-      <p class="mb-6">{{{borrower_fio}}}</p>
-      <div class="border-b border-zinc-950 w-56 h-5 mb-1"></div>
-      <p class="text-zinc-400 text-[10px]">подпись</p>
-    </div>
-  </div>
-</div>`,
+    
   },
 {
     id: "tenancy-flat",
@@ -1952,55 +984,7 @@ export const TEMPLATES_REALTY: LegalTemplate[] = [
       { id: "rental_end", label: "Дата окончания", type: "date", defaultValue: "", category: "contract" },
       { id: "utilities_order", label: "Коммунальные платежи", type: "select", defaultValue: "оплачивает наниматель по счётчикам", options: ["оплачивает наниматель по счётчикам", "включены в плату", "оплачивает наймодатель"], category: "payment" },
     ],
-    previewTemplate: `
-<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
-  <div class="text-center font-bold text-base mb-6 text-black uppercase">Договор найма жилого помещения</div>
-  <div class="flex justify-between mb-6 text-xs font-semibold">
-    <div>г. {{{city}}}</div>
-    <div>«{{{date}}}»</div>
-  </div>
-  <p class="mb-4 text-justify">
-    Гражданин <strong>{{{landlord_fio}}}</strong>, именуемый в дальнейшем «Наймодатель», и гражданин <strong>{{{tenant_fio}}}</strong>, именуемый в дальнейшем «Наниматель», заключили настоящий договор о нижеследующем:
-  </p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">1. Предмет договора</div>
-  <p class="mb-4 text-justify">1.1. Наймодатель передаёт Нанимателю за плату во владение и пользование квартиру по адресу: <strong>{{{flat_address}}}</strong>.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">2. Плата за наём</div>
-  <p class="mb-4 text-justify">2.1. Плата за наём составляет {{{rent_price}}} руб. в месяц. Обеспечительный платёж — {{{rent_deposit}}} руб.</p>
-  <p class="mb-4 text-justify">2.2. Коммунальные платежи: {{{utilities_order}}}.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">3. Срок договора</div>
-  <p class="mb-4 text-justify">3.1. Срок найма: с «{{{rental_start}}}» по «{{{rental_end}}}» (ст. 671, 682 ГК РФ).</p>
-  
-  <div class="font-bold mb-2 text-black text-xs uppercase">4. Форс-мажор</div>
-  <p class="mb-4 text-justify">
-    4.1. Стороны освобождаются от ответственности за частичное или полное неисполнение обязательств по настоящему договору, если оно явилось следствием обстоятельств непреодолимой силы (форс-мажора): стихийных бедствий, пожаров, наводнений, землетрясений, эпидемий, военных действий, решений органов государственной власти, а также иных обстоятельств, которые стороны не могли предвидеть и предотвратить разумными мерами.
-  </p>
-  <p class="mb-4 text-justify">
-    4.2. Сторона, для которой создалась невозможность исполнения обязательств, обязана незамедлительно, но не позднее 10 (десяти) календарных дней с момента наступления таких обстоятельств, письменно уведомить другую сторону об их возникновении. Неуведомление либо несвоевременное уведомление лишает сторону права ссылаться на форс-мажор как на основание освобождения от ответственности.
-  </p>
-  <p class="mb-4 text-justify">
-    4.3. Если обстоятельства непреодолимой силы действуют более 60 (шестидесяти) календарных дней, каждая из сторон вправе в одностороннем порядке отказаться от исполнения настоящего договора, письменно уведомив другую сторону.
-  </p>
-
-  <div class="font-bold mb-2 text-black text-xs uppercase">5. Порядок разрешения споров</div>
-  <p class="mb-4 text-justify">
-    5.1. Все споры и разногласия, возникающие из настоящего договора или в связи с ним, стороны разрешают путём переговоров. Срок рассмотрения письменной претензии — 10 (десять) календарных дней с момента её получения.
-  </p>
-  <p class="mb-4 text-justify">
-    5.2. При недостижении согласия споры разрешаются в судебном порядке в соответствии с действующим законодательством Российской Федерации.
-  </p>
-<div class="grid grid-cols-2 gap-6 mt-8 text-xs border-t border-zinc-300 pt-4">
-    <div>
-      <div class="font-bold mb-2 uppercase text-black">Наймодатель:</div>
-      <p class="mb-1"><strong>{{{landlord_fio}}}</strong></p>
-      <p class="text-zinc-500 text-[11px]">подпись</p>
-    </div>
-    <div>
-      <div class="font-bold mb-2 uppercase text-black">Наниматель:</div>
-      <p class="mb-1"><strong>{{{tenant_fio}}}</strong></p>
-      <p class="text-zinc-500 text-[11px]">подпись</p>
-    </div>
-  </div>
-</div>`,
+    
   },
 {
     id: "mandate-realty-sale",
@@ -2020,54 +1004,7 @@ export const TEMPLATES_REALTY: LegalTemplate[] = [
       { id: "mandate_reward", label: "Вознаграждение (руб.)", type: "number", defaultValue: "", category: "payment" },
       { id: "mandate_period", label: "Срок поручения (мес.)", type: "number", defaultValue: "", category: "contract" },
     ],
-    previewTemplate: `
-<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
-  <div class="text-center font-bold text-base mb-6 text-black uppercase">Договор поручения</div>
-  <div class="flex justify-between mb-6 text-xs font-semibold">
-    <div>г. {{{city}}}</div>
-    <div>«{{{date}}}»</div>
-  </div>
-  <p class="mb-4 text-justify">
-    Гражданин <strong>{{{principal_fio}}}</strong>, именуемый в дальнейшем «Доверитель», и <strong>{{{attorney_org}}}</strong>, именуемое в дальнейшем «Поверенный», заключили настоящий договор о нижеследующем:
-  </p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">1. Предмет договора</div>
-  <p class="mb-4 text-justify">1.1. Поверенный обязуется совершить от имени и за счёт Доверителя действия по продаже объекта: <strong>{{{property_name}}}</strong> по цене не ниже {{{sale_price}}} руб.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">2. Вознаграждение</div>
-  <p class="mb-4 text-justify">2.1. Вознаграждение Поверенного составляет {{{mandate_reward}}} руб. и выплачивается после регистрации перехода права собственности (ст. 972 ГК РФ).</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">3. Срок действия</div>
-  <p class="mb-4 text-justify">3.1. Договор действует {{{mandate_period}}} месяца (ст. 971 ГК РФ).</p>
-  
-  <div class="font-bold mb-2 text-black text-xs uppercase">4. Форс-мажор</div>
-  <p class="mb-4 text-justify">
-    4.1. Стороны освобождаются от ответственности за частичное или полное неисполнение обязательств по настоящему договору, если оно явилось следствием обстоятельств непреодолимой силы (форс-мажора): стихийных бедствий, пожаров, наводнений, землетрясений, эпидемий, военных действий, решений органов государственной власти, а также иных обстоятельств, которые стороны не могли предвидеть и предотвратить разумными мерами.
-  </p>
-  <p class="mb-4 text-justify">
-    4.2. Сторона, для которой создалась невозможность исполнения обязательств, обязана незамедлительно, но не позднее 10 (десяти) календарных дней с момента наступления таких обстоятельств, письменно уведомить другую сторону об их возникновении. Неуведомление либо несвоевременное уведомление лишает сторону права ссылаться на форс-мажор как на основание освобождения от ответственности.
-  </p>
-  <p class="mb-4 text-justify">
-    4.3. Если обстоятельства непреодолимой силы действуют более 60 (шестидесяти) календарных дней, каждая из сторон вправе в одностороннем порядке отказаться от исполнения настоящего договора, письменно уведомив другую сторону.
-  </p>
-
-  <div class="font-bold mb-2 text-black text-xs uppercase">5. Порядок разрешения споров</div>
-  <p class="mb-4 text-justify">
-    5.1. Все споры и разногласия, возникающие из настоящего договора или в связи с ним, стороны разрешают путём переговоров. Срок рассмотрения письменной претензии — 10 (десять) календарных дней с момента её получения.
-  </p>
-  <p class="mb-4 text-justify">
-    5.2. При недостижении согласия споры разрешаются в судебном порядке в соответствии с действующим законодательством Российской Федерации.
-  </p>
-<div class="grid grid-cols-2 gap-6 mt-8 text-xs border-t border-zinc-300 pt-4">
-    <div>
-      <div class="font-bold mb-2 uppercase text-black">Доверитель:</div>
-      <p class="mb-1"><strong>{{{principal_fio}}}</strong></p>
-      <p class="text-zinc-500 text-[11px]">подпись</p>
-    </div>
-    <div>
-      <div class="font-bold mb-2 uppercase text-black">Поверенный:</div>
-      <p class="mb-1">{{{attorney_org}}}</p>
-      <p class="text-zinc-500 text-[11px]">М.П.</p>
-    </div>
-  </div>
-</div>`,
+    
   },
 {
     id: "land-acceptance-act",
@@ -2086,30 +1023,7 @@ export const TEMPLATES_REALTY: LegalTemplate[] = [
       { id: "land_area", label: "Площадь (соток)", type: "number", defaultValue: "", category: "realty" },
       { id: "dkp_number", label: "Договор (номер, дата)", type: "text", defaultValue: "", category: "contract" },
     ],
-    previewTemplate: `
-<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
-  <div class="text-center font-bold text-base mb-6 text-black uppercase">Акт приёма-передачи земельного участка</div>
-  <div class="flex justify-between mb-6 text-xs font-semibold">
-    <div>г. {{{city}}}</div>
-    <div>«{{{date}}}»</div>
-  </div>
-  <p class="mb-4 text-justify">к договору купли-продажи {{{dkp_number}}}. Продавец: <strong>{{{seller_fio}}}</strong>, Покупатель: <strong>{{{buyer_fio}}}</strong>.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">Передано</div>
-  <p class="mb-4 text-justify">Земельный участок: {{{land_address}}}, площадью {{{land_area}}} соток, в состоянии, пригодном для использования по назначению (ст. 556 ГК РФ).</p>
-  <p class="mb-4 text-justify">Границы участка обозначены, претензий к передаваемому участку стороны не имеют.</p>
-  <div class="grid grid-cols-2 gap-6 mt-8 text-xs border-t border-zinc-300 pt-4">
-    <div>
-      <div class="font-bold mb-2 uppercase text-black">Передал (Продавец):</div>
-      <p class="mb-1"><strong>{{{seller_fio}}}</strong></p>
-      <p class="text-zinc-500 text-[11px]">подпись</p>
-    </div>
-    <div>
-      <div class="font-bold mb-2 uppercase text-black">Принял (Покупатель):</div>
-      <p class="mb-1"><strong>{{{buyer_fio}}}</strong></p>
-      <p class="text-zinc-500 text-[11px]">подпись</p>
-    </div>
-  </div>
-</div>`,
+    
   },
 {
     id: "ds-rent",
@@ -2128,53 +1042,7 @@ export const TEMPLATES_REALTY: LegalTemplate[] = [
       { id: "new_rent", label: "Новый размер арендной платы (руб./мес.)", type: "number", defaultValue: "", category: "payment" },
       { id: "change_effect_date", label: "Дата вступления в силу", type: "date", defaultValue: "", category: "contract" },
     ],
-    previewTemplate: `
-<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
-  <div class="text-center font-bold text-base mb-6 text-black uppercase">Дополнительное соглашение</div>
-  <div class="flex justify-between mb-6 text-xs font-semibold">
-    <div>г. {{{city}}}</div>
-    <div>«{{{date}}}»</div>
-  </div>
-  <p class="mb-4 text-justify">
-    к договору аренды {{{rent_contract}}}. Арендодатель: <strong>{{{landlord_org}}}</strong>, Арендатор: <strong>{{{tenant_org}}}</strong>, заключили настоящее соглашение:
-  </p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">1. Изменения</div>
-  <p class="mb-4 text-justify">1.1. Пункт 4.1 договора изложить в редакции: «Арендная плата составляет {{{new_rent}}} руб. в месяц».</p>
-  <p class="mb-4 text-justify">1.2. Изменения вступают в силу с «{{{change_effect_date}}}» (ст. 614 ГК РФ).</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">2. Заключительные положения</div>
-  <p class="mb-4 text-justify">2.1. Остальные условия договора остаются неизменными (ст. 450 ГК РФ).</p>
-  
-  <div class="font-bold mb-2 text-black text-xs uppercase">3. Форс-мажор</div>
-  <p class="mb-4 text-justify">
-    3.1. Стороны освобождаются от ответственности за частичное или полное неисполнение обязательств по настоящему договору, если оно явилось следствием обстоятельств непреодолимой силы (форс-мажора): стихийных бедствий, пожаров, наводнений, землетрясений, эпидемий, военных действий, решений органов государственной власти, а также иных обстоятельств, которые стороны не могли предвидеть и предотвратить разумными мерами.
-  </p>
-  <p class="mb-4 text-justify">
-    3.2. Сторона, для которой создалась невозможность исполнения обязательств, обязана незамедлительно, но не позднее 10 (десяти) календарных дней с момента наступления таких обстоятельств, письменно уведомить другую сторону об их возникновении. Неуведомление либо несвоевременное уведомление лишает сторону права ссылаться на форс-мажор как на основание освобождения от ответственности.
-  </p>
-  <p class="mb-4 text-justify">
-    3.3. Если обстоятельства непреодолимой силы действуют более 60 (шестидесяти) календарных дней, каждая из сторон вправе в одностороннем порядке отказаться от исполнения настоящего договора, письменно уведомив другую сторону.
-  </p>
-
-  <div class="font-bold mb-2 text-black text-xs uppercase">4. Порядок разрешения споров</div>
-  <p class="mb-4 text-justify">
-    4.1. Все споры и разногласия, возникающие из настоящего договора или в связи с ним, стороны разрешают путём переговоров. Срок рассмотрения письменной претензии — 10 (десять) календарных дней с момента её получения.
-  </p>
-  <p class="mb-4 text-justify">
-    4.2. При недостижении согласия споры разрешаются в судебном порядке в соответствии с действующим законодательством Российской Федерации.
-  </p>
-<div class="grid grid-cols-2 gap-6 mt-8 text-xs border-t border-zinc-300 pt-4">
-    <div>
-      <div class="font-bold mb-2 uppercase text-black">Арендодатель:</div>
-      <p class="mb-1">{{{landlord_org}}}</p>
-      <p class="text-zinc-500 text-[11px]">М.П.</p>
-    </div>
-    <div>
-      <div class="font-bold mb-2 uppercase text-black">Арендатор:</div>
-      <p class="mb-1">{{{tenant_org}}}</p>
-      <p class="text-zinc-500 text-[11px]">М.П.</p>
-    </div>
-  </div>
-</div>`,
+    
   },
 {
     id: "terminate-rent",
@@ -2193,54 +1061,7 @@ export const TEMPLATES_REALTY: LegalTemplate[] = [
       { id: "termination_date", label: "Дата расторжения", type: "date", defaultValue: "", category: "contract" },
       { id: "settlement_note", label: "Взаиморасчёты", type: "text", defaultValue: "", category: "payment" },
     ],
-    previewTemplate: `
-<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
-  <div class="text-center font-bold text-base mb-6 text-black uppercase">Соглашение о расторжении договора аренды</div>
-  <div class="flex justify-between mb-6 text-xs font-semibold">
-    <div>г. {{{city}}}</div>
-    <div>«{{{date}}}»</div>
-  </div>
-  <p class="mb-4 text-justify">
-    Арендодатель: <strong>{{{landlord_org}}}</strong>, Арендатор: <strong>{{{tenant_org}}}</strong>, заключили настоящее соглашение о расторжении договора аренды {{{rent_contract}}} (ст. 450, 452 ГК РФ):
-  </p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">1. Расторжение</div>
-  <p class="mb-4 text-justify">1.1. Договор аренды {{{rent_contract}}} расторгается с «{{{termination_date}}}».</p>
-  <p class="mb-4 text-justify">1.2. {{{settlement_note}}}.</p>
-  <p class="mb-4 text-justify">1.3. Арендатор обязуется возвратить объект по акту приёма-передачи в срок до «{{{termination_date}}}».</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">2. Заключительные положения</div>
-  <p class="mb-4 text-justify">2.1. Обязательства сторон прекращаются с момента расторжения договора.</p>
-  
-  <div class="font-bold mb-2 text-black text-xs uppercase">3. Форс-мажор</div>
-  <p class="mb-4 text-justify">
-    3.1. Стороны освобождаются от ответственности за частичное или полное неисполнение обязательств по настоящему договору, если оно явилось следствием обстоятельств непреодолимой силы (форс-мажора): стихийных бедствий, пожаров, наводнений, землетрясений, эпидемий, военных действий, решений органов государственной власти, а также иных обстоятельств, которые стороны не могли предвидеть и предотвратить разумными мерами.
-  </p>
-  <p class="mb-4 text-justify">
-    3.2. Сторона, для которой создалась невозможность исполнения обязательств, обязана незамедлительно, но не позднее 10 (десяти) календарных дней с момента наступления таких обстоятельств, письменно уведомить другую сторону об их возникновении. Неуведомление либо несвоевременное уведомление лишает сторону права ссылаться на форс-мажор как на основание освобождения от ответственности.
-  </p>
-  <p class="mb-4 text-justify">
-    3.3. Если обстоятельства непреодолимой силы действуют более 60 (шестидесяти) календарных дней, каждая из сторон вправе в одностороннем порядке отказаться от исполнения настоящего договора, письменно уведомив другую сторону.
-  </p>
-
-  <div class="font-bold mb-2 text-black text-xs uppercase">4. Порядок разрешения споров</div>
-  <p class="mb-4 text-justify">
-    4.1. Все споры и разногласия, возникающие из настоящего договора или в связи с ним, стороны разрешают путём переговоров. Срок рассмотрения письменной претензии — 10 (десять) календарных дней с момента её получения.
-  </p>
-  <p class="mb-4 text-justify">
-    4.2. При недостижении согласия споры разрешаются в судебном порядке в соответствии с действующим законодательством Российской Федерации.
-  </p>
-<div class="grid grid-cols-2 gap-6 mt-8 text-xs border-t border-zinc-300 pt-4">
-    <div>
-      <div class="font-bold mb-2 uppercase text-black">Арендодатель:</div>
-      <p class="mb-1">{{{landlord_org}}}</p>
-      <p class="text-zinc-500 text-[11px]">М.П.</p>
-    </div>
-    <div>
-      <div class="font-bold mb-2 uppercase text-black">Арендатор:</div>
-      <p class="mb-1">{{{tenant_org}}}</p>
-      <p class="text-zinc-500 text-[11px]">М.П.</p>
-    </div>
-  </div>
-</div>`,
+    
   },
 {
     id: "terminate-sublease",
@@ -2259,52 +1080,7 @@ export const TEMPLATES_REALTY: LegalTemplate[] = [
       { id: "termination_date", label: "Дата расторжения", type: "date", defaultValue: "", category: "contract" },
       { id: "settlement_note", label: "Взаиморасчёты", type: "text", defaultValue: "", category: "payment" },
     ],
-    previewTemplate: `
-<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
-  <div class="text-center font-bold text-base mb-6 text-black uppercase">Соглашение о расторжении договора субаренды</div>
-  <div class="flex justify-between mb-6 text-xs font-semibold">
-    <div>г. {{{city}}}</div>
-    <div>«{{{date}}}»</div>
-  </div>
-  <p class="mb-4 text-justify">
-    Субарендодатель: <strong>{{{sublessor_org}}}</strong>, Субарендатор: <strong>{{{subtenant_org}}}</strong>, заключили настоящее соглашение о расторжении договора субаренды {{{sublease_contract}}} (ст. 450, 452, 615 ГК РФ):
-  </p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">1. Расторжение</div>
-  <p class="mb-4 text-justify">1.1. Договор субаренды {{{sublease_contract}}} расторгается с «{{{termination_date}}}».</p>
-  <p class="mb-4 text-justify">1.2. {{{settlement_note}}}.</p>
-  <p class="mb-4 text-justify">1.3. Помещение возвращается по акту приёма-передачи в день расторжения.</p>
-  
-  <div class="font-bold mb-2 text-black text-xs uppercase">2. Форс-мажор</div>
-  <p class="mb-4 text-justify">
-    2.1. Стороны освобождаются от ответственности за частичное или полное неисполнение обязательств по настоящему договору, если оно явилось следствием обстоятельств непреодолимой силы (форс-мажора): стихийных бедствий, пожаров, наводнений, землетрясений, эпидемий, военных действий, решений органов государственной власти, а также иных обстоятельств, которые стороны не могли предвидеть и предотвратить разумными мерами.
-  </p>
-  <p class="mb-4 text-justify">
-    2.2. Сторона, для которой создалась невозможность исполнения обязательств, обязана незамедлительно, но не позднее 10 (десяти) календарных дней с момента наступления таких обстоятельств, письменно уведомить другую сторону об их возникновении. Неуведомление либо несвоевременное уведомление лишает сторону права ссылаться на форс-мажор как на основание освобождения от ответственности.
-  </p>
-  <p class="mb-4 text-justify">
-    2.3. Если обстоятельства непреодолимой силы действуют более 60 (шестидесяти) календарных дней, каждая из сторон вправе в одностороннем порядке отказаться от исполнения настоящего договора, письменно уведомив другую сторону.
-  </p>
-
-  <div class="font-bold mb-2 text-black text-xs uppercase">3. Порядок разрешения споров</div>
-  <p class="mb-4 text-justify">
-    3.1. Все споры и разногласия, возникающие из настоящего договора или в связи с ним, стороны разрешают путём переговоров. Срок рассмотрения письменной претензии — 10 (десять) календарных дней с момента её получения.
-  </p>
-  <p class="mb-4 text-justify">
-    3.2. При недостижении согласия споры разрешаются в судебном порядке в соответствии с действующим законодательством Российской Федерации.
-  </p>
-<div class="grid grid-cols-2 gap-6 mt-8 text-xs border-t border-zinc-300 pt-4">
-    <div>
-      <div class="font-bold mb-2 uppercase text-black">Субарендодатель:</div>
-      <p class="mb-1">{{{sublessor_org}}}</p>
-      <p class="text-zinc-500 text-[11px]">М.П.</p>
-    </div>
-    <div>
-      <div class="font-bold mb-2 uppercase text-black">Субарендатор:</div>
-      <p class="mb-1">{{{subtenant_org}}}</p>
-      <p class="text-zinc-500 text-[11px]">М.П.</p>
-    </div>
-  </div>
-</div>`,
+    
   },
 {
     id: "preliminary-sale",
@@ -2333,63 +1109,7 @@ export const TEMPLATES_REALTY: LegalTemplate[] = [
       { id: "main_deal_date", label: "Срок заключения основного договора", type: "date", defaultValue: "", category: "contract" },
       { id: "penalty", label: "Неустойка при отказе (% от суммы)", type: "text", defaultValue: "", category: "contract" },
     ],
-    previewTemplate: `
-<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
-  <div class="flex justify-between mb-6 text-xs font-semibold">
-    <div>г. {{{city}}}</div>
-    <div>«{{{date}}}»</div>
-  </div>
-  <div class="text-center font-bold text-base mb-6 text-black uppercase">Предварительный договор купли-продажи квартиры</div>
-  <p class="mb-4 text-justify">
-    <strong>{{{seller_fio}}}</strong> (паспорт: {{{seller_passport}}}), именуемый «Продавец», с одной стороны, и
-    <strong>{{{buyer_fio}}}</strong> (паспорт: {{{buyer_passport}}}), именуемый «Покупатель», с другой стороны,
-    заключили настоящий договор о нижеследующем (ст. 429-431 ГК РФ):
-  </p>
-  <p class="font-bold mb-2">1. Предмет договора</p>
-  <p class="mb-3 text-justify">1.1. Стороны обязуются заключить в будущем основной договор купли-продажи квартиры по адресу: {{{flat_address}}}, площадью {{{flat_area}}} кв. м (далее — «Основной договор»).</p>
-  <p class="mb-3 text-justify">1.2. Стоимость квартиры составляет <strong>{{{flat_price}}} руб.</strong> ({{{flat_price_words}}}).</p>
-  <p class="font-bold mb-2">2. Обеспечительный платёж</p>
-  <p class="mb-3 text-justify">2.1. В обеспечение обязательств Покупатель передаёт Продавцу {{{deposit_amount}}} руб., что является {{{deposit_type}}} (ст. 380-381 ГК РФ).</p>
-  <p class="mb-3 text-justify">2.2. При отказе Покупателя от заключения Основного договора {{{deposit_type}}} не возвращается. При отказе Продавца {{{deposit_type}}} возвращается в двойном размере. В случае прекращения обязательств по иным основаниям {{{deposit_type}}} подлежит возврату.</p>
-  <p class="font-bold mb-2">3. Срок заключения основного договора</p>
-  <p class="mb-3 text-justify">3.1. Основной договор заключается не позднее «{{{main_deal_date}}}». Если в этот срок он не заключён и ни одна сторона не направила предложение заключить его, обязательства по настоящему договору прекращаются.</p>
-  <p class="font-bold mb-2">4. Ответственность</p>
-  <p class="mb-3 text-justify">4.1. За просрочку заключения Основного договора виновная сторона уплачивает неустойку в размере {{{penalty}}} (ст. 330 ГК РФ).</p>
-  <p class="mb-3 text-justify">4.2. Настоящий договор составлен в двух экземплярах, имеющих равную юридическую силу.</p>
-  
-  <p class="font-bold mb-2">5. Форс-мажор</p>
-  <p class="mb-3 text-justify">
-    5.1. Стороны освобождаются от ответственности за частичное или полное неисполнение обязательств по настоящему договору, если оно явилось следствием обстоятельств непреодолимой силы (форс-мажора): стихийных бедствий, пожаров, наводнений, землетрясений, эпидемий, военных действий, решений органов государственной власти, а также иных обстоятельств, которые стороны не могли предвидеть и предотвратить разумными мерами.
-  </p>
-  <p class="mb-3 text-justify">
-    5.2. Сторона, для которой создалась невозможность исполнения обязательств, обязана незамедлительно, но не позднее 10 (десяти) календарных дней с момента наступления таких обстоятельств, письменно уведомить другую сторону об их возникновении. Неуведомление либо несвоевременное уведомление лишает сторону права ссылаться на форс-мажор как на основание освобождения от ответственности.
-  </p>
-  <p class="mb-3 text-justify">
-    5.3. Если обстоятельства непреодолимой силы действуют более 60 (шестидесяти) календарных дней, каждая из сторон вправе в одностороннем порядке отказаться от исполнения настоящего договора, письменно уведомив другую сторону.
-  </p>
-
-  <p class="font-bold mb-2">6. Порядок разрешения споров</p>
-  <p class="mb-3 text-justify">
-    6.1. Все споры и разногласия, возникающие из настоящего договора или в связи с ним, стороны разрешают путём переговоров. Срок рассмотрения письменной претензии — 10 (десять) календарных дней с момента её получения.
-  </p>
-  <p class="mb-3 text-justify">
-    6.2. При недостижении согласия споры разрешаются в судебном порядке в соответствии с действующим законодательством Российской Федерации.
-  </p>
-<div class="flex justify-between mt-10 text-xs">
-    <div class="w-1/2 pr-4">
-      <p class="font-bold mb-1">Продавец:</p>
-      <p class="mb-6">{{{seller_fio}}}</p>
-      <div class="border-b border-zinc-950 w-56 h-5 mb-1"></div>
-      <p class="text-zinc-400 text-[10px]">подпись</p>
-    </div>
-    <div class="w-1/2 pl-4">
-      <p class="font-bold mb-1">Покупатель:</p>
-      <p class="mb-6">{{{buyer_fio}}}</p>
-      <div class="border-b border-zinc-950 w-56 h-5 mb-1"></div>
-      <p class="text-zinc-400 text-[10px]">подпись</p>
-    </div>
-  </div>
-</div>`,
+    
   },
 {
     id: "deposit-agreement",
@@ -2413,61 +1133,7 @@ export const TEMPLATES_REALTY: LegalTemplate[] = [
       { id: "main_deal_date", label: "Срок заключения основного договора", type: "date", defaultValue: "", category: "contract" },
       { id: "transfer_note", label: "Способ передачи задатка", type: "text", defaultValue: "", category: "payment" },
     ],
-    previewTemplate: `
-<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
-  <div class="flex justify-between mb-6 text-xs font-semibold">
-    <div>г. {{{city}}}</div>
-    <div>«{{{date}}}»</div>
-  </div>
-  <div class="text-center font-bold text-base mb-6 text-black uppercase">Соглашение о задатке</div>
-  <p class="mb-4 text-justify">
-    <strong>{{{seller_fio}}}</strong> (паспорт: {{{seller_passport}}}), именуемый «Продавец», и
-    <strong>{{{buyer_fio}}}</strong> (паспорт: {{{buyer_passport}}}), именуемый «Покупатель», заключили
-    настоящее соглашение о нижеследующем (ст. 380-381 ГК РФ):
-  </p>
-  <p class="font-bold mb-2">1. Предмет соглашения</p>
-  <p class="mb-3 text-justify">1.1. В обеспечение обязательства Покупателя заключить с Продавцом основной договор купли-продажи квартиры по адресу: {{{flat_address}}}, стоимостью {{{flat_price}}} руб., Покупатель передаёт Продавцу задаток в размере <strong>{{{deposit_amount}}} руб.</strong> ({{{deposit_amount_words}}}).</p>
-  <p class="mb-3 text-justify">1.2. Передача задатка производится {{{transfer_note}}}. Факт передачи удостоверяется настоящим соглашением и распиской.</p>
-  <p class="font-bold mb-2">2. Последствия неисполнения обязательства</p>
-  <p class="mb-3 text-justify">2.1. Если основной договор не будет заключён по вине Покупателя, задаток остаётся у Продавца (ст. 381 п. 2 ГК РФ).</p>
-  <p class="mb-3 text-justify">2.2. Если основной договор не будет заключён по вине Продавца, он обязан уплатить Покупателю двойную сумму задатка (ст. 381 п. 2 ГК РФ).</p>
-  <p class="mb-3 text-justify">2.3. Если обязательство прекращается по соглашению сторон либо вследствие невозможности исполнения, задаток подлежит возврату.</p>
-  <p class="font-bold mb-2">3. Срок</p>
-  <p class="mb-3 text-justify">3.1. Основной договор должен быть заключён не позднее «{{{main_deal_date}}}».</p>
-  
-  <p class="font-bold mb-2">4. Форс-мажор</p>
-  <p class="mb-3 text-justify">
-    4.1. Стороны освобождаются от ответственности за частичное или полное неисполнение обязательств по настоящему договору, если оно явилось следствием обстоятельств непреодолимой силы (форс-мажора): стихийных бедствий, пожаров, наводнений, землетрясений, эпидемий, военных действий, решений органов государственной власти, а также иных обстоятельств, которые стороны не могли предвидеть и предотвратить разумными мерами.
-  </p>
-  <p class="mb-3 text-justify">
-    4.2. Сторона, для которой создалась невозможность исполнения обязательств, обязана незамедлительно, но не позднее 10 (десяти) календарных дней с момента наступления таких обстоятельств, письменно уведомить другую сторону об их возникновении. Неуведомление либо несвоевременное уведомление лишает сторону права ссылаться на форс-мажор как на основание освобождения от ответственности.
-  </p>
-  <p class="mb-3 text-justify">
-    4.3. Если обстоятельства непреодолимой силы действуют более 60 (шестидесяти) календарных дней, каждая из сторон вправе в одностороннем порядке отказаться от исполнения настоящего договора, письменно уведомив другую сторону.
-  </p>
-
-  <p class="font-bold mb-2">5. Порядок разрешения споров</p>
-  <p class="mb-3 text-justify">
-    5.1. Все споры и разногласия, возникающие из настоящего договора или в связи с ним, стороны разрешают путём переговоров. Срок рассмотрения письменной претензии — 10 (десять) календарных дней с момента её получения.
-  </p>
-  <p class="mb-3 text-justify">
-    5.2. При недостижении согласия споры разрешаются в судебном порядке в соответствии с действующим законодательством Российской Федерации.
-  </p>
-<div class="flex justify-between mt-10 text-xs">
-    <div class="w-1/2 pr-4">
-      <p class="font-bold mb-1">Продавец:</p>
-      <p class="mb-6">{{{seller_fio}}}</p>
-      <div class="border-b border-zinc-950 w-56 h-5 mb-1"></div>
-      <p class="text-zinc-400 text-[10px]">подпись</p>
-    </div>
-    <div class="w-1/2 pl-4">
-      <p class="font-bold mb-1">Покупатель:</p>
-      <p class="mb-6">{{{buyer_fio}}}</p>
-      <div class="border-b border-zinc-950 w-56 h-5 mb-1"></div>
-      <p class="text-zinc-400 text-[10px]">подпись</p>
-    </div>
-  </div>
-</div>`,
+    
   },
 {
     id: "rent-contract",
@@ -2492,63 +1158,7 @@ export const TEMPLATES_REALTY: LegalTemplate[] = [
       { id: "care_conditions", label: "Условия содержания и ухода", type: "textarea", defaultValue: "", category: "items", rows: 2 },
       { id: "notary", label: "Нотариус", type: "text", defaultValue: "", category: "notary" },
     ],
-    previewTemplate: `
-<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
-  <div class="flex justify-between mb-6 text-xs font-semibold">
-    <div>г. {{{city}}}</div>
-    <div>«{{{date}}}»</div>
-  </div>
-  <div class="text-center font-bold text-base mb-6 text-black uppercase">Договор ренты с пожизненным содержанием с иждивением</div>
-  <p class="mb-4 text-justify">
-    <strong>{{{recipient_fio}}}</strong> (паспорт: {{{recipient_passport}}}, адрес: {{{recipient_address}}}),
-    именуемый «Получатель ренты», и <strong>{{{payer_fio}}}</strong> (паспорт: {{{payer_passport}}}),
-    именуемый «Плательщик ренты», заключили настоящий договор о нижеследующем (ст. 583-605 ГК РФ):
-  </p>
-  <p class="font-bold mb-2">1. Предмет договора</p>
-  <p class="mb-3 text-justify">1.1. Получатель ренты передаёт в собственность Плательщику ренты квартиру по адресу: {{{property_address}}} (кадастровый № {{{property_cadastral}}}), а Плательщик ренты обязуется выплачивать пожизненную ренту и осуществлять содержание с иждивением.</p>
-  <p class="font-bold mb-2">2. Размер и порядок ренты</p>
-  <p class="mb-3 text-justify">2.1. Ежемесячная рента составляет <strong>{{{rent_amount}}} руб.</strong>, что не менее двух величин прожиточного минимума (ст. 602 ГК РФ).</p>
-  <p class="mb-3 text-justify">2.2. Плательщик ренты обеспечивает: {{{care_conditions}}}.</p>
-  <p class="font-bold mb-2">3. Обеспечение исполнения</p>
-  <p class="mb-3 text-justify">3.1. Плательщик ренты не вправе отчуждать полученное имущество без предварительного письменного согласия Получателя ренты (ст. 604 ГК РФ).</p>
-  <p class="font-bold mb-2">4. Ответственность и прекращение</p>
-  <p class="mb-3 text-justify">4.1. При существенном нарушении условий содержания Получатель ренты вправе требовать возврата квартиры (ст. 605 ГК РФ).</p>
-  <p class="mb-3 text-justify">4.2. Обязательства прекращаются со смертью Получателя ренты либо по основаниям, установленным законом.</p>
-  <p class="mb-3 text-justify">4.3. Настоящий договор подлежит нотариальному удостоверению (ст. 584 ГК РФ) и государственной регистрации. Удостоверен {{{notary}}}.</p>
-  
-  <p class="font-bold mb-2">5. Форс-мажор</p>
-  <p class="mb-3 text-justify">
-    5.1. Стороны освобождаются от ответственности за частичное или полное неисполнение обязательств по настоящему договору, если оно явилось следствием обстоятельств непреодолимой силы (форс-мажора): стихийных бедствий, пожаров, наводнений, землетрясений, эпидемий, военных действий, решений органов государственной власти, а также иных обстоятельств, которые стороны не могли предвидеть и предотвратить разумными мерами.
-  </p>
-  <p class="mb-3 text-justify">
-    5.2. Сторона, для которой создалась невозможность исполнения обязательств, обязана незамедлительно, но не позднее 10 (десяти) календарных дней с момента наступления таких обстоятельств, письменно уведомить другую сторону об их возникновении. Неуведомление либо несвоевременное уведомление лишает сторону права ссылаться на форс-мажор как на основание освобождения от ответственности.
-  </p>
-  <p class="mb-3 text-justify">
-    5.3. Если обстоятельства непреодолимой силы действуют более 60 (шестидесяти) календарных дней, каждая из сторон вправе в одностороннем порядке отказаться от исполнения настоящего договора, письменно уведомив другую сторону.
-  </p>
-
-  <p class="font-bold mb-2">6. Порядок разрешения споров</p>
-  <p class="mb-3 text-justify">
-    6.1. Все споры и разногласия, возникающие из настоящего договора или в связи с ним, стороны разрешают путём переговоров. Срок рассмотрения письменной претензии — 10 (десять) календарных дней с момента её получения.
-  </p>
-  <p class="mb-3 text-justify">
-    6.2. При недостижении согласия споры разрешаются в судебном порядке в соответствии с действующим законодательством Российской Федерации.
-  </p>
-<div class="flex justify-between mt-10 text-xs">
-    <div class="w-1/2 pr-4">
-      <p class="font-bold mb-1">Получатель ренты:</p>
-      <p class="mb-6">{{{recipient_fio}}}</p>
-      <div class="border-b border-zinc-950 w-56 h-5 mb-1"></div>
-      <p class="text-zinc-400 text-[10px]">подпись</p>
-    </div>
-    <div class="w-1/2 pl-4">
-      <p class="font-bold mb-1">Плательщик ренты:</p>
-      <p class="mb-6">{{{payer_fio}}}</p>
-      <div class="border-b border-zinc-950 w-56 h-5 mb-1"></div>
-      <p class="text-zinc-400 text-[10px]">подпись</p>
-    </div>
-  </div>
-</div>`,
+    
   },
 {
     id: "gift-share",
@@ -2573,61 +1183,7 @@ export const TEMPLATES_REALTY: LegalTemplate[] = [
       { id: "share_desc", label: "Характеристики доли", type: "text", defaultValue: "", category: "realty" },
       { id: "notary", label: "Нотариус (если удостоверяется)", type: "text", defaultValue: "", category: "notary" },
     ],
-    previewTemplate: `
-<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
-  <div class="flex justify-between mb-6 text-xs font-semibold">
-    <div>г. {{{city}}}</div>
-    <div>«{{{date}}}»</div>
-  </div>
-  <div class="text-center font-bold text-base mb-6 text-black uppercase">Договор дарения доли в квартире</div>
-  <p class="mb-4 text-justify">
-    <strong>{{{donor_fio}}}</strong> (паспорт: {{{donor_passport}}}), именуемый «Даритель», и
-    <strong>{{{donee_fio}}}</strong> (паспорт: {{{donee_passport}}}), именуемый «Одаряемый»,
-    заключили настоящий договор о нижеследующем (ст. 572 ГК РФ):
-  </p>
-  <p class="font-bold mb-2">1. Предмет договора</p>
-  <p class="mb-3 text-justify">1.1. Даритель безвозмездно передаёт в собственность Одаряемому долю в размере {{{share_size}}} в праве общей долевой собственности на квартиру по адресу: {{{flat_address}}} (кадастровый № {{{flat_cadastral}}}), {{{share_desc}}}.</p>
-  <p class="mb-3 text-justify">1.2. Одаряемый — {{{relationship}}} Дарителя. {{#relationship}}Дарение осуществляется близкому родственнику, в связи с чем нотариальное удостоверение не требуется (п. 1.1 ст. 42 ФЗ-218).{{/relationship}}</p>
-  <p class="font-bold mb-2">2. Права и обязанности сторон</p>
-  <p class="mb-3 text-justify">2.1. Даритель гарантирует, что доля свободна от прав третьих лиц, в споре и под арестом не состоит, в залоге не находится (ст. 576 ГК РФ).</p>
-  <p class="mb-3 text-justify">2.2. Одаряемый принимает долю и обязуется зарегистрировать переход права собственности в Росреестре.</p>
-  <p class="font-bold mb-2">3. Отмена дарения</p>
-  <p class="mb-3 text-justify">3.1. Дарение может быть отменено по основаниям, предусмотренным ст. 578 ГК РФ (покушение на жизнь дарителя, умышленное причинение вреда, неблагодарность).</p>
-  <p class="mb-3 text-justify">3.2. Настоящий договор составлен в двух экземплярах, имеющих равную юридическую силу. {{{notary}}}</p>
-  
-  <p class="font-bold mb-2">4. Форс-мажор</p>
-  <p class="mb-3 text-justify">
-    4.1. Стороны освобождаются от ответственности за частичное или полное неисполнение обязательств по настоящему договору, если оно явилось следствием обстоятельств непреодолимой силы (форс-мажора): стихийных бедствий, пожаров, наводнений, землетрясений, эпидемий, военных действий, решений органов государственной власти, а также иных обстоятельств, которые стороны не могли предвидеть и предотвратить разумными мерами.
-  </p>
-  <p class="mb-3 text-justify">
-    4.2. Сторона, для которой создалась невозможность исполнения обязательств, обязана незамедлительно, но не позднее 10 (десяти) календарных дней с момента наступления таких обстоятельств, письменно уведомить другую сторону об их возникновении. Неуведомление либо несвоевременное уведомление лишает сторону права ссылаться на форс-мажор как на основание освобождения от ответственности.
-  </p>
-  <p class="mb-3 text-justify">
-    4.3. Если обстоятельства непреодолимой силы действуют более 60 (шестидесяти) календарных дней, каждая из сторон вправе в одностороннем порядке отказаться от исполнения настоящего договора, письменно уведомив другую сторону.
-  </p>
-
-  <p class="font-bold mb-2">5. Порядок разрешения споров</p>
-  <p class="mb-3 text-justify">
-    5.1. Все споры и разногласия, возникающие из настоящего договора или в связи с ним, стороны разрешают путём переговоров. Срок рассмотрения письменной претензии — 10 (десять) календарных дней с момента её получения.
-  </p>
-  <p class="mb-3 text-justify">
-    5.2. При недостижении согласия споры разрешаются в судебном порядке в соответствии с действующим законодательством Российской Федерации.
-  </p>
-<div class="flex justify-between mt-10 text-xs">
-    <div class="w-1/2 pr-4">
-      <p class="font-bold mb-1">Даритель:</p>
-      <p class="mb-6">{{{donor_fio}}}</p>
-      <div class="border-b border-zinc-950 w-56 h-5 mb-1"></div>
-      <p class="text-zinc-400 text-[10px]">подпись</p>
-    </div>
-    <div class="w-1/2 pl-4">
-      <p class="font-bold mb-1">Одаряемый:</p>
-      <p class="mb-6">{{{donee_fio}}}</p>
-      <div class="border-b border-zinc-950 w-56 h-5 mb-1"></div>
-      <p class="text-zinc-400 text-[10px]">подпись</p>
-    </div>
-  </div>
-</div>`,
+    
   },
 {
     id: "garage-lease",
@@ -2661,65 +1217,7 @@ export const TEMPLATES_REALTY: LegalTemplate[] = [
       { id: "payment_order", label: "Порядок оплаты", type: "text", defaultValue: "", category: "payment" },
       { id: "penalty", label: "Неустойка за просрочку", type: "text", defaultValue: "", category: "contract" },
     ],
-    previewTemplate: `
-<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
-  <div class="flex justify-between mb-6 text-xs font-semibold">
-    <div>г. {{{city}}}</div>
-    <div>«{{{date}}}»</div>
-  </div>
-  <div class="text-center font-bold text-base mb-6 text-black uppercase">Договор аренды гаража</div>
-  <p class="mb-4 text-justify">
-    <strong>{{{landlord_fio}}}</strong> (паспорт: {{{landlord_passport}}}), именуемый «Арендодатель», с одной стороны, и
-    <strong>{{{tenant_fio}}}</strong> (паспорт: {{{tenant_passport}}}), именуемый «Арендатор», с другой стороны,
-    заключили настоящий договор о нижеследующем (ст. 606 ГК РФ):
-  </p>
-  <p class="font-bold mb-2">1. Предмет договора</p>
-  <p class="mb-3 text-justify">1.1. Арендодатель передаёт, а Арендатор принимает во временное владение и пользование {{{garage_type}}} по адресу: {{{garage_address}}}.</p>
-  <p class="mb-3 text-justify">1.2. Гараж передаётся по акту приёма-передачи, который является неотъемлемой частью настоящего договора.</p>
-  <p class="font-bold mb-2">2. Арендная плата</p>
-  <p class="mb-3 text-justify">2.1. Арендная плата составляет <strong>{{{rent_amount}}} руб.</strong> в месяц, оплачивается {{{payment_order}}}.</p>
-  <p class="mb-3 text-justify">2.2. Коммунальные услуги и расходы на электроэнергию оплачивает: {{{utilities_payer}}}.</p>
-  <p class="font-bold mb-2">3. Срок аренды</p>
-  <p class="mb-3 text-justify">3.1. Договор заключён на срок {{{lease_term}}} с «{{{start_date}}}». Арендатор вправе использовать гараж для хранения личного автомобиля.</p>
-  <p class="font-bold mb-2">4. Обязанности сторон</p>
-  <p class="mb-3 text-justify">4.1. Арендодатель обязан передать гараж в состоянии, пригодном для использования. Арендатор обязан поддерживать гараж в исправном состоянии и вернуть его по акту по окончании срока.</p>
-  <p class="font-bold mb-2">5. Ответственность</p>
-  <p class="mb-3 text-justify">5.1. За просрочку арендной платы Арендатор уплачивает неустойку {{{penalty}}} от суммы задолженности.</p>
-  <p class="mb-3 text-justify">5.2. Арендатор несёт ответственность за ущерб, причинённый гаражу, в пределах стоимости ремонта.</p>
-  
-  <p class="font-bold mb-2">6. Форс-мажор</p>
-  <p class="mb-3 text-justify">
-    6.1. Стороны освобождаются от ответственности за частичное или полное неисполнение обязательств по настоящему договору, если оно явилось следствием обстоятельств непреодолимой силы (форс-мажора): стихийных бедствий, пожаров, наводнений, землетрясений, эпидемий, военных действий, решений органов государственной власти, а также иных обстоятельств, которые стороны не могли предвидеть и предотвратить разумными мерами.
-  </p>
-  <p class="mb-3 text-justify">
-    6.2. Сторона, для которой создалась невозможность исполнения обязательств, обязана незамедлительно, но не позднее 10 (десяти) календарных дней с момента наступления таких обстоятельств, письменно уведомить другую сторону об их возникновении. Неуведомление либо несвоевременное уведомление лишает сторону права ссылаться на форс-мажор как на основание освобождения от ответственности.
-  </p>
-  <p class="mb-3 text-justify">
-    6.3. Если обстоятельства непреодолимой силы действуют более 60 (шестидесяти) календарных дней, каждая из сторон вправе в одностороннем порядке отказаться от исполнения настоящего договора, письменно уведомив другую сторону.
-  </p>
-
-  <p class="font-bold mb-2">7. Порядок разрешения споров</p>
-  <p class="mb-3 text-justify">
-    7.1. Все споры и разногласия, возникающие из настоящего договора или в связи с ним, стороны разрешают путём переговоров. Срок рассмотрения письменной претензии — 10 (десять) календарных дней с момента её получения.
-  </p>
-  <p class="mb-3 text-justify">
-    7.2. При недостижении согласия споры разрешаются в судебном порядке в соответствии с действующим законодательством Российской Федерации.
-  </p>
-<div class="flex justify-between mt-10 text-xs">
-    <div class="w-1/2 pr-4">
-      <p class="font-bold mb-1">Арендодатель:</p>
-      <p class="mb-6">{{{landlord_fio}}}</p>
-      <div class="border-b border-zinc-950 w-56 h-5 mb-1"></div>
-      <p class="text-zinc-400 text-[10px]">подпись</p>
-    </div>
-    <div class="w-1/2 pl-4">
-      <p class="font-bold mb-1">Арендатор:</p>
-      <p class="mb-6">{{{tenant_fio}}}</p>
-      <div class="border-b border-zinc-950 w-56 h-5 mb-1"></div>
-      <p class="text-zinc-400 text-[10px]">подпись</p>
-    </div>
-  </div>
-</div>`,
+    
   },
 {
     id: "garage-sale",
@@ -2748,62 +1246,7 @@ export const TEMPLATES_REALTY: LegalTemplate[] = [
       { id: "payment_order", label: "Порядок расчётов", type: "text", defaultValue: "", category: "payment" },
       { id: "transfer_date", label: "Дата передачи по акту", type: "date", defaultValue: "", category: "contract" },
     ],
-    previewTemplate: `
-<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
-  <div class="flex justify-between mb-6 text-xs font-semibold">
-    <div>г. {{{city}}}</div>
-    <div>«{{{date}}}»</div>
-  </div>
-  <div class="text-center font-bold text-base mb-6 text-black uppercase">Договор купли-продажи гаража</div>
-  <p class="mb-4 text-justify">
-    <strong>{{{seller_fio}}}</strong> (паспорт: {{{seller_passport}}}), именуемый «Продавец», с одной стороны, и
-    <strong>{{{buyer_fio}}}</strong> (паспорт: {{{buyer_passport}}}), именуемый «Покупатель», с другой стороны,
-    заключили настоящий договор о нижеследующем (ст. 454 ГК РФ):
-  </p>
-  <p class="font-bold mb-2">1. Предмет договора</p>
-  <p class="mb-3 text-justify">1.1. Продавец передаёт в собственность Покупателя {{{garage_type}}} по адресу: {{{garage_address}}}, площадью {{{garage_area}}} кв. м (кадастровый № {{{garage_cadastral}}}).</p>
-  <p class="mb-3 text-justify">1.2. Отчуждаемый гараж не продан, не заложен, в споре и под арестом не состоит, правами третьих лиц не обременён.</p>
-  <p class="font-bold mb-2">2. Цена и порядок расчётов</p>
-  <p class="mb-3 text-justify">2.1. Цена гаража составляет <strong>{{{garage_price}}} руб.</strong> ({{{garage_price_words}}}) и уплачивается: {{{payment_order}}} (ст. 555 ГК РФ).</p>
-  <p class="font-bold mb-2">3. Передача</p>
-  <p class="mb-3 text-justify">3.1. Гараж передаётся по акту приёма-передачи «{{{transfer_date}}}». Риск случайной гибели переходит к Покупателю с момента передачи.</p>
-  <p class="font-bold mb-2">4. Регистрация и ответственность</p>
-  <p class="mb-3 text-justify">4.1. Переход права собственности на капитальный гараж подлежит государственной регистрации в Росреестре (ст. 551 ГК РФ).</p>
-  <p class="mb-3 text-justify">4.2. За нарушение сроков передачи или оплаты виновная сторона уплачивает неустойку 0,1% от цены за каждый день просрочки (ст. 330 ГК РФ).</p>
-  
-  <p class="font-bold mb-2">5. Форс-мажор</p>
-  <p class="mb-3 text-justify">
-    5.1. Стороны освобождаются от ответственности за частичное или полное неисполнение обязательств по настоящему договору, если оно явилось следствием обстоятельств непреодолимой силы (форс-мажора): стихийных бедствий, пожаров, наводнений, землетрясений, эпидемий, военных действий, решений органов государственной власти, а также иных обстоятельств, которые стороны не могли предвидеть и предотвратить разумными мерами.
-  </p>
-  <p class="mb-3 text-justify">
-    5.2. Сторона, для которой создалась невозможность исполнения обязательств, обязана незамедлительно, но не позднее 10 (десяти) календарных дней с момента наступления таких обстоятельств, письменно уведомить другую сторону об их возникновении. Неуведомление либо несвоевременное уведомление лишает сторону права ссылаться на форс-мажор как на основание освобождения от ответственности.
-  </p>
-  <p class="mb-3 text-justify">
-    5.3. Если обстоятельства непреодолимой силы действуют более 60 (шестидесяти) календарных дней, каждая из сторон вправе в одностороннем порядке отказаться от исполнения настоящего договора, письменно уведомив другую сторону.
-  </p>
-
-  <p class="font-bold mb-2">6. Порядок разрешения споров</p>
-  <p class="mb-3 text-justify">
-    6.1. Все споры и разногласия, возникающие из настоящего договора или в связи с ним, стороны разрешают путём переговоров. Срок рассмотрения письменной претензии — 10 (десять) календарных дней с момента её получения.
-  </p>
-  <p class="mb-3 text-justify">
-    6.2. При недостижении согласия споры разрешаются в судебном порядке в соответствии с действующим законодательством Российской Федерации.
-  </p>
-<div class="flex justify-between mt-10 text-xs">
-    <div class="w-1/2 pr-4">
-      <p class="font-bold mb-1">Продавец:</p>
-      <p class="mb-6">{{{seller_fio}}}</p>
-      <div class="border-b border-zinc-950 w-56 h-5 mb-1"></div>
-      <p class="text-zinc-400 text-[10px]">подпись</p>
-    </div>
-    <div class="w-1/2 pl-4">
-      <p class="font-bold mb-1">Покупатель:</p>
-      <p class="mb-6">{{{buyer_fio}}}</p>
-      <div class="border-b border-zinc-950 w-56 h-5 mb-1"></div>
-      <p class="text-zinc-400 text-[10px]">подпись</p>
-    </div>
-  </div>
-</div>`,
+    
   },
 {
     id: "dacha-lease",
@@ -2838,65 +1281,7 @@ export const TEMPLATES_REALTY: LegalTemplate[] = [
       { id: "start_date", label: "Дата начала аренды", type: "date", defaultValue: "", category: "contract" },
       { id: "end_date", label: "Дата окончания аренды", type: "date", defaultValue: "", category: "contract" },
     ],
-    previewTemplate: `
-<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
-  <div class="flex justify-between mb-6 text-xs font-semibold">
-    <div>г. {{{city}}}</div>
-    <div>«{{{date}}}»</div>
-  </div>
-  <div class="text-center font-bold text-base mb-6 text-black uppercase">Договор аренды дачи/садового участка</div>
-  <p class="mb-4 text-justify">
-    <strong>{{{landlord_fio}}}</strong> (паспорт: {{{landlord_passport}}}), именуемый «Арендодатель», с одной стороны, и
-    <strong>{{{tenant_fio}}}</strong> (паспорт: {{{tenant_passport}}}), именуемый «Арендатор», с другой стороны,
-    заключили настоящий договор о нижеследующем (ст. 606 ГК РФ, ст. 22 ЗК РФ):
-  </p>
-  <p class="font-bold mb-2">1. Предмет договора</p>
-  <p class="mb-3 text-justify">1.1. Арендодатель передаёт Арендатору во временное владение и пользование земельный участок площадью {{{plot_area}}} соток по адресу: {{{plot_address}}} (кадастровый № {{{plot_cadastral}}}), с расположенными на нём постройками: {{{buildings}}}.</p>
-  <p class="mb-3 text-justify">1.2. Участок используется для: {{{plot_purpose}}}. Иное использование допускается только с письменного согласия Арендодателя.</p>
-  <p class="font-bold mb-2">2. Арендная плата</p>
-  <p class="mb-3 text-justify">2.1. Арендная плата составляет {{{rent_amount}}} и вносится в порядке, согласованном сторонами.</p>
-  <p class="mb-3 text-justify">2.2. Коммунальные платежи (электроэнергия, вода, вывоз ТКО) оплачивает: {{{utilities_payer}}}.</p>
-  <p class="font-bold mb-2">3. Срок аренды</p>
-  <p class="mb-3 text-justify">3.1. Договор действует с «{{{start_date}}}» по «{{{end_date}}}». По истечении срока участок возвращается по акту приёма-передачи.</p>
-  <p class="font-bold mb-2">4. Обязанности сторон</p>
-  <p class="mb-3 text-justify">4.1. Арендатор обязан использовать участок по целевому назначению, не допускать порчи построек, возмещать ущерб, причинённый по его вине.</p>
-  <p class="mb-3 text-justify">4.2. Арендодатель обязан передать участок и постройки в состоянии, пригодном для использования.</p>
-  <p class="font-bold mb-2">5. Ответственность</p>
-  <p class="mb-3 text-justify">5.1. За просрочку внесения арендной платы Арендатор уплачивает неустойку 0,1% от суммы задолженности за каждый день просрочки (ст. 330 ГК РФ).</p>
-  
-  <p class="font-bold mb-2">6. Форс-мажор</p>
-  <p class="mb-3 text-justify">
-    6.1. Стороны освобождаются от ответственности за частичное или полное неисполнение обязательств по настоящему договору, если оно явилось следствием обстоятельств непреодолимой силы (форс-мажора): стихийных бедствий, пожаров, наводнений, землетрясений, эпидемий, военных действий, решений органов государственной власти, а также иных обстоятельств, которые стороны не могли предвидеть и предотвратить разумными мерами.
-  </p>
-  <p class="mb-3 text-justify">
-    6.2. Сторона, для которой создалась невозможность исполнения обязательств, обязана незамедлительно, но не позднее 10 (десяти) календарных дней с момента наступления таких обстоятельств, письменно уведомить другую сторону об их возникновении. Неуведомление либо несвоевременное уведомление лишает сторону права ссылаться на форс-мажор как на основание освобождения от ответственности.
-  </p>
-  <p class="mb-3 text-justify">
-    6.3. Если обстоятельства непреодолимой силы действуют более 60 (шестидесяти) календарных дней, каждая из сторон вправе в одностороннем порядке отказаться от исполнения настоящего договора, письменно уведомив другую сторону.
-  </p>
-
-  <p class="font-bold mb-2">7. Порядок разрешения споров</p>
-  <p class="mb-3 text-justify">
-    7.1. Все споры и разногласия, возникающие из настоящего договора или в связи с ним, стороны разрешают путём переговоров. Срок рассмотрения письменной претензии — 10 (десять) календарных дней с момента её получения.
-  </p>
-  <p class="mb-3 text-justify">
-    7.2. При недостижении согласия споры разрешаются в судебном порядке в соответствии с действующим законодательством Российской Федерации.
-  </p>
-<div class="flex justify-between mt-10 text-xs">
-    <div class="w-1/2 pr-4">
-      <p class="font-bold mb-1">Арендодатель:</p>
-      <p class="mb-6">{{{landlord_fio}}}</p>
-      <div class="border-b border-zinc-950 w-56 h-5 mb-1"></div>
-      <p class="text-zinc-400 text-[10px]">подпись</p>
-    </div>
-    <div class="w-1/2 pl-4">
-      <p class="font-bold mb-1">Арендатор:</p>
-      <p class="mb-6">{{{tenant_fio}}}</p>
-      <div class="border-b border-zinc-950 w-56 h-5 mb-1"></div>
-      <p class="text-zinc-400 text-[10px]">подпись</p>
-    </div>
-  </div>
-</div>`,
+    
   },
 {
     id: "retail-space-lease",
@@ -2920,63 +1305,7 @@ export const TEMPLATES_REALTY: LegalTemplate[] = [
       { id: "lease_term", label: "Срок аренды", type: "text", defaultValue: "", category: "contract" },
       { id: "start_date", label: "Дата начала аренды", type: "date", defaultValue: "", category: "contract" },
     ],
-    previewTemplate: `
-<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
-  <div class="flex justify-between mb-6 text-xs font-semibold">
-    <div>г. {{{city}}}</div>
-    <div>«{{{date}}}»</div>
-  </div>
-  <div class="text-center font-bold text-base mb-6 text-black uppercase">Договор аренды торгового места</div>
-  <p class="mb-4 text-justify">
-    <strong>{{{landlord_company}}}</strong>, именуемое «Арендодатель», с одной стороны, и
-    <strong>{{{tenant_company}}}</strong>, именуемый «Арендатор», с другой стороны,
-    заключили настоящий договор о нижеследующем (ст. 606 ГК РФ):
-  </p>
-  <p class="font-bold mb-2">1. Предмет договора</p>
-  <p class="mb-3 text-justify">1.1. Арендодатель передаёт, а Арендатор принимает во временное владение и пользование торговое место: {{{space_address}}}, площадью {{{space_area}}}.</p>
-  <p class="mb-3 text-justify">1.2. Торговое место используется для: {{{purpose}}}.</p>
-  <p class="font-bold mb-2">2. Арендная плата и платежи</p>
-  <p class="mb-3 text-justify">2.1. Арендная плата: {{{rent}}}, вносится ежемесячно не позднее 5 числа. {{{utilities}}}.</p>
-  <p class="font-bold mb-2">3. Обязанности сторон</p>
-  <p class="mb-3 text-justify">3.1. Арендатор поддерживает место в надлежащем состоянии, соблюдает правила торговли и санитарные нормы.</p>
-  <p class="mb-3 text-justify">3.2. Арендодатель обеспечивает беспрепятственный доступ и работоспособность инженерных коммуникаций.</p>
-  <p class="font-bold mb-2">4. Срок действия и ответственность</p>
-  <p class="mb-3 text-justify">4.1. Договор заключён на срок {{{lease_term}}} с «{{{start_date}}}» и может быть продлён сторонами.</p>
-  <p class="mb-3 text-justify">4.2. За просрочку арендной платы Арендатор уплачивает неустойку 0,1% в день от суммы задолженности (ст. 330 ГК РФ).</p>
-  
-  <p class="font-bold mb-2">5. Форс-мажор</p>
-  <p class="mb-3 text-justify">
-    5.1. Стороны освобождаются от ответственности за частичное или полное неисполнение обязательств по настоящему договору, если оно явилось следствием обстоятельств непреодолимой силы (форс-мажора): стихийных бедствий, пожаров, наводнений, землетрясений, эпидемий, военных действий, решений органов государственной власти, а также иных обстоятельств, которые стороны не могли предвидеть и предотвратить разумными мерами.
-  </p>
-  <p class="mb-3 text-justify">
-    5.2. Сторона, для которой создалась невозможность исполнения обязательств, обязана незамедлительно, но не позднее 10 (десяти) календарных дней с момента наступления таких обстоятельств, письменно уведомить другую сторону об их возникновении. Неуведомление либо несвоевременное уведомление лишает сторону права ссылаться на форс-мажор как на основание освобождения от ответственности.
-  </p>
-  <p class="mb-3 text-justify">
-    5.3. Если обстоятельства непреодолимой силы действуют более 60 (шестидесяти) календарных дней, каждая из сторон вправе в одностороннем порядке отказаться от исполнения настоящего договора, письменно уведомив другую сторону.
-  </p>
-
-  <p class="font-bold mb-2">6. Порядок разрешения споров</p>
-  <p class="mb-3 text-justify">
-    6.1. Все споры и разногласия, возникающие из настоящего договора или в связи с ним, стороны разрешают путём переговоров. Срок рассмотрения письменной претензии — 10 (десять) календарных дней с момента её получения.
-  </p>
-  <p class="mb-3 text-justify">
-    6.2. При недостижении согласия споры разрешаются в судебном порядке в соответствии с действующим законодательством Российской Федерации.
-  </p>
-<div class="flex justify-between mt-10 text-xs">
-    <div class="w-1/2 pr-4">
-      <p class="font-bold mb-1">Арендодатель:</p>
-      <p class="mb-6">{{{landlord_company}}}</p>
-      <div class="border-b border-zinc-950 w-56 h-5 mb-1"></div>
-      <p class="text-zinc-400 text-[10px]">подпись</p>
-    </div>
-    <div class="w-1/2 pl-4">
-      <p class="font-bold mb-1">Арендатор:</p>
-      <p class="mb-6">{{{tenant_company}}}</p>
-      <div class="border-b border-zinc-950 w-56 h-5 mb-1"></div>
-      <p class="text-zinc-400 text-[10px]">подпись</p>
-    </div>
-  </div>
-</div>`,
+    
   },
 {
     id: "dkp-apartment",
@@ -3010,62 +1339,7 @@ export const TEMPLATES_REALTY: LegalTemplate[] = [
       { id: "has_encumbrance", label: "Обременения/аресты", type: "select", defaultValue: "нет", category: "realty", options: [ { label: "Нет", value: "нет" }, { label: "Ипотека", value: "ипотека" }, { label: "Залог", value: "залог" }, { label: "Аренда", value: "аренда" } ] },
       { id: "deposit_note", label: "Условие о задатке", type: "text", defaultValue: "", category: "payment" },
     ],
-    previewTemplate: `<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
-  <div class="text-center font-bold text-base mb-6 text-black uppercase">Договор купли-продажи квартиры</div>
-  <div class="flex justify-between mb-6 text-xs font-semibold">
-    <div>г. {{{city}}}</div>
-    <div>«{{{date}}}»</div>
-  </div>
-  <p class="mb-4 text-justify">
-    Гражданин <strong>{{{seller_fio}}}</strong> (паспорт {{{seller_passport}}}, адрес: {{{seller_addr}}}), именуемый в дальнейшем «Продавец», с одной стороны,
-  </p>
-  <p class="mb-4 text-justify">
-    Гражданин <strong>{{{buyer_fio}}}</strong> (паспорт {{{buyer_passport}}}, адрес: {{{buyer_addr}}}), именуемый в дальнейшем «Покупатель», с другой стороны,
-    заключили настоящий договор о нижеследующем:
-  </p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">1. Предмет договора</div>
-  <p class="mb-4 text-justify">1.1. Продавец обязуется передать в собственность Покупателя квартиру, расположенную по адресу: {{{appartment_addr}}}, кадастровый номер {{{cadastre_number}}}, общей площадью {{{area}}} кв. м, а Покупатель обязуется принять квартиру и уплатить за неё цену в размере <strong>{{{contract_price}}} рублей</strong>.</p>
-  <p class="mb-4 text-justify">1.2. Квартира принадлежит Продавцу на праве собственности на основании: {{{prop_rights}}}.</p>
-  <p class="mb-4 text-justify">1.3. На момент подписания договора квартира обременений и арестов не имеет, за исключением: {{{has_encumbrance}}}.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">2. Цена и порядок расчётов</div>
-  <p class="mb-4 text-justify">2.1. Цена квартиры составляет <strong>{{{contract_price}}} ({{{price_words}}}) рублей</strong>.</p>
-  <p class="mb-4 text-justify">2.2. Оплата производится в срок до {{{payment_term}}}: {{{deposit_note}}}.</p>
-  <p class="mb-4 text-justify">2.3. Расчёты между сторонами производятся в безналичном порядке по реквизитам Продавца либо в наличном порядке с составлением расписки.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">3. Передача квартиры</div>
-  <p class="mb-4 text-justify">3.1. Продавец передаёт квартиру Покупателю в срок до {{{transfer_term}}} по акту приёма-передачи.</p>
-  <p class="mb-4 text-justify">3.2. Обязательство по передаче считается исполненным с момента подписания акта приёма-передачи.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">4. Права и обязанности сторон</div>
-  <p class="mb-4 text-justify">4.1. Продавец гарантирует, что квартира не отчуждена, не заложена, в споре и под арестом не состоит.</p>
-  <p class="mb-4 text-justify">4.2. Покупатель обязуется принять квартиру и произвести оплату в установленный срок.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">5. Ответственность сторон</div>
-  <p class="mb-4 text-justify">5.1. За нарушение срока оплаты Покупатель уплачивает пени в размере 0,1% от неуплаченной суммы за каждый день просрочки.</p>
-  <p class="mb-4 text-justify">5.2. За нарушение срока передачи квартиры Продавец уплачивает пени в размере 0,1% от цены договора за каждый день просрочки.</p>
-
-  <div class="font-bold mb-2 text-black text-xs uppercase">6. Форс-мажор</div>
-  <p class="mb-4 text-justify">6.1. Стороны освобождаются от ответственности за частичное или полное неисполнение обязательств по настоящему договору, если оно явилось следствием обстоятельств непреодолимой силы (форс-мажора): стихийных бедствий, пожаров, наводнений, землетрясений, эпидемий, военных действий, решений органов государственной власти, а также иных обстоятельств, которые стороны не могли предвидеть и предотвратить разумными мерами.</p>
-  <p class="mb-4 text-justify">6.2. Сторона, для которой создалась невозможность исполнения обязательств, обязана незамедлительно, но не позднее 10 (десяти) календарных дней с момента наступления таких обстоятельств, письменно уведомить другую сторону об их возникновении. Неуведомление лишает сторону права ссылаться на форс-мажор.</p>
-  <p class="mb-4 text-justify">6.3. Если обстоятельства непреодолимой силы действуют более 60 (шестидесяти) календарных дней, каждая из сторон вправе в одностороннем порядке отказаться от исполнения настоящего договора, письменно уведомив другую сторону.</p>
-
-  <div class="font-bold mb-2 text-black text-xs uppercase">7. Порядок разрешения споров</div>
-  <p class="mb-4 text-justify">7.1. Все споры и разногласия, возникающие из настоящего договора или в связи с ним, стороны разрешают путём переговоров. Срок рассмотрения письменной претензии — 10 (десять) календарных дней с момента её получения.</p>
-  <p class="mb-4 text-justify">7.2. При недостижении согласия споры разрешаются в судебном порядке в соответствии с действующим законодательством Российской Федерации.</p>
-  <div class="grid grid-cols-2 gap-6 mt-8 text-xs border-t border-zinc-300 pt-4">
-    <div>
-      <div class="font-bold mb-2 uppercase text-black">Продавец:</div>
-      <p class="mb-1"><strong>{{{seller_fio}}}</strong></p>
-      <p class="text-zinc-500 text-[11px]">Паспорт: {{{seller_passport}}}</p>
-      <p class="text-zinc-500 text-[11px]">Адрес: {{{seller_addr}}}</p>
-      <div class="mt-8 border-b border-zinc-900 w-44 h-5 flex justify-end items-end text-[10px] text-zinc-400">Подпись</div>
-    </div>
-    <div>
-      <div class="font-bold mb-2 uppercase text-black">Покупатель:</div>
-      <p class="mb-1"><strong>{{{buyer_fio}}}</strong></p>
-      <p class="text-zinc-500 text-[11px]">Паспорт: {{{buyer_passport}}}</p>
-      <p class="text-zinc-500 text-[11px]">Адрес: {{{buyer_addr}}}</p>
-      <div class="mt-8 border-b border-zinc-900 w-44 h-5 flex justify-end items-end text-[10px] text-zinc-400">Подпись</div>
-    </div>
-  </div>
-</div>`,
+    
   },
 {
     id: "dkp-room",
@@ -3095,57 +1369,7 @@ export const TEMPLATES_REALTY: LegalTemplate[] = [
       { id: "payment_term", label: "Срок оплаты (дата)", type: "date", defaultValue: "", category: "payment" },
       { id: "other_owners", label: "Другие собственники (если есть)", type: "text", defaultValue: "", category: "realty" },
     ],
-    previewTemplate: `<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
-  <div class="text-center font-bold text-base mb-6 text-black uppercase">Договор купли-продажи комнаты</div>
-  <div class="flex justify-between mb-6 text-xs font-semibold">
-    <div>г. {{{city}}}</div>
-    <div>«{{{date}}}»</div>
-  </div>
-  <p class="mb-4 text-justify">
-    Гражданин <strong>{{{seller_fio}}}</strong> (паспорт {{{seller_passport}}}, адрес: {{{seller_addr}}}), именуемый в дальнейшем «Продавец», с одной стороны,
-  </p>
-  <p class="mb-4 text-justify">
-    Гражданин <strong>{{{buyer_fio}}}</strong> (паспорт {{{buyer_passport}}}, адрес: {{{buyer_addr}}}), именуемый в дальнейшем «Покупатель», с другой стороны,
-    заключили настоящий договор о нижеследующем:
-  </p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">1. Предмет договора</div>
-  <p class="mb-4 text-justify">1.1. Продавец обязуется передать в собственность Покупателя комнату площадью {{{room_area}}} кв. м, расположенную по адресу: {{{room_addr}}}, кадастровый номер {{{cadastre_number}}}.</p>
-  <p class="mb-4 text-justify">1.2. Комната продаётся в составе квартиры общей площадью {{{apartment_area}}} кв. м. Права на места общего пользования переходят к Покупателю в соответствии с законодательством.</p>
-  <p class="mb-4 text-justify">1.3. Другие собственники комнат: {{{other_owners}}}.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">2. Цена и порядок расчётов</div>
-  <p class="mb-4 text-justify">2.1. Цена комнаты составляет <strong>{{{contract_price}}} ({{{price_words}}}) рублей</strong>.</p>
-  <p class="mb-4 text-justify">2.2. Оплата производится в срок до {{{payment_term}}} в безналичном или наличном порядке с составлением расписки.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">3. Права и обязанности сторон</div>
-  <p class="mb-4 text-justify">3.1. Продавец гарантирует отсутствие обременений и прав третьих лиц на комнату.</p>
-  <p class="mb-4 text-justify">3.2. Покупатель обязуется принять комнату и оплатить её в установленный срок.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">4. Ответственность сторон</div>
-  <p class="mb-4 text-justify">4.1. При уклонении одной из сторон от регистрации перехода права собственности виновная сторона возмещает другой стороне причинённые убытки.</p>
-
-  <div class="font-bold mb-2 text-black text-xs uppercase">5. Форс-мажор</div>
-  <p class="mb-4 text-justify">5.1. Стороны освобождаются от ответственности за частичное или полное неисполнение обязательств по настоящему договору, если оно явилось следствием обстоятельств непреодолимой силы (форс-мажора): стихийных бедствий, пожаров, наводнений, землетрясений, эпидемий, военных действий, решений органов государственной власти, а также иных обстоятельств, которые стороны не могли предвидеть и предотвратить разумными мерами.</p>
-  <p class="mb-4 text-justify">5.2. Сторона, для которой создалась невозможность исполнения обязательств, обязана незамедлительно, но не позднее 10 (десяти) календарных дней с момента наступления таких обстоятельств, письменно уведомить другую сторону об их возникновении. Неуведомление лишает сторону права ссылаться на форс-мажор.</p>
-  <p class="mb-4 text-justify">5.3. Если обстоятельства непреодолимой силы действуют более 60 (шестидесяти) календарных дней, каждая из сторон вправе в одностороннем порядке отказаться от исполнения настоящего договора, письменно уведомив другую сторону.</p>
-
-  <div class="font-bold mb-2 text-black text-xs uppercase">6. Порядок разрешения споров</div>
-  <p class="mb-4 text-justify">6.1. Все споры и разногласия, возникающие из настоящего договора или в связи с ним, стороны разрешают путём переговоров. Срок рассмотрения письменной претензии — 10 (десять) календарных дней с момента её получения.</p>
-  <p class="mb-4 text-justify">6.2. При недостижении согласия споры разрешаются в судебном порядке в соответствии с действующим законодательством Российской Федерации.</p>
-  <div class="grid grid-cols-2 gap-6 mt-8 text-xs border-t border-zinc-300 pt-4">
-    <div>
-      <div class="font-bold mb-2 uppercase text-black">Продавец:</div>
-      <p class="mb-1"><strong>{{{seller_fio}}}</strong></p>
-      <p class="text-zinc-500 text-[11px]">Паспорт: {{{seller_passport}}}</p>
-      <p class="text-zinc-500 text-[11px]">Адрес: {{{seller_addr}}}</p>
-      <div class="mt-8 border-b border-zinc-900 w-44 h-5 flex justify-end items-end text-[10px] text-zinc-400">Подпись</div>
-    </div>
-    <div>
-      <div class="font-bold mb-2 uppercase text-black">Покупатель:</div>
-      <p class="mb-1"><strong>{{{buyer_fio}}}</strong></p>
-      <p class="text-zinc-500 text-[11px]">Паспорт: {{{buyer_passport}}}</p>
-      <p class="text-zinc-500 text-[11px]">Адрес: {{{buyer_addr}}}</p>
-      <div class="mt-8 border-b border-zinc-900 w-44 h-5 flex justify-end items-end text-[10px] text-zinc-400">Подпись</div>
-    </div>
-  </div>
-</div>`,
+    
   },
 {
     id: "dkp-house",
@@ -3177,62 +1401,7 @@ export const TEMPLATES_REALTY: LegalTemplate[] = [
       { id: "payment_term", label: "Срок оплаты (дата)", type: "date", defaultValue: "", category: "payment" },
       { id: "property_doc", label: "Правоустанавливающие документы", type: "text", defaultValue: "", category: "realty", validation: { required: true } },
     ],
-    previewTemplate: `<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
-  <div class="text-center font-bold text-base mb-6 text-black uppercase">Договор купли-продажи жилого дома и земельного участка</div>
-  <div class="flex justify-between mb-6 text-xs font-semibold">
-    <div>г. {{{city}}}</div>
-    <div>«{{{date}}}»</div>
-  </div>
-  <p class="mb-4 text-justify">
-    Гражданин <strong>{{{seller_fio}}}</strong> (паспорт {{{seller_passport}}}, адрес: {{{seller_addr}}}), именуемый в дальнейшем «Продавец», с одной стороны,
-  </p>
-  <p class="mb-4 text-justify">
-    Гражданин <strong>{{{buyer_fio}}}</strong> (паспорт {{{buyer_passport}}}, адрес: {{{buyer_addr}}}), именуемый в дальнейшем «Покупатель», с другой стороны,
-    заключили настоящий договор о нижеследующем:
-  </p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">1. Предмет договора</div>
-  <p class="mb-4 text-justify">1.1. Продавец обязуется передать в собственность Покупателя жилой дом площадью {{{house_area}}} кв. м, кадастровый номер {{{house_cadastre}}}, и земельный участок площадью {{{land_area}}} соток, кадастровый номер {{{land_cadastre}}}, расположенные по адресу: {{{house_addr}}}.</p>
-  <p class="mb-4 text-justify">1.2. Земельный участок имеет категорию: {{{land_purpose}}}.</p>
-  <p class="mb-4 text-justify">1.3. Право собственности подтверждено: {{{property_doc}}}.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">2. Цена и порядок расчётов</div>
-  <p class="mb-4 text-justify">2.1. Цена объекта составляет <strong>{{{contract_price}}} ({{{price_words}}}) рублей</strong>, включая стоимость дома, участка и построек.</p>
-  <p class="mb-4 text-justify">2.2. Оплата производится в срок до {{{payment_term}}}.</p>
-  <p class="mb-4 text-justify">2.3. Расчёты производятся в безналичном порядке либо наличными с составлением расписки.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">3. Передача недвижимости</div>
-  <p class="mb-4 text-justify">3.1. Передача дома и участка производится по передаточному акту, подписываемому сторонами.</p>
-  <p class="mb-4 text-justify">3.2. Покупатель становится собственником с момента государственной регистрации перехода права собственности.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">4. Обязанности продавца</div>
-  <p class="mb-4 text-justify">4.1. Передать недвижимость свободной от прав третьих лиц и обременений.</p>
-  <p class="mb-4 text-justify">4.2. Передать ключи, документы и техническую документацию на дом.</p>
-  <p class="mb-4 text-justify">4.3. Нести расходы по снятию с регистрационного учёта лиц, проживающих в доме, до передачи объекта.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">5. Ответственность сторон</div>
-  <p class="mb-4 text-justify">5.1. При изъятии недвижимости у Покупателя третьими лицами Продавец возмещает убытки.</p>
-
-  <div class="font-bold mb-2 text-black text-xs uppercase">6. Форс-мажор</div>
-  <p class="mb-4 text-justify">6.1. Стороны освобождаются от ответственности за частичное или полное неисполнение обязательств по настоящему договору, если оно явилось следствием обстоятельств непреодолимой силы (форс-мажора): стихийных бедствий, пожаров, наводнений, землетрясений, эпидемий, военных действий, решений органов государственной власти, а также иных обстоятельств, которые стороны не могли предвидеть и предотвратить разумными мерами.</p>
-  <p class="mb-4 text-justify">6.2. Сторона, для которой создалась невозможность исполнения обязательств, обязана незамедлительно, но не позднее 10 (десяти) календарных дней с момента наступления таких обстоятельств, письменно уведомить другую сторону об их возникновении. Неуведомление лишает сторону права ссылаться на форс-мажор.</p>
-  <p class="mb-4 text-justify">6.3. Если обстоятельства непреодолимой силы действуют более 60 (шестидесяти) календарных дней, каждая из сторон вправе в одностороннем порядке отказаться от исполнения настоящего договора, письменно уведомив другую сторону.</p>
-
-  <div class="font-bold mb-2 text-black text-xs uppercase">7. Порядок разрешения споров</div>
-  <p class="mb-4 text-justify">7.1. Все споры и разногласия, возникающие из настоящего договора или в связи с ним, стороны разрешают путём переговоров. Срок рассмотрения письменной претензии — 10 (десять) календарных дней с момента её получения.</p>
-  <p class="mb-4 text-justify">7.2. При недостижении согласия споры разрешаются в судебном порядке в соответствии с действующим законодательством Российской Федерации.</p>
-  <div class="grid grid-cols-2 gap-6 mt-8 text-xs border-t border-zinc-300 pt-4">
-    <div>
-      <div class="font-bold mb-2 uppercase text-black">Продавец:</div>
-      <p class="mb-1"><strong>{{{seller_fio}}}</strong></p>
-      <p class="text-zinc-500 text-[11px]">Паспорт: {{{seller_passport}}}</p>
-      <p class="text-zinc-500 text-[11px]">Адрес: {{{seller_addr}}}</p>
-      <div class="mt-8 border-b border-zinc-900 w-44 h-5 flex justify-end items-end text-[10px] text-zinc-400">Подпись</div>
-    </div>
-    <div>
-      <div class="font-bold mb-2 uppercase text-black">Покупатель:</div>
-      <p class="mb-1"><strong>{{{buyer_fio}}}</strong></p>
-      <p class="text-zinc-500 text-[11px]">Паспорт: {{{buyer_passport}}}</p>
-      <p class="text-zinc-500 text-[11px]">Адрес: {{{buyer_addr}}}</p>
-      <div class="mt-8 border-b border-zinc-900 w-44 h-5 flex justify-end items-end text-[10px] text-zinc-400">Подпись</div>
-    </div>
-  </div>
-</div>`,
+    
   },
 {
     id: "dkp-land",
@@ -3262,57 +1431,7 @@ export const TEMPLATES_REALTY: LegalTemplate[] = [
       { id: "payment_term", label: "Срок оплаты (дата)", type: "date", defaultValue: "", category: "payment" },
       { id: "has_buildings", label: "Строения на участке", type: "text", defaultValue: "", category: "realty" },
     ],
-    previewTemplate: `<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
-  <div class="text-center font-bold text-base mb-6 text-black uppercase">Договор купли-продажи земельного участка</div>
-  <div class="flex justify-between mb-6 text-xs font-semibold">
-    <div>г. {{{city}}}</div>
-    <div>«{{{date}}}»</div>
-  </div>
-  <p class="mb-4 text-justify">
-    Гражданин <strong>{{{seller_fio}}}</strong> (паспорт {{{seller_passport}}}, адрес: {{{seller_addr}}}), именуемый в дальнейшем «Продавец», с одной стороны,
-  </p>
-  <p class="mb-4 text-justify">
-    Гражданин <strong>{{{buyer_fio}}}</strong> (паспорт {{{buyer_passport}}}, адрес: {{{buyer_addr}}}), именуемый в дальнейшем «Покупатель», с другой стороны,
-    заключили настоящий договор о нижеследующем:
-  </p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">1. Предмет договора</div>
-  <p class="mb-4 text-justify">1.1. Продавец обязуется передать в собственность Покупателя земельный участок площадью {{{land_area}}} соток, кадастровый номер {{{land_cadastre}}}, расположенный по адресу: {{{land_addr}}}.</p>
-  <p class="mb-4 text-justify">1.2. Категория земель: {{{land_category}}}. На участке расположены строения: {{{has_buildings}}}.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">2. Цена и порядок расчётов</div>
-  <p class="mb-4 text-justify">2.1. Цена участка составляет <strong>{{{land_price}}} ({{{price_words}}}) рублей</strong>.</p>
-  <p class="mb-4 text-justify">2.2. Оплата производится в срок до {{{payment_term}}} наличными с составлением расписки либо в безналичном порядке.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">3. Обязанности сторон</div>
-  <p class="mb-4 text-justify">3.1. Продавец обязуется передать участок свободным от прав третьих лиц и обременений.</p>
-  <p class="mb-4 text-justify">3.2. Покупатель обязуется принять участок и оплатить его в установленный срок.</p>
-  <p class="mb-4 text-justify">3.3. Переход права собственности подлежит государственной регистрации в Росреестре.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">4. Ответственность сторон</div>
-  <p class="mb-4 text-justify">4.1. В случае нарушения условий договора виновная сторона возмещает причинённые убытки.</p>
-
-  <div class="font-bold mb-2 text-black text-xs uppercase">5. Форс-мажор</div>
-  <p class="mb-4 text-justify">5.1. Стороны освобождаются от ответственности за частичное или полное неисполнение обязательств по настоящему договору, если оно явилось следствием обстоятельств непреодолимой силы (форс-мажора): стихийных бедствий, пожаров, наводнений, землетрясений, эпидемий, военных действий, решений органов государственной власти, а также иных обстоятельств, которые стороны не могли предвидеть и предотвратить разумными мерами.</p>
-  <p class="mb-4 text-justify">5.2. Сторона, для которой создалась невозможность исполнения обязательств, обязана незамедлительно, но не позднее 10 (десяти) календарных дней с момента наступления таких обстоятельств, письменно уведомить другую сторону об их возникновении. Неуведомление лишает сторону права ссылаться на форс-мажор.</p>
-  <p class="mb-4 text-justify">5.3. Если обстоятельства непреодолимой силы действуют более 60 (шестидесяти) календарных дней, каждая из сторон вправе в одностороннем порядке отказаться от исполнения настоящего договора, письменно уведомив другую сторону.</p>
-
-  <div class="font-bold mb-2 text-black text-xs uppercase">6. Порядок разрешения споров</div>
-  <p class="mb-4 text-justify">6.1. Все споры и разногласия, возникающие из настоящего договора или в связи с ним, стороны разрешают путём переговоров. Срок рассмотрения письменной претензии — 10 (десять) календарных дней с момента её получения.</p>
-  <p class="mb-4 text-justify">6.2. При недостижении согласия споры разрешаются в судебном порядке в соответствии с действующим законодательством Российской Федерации.</p>
-  <div class="grid grid-cols-2 gap-6 mt-8 text-xs border-t border-zinc-300 pt-4">
-    <div>
-      <div class="font-bold mb-2 uppercase text-black">Продавец:</div>
-      <p class="mb-1"><strong>{{{seller_fio}}}</strong></p>
-      <p class="text-zinc-500 text-[11px]">Паспорт: {{{seller_passport}}}</p>
-      <p class="text-zinc-500 text-[11px]">Адрес: {{{seller_addr}}}</p>
-      <div class="mt-8 border-b border-zinc-900 w-44 h-5 flex justify-end items-end text-[10px] text-zinc-400">Подпись</div>
-    </div>
-    <div>
-      <div class="font-bold mb-2 uppercase text-black">Покупатель:</div>
-      <p class="mb-1"><strong>{{{buyer_fio}}}</strong></p>
-      <p class="text-zinc-500 text-[11px]">Паспорт: {{{buyer_passport}}}</p>
-      <p class="text-zinc-500 text-[11px]">Адрес: {{{buyer_addr}}}</p>
-      <div class="mt-8 border-b border-zinc-900 w-44 h-5 flex justify-end items-end text-[10px] text-zinc-400">Подпись</div>
-    </div>
-  </div>
-</div>`,
+    
   },
 {
     id: "dogovor-zadatka",
@@ -3341,57 +1460,7 @@ export const TEMPLATES_REALTY: LegalTemplate[] = [
       { id: "deposit_date", label: "Дата передачи задатка", type: "date", defaultValue: "", category: "payment" },
       { id: "receipt_note", label: "Расписка в получении задатка", type: "text", defaultValue: "", category: "payment" },
     ],
-    previewTemplate: `<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
-  <div class="text-center font-bold text-base mb-6 text-black uppercase">Договор задатка</div>
-  <div class="flex justify-between mb-6 text-xs font-semibold">
-    <div>г. {{{city}}}</div>
-    <div>«{{{date}}}»</div>
-  </div>
-  <p class="mb-4 text-justify">
-    Гражданин <strong>{{{seller_fio}}}</strong> (паспорт {{{seller_passport}}}, адрес: {{{seller_addr}}}), именуемый в дальнейшем «Продавец», с одной стороны,
-  </p>
-  <p class="mb-4 text-justify">
-    Гражданин <strong>{{{buyer_fio}}}</strong> (паспорт {{{buyer_passport}}}, адрес: {{{buyer_addr}}}), именуемый в дальнейшем «Покупатель», с другой стороны,
-    заключили настоящий договор о нижеследующем:
-  </p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">1. Предмет договора</div>
-  <p class="mb-4 text-justify">1.1. Покупатель передаёт Продавцу задаток в размере <strong>{{{deposit_amount}}} ({{{deposit_words}}}) рублей</strong> в счёт причитающихся платежей по основному договору купли-продажи объекта: {{{object_desc}}}.</p>
-  <p class="mb-4 text-justify">1.2. Цена объекта по основному договору составляет {{{main_price}}} рублей.</p>
-  <p class="mb-4 text-justify">1.3. Задаток передаётся {{{deposit_date}}}: {{{receipt_note}}}.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">2. Обязательства сторон</div>
-  <p class="mb-4 text-justify">2.1. Стороны обязуются заключить основной договор купли-продажи в срок до {{{deposit_term}}}.</p>
-  <p class="mb-4 text-justify">2.2. Сумма задатка засчитывается в счёт оплаты цены объекта при заключении основного договора.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">3. Последствия неисполнения обязательств</div>
-  <p class="mb-4 text-justify">3.1. Если за неисполнение обязательств ответственен Покупатель, задаток остаётся у Продавца.</p>
-  <p class="mb-4 text-justify">3.2. Если за неисполнение обязательств ответственен Продавец, он обязан вернуть Покупателю двойную сумму задатка.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">4. Возврат задатка</div>
-  <p class="mb-4 text-justify">4.1. Задаток подлежит возврату в полном объёме, если основной договор не был заключён по соглашению сторон либо вследствие невозможности исполнения, не связанной с виной сторон.</p>
-
-  <div class="font-bold mb-2 text-black text-xs uppercase">5. Форс-мажор</div>
-  <p class="mb-4 text-justify">5.1. Стороны освобождаются от ответственности за частичное или полное неисполнение обязательств по настоящему договору, если оно явилось следствием обстоятельств непреодолимой силы (форс-мажора): стихийных бедствий, пожаров, наводнений, землетрясений, эпидемий, военных действий, решений органов государственной власти, а также иных обстоятельств, которые стороны не могли предвидеть и предотвратить разумными мерами.</p>
-  <p class="mb-4 text-justify">5.2. Сторона, для которой создалась невозможность исполнения обязательств, обязана незамедлительно, но не позднее 10 (десяти) календарных дней с момента наступления таких обстоятельств, письменно уведомить другую сторону об их возникновении. Неуведомление лишает сторону права ссылаться на форс-мажор.</p>
-  <p class="mb-4 text-justify">5.3. Если обстоятельства непреодолимой силы действуют более 60 (шестидесяти) календарных дней, каждая из сторон вправе в одностороннем порядке отказаться от исполнения настоящего договора, письменно уведомив другую сторону.</p>
-
-  <div class="font-bold mb-2 text-black text-xs uppercase">6. Порядок разрешения споров</div>
-  <p class="mb-4 text-justify">6.1. Все споры и разногласия, возникающие из настоящего договора или в связи с ним, стороны разрешают путём переговоров. Срок рассмотрения письменной претензии — 10 (десять) календарных дней с момента её получения.</p>
-  <p class="mb-4 text-justify">6.2. При недостижении согласия споры разрешаются в судебном порядке в соответствии с действующим законодательством Российской Федерации.</p>
-  <div class="grid grid-cols-2 gap-6 mt-8 text-xs border-t border-zinc-300 pt-4">
-    <div>
-      <div class="font-bold mb-2 uppercase text-black">Продавец:</div>
-      <p class="mb-1"><strong>{{{seller_fio}}}</strong></p>
-      <p class="text-zinc-500 text-[11px]">Паспорт: {{{seller_passport}}}</p>
-      <p class="text-zinc-500 text-[11px]">Адрес: {{{seller_addr}}}</p>
-      <div class="mt-8 border-b border-zinc-900 w-44 h-5 flex justify-end items-end text-[10px] text-zinc-400">Подпись</div>
-    </div>
-    <div>
-      <div class="font-bold mb-2 uppercase text-black">Покупатель:</div>
-      <p class="mb-1"><strong>{{{buyer_fio}}}</strong></p>
-      <p class="text-zinc-500 text-[11px]">Паспорт: {{{buyer_passport}}}</p>
-      <p class="text-zinc-500 text-[11px]">Адрес: {{{buyer_addr}}}</p>
-      <div class="mt-8 border-b border-zinc-900 w-44 h-5 flex justify-end items-end text-[10px] text-zinc-400">Подпись</div>
-    </div>
-  </div>
-</div>`,
+    
   },
 {
     id: "dogovor-avansa",
@@ -3419,56 +1488,7 @@ export const TEMPLATES_REALTY: LegalTemplate[] = [
       { id: "contract_term", label: "Срок заключения основного договора (дата)", type: "date", defaultValue: "", category: "payment", validation: { required: true } },
       { id: "return_rule", label: "Условие о возврате", type: "text", defaultValue: "", category: "payment" },
     ],
-    previewTemplate: `<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
-  <div class="text-center font-bold text-base mb-6 text-black uppercase">Договор аванса</div>
-  <div class="flex justify-between mb-6 text-xs font-semibold">
-    <div>г. {{{city}}}</div>
-    <div>«{{{date}}}»</div>
-  </div>
-  <p class="mb-4 text-justify">
-    Гражданин <strong>{{{seller_fio}}}</strong> (паспорт {{{seller_passport}}}, адрес: {{{seller_addr}}}), именуемый в дальнейшем «Продавец», с одной стороны,
-  </p>
-  <p class="mb-4 text-justify">
-    Гражданин <strong>{{{buyer_fio}}}</strong> (паспорт {{{buyer_passport}}}, адрес: {{{buyer_addr}}}), именуемый в дальнейшем «Покупатель», с другой стороны,
-    заключили настоящий договор о нижеследующем:
-  </p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">1. Предмет договора</div>
-  <p class="mb-4 text-justify">1.1. Покупатель передаёт Продавцу аванс в размере <strong>{{{avans_amount}}} ({{{avans_words}}}) рублей</strong> в счёт будущего договора купли-продажи объекта: {{{object_desc}}}.</p>
-  <p class="mb-4 text-justify">1.2. Стороны обязуются заключить основной договор по цене {{{main_price}}} рублей в срок до {{{contract_term}}}.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">2. Возврат аванса</div>
-  <p class="mb-4 text-justify">2.1. {{{return_rule}}}.</p>
-  <p class="mb-4 text-justify">2.2. Аванс не является задатком (ст. 380 ГК РФ) и не выполняет обеспечительную функцию.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">3. Обязанности сторон</div>
-  <p class="mb-4 text-justify">3.1. Продавец обязуется не отчуждать объект третьим лицам до заключения основного договора.</p>
-  <p class="mb-4 text-justify">3.2. Покупатель обязуется в установленный срок заключить основной договор и оплатить оставшуюся сумму.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">4. Ответственность сторон</div>
-  <p class="mb-4 text-justify">4.1. При уклонении от заключения основного договора виновная сторона возмещает убытки в размере, не превышающем суммы аванса.</p>
-
-  <div class="font-bold mb-2 text-black text-xs uppercase">5. Форс-мажор</div>
-  <p class="mb-4 text-justify">5.1. Стороны освобождаются от ответственности за частичное или полное неисполнение обязательств по настоящему договору, если оно явилось следствием обстоятельств непреодолимой силы (форс-мажора): стихийных бедствий, пожаров, наводнений, землетрясений, эпидемий, военных действий, решений органов государственной власти, а также иных обстоятельств, которые стороны не могли предвидеть и предотвратить разумными мерами.</p>
-  <p class="mb-4 text-justify">5.2. Сторона, для которой создалась невозможность исполнения обязательств, обязана незамедлительно, но не позднее 10 (десяти) календарных дней с момента наступления таких обстоятельств, письменно уведомить другую сторону об их возникновении. Неуведомление лишает сторону права ссылаться на форс-мажор.</p>
-  <p class="mb-4 text-justify">5.3. Если обстоятельства непреодолимой силы действуют более 60 (шестидесяти) календарных дней, каждая из сторон вправе в одностороннем порядке отказаться от исполнения настоящего договора, письменно уведомив другую сторону.</p>
-
-  <div class="font-bold mb-2 text-black text-xs uppercase">6. Порядок разрешения споров</div>
-  <p class="mb-4 text-justify">6.1. Все споры и разногласия, возникающие из настоящего договора или в связи с ним, стороны разрешают путём переговоров. Срок рассмотрения письменной претензии — 10 (десять) календарных дней с момента её получения.</p>
-  <p class="mb-4 text-justify">6.2. При недостижении согласия споры разрешаются в судебном порядке в соответствии с действующим законодательством Российской Федерации.</p>
-  <div class="grid grid-cols-2 gap-6 mt-8 text-xs border-t border-zinc-300 pt-4">
-    <div>
-      <div class="font-bold mb-2 uppercase text-black">Продавец:</div>
-      <p class="mb-1"><strong>{{{seller_fio}}}</strong></p>
-      <p class="text-zinc-500 text-[11px]">Паспорт: {{{seller_passport}}}</p>
-      <p class="text-zinc-500 text-[11px]">Адрес: {{{seller_addr}}}</p>
-      <div class="mt-8 border-b border-zinc-900 w-44 h-5 flex justify-end items-end text-[10px] text-zinc-400">Подпись</div>
-    </div>
-    <div>
-      <div class="font-bold mb-2 uppercase text-black">Покупатель:</div>
-      <p class="mb-1"><strong>{{{buyer_fio}}}</strong></p>
-      <p class="text-zinc-500 text-[11px]">Паспорт: {{{buyer_passport}}}</p>
-      <p class="text-zinc-500 text-[11px]">Адрес: {{{buyer_addr}}}</p>
-      <div class="mt-8 border-b border-zinc-900 w-44 h-5 flex justify-end items-end text-[10px] text-zinc-400">Подпись</div>
-    </div>
-  </div>
-</div>`,
+    
   },
 {
     id: "rental-residential",
@@ -3501,63 +1521,7 @@ export const TEMPLATES_REALTY: LegalTemplate[] = [
       { id: "guests", label: "Проживание третьих лиц", type: "text", defaultValue: "", category: "contract" },
       { id: "animals", label: "Домашние животные", type: "select", defaultValue: "запрещены", category: "contract", options: [ { label: "Запрещены", value: "запрещены" }, { label: "Разрешены (кошки)", value: "кошки" }, { label: "Разрешены", value: "разрешены" } ] },
     ],
-    previewTemplate: `<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
-  <div class="text-center font-bold text-base mb-6 text-black uppercase">Договор найма жилого помещения</div>
-  <div class="flex justify-between mb-6 text-xs font-semibold">
-    <div>г. {{{city}}}</div>
-    <div>«{{{date}}}»</div>
-  </div>
-  <p class="mb-4 text-justify">
-    Гражданин <strong>{{{owner_fio}}}</strong> (паспорт {{{owner_passport}}}, адрес: {{{owner_addr}}}), именуемый в дальнейшем «Наймодатель», с одной стороны,
-  </p>
-  <p class="mb-4 text-justify">
-    Гражданин <strong>{{{tenant_fio}}}</strong> (паспорт {{{tenant_passport}}}, адрес: {{{tenant_addr}}}), именуемый в дальнейшем «Наниматель», с другой стороны,
-    заключили настоящий договор о нижеследующем:
-  </p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">1. Предмет договора</div>
-  <p class="mb-4 text-justify">1.1. Наймодатель передаёт, а Наниматель принимает во временное владение и пользование жилое помещение, расположенное по адресу: {{{flat_addr}}}, общей площадью {{{flat_area}}} кв. м.</p>
-  <p class="mb-4 text-justify">1.2. Совместно с Нанимателем проживают лица: {{{guests}}}.</p>
-  <p class="mb-4 text-justify">1.3. Домашние животные: {{{animals}}}.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">2. Плата и порядок расчётов</div>
-  <p class="mb-4 text-justify">2.1. Плата за пользование помещением составляет <strong>{{{rent_amount}}} ({{{rent_words}}}) рублей</strong> в месяц.</p>
-  <p class="mb-4 text-justify">2.2. Плата вносится ежемесячно до {{{pay_day}}} числа текущего месяца.</p>
-  <p class="mb-4 text-justify">2.3. {{{utilities}}}.</p>
-  <p class="mb-4 text-justify">2.4. Обеспечительный депозит {{{deposit}}} рублей оплачивается при заключении договора и возвращается при выселении при отсутствии задолженности и повреждений.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">3. Права и обязанности сторон</div>
-  <p class="mb-4 text-justify">3.1. Наймодатель обязуется передать помещение в пригодном для проживания состоянии и производить капитальный ремонт.</p>
-  <p class="mb-4 text-justify">3.2. Наниматель обязуется использовать помещение по назначению, поддерживать его в исправном состоянии, производить текущий ремонт, своевременно вносить плату.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">4. Срок действия договора</div>
-  <p class="mb-4 text-justify">4.1. Договор заключается на срок с {{{term_start}}} по {{{term_end}}}.</p>
-  <p class="mb-4 text-justify">4.2. По истечении срока договор может быть продлён по соглашению сторон.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">5. Ответственность сторон</div>
-  <p class="mb-4 text-justify">5.1. При просрочке внесения платы Наниматель уплачивает пени в размере 0,1% от суммы долга за каждый день просрочки.</p>
-  <p class="mb-4 text-justify">5.2. В случае нарушения условий договора стороны несут ответственность в соответствии с законодательством РФ.</p>
-
-  <div class="font-bold mb-2 text-black text-xs uppercase">6. Форс-мажор</div>
-  <p class="mb-4 text-justify">6.1. Стороны освобождаются от ответственности за частичное или полное неисполнение обязательств по настоящему договору, если оно явилось следствием обстоятельств непреодолимой силы (форс-мажора): стихийных бедствий, пожаров, наводнений, землетрясений, эпидемий, военных действий, решений органов государственной власти, а также иных обстоятельств, которые стороны не могли предвидеть и предотвратить разумными мерами.</p>
-  <p class="mb-4 text-justify">6.2. Сторона, для которой создалась невозможность исполнения обязательств, обязана незамедлительно, но не позднее 10 (десяти) календарных дней с момента наступления таких обстоятельств, письменно уведомить другую сторону об их возникновении. Неуведомление лишает сторону права ссылаться на форс-мажор.</p>
-  <p class="mb-4 text-justify">6.3. Если обстоятельства непреодолимой силы действуют более 60 (шестидесяти) календарных дней, каждая из сторон вправе в одностороннем порядке отказаться от исполнения настоящего договора, письменно уведомив другую сторону.</p>
-
-  <div class="font-bold mb-2 text-black text-xs uppercase">7. Порядок разрешения споров</div>
-  <p class="mb-4 text-justify">7.1. Все споры и разногласия, возникающие из настоящего договора или в связи с ним, стороны разрешают путём переговоров. Срок рассмотрения письменной претензии — 10 (десять) календарных дней с момента её получения.</p>
-  <p class="mb-4 text-justify">7.2. При недостижении согласия споры разрешаются в судебном порядке в соответствии с действующим законодательством Российской Федерации.</p>
-  <div class="grid grid-cols-2 gap-6 mt-8 text-xs border-t border-zinc-300 pt-4">
-    <div>
-      <div class="font-bold mb-2 uppercase text-black">Наймодатель:</div>
-      <p class="mb-1"><strong>{{{owner_fio}}}</strong></p>
-      <p class="text-zinc-500 text-[11px]">Паспорт: {{{owner_passport}}}</p>
-      <p class="text-zinc-500 text-[11px]">Адрес: {{{owner_addr}}}</p>
-      <div class="mt-8 border-b border-zinc-900 w-44 h-5 flex justify-end items-end text-[10px] text-zinc-400">Подпись</div>
-    </div>
-    <div>
-      <div class="font-bold mb-2 uppercase text-black">Наниматель:</div>
-      <p class="mb-1"><strong>{{{tenant_fio}}}</strong></p>
-      <p class="text-zinc-500 text-[11px]">Паспорт: {{{tenant_passport}}}</p>
-      <p class="text-zinc-500 text-[11px]">Адрес: {{{tenant_addr}}}</p>
-      <div class="mt-8 border-b border-zinc-900 w-44 h-5 flex justify-end items-end text-[10px] text-zinc-400">Подпись</div>
-    </div>
-  </div>
-</div>`,
+    
   },
 {
     id: "dogovor-arendy-kvartiry",
@@ -3588,60 +1552,7 @@ export const TEMPLATES_REALTY: LegalTemplate[] = [
       { id: "purpose", label: "Цель использования", type: "text", defaultValue: "", category: "contract", validation: { required: true } },
       { id: "utilities_note", label: "Коммунальные платежи", type: "text", defaultValue: "", category: "payment" },
     ],
-    previewTemplate: `<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
-  <div class="text-center font-bold text-base mb-6 text-black uppercase">Договор аренды квартиры</div>
-  <div class="flex justify-between mb-6 text-xs font-semibold">
-    <div>г. {{{city}}}</div>
-    <div>«{{{date}}}»</div>
-  </div>
-  <p class="mb-4 text-justify">
-    Гражданин <strong>{{{landlord_fio}}}</strong> (паспорт {{{landlord_passport}}}, адрес: {{{landlord_addr}}}), именуемый в дальнейшем «Арендодатель», с одной стороны,
-  </p>
-  <p class="mb-4 text-justify">
-    Гражданин <strong>{{{tenant_fio}}}</strong> (паспорт {{{tenant_passport}}}, адрес: {{{tenant_addr}}}), именуемый в дальнейшем «Арендатор», с другой стороны,
-    заключили настоящий договор о нижеследующем:
-  </p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">1. Предмет договора</div>
-  <p class="mb-4 text-justify">1.1. Арендодатель предоставляет, а Арендатор принимает во временное владение и пользование помещение по адресу: {{{premise_addr}}}, площадью {{{premise_area}}} кв. м, для цели: {{{purpose}}}.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">2. Арендная плата</div>
-  <p class="mb-4 text-justify">2.1. Арендная плата составляет <strong>{{{rent_amount}}} ({{{rent_words}}}) рублей</strong> в месяц.</p>
-  <p class="mb-4 text-justify">2.2. Плата вносится ежемесячно до {{{pay_day}}} числа.</p>
-  <p class="mb-4 text-justify">2.3. {{{utilities_note}}}.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">3. Права и обязанности сторон</div>
-  <p class="mb-4 text-justify">3.1. Арендодатель обязуется передать помещение в состоянии, соответствующем договору, и не препятствовать пользованию им.</p>
-  <p class="mb-4 text-justify">3.2. Арендатор обязуется использовать помещение по назначению, поддерживать его в исправном состоянии, своевременно вносить арендную плату.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">4. Срок договора</div>
-  <p class="mb-4 text-justify">4.1. Договор действует с {{{term_start}}} по {{{term_end}}}.</p>
-  <p class="mb-4 text-justify">4.2. По истечении срока договор считается возобновлённым на тех же условиях, если ни одна из сторон не заявит о его прекращении.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">5. Ответственность сторон</div>
-  <p class="mb-4 text-justify">5.1. За просрочку арендной платы Арендатор уплачивает пени 0,1% за каждый день просрочки.</p>
-  <p class="mb-4 text-justify">5.2. Досрочное расторжение возможно по соглашению сторон или в судебном порядке.</p>
-
-  <div class="font-bold mb-2 text-black text-xs uppercase">6. Форс-мажор</div>
-  <p class="mb-4 text-justify">6.1. Стороны освобождаются от ответственности за частичное или полное неисполнение обязательств по настоящему договору, если оно явилось следствием обстоятельств непреодолимой силы (форс-мажора): стихийных бедствий, пожаров, наводнений, землетрясений, эпидемий, военных действий, решений органов государственной власти, а также иных обстоятельств, которые стороны не могли предвидеть и предотвратить разумными мерами.</p>
-  <p class="mb-4 text-justify">6.2. Сторона, для которой создалась невозможность исполнения обязательств, обязана незамедлительно, но не позднее 10 (десяти) календарных дней с момента наступления таких обстоятельств, письменно уведомить другую сторону об их возникновении. Неуведомление лишает сторону права ссылаться на форс-мажор.</p>
-  <p class="mb-4 text-justify">6.3. Если обстоятельства непреодолимой силы действуют более 60 (шестидесяти) календарных дней, каждая из сторон вправе в одностороннем порядке отказаться от исполнения настоящего договора, письменно уведомив другую сторону.</p>
-
-  <div class="font-bold mb-2 text-black text-xs uppercase">7. Порядок разрешения споров</div>
-  <p class="mb-4 text-justify">7.1. Все споры и разногласия, возникающие из настоящего договора или в связи с ним, стороны разрешают путём переговоров. Срок рассмотрения письменной претензии — 10 (десять) календарных дней с момента её получения.</p>
-  <p class="mb-4 text-justify">7.2. При недостижении согласия споры разрешаются в судебном порядке в соответствии с действующим законодательством Российской Федерации.</p>
-  <div class="grid grid-cols-2 gap-6 mt-8 text-xs border-t border-zinc-300 pt-4">
-    <div>
-      <div class="font-bold mb-2 uppercase text-black">Арендодатель:</div>
-      <p class="mb-1"><strong>{{{landlord_fio}}}</strong></p>
-      <p class="text-zinc-500 text-[11px]">Паспорт: {{{landlord_passport}}}</p>
-      <p class="text-zinc-500 text-[11px]">Адрес: {{{landlord_addr}}}</p>
-      <div class="mt-8 border-b border-zinc-900 w-44 h-5 flex justify-end items-end text-[10px] text-zinc-400">Подпись</div>
-    </div>
-    <div>
-      <div class="font-bold mb-2 uppercase text-black">Арендатор:</div>
-      <p class="mb-1"><strong>{{{tenant_fio}}}</strong></p>
-      <p class="text-zinc-500 text-[11px]">Паспорт: {{{tenant_passport}}}</p>
-      <p class="text-zinc-500 text-[11px]">Адрес: {{{tenant_addr}}}</p>
-      <div class="mt-8 border-b border-zinc-900 w-44 h-5 flex justify-end items-end text-[10px] text-zinc-400">Подпись</div>
-    </div>
-  </div>
-</div>`,
+    
   },
 {
     id: "rental-garage",
@@ -3671,58 +1582,7 @@ export const TEMPLATES_REALTY: LegalTemplate[] = [
       { id: "term_end", label: "Дата окончания аренды", type: "date", defaultValue: "", category: "contract", validation: { required: true } },
       { id: "utilities", label: "Коммунальные платежи", type: "text", defaultValue: "", category: "payment" },
     ],
-    previewTemplate: `<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
-  <div class="text-center font-bold text-base mb-6 text-black uppercase">Договор аренды гаража (машино-места)</div>
-  <div class="flex justify-between mb-6 text-xs font-semibold">
-    <div>г. {{{city}}}</div>
-    <div>«{{{date}}}»</div>
-  </div>
-  <p class="mb-4 text-justify">
-    Гражданин <strong>{{{landlord_fio}}}</strong> (паспорт {{{landlord_passport}}}, адрес: {{{landlord_addr}}}), именуемый в дальнейшем «Арендодатель», с одной стороны,
-  </p>
-  <p class="mb-4 text-justify">
-    Гражданин <strong>{{{tenant_fio}}}</strong> (паспорт {{{tenant_passport}}}, адрес: {{{tenant_addr}}}), именуемый в дальнейшем «Арендатор», с другой стороны,
-    заключили настоящий договор о нижеследующем:
-  </p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">1. Предмет договора</div>
-  <p class="mb-4 text-justify">1.1. Арендодатель предоставляет Арендатору во временное пользование гараж (машино-место), расположенный по адресу: {{{garage_addr}}}, площадью {{{garage_area}}} кв. м, для хранения автомобиля.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">2. Арендная плата</div>
-  <p class="mb-4 text-justify">2.1. Арендная плата составляет <strong>{{{rent_amount}}} ({{{rent_words}}}) рублей</strong> в месяц.</p>
-  <p class="mb-4 text-justify">2.2. Плата вносится ежемесячно до {{{pay_day}}} числа.</p>
-  <p class="mb-4 text-justify">2.3. {{{utilities}}}.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">3. Права и обязанности сторон</div>
-  <p class="mb-4 text-justify">3.1. Арендодатель обязуется предоставить гараж в состоянии, пригодном для использования.</p>
-  <p class="mb-4 text-justify">3.2. Арендатор обязуется поддерживать гараж в исправном состоянии, не хранить запрещённые вещества, своевременно вносить плату.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">4. Срок договора</div>
-  <p class="mb-4 text-justify">4.1. Договор действует с {{{term_start}}} по {{{term_end}}}.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">5. Ответственность сторон</div>
-  <p class="mb-4 text-justify">5.1. За просрочку арендной платы Арендатор уплачивает пени 0,1% за каждый день просрочки.</p>
-
-  <div class="font-bold mb-2 text-black text-xs uppercase">6. Форс-мажор</div>
-  <p class="mb-4 text-justify">6.1. Стороны освобождаются от ответственности за частичное или полное неисполнение обязательств по настоящему договору, если оно явилось следствием обстоятельств непреодолимой силы (форс-мажора): стихийных бедствий, пожаров, наводнений, землетрясений, эпидемий, военных действий, решений органов государственной власти, а также иных обстоятельств, которые стороны не могли предвидеть и предотвратить разумными мерами.</p>
-  <p class="mb-4 text-justify">6.2. Сторона, для которой создалась невозможность исполнения обязательств, обязана незамедлительно, но не позднее 10 (десяти) календарных дней с момента наступления таких обстоятельств, письменно уведомить другую сторону об их возникновении. Неуведомление лишает сторону права ссылаться на форс-мажор.</p>
-  <p class="mb-4 text-justify">6.3. Если обстоятельства непреодолимой силы действуют более 60 (шестидесяти) календарных дней, каждая из сторон вправе в одностороннем порядке отказаться от исполнения настоящего договора, письменно уведомив другую сторону.</p>
-
-  <div class="font-bold mb-2 text-black text-xs uppercase">7. Порядок разрешения споров</div>
-  <p class="mb-4 text-justify">7.1. Все споры и разногласия, возникающие из настоящего договора или в связи с ним, стороны разрешают путём переговоров. Срок рассмотрения письменной претензии — 10 (десять) календарных дней с момента её получения.</p>
-  <p class="mb-4 text-justify">7.2. При недостижении согласия споры разрешаются в судебном порядке в соответствии с действующим законодательством Российской Федерации.</p>
-  <div class="grid grid-cols-2 gap-6 mt-8 text-xs border-t border-zinc-300 pt-4">
-    <div>
-      <div class="font-bold mb-2 uppercase text-black">Арендодатель:</div>
-      <p class="mb-1"><strong>{{{landlord_fio}}}</strong></p>
-      <p class="text-zinc-500 text-[11px]">Паспорт: {{{landlord_passport}}}</p>
-      <p class="text-zinc-500 text-[11px]">Адрес: {{{landlord_addr}}}</p>
-      <div class="mt-8 border-b border-zinc-900 w-44 h-5 flex justify-end items-end text-[10px] text-zinc-400">Подпись</div>
-    </div>
-    <div>
-      <div class="font-bold mb-2 uppercase text-black">Арендатор:</div>
-      <p class="mb-1"><strong>{{{tenant_fio}}}</strong></p>
-      <p class="text-zinc-500 text-[11px]">Паспорт: {{{tenant_passport}}}</p>
-      <p class="text-zinc-500 text-[11px]">Адрес: {{{tenant_addr}}}</p>
-      <div class="mt-8 border-b border-zinc-900 w-44 h-5 flex justify-end items-end text-[10px] text-zinc-400">Подпись</div>
-    </div>
-  </div>
-</div>`,
+    
   },
 {
     id: "realty-agency",
@@ -3751,60 +1611,7 @@ export const TEMPLATES_REALTY: LegalTemplate[] = [
       { id: "services_list", label: "Перечень услуг", type: "textarea", defaultValue: "", category: "contract", validation: { required: true } },
       { id: "exclusive", label: "Эксклюзивное поручение", type: "select", defaultValue: "да", category: "contract", options: [ { label: "Да", value: "да" }, { label: "Нет", value: "нет" } ] },
     ],
-    previewTemplate: `<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
-  <div class="text-center font-bold text-base mb-6 text-black uppercase">Договор оказания риелторских услуг</div>
-  <div class="flex justify-between mb-6 text-xs font-semibold">
-    <div>г. {{{city}}}</div>
-    <div>«{{{date}}}»</div>
-  </div>
-  <p class="mb-4 text-justify">
-    Гражданин <strong>{{{client_fio}}}</strong> (паспорт {{{client_passport}}}, адрес: {{{client_addr}}}), именуемый в дальнейшем «Заказчик», с одной стороны,
-  </p>
-  <p class="mb-4 text-justify">
-    <strong>{{{agency_name}}}</strong> (ИНН {{{agency_inn}}}, адрес: {{{agency_addr}}}), именуемое в дальнейшем «Исполнитель», с другой стороны,
-    заключили настоящий договор о нижеследующем:
-  </p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">1. Предмет договора</div>
-  <p class="mb-4 text-justify">1.1. Исполнитель обязуется оказать Заказчику услуги по продаже объекта: {{{object_desc}}}, а Заказчик обязуется оплатить услуги.</p>
-  <p class="mb-4 text-justify">1.2. Перечень услуг: {{{services_list}}}.</p>
-  <p class="mb-4 text-justify">1.3. Поручение является {{{exclusive}}} эксклюзивным.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">2. Вознаграждение</div>
-  <p class="mb-4 text-justify">2.1. Вознаграждение Исполнителя составляет <strong>{{{commission}}} ({{{commission_words}}}) рублей</strong>.</p>
-  <p class="mb-4 text-justify">2.2. Вознаграждение выплачивается после подписания основного договора купли-продажи объекта.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">3. Обязанности сторон</div>
-  <p class="mb-4 text-justify">3.1. Исполнитель обязуется качественно и в срок оказать услуги, информировать Заказчика о ходе исполнения.</p>
-  <p class="mb-4 text-justify">3.2. Заказчик обязуется предоставить документы и доступ в объект, не заключать аналогичные договоры с третьими лицами при эксклюзивном поручении.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">4. Срок действия</div>
-  <p class="mb-4 text-justify">4.1. Услуги оказываются в срок до {{{deadline}}}.</p>
-  <p class="mb-4 text-justify">4.2. Договор может быть расторгнут по соглашению сторон.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">5. Ответственность сторон</div>
-  <p class="mb-4 text-justify">5.1. При неисполнении обязательств виновная сторона возмещает убытки в пределах суммы вознаграждения.</p>
-
-  <div class="font-bold mb-2 text-black text-xs uppercase">6. Форс-мажор</div>
-  <p class="mb-4 text-justify">6.1. Стороны освобождаются от ответственности за частичное или полное неисполнение обязательств по настоящему договору, если оно явилось следствием обстоятельств непреодолимой силы (форс-мажора): стихийных бедствий, пожаров, наводнений, землетрясений, эпидемий, военных действий, решений органов государственной власти, а также иных обстоятельств, которые стороны не могли предвидеть и предотвратить разумными мерами.</p>
-  <p class="mb-4 text-justify">6.2. Сторона, для которой создалась невозможность исполнения обязательств, обязана незамедлительно, но не позднее 10 (десяти) календарных дней с момента наступления таких обстоятельств, письменно уведомить другую сторону об их возникновении. Неуведомление лишает сторону права ссылаться на форс-мажор.</p>
-  <p class="mb-4 text-justify">6.3. Если обстоятельства непреодолимой силы действуют более 60 (шестидесяти) календарных дней, каждая из сторон вправе в одностороннем порядке отказаться от исполнения настоящего договора, письменно уведомив другую сторону.</p>
-
-  <div class="font-bold mb-2 text-black text-xs uppercase">7. Порядок разрешения споров</div>
-  <p class="mb-4 text-justify">7.1. Все споры и разногласия, возникающие из настоящего договора или в связи с ним, стороны разрешают путём переговоров. Срок рассмотрения письменной претензии — 10 (десять) календарных дней с момента её получения.</p>
-  <p class="mb-4 text-justify">7.2. При недостижении согласия споры разрешаются в судебном порядке в соответствии с действующим законодательством Российской Федерации.</p>
-  <div class="grid grid-cols-2 gap-6 mt-8 text-xs border-t border-zinc-300 pt-4">
-    <div>
-      <div class="font-bold mb-2 uppercase text-black">Заказчик:</div>
-      <p class="mb-1"><strong>{{{client_fio}}}</strong></p>
-      <p class="text-zinc-500 text-[11px]">Паспорт: {{{client_passport}}}</p>
-      <p class="text-zinc-500 text-[11px]">Адрес: {{{client_addr}}}</p>
-      <div class="mt-8 border-b border-zinc-900 w-44 h-5 flex justify-end items-end text-[10px] text-zinc-400">Подпись</div>
-    </div>
-    <div>
-      <div class="font-bold mb-2 uppercase text-black">Исполнитель:</div>
-      <p class="mb-1"><strong>{{{agency_name}}}</strong></p>
-      <p class="text-zinc-500 text-[11px]">ИНН: {{{agency_inn}}}</p>
-      <p class="text-zinc-500 text-[11px]">Адрес: {{{agency_addr}}}</p>
-      <div class="mt-8 border-b border-zinc-900 w-44 h-5 flex justify-end items-end text-[10px] text-zinc-400">Подпись</div>
-    </div>
-  </div>
-</div>`,
+    
   },
 {
     id: "free-use-apartment",
@@ -3832,56 +1639,7 @@ export const TEMPLATES_REALTY: LegalTemplate[] = [
       { id: "utilities_note", label: "Коммунальные платежи", type: "text", defaultValue: "", category: "payment" },
       { id: "purpose", label: "Цель использования", type: "text", defaultValue: "", category: "contract" },
     ],
-    previewTemplate: `<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
-  <div class="text-center font-bold text-base mb-6 text-black uppercase">Договор безвозмездного пользования квартирой</div>
-  <div class="flex justify-between mb-6 text-xs font-semibold">
-    <div>г. {{{city}}}</div>
-    <div>«{{{date}}}»</div>
-  </div>
-  <p class="mb-4 text-justify">
-    Гражданин <strong>{{{lender_fio}}}</strong> (паспорт {{{lender_passport}}}, адрес: {{{lender_addr}}}), именуемый в дальнейшем «Ссудодатель», с одной стороны,
-  </p>
-  <p class="mb-4 text-justify">
-    Гражданин <strong>{{{borrower_fio}}}</strong> (паспорт {{{borrower_passport}}}, адрес: {{{borrower_addr}}}), именуемый в дальнейшем «Ссудополучатель», с другой стороны,
-    заключили настоящий договор о нижеследующем:
-  </p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">1. Предмет договора</div>
-  <p class="mb-4 text-justify">1.1. Ссудодатель передаёт в безвозмездное временное пользование квартиру по адресу: {{{flat_addr}}}, площадью {{{flat_area}}} кв. м.</p>
-  <p class="mb-4 text-justify">1.2. Цель использования: {{{purpose}}}.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">2. Обязанности сторон</div>
-  <p class="mb-4 text-justify">2.1. Ссудодатель обязуется передать квартиру в состоянии, пригодном для использования, и не препятствовать пользованию.</p>
-  <p class="mb-4 text-justify">2.2. Ссудополучатель обязуется поддерживать квартиру в исправном состоянии, нести расходы на её содержание: {{{utilities_note}}}.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">3. Срок договора</div>
-  <p class="mb-4 text-justify">3.1. Договор действует с {{{term_start}}} по {{{term_end}}}.</p>
-  <p class="mb-4 text-justify">3.2. Досрочный отказ от договора возможен по правилам ст. 698 ГК РФ.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">4. Ответственность сторон</div>
-  <p class="mb-4 text-justify">4.1. За порчу квартиры ссудополучатель возмещает ущерб.</p>
-
-  <div class="font-bold mb-2 text-black text-xs uppercase">5. Форс-мажор</div>
-  <p class="mb-4 text-justify">5.1. Стороны освобождаются от ответственности за частичное или полное неисполнение обязательств по настоящему договору, если оно явилось следствием обстоятельств непреодолимой силы (форс-мажора): стихийных бедствий, пожаров, наводнений, землетрясений, эпидемий, военных действий, решений органов государственной власти, а также иных обстоятельств, которые стороны не могли предвидеть и предотвратить разумными мерами.</p>
-  <p class="mb-4 text-justify">5.2. Сторона, для которой создалась невозможность исполнения обязательств, обязана незамедлительно, но не позднее 10 (десяти) календарных дней с момента наступления таких обстоятельств, письменно уведомить другую сторону об их возникновении. Неуведомление лишает сторону права ссылаться на форс-мажор.</p>
-  <p class="mb-4 text-justify">5.3. Если обстоятельства непреодолимой силы действуют более 60 (шестидесяти) календарных дней, каждая из сторон вправе в одностороннем порядке отказаться от исполнения настоящего договора, письменно уведомив другую сторону.</p>
-
-  <div class="font-bold mb-2 text-black text-xs uppercase">6. Порядок разрешения споров</div>
-  <p class="mb-4 text-justify">6.1. Все споры и разногласия, возникающие из настоящего договора или в связи с ним, стороны разрешают путём переговоров. Срок рассмотрения письменной претензии — 10 (десять) календарных дней с момента её получения.</p>
-  <p class="mb-4 text-justify">6.2. При недостижении согласия споры разрешаются в судебном порядке в соответствии с действующим законодательством Российской Федерации.</p>
-  <div class="grid grid-cols-2 gap-6 mt-8 text-xs border-t border-zinc-300 pt-4">
-    <div>
-      <div class="font-bold mb-2 uppercase text-black">Ссудодатель:</div>
-      <p class="mb-1"><strong>{{{lender_fio}}}</strong></p>
-      <p class="text-zinc-500 text-[11px]">Паспорт: {{{lender_passport}}}</p>
-      <p class="text-zinc-500 text-[11px]">Адрес: {{{lender_addr}}}</p>
-      <div class="mt-8 border-b border-zinc-900 w-44 h-5 flex justify-end items-end text-[10px] text-zinc-400">Подпись</div>
-    </div>
-    <div>
-      <div class="font-bold mb-2 uppercase text-black">Ссудополучатель:</div>
-      <p class="mb-1"><strong>{{{borrower_fio}}}</strong></p>
-      <p class="text-zinc-500 text-[11px]">Паспорт: {{{borrower_passport}}}</p>
-      <p class="text-zinc-500 text-[11px]">Адрес: {{{borrower_addr}}}</p>
-      <div class="mt-8 border-b border-zinc-900 w-44 h-5 flex justify-end items-end text-[10px] text-zinc-400">Подпись</div>
-    </div>
-  </div>
-</div>`,
+    
   },
 {
     id: "mortgage-rent",
@@ -3911,59 +1669,7 @@ export const TEMPLATES_REALTY: LegalTemplate[] = [
       { id: "term_months", label: "Срок (месяцев)", type: "number", defaultValue: "", category: "contract" },
       { id: "term_start", label: "Дата начала", type: "date", defaultValue: "", category: "contract", validation: { required: true } },
     ],
-    previewTemplate: `<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
-  <div class="text-center font-bold text-base mb-6 text-black uppercase">Договор аренды с правом выкупа</div>
-  <div class="flex justify-between mb-6 text-xs font-semibold">
-    <div>г. {{{city}}}</div>
-    <div>«{{{date}}}»</div>
-  </div>
-  <p class="mb-4 text-justify">
-    Гражданин <strong>{{{landlord_fio}}}</strong> (паспорт {{{landlord_passport}}}, адрес: {{{landlord_addr}}}), именуемый в дальнейшем «Арендодатель», с одной стороны,
-  </p>
-  <p class="mb-4 text-justify">
-    Гражданин <strong>{{{tenant_fio}}}</strong> (паспорт {{{tenant_passport}}}, адрес: {{{tenant_addr}}}), именуемый в дальнейшем «Арендатор», с другой стороны,
-    заключили настоящий договор о нижеследующем:
-  </p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">1. Предмет договора</div>
-  <p class="mb-4 text-justify">1.1. Арендодатель передаёт Арендатору во временное владение и пользование квартиру по адресу: {{{flat_addr}}} с правом последующего выкупа.</p>
-  <p class="mb-4 text-justify">1.2. Выкупная цена квартиры составляет <strong>{{{buyout_price}}} ({{{price_words}}}) рублей</strong>.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">2. Арендная плата</div>
-  <p class="mb-4 text-justify">2.1. Арендная плата составляет <strong>{{{monthly_pay}}} ({{{pay_words}}}) рублей</strong> в месяц и вносится до {{{pay_day}}} числа каждого месяца.</p>
-  <p class="mb-4 text-justify">2.2. Сумма арендных платежей в размере 100% засчитывается в счёт выкупной цены квартиры.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">3. Выкуп квартиры</div>
-  <p class="mb-4 text-justify">3.1. После внесения платежей, составляющих {{{buyout_price}}} рублей (включая зачёркнутые арендные платежи), Арендатор вправе потребовать заключения договора купли-продажи квартиры.</p>
-  <p class="mb-4 text-justify">3.2. Срок выкупа: {{{term_months}}} месяцев с даты начала {{{term_start}}}.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">4. Обязанности сторон</div>
-  <p class="mb-4 text-justify">4.1. Арендатор обязуется своевременно вносить платежи и содержать квартиру в надлежащем состоянии.</p>
-  <p class="mb-4 text-justify">4.2. Арендодатель обязуется не отчуждать квартиру третьим лицам до исполнения условий договора.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">5. Ответственность сторон</div>
-  <p class="mb-4 text-justify">5.1. При просрочке платежей более 2 месяцев Арендодатель вправе расторгнуть договор, вернув уплаченные суммы за вычетом арендной платы.</p>
-
-  <div class="font-bold mb-2 text-black text-xs uppercase">6. Форс-мажор</div>
-  <p class="mb-4 text-justify">6.1. Стороны освобождаются от ответственности за частичное или полное неисполнение обязательств по настоящему договору, если оно явилось следствием обстоятельств непреодолимой силы (форс-мажора): стихийных бедствий, пожаров, наводнений, землетрясений, эпидемий, военных действий, решений органов государственной власти, а также иных обстоятельств, которые стороны не могли предвидеть и предотвратить разумными мерами.</p>
-  <p class="mb-4 text-justify">6.2. Сторона, для которой создалась невозможность исполнения обязательств, обязана незамедлительно, но не позднее 10 (десяти) календарных дней с момента наступления таких обстоятельств, письменно уведомить другую сторону об их возникновении. Неуведомление лишает сторону права ссылаться на форс-мажор.</p>
-  <p class="mb-4 text-justify">6.3. Если обстоятельства непреодолимой силы действуют более 60 (шестидесяти) календарных дней, каждая из сторон вправе в одностороннем порядке отказаться от исполнения настоящего договора, письменно уведомив другую сторону.</p>
-
-  <div class="font-bold mb-2 text-black text-xs uppercase">7. Порядок разрешения споров</div>
-  <p class="mb-4 text-justify">7.1. Все споры и разногласия, возникающие из настоящего договора или в связи с ним, стороны разрешают путём переговоров. Срок рассмотрения письменной претензии — 10 (десять) календарных дней с момента её получения.</p>
-  <p class="mb-4 text-justify">7.2. При недостижении согласия споры разрешаются в судебном порядке в соответствии с действующим законодательством Российской Федерации.</p>
-  <div class="grid grid-cols-2 gap-6 mt-8 text-xs border-t border-zinc-300 pt-4">
-    <div>
-      <div class="font-bold mb-2 uppercase text-black">Арендодатель:</div>
-      <p class="mb-1"><strong>{{{landlord_fio}}}</strong></p>
-      <p class="text-zinc-500 text-[11px]">Паспорт: {{{landlord_passport}}}</p>
-      <p class="text-zinc-500 text-[11px]">Адрес: {{{landlord_addr}}}</p>
-      <div class="mt-8 border-b border-zinc-900 w-44 h-5 flex justify-end items-end text-[10px] text-zinc-400">Подпись</div>
-    </div>
-    <div>
-      <div class="font-bold mb-2 uppercase text-black">Арендатор:</div>
-      <p class="mb-1"><strong>{{{tenant_fio}}}</strong></p>
-      <p class="text-zinc-500 text-[11px]">Паспорт: {{{tenant_passport}}}</p>
-      <p class="text-zinc-500 text-[11px]">Адрес: {{{tenant_addr}}}</p>
-      <div class="mt-8 border-b border-zinc-900 w-44 h-5 flex justify-end items-end text-[10px] text-zinc-400">Подпись</div>
-    </div>
-  </div>
-</div>`,
+    
   },
 {
     id: "realty-option",
@@ -3991,55 +1697,7 @@ export const TEMPLATES_REALTY: LegalTemplate[] = [
       { id: "option_term", label: "Срок опциона (дата)", type: "date", defaultValue: "", category: "contract", validation: { required: true } },
       { id: "exercise_term", label: "Срок заявления об акцепте (дней)", type: "number", defaultValue: "", category: "contract" },
     ],
-    previewTemplate: `<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
-  <div class="text-center font-bold text-base mb-6 text-black uppercase">Договор опциона на заключение договора купли-продажи</div>
-  <div class="flex justify-between mb-6 text-xs font-semibold">
-    <div>г. {{{city}}}</div>
-    <div>«{{{date}}}»</div>
-  </div>
-  <p class="mb-4 text-justify">
-    Гражданин <strong>{{{seller_fio}}}</strong> (паспорт {{{seller_passport}}}, адрес: {{{seller_addr}}}), именуемый в дальнейшем «Продавец», с одной стороны,
-  </p>
-  <p class="mb-4 text-justify">
-    Гражданин <strong>{{{buyer_fio}}}</strong> (паспорт {{{buyer_passport}}}, адрес: {{{buyer_addr}}}), именуемый в дальнейшем «Покупатель», с другой стороны,
-    заключили настоящий договор о нижеследующем:
-  </p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">1. Предмет опциона</div>
-  <p class="mb-4 text-justify">1.1. Покупатель приобретает право заключить договор купли-продажи объекта: {{{object_desc}}} по цене <strong>{{{fix_price}}} ({{{price_words}}}) рублей</strong>.</p>
-  <p class="mb-4 text-justify">1.2. За предоставление опциона Покупатель уплачивает {{{option_price}}} рублей, которые засчитываются в счёт цены выкупа при реализации опциона.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">2. Порядок реализации опциона</div>
-  <p class="mb-4 text-justify">2.1. Опцион может быть реализован в любой момент до {{{option_term}}}.</p>
-  <p class="mb-4 text-justify">2.2. Для реализации опциона Покупатель направляет Продавцу заявление об акцепте не позднее чем за {{{exercise_term}}} дней до даты заключения договора.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">3. Последствия нереализации</div>
-  <p class="mb-4 text-justify">3.1. Если опцион не реализован до {{{option_term}}}, он прекращается, а уплаченная цена опциона не возвращается.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">4. Гарантии продавца</div>
-  <p class="mb-4 text-justify">4.1. Продавец гарантирует, что объект свободен от прав третьих лиц и обременений, и обязуется не отчуждать его до {{{option_term}}}.</p>
-
-  <div class="font-bold mb-2 text-black text-xs uppercase">5. Форс-мажор</div>
-  <p class="mb-4 text-justify">5.1. Стороны освобождаются от ответственности за частичное или полное неисполнение обязательств по настоящему договору, если оно явилось следствием обстоятельств непреодолимой силы (форс-мажора): стихийных бедствий, пожаров, наводнений, землетрясений, эпидемий, военных действий, решений органов государственной власти, а также иных обстоятельств, которые стороны не могли предвидеть и предотвратить разумными мерами.</p>
-  <p class="mb-4 text-justify">5.2. Сторона, для которой создалась невозможность исполнения обязательств, обязана незамедлительно, но не позднее 10 (десяти) календарных дней с момента наступления таких обстоятельств, письменно уведомить другую сторону об их возникновении. Неуведомление лишает сторону права ссылаться на форс-мажор.</p>
-  <p class="mb-4 text-justify">5.3. Если обстоятельства непреодолимой силы действуют более 60 (шестидесяти) календарных дней, каждая из сторон вправе в одностороннем порядке отказаться от исполнения настоящего договора, письменно уведомив другую сторону.</p>
-
-  <div class="font-bold mb-2 text-black text-xs uppercase">6. Порядок разрешения споров</div>
-  <p class="mb-4 text-justify">6.1. Все споры и разногласия, возникающие из настоящего договора или в связи с ним, стороны разрешают путём переговоров. Срок рассмотрения письменной претензии — 10 (десять) календарных дней с момента её получения.</p>
-  <p class="mb-4 text-justify">6.2. При недостижении согласия споры разрешаются в судебном порядке в соответствии с действующим законодательством Российской Федерации.</p>
-  <div class="grid grid-cols-2 gap-6 mt-8 text-xs border-t border-zinc-300 pt-4">
-    <div>
-      <div class="font-bold mb-2 uppercase text-black">Продавец:</div>
-      <p class="mb-1"><strong>{{{seller_fio}}}</strong></p>
-      <p class="text-zinc-500 text-[11px]">Паспорт: {{{seller_passport}}}</p>
-      <p class="text-zinc-500 text-[11px]">Адрес: {{{seller_addr}}}</p>
-      <div class="mt-8 border-b border-zinc-900 w-44 h-5 flex justify-end items-end text-[10px] text-zinc-400">Подпись</div>
-    </div>
-    <div>
-      <div class="font-bold mb-2 uppercase text-black">Покупатель:</div>
-      <p class="mb-1"><strong>{{{buyer_fio}}}</strong></p>
-      <p class="text-zinc-500 text-[11px]">Паспорт: {{{buyer_passport}}}</p>
-      <p class="text-zinc-500 text-[11px]">Адрес: {{{buyer_addr}}}</p>
-      <div class="mt-8 border-b border-zinc-900 w-44 h-5 flex justify-end items-end text-[10px] text-zinc-400">Подпись</div>
-    </div>
-  </div>
-</div>`,
+    
   },
 {
     id: "notice-rent-termination",
@@ -4063,37 +1721,7 @@ export const TEMPLATES_REALTY: LegalTemplate[] = [
       { id: "transfer_date", label: "Дата передачи помещения", type: "date", defaultValue: "", category: "contract" },
       { id: "send_method", label: "Способ направления", type: "text", defaultValue: "", category: "contract" },
     ],
-    previewTemplate: `<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
-  <div class="text-center font-bold text-base mb-6 text-black uppercase">Уведомление о расторжении договора аренды</div>
-  <div class="flex justify-between mb-6 text-xs font-semibold">
-    <div>г. {{{city}}}</div>
-    <div>«{{{date}}}»</div>
-  </div>
-
-  <div class="font-bold mb-2 text-black text-xs uppercase">1. Уведомление</div>
-  <p class="mb-4 text-justify">1.1. Настоящим уведомляю о расторжении {{{agreement}}} с «{{{termination_date}}}» по причине: {{{reason}}}.</p>
-  <p class="mb-4 text-justify">1.2. Прошу освободить помещение и передать его по акту приёма-передачи {{{transfer_date}}}.</p>
-  <p class="mb-4 text-justify">1.3. Расчёты по арендной плате и коммунальным услугам произвести до {{{termination_date}}}.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">2. Сроки</div>
-  <p class="mb-4 text-justify">2.1. Уведомление направляется за {{{notice_days}}} дней до расторжения, что соответствует требованиям ст. 610 ГК РФ.</p>
-  <p class="mb-4 text-justify">2.2. В случае неисполнения требования буду вынужден обратиться в суд за защитой своих прав.</p>
-
-  <div class="font-bold mb-2 text-black text-xs uppercase">3. Форс-мажор</div>
-  <p class="mb-4 text-justify">3.1. Стороны освобождаются от ответственности за частичное или полное неисполнение обязательств по настоящему договору, если оно явилось следствием обстоятельств непреодолимой силы (форс-мажора): стихийных бедствий, пожаров, наводнений, землетрясений, эпидемий, военных действий, решений органов государственной власти, а также иных обстоятельств, которые стороны не могли предвидеть и предотвратить разумными мерами.</p>
-  <p class="mb-4 text-justify">3.2. Сторона, для которой создалась невозможность исполнения обязательств, обязана незамедлительно, но не позднее 10 (десяти) календарных дней с момента наступления таких обстоятельств, письменно уведомить другую сторону об их возникновении. Неуведомление лишает сторону права ссылаться на форс-мажор.</p>
-  <p class="mb-4 text-justify">3.3. Если обстоятельства непреодолимой силы действуют более 60 (шестидесяти) календарных дней, каждая из сторон вправе в одностороннем порядке отказаться от исполнения настоящего договора, письменно уведомив другую сторону.</p>
-
-  <div class="font-bold mb-2 text-black text-xs uppercase">4. Порядок разрешения споров</div>
-  <p class="mb-4 text-justify">4.1. Все споры и разногласия, возникающие из настоящего договора или в связи с ним, стороны разрешают путём переговоров. Срок рассмотрения письменной претензии — 10 (десять) календарных дней с момента её получения.</p>
-  <p class="mb-4 text-justify">4.2. При недостижении согласия споры разрешаются в судебном порядке в соответствии с действующим законодательством Российской Федерации.</p>
-  <div class="mt-8 border-t border-zinc-300 pt-4 text-xs">
-    <div>
-      <div class="font-bold mb-2 uppercase text-black">Заявитель:</div>
-      <p class="mb-1"><strong>{{{applicant_fio}}}</strong></p>
-      <div class="mt-8 border-b border-zinc-900 w-44 h-5 flex justify-end items-end text-[10px] text-zinc-400">Подпись</div>
-    </div>
-  </div>
-</div>`,
+    
   },
 {
     id: "rent-agreement",
@@ -4121,55 +1749,6 @@ export const TEMPLATES_REALTY: LegalTemplate[] = [
       { id: "housing_right", label: "Право проживания", type: "text", defaultValue: "", category: "contract" },
       { id: "notary_note", label: "Нотариальное удостоверение", type: "text", defaultValue: "", category: "contract" },
     ],
-    previewTemplate: `<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
-  <div class="text-center font-bold text-base mb-6 text-black uppercase">Договор ренты с пожизненным содержанием с иждивением</div>
-  <div class="flex justify-between mb-6 text-xs font-semibold">
-    <div>г. {{{city}}}</div>
-    <div>«{{{date}}}»</div>
-  </div>
-  <p class="mb-4 text-justify">
-    Гражданин <strong>{{{recipient_fio}}}</strong> (паспорт {{{recipient_passport}}}, адрес: {{{recipient_addr}}}), именуемый в дальнейшем «Получатель ренты», с одной стороны,
-  </p>
-  <p class="mb-4 text-justify">
-    Гражданин <strong>{{{payer_fio}}}</strong> (паспорт {{{payer_passport}}}, адрес: {{{payer_addr}}}), именуемый в дальнейшем «Плательщик ренты», с другой стороны,
-    заключили настоящий договор о нижеследующем:
-  </p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">1. Предмет договора</div>
-  <p class="mb-4 text-justify">1.1. Получатель ренты передаёт Плательщику ренты в собственность: {{{property}}}.</p>
-  <p class="mb-4 text-justify">1.2. Взамен Получатель ренты получает пожизненное содержание с иждивением: {{{care_scope}}}, а также денежные выплаты в размере {{{rent_amount}}} руб. ({{{rent_words}}}) ежемесячно.</p>
-  <p class="mb-4 text-justify">1.3. {{{housing_right}}}.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">2. Права и обязанности</div>
-  <p class="mb-4 text-justify">2.1. Плательщик ренты обязуется обеспечивать содержание и уход в полном объёме, своевременно выплачивать ренту.</p>
-  <p class="mb-4 text-justify">2.2. Получатель ренты обязуется передать имущество по акту приёма-передачи.</p>
-  <p class="mb-4 text-justify">2.3. {{{notary_note}}}.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">3. Ответственность</div>
-  <p class="mb-4 text-justify">3.1. При существенном нарушении обязательств получатель ренты вправе потребовать возврата имущества (ст. 605 ГК РФ) или выплаты выкупной цены.</p>
-  <p class="mb-4 text-justify">3.2. По требованию получателя ренты плательщик предоставляет обеспечение исполнения обязательств.</p>
-
-  <div class="font-bold mb-2 text-black text-xs uppercase">4. Форс-мажор</div>
-  <p class="mb-4 text-justify">4.1. Стороны освобождаются от ответственности за частичное или полное неисполнение обязательств по настоящему договору, если оно явилось следствием обстоятельств непреодолимой силы (форс-мажора): стихийных бедствий, пожаров, наводнений, землетрясений, эпидемий, военных действий, решений органов государственной власти, а также иных обстоятельств, которые стороны не могли предвидеть и предотвратить разумными мерами.</p>
-  <p class="mb-4 text-justify">4.2. Сторона, для которой создалась невозможность исполнения обязательств, обязана незамедлительно, но не позднее 10 (десяти) календарных дней с момента наступления таких обстоятельств, письменно уведомить другую сторону об их возникновении. Неуведомление лишает сторону права ссылаться на форс-мажор.</p>
-  <p class="mb-4 text-justify">4.3. Если обстоятельства непреодолимой силы действуют более 60 (шестидесяти) календарных дней, каждая из сторон вправе в одностороннем порядке отказаться от исполнения настоящего договора, письменно уведомив другую сторону.</p>
-
-  <div class="font-bold mb-2 text-black text-xs uppercase">5. Порядок разрешения споров</div>
-  <p class="mb-4 text-justify">5.1. Все споры и разногласия, возникающие из настоящего договора или в связи с ним, стороны разрешают путём переговоров. Срок рассмотрения письменной претензии — 10 (десять) календарных дней с момента её получения.</p>
-  <p class="mb-4 text-justify">5.2. При недостижении согласия споры разрешаются в судебном порядке в соответствии с действующим законодательством Российской Федерации.</p>
-  <div class="grid grid-cols-2 gap-6 mt-8 text-xs border-t border-zinc-300 pt-4">
-    <div>
-      <div class="font-bold mb-2 uppercase text-black">Получатель ренты:</div>
-      <p class="mb-1"><strong>{{{recipient_fio}}}</strong></p>
-      <p class="text-zinc-500 text-[11px]">Паспорт: {{{recipient_passport}}}</p>
-      <p class="text-zinc-500 text-[11px]">Адрес: {{{recipient_addr}}}</p>
-      <div class="mt-8 border-b border-zinc-900 w-44 h-5 flex justify-end items-end text-[10px] text-zinc-400">Подпись</div>
-    </div>
-    <div>
-      <div class="font-bold mb-2 uppercase text-black">Плательщик ренты:</div>
-      <p class="mb-1"><strong>{{{payer_fio}}}</strong></p>
-      <p class="text-zinc-500 text-[11px]">Паспорт: {{{payer_passport}}}</p>
-      <p class="text-zinc-500 text-[11px]">Адрес: {{{payer_addr}}}</p>
-      <div class="mt-8 border-b border-zinc-900 w-44 h-5 flex justify-end items-end text-[10px] text-zinc-400">Подпись</div>
-    </div>
-  </div>
-</div>`,
+    
   }
 ];

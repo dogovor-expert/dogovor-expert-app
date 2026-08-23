@@ -80,22 +80,22 @@ export default function MergePdf() {
             <Files className="w-6 h-6 text-brand-500" />
           </div>
           <div className="text-sm font-semibold text-gray-900">Выберите PDF-файлы</div>
-          <div className="text-xs text-gray-500">Можно выбрать несколько файлов. Файлы обрабатываются только в вашем браузере.</div>
+          <div className="text-xs text-gray-600">Можно выбрать несколько файлов. Файлы обрабатываются только в вашем браузере.</div>
         </button>
       ) : (
         <div className="space-y-2">
           {files.map((f, i) => (
             <div key={`${f.name}-${i}`} className="flex items-center gap-3 bg-gray-50 border border-gray-200 rounded-xl px-4 py-3">
-              <span className="text-[10px] font-mono text-gray-400 w-6">{i + 1}</span>
+              <span className="text-[10px] font-mono text-gray-600 w-6">{i + 1}</span>
               <div className="flex-1 min-w-0">
                 <p className="text-xs font-medium text-gray-900 truncate">{f.name}</p>
-                <p className="text-[10px] text-gray-400">{formatBytes(f.size)}</p>
+                <p className="text-[10px] text-gray-600">{formatBytes(f.size)}</p>
               </div>
               <div className="flex items-center gap-1">
                 <button onClick={() => move(i, -1)} disabled={i === 0}
-                  className="p-1.5 rounded-lg hover:bg-gray-200 text-gray-500 disabled:opacity-30 text-xs font-bold cursor-pointer" title="Вверх">↑</button>
+                  className="p-1.5 rounded-lg hover:bg-gray-200 text-gray-600 disabled:opacity-30 text-xs font-bold cursor-pointer" title="Вверх">↑</button>
                 <button onClick={() => move(i, 1)} disabled={i === files.length - 1}
-                  className="p-1.5 rounded-lg hover:bg-gray-200 text-gray-500 disabled:opacity-30 text-xs font-bold cursor-pointer" title="Вниз">↓</button>
+                  className="p-1.5 rounded-lg hover:bg-gray-200 text-gray-600 disabled:opacity-30 text-xs font-bold cursor-pointer" title="Вниз">↓</button>
                 <button onClick={() => removeFile(i)}
                   className="p-1.5 rounded-lg hover:bg-red-50 text-red-400 hover:text-red-600 cursor-pointer" title="Удалить">
                   <X className="w-4 h-4" />

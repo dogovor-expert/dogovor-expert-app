@@ -76,7 +76,7 @@ export default function SignCanvasModal({
         <h3 className="text-sm font-semibold text-gray-900 mb-0.5">
           Нарисуйте подпись
         </h3>
-        <p className="text-[11px] text-gray-400 mb-3">
+        <p className="text-[11px] text-gray-600 mb-3">
           {drawingFor === "seller" ? "Продавец" : "Покупатель"} — пальцем,
           мышью или стилусом
         </p>

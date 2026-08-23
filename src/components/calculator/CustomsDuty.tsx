@@ -92,7 +92,7 @@ export default function CustomsDuty() {
     <div className="space-y-4">
       <div className="space-y-3">
         <div className="space-y-1">
-          <label className="text-[10px] font-mono text-gray-500">Кто ввозит автомобиль</label>
+          <label className="text-[10px] font-mono text-gray-600">Кто ввозит автомобиль</label>
           <div className="grid grid-cols-3 gap-1.5">
             {SCENARIOS.map((s) => (
               <button key={s.id} onClick={() => { setScenario(s.id); setResult(null); }}
@@ -103,7 +103,7 @@ export default function CustomsDuty() {
           </div>
         </div>
         <div className="space-y-1">
-          <label className="text-[10px] font-mono text-gray-500">Тип двигателя</label>
+          <label className="text-[10px] font-mono text-gray-600">Тип двигателя</label>
           <div className="grid grid-cols-4 gap-1.5">
             {FUELS.map((f) => (
               <button key={f.id} onClick={() => { setFuel(f.id); setResult(null); }}
@@ -114,7 +114,7 @@ export default function CustomsDuty() {
           </div>
         </div>
         <div className="space-y-1">
-          <label className="text-[10px] font-mono text-gray-500">Возраст автомобиля</label>
+          <label className="text-[10px] font-mono text-gray-600">Возраст автомобиля</label>
           <div className="grid grid-cols-4 gap-1.5">
             {AGES.map((a) => (
               <button key={a.id} onClick={() => { setAge(a.id); setResult(null); }}
@@ -126,19 +126,19 @@ export default function CustomsDuty() {
         </div>
         <div className="grid grid-cols-3 gap-3">
           <div className="space-y-1">
-            <label className="text-[10px] font-mono text-gray-500">Объём (см³)</label>
+            <label className="text-[10px] font-mono text-gray-600">Объём (см³)</label>
             <input type="number" min="0" value={volume} onChange={(e) => setVolume(e.target.value)}
               placeholder="1996"
               className="w-full bg-gray-50 border border-gray-200 text-xs py-2.5 px-3 rounded-lg text-gray-900 outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500" />
           </div>
           <div className="space-y-1">
-            <label className="text-[10px] font-mono text-gray-500">Мощность (л.с.)</label>
+            <label className="text-[10px] font-mono text-gray-600">Мощность (л.с.)</label>
             <input type="number" min="0" value={power} onChange={(e) => setPower(e.target.value)}
               placeholder="150"
               className="w-full bg-gray-50 border border-gray-200 text-xs py-2.5 px-3 rounded-lg text-gray-900 outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500" />
           </div>
           <div className="space-y-1">
-            <label className="text-[10px] font-mono text-gray-500">Стоимость (₽)</label>
+            <label className="text-[10px] font-mono text-gray-600">Стоимость (₽)</label>
             <input type="number" min="0" value={value} onChange={(e) => setValue(e.target.value)}
               placeholder="2500000"
               className="w-full bg-gray-50 border border-gray-200 text-xs py-2.5 px-3 rounded-lg text-gray-900 outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500" />
@@ -156,16 +156,16 @@ export default function CustomsDuty() {
         <div className="bg-gray-50 rounded-xl p-4 border border-gray-200 space-y-2">
           <div className="flex items-center gap-2">
             <Check className="w-4 h-4 text-emerald-500" />
-            <span className="text-[10px] font-mono text-gray-500">Расчёт по курсам ЦБ: 1 € = {fmt(FX_RATES.EUR)} ₽ · 1 $ = {fmt(FX_RATES.USD)} ₽</span>
+            <span className="text-[10px] font-mono text-gray-600">Расчёт по курсам ЦБ: 1 € = {fmt(FX_RATES.EUR)} ₽ · 1 $ = {fmt(FX_RATES.USD)} ₽</span>
           </div>
           <div className="divide-y divide-gray-200 border border-gray-200 rounded-lg bg-white">
             {result.rows.map((r) => (
               <div key={r.name} className="flex items-center justify-between gap-3 px-3 py-2">
                 <div className="min-w-0">
                   <p className="text-[11px] font-semibold text-gray-800">{r.name}</p>
-                  <p className="text-[10px] text-gray-400 truncate">{r.formula}</p>
+                  <p className="text-[10px] text-gray-600 truncate">{r.formula}</p>
                 </div>
-                <p className={`text-xs font-bold flex-shrink-0 ${r.amount === 0 ? "text-gray-400" : "text-gray-900"}`}>{fmt(r.amount)} ₽</p>
+                <p className={`text-xs font-bold flex-shrink-0 ${r.amount === 0 ? "text-gray-600" : "text-gray-900"}`}>{fmt(r.amount)} ₽</p>
               </div>
             ))}
           </div>
@@ -173,7 +173,7 @@ export default function CustomsDuty() {
             <p className="text-[11px] font-semibold text-indigo-800">Всего платежей</p>
             <p className="text-lg font-bold text-indigo-700">{fmt(result.total)} ₽</p>
           </div>
-          <p className="text-[11px] text-gray-500">
+          <p className="text-[11px] text-gray-600">
             Автомобиль с учётом платежей: <b>{fmt(result.carWithDuty)} ₽</b>
           </p>
         </div>
@@ -190,7 +190,7 @@ export default function CustomsDuty() {
               <button key={s.id} onClick={() => { setService(s.id); setSent(false); }}
                 className={`p-2.5 rounded-lg border text-left transition-colors cursor-pointer ${service === s.id ? "border-brand-500 bg-white" : "border-gray-200 bg-white/60 hover:border-brand-300"}`}>
                 <p className="text-[11px] font-bold text-gray-800">{s.title}</p>
-                <p className="text-[10px] text-gray-500 mt-0.5 leading-snug">{s.desc}</p>
+                <p className="text-[10px] text-gray-600 mt-0.5 leading-snug">{s.desc}</p>
                 <p className="text-xs font-bold text-brand-600 mt-1">{fmt(s.price)} ₽</p>
               </button>
             ))}
@@ -215,7 +215,7 @@ export default function CustomsDuty() {
               </button>
             </div>
           )}
-          <p className="text-[10px] text-gray-400">Оформим заявление, оплату пошлины, а для коммерческого ввоза — ЭПТС и СБКТС. Не является публичной офертой.</p>
+          <p className="text-[10px] text-gray-600">Оформим заявление, оплату пошлины, а для коммерческого ввоза — ЭПТС и СБКТС. Не является публичной офертой.</p>
         </div>
       ) : (
         <div className="rounded-xl border border-dashed border-brand-300 bg-brand-50/40 p-6 text-center space-y-3">
@@ -223,13 +223,13 @@ export default function CustomsDuty() {
             Скоро
           </span>
           <p className="text-sm font-bold text-gray-800">Растаможка под ключ — оформление документов</p>
-          <p className="text-[11px] text-gray-500 max-w-md mx-auto leading-relaxed">
+          <p className="text-[11px] text-gray-600 max-w-md mx-auto leading-relaxed">
             Расчёт уже работает. Оформление документов и подача на таможню — запустим в ближайшее время.
           </p>
         </div>
       )}
 
-      <p className="text-[11px] text-gray-400 leading-relaxed flex items-start gap-1.5">
+      <p className="text-[11px] text-gray-600 leading-relaxed flex items-start gap-1.5">
         <Ship className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
         Пошлины — по единому таможенному тарифу: физлица до 3 лет — от стоимости (54% при цене до 8 500 €, далее 48% с минимумом €/см³), старше 3 лет — 1,5–5,7 €/см³. Юрлица — 15% (до 3 лет) / 20% (3–7 лет) с минимальной пошлиной, старше 7 лет — по объёму. НДС 22% и акциз (ст. 193 НК) — для юрлиц и перепродажи. Таможенный сбор — 11 ступеней: 775–30 000 ₽ (ПП № 342).
       </p>

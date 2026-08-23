@@ -65,7 +65,7 @@ export default function NotificationsTab() {
     <div className="space-y-6 max-w-2xl">
       <Card variant="elevated" padding="lg">
         {loading ? (
-          <div className="flex items-center justify-center py-10 text-gray-400 text-sm">
+          <div className="flex items-center justify-center py-10 text-gray-600 text-sm">
             Загрузка…
           </div>
         ) : (
@@ -77,13 +77,13 @@ export default function NotificationsTab() {
                 </div>
                 <div>
                   <h3 className="font-semibold text-gray-900">Уведомления на email</h3>
-                  <p className="text-sm text-gray-500 mt-0.5">
+                  <p className="text-sm text-gray-600 mt-0.5">
                     О новых функциях и важных событиях аккаунта
                   </p>
                 </div>
               </div>
               <div className="flex items-center gap-2 flex-shrink-0">
-                {saving && <Loader2 className="w-4 h-4 animate-spin text-gray-400" />}
+                {saving && <Loader2 className="w-4 h-4 animate-spin text-gray-600" />}
                 <Toggle checked={notifyEmail} onChange={handleToggle} />
               </div>
             </div>
@@ -92,19 +92,19 @@ export default function NotificationsTab() {
               {[
                 {
                   icon: Send,
-                  color: "bg-gray-50 text-gray-400",
+                  color: "bg-gray-50 text-gray-600",
                   title: "Telegram",
                   desc: "Уведомления в Telegram-боте",
                 },
                 {
                   icon: MessageSquare,
-                  color: "bg-gray-50 text-gray-400",
+                  color: "bg-gray-50 text-gray-600",
                   title: "SMS-сообщения",
                   desc: "Важные события по SMS",
                 },
                 {
                   icon: Bell,
-                  color: "bg-gray-50 text-gray-400",
+                  color: "bg-gray-50 text-gray-600",
                   title: "Напоминания о договорах",
                   desc: "Об окончании срока действия",
                 },
@@ -120,11 +120,11 @@ export default function NotificationsTab() {
                       </div>
                       <div>
                         <h4 className="text-sm font-medium text-gray-700">{item.title}</h4>
-                        <p className="text-sm text-gray-400 mt-0.5">{item.desc}</p>
+                        <p className="text-sm text-gray-600 mt-0.5">{item.desc}</p>
                       </div>
                     </div>
                     <span className="text-xs font-medium text-gray-300 bg-gray-50 border border-gray-100 rounded-full px-2.5 py-1 mt-1 flex-shrink-0">
-                      Скоро
+                      В разработке
                     </span>
                   </div>
                 );

@@ -1,0 +1,56 @@
+import { createAdminClient } from "@/lib/supabase/admin";
+
+export interface DirectoryUser {
+  id: string;
+  email: string;
+  full_name: string;
+  company: string;
+  inn: string;
+  phone: string;
+  is_admin: boolean;
+  created_at: string;
+  last_sign_in_at: string | null;
+}
+
+export interface Directory {
+  users: DirectoryUser[];
+  emailById: Map<string, string>;
+}
+
+/**
+ * Справочник пользователей: объединяет auth.users (email, last_sign_in)
+ * и profiles (full_name, company, is_admin). Используется админ-страницами.
+ */
+export async function getDirectory(): Promise<Directory> {
+  const admin = createAdminClient();
+  const [{ data: authData }, { data: profiles }] = await Promise.all([
+    admin.auth.admin.listUsers({ page: 1, perPage: 200 }),
+    admin.from("profiles").select("id, full_name, company, inn, phone, is_admin, created_at"),
+  ]);
+
+  const authUsers = (authData?.users ?? []) as Array<{
+    id: string;
+    email?: string;
+    created_at?: string;
+    last_sign_in_at?: string | null;
+  }>;
+  const profMap = new Map((profiles ?? []).map((p: any) => [p.id, p]));
+
+  const users: DirectoryUser[] = authUsers.map((u) => {
+    const p = profMap.get(u.id);
+    return {
+      id: u.id,
+      email: u.email ?? "",
+      full_name: p?.full_name ?? "",
+      company: p?.company ?? "",
+      phone: p?.phone ?? "",
+      inn: p?.inn ?? "",
+      is_admin: p?.is_admin ?? false,
+      created_at: u.created_at ?? "",
+      last_sign_in_at: u.last_sign_in_at ?? null,
+    };
+  });
+
+  const emailById = new Map(users.map((u) => [u.id, u.email]));
+  return { users, emailById };
+}

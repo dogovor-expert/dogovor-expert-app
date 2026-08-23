@@ -14,7 +14,7 @@ const partyCache = new Map<string, { ts: number; body: unknown }>();
 const RATE_LIMIT_PER_MIN = 40;
 
 async function hasActiveSubscription(): Promise<boolean> {
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -59,6 +59,15 @@ function sanitizeParty(data: any): Record<string, unknown> {
     management_name: String(data.data?.management?.name ?? ""),
     management_post: String(data.data?.management?.post ?? ""),
     okved: String(data.data?.okved ?? ""),
+  };
+}
+
+function sanitizeFmsUnit(data: any): Record<string, unknown> {
+  return {
+    value: String(data.value ?? ""),
+    code: String(data.data?.code ?? ""),
+    name: String(data.data?.name ?? ""),
+    region_code: String(data.data?.region_code ?? ""),
   };
 }
 
@@ -110,6 +119,8 @@ export async function POST(req: NextRequest) {
     endpoint = "/suggest/party";
   } else if (op === "suggest-address") {
     endpoint = "/suggest/address";
+  } else if (op === "suggest-fms-unit") {
+    endpoint = "/suggest/fms_unit";
   } else {
     return NextResponse.json({ error: "unknown op" }, { status: 400 });
   }
@@ -145,7 +156,11 @@ export async function POST(req: NextRequest) {
 
     const upstreamJson = (await upstream.json()) as { suggestions?: unknown[] };
     const suggestions = (upstreamJson.suggestions ?? []).map((s) =>
-      op === "suggest-address" ? s : sanitizeParty(s as Record<string, unknown>)
+      op === "suggest-address"
+        ? s
+        : op === "suggest-fms-unit"
+          ? sanitizeFmsUnit(s as Record<string, unknown>)
+          : sanitizeParty(s as Record<string, unknown>)
     );
     const result = { suggestions };
 

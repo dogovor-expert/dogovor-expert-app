@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 export const maxDuration = 60;
 
 export async function POST(req: Request) {
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();

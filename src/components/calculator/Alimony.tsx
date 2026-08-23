@@ -25,13 +25,13 @@ export default function Alimony() {
     <div className="space-y-4">
       <div className="space-y-3">
         <div className="space-y-1">
-          <label className="text-[10px] font-mono text-gray-500">Доход плательщика в месяц (₽)</label>
+          <label className="text-[10px] font-mono text-gray-600">Доход плательщика в месяц (₽)</label>
           <input type="number" min="0" value={income} onChange={(e) => setIncome(e.target.value)}
             placeholder="Например 100000"
             className="w-full bg-gray-50 border border-gray-200 text-xs py-2.5 px-3 rounded-lg text-gray-900 outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500" />
         </div>
         <div className="space-y-1">
-          <label className="text-[10px] font-mono text-gray-500">Количество детей</label>
+          <label className="text-[10px] font-mono text-gray-600">Количество детей</label>
           <div className="grid grid-cols-3 gap-1.5">
             {["1", "2", "3"].map((n) => (
               <button key={n} onClick={() => setChildren(n)}
@@ -45,12 +45,12 @@ export default function Alimony() {
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-1">
-            <label className="text-[10px] font-mono text-gray-500">Задолженность по алиментам (₽, необязательно)</label>
+            <label className="text-[10px] font-mono text-gray-600">Задолженность по алиментам (₽, необязательно)</label>
             <input type="number" min="0" value={debt} onChange={(e) => setDebt(e.target.value)}
               className="w-full bg-gray-50 border border-gray-200 text-xs py-2.5 px-3 rounded-lg text-gray-900 outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500" />
           </div>
           <div className="space-y-1">
-            <label className="text-[10px] font-mono text-gray-500">Дней просрочки (необязательно)</label>
+            <label className="text-[10px] font-mono text-gray-600">Дней просрочки (необязательно)</label>
             <input type="number" min="0" value={penaltyDays} onChange={(e) => setPenaltyDays(e.target.value)}
               className="w-full bg-gray-50 border border-gray-200 text-xs py-2.5 px-3 rounded-lg text-gray-900 outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500" />
           </div>
@@ -67,12 +67,12 @@ export default function Alimony() {
         <div className="bg-gray-50 rounded-xl p-4 border border-gray-200 space-y-2">
           <div className="flex items-center gap-2">
             <Check className="w-4 h-4 text-emerald-500" />
-            <span className="text-[10px] font-mono text-gray-500">Алименты — ст. 81 СК РФ</span>
+            <span className="text-[10px] font-mono text-gray-600">Алименты — ст. 81 СК РФ</span>
           </div>
           <p className="text-2xl font-bold text-gray-900">{fmtMoney(result.monthly)}</p>
-          <p className="text-[11px] text-gray-500">Доля от дохода: {result.sharePct.toLocaleString("ru-RU")}% (1/{result.sharePct === 25 ? 4 : result.sharePct === 33.33333333333333 ? 3 : 2} от дохода)</p>
+          <p className="text-[11px] text-gray-600">Доля от дохода: {result.sharePct.toLocaleString("ru-RU")}% (1/{result.sharePct === 25 ? 4 : result.sharePct === 33.33333333333333 ? 3 : 2} от дохода)</p>
           {result.penalty > 0 && (
-            <p className="text-[11px] text-gray-500">
+            <p className="text-[11px] text-gray-600">
               Пени за просрочку (0,5% в день, ст. 115 СК РФ): <b>{fmtMoney(result.penalty)}</b>
             </p>
           )}
@@ -83,7 +83,7 @@ export default function Alimony() {
         </div>
       )}
 
-      <p className="text-[11px] text-gray-400 leading-relaxed flex items-start gap-1.5">
+      <p className="text-[11px] text-gray-600 leading-relaxed flex items-start gap-1.5">
         <Baby className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
         Ст. 81 СК РФ: на одного ребёнка — 1/4 дохода, на двух — 1/3, на трёх и более — 1/2 (доли могут быть изменены судом). Ст. 115 СК РФ: пени 0,5% от суммы задолженности за каждый день просрочки.
       </p>

@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
-import { LEGAL_TEMPLATES } from "@/data/legalTemplates";
-import type { TemplateField } from "@/data/types";
+import { useParams } from "next/navigation";
+import type { LegalTemplate, TemplateField } from "@/data/types";
 import { normalizeOptions } from "@/lib/validation";
 import { Check, Loader2, Shield, AlertTriangle, Clock } from "lucide-react";
 
@@ -14,7 +14,9 @@ interface ApprovalData {
   expiresAt: string;
 }
 
-export default function ApprovePage({ params }: { params: { token: string } }) {
+export default function ApprovePage() {
+  const params = useParams<{ token: string }>();
+  const token = params.token;
   const [data, setData] = useState<ApprovalData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -22,15 +24,20 @@ export default function ApprovePage({ params }: { params: { token: string } }) {
   const [checklist, setChecklist] = useState<Record<string, boolean>>({});
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [template, setTemplate] = useState<LegalTemplate | null>(null);
 
   useEffect(() => {
-    fetch(`/api/approval/${params.token}`)
+    fetch(`/api/approval/${token}`)
       .then((r) => (r.ok ? r.json() : r.json().then((j) => Promise.reject(new Error(j.error || "Ошибка")))))
       .then((d) => {
         setData(d);
         setValues(d.values || {});
         setChecklist(d.checklist || {});
+        return import("@/data/legalTemplates").then(({ LEGAL_TEMPLATES }) =>
+          LEGAL_TEMPLATES.find((t) => t.id === d.templateId) || null
+        );
       })
+      .then((tpl) => setTemplate(tpl))
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
   }, [params.token]);
@@ -51,7 +58,7 @@ export default function ApprovePage({ params }: { params: { token: string } }) {
           <h1 className="text-xl font-bold text-gray-900 mb-2">
             {error === "expired" ? "Ссылка истекла" : "Ссылка не найдена"}
           </h1>
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-gray-600">
             {error === "expired"
               ? "Срок действия ссылки (7 дней) истёк. Попросите контрагента отправить новую ссылку."
               : "Проверьте правильность ссылки или попросите отправить её заново."}
@@ -61,9 +68,8 @@ export default function ApprovePage({ params }: { params: { token: string } }) {
     );
   }
 
-  const template = LEGAL_TEMPLATES.find((t) => t.id === data.templateId);
   if (!template) {
-    return <div className="p-6 text-center text-gray-500">Шаблон не найден</div>;
+    return <div className="p-6 text-center text-gray-600">Шаблон не найден</div>;
   }
 
   const msLeft = Math.max(0, new Date(data.expiresAt).getTime() - Date.now());
@@ -102,7 +108,7 @@ export default function ApprovePage({ params }: { params: { token: string } }) {
           </div>
           <div>
             <h1 className="text-xl font-bold text-gray-900">Согласование документа</h1>
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-gray-600">
               {template.name} · отправлено для согласования
             </p>
           </div>
@@ -113,7 +119,7 @@ export default function ApprovePage({ params }: { params: { token: string } }) {
             <p className="text-sm font-medium text-gray-700">
               {data.changed ? "Контрагент уже вносил изменения — они видны владельцу" : "Заполните поля документа"}
             </p>
-            <span className="inline-flex items-center gap-1.5 text-xs text-gray-500 bg-gray-50 rounded-lg px-3 py-1.5">
+            <span className="inline-flex items-center gap-1.5 text-xs text-gray-600 bg-gray-50 rounded-lg px-3 py-1.5">
               <Clock className="w-3.5 h-3.5" />
               Ссылка действует {expiresLabel}
             </span>
@@ -183,7 +189,7 @@ export default function ApprovePage({ params }: { params: { token: string } }) {
                     />
                   )}
                   {f.validation?.helpText && (
-                    <p className="mt-1 text-[10px] text-gray-400">{f.validation.helpText}</p>
+                    <p className="mt-1 text-[10px] text-gray-600">{f.validation.helpText}</p>
                   )}
                 </div>
               );
@@ -202,7 +208,7 @@ export default function ApprovePage({ params }: { params: { token: string } }) {
             ) : null}
             {saved ? "Изменения сохранены" : "Сохранить изменения"}
           </button>
-          <p className="mt-3 text-[10px] text-gray-400 text-center">
+          <p className="mt-3 text-[10px] text-gray-600 text-center">
             Внесённые изменения увидят владелец документа. Согласование не является юридической консультацией.
           </p>
         </div>

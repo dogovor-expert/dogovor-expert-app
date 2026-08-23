@@ -1,5 +1,7 @@
 import { Search, Star } from "lucide-react";
-import { LEGAL_TEMPLATES } from "@/data/legalTemplates";
+import { TEMPLATE_META } from "@/data/templatesMeta";
+import Highlight from "@/components/ui/Highlight";
+import { tokenGroups, scoreText, textMatchesTokens } from "@/lib/search";
 
 const TEMPLATE_CATEGORIES = [
   { id: "all", label: "Все", color: "brand" },
@@ -61,17 +63,32 @@ export default function TemplateSelector({
   onToggleFavorite,
   onSelectTemplate,
 }: TemplateSelectorProps) {
-  const filteredTemplates = LEGAL_TEMPLATES.filter((t) => {
-    const matchCategory = templateCategory === "all" || t.category === templateCategory;
-    const matchSearch = templateSearch === "" ||
-      t.name.toLowerCase().includes(templateSearch.toLowerCase()) ||
-      t.description.toLowerCase().includes(templateSearch.toLowerCase());
-    return matchCategory && matchSearch;
-  }).sort((a, b) => {
-    const fa = favorites.has(a.id) ? 0 : 1;
-    const fb = favorites.has(b.id) ? 0 : 1;
-    return fa - fb;
-  });
+  const filteredTemplates = (() => {
+    const tokens = tokenGroups(templateSearch);
+    const inCategory = TEMPLATE_META.filter(
+      (t) => templateCategory === "all" || t.category === templateCategory
+    );
+    const matches = tokens.length === 0
+      ? inCategory
+      : inCategory.filter((t) =>
+          textMatchesTokens(
+            `${t.name} ${t.description} ${(t.suggestedDocs || []).join(" ")} ${t.actSource}`,
+            tokens
+          )
+        );
+    if (tokens.length > 0) {
+      matches.sort(
+        (a, b) =>
+          Math.max(scoreText(b.name, tokens, 0), scoreText(b.description, tokens, 20)) -
+          Math.max(scoreText(a.name, tokens, 0), scoreText(a.description, tokens, 20))
+      );
+    }
+    return matches.sort((a, b) => {
+      const fa = favorites.has(a.id) ? 0 : 1;
+      const fb = favorites.has(b.id) ? 0 : 1;
+      return fa - fb;
+    });
+  })();
 
   return (
     <div className="mb-6">
@@ -83,8 +100,8 @@ export default function TemplateSelector({
       <div className="flex items-center gap-2 overflow-x-auto pb-2 mb-6 scrollbar-thin [scrollbar-width:thin]">
         {TEMPLATE_CATEGORIES.map((cat) => {
           const count = cat.id === "all"
-            ? LEGAL_TEMPLATES.length
-            : LEGAL_TEMPLATES.filter((t) => t.category === cat.id).length;
+            ? TEMPLATE_META.length
+            : TEMPLATE_META.filter((t) => t.category === cat.id).length;
           return (
             <button
               key={cat.id}
@@ -110,9 +127,9 @@ export default function TemplateSelector({
       <div className="flex items-center gap-3 mb-4">
         <div className="w-6 h-6 rounded-full bg-brand-500 text-white flex items-center justify-center text-xs font-bold flex-shrink-0">2</div>
         <h2 className="text-sm font-semibold text-gray-900">Выберите шаблон документа</h2>
-        <span className="text-xs text-gray-400">— {filteredTemplates.length} готовых шаблонов</span>
+        <span className="text-xs text-gray-600">— {filteredTemplates.length} готовых шаблонов</span>
         {favorites.size > 0 && (
-          <span className="text-[10px] font-medium text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full flex items-center gap-1">
+          <span className="text-[10px] font-medium text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full flex items-center gap-1">
             <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
             {favorites.size} в избранном, показаны первыми
           </span>
@@ -121,7 +138,7 @@ export default function TemplateSelector({
 
       {/* Search */}
       <div className="relative mb-4">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-600" />
         <input
           type="text"
           placeholder="Найти шаблон... например, ДКП, аренда, доверенность"
@@ -151,7 +168,7 @@ export default function TemplateSelector({
                 {CATEGORY_ICONS[t.category] || "📄"}
               </span>
               <span className={`text-xs font-medium text-center leading-snug line-clamp-2 min-h-[2em] ${isSelected ? "text-brand-700" : "text-gray-600"}`}>
-                {t.name}
+                <Highlight text={t.name} query={templateSearch} />
               </span>
               {HIGH_RISK_CATEGORIES.has(t.category) && (
                 <span className="text-[9px] font-semibold text-purple-700 bg-purple-50 border border-purple-100 rounded px-1 py-0.5 flex-shrink-0">
@@ -184,7 +201,7 @@ export default function TemplateSelector({
         })}
         <a
           href="/templates"
-          className="flex flex-col items-center justify-center gap-2 w-[160px] px-3 py-4 rounded-xl border-2 border-dashed border-gray-300 text-gray-400 hover:border-brand-300 hover:text-brand-600 whitespace-nowrap flex-shrink-0"
+          className="flex flex-col items-center justify-center gap-2 w-[160px] px-3 py-4 rounded-xl border-2 border-dashed border-gray-300 text-gray-600 hover:border-brand-300 hover:text-brand-600 whitespace-nowrap flex-shrink-0"
         >
           <span className="text-xl leading-none">+</span>
           <span className="text-xs font-medium">Выбрать из каталога</span>
@@ -194,8 +211,14 @@ export default function TemplateSelector({
       {filteredTemplates.length === 0 && (
         <div className="text-center py-12 bg-white rounded-xl border border-gray-200">
           <Search className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-gray-900 mb-1">Ничего не найдено</h3>
-          <p className="text-sm text-gray-500">Попробуйте изменить запрос или выбрать другую категорию</p>
+          <h3 className="text-lg font-semibold text-gray-900 mb-1">
+            {templateSearch.trim() ? `Ничего не найдено по запросу «${templateSearch.trim()}»` : "Нет шаблонов в категории"}
+          </h3>
+          <p className="text-sm text-gray-600">
+            {templateSearch.trim()
+              ? "Попробуйте другие слова: ДКП, аренда, доверенность, расписка"
+              : "Выберите другую категорию"}
+          </p>
         </div>
       )}
     </div>

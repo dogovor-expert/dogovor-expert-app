@@ -2,12 +2,15 @@
 
 import { useState } from "react";
 import { LEGAL_TEMPLATES } from "@/data/legalTemplates";
+import { TEMPLATE_PREVIEWS } from "@/data/templatePreviews";
 import { renderTemplateDocument } from "@/lib/renderDocument";
-import { buildPdf } from "@/lib/exportPdf";
+import { DOC_DESIGNS, type DesignId } from "@/lib/docDesign";
 
 const SAMPLE: Record<string, string> = {
   city: "Москва",
   date: "2026-08-15",
+  seller_status: "person",
+  seller_data_mode: "full",
   seller_fio: "Иванов Иван Иванович",
   seller_passport_series: "4512",
   seller_passport_number: "123456",
@@ -16,6 +19,8 @@ const SAMPLE: Record<string, string> = {
   seller_address: "г. Москва, ул. Тверская, д. 1, кв. 10",
   seller_phone: "+7 900 000-00-01",
   buyer_fio: "Петров Петр Петрович",
+  buyer_status: "person",
+  buyer_data_mode: "full",
   buyer_passport_series: "4615",
   buyer_passport_number: "987654",
   buyer_passport_issued_by: "ОВД района Арбат г. Москвы",
@@ -35,10 +40,12 @@ const SAMPLE: Record<string, string> = {
   contract_price: "650000",
   contract_price_words: "Шестьсот пятьдесят тысяч рублей 00 копеек",
   copies_count: "3",
+  claim_period: "10",
 };
 
 export default function DebugPdfPage() {
   const [templateId, setTemplateId] = useState("dkp-auto");
+  const [designId, setDesignId] = useState<DesignId>("classic");
   const [pageCount, setPageCount] = useState<number | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -50,8 +57,11 @@ export default function DebugPdfPage() {
     setBusy(true);
     setError(null);
     try {
-      const html = renderTemplateDocument(template, SAMPLE);
-      const { blob, pageCount: pc } = await buildPdf(html, { pageNumbers: true });
+      const html = renderTemplateDocument(template, SAMPLE, {
+        previewTemplate: TEMPLATE_PREVIEWS[template.id],
+      });
+      const { buildPdf } = await import("@/lib/exportPdf");
+      const { blob, pageCount: pc } = await buildPdf(html, { pageNumbers: true, design: designId });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
@@ -66,7 +76,9 @@ export default function DebugPdfPage() {
     }
   };
 
-  const previewHtml = renderTemplateDocument(template, SAMPLE);
+  const previewHtml = renderTemplateDocument(template, SAMPLE, {
+    previewTemplate: TEMPLATE_PREVIEWS[template.id],
+  });
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-8">
@@ -83,6 +95,20 @@ export default function DebugPdfPage() {
           {LEGAL_TEMPLATES.map((t) => (
             <option key={t.id} value={t.id}>
               {t.name}
+            </option>
+          ))}
+        </select>
+        <select
+          value={designId}
+          onChange={(e) => {
+            setDesignId(e.target.value as DesignId);
+            setPageCount(null);
+          }}
+          className="border border-gray-300 rounded-lg px-3 py-2 text-sm"
+        >
+          {(Object.keys(DOC_DESIGNS) as DesignId[]).map((id) => (
+            <option key={id} value={id}>
+              {DOC_DESIGNS[id].label}
             </option>
           ))}
         </select>

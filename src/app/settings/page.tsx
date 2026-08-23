@@ -6,7 +6,7 @@ export default function SettingsPage() {
     <div className="p-6 max-w-5xl mx-auto">
       <Suspense
         fallback={
-          <div className="py-16 text-center text-sm text-gray-400">
+          <div className="py-16 text-center text-sm text-gray-600">
             Загрузка настроек…
           </div>
         }

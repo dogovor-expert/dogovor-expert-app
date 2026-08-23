@@ -3,6 +3,7 @@ import { useState, useEffect, useMemo, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import DocPreview from "@/components/DocPreview";
 import { LEGAL_TEMPLATES } from "@/data/legalTemplates";
+import { TEMPLATE_PREVIEWS } from "@/data/templatePreviews";
 import { loadDraft } from "@/lib/autosave";
 import { renderTemplateDocument } from "@/lib/renderDocument";
 import { Download, Printer, ChevronLeft, FileText } from "lucide-react";
@@ -11,7 +12,7 @@ export default function PreviewPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center text-gray-500">
+        <div className="min-h-screen flex items-center justify-center text-gray-600">
           Загрузка документа…
         </div>
       }
@@ -50,6 +51,7 @@ function PreviewContent() {
           qrSvg: null,
           signSeller: esignSeller,
           signBuyer: esignBuyer,
+          previewTemplate: TEMPLATE_PREVIEWS[template.id],
         })
       );
     } finally {
@@ -74,7 +76,7 @@ function PreviewContent() {
           <h1 className="text-lg font-bold text-gray-900 mb-2">
             Черновик не найден
           </h1>
-          <p className="text-sm text-gray-500 mb-6">
+          <p className="text-sm text-gray-600 mb-6">
             Сначала заполните форму в конструкторе — документ автоматически
             сохранится, и предпросмотр станет доступен.
           </p>
@@ -91,7 +93,7 @@ function PreviewContent() {
 
   if (!loaded) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center text-gray-500">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center text-gray-600">
         Загрузка документа…
       </div>
     );
@@ -103,7 +105,7 @@ function PreviewContent() {
         <div className="flex items-center gap-3">
           <a
             href={`/builder?template=${template.id}`}
-            className="flex items-center gap-1 p-1.5 hover:bg-gray-100 rounded-lg text-gray-500 hover:text-gray-700 transition-colors"
+            className="flex items-center gap-1 p-1.5 hover:bg-gray-100 rounded-lg text-gray-600 hover:text-gray-700 transition-colors"
             title="Вернуться к заполнению"
           >
             <ChevronLeft className="w-5 h-5" />
@@ -112,7 +114,7 @@ function PreviewContent() {
             <h1 className="text-sm font-semibold text-gray-900">
               {template.name} — предпросмотр
             </h1>
-            <p className="text-xs text-gray-400">
+            <p className="text-xs text-gray-600">
               {pageCount > 0 ? `Страница ${page} из ${pageCount}` : "Формирование страниц…"}
             </p>
           </div>
@@ -140,7 +142,7 @@ function PreviewContent() {
       </div>
 
       <footer className="bg-white border-t border-gray-200 flex items-center justify-between px-4 sm:px-6 h-14 flex-shrink-0">
-        <span className="text-xs text-gray-400">
+        <span className="text-xs text-gray-600">
           Черновик хранится локально в вашем браузере
         </span>
         <div className="flex items-center gap-2">
@@ -162,7 +164,7 @@ function PreviewContent() {
             Вперёд →
           </button>
         </div>
-        <span className="text-xs text-gray-400">Подготовлено в Dogovor.expert</span>
+        <span className="text-xs text-gray-600">Подготовлено в Dogovor.expert</span>
       </footer>
     </div>
   );

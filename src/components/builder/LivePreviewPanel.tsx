@@ -23,7 +23,7 @@ export default function LivePreviewPanel({
           <h2 className="text-sm font-semibold text-gray-900">
             Живой предпросмотр
           </h2>
-          <span className="text-[10px] text-gray-400 hidden sm:inline">
+          <span className="text-[10px] text-gray-600 hidden sm:inline">
             {template.name}
           </span>
         </div>

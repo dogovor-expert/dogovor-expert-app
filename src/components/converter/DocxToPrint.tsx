@@ -78,14 +78,14 @@ export default function DocxToPrint() {
             <FileText className="w-6 h-6 text-brand-500" />
           </div>
           <div className="text-sm font-semibold text-gray-900">Выберите файл DOCX (Word)</div>
-          <div className="text-xs text-gray-500">Конвертируется в HTML и открывается в окне печати — сохраните как PDF через принтер. Файл не покидает ваш браузер.</div>
+          <div className="text-xs text-gray-600">Конвертируется в HTML и открывается в окне печати — сохраните как PDF через принтер. Файл не покидает ваш браузер.</div>
         </button>
       ) : (
         <div className="space-y-3">
           <div className="flex items-center gap-3 bg-gray-50 border border-gray-200 rounded-xl px-4 py-3">
             <div className="flex-1 min-w-0">
               <p className="text-xs font-medium text-gray-900 truncate">{file.name}</p>
-              <p className="text-[10px] text-gray-400">{formatBytes(file.size)}</p>
+              <p className="text-[10px] text-gray-600">{formatBytes(file.size)}</p>
             </div>
             <button onClick={() => { setFile(null); setDone(false); }}
               className="p-1.5 rounded-lg hover:bg-red-50 text-red-400 hover:text-red-600 cursor-pointer" title="Удалить">

@@ -37,13 +37,13 @@ export default function ContractPenalty() {
     <div className="space-y-4">
       <div className="space-y-3">
         <div className="space-y-1">
-          <label className="text-[10px] font-mono text-gray-500">Сумма обязательства (₽)</label>
+          <label className="text-[10px] font-mono text-gray-600">Сумма обязательства (₽)</label>
           <input type="number" min="0" value={sum} onChange={(e) => setSum(e.target.value)}
             placeholder="Например 200000"
             className="w-full bg-gray-50 border border-gray-200 text-xs py-2.5 px-3 rounded-lg text-gray-900 outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500" />
         </div>
         <div className="space-y-1">
-          <label className="text-[10px] font-mono text-gray-500">Способ расчёта неустойки</label>
+          <label className="text-[10px] font-mono text-gray-600">Способ расчёта неустойки</label>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
             {MODES.map((m) => (
               <button key={m.id} onClick={() => { setMode(m.id); setResult(null); }}
@@ -54,18 +54,18 @@ export default function ContractPenalty() {
               </button>
             ))}
           </div>
-          <p className="text-[10px] text-gray-400">{MODES.find((m) => m.id === mode)?.hint}</p>
+          <p className="text-[10px] text-gray-600">{MODES.find((m) => m.id === mode)?.hint}</p>
         </div>
         <div className="grid grid-cols-2 gap-3">
           {(mode === "perDay" || mode === "perYear") && (
             <div className="space-y-1">
-              <label className="text-[10px] font-mono text-gray-500">Ставка (%)</label>
+              <label className="text-[10px] font-mono text-gray-600">Ставка (%)</label>
               <input type="number" min="0" step="0.1" value={rate} onChange={(e) => setRate(e.target.value)}
                 className="w-full bg-gray-50 border border-gray-200 text-xs py-2.5 px-3 rounded-lg text-gray-900 outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500" />
             </div>
           )}
           <div className="space-y-1">
-            <label className="text-[10px] font-mono text-gray-500">Дней просрочки</label>
+            <label className="text-[10px] font-mono text-gray-600">Дней просрочки</label>
             <input type="number" min="0" value={days} onChange={(e) => setDays(e.target.value)}
               className="w-full bg-gray-50 border border-gray-200 text-xs py-2.5 px-3 rounded-lg text-gray-900 outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500" />
           </div>
@@ -82,11 +82,11 @@ export default function ContractPenalty() {
         <div className="bg-gray-50 rounded-xl p-4 border border-gray-200 space-y-2">
           <div className="flex items-center gap-2">
             <Check className="w-4 h-4 text-emerald-500" />
-            <span className="text-[10px] font-mono text-gray-500">Неустойка (ст. 330 ГК РФ)</span>
+            <span className="text-[10px] font-mono text-gray-600">Неустойка (ст. 330 ГК РФ)</span>
           </div>
           <p className="text-2xl font-bold text-gray-900">{fmtMoney(result.total)}</p>
           {result.daily > 0 && (
-            <p className="text-[11px] text-gray-500">В день: {fmtMoney(Math.round(result.daily * 100) / 100)}</p>
+            <p className="text-[11px] text-gray-600">В день: {fmtMoney(Math.round(result.daily * 100) / 100)}</p>
           )}
           <a href="/builder?id=claim-generic"
             className="inline-block mt-1 py-2 px-3 rounded-lg bg-white border border-brand-300 text-brand-600 font-bold text-[11px] hover:bg-brand-50 transition">
@@ -95,7 +95,7 @@ export default function ContractPenalty() {
         </div>
       )}
 
-      <p className="text-[11px] text-gray-400 leading-relaxed flex items-start gap-1.5">
+      <p className="text-[11px] text-gray-600 leading-relaxed flex items-start gap-1.5">
         <FileWarning className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
         Неустойка по договору — ст. 330 ГК РФ; законные пени привязаны к ключевой ставке ЦБ (сейчас {currentKeyRate().toFixed(2).replace(".", ",")}%). Суд может снизить неустойку по ст. 333 ГК РФ, если она явно несоразмерна последствиям нарушения.
       </p>

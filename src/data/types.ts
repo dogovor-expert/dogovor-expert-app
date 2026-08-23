@@ -68,7 +68,8 @@ export interface TemplateField {
   obsoleteValues?: string[];
   /** Подсказки для автокомплита (нативный <datalist>). */
   suggestions?: string[];
-  dependsOn?: TemplateFieldDependency;
+  /** Одна или несколько зависимостей: поле видно, только если выполнены ВСЕ зависимости. */
+  dependsOn?: TemplateFieldDependency | TemplateFieldDependency[];
   validation?: {
     required?: boolean;
     pattern?: string;
@@ -76,6 +77,8 @@ export interface TemplateField {
     maxLength?: number;
     helpText?: string;
   };
+  /** Юридическая/методическая подсказка к полю (напр. ссылка на статью закона). */
+  hint?: string;
   repeatingFields?: {
     id: string;
     label: string;
@@ -88,7 +91,29 @@ export interface TemplateField {
 export interface TemplateVersion {
   id: string;
   label: string;
-  previewTemplate: string;
+  previewTemplate?: string;
+}
+
+/**
+ * Класс подписания шаблона (см. PRODUCTION-READINESS-AUDIT.md, Фаза 6):
+ * A — простая письменная форма, двусторонняя/многосторонняя рукописная;
+ * B — нотариальная форма (доверенность нотариуса не заменит лист ПЭП);
+ * C — односторонний документ (один подписант);
+ * D — бланк/заявление в госорган по установленной форме;
+ * E — допускает ЭДО (обе стороны юрлица/ИП) — лист подписания доступен opt-in.
+ */
+export type SigningClass = "A" | "B" | "C" | "D" | "E";
+
+export interface TemplateSigner {
+  /** Роль подписанта, как в блоке подписей документа («Продавец», «Доверитель»…). */
+  role: string;
+  /** id поля формы со значением подписанта (ФИО/наименование). */
+  fieldId: string;
+}
+
+export interface TemplateSigning {
+  signingClass: SigningClass;
+  signers: TemplateSigner[];
 }
 
 export interface LegalTemplate {
@@ -99,7 +124,7 @@ export interface LegalTemplate {
   lastUpdated: string;
   description: string;
   fields: TemplateField[];
-  previewTemplate: string;
+  previewTemplate?: string;
   suggestedDocs: string[];
   supportsOcr?: boolean;
   versions?: TemplateVersion[];

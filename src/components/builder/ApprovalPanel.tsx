@@ -49,7 +49,7 @@ export default function ApprovalPanel({
 }: ApprovalPanelProps) {
   return (
     <div className="space-y-3">
-      <p className="text-[10px] text-gray-500 leading-relaxed">
+      <p className="text-[10px] text-gray-600 leading-relaxed">
         Отправьте контрагенту ссылку — он заполнит поля прямо на сайте (7 дней). Изменения будут отмечены в форме.
       </p>
       <div className="flex items-center gap-3">
@@ -94,7 +94,7 @@ export default function ApprovalPanel({
       {myApprovals.filter((a) => a.template_id === templateId).length > 0 && (
         <div className="space-y-2 pt-1">
           <div className="flex items-center justify-between">
-            <span className="text-[10px] font-semibold text-gray-500 uppercase tracking-wide">
+            <span className="text-[10px] font-semibold text-gray-600 uppercase tracking-wide">
               Ссылки по этому шаблону
             </span>
             <button
@@ -117,12 +117,12 @@ export default function ApprovalPanel({
                       className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${
                         active
                           ? "bg-emerald-50 text-emerald-700"
-                          : "bg-gray-200 text-gray-500"
+                          : "bg-gray-200 text-gray-600"
                       }`}
                     >
                       {active ? `Активна ${days} дн.` : "Истекла"}
                     </span>
-                    <span className="text-[10px] text-gray-400">
+                    <span className="text-[10px] text-gray-600">
                       открыто {a.opened_count || 0} раз
                     </span>
                   </div>
@@ -140,7 +140,7 @@ export default function ApprovalPanel({
                       </button>
                     </div>
                   ) : (
-                    <p className="text-[10px] text-gray-400">
+                    <p className="text-[10px] text-gray-600">
                       Изменений ещё нет
                     </p>
                   )}
@@ -149,11 +149,11 @@ export default function ApprovalPanel({
                       readOnly
                       value={`${typeof window !== "undefined" ? window.location.origin : ""}/approve/${a.token}`}
                       onFocus={(e) => e.target.select()}
-                      className="flex-1 min-w-0 px-2 py-1.5 text-[10px] text-gray-500 bg-white border border-gray-200 rounded-lg focus:outline-none"
+                      className="flex-1 min-w-0 px-2 py-1.5 text-[10px] text-gray-600 bg-white border border-gray-200 rounded-lg focus:outline-none"
                     />
                     <button
                       onClick={() => onCopyLink(a)}
-                      className="p-1.5 text-gray-400 hover:text-brand-600 transition-colors shrink-0"
+                      className="p-1.5 text-gray-600 hover:text-brand-600 transition-colors shrink-0"
                       title="Скопировать ссылку"
                     >
                       <Copy className="w-3.5 h-3.5" />
@@ -163,7 +163,7 @@ export default function ApprovalPanel({
                       className={`p-1.5 rounded-md transition-colors shrink-0 ${
                         approvalQr?.token === a.token
                           ? "text-brand-600 bg-brand-50"
-                          : "text-gray-400 hover:text-brand-600"
+                          : "text-gray-600 hover:text-brand-600"
                       }`}
                       title="Показать QR-код"
                     >
@@ -179,7 +179,7 @@ export default function ApprovalPanel({
                         alt="QR-код ссылки для согласования"
                         className="w-28 h-28 bg-white rounded-lg border border-gray-100 p-1.5"
                       />
-                      <span className="text-[9px] text-gray-400">
+                      <span className="text-[9px] text-gray-600">
                         Отсканируйте для открытия на устройстве
                       </span>
                     </div>

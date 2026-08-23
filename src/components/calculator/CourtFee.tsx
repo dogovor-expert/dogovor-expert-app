@@ -91,7 +91,7 @@ export default function CourtFee() {
         {(mode === "property" || mode === "order") && (
           <>
             <div className="space-y-1">
-              <label className="text-[10px] font-mono text-gray-500">Цена иска (₽)</label>
+              <label className="text-[10px] font-mono text-gray-600">Цена иска (₽)</label>
               <input
                 type="number"
                 min="0"
@@ -132,13 +132,13 @@ export default function CourtFee() {
         <div className="bg-gray-50 rounded-xl p-4 border border-gray-200 space-y-2">
           <div className="flex items-center gap-2">
             <Check className="w-4 h-4 text-emerald-500" />
-            <span className="text-[10px] font-mono text-gray-500">Госпошлина (ст. 333.19 НК РФ)</span>
+            <span className="text-[10px] font-mono text-gray-600">Госпошлина (ст. 333.19 НК РФ)</span>
           </div>
           <p className="text-2xl font-bold text-gray-900">
             {result.fee.toLocaleString("ru-RU")} ₽
           </p>
-          <p className="text-[11px] text-gray-500">{result.formula}</p>
-          {result.note && <p className="text-[11px] text-gray-500">{result.note}</p>}
+          <p className="text-[11px] text-gray-600">{result.formula}</p>
+          {result.note && <p className="text-[11px] text-gray-600">{result.note}</p>}
           <a
             href={templates[mode]}
             className="inline-block mt-1 py-2 px-3 rounded-lg bg-white border border-brand-300 text-brand-600 font-bold text-[11px] hover:bg-brand-50 transition"
@@ -148,7 +148,7 @@ export default function CourtFee() {
         </div>
       )}
 
-      <p className="text-[11px] text-gray-400 leading-relaxed flex items-start gap-1.5">
+      <p className="text-[11px] text-gray-600 leading-relaxed flex items-start gap-1.5">
         <Scale className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
         Размеры пошлины — по пп. 1, 2, 3, 16, 19, 20, 21 п. 1 ст. 333.19 НК РФ (в ред. ФЗ от 12.07.2024 № 176-ФЗ). Точную сумму уточнит суд при принятии иска.
       </p>

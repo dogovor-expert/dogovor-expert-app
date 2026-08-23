@@ -9,18 +9,18 @@ export default function KbmFrame() {
         </div>
         <div>
           <h2 className="text-xl font-bold text-gray-900">Проверка и восстановление КБМ</h2>
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-gray-600">
             Раздел проверки коэффициента бонус-малус по ОСАГО временно недоступен.
           </p>
         </div>
       </div>
 
       <div className="mt-6 flex flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-gray-300 bg-gray-50 py-12 text-center">
-        <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gray-100 text-gray-500 text-sm font-semibold">
+        <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gray-100 text-gray-600 text-sm font-semibold">
           <Clock className="w-4 h-4" />
           Скоро
         </span>
-        <p className="text-sm text-gray-400 max-w-sm">
+        <p className="text-sm text-gray-600 max-w-sm">
           Мы готовим удобный сервис проверки КБМ по официальной базе. Вернёмся к этому позже.
         </p>
       </div>

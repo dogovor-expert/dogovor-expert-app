@@ -5,7 +5,7 @@ import { Card } from "@/components/ui/Card";
 export const metadata: Metadata = {
   title: "Тахограф СКЗИ 2026: кому нужен, установка, штрафы | Конструктор документов",
   description:
-    "Оснащение транспортных средств тахографами с СКЗИ (Блок СКЗИ), требования Приказа Минтранса № 440, штрафы за управление без тахографа (ст. 11.23 КоАП), сроки перехода на тахографы БИК. Порядок калибровки и опломбирования.",
+    "Тахографы СКЗИ в 2026: кому нужны, установка по Приказу Минтранса № 440, штрафы по ст. 11.23 КоАП, калибровка и опломбирование.",
   alternates: { canonical: "/tahograph" },
 };
 
@@ -44,9 +44,9 @@ export default function TahographPage() {
   return (
     <div className="max-w-3xl mx-auto px-4 py-10 space-y-6">
       <div className="space-y-2">
-        <div className="text-[10px] font-mono uppercase tracking-widest text-gray-400">Справочник водителя и перевозчика</div>
+        <div className="text-[10px] font-mono uppercase tracking-widest text-gray-600">Справочник водителя и перевозчика</div>
         <h1 className="text-2xl font-bold text-gray-900">Тахограф СКЗИ: требования, установка, штрафы — 2026</h1>
-        <p className="text-sm text-gray-500">
+        <p className="text-sm text-gray-600">
           Обязанность оснащения, порядок установки блоков СКЗИ/БИК и ответственность за нарушения — актуальная редакция на 2026 год.
         </p>
       </div>
