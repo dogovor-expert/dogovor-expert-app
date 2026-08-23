@@ -11,7 +11,10 @@ import {
   Stamp,
 } from "lucide-react";
 import { LEGAL_TEMPLATES } from "@/data/templates";
+import { TEMPLATE_PREVIEWS } from "@/data/templatePreviews";
 import { renderTemplateDocument } from "@/lib/renderDocument";
+import { JsonLd } from "@/components/seo/JsonLd";
+import { faqJsonLd, breadcrumbJsonLd } from "@/lib/seo/faq";
 
 const dkp = LEGAL_TEMPLATES.find((t) => t.id === "dkp-auto")!;
 
@@ -47,7 +50,9 @@ const DEMO_VALUES: Record<string, string> = {
   contract_price_words: "один миллион двести пятьдесят тысяч рублей 00 копеек",
 };
 
-const demoHtml = renderTemplateDocument(dkp, DEMO_VALUES);
+const demoHtml = renderTemplateDocument(dkp, DEMO_VALUES, {
+  previewTemplate: TEMPLATE_PREVIEWS[dkp.id],
+});
 
 const STEPS = [
   {
@@ -106,6 +111,16 @@ const FAQ = [
 export default function DkpPage() {
   return (
     <div className="p-6 max-w-4xl mx-auto space-y-10">
+      <JsonLd
+        data={[
+          breadcrumbJsonLd([
+            { name: "Главная", path: "/" },
+            { name: "Каталог шаблонов", path: "/templates" },
+            { name: "Договор купли-продажи автомобиля (ДКП)", path: "/dkp" },
+          ]),
+          faqJsonLd(FAQ),
+        ]}
+      />
       <section className="flex flex-col items-start gap-6 sm:flex-row sm:items-center">
         <div className="w-12 h-12 rounded-xl bg-indigo-50 border border-indigo-200 flex items-center justify-center text-indigo-500 flex-shrink-0">
           <Car className="h-6 w-6" />
@@ -117,7 +132,7 @@ export default function DkpPage() {
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
             Договор купли-продажи автомобиля (ДКП)
           </h1>
-          <p className="text-sm text-gray-500 mt-1.5 max-w-2xl leading-relaxed">
+          <p className="text-sm text-gray-600 mt-1.5 max-w-2xl leading-relaxed">
             Заполните форму — документ сформируется автоматически. Подходит для
             сделок между физическими лицами: легковые авто, мотоциклы и
             грузовики. Печать на одном листе А4, экспорт в PDF и DOCX.
@@ -144,7 +159,7 @@ export default function DkpPage() {
           >
             <f.icon className="w-5 h-5 mx-auto text-indigo-500" />
             <p className="text-sm font-bold text-gray-900 mt-1.5">{f.title}</p>
-            <p className="text-[11px] text-gray-500">{f.text}</p>
+            <p className="text-[11px] text-gray-600">{f.text}</p>
           </div>
         ))}
       </div>
@@ -155,11 +170,11 @@ export default function DkpPage() {
             <FileText className="w-5 h-5 text-indigo-500" />
             Как выглядит документ
           </h2>
-          <span className="text-[10px] font-mono uppercase text-gray-400">
+          <span className="text-[10px] font-mono uppercase text-gray-600">
             Пример данных
           </span>
         </div>
-        <p className="text-xs text-gray-500 mb-3">
+        <p className="text-xs text-gray-600 mb-3">
           Это демонстрация с образцом данных — при заполнении формы подставятся
           ваши значения.
         </p>
@@ -194,7 +209,7 @@ export default function DkpPage() {
                 </span>
               </div>
               <p className="text-sm font-bold text-gray-900">{s.title}</p>
-              <p className="text-xs text-gray-500 mt-1 leading-relaxed">
+              <p className="text-xs text-gray-600 mt-1 leading-relaxed">
                 {s.text}
               </p>
             </div>
@@ -230,7 +245,7 @@ export default function DkpPage() {
             >
               <summary className="flex items-center justify-between gap-3 cursor-pointer text-sm font-semibold text-gray-800 list-none">
                 {f.q}
-                <ChevronRight className="w-4 h-4 text-gray-400 transition-transform group-open:rotate-90 flex-shrink-0" />
+                <ChevronRight className="w-4 h-4 text-gray-600 transition-transform group-open:rotate-90 flex-shrink-0" />
               </summary>
               <p className="text-xs text-gray-600 mt-2 leading-relaxed">
                 {f.a}

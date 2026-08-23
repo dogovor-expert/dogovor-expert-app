@@ -51,7 +51,7 @@ export default function DataTab() {
           </div>
           <div>
             <h3 className="font-semibold text-gray-900">Экспорт данных</h3>
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-gray-600">
               Все данные аккаунта: профиль, документы, подписки, платежи
             </p>
           </div>
@@ -63,7 +63,7 @@ export default function DataTab() {
           <Download className="w-4 h-4" />
           Скачать JSON
         </a>
-        <p className="text-xs text-gray-400 mt-3 flex items-center gap-1.5">
+        <p className="text-xs text-gray-600 mt-3 flex items-center gap-1.5">
           <Database className="w-3.5 h-3.5" />
           Статья 152-ФЗ «О персональных данных»: вы вправе получить свои данные в любой момент
         </p>
@@ -76,7 +76,7 @@ export default function DataTab() {
           </div>
           <div>
             <h3 className="font-semibold text-gray-900">Удаление аккаунта</h3>
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-gray-600">
               Профиль, документы и файлы будут удалены безвозвратно
             </p>
           </div>

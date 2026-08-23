@@ -6,20 +6,20 @@ export default function TemplateInfoPanel({ template }: { template: LegalTemplat
     <div className="space-y-2.5 text-xs text-gray-600">
       <p className="leading-relaxed">{template.description}</p>
       <div className="flex items-center justify-between gap-2 pt-2 border-t border-gray-100">
-        <span className="text-[10px] text-gray-400 shrink-0">Правовое основание</span>
+        <span className="text-[10px] text-gray-600 shrink-0">Правовое основание</span>
         <span className="text-[11px] font-medium text-gray-700 text-right">
           {template.actSource}
         </span>
       </div>
       <div className="flex items-center justify-between">
-        <span className="text-[10px] text-gray-400">Актуализировано</span>
+        <span className="text-[10px] text-gray-600">Актуализировано</span>
         <span className="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-600">
           <Check className="w-3 h-3" />
           {template.lastUpdated}
         </span>
       </div>
       <div className="flex items-center justify-between">
-        <span className="text-[10px] text-gray-400">Полей для заполнения</span>
+        <span className="text-[10px] text-gray-600">Полей для заполнения</span>
         <span className="text-[11px] font-medium text-gray-700">
           {template.fields.length}
         </span>

@@ -8,7 +8,9 @@ import { Badge } from "@/components/ui/Badge";
 import { createClient } from "@/lib/supabase/client";
 import { getAllDrafts } from "@/lib/autosave";
 import LeadsPanel from "@/components/dashboard/LeadsPanel";
-import { FileText, FolderOpen, Plus, ArrowRight, Sparkles, ShieldCheck, Files, CreditCard } from "lucide-react";
+import { FileText, FolderOpen, Plus, ArrowRight, Sparkles, ShieldCheck, Files, CreditCard, Flame } from "lucide-react";
+import { currentProPrice, PRO_PRICE_OLD, PROMO_LABEL, isPromoActive, promoCountdownTarget, formatRub } from "@/lib/pricing";
+import CountdownTimer from "@/components/billing/CountdownTimer";
 
 interface ProfileData {
   full_name: string | null;
@@ -24,6 +26,8 @@ export default function DashboardPage() {
   const [localCount, setLocalCount] = useState(0);
   const [sub, setSub] = useState<{ subscription_active: boolean; plan: string }>({ subscription_active: false, plan: "free" });
   const [loading, setLoading] = useState(true);
+  const promo = isPromoActive();
+  const price = currentProPrice();
 
   const load = useCallback(async () => {
     const supabase = createClient();
@@ -58,7 +62,7 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <div className="min-h-[60vh] flex items-center justify-center text-gray-400 text-sm">
+      <div className="min-h-[60vh] flex items-center justify-center text-gray-600 text-sm">
         Загрузка кабинета…
       </div>
     );
@@ -75,7 +79,7 @@ export default function DashboardPage() {
           <h1 className="text-2xl font-bold text-gray-900">
             {profile?.full_name ? `Здравствуйте, ${firstName}!` : "Личный кабинет"}
           </h1>
-          <p className="text-gray-500 mt-1">
+          <p className="text-gray-600 mt-1">
             {generatedCount > 0
               ? `У вас ${generatedCount} ${generatedCount === 1 ? "документ" : generatedCount < 5 ? "документа" : "документов"}`
               : "Создайте первый документ за пару минут"}
@@ -95,23 +99,27 @@ export default function DashboardPage() {
             <div className="w-9 h-9 rounded-xl bg-brand-50 flex items-center justify-center">
               <FileText className="w-4.5 h-4.5 text-brand-500" />
             </div>
-            <p className="text-sm text-gray-500">Всего документов</p>
+            <p className="text-sm text-gray-600">Всего документов</p>
           </div>
           <p className="text-3xl font-bold text-gray-900">{totalDocs}</p>
-          <p className="text-xs text-gray-400 mt-1">включая черновики</p>
+          <p className="text-xs text-gray-600 mt-1">включая черновики</p>
         </Card>
         <Card className="p-5">
           <div className="flex items-center gap-3 mb-2">
             <div className="w-9 h-9 rounded-xl bg-emerald-50 flex items-center justify-center">
               <ShieldCheck className="w-4.5 h-4.5 text-emerald-500" />
             </div>
-            <p className="text-sm text-gray-500">Тариф</p>
+            <p className="text-sm text-gray-600">Тариф</p>
           </div>
           <p className="text-3xl font-bold text-gray-900 capitalize">
             {sub.subscription_active && sub.plan !== "free" ? sub.plan : "Бесплатный"}
           </p>
-          <p className="text-xs text-gray-400 mt-1">
-            {sub.subscription_active && sub.plan !== "free" ? "оплачен до конца периода" : "990 ₽/мес — без ограничений"}
+          <p className="text-xs text-gray-600 mt-1">
+            {sub.subscription_active && sub.plan !== "free"
+              ? "оплачен до конца периода"
+              : promo
+                ? `${formatRub(price)}/мес вместо ${formatRub(PRO_PRICE_OLD)} — акция ${PROMO_LABEL}`
+                : `${formatRub(price)}/мес — без ограничений`}
           </p>
         </Card>
         <Card className="p-5">
@@ -119,7 +127,7 @@ export default function DashboardPage() {
             <div className="w-9 h-9 rounded-xl bg-purple-50 flex items-center justify-center">
               <Sparkles className="w-4.5 h-4.5 text-purple-500" />
             </div>
-            <p className="text-sm text-gray-500">Автозаполнение</p>
+            <p className="text-sm text-gray-600">Автозаполнение</p>
           </div>
           <p className="text-3xl font-bold text-gray-900">{profile?.inn ? "Есть" : "Нет"}</p>
           <Link href="/settings/profile" className="text-xs text-brand-600 hover:underline mt-1 inline-block">
@@ -142,7 +150,7 @@ export default function DashboardPage() {
               <FolderOpen className="w-7 h-7 text-gray-300" />
             </div>
             <p className="text-sm font-medium text-gray-800 mb-1">Здесь будут ваши договоры</p>
-            <p className="text-xs text-gray-500 mb-4 max-w-sm mx-auto">
+            <p className="text-xs text-gray-600 mb-4 max-w-sm mx-auto">
               Создайте договор в конструкторе — он сразу появится в списке и будет сохранён в аккаунте
             </p>
             <Link href="/builder">
@@ -167,7 +175,7 @@ export default function DashboardPage() {
                   <p className="text-sm font-medium text-gray-900 truncate">
                     {d.template_id.replace(/-/g, " ")}
                   </p>
-                  <p className="text-xs text-gray-400">
+                  <p className="text-xs text-gray-600">
                     {new Date(d.updated_at).toLocaleDateString("ru-RU")}
                   </p>
                 </div>
@@ -183,9 +191,24 @@ export default function DashboardPage() {
       <Card className="p-6 bg-gradient-to-br from-brand-50 to-purple-50 border-brand-100">
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
           <div className="flex-1">
-            <h3 className="font-semibold text-gray-900">Тариф Pro за 990 ₽/мес</h3>
+            <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+              {promo && !(sub.subscription_active && sub.plan !== "free") && (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-400 text-amber-950 text-[10px] font-bold">
+                  <Flame className="w-3 h-3" />
+                  Акция {PROMO_LABEL}
+                </span>
+              )}
+              Тариф Pro за {formatRub(price)}
+              <span className="text-sm font-normal text-gray-600 line-through"> {formatRub(PRO_PRICE_OLD)}</span>
+              /мес
+            </h3>
             <p className="text-sm text-gray-600 mt-1">
-              Неограниченные расчёты, экспорт в PDF, история, все калькуляторы без рекламы.
+              {promo && !(sub.subscription_active && sub.plan !== "free")
+                ? `Выгода ${formatRub(PRO_PRICE_OLD - price)} — цена вернётся к обычной через: `
+                : "Неограниченные расчёты, экспорт в PDF, история, все калькуляторы без рекламы."}
+              {promo && !(sub.subscription_active && sub.plan !== "free") && (
+                <CountdownTimer endsAt={promoCountdownTarget()} compact className="font-bold text-gray-800 tabular-nums" />
+              )}
             </p>
           </div>
           {profile?.is_admin && (

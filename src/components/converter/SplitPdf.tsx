@@ -118,14 +118,14 @@ export default function SplitPdf() {
             <Scissors className="w-6 h-6 text-brand-500" />
           </div>
           <div className="text-sm font-semibold text-gray-900">Выберите PDF-файл</div>
-          <div className="text-xs text-gray-500">Максимум 100 страниц. Обработка происходит в вашем браузере.</div>
+          <div className="text-xs text-gray-600">Максимум 100 страниц. Обработка происходит в вашем браузере.</div>
         </button>
       ) : (
         <div className="space-y-4">
           <div className="flex items-center gap-3 bg-gray-50 border border-gray-200 rounded-xl px-4 py-3">
             <div className="flex-1 min-w-0">
               <p className="text-xs font-medium text-gray-900 truncate">{file.name}</p>
-              <p className="text-[10px] text-gray-400">{formatBytes(file.size)} · {pageCount} стр.</p>
+              <p className="text-[10px] text-gray-600">{formatBytes(file.size)} · {pageCount} стр.</p>
             </div>
             <button onClick={() => { setFile(null); setPageCount(0); setRange(""); setDone(false); }}
               className="p-1.5 rounded-lg hover:bg-red-50 text-red-400 hover:text-red-600 cursor-pointer" title="Удалить">
@@ -137,20 +137,20 @@ export default function SplitPdf() {
             <button
               onClick={() => setMode("range")}
               className={`flex-1 py-2.5 rounded-xl border text-xs font-medium transition cursor-pointer ${
-                mode === "range" ? "border-brand-500 bg-brand-50 text-brand-700" : "border-gray-200 text-gray-500 hover:border-gray-300"
+                mode === "range" ? "border-brand-500 bg-brand-50 text-brand-700" : "border-gray-200 text-gray-600 hover:border-gray-300"
               }`}
             >Выбрать страницы</button>
             <button
               onClick={() => setMode("all")}
               className={`flex-1 py-2.5 rounded-xl border text-xs font-medium transition cursor-pointer ${
-                mode === "all" ? "border-brand-500 bg-brand-50 text-brand-700" : "border-gray-200 text-gray-500 hover:border-gray-300"
+                mode === "all" ? "border-brand-500 bg-brand-50 text-brand-700" : "border-gray-200 text-gray-600 hover:border-gray-300"
               }`}
             >Разделить на один файл на страницу</button>
           </div>
 
           {mode === "range" && (
             <div className="space-y-1">
-              <label className="text-[10px] font-mono text-gray-500 uppercase">Страницы (например: 1-3, 5, 8-10)</label>
+              <label className="text-[10px] font-mono text-gray-600 uppercase">Страницы (например: 1-3, 5, 8-10)</label>
               <input
                 value={range}
                 onChange={(e) => setRange(e.target.value)}

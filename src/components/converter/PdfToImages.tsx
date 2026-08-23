@@ -99,14 +99,14 @@ export default function PdfToImages() {
             <FileImage className="w-6 h-6 text-brand-500" />
           </div>
           <div className="text-sm font-semibold text-gray-900">Выберите PDF-файл</div>
-          <div className="text-xs text-gray-500">Каждая страница станет отдельным JPG. Конвертация происходит в вашем браузере.</div>
+          <div className="text-xs text-gray-600">Каждая страница станет отдельным JPG. Конвертация происходит в вашем браузере.</div>
         </button>
       ) : (
         <div className="space-y-4">
           <div className="flex items-center gap-3 bg-gray-50 border border-gray-200 rounded-xl px-4 py-3">
             <div className="flex-1 min-w-0">
               <p className="text-xs font-medium text-gray-900 truncate">{file.name}</p>
-              <p className="text-[10px] text-gray-400">{formatBytes(file.size)} · {pageCount || "…"} стр.</p>
+              <p className="text-[10px] text-gray-600">{formatBytes(file.size)} · {pageCount || "…"} стр.</p>
             </div>
             <button onClick={() => { setFile(null); setPageCount(0); setDone(false); }}
               className="p-1.5 rounded-lg hover:bg-red-50 text-red-400 hover:text-red-600 cursor-pointer" title="Удалить">
@@ -115,18 +115,18 @@ export default function PdfToImages() {
           </div>
 
           <div className="space-y-1">
-            <label className="text-[10px] font-mono text-gray-500 uppercase">Качество (DPI)</label>
+            <label className="text-[10px] font-mono text-gray-600 uppercase">Качество (DPI)</label>
             <div className="grid grid-cols-3 gap-2">
               {[100, 150, 300].map((d) => (
                 <button key={d} onClick={() => setDpi(d)}
                   className={`py-2.5 rounded-xl border text-xs font-medium transition cursor-pointer ${
-                    dpi === d ? "border-brand-500 bg-brand-50 text-brand-700" : "border-gray-200 text-gray-500 hover:border-gray-300"
+                    dpi === d ? "border-brand-500 bg-brand-50 text-brand-700" : "border-gray-200 text-gray-600 hover:border-gray-300"
                   }`}>
                   {d} DPI{d === 100 ? " (эконом)" : d === 300 ? " (печать)" : ""}
                 </button>
               ))}
             </div>
-            <p className="text-[10px] text-gray-400 pt-1">300 DPI — для печати и распознавания, 100 DPI — для веба. Чем выше DPI, тем больше файлы.</p>
+            <p className="text-[10px] text-gray-600 pt-1">300 DPI — для печати и распознавания, 100 DPI — для веба. Чем выше DPI, тем больше файлы.</p>
           </div>
 
           <button onClick={convert} disabled={busy}

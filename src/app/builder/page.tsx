@@ -1,7 +1,6 @@
 "use client";
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import type { ChangeEvent } from "react";
-import QRCode from "qrcode";
 import {
   FileText,
   Shield,
@@ -16,12 +15,15 @@ import {
   Mail,
   X,
   Loader2,
+  Camera,
+  ChevronDown,
 } from "lucide-react";
 import { LEGAL_TEMPLATES } from "@/data/legalTemplates";
 import type { LegalTemplate, TemplateField } from "@/data/types";
 import {
   runLegalAudit,
   isFieldVisible,
+  requiredProgress,
   type AuditResult,
 } from "@/lib/validation";
 import { calculateCosts, numberToWords } from "@/lib/calculator";
@@ -29,29 +31,43 @@ import { saveDraft, loadDraft, clearDraft, clearDraftVersions, getAllDrafts, pus
 import { syncDraft, syncDelete, setUserFlag } from "@/lib/sync";
 import { createClient } from "@/lib/supabase/client";
 import { renderTemplateDocument, buildPackValues } from "@/lib/renderDocument";
-import { exportToPdf, buildPdf } from "@/lib/exportPdf";
-import { exportToDocx } from "@/lib/exportDocx";
+import { getSigning, canShowSignSheet } from "@/data/signingMeta";
+import { DOC_DESIGNS, type DesignId } from "@/lib/docDesign";
 import { buildTemplateDefaults, getGreeting, normalizeTypography, todayStr } from "@/lib/format";
+import dynamic from "next/dynamic";
 import ProgressSteps from "@/components/builder/ProgressSteps";
 import TemplateSelector from "@/components/builder/TemplateSelector";
-import OcrScanner from "@/components/builder/OcrScanner";
 import FormSection from "@/components/builder/FormSection";
 import PreviewStage from "@/components/builder/PreviewStage";
 import Collapsible from "@/components/builder/Collapsible";
-import DraftsPanel from "@/components/builder/DraftsPanel";
 import RelatedDocsPanel from "@/components/builder/RelatedDocsPanel";
-import ApprovalPanel, { type MyApproval } from "@/components/builder/ApprovalPanel";
+import type { MyApproval } from "@/components/builder/ApprovalPanel";
 import TemplateInfoPanel from "@/components/builder/TemplateInfoPanel";
-import SimilarTemplatesPanel from "@/components/builder/SimilarTemplatesPanel";
-import DadataPanel from "@/components/builder/DadataPanel";
-import ContractorsPanel from "@/components/builder/ContractorsPanel";
 import EsignPanel from "@/components/builder/EsignPanel";
 import SigningPanel from "@/components/builder/SigningPanel";
 import PaywallModal from "@/components/builder/PaywallModal";
-import ChecklistPanel from "@/components/builder/ChecklistPanel";
-import AuditPanel from "@/components/builder/AuditPanel";
-import CostsPanel from "@/components/builder/CostsPanel";
-import SignCanvasModal from "@/components/builder/SignCanvasModal";
+// №7 аудита: необязательные панели грузим лениво — меньше First Load JS.
+// ssr: false для клиентских компонентов с тяжёлыми зависимостями (tesseract.js, pdf-lib и др.)
+const DocScanner = dynamic(() => import("@/components/builder/DocScanner"), { ssr: false });
+const DraftsPanel = dynamic(() => import("@/components/builder/DraftsPanel"), { ssr: false });
+const ApprovalPanel = dynamic(() => import("@/components/builder/ApprovalPanel"), { ssr: false });
+const SimilarTemplatesPanel = dynamic(() => import("@/components/builder/SimilarTemplatesPanel"), { ssr: false });
+const DadataPanel = dynamic(() => import("@/components/builder/DadataPanel"), { ssr: false });
+const ContractorsPanel = dynamic(() => import("@/components/builder/ContractorsPanel"), { ssr: false });
+const ChecklistPanel = dynamic(() => import("@/components/builder/ChecklistPanel"), { ssr: false });
+const AuditPanel = dynamic(() => import("@/components/builder/AuditPanel"), { ssr: false });
+const CostsPanel = dynamic(() => import("@/components/builder/CostsPanel"), { ssr: false });
+const SignCanvasModal = dynamic(() => import("@/components/builder/SignCanvasModal"), { ssr: false });
+import PersonsPanel, { type PersonRow } from "@/components/builder/PersonsPanel";
+import { roleToPerson, personToFields } from "@/lib/personMapping";
+import { getTemplateRoles } from "@/lib/docRequirements";
+
+// Для шаблонов с парой «Полный / Краткий» по умолчанию открываем краткую
+// версию. Легко расширяется добавлением новых пар.
+const BRIEF_VARIANT: Record<string, string> = {
+  "dkp-auto": "dkp-auto-short",
+};
+const preferBrief = (id: string) => BRIEF_VARIANT[id] ?? id;
 
 function HomeContent() {
   const [userName, setUserName] = useState<string>("Гость");
@@ -59,14 +75,27 @@ function HomeContent() {
 
   useEffect(() => {
     setGreeting(getGreeting());
-    const p = new URLSearchParams(window.location.search).get("template");
-    if (p && LEGAL_TEMPLATES.find((t) => t.id === p)) {
-      setSelectedTemplateId(p);
-      setWizardStep("form");
-    }
+    const tryOpenFromUrl = () => {
+      const p = new URLSearchParams(window.location.search).get("template");
+      // ДКП по умолчанию открывается в краткой (1 стр.) форме
+      const pid = p ? preferBrief(p) : p;
+      if (pid && LEGAL_TEMPLATES.find((t) => t.id === pid)) {
+        setSelectedTemplateId(pid);
+        setWizardStep("form");
+        return true;
+      }
+      return false;
+    };
+    if (tryOpenFromUrl()) return;
+    // Страховка: при редком сбое первого прохода (холодный старт) повторяем
+    // открытие шаблона из URL после гидратации.
+    const t = setTimeout(() => {
+      tryOpenFromUrl();
+    }, 1500);
+    return () => clearTimeout(t);
   }, []);
 
-  const [selectedTemplateId, setSelectedTemplateId] = useState<string>("dkp-auto");
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string>("dkp-auto-short");
   const [wizardStep, setWizardStep] = useState<"select" | "form">("select");
   const [formValues, setFormValues] = useState<Record<string, string>>(() => {
     const t =
@@ -76,24 +105,23 @@ function HomeContent() {
   });
   const [activeTab, setActiveTab] =
     useState<TemplateField["category"]>("seller");
-  const [isScanning, setIsScanning] = useState(false);
-  const [scanSuccess, setScanSuccess] = useState<string | null>(null);
+  const [scanPhotos, setScanPhotos] = useState<Record<string, string[]>>({});
   const [auditResults, setAuditResults] = useState<AuditResult[] | null>(null);
   const [liveAudit, setLiveAudit] = useState<AuditResult[]>([]);
   const [draftInfos, setDraftInfos] = useState<DraftData[]>([]);
   const [showAudit, setShowAudit] = useState(false);
   const [checklist, setChecklist] = useState<Record<string, boolean>>({});
   const [showSaved, setShowSaved] = useState(false);
+  const [showScanner, setShowScanner] = useState(false);
   const [ownershipYears, setOwnershipYears] = useState<string>("");
   const [isExporting, setIsExporting] = useState(false);
   const [templateCategory, setTemplateCategory] = useState<string>("all");
   const [templateSearch, setTemplateSearch] = useState("");
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
   const [viewMode, setViewMode] = useState<"form" | "preview">("form");
-  const [sidebarTab, setSidebarTab] = useState<"preview" | "tools">("preview");
+  const [sidebarTab, setSidebarTab] = useState<"preview" | "tools">("tools");
   const [previewBlocked, setPreviewBlocked] =
     useState<AuditResult[] | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const printRef = useRef<HTMLDivElement>(null);
   const flatRef = useRef<HTMLDivElement>(null);
   const formValuesRef = useRef<Record<string, string>>(formValues);
@@ -104,7 +132,34 @@ function HomeContent() {
   const lastVersionRef = useRef<number>(0);
   const saveCountRef = useRef(0);
   const [packTemplateIds, setPackTemplateIds] = useState<string[]>([]);
-  const [signSheetEnabled, setSignSheetEnabled] = useState(true);
+  const [previewMap, setPreviewMap] = useState<Record<string, string>>({});
+  // HTML-шаблоны превью (previewTemplate) вынесены в ленивый модуль, чтобы не
+  // раздувать основной бандл конструктора. Грузим их динамически и кешируем
+  // по id, затем подставляем в renderTemplateDocument через options.
+  useEffect(() => {
+    let cancelled = false;
+    const ids = Array.from(
+      new Set([selectedTemplateId, ...packTemplateIds].filter(Boolean))
+    ) as string[];
+    import("@/data/templatePreviews")
+      .then(async (mod) => {
+        const entries = await Promise.all(
+          ids.map(async (id) => [id, await mod.getPreviewTemplate(id)] as const)
+        );
+        if (!cancelled) setPreviewMap(Object.fromEntries(entries));
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedTemplateId, packTemplateIds]);
+  const [signSheetEnabled, setSignSheetEnabled] = useState(false);
+  const [toast, setToast] = useState<string | null>(null);
+  const showToast = (msg: string) => {
+    setToast(msg);
+    setTimeout(() => setToast(null), 4000);
+  };
+  const [designId, setDesignId] = useState<DesignId>("classic");
   const [signSeller, setSignSeller] = useState<string | null>(null);
   const [signBuyer, setSignBuyer] = useState<string | null>(null);
 
@@ -119,7 +174,10 @@ function HomeContent() {
     fetch("/api/profile")
       .then((r) => (r.ok ? r.json() : null))
       .then(({ data } = {}) => {
-        if (data?.full_name) setUserName(data.full_name.split(" ")[0]);
+        if (data?.full_name) {
+          setUserName(data.full_name.split(" ")[0]);
+          setMeFio(data.full_name);
+        }
       })
       .catch(() => {});
   }, []);
@@ -480,16 +538,109 @@ function HomeContent() {
     } catch {}
   };
 
-  const sha256Hex = async (text: string): Promise<string> => {
-    if (typeof crypto === "undefined" || !crypto.subtle)
-      return "hash недоступен в этом браузере";
-    const buf = await crypto.subtle.digest(
-      "SHA-256",
-      new TextEncoder().encode(text)
+  const [meFio, setMeFio] = useState<string | null>(null);
+  const [persons, setPersons] = useState<PersonRow[] | null>(null);
+  const [personsMsg, setPersonsMsg] = useState<string | null>(null);
+
+  const loadPersons = async () => {
+    try {
+      const res = await fetch("/api/persons");
+      if (!res.ok) throw new Error(String(res.status));
+      const json = await res.json();
+      setPersons(Array.isArray(json.data) ? json.data : []);
+    } catch {
+      setPersons([]);
+    }
+  };
+  useEffect(() => {
+    void loadPersons();
+  }, []);
+
+  const savePerson = async (prefix: string) => {
+    const data = roleToPerson(formValuesRef.current, prefix, template.fields);
+    if (!data.fio) {
+      setPersonsMsg("Заполните ФИО стороны в форме");
+      return;
+    }
+    try {
+      const res = await fetch("/api/persons", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) {
+        const j = await res.json().catch(() => null);
+        setPersonsMsg(j?.error || "Не удалось сохранить");
+        return;
+      }
+      await loadPersons();
+      setPersonsMsg("Лицо сохранено");
+    } catch {
+      setPersonsMsg("Ошибка сохранения");
+    }
+  };
+
+  const applyPersonToRole = (person: PersonRow, prefix: string) => {
+    const pairs = personToFields(
+      {
+        fio: person.fio,
+        birthday: "",
+        phone: "",
+        passport_series: person.passport_series || "",
+        passport_number: person.passport_number || "",
+        passport_issued_by: person.passport_issued_by || "",
+        passport_code: person.passport_code || "",
+        address: person.address || "",
+      },
+      prefix,
+      template.fields
     );
-    return Array.from(new Uint8Array(buf))
-      .map((b) => b.toString(16).padStart(2, "0"))
-      .join("");
+    let filled = 0;
+    Object.entries(pairs).forEach(([fieldId, v]) => {
+      if (!v) return;
+      handleFieldChange(fieldId, v);
+      filled++;
+    });
+    setPersonsMsg(
+      filled > 0 ? "Данные лица подставлены в форму" : "Нет подходящих полей"
+    );
+  };
+
+  const applyMeToRole = (prefix: string) => {
+    applyPersonToRole(
+      {
+        id: "me",
+        fio: meFio || "",
+        address: "",
+      },
+      prefix
+    );
+  };
+
+  const deletePerson = async (id: string) => {
+    try {
+      await fetch(`/api/persons?id=${encodeURIComponent(id)}`, {
+        method: "DELETE",
+      });
+      await loadPersons();
+    } catch {}
+  };
+
+  /** SHA-256 содержимого; null, если Web Crypto недоступен (№3 аудита:
+   *  никаких текстов-заглушек про хеш в документ не попадает). */
+  const sha256Hex = async (text: string): Promise<string | null> => {
+    if (typeof crypto === "undefined" || !crypto.subtle) return null;
+    try {
+      const buf = await crypto.subtle.digest(
+        "SHA-256",
+        new TextEncoder().encode(text)
+      );
+      return Array.from(new Uint8Array(buf))
+        .map((b) => b.toString(16).padStart(2, "0"))
+        .join("");
+    } catch {
+      return null;
+    }
   };
 
   const togglePack = (id: string) => {
@@ -503,6 +654,15 @@ function HomeContent() {
   const template =
     LEGAL_TEMPLATES.find((t) => t.id === selectedTemplateId) ||
     LEGAL_TEMPLATES[0];
+
+  const personRoles = useMemo(
+    () =>
+      getTemplateRoles(template).map((r) => ({
+        prefix: r.prefix,
+        label: r.label,
+      })),
+    [template]
+  );
 
   const packTemplates = useMemo(() => {
     const list: LegalTemplate[] = [];
@@ -570,8 +730,11 @@ function HomeContent() {
     } else {
       const draft = loadDraft(template.id);
       if (draft) {
-        setFormValues(draft.values);
+        // Черновик может не содержать полей, добавленных в шаблон позже, —
+        // новые поля получают дефолтные значения (статусы сторон и т.п.).
+        setFormValues({ ...buildTemplateDefaults(template), ...draft.values });
         setChecklist(draft.checklist);
+        setScanPhotos(draft.photos || {});
         const draftTab = draft.activeTab as TemplateField["category"];
         setActiveTab(
           (tabs.includes(draftTab) ? draftTab : tabs[0]) as TemplateField["category"]
@@ -579,6 +742,7 @@ function HomeContent() {
       } else {
         setFormValues(buildTemplateDefaults(template));
         setChecklist({});
+        setScanPhotos({});
         setActiveTab(tabs[0]);
       }
     }
@@ -591,7 +755,7 @@ function HomeContent() {
   useEffect(() => {
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
     saveTimerRef.current = setTimeout(() => {
-      saveDraft(template.id, formValues, checklist, activeTab);
+      saveDraft(template.id, formValues, checklist, activeTab, undefined, scanPhotos);
       syncDraft({
         templateId: template.id,
         values: formValues,
@@ -616,7 +780,7 @@ function HomeContent() {
     return () => {
       if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
     };
-  }, [formValues, checklist, activeTab, template.id]);
+  }, [formValues, checklist, activeTab, scanPhotos, template.id]);
 
   // Живой аудит: проверка с небольшим дебаунсом прямо при вводе.
   useEffect(() => {
@@ -709,6 +873,15 @@ function HomeContent() {
     void lookupInn(fieldId);
   };
 
+  const handleSuggestFill = (pairs: Record<string, string>) => {
+    Object.entries(pairs).forEach(([fieldId, v]) => {
+      if (!v) return;
+      if (!template.fields.some((f) => f.id === fieldId)) return;
+      if (formValuesRef.current[fieldId]?.trim()) return;
+      handleFieldChange(fieldId, v);
+    });
+  };
+
   const handleAuditResultClick = (fieldId: string) => {
     const el = document.querySelector(`[data-field="${fieldId}"]`);
     if (!el) return;
@@ -719,73 +892,8 @@ function HomeContent() {
     focusable?.focus({ preventScroll: true });
   };
 
-  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setIsScanning(true);
-    setScanSuccess(null);
-    try {
-      const { createWorker } = await import("tesseract.js");
-      const worker = await createWorker("rus+eng");
-      const { data } = await worker.recognize(file);
-      await worker.terminate();
-      const text = data.text;
-      const lowerText = text.toLowerCase();
-      const newValues = { ...formValues };
-      if (lowerText.includes("паспорт") || lowerText.includes("серия")) {
-        const fioMatch = text.match(
-          /([А-ЯЁ][а-яё]+\s+[А-ЯЁ][а-яё]+\s+[А-ЯЁ][а-яё]+)/
-        );
-        const seriesMatch = text.match(/(\d{2}\s?\d{2})/);
-        const numberMatch = text.match(/(?:№|N)?\s*(\d{6})/);
-        const addressMatch = text.match(
-          /(?:зарегистрирован[а-яё]*\s+по\s+адресу:?\s*)(.+?)(?:,\s*паспорт|$)/i
-        );
-        const birthdayMatch = text.match(
-          /(\d{2}\.\d{2}\.\d{4})\s*(?:г\.?|года)/
-        );
-        const hasSellerFields = template.fields.some((f) =>
-          f.id.startsWith("seller_")
-        );
-        const prefix = hasSellerFields ? "seller" : "buyer";
-        if (fioMatch)
-          newValues[`${prefix}_fio`] = fioMatch[1].trim();
-        if (seriesMatch)
-          newValues[`${prefix}_passport_series`] =
-            seriesMatch[1].replace(/\s/g, "");
-        if (numberMatch)
-          newValues[`${prefix}_passport_number`] = numberMatch[1];
-        if (addressMatch)
-          newValues[`${prefix}_address`] = addressMatch[1].trim();
-        if (birthdayMatch)
-          newValues[`${prefix}_birthday`] = birthdayMatch[1];
-        setScanSuccess("Паспорт распознан! Проверьте данные.");
-      } else if (
-        lowerText.includes("vin") ||
-        lowerText.includes("pts") ||
-        lowerText.includes("sts")
-      ) {
-        const vinMatch = text.match(
-          /\b([A-HJ-NPR-Z0-9]{17})\b/
-        );
-        const plateMatch = text.match(
-          /([А-ЯЁA-Z]\d{3}[А-ЯЁA-Z]{2}\d{2,3})/
-        );
-        if (vinMatch) newValues.car_vin = vinMatch[1].toUpperCase();
-        if (plateMatch) newValues.car_plate = plateMatch[1].toUpperCase();
-        setScanSuccess("Документ ТС распознан! Проверьте данные.");
-      } else {
-        setScanSuccess(
-          "Текст распознан. Проверьте данные вручную."
-        );
-      }
-      setFormValues(newValues);
-    } catch {
-      setScanSuccess("Ошибка распознавания. Попробуйте другое фото.");
-    }
-    setIsScanning(false);
-    setTimeout(() => setScanSuccess(null), 5000);
-    if (fileInputRef.current) fileInputRef.current.value = "";
+  const handlePhotosChange = (slotId: string, photos: string[]) => {
+    setScanPhotos((prev) => ({ ...prev, [slotId]: photos }));
   };
 
   const handleAudit = () => {
@@ -828,37 +936,41 @@ function HomeContent() {
     window.scrollTo(0, 0);
   };
 
-  const handleExportPdf = async () => {
-    setIsExporting(true);
-    try {
-      const fileName =
-        packTemplates.length > 1
-          ? `Паспорт_сделки_${todayStr()}`
-          : `${template.name}_${todayStr()}`;
-      const docs: string[] = [];
-      if (packTemplates.length > 1) {
-        const coverHtml = await buildCoverHtml();
-        if (coverHtml) docs.push(coverHtml);
-      }
-      for (const t of packTemplates) {
-        docs.push(renderPreview(t));
-      }
-      if (signSheetEnabled) {
-        const signHtml = await buildSignHtml();
-        if (signHtml) docs.push(signHtml);
-      }
-      const pages = await exportToPdf(docs, fileName, {
-        title: packTemplates.length > 1 ? "Паспорт сделки" : template.name,
-        watermark: subscriptionActive
-          ? undefined
-          : "Сформировано бесплатно на сервисе Dogovor",
-      });
-      setExportPages(pages);
-      setTimeout(() => setExportPages(0), 3000);
-    } catch (err) {
-      console.error("PDF export error:", err);
+  const handleExportPdf = async (scope: "pack" | "current" = "pack") => {
+    const docs = scope === "pack" && packTemplates.length > 1 ? packTemplates : [template];
+    const ids = docs.map((t) => t.id).join(",");
+    const params = new URLSearchParams({
+      template: template.id,
+      design: designId,
+      watermark: subscriptionActive ? "false" : "true",
+    });
+    if (scope === "pack" && packTemplates.length > 1) {
+      params.set("pack", ids);
     }
-    setIsExporting(false);
+    const url = `/builder/export-pdf?${params.toString()}`;
+    window.open(url, "_blank");
+  };
+
+  /** Сбор HTML-документов для экспорта: пакет целиком или один документ. */
+  const collectExportDocs = async (scope: "pack" | "current"): Promise<string[]> => {
+    const list = scope === "current" ? [template] : packTemplates;
+    const docs: string[] = [];
+    if (scope === "pack" && packTemplates.length > 1) {
+      const coverHtml = await buildCoverHtml();
+      if (coverHtml) docs.push(coverHtml);
+    }
+    for (const t of list) {
+      docs.push(renderPreview(t));
+    }
+    if (
+      scope === "pack" &&
+      signSheetEnabled &&
+      canShowSignSheet(template.id)
+    ) {
+      const signHtml = await buildSignHtml();
+      if (signHtml) docs.push(signHtml);
+    }
+    return docs;
   };
 
   const buildCoverHtml = async (): Promise<string | null> => {
@@ -867,6 +979,7 @@ function HomeContent() {
       for (const [i, t] of packTemplates.entries()) {
         const html = renderPreview(t);
         const hash = await sha256Hex(html);
+        if (!hash) continue; // №3: без Web Crypto обложка с хешами не строится
         rows.push(`
           <tr>
             <td style="padding:8px 10px;border:1px solid #d4d4d8;font-size:12px;">${i + 1}</td>
@@ -874,13 +987,17 @@ function HomeContent() {
             <td style="padding:8px 10px;border:1px solid #d4d4d8;font-size:10px;word-break:break-all;color:#52525b;">${hash}</td>
           </tr>`);
       }
-      const seller =
-        formValues.seller_fio || formValues.seller_company || "___________";
-      const buyer =
-        formValues.buyer_fio ||
-        formValues.buyer_company ||
-        formValues.customer_name ||
-        "___________";
+      if (!rows.length) return null; // хеши недоступны — обложка без смысла
+      // Стороны пакета — из метаданных подписантов первого документа (не хардкод).
+      const meta = getSigning(packTemplates[0].id);
+      const partyName = (i: number, fallback: string) => {
+        const s = meta.signers[i];
+        return (s && formValues[s.fieldId]) || fallback;
+      };
+      const side1 = partyName(0, "___________");
+      const side2 = partyName(1, "___________");
+      const role1 = meta.signers[0]?.role || "Сторона 1";
+      const role2 = meta.signers[1]?.role || "Сторона 2";
 
       return `<div class="flex flex-col font-serif text-[14px] leading-relaxed text-gray-900" style="padding:48px 56px;">
         <div class="text-center font-bold text-[18px] mb-2">ПАСПОРТ СДЕЛКИ</div>
@@ -895,8 +1012,8 @@ function HomeContent() {
           </thead>
           <tbody>${rows.join("")}</tbody>
         </table>
-        <div class="mb-1"><b>Продавец / Исполнитель:</b> ${seller}</div>
-        <div class="mb-6"><b>Покупатель / Заказчик:</b> ${buyer}</div>
+        <div class="mb-1"><b>${role1}:</b> ${side1}</div>
+        <div class="mb-6"><b>${role2}:</b> ${side2}</div>
         <div class="text-xs text-justify">Хеши рассчитаны по итоговому HTML-содержимому каждого документа на момент формирования пакета и позволяют зафиксировать неизменность редакций (сравнение с актуальным состоянием — на странице «Предпросмотр»).</div>
       </div>`;
     } catch (err) {
@@ -907,41 +1024,64 @@ function HomeContent() {
 
   const buildSignHtml = async (): Promise<string | null> => {
     try {
-      const sellerName =
-        formValues.seller_fio || formValues.seller_company || "___________";
-      const buyerName =
-        formValues.buyer_fio ||
-        formValues.buyer_company ||
-        formValues.customer_name ||
-        "___________";
-      const docList = packTemplates.map((t) => t.name).join(", ");
-      const docHtml = packTemplates
-        .map((t) => renderPreview(t))
-        .join("\n");
-      const hash = await sha256Hex(docHtml);
+      const docs = packTemplates.length ? packTemplates : [template];
+      const docList = docs.map((t) => t.name).join(", ");
+      // Подписанты — из метаданных шаблона (роль + поле формы), не хардкод.
+      const signerRows: string[] = [];
+      for (const t of docs) {
+        const meta = getSigning(t.id);
+        const list = meta.signers.length
+          ? meta.signers
+          : [{ role: "Подписант", fieldId: "" }];
+        for (const s of list) {
+          const name = (s.fieldId && formValues[s.fieldId]) || "___________";
+          signerRows.push(`
+            <tr>
+              <td style="padding:8px 10px;border:1px solid #d4d4d8;font-size:12px;">${t.name}</td>
+              <td style="padding:8px 10px;border:1px solid #d4d4d8;font-size:12px;">${s.role}</td>
+              <td style="padding:8px 10px;border:1px solid #d4d4d8;font-size:12px;">${name}</td>
+              <td style="padding:8px 10px;border:1px solid #d4d4d8;font-size:12px;width:120px;"></td>
+            </tr>`);
+        }
+      }
+      // Отпечатки содержимого — техническая контрольная сумма, НЕ подпись.
+      const hashRows: string[] = [];
+      for (const [i, t] of docs.entries()) {
+        const html = renderPreview(t);
+        const hash = await sha256Hex(html);
+        if (!hash) continue; // №3: без crypto.subtle строки с хешем не выводятся вовсе
+        hashRows.push(`
+          <tr>
+            <td style="padding:6px 10px;border:1px solid #d4d4d8;font-size:11px;">${i + 1}</td>
+            <td style="padding:6px 10px;border:1px solid #d4d4d8;font-size:11px;">${t.name}</td>
+            <td style="padding:6px 10px;border:1px solid #d4d4d8;font-size:10px;word-break:break-all;color:#52525b;">${hash}</td>
+          </tr>`);
+      }
       const stamp = new Date().toLocaleString("ru-RU");
 
       return `<div class="flex flex-col font-serif text-[14px] leading-relaxed text-gray-900" style="padding:48px 56px;">
-        <div class="text-center font-bold text-[16px] mb-6">ЛИСТ ПОДПИСАНИЯ И ПРОТОКОЛ ПЭП</div>
-        <div class="mb-1">Документ: <b>${docList}</b> от ${todayStr()}</div>
-        <div class="mb-4">Хеш SHA-256 содержимого документа: <span style="font-size:11px;word-break:break-all;">${hash}</span></div>
-        <div class="mb-4 text-justify">Настоящий лист составлен в соответствии со ст. 6 и ст. 9 Федерального закона от 06.04.2011 № 63-ФЗ «Об электронной подписи». Документы подписаны сторонами простой электронной подписью (ПЭП) — по соглашению сторон такая подпись признаётся равнозначной собственноручной (п. 2 ст. 160 ГК РФ, п. 2 ст. 6 63-ФЗ).</div>
-        <div class="grid grid-cols-2 gap-8 mb-6">
-          <div>
-            <div class="font-bold mb-1">Продавец / Исполнитель</div>
-            <div class="mb-8">${sellerName}</div>
-            <div class="border-b"></div>
-            <div class="text-xs">подпись и расшифровка</div>
-          </div>
-          <div>
-            <div class="font-bold mb-1">Покупатель / Заказчик</div>
-            <div class="mb-8">${buyerName}</div>
-            <div class="border-b"></div>
-            <div class="text-xs">подпись и расшифровка</div>
-          </div>
-        </div>
-        <div class="text-xs mb-1">Стороны подтверждают, что ознакомились с содержанием указанных документов, согласны с их условиями и подписывают их в день составления.</div>
-        <div class="text-xs">Протокол сформирован: ${stamp}. Документ может быть направлен по электронной почте или мессенджеру; факт подписания стороны фиксируют собственноручными подписями на бумажной копии либо письменным соглашением о ПЭП.</div>
+        <div class="text-center font-bold text-[16px] mb-2">СОГЛАШЕНИЕ ОБ ИСПОЛЬЗОВАНИИ ПРОСТОЙ ЭЛЕКТРОННОЙ ПОДПИСИ</div>
+        <div class="text-center text-xs mb-6">(образец; к документам: ${docList} от ${todayStr()})</div>
+        <div class="mb-3 text-justify">1. Стороны в соответствии со ст. 6 (ч. 2) и ст. 9 Федерального закона от 06.04.2011 № 63-ФЗ «Об электронной подписи» договорились, что электронные документы (в том числе копии и сканы указанных документов, а также сообщения сторон по электронной почте и мессенджерам), подписанные простой электронной подписью (ПЭП), признаются равнозначными документам на бумажном носителе, подписанным собственноручной подписью.</div>
+        <div class="mb-3 text-justify">2. Правила определения лица, подписывающего документ по его ПЭП: подписантом признаётся лицо, указанное в таблице ниже, с адреса электронной почты (или аккаунта мессенджера) которого отправлен подписанный документ либо которое подтвердило подписание иным способом, зафиксированным сторонами.</div>
+        <div class="mb-3 text-justify">3. Каждая сторона обязана соблюдать конфиденциальность ключа своей ПЭП (паролей, кодов доступа к почте/мессенджеру) и не передавать их третьим лицам.</div>
+        <table style="width:100%;border-collapse:collapse;margin-bottom:20px;">
+          <thead>
+            <tr>
+              <th style="padding:8px 10px;border:1px solid #d4d4d8;text-align:left;font-size:11px;">Документ</th>
+              <th style="padding:8px 10px;border:1px solid #d4d4d8;text-align:left;font-size:11px;">Роль</th>
+              <th style="padding:8px 10px;border:1px solid #d4d4d8;text-align:left;font-size:11px;">Подписант (ФИО / наименование)</th>
+              <th style="padding:8px 10px;border:1px solid #d4d4d8;text-align:left;font-size:11px;">Подпись</th>
+            </tr>
+          </thead>
+          <tbody>${signerRows.join("")}</tbody>
+        </table>
+        ${hashRows.length ? `<div class="text-xs font-bold mb-1">Отпечаток содержимого документов (SHA-256):</div>
+        <table style="width:100%;border-collapse:collapse;margin-bottom:20px;">
+          <tbody>${hashRows.join("")}</tbody>
+        </table>
+        <div class="text-xs text-justify mb-4">Указанные отпечатки являются технической контрольной суммой содержимого для идентификации версии документа; сами по себе они не являются электронной подписью и не заменяют её.</div>` : ""}
+        <div class="text-xs text-justify">Настоящее соглашение вступает в силу с момента подписания обеими сторонами и действует до его расторжения. Сформировано: ${stamp}.</div>
       </div>`;
     } catch (err) {
       console.error("Sign sheet error:", err);
@@ -957,12 +1097,32 @@ function HomeContent() {
     if (!flatRef.current) return;
     setIsExporting(true);
     try {
-      await exportToDocx(
-        flatRef.current,
-        `${template.name}_${todayStr()}`
+      const { exportToDocx, exportToDocxHtml } = await import("@/lib/exportDocx");
+      if (packTemplates.length > 1) {
+        // №6 аудита: DOCX пакета содержит те же документы, что и PDF.
+        const html = packTemplates
+          .map(
+            (t, i) =>
+              `<p style="text-align:center;font-weight:bold;">Документ ${i + 1} из ${packTemplates.length}: ${t.name}</p>` +
+              renderPreview(t)
+          )
+          .join('<p style="text-align:center;">— — — — —</p>');
+        await exportToDocxHtml(html, `Паспорт_сделки_${todayStr()}`, {
+          design: designId,
+        });
+      } else {
+        await exportToDocx(flatRef.current, `${template.name}_${todayStr()}`, {
+          design: designId,
+        });
+      }
+      showToast(
+        "DOCX сохранён. Часть оформления (таблицы, рамки, шрифты) может отличаться от PDF — для печати надёжнее использовать PDF."
       );
     } catch (err) {
       console.error("DOCX export error:", err);
+      showToast(
+        "Не удалось сформировать DOCX. Проверьте подключение к интернету и попробуйте ещё раз."
+      );
     }
     setIsExporting(false);
   };
@@ -981,24 +1141,15 @@ function HomeContent() {
     setEmailSending(true);
     setEmailStatus(null);
     try {
+      const docs = await collectExportDocs("pack");
       const fileName =
         packTemplates.length > 1
           ? `Паспорт_сделки_${todayStr()}`
           : `${template.name}_${todayStr()}`;
-      const docs: string[] = [];
-      if (packTemplates.length > 1) {
-        const coverHtml = await buildCoverHtml();
-        if (coverHtml) docs.push(coverHtml);
-      }
-      for (const t of packTemplates) {
-        docs.push(renderPreview(t));
-      }
-      if (signSheetEnabled) {
-        const signHtml = await buildSignHtml();
-        if (signHtml) docs.push(signHtml);
-      }
+      const { buildPdf } = await import("@/lib/exportPdf");
       const { blob } = await buildPdf(docs, {
         title: packTemplates.length > 1 ? "Паспорт сделки" : template.name,
+        design: designId,
         watermark: subscriptionActive
           ? undefined
           : "Сформировано бесплатно на сервисе Dogovor",
@@ -1046,6 +1197,7 @@ function HomeContent() {
       qrSvg: t.id === "invoice" ? qrSvg : null,
       signSeller,
       signBuyer,
+      previewTemplate: previewMap[t.id] ?? "",
     });
   };
 
@@ -1085,15 +1237,16 @@ function HomeContent() {
     }
     const data = buildInvoiceQrData();
     let cancelled = false;
-    QRCode.toString(data, {
-      type: "svg",
-      errorCorrectionLevel: "M",
-      margin: 1,
-      width: 132,
-    }).then((svg) => {
-      if (cancelled) return;
-      setQrSvg(svg);
-    });
+    (async () => {
+      const { default: QRCode } = await import("qrcode");
+      const svg = await QRCode.toString(data, {
+        type: "svg",
+        errorCorrectionLevel: "M",
+        margin: 1,
+        width: 132,
+      });
+      if (!cancelled) setQrSvg(svg);
+    })();
     return () => {
       cancelled = true;
     };
@@ -1135,6 +1288,7 @@ function HomeContent() {
       return;
     }
     try {
+      const { default: QRCode } = await import("qrcode");
       const svg = await QRCode.toString(`${window.location.origin}/approve/${token}`, {
         type: "svg",
         errorCorrectionLevel: "M",
@@ -1222,7 +1376,7 @@ function HomeContent() {
           <h1 className="text-2xl font-bold text-gray-900">
             {greeting}, {userName}!
           </h1>
-          <p className="text-gray-500 mt-1 text-sm">{template.name}</p>
+          <p className="text-gray-600 mt-1 text-sm">{template.name}</p>
         </div>
         <div className="flex items-center gap-3">
           {showSaved && (
@@ -1231,11 +1385,11 @@ function HomeContent() {
               Сохранено
             </div>
           )}
-          <span className="text-[10px] text-gray-400">
+          <span className="text-[10px] text-gray-600">
             <Clock className="w-3 h-3 inline mr-1" />
             {template.actSource}
           </span>
-          <span className="hidden sm:inline-flex items-center gap-1 text-[10px] text-gray-400">
+          <span className="hidden sm:inline-flex items-center gap-1 text-[10px] text-gray-600">
             <Shield className="w-3 h-3" />
             Данные обрабатываются локально в браузере
           </span>
@@ -1251,6 +1405,28 @@ function HomeContent() {
         onGoToPreview={goToPreview}
       />
 
+      {/* №9 аудита: прогресс заполнения обязательных полей */}
+      {wizardStep === "form" && viewMode === "form" && (() => {
+        const { filled, total } = requiredProgress(template, formValues);
+        const pct = total ? Math.round((filled / total) * 100) : 100;
+        return (
+          <div className="mb-6 max-w-4xl">
+            <div className="flex items-center justify-between text-xs text-gray-600 mb-1">
+              <span>Заполнено обязательных полей</span>
+              <span className={pct === 100 ? "text-emerald-600 font-medium" : ""}>
+                {filled} из {total} ({pct}%)
+              </span>
+            </div>
+            <div className="h-1.5 rounded-full bg-gray-100 overflow-hidden">
+              <div
+                className={`h-full rounded-full transition-all duration-300 ${pct === 100 ? "bg-emerald-500" : "bg-brand-500"}`}
+                style={{ width: `${pct}%` }}
+              />
+            </div>
+          </div>
+        );
+      })()}
+
       {/* Template Selector — Step-by-step */}
       {wizardStep === "select" && (
         <>
@@ -1263,7 +1439,7 @@ function HomeContent() {
             favorites={favorites}
             onToggleFavorite={toggleFavorite}
             onSelectTemplate={(id) => {
-              setSelectedTemplateId(id);
+              setSelectedTemplateId(preferBrief(id));
               setWizardStep("form");
             }}
           />
@@ -1275,7 +1451,7 @@ function HomeContent() {
             <h2 className="text-lg font-bold text-gray-900 mb-1">
               Выберите шаблон выше, чтобы начать
             </h2>
-            <p className="text-sm text-gray-500 max-w-md mx-auto">
+            <p className="text-sm text-gray-600 max-w-md mx-auto">
               После выбора откроется форма заполнения — она сохраняется автоматически.
               Заполнить можно в 3 шага: категория → шаблон → документ.
             </p>
@@ -1338,7 +1514,7 @@ function HomeContent() {
                       <p className="text-sm font-semibold text-gray-900">
                         Форма договора
                       </p>
-                      <p className="text-xs text-gray-500">
+                      <p className="text-xs text-gray-600">
                         Выберите версию документа
                       </p>
                     </div>
@@ -1374,6 +1550,7 @@ function HomeContent() {
                 onFieldChange={handleFieldChange}
                 onBlurNormalize={onBlurNormalize}
                 onInnBlur={onInnBlur}
+                onSuggestFill={handleSuggestFill}
                 onGoToPreview={goToPreview}
                 onAudit={handleAudit}
               />
@@ -1400,11 +1577,14 @@ function HomeContent() {
                   renderPreview={renderPreview}
                   onPrint={handlePrint}
                   onCopyJson={handleCopyJson}
-                  onExportPdf={handleExportPdf}
+                  onExportPdf={() => handleExportPdf("pack")}
+                  onExportPdfCurrent={() => handleExportPdf("current")}
                   onExportDocx={handleExportDocx}
                   onOpenEmailModal={handleExportEmail}
                   emailSending={emailSending}
                   onBackToForm={backToForm}
+                  designId={designId}
+                  onDesignChange={setDesignId}
                 />
               </div>
             )}
@@ -1412,20 +1592,20 @@ function HomeContent() {
 
           {/* Right Column: Live preview / Tools */}
           {viewMode === "form" && (<div id="builder-sidebar" className="xl:col-span-2 space-y-4">
-            <div className="flex items-center gap-2 bg-white rounded-xl border border-gray-100 shadow-sm p-1.5">
+            <div className="flex gap-1 bg-slate-100 p-1 rounded-2xl">
               {(
                 [
-                  ["preview", "Аудит и чек-лист", <Eye key="preview" />],
-                  ["tools", "Документы и инструменты", <Wrench key="tools" />],
+                  ["preview", "Аудит и чек-лист", <Eye key="preview" className="w-4 h-4" />],
+                  ["tools", "Документы и инструменты", <Wrench key="tools" className="w-4 h-4" />],
                 ] as const
               ).map(([id, label, icon]) => (
                 <button
                   key={id}
                   onClick={() => setSidebarTab(id)}
-                  className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-all ${
+                  className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
                     sidebarTab === id
-                      ? "bg-brand-50 text-brand-700 border border-brand-200"
-                      : "text-gray-500 hover:bg-gray-50 border border-transparent"
+                      ? "bg-white text-brand-700 shadow-sm"
+                      : "text-slate-600 hover:text-slate-700"
                   }`}
                 >
                   {icon}
@@ -1457,10 +1637,15 @@ function HomeContent() {
                 onToggle={toggleSection}
               >
                 <ChecklistPanel
+                  template={template}
                   checklist={checklist}
                   onChange={(item, checked) =>
                     setChecklist((prev) => ({ ...prev, [item]: checked }))
                   }
+                  packTemplateIds={packTemplateIds}
+                  suggestedDocs={template.suggestedDocs}
+                  onAddDoc={togglePack}
+                  formValues={formValues}
                 />
               </Collapsible>
 
@@ -1481,14 +1666,23 @@ function HomeContent() {
               )}
             </>) : (<>
               {/* Document assembly tools */}
-              {template.supportsOcr && (
-                <OcrScanner
-                  isScanning={isScanning}
-                  scanSuccess={scanSuccess}
-                  fileInputRef={fileInputRef}
-                  onPhotoUpload={handlePhotoUpload}
+              {showScanner && (
+                <DocScanner
+                  template={template}
+                  photos={scanPhotos}
+                  onPhotosChange={handlePhotosChange}
+                  onFieldChange={handleFieldChange}
                 />
               )}
+              <button
+                type="button"
+                onClick={() => setShowScanner(!showScanner)}
+                className="w-full px-3 py-2 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 text-left text-sm font-medium text-gray-700 flex items-center gap-2 transition-colors"
+              >
+                <Camera className="w-4 h-4 text-gray-600" />
+                <span>{showScanner ? "Скрыть сканер" : "Показать сканер документов"}</span>
+                <ChevronDown className={`w-4 h-4 text-gray-600 transition-transform ${showScanner ? "rotate-180" : ""}`} />
+              </button>
               {getRelatedDocs().length > 0 && (
                 <Collapsible
                   id="related"
@@ -1500,7 +1694,7 @@ function HomeContent() {
                     relatedDocs={getRelatedDocs()}
                     packTemplateIds={packTemplateIds}
                     onTogglePack={togglePack}
-                    onSelectTemplate={selectRelatedTemplate}
+                    onSelectTemplate={(id) => selectRelatedTemplate(preferBrief(id))}
                   />
                 </Collapsible>
               )}
@@ -1559,14 +1753,14 @@ function HomeContent() {
                 >
                   <SimilarTemplatesPanel
                     similarTemplates={similarTemplates}
-                    onSelectTemplate={selectRelatedTemplate}
+                    onSelectTemplate={(id) => selectRelatedTemplate(preferBrief(id))}
                   />
                 </Collapsible>
               )}
 
               {/* Data & signatures */}
               <div className="pt-1 pb-0.5">
-                <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide px-1">
+                <p className="text-[10px] font-semibold text-gray-600 uppercase tracking-wide px-1">
                   Данные и подписи
                 </p>
               </div>
@@ -1608,6 +1802,26 @@ function HomeContent() {
                 />
               </Collapsible>
 
+              {personRoles.length > 0 && (
+                <Collapsible
+                  id="persons"
+                  title="Сохранённые лица"
+                  collapsed={!!collapsedSections["persons"]}
+                  onToggle={toggleSection}
+                >
+                  <PersonsPanel
+                    roles={personRoles}
+                    persons={persons}
+                    personsMsg={personsMsg}
+                    meFio={meFio}
+                    onApplyToRole={applyPersonToRole}
+                    onApplyMe={applyMeToRole}
+                    onDelete={deletePerson}
+                    onSave={savePerson}
+                  />
+                </Collapsible>
+              )}
+
               <Collapsible
                 id="esign"
                 title="Подписи сторон (e-sign)"
@@ -1630,6 +1844,7 @@ function HomeContent() {
                 onToggle={toggleSection}
               >
                 <SigningPanel
+                  visible={canShowSignSheet(template.id)}
                   signSheetEnabled={signSheetEnabled}
                   onToggle={setSignSheetEnabled}
                 />
@@ -1663,7 +1878,7 @@ function HomeContent() {
               </div>
               <button
                 onClick={() => setEmailModalOpen(false)}
-                className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-400 transition-colors"
+                className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-600 transition-colors"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -1694,7 +1909,7 @@ function HomeContent() {
                   {emailStatus.text}
                 </p>
               )}
-              <p className="mt-3 text-[11px] text-gray-400">
+              <p className="mt-3 text-[11px] text-gray-600">
                 На почту придёт PDF с документом ({packTemplates.length}{" "}
                 {packTemplates.length > 1 ? "документов" : "документ"}). Ссылки
                 для скачивания активны всегда.
@@ -1719,6 +1934,12 @@ function HomeContent() {
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {toast && (
+        <div className="fixed bottom-6 right-6 bg-gray-900 text-white px-5 py-3 rounded-xl shadow-lg text-sm font-medium z-50 max-w-sm">
+          {toast}
         </div>
       )}
     </div>

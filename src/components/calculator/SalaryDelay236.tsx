@@ -24,7 +24,7 @@ export default function SalaryDelay236() {
     <div className="space-y-4">
       <div className="space-y-3">
         <div className="space-y-1">
-          <label className="text-[10px] font-mono text-gray-500">Сумма задолженности (₽)</label>
+          <label className="text-[10px] font-mono text-gray-600">Сумма задолженности (₽)</label>
           <input
             type="number" min="0" value={sum} onChange={(e) => setSum(e.target.value)}
             placeholder="Например 80000"
@@ -33,12 +33,12 @@ export default function SalaryDelay236() {
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-1">
-            <label className="text-[10px] font-mono text-gray-500">День, когда должны были выплатить</label>
+            <label className="text-[10px] font-mono text-gray-600">День, когда должны были выплатить</label>
             <input type="date" value={due} onChange={(e) => setDue(e.target.value)}
               className="w-full bg-gray-50 border border-gray-200 text-xs py-2.5 px-3 rounded-lg text-gray-900 outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500" />
           </div>
           <div className="space-y-1">
-            <label className="text-[10px] font-mono text-gray-500">День фактического расчёта</label>
+            <label className="text-[10px] font-mono text-gray-600">День фактического расчёта</label>
             <input type="date" value={paid} onChange={(e) => setPaid(e.target.value)}
               className="w-full bg-gray-50 border border-gray-200 text-xs py-2.5 px-3 rounded-lg text-gray-900 outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500" />
           </div>
@@ -55,10 +55,10 @@ export default function SalaryDelay236() {
         <div className="bg-gray-50 rounded-xl p-4 border border-gray-200 space-y-2">
           <div className="flex items-center gap-2">
             <Check className="w-4 h-4 text-emerald-500" />
-            <span className="text-[10px] font-mono text-gray-500">Компенсация по ст. 236 ТК РФ — 1/150 ключевой ставки за день</span>
+            <span className="text-[10px] font-mono text-gray-600">Компенсация по ст. 236 ТК РФ — 1/150 ключевой ставки за день</span>
           </div>
           <p className="text-2xl font-bold text-gray-900">{fmtMoney(result.total)}</p>
-          <p className="text-[11px] text-gray-500">
+          <p className="text-[11px] text-gray-600">
             {result.days} дн. задержки
           </p>
           {result.periods.length > 1 && (
@@ -78,7 +78,7 @@ export default function SalaryDelay236() {
         </div>
       )}
 
-      <p className="text-[11px] text-gray-400 leading-relaxed flex items-start gap-1.5">
+      <p className="text-[11px] text-gray-600 leading-relaxed flex items-start gap-1.5">
         <Banknote className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
         Ст. 236 ТК РФ: компенсация — не ниже 1/150 действующей в период задержки ключевой ставки ЦБ от невыплаченных сумм за каждый день задержки, со дня, следующего за днём выплаты, по день фактического расчёта включительно. Право на компенсацию не зависит от вины работодателя.
       </p>

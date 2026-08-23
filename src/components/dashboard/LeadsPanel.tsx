@@ -69,14 +69,14 @@ export default function LeadsPanel() {
       </div>
 
       {loading ? (
-        <p className="text-sm text-gray-400 py-6 text-center">Загрузка заявок…</p>
+        <p className="text-sm text-gray-600 py-6 text-center">Загрузка заявок…</p>
       ) : leads.length === 0 ? (
         <div className="text-center py-10">
           <div className="w-12 h-12 rounded-2xl bg-gray-50 flex items-center justify-center mx-auto mb-3">
             <Inbox className="w-6 h-6 text-gray-300" />
           </div>
           <p className="text-sm font-medium text-gray-800 mb-1">Заявок пока нет</p>
-          <p className="text-xs text-gray-500">Новые заявки из калькулятора «Растаможка» появятся здесь</p>
+          <p className="text-xs text-gray-600">Новые заявки из калькулятора «Растаможка» появятся здесь</p>
         </div>
       ) : (
         <div className="space-y-3">
@@ -84,12 +84,12 @@ export default function LeadsPanel() {
             <div key={l.id} className="flex flex-col sm:flex-row sm:items-center gap-3 p-4 rounded-xl border border-gray-100 bg-white hover:bg-gray-50/50 transition-colors">
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-gray-900 truncate">{l.brand}</p>
-                <p className="text-xs text-gray-500 mt-0.5 flex items-center gap-1.5 flex-wrap">
+                <p className="text-xs text-gray-600 mt-0.5 flex items-center gap-1.5 flex-wrap">
                   <span className="inline-flex items-center gap-1"><Phone className="w-3 h-3" />{l.phone}</span>
                   <span className="inline-flex items-center gap-1"><Package className="w-3 h-3" />{SERVICE_LABELS[l.service]}</span>
-                  <span className="text-gray-400">{new Date(l.created_at).toLocaleString("ru-RU", { day: "2-digit", month: "2-digit", year: "2-digit", hour: "2-digit", minute: "2-digit" })}</span>
+                  <span className="text-gray-600">{new Date(l.created_at).toLocaleString("ru-RU", { day: "2-digit", month: "2-digit", year: "2-digit", hour: "2-digit", minute: "2-digit" })}</span>
                 </p>
-                {l.vin && <p className="text-[11px] text-gray-400 mt-0.5 font-mono">VIN: {l.vin}</p>}
+                {l.vin && <p className="text-[11px] text-gray-600 mt-0.5 font-mono">VIN: {l.vin}</p>}
               </div>
               <div className="flex items-center gap-2 flex-shrink-0">
                 <Badge variant={STATUS_LABELS[l.status].variant} size="sm" dot>

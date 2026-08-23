@@ -1,11 +1,16 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { limiters, clientIp, checkRateLimit, rateLimitResponse } from "@/lib/ratelimit";
+import { sendEmail, sendTelegram, SUPPORT_EMAIL } from "@/lib/mail";
 
 const SERVICES = ["docs", "full", "kasko"] as const;
 const STATUSES = ["new", "paid", "docs", "filed", "done", "canceled"] as const;
 
 export async function POST(req: Request) {
+  const rl = await checkRateLimit(limiters.publicForm, clientIp(req));
+  if (!rl.ok) return rateLimitResponse(rl.retryAfter);
+
   const body = await req.json().catch(() => null);
   if (!body || typeof body !== "object") {
     return NextResponse.json({ error: "bad body" }, { status: 400 });
@@ -36,11 +41,20 @@ export async function POST(req: Request) {
     .single();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  const text = `Новый лид (растаможка)\nУслуга: ${service}\nБренд: ${brand}\nVIN: ${vin || "—"}\nТел: ${phone}`;
+  await sendTelegram("🔔 " + text);
+  await sendEmail({
+    to: SUPPORT_EMAIL,
+    subject: `Новый лид: ${brand}`,
+    html: `<div style="font-family:Arial,sans-serif;padding:16px;white-space:pre-wrap;color:#374151;">${text}</div>`,
+  });
+
   return NextResponse.json({ data }, { status: 201 });
 }
 
 async function requireAdmin() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();

@@ -47,6 +47,9 @@ export function applyFieldFormat(field: TemplateField, raw: string): string {
 
   if (field.type === "checkbox") return raw;
 
+  // Поля «прописью» (*_words) — обычный текст, не форматировать как число.
+  if (id.endsWith("_words")) return raw;
+
   if (id.includes("vin") || id === "car_vin") {
     return raw.replace(/[^A-Za-z0-9]/g, "").toUpperCase().slice(0, 17);
   }
@@ -59,7 +62,7 @@ export function applyFieldFormat(field: TemplateField, raw: string): string {
   if (id.includes("passport_number")) {
     return raw.replace(/\D/g, "").slice(0, 6);
   }
-  if (id.includes("department_code")) {
+  if (id.includes("department_code") || id.includes("passport_code")) {
     const digits = raw.replace(/\D/g, "").slice(0, 6);
     return digits.length > 3 ? `${digits.slice(0, 3)}-${digits.slice(3)}` : digits;
   }

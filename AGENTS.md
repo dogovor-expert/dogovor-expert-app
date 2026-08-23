@@ -19,3 +19,91 @@
 
 ## Личные файлы
 Не коммитить и не редактировать: prompt-для-нейросети.md, СКОРО_растаможка.md, на-потом.md (в корне репозитория).
+
+## ГЛАВНОЕ ПРАВИЛО: связанные элементы при наполнении контентом (19.08.2026)
+Любое добавление/изменение шаблона документа, поля, раздела, модуля или «любого другого контента» — это НЕ изолированная правка. Ниже — карта связей и обязательный чек-лист. Если не знаешь, какие элементы затронуты — сначала исследование (grep по id/классу/имени), потом правка, потом ВСЕ прогоны из чек-листа. НИКОГДА не помечать задачу «сделано» без полного прогона.
+
+### Карта связей «шаблон → рендер → сканер → образцы»
+
+**A. Шаблон** (`src/data/templates/*.ts`, `parts.ts`, `index.ts`):
+- Каждый шаблон = объект LegalTemplate с полями (`src/data/types.ts`). Категория — из списка в `index.ts` (порядок важен: AUTO, FINANCE, REALTY, BUSINESS, RENTALS, SALES, CONTRACTS, HR, CLAIMS, FINANCE_ACTS, CORPORATE_WEB, FAMILY, OTHER, MIGRATION, LEGAL, POSTAL).
+- Общие блоки — из `parts.ts` (pageShell, pairIntro, pairSign, sideFields, sideBlock, commonClauses, saleSign, rentSign). Повторяющиеся блоки/таблицы — из своего файла (finance-act.ts: itemsRepeating+itemsTable; corporate-web.ts: partyFields, operatorSign, foundersSign, signPairLeft).
+- Обязательные поля типов: select/radio со значениями порождают флаги `field_is_<value>` (только ASCII-значения) в renderDocument; числовые поля автоматически получают `<id>_words` (прописью) — НЕ объявлять такие поля вручную.
+- Счётчик шаблонов: `src/lib/__tests__/templates.test.ts` ожидает точное число (сейчас 367). Добавил шаблон → обнови счётчик.
+
+**B. Поля и валидация**:
+- `src/lib/format.ts` — applyFieldFormat (НИКОГДА не форматировать `*_words` как числа), buildTemplateDefaults (defaultValue + флаги статусов). Новый шаблон без дефолтов ломает загрузку черновиков (builder/page.tsx:571 — слияние `{...buildTemplateDefaults(template), ...draft.values}`).
+- `src/lib/validation.ts` — isFieldVisible/dependsOn; категории полей и статусы (`seller_status: person|ip|legal` и т.п.) должны быть согласованы с шаблоном (sideFields в parts.ts).
+- Роль/статусные префиксы (seller, buyer, owner, driver, landlord, tenant, donor, donee, ...) — фиксированный список в `src/lib/docRequirements.ts` (PERSON_ROLES). Новый префикс роли → добавить в PERSON_ROLES + слоты + тесты docScanner.test.ts.
+
+**C. Итоговые документы PDF/DOCX — КОНТРАКТНЫЕ классы и токены**:
+- Рендереры читают ТОЛЬКО по классам HTML. Менять классы в шаблонах/parts.ts без сверки с рендерами = тихий слом:
+  - `doc-title` (заголовок), `doc-sides` + `doc-sides-title` (блок «Стороны» — в PDF две колонки, в DOCX таблица 2×50% без рамок), `doc-price` (рамка цены), пустой `div.border-b` (линия-разделитель), `flex justify-between` (пара строк), таблицы `<table><th><td>`.
+  - Размеры: px→pt = ×0.75 (text-xs = 9pt, text-sm = 10.5pt; кегли токенов: title 15, subheading 11.5, body 10.5, small 8.5, tiny 7.5), интервалы leading-normal/tight/relaxed, отступы mb-*.
+- Токены — единый источник `src/lib/docDesign.ts` (3 стиля: classic/minimal/brand; диапазоны зафиксированы тестами docDesign.test.ts — менять токены = менять тесты). Шрифты: только TTF в `public/fonts` (OTF → CFF-сабсеттинг pdf-lib при save() крайне медленный). В тестах/скриптах Node шрифты оборачивать `new Uint8Array(readFileSync(...))` (jsdom-реалм, иначе pdf-lib падает).
+- Известные баги-ловушки (исправлены 19.08.2026, регресс-тесты в docDesign.test.ts): орфан-цикл обязан удалять страницы предыдущего рендера (`removePage(0)` × prevCount); оценка высоты блоков sides/columns — только через LayoutEstimator (layoutLines), не «words.length × fontSize × lh»; в renderBlockWithWidth есть `case "row"`.
+
+**D. Сканер документов (OCR)**:
+- Модули: `src/components/builder/DocScanner.tsx`, `OcrScanner.tsx`; логика — `src/lib/docRequirements.ts` (getDocRequirements/getTemplateRoles — слоты паспорт/прописка/ПТС/СТС/ЭПТС/ВУ по id полей) и `src/lib/docOcr.ts` (extractPassportData, extractVehicleData, applyPassportToRole, applyVehicleToTemplate). Конвертер: `src/app/converter` + `src/components/converter/*` (OcrTool, PdfToImages, SignPdf, MergePdf, SplitPdf, ImagesToPdf, DocxToPrint) — всё на pdfjs-dist.
+- Связь: слоты сканера строятся по ПОЛЯМ шаблона. Если новый шаблон использует паспортные/авто-поля с нестандартными id — сканer его не распознает. Именование фиксировано: `<role>_passport`, `<role>_passport_series`, `<role>_passport_number`, `<role>_passport_issued_by`, `<role>_passport_code`, `<role>_address`, `<role>_birthday`, `car_vin`, `car_pts`, `car_epts`, `car_sts`.
+- После любых изменений полей/шаблонов — прогнать `src/lib/__tests__/docScanner.test.ts` (роли, слоты, извлечение, применённые данные).
+
+**E. Образцы и debug**:
+- Папка `samples/` УДАЛЕНА 19.08.2026 (образцы больше не нужны пользователю). Тесты `src/lib/__tests__/gen-samples.test.ts` и `gen-samples-docs.test.ts` ИСКЛЮЧЕНЫ из vitest (см. vitest.config.ts) — при желании пересоздать образцы временно вернуть их в конфиг и прогнать вручную.
+- `src/app/debug/pdf/page.tsx` — SAMPLE обязан содержать флаги статусов (`seller_status`, `buyer_status`, `seller_data_mode`, `buyer_data_mode`, `claim_period` и т.п.), иначе условные секции рендерятся ПУСТЫМИ (реальный кейс: пропал блок «Стороны», 19.08.2026).
+- `_total_pretty` (итог repeating-таблиц) вычисляется в `src/lib/renderDocument.ts` для фиксированного списка id — новый табличный шаблон → добавить его id в этот список.
+
+### Обязательный чек-лист перед завершением ЛЮБОЙ задачи
+1. `npx tsc --noEmit` — чисто.
+2. `npx vitest run` — все тесты (счётчик шаблонов, docDesign, docScanner, renderDocument, validation, format, gen-samples...).
+3. Если менялся шаблон/рендер/токены — открыть свежие образцы в `samples/` и `samples/10-docs/` и программно проверить: шапка/подвал, число страниц, отсутствие пустых полей и плейсхолдеров, нет дублей страниц, нет «дыр» > 60pt (кроме штатных отступов дизайна, напр. 76pt после `doc-title`), блок «Стороны» присутствует.
+4. Если менялись шаблоны/контент, влияющий на каталог/сканер — проверить соответствующие тесты (templates, docScanner).
+5. Задеплоить и проверить прод фактически (см. ниже).
+
+### Деплой и проверка прода (актуальный флоу 19.08.2026)
+- Деплой: `npx vercel --prod --yes --cwd "D:\Мои сайты\site Dogovor"` (прямой флоу; robocopy-флоу ниже — старый, использовать только если прямой падает).
+- «Ready» ≠ код на проде. Проверять фактически: скачивание PDF с прода через playwright (`%TEMP%\opencode\e2e-*.cjs` — chromium из ms-playwright; селекторы: кнопка по тексту «Скачать PDF», select по индексу; ждать гидрации: клик → появление «Генерация…») и программный анализ скачанного PDF через pdfjs-dist (`node_modules/pdfjs-dist/legacy/build/pdf.mjs`, polyfill DOMMatrix; скрипты `%TEMP%\opencode\check-gaps-file.cjs`, `dump-lines.cjs` — текст с y-координатами, зазоры, дубли страниц).
+- Кириллица в PowerShell: `[Console]::OutputEncoding = [System.Text.Encoding]::UTF8` перед запуском node-скриптов; чтение файлов — ReadAllText(..., UTF8).
+
+## Подсказки DaData и сохранённые лица (19.08.2026)
+- Прокси `/api/dadata` (ops: find-party, suggest-party, suggest-address, suggest-fms_unit) возвращает `{error:"subscription required", fallback:true}` без серверного ключа — тогда фронт ходит напрямую в suggestions.dadata.ru с ключом пользователя из `localStorage.dadata_key` (тот же ключ, что в панели «поиск по ИНН»). НЕ менять формат ответа без сверки с `src/components/builder/DadataSuggest.tsx`.
+- Автоподсказки в форме (`DadataSuggest.tsx` + FormField): поля `*_passport_code` → suggest-fms_unit (при выборе заполняются `*_passport_issued_by`/`*_passport_by`/`*_passport_issued`), поля `*_address` → suggest-address (при выборе заполняется `city`, если пусто). Заполнение связанных полей идёт через `onSuggestFill` → `handleSuggestFill` (builder/page.tsx) — применяется ТОЛЬКО к существующим и пустым полям шаблона.
+- Маска `XXX-XXX` в format.ts применяется к `department_code` И `*_passport_code` (не менять).
+- Таблица `public.persons` (миграция `supabase/migrations/008_persons.sql`) — сохранённые физлица. API `/api/persons` (GET/POST/DELETE) зеркалит `/api/contractors`. Панель «Сохранённые лица» (PersonsPanel) с кнопками по ролям из `getTemplateRoles` (PERSON_ROLES в docRequirements.ts — источник правды по префиксам ролей). Маппинг роль↔данные — `src/lib/personMapping.ts` (roleToPerson/personToFields; слоты fio/birthday/phone/passport_series/passport_number/passport_issued_by/passport_code/address). «Мои данные» в панели — из `/api/profile` (full_name; телефон НЕ подставляется — в профиле нет паспорта).
+- ПРИМЕНЯТЬ МИГРАЦИИ: при добавлении таблиц/полей в `supabase/migrations/*.sql` — выполнить их в БД (Management API `POST /v1/projects/<ref>/database/query` с токеном из справочника, или supabase db push / SQL editor). Миграция 008_persons.sql применена к проду 19.08.2026.
+- Новые физлицо-поля в шаблоне должны попадать в слоты сканера/docOcr (именование `<role>_passport_*`/`<role>_address` фиксировано, см. выше).
+
+## Акция PRO 299 ₽ (19.08.2026)
+- Единый источник — `src/lib/pricing.ts`: `PRO_PRICE=299`, `PRO_PRICE_OLD=990`, `PROMO_LABEL="-70%"`, `PROMO_ENDS_AT=2026-09-20T23:59:59+03:00`, `isPromoActive()`, `currentProPrice()`, `formatRub()`. Платежи (`/api/billing/create-payment`, `/api/billing/auto-renew`) берут сумму ТОЛЬКО через `currentProPrice()` — после дедлайна акция гаснет автоматически.
+- Показ промо: billing/page.tsx (бейдж, зачёркнутая 990, «Выгода 691 ₽», таймер `CountdownTimer.tsx`, CTA «Оформить PRO за 299 ₽», «Отмена в любой момент…»), dashboard/page.tsx, PaywallModal.tsx, login/page.tsx (RegisterPromo — шаг email и перед кнопкой регистрации), `PromoPill.tsx` в шапке AppLayout (скрыта для PRO-пользователей и на <md; данные — `/api/subscription-status`).
+- `/billing` закрыт авторизацией — гость редиректится на `/login?next=%2Fbilling`; контент биллинга грузится клиентом (fetch `/api/subscription-status` + `/api/billing/history`).
+- Проверено на проде 19.08.2026 авторизованным e2e-скриптом (все 8 чеков: 299/990/strike/timer/выгода/CTA/отмена). Тестовый аккаунт `promo-test@dogovor.expert` / `PromoTest123!` (email подтверждён, без подписки) — для проверки биллинга.
+- Владелец: `pochta.alik@gmail.com` (id `1c402366-877a-412e-83d8-d19cc507458a`) — is_admin=true, подписка PRO active до 2036-08-16 (выдана через Management API).
+
+## E2E-скрипты с сессией (19.08.2026)
+- Для проверки авторизованных страниц прода: `%TEMP%\opencode\e2e-prod-billing-auth.cjs` — логин через supabase-js (ключ `NEXT_PUBLIC_SUPABASE_ANON_KEY` из `.env.production`, обрезать кавычки), cookie `sb-<ref>-auth-token` = `"base64-" + base64url(JSON.stringify(session БЕЗ user))` (формат @supabase/ssr v0.12; массив [at,rt,null,tt,ei,user] НЕ работает). Cookie: domain dogovor.expert, path /, httpOnly, secure, sameSite Lax. Playwright: `$env:NODE_PATH = "D:\Мои сайты\site Dogovor\node_modules"`, goto ждать `domcontentloaded` + retry ×3 (на проде бывают сетевые таймауты), баннер cookies кликать «Принять», контент биллинга ждать исчезновения «Загрузка…» (waitForFunction).
+
+## Аудит-фиксы 20.08.2026 (важные инварианты, не ломать)
+- **Вебхук YooKassa** (`src/app/api/billing/webhook/route.ts`): IP-allowlist (официальные подсети YooKassa + env `YOOKASSA_IP_ALLOWLIST` через запятую), верификация платежа через API `GET /v3/payments/{id}` (Basic auth) + сверка `amount.value`/`currency` с таблицей, идемпотентность по `row.status`. НЕ добавлять HMAC-проверку «для надёжности» — YooKassa НЕ подписывает вебхуки, работает только IP+API-verify. Клиентский `x-forwarded-for` на Vercel перезаписывается реальным IP (спуфинг невозможен, проверено).
+- **RLS write-lock** (миграция 009): `anon`/`authenticated` НЕ имеют INSERT/UPDATE/DELETE на `subscriptions`/`payments`; `profiles_insert_own` WITH CHECK `is_admin=false`. Подписки/платежи создаёт ТОЛЬКО сервер (service_role). Новые миграции не должны возвращать клиентские гранты/политики на эти таблицы.
+- **Экранирование**: `renderDocument.ts` НЕ вызывает `escapeHtml` для значений в view — экранирует только Mustache `{{}}`; в шаблонах используется `{{x}}`, НЕ `{{{x}}}` (тройные скобки = двойное экранирование, было 5422 таких мест, исправлено). Регресс-тесты в `renderDocument.test.ts`.
+- **Rate limit** (`src/lib/ratelimit.ts`): Upstash sliding window; `clientIp()` здесь — единственный источник; в вебхуке — локальная копия (не импортировать, конфликт имён). Без `UPSTASH_REDIS_REST_URL`/`UPSTASH_REDIS_REST_TOKEN` лимитеры no-op. Ключи Upstash для прода — ОТКРЫТАЯ ЗАДАЧА (спросить владельца).
+- **Next 15**: `createClient()` из `@/lib/supabase/server` — async, вызывать ТОЛЬКО с `await` (28 вызовов уже обновлены); `params`/`searchParams` в роутах/страницах — `Promise` (await/useParams). Реакт-рефы в пропсах — `RefObject<T | null>`. Custom elements объявляются через `declare module "react" { namespace JSX ... }` (не global).
+- **npm overrides**: postcss 8.5.26 + sharp 0.35.3 внутри next (иначе npm audit = 3 high). Целевое состояние: 0 vulnerabilities. Не обновлять next до 16 без согласования (ломает middleware→proxy, Turbopack).
+- PATCH/DELETE `/api/documents/[id]` → 404 при отсутствии строки; `/api/export/email` требует авторизацию; `/debug` защищён middleware; `.env*.production` в .gitignore.
+- Отчёт: `AUDIT-2026-08-19.md` (раздел 7 — статусы исправлений, верифицировано на проде 20.08.2026).
+
+## SEO-инварианты 20.08.2026 (не ломать)
+- **Посадочные документов**: `/documents/[slug]` (slug = `t.id` из LEGAL_TEMPLATES) — SSG (`generateStaticParams` + `dynamicParams=false`). Не удалять; не менять URL-схему без согласования — на неё завязаны sitemap, canonical, JSON-LD, перелинковка и уже отправленные в IndexNow URL.
+- **Title-паттерн посадочных**: `"{name} — образец {YEAR}: составить и скачать бесплатно"`, `YEAR = new Date().getFullYear()` (не хардкодить год). Description = `t.description` + «Заполнение онлайн за 5 минут: PDF и DOCX, без регистрации, бесплатно. Образец {YEAR} года.» — обрезать через `truncateWord(desc, 200)` (по границе слова + «…», НЕ `slice`).
+- **Robots посадочных**: `documents/layout.tsx` не трогать — его `robots: {index:false, follow:false}` нужен личному кабинету `/documents`. В `generateMetadata` `[slug]/page.tsx` ОБЯЗАТЕЛЬНО `robots: {index:true, follow:true}` + `googleBot` — дочерние метаданные переопределяют layout; удаление вернёт noindex на все 367 посадочных.
+- **robots.txt**: `Disallow: /documents$` и `/documents/$` (точные пути, НЕ `Disallow: /documents` — иначе убьёт посадочные). Приватные `/login /billing /dashboard /settings /trash /preview /api/` — в Disallow.
+- **Middleware**: `/documents` — ТОЛЬКО точная проверка `pathname === "/documents" || pathname === "/documents/"`. НЕ добавлять `/documents` в PROTECTED_PREFIXES (редирект на /login убьёт посадочные).
+- **Sitemap** (`src/app/sitemap.ts`, динамический): статический `public/sitemap.xml` удалён — не создавать заново. sitemap = служебные (16) + документы (367, lastmod из `t.lastUpdated`) + блог (индекс + статьи, lastmod из `updatedAt`). Новый шаблон/статья автоматически попадают. Парсер lastmod понимает именительный И родительный падежи месяцев («Апрель»/«апреля»).
+- **templatesMeta.ts**: после ЛЮБОГО изменения `src/data/templates/*.ts` (имена, описания, новые шаблоны) перегенерировать: `npx tsx scripts/generate-templates-meta.mts` (367 записей). Не редактировать файл вручную.
+- **Имена шаблонов уникальны** (аудит 21.08.2026): `auto-lease` = «...между физическими лицами (без экипажа)», `rental-car` = «...без экипажа» (универсальная), `free-use-contract` = «...(простая ссуда)», `loan-use` = «...(ссуда)». Не давать двум шаблонам одинаковое name — каннибализация выдачи.
+- **JSON-LD**: Organization+WebSite+SearchAction — в корневом `layout.tsx` (`<head>`). Посадочные: BreadcrumbList+FAQPage+WebPage (из `src/lib/seo/faq.ts` и `src/components/seo/JsonLd.tsx`). Блог: Article. FAQ на страницах документов берётся из `faqForTemplate(category)` — НЕ хардкодить отдельный FAQ в page-компонентах.
+- **`og.url` НЕ задавать в корневом layout** (жёсткий URL на всех страницах — баг; задавать в metadata каждой страницы).
+- **Блог**: `src/data/blog/posts.ts` — единый источник. Новая статья = 1) добавить объект в `BLOG_POSTS`, 2) не использовать в `relatedDocs` несуществующие id шаблонов (проверять grep по `src/data/templates/*.ts`), 3) sitemap подхватится автоматически, 4) задеплоить, 5) `node scripts/indexnow.mjs`.
+- **IndexNow**: ключ `60f95e2da98647ee80eb7f741083f90c` (файл `public/60f95e2da98647ee80eb7f741083f90c.txt`). После деплоя с новыми/изменёнными URL: `node scripts/indexnow.mjs` (сначала подождать ~2–3 мин после публикации ключевого файла, иначе 403 SiteVerificationNotCompleted; успех = 200/202).
+- Отчёт: `SEO-REPORT.md` (фазы 1–6).

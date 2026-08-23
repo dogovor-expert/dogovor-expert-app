@@ -1,16 +1,10 @@
-import {
-  AlertCircle,
-  AlertTriangle,
-  CheckCircle,
-  Plus,
-  Search,
-  Trash2,
-} from "lucide-react";
-import { useState } from "react";
+import { AlertCircle, AlertTriangle, CheckCircle, Plus, Search, Trash2 } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import type { TemplateField } from "@/data/types";
 import { normalizeOptions, type AuditResult } from "@/lib/validation";
 import { applyFieldFormat } from "@/lib/format";
 import FioDeclineHint from "./FioDeclineHint";
+import { useDadataSuggest, type SuggestOption } from "./DadataSuggest";
 
 interface FormFieldProps {
   field: TemplateField;
@@ -19,6 +13,7 @@ interface FormFieldProps {
   onChange: (fieldId: string, value: string) => void;
   onBlurNormalize: (fieldId: string) => void;
   onInnBlur: (fieldId: string) => void;
+  onSuggestFill?: (pairs: Record<string, string>) => void;
 }
 
 const AUTOCOMPLETE_HINTS: Record<string, string> = {
@@ -46,6 +41,7 @@ export default function FormField({
   onChange,
   onBlurNormalize,
   onInnBlur,
+  onSuggestFill,
 }: FormFieldProps) {
   const [focused, setFocused] = useState(false);
   const hasError = audit.some((r) => r.type === "error");
@@ -57,6 +53,48 @@ export default function FormField({
     !hasWarn &&
     audit.find((r) => r.type === "success")?.message;
 
+  const suggestOp =
+    field.type === "text"
+      ? field.id.includes("passport_code")
+        ? ("suggest-fms-unit" as const)
+        : field.id.includes("address")
+          ? ("suggest-address" as const)
+          : null
+      : null;
+  const { suggestions, loading, query, clear } = useDadataSuggest(
+    suggestOp === "suggest-fms-unit" ? "suggest-fms-unit" : "suggest-address"
+  );
+  const [showSuggest, setShowSuggest] = useState(false);
+  const pickedRef = useRef(false);
+
+  useEffect(() => {
+    if (suggestOp && focused && !pickedRef.current) {
+      query(value);
+    }
+  }, [value, focused, suggestOp, query]);
+
+  const pickSuggestion = (opt: SuggestOption) => {
+    pickedRef.current = true;
+    onChange(field.id, opt.fillValue);
+    let extra = opt.extra ?? {};
+    if (suggestOp === "suggest-fms-unit" && opt.sub) {
+      const prefix = field.id.replace(/_passport_code$/, "");
+      extra = {
+        ...extra,
+        [`${prefix}_passport_issued_by`]: opt.sub,
+        [`${prefix}_passport_by`]: opt.sub,
+        [`${prefix}_passport_issued`]: opt.sub,
+      };
+    }
+    if (Object.keys(extra).length > 0 && onSuggestFill) {
+      onSuggestFill(extra);
+    }
+    clear();
+    setShowSuggest(false);
+  };
+
+  const showDropdown = showSuggest && suggestions.length > 0;
+
   const fieldMessage =
     (errorMsg && (
       <p className="flex items-center gap-1 mt-1 text-[11px] text-red-600">
@@ -65,7 +103,7 @@ export default function FormField({
       </p>
     )) ||
     (warnMsg && (
-      <p className="flex items-center gap-1 mt-1 text-[11px] text-amber-600">
+      <p className="flex items-center gap-1 mt-1 text-[11px] text-amber-700">
         <AlertTriangle className="w-3 h-3 flex-shrink-0" />
         {warnMsg}
       </p>
@@ -82,7 +120,7 @@ export default function FormField({
     value === "" &&
     field.defaultValue !== "" &&
     (field.type === "text" || field.type === "number" || field.type === "textarea") ? (
-      <p className="text-[10px] text-gray-400 mt-0.5">
+      <p className="text-[10px] text-gray-600 mt-0.5">
         Пример: {field.defaultValue}
       </p>
     ) : null;
@@ -179,7 +217,7 @@ export default function FormField({
           </p>
         )}
         {field.validation?.helpText && (
-          <p className="text-[10px] text-gray-400 mt-0.5">
+          <p className="text-[10px] text-gray-600 mt-0.5">
             {field.validation.helpText}
           </p>
         )}
@@ -206,7 +244,7 @@ export default function FormField({
           className={`${baseInputClass} resize-none`}
         />
         {field.validation?.helpText && (
-          <p className="text-[10px] text-gray-400 mt-0.5">
+          <p className="text-[10px] text-gray-600 mt-0.5">
             {field.validation.helpText}
           </p>
         )}
@@ -291,7 +329,7 @@ export default function FormField({
                   <td className="px-1 py-1 border-b text-center">
                     <button
                       onClick={() => removeItem(idx)}
-                      className="p-1 hover:bg-red-50 rounded text-gray-400 hover:text-red-500 transition-colors"
+                      className="p-1 hover:bg-red-50 rounded text-gray-600 hover:text-red-500 transition-colors"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
@@ -313,6 +351,12 @@ export default function FormField({
             Итого: {total.toLocaleString("ru-RU")} ₽
           </span>
         </div>
+        {field.hint && (
+          <p className="flex items-start gap-1.5 mt-1 text-[10px] text-brand-700 bg-brand-50 border border-brand-100 rounded-lg px-2.5 py-1.5">
+            <AlertCircle className="w-3.5 h-3.5 flex-shrink-0 mt-px" />
+            <span>{field.hint}</span>
+          </p>
+        )}
         {fieldMessage}
       </div>
     );
@@ -326,36 +370,77 @@ export default function FormField({
         {field.label}
         {requiredMark}
       </label>
-      <input
-        id={field.id}
-        type={
-          field.type === "date"
-            ? "date"
-            : field.type === "number"
-              ? "number"
-              : "text"
-        }
-        value={value}
-        placeholder={field.placeholder}
-        autoComplete={autoComplete}
-        inputMode={inputMode}
-        onChange={(e) => onChange(field.id, applyFieldFormat(field, e.target.value))}
-        onBlur={() => {
-          setFocused(false);
-          if (field.type === "text") {
-            onBlurNormalize(field.id);
-            if (field.id.includes("inn")) onInnBlur(field.id);
+      <div className="relative">
+        <input
+          id={field.id}
+          type={
+            field.type === "date"
+              ? "date"
+              : field.type === "number"
+                ? "number"
+                : "text"
           }
-        }}
-        onFocus={() => setFocused(true)}
-        aria-invalid={hasError || undefined}
-        list={
-          field.suggestions && field.suggestions.length > 0
-            ? `datalist-${field.id}`
-            : undefined
-        }
-        className={baseInputClass}
-      />
+          value={value}
+          placeholder={field.placeholder}
+          autoComplete={autoComplete}
+          inputMode={inputMode}
+          onChange={(e) => {
+            pickedRef.current = false;
+            onChange(field.id, applyFieldFormat(field, e.target.value));
+          }}
+          onBlur={() => {
+            setFocused(false);
+            setShowSuggest(false);
+            if (field.type === "text") {
+              onBlurNormalize(field.id);
+              if (field.id.includes("inn")) onInnBlur(field.id);
+            }
+          }}
+          onFocus={() => {
+            setFocused(true);
+            if (suggestOp) setShowSuggest(true);
+          }}
+          onKeyDown={(e) => {
+            if (e.key === "Escape") {
+              setShowSuggest(false);
+              (e.target as HTMLInputElement).blur();
+            }
+          }}
+          aria-invalid={hasError || undefined}
+          list={
+            field.suggestions && field.suggestions.length > 0
+              ? `datalist-${field.id}`
+              : undefined
+          }
+          className={baseInputClass}
+        />
+        {showDropdown && (
+          <div className="absolute left-0 right-0 top-full mt-1 z-30 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden">
+            <ul className="max-h-56 overflow-y-auto">
+              {suggestions.map((s, i) => (
+                <li key={i}>
+                  <button
+                    type="button"
+                    onMouseDown={(e) => e.preventDefault()}
+                    onClick={() => pickSuggestion(s)}
+                    className="w-full text-left px-3 py-2 text-sm text-gray-800 hover:bg-brand-50 transition-colors"
+                  >
+                    <span className="block">{s.value}</span>
+                    {s.sub && s.sub !== s.value && (
+                      <span className="block text-[11px] text-gray-600">{s.sub}</span>
+                    )}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+        {loading && (
+          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-gray-600">
+            ищем…
+          </span>
+        )}
+      </div>
       {field.suggestions && field.suggestions.length > 0 && (
         <datalist id={`datalist-${field.id}`}>
           {field.suggestions.map((s) => (
@@ -364,8 +449,14 @@ export default function FormField({
         </datalist>
       )}
       {field.validation?.helpText && (
-        <p className="text-[10px] text-gray-400 mt-0.5">
+        <p className="text-[10px] text-gray-600 mt-0.5">
           {field.validation.helpText}
+        </p>
+      )}
+      {field.hint && (
+        <p className="flex items-start gap-1.5 mt-1 text-[10px] text-brand-700 bg-brand-50 border border-brand-100 rounded-lg px-2.5 py-1.5">
+          <AlertCircle className="w-3.5 h-3.5 flex-shrink-0 mt-px" />
+          <span>{field.hint}</span>
         </p>
       )}
       {fieldMessage}
@@ -382,7 +473,7 @@ export default function FormField({
           href="https://egrul.nalog.ru"
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center gap-1 mt-1 text-[10px] text-gray-400 hover:text-brand-600 transition-colors"
+          className="inline-flex items-center gap-1 mt-1 text-[10px] text-gray-600 hover:text-brand-600 transition-colors"
         >
           <Search className="w-3 h-3" />
           Свериться с ЕГРЮЛ на egrul.nalog.ru

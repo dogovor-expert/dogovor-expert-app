@@ -32,7 +32,7 @@ export default function ConfirmClient({ next }: { next: string }) {
         <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-brand-50 text-brand-600 mb-4">
           <Loader2 className="w-7 h-7 animate-spin" />
         </div>
-        <p className="text-sm text-gray-500">{status}</p>
+        <p className="text-sm text-gray-600">{status}</p>
       </div>
     </div>
   );

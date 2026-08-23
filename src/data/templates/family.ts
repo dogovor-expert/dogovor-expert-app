@@ -55,32 +55,7 @@ export const TEMPLATES_FAMILY: LegalTemplate[] = [
         defaultValue: "", category: "buyer",
       },
     ],
-    previewTemplate: `
-<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
-  <div class="text-center font-bold text-base mb-6 text-black uppercase">Согласие супруга(и) на продажу имущества</div>
-  <div class="flex justify-between mb-6 text-xs font-semibold">
-    <div>г. {{{city}}}</div>
-    <div>«{{{date}}}»</div>
-  </div>
-  <p class="mb-4 text-justify">
-    Я, гражданин <strong>{{{spouse_fio}}}</strong>, паспорт {{{spouse_passport}}}, зарегистрированный по адресу: {{{spouse_address}}}, являясь супругом(ой) гражданина <strong>{{{owner_fio}}}</strong>, настоящим даю согласие на продажу следующего имущества:
-  </p>
-  <p class="mb-4 text-justify">
-    <strong>Тип:</strong> {{{object_type}}}, <strong>Описание:</strong> {{{object_address}}}
-  </p>
-  <p class="mb-4 text-justify">
-    {{{#buyer_fio}}}Покупатель: {{{buyer_fio}}}{{{/buyer_fio}}}
-  </p>
-  <p class="mb-4 text-justify">
-    Настоящее согласие действует в течение всего срока действия сделки по продаже указанного имущества.
-  </p>
-  <div class="flex justify-end mt-12 text-xs">
-    <div class="text-right">
-      <div class="border-b border-zinc-950 w-64 h-5 mb-1"></div>
-      <p class="text-zinc-400 text-[10px]">Подпись / {{{spouse_fio}}}</p>
-    </div>
-  </div>
-</div>`,
+    
   },
 {
     id: "marriage-contract",
@@ -146,69 +121,7 @@ export const TEMPLATES_FAMILY: LegalTemplate[] = [
         defaultValue: "", category: "family",
       },
     ],
-    previewTemplate: `
-<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
-  <div class="text-center font-bold text-base mb-6 text-black uppercase">Брачный договор</div>
-  <div class="flex justify-between mb-6 text-xs font-semibold">
-    <div>г. {{{city}}}</div>
-    <div>«{{{date}}}»</div>
-  </div>
-  <p class="mb-4 text-justify">
-    Гражданин <strong>{{{spouse1_fio}}}</strong>, паспорт {{{spouse1_passport}}}, и гражданка <strong>{{{spouse2_fio}}}</strong>, паспорт {{{spouse2_passport}}}, состоящие в браке, зарегистрированном «{{{marriage_date}}}», именуемые вместе «Супруги», заключили настоящий договор:
-  </p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">1. Общие положения</div>
-  <p class="mb-4 text-justify">
-    1.1. Настоящий договор определяет имущественные права и обязанности Супругов в браке и (или) в случае его расторжения.
-  </p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">2. Режим собственности</div>
-  <p class="mb-4 text-justify">
-    2.1. На имущество, нажитое супругами во время брака, устанавливается режим: {{{regime}}}.
-  </p>
-  <p class="mb-4 text-justify">
-    2.2. Имущество, на которое распространяется режим: {{{property_list}}}.
-  </p>
-  {{#mixed_notes}}
-  <p class="mb-4 text-justify">
-    2.3. Особенности режима: {{{mixed_notes}}}.
-  </p>
-  {{/mixed_notes}}
-  <div class="font-bold mb-2 text-black text-xs uppercase">3. Прочие условия</div>
-  <p class="mb-4 text-justify">
-    3.1. {{{children_note}}}.
-  </p>
-  <p class="mb-4 text-justify">
-    3.2. Договор подлежит нотариальному удостоверению и вступает в силу с момента его удостоверения.
-  </p>
-  
-  <div class="font-bold mb-2 text-black text-xs uppercase">4. Форс-мажор</div>
-  <p class="mb-4 text-justify">
-    4.1. Стороны освобождаются от ответственности за частичное или полное неисполнение обязательств по настоящему договору, если оно явилось следствием обстоятельств непреодолимой силы (форс-мажора): стихийных бедствий, пожаров, наводнений, землетрясений, эпидемий, военных действий, решений органов государственной власти, а также иных обстоятельств, которые стороны не могли предвидеть и предотвратить разумными мерами.
-  </p>
-  <p class="mb-4 text-justify">
-    4.2. Сторона, для которой создалась невозможность исполнения обязательств, обязана незамедлительно, но не позднее 10 (десяти) календарных дней с момента наступления таких обстоятельств, письменно уведомить другую сторону об их возникновении. Неуведомление либо несвоевременное уведомление лишает сторону права ссылаться на форс-мажор как на основание освобождения от ответственности.
-  </p>
-  <p class="mb-4 text-justify">
-    4.3. Если обстоятельства непреодолимой силы действуют более 60 (шестидесяти) календарных дней, каждая из сторон вправе в одностороннем порядке отказаться от исполнения настоящего договора, письменно уведомив другую сторону.
-  </p>
-
-  <div class="font-bold mb-2 text-black text-xs uppercase">5. Порядок разрешения споров</div>
-  <p class="mb-4 text-justify">
-    5.1. Все споры и разногласия, возникающие из настоящего договора или в связи с ним, стороны разрешают путём переговоров. Срок рассмотрения письменной претензии — 10 (десять) календарных дней с момента её получения.
-  </p>
-  <p class="mb-4 text-justify">
-    5.2. При недостижении согласия споры разрешаются в судебном порядке в соответствии с действующим законодательством Российской Федерации.
-  </p>
-<div class="grid grid-cols-2 gap-6 mt-8 text-xs border-t border-zinc-300 pt-4">
-    <div>
-      <div class="font-bold mb-1">{{{spouse1_fio}}}:</div>
-      <div class="mt-8 border-b border-zinc-950 w-44 h-5"></div>
-    </div>
-    <div>
-      <div class="font-bold mb-1">{{{spouse2_fio}}}:</div>
-      <div class="mt-8 border-b border-zinc-950 w-44 h-5"></div>
-    </div>
-  </div>
-</div>`,
+    
   },
 {
     id: "alimony-agreement",
@@ -289,73 +202,7 @@ export const TEMPLATES_FAMILY: LegalTemplate[] = [
         defaultValue: "До совершеннолетия (18 лет)", category: "family",
       },
     ],
-    previewTemplate: `
-<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
-  <div class="text-center font-bold text-base mb-6 text-black uppercase">Соглашение об уплате алиментов</div>
-  <div class="flex justify-between mb-6 text-xs font-semibold">
-    <div>г. {{{city}}}</div>
-    <div>«{{{date}}}»</div>
-  </div>
-  <p class="mb-4 text-justify">
-    Гражданин <strong>{{{payer_fio}}}</strong>, паспорт {{{payer_passport}}}, именуемый «Плательщик», и гражданка <strong>{{{receiver_fio}}}</strong>, паспорт {{{receiver_passport}}}, именуемая «Получатель», заключили соглашение об уплате алиментов на содержание ребёнка:
-  </p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">1. Предмет соглашения</div>
-  <p class="mb-4 text-justify">
-    1.1. Плательщик обязуется уплачивать алименты на содержание <strong>{{{child_fio}}}</strong>, {{{child_birthday}}} года рождения, а Получатель — принимать их.
-  </p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">2. Размер алиментов</div>
-  {{#amount_fixed}}
-  <p class="mb-4 text-justify">
-    2.1. Алименты уплачиваются в твёрдой денежной сумме: <strong>{{{amount_fixed}}} руб.</strong> ({{{amount_fixed_words}}}) ежемесячно.
-  </p>
-  {{/amount_fixed}}
-  {{#amount_share}}
-  <p class="mb-4 text-justify">
-    2.1. Алименты уплачиваются в размере <strong>{{{amount_share}}}</strong> от всех видов заработка Плательщика.
-  </p>
-  {{/amount_share}}
-  <p class="mb-4 text-justify">
-    2.2. Оплата производится не позднее {{{pay_day}}}-го числа каждого месяца.
-  </p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">3. Срок действия</div>
-  <p class="mb-4 text-justify">
-    3.1. Уплата производится {{{until_note}}}.
-  </p>
-  <p class="mb-4 text-justify">
-    3.2. Соглашение подлежит нотариальному удостоверению и имеет силу исполнительного листа.
-  </p>
-  
-  <div class="font-bold mb-2 text-black text-xs uppercase">4. Форс-мажор</div>
-  <p class="mb-4 text-justify">
-    4.1. Стороны освобождаются от ответственности за частичное или полное неисполнение обязательств по настоящему договору, если оно явилось следствием обстоятельств непреодолимой силы (форс-мажора): стихийных бедствий, пожаров, наводнений, землетрясений, эпидемий, военных действий, решений органов государственной власти, а также иных обстоятельств, которые стороны не могли предвидеть и предотвратить разумными мерами.
-  </p>
-  <p class="mb-4 text-justify">
-    4.2. Сторона, для которой создалась невозможность исполнения обязательств, обязана незамедлительно, но не позднее 10 (десяти) календарных дней с момента наступления таких обстоятельств, письменно уведомить другую сторону об их возникновении. Неуведомление либо несвоевременное уведомление лишает сторону права ссылаться на форс-мажор как на основание освобождения от ответственности.
-  </p>
-  <p class="mb-4 text-justify">
-    4.3. Если обстоятельства непреодолимой силы действуют более 60 (шестидесяти) календарных дней, каждая из сторон вправе в одностороннем порядке отказаться от исполнения настоящего договора, письменно уведомив другую сторону.
-  </p>
-
-  <div class="font-bold mb-2 text-black text-xs uppercase">5. Порядок разрешения споров</div>
-  <p class="mb-4 text-justify">
-    5.1. Все споры и разногласия, возникающие из настоящего договора или в связи с ним, стороны разрешают путём переговоров. Срок рассмотрения письменной претензии — 10 (десять) календарных дней с момента её получения.
-  </p>
-  <p class="mb-4 text-justify">
-    5.2. При недостижении согласия споры разрешаются в судебном порядке в соответствии с действующим законодательством Российской Федерации.
-  </p>
-<div class="grid grid-cols-2 gap-6 mt-8 text-xs border-t border-zinc-300 pt-4">
-    <div>
-      <div class="font-bold mb-1">Плательщик:</div>
-      <p>{{{payer_fio}}}</p>
-      <div class="mt-8 border-b border-zinc-950 w-44 h-5"></div>
-    </div>
-    <div>
-      <div class="font-bold mb-1">Получатель:</div>
-      <p>{{{receiver_fio}}}</p>
-      <div class="mt-8 border-b border-zinc-950 w-44 h-5"></div>
-    </div>
-  </div>
-</div>`,
+    
   },
 {
     id: "gift-agreement",
@@ -440,75 +287,7 @@ export const TEMPLATES_FAMILY: LegalTemplate[] = [
         category: "family",
       },
     ],
-    previewTemplate: `
-<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
-  <div class="text-center font-bold text-base mb-6 text-black uppercase">Договор дарения</div>
-  <div class="flex justify-between mb-6 text-xs font-semibold">
-    <div>г. {{{city}}}</div>
-    <div>«{{{date}}}»</div>
-  </div>
-  <p class="mb-4 text-justify">
-    Гражданин <strong>{{{donor_fio}}}</strong>, паспорт {{{donor_passport}}}, именуемый «Даритель», с одной стороны, и
-  </p>
-  <p class="mb-4 text-justify">
-    гражданин <strong>{{{donee_fio}}}</strong>, паспорт {{{donee_passport}}}, именуемый «Одаряемый», с другой стороны, заключили договор о нижеследующем:
-  </p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">1. Предмет договора</div>
-  <p class="mb-4 text-justify">
-    1.1. Даритель безвозмездно передаёт в собственность Одаряемого: <strong>{{{gift_description}}}</strong>.
-  </p>
-  {{#cadastral_number}}
-  <p class="mb-4 text-justify">1.2. Кадастровый номер: {{{cadastral_number}}}.</p>
-  {{/cadastral_number}}
-  {{#gift_car_vin}}
-  <p class="mb-4 text-justify">1.2. VIN: {{{gift_car_vin}}}.</p>
-  {{/gift_car_vin}}
-  {{#gift_money}}
-  <p class="mb-4 text-justify">
-    1.2. Сумма денежных средств: <strong>{{{gift_money}}} руб.</strong> ({{{gift_money_words}}}).
-  </p>
-  {{/gift_money}}
-  <div class="font-bold mb-2 text-black text-xs uppercase">2. Отношения сторон</div>
-  <p class="mb-4 text-justify">
-    2.1. Одаряемый состоит с Дарителем в родстве: {{{relation}}}.
-  </p>
-  <p class="mb-4 text-justify">2.2. {{{tax_note}}}.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">3. Прочие условия</div>
-  <p class="mb-4 text-justify">
-    3.1. Договор не содержит условий о передаче имущества после смерти Дарителя (обещание дарения на случай смерти ничтожно).
-  </p>
-  
-  <div class="font-bold mb-2 text-black text-xs uppercase">4. Форс-мажор</div>
-  <p class="mb-4 text-justify">
-    4.1. Стороны освобождаются от ответственности за частичное или полное неисполнение обязательств по настоящему договору, если оно явилось следствием обстоятельств непреодолимой силы (форс-мажора): стихийных бедствий, пожаров, наводнений, землетрясений, эпидемий, военных действий, решений органов государственной власти, а также иных обстоятельств, которые стороны не могли предвидеть и предотвратить разумными мерами.
-  </p>
-  <p class="mb-4 text-justify">
-    4.2. Сторона, для которой создалась невозможность исполнения обязательств, обязана незамедлительно, но не позднее 10 (десяти) календарных дней с момента наступления таких обстоятельств, письменно уведомить другую сторону об их возникновении. Неуведомление либо несвоевременное уведомление лишает сторону права ссылаться на форс-мажор как на основание освобождения от ответственности.
-  </p>
-  <p class="mb-4 text-justify">
-    4.3. Если обстоятельства непреодолимой силы действуют более 60 (шестидесяти) календарных дней, каждая из сторон вправе в одностороннем порядке отказаться от исполнения настоящего договора, письменно уведомив другую сторону.
-  </p>
-
-  <div class="font-bold mb-2 text-black text-xs uppercase">5. Порядок разрешения споров</div>
-  <p class="mb-4 text-justify">
-    5.1. Все споры и разногласия, возникающие из настоящего договора или в связи с ним, стороны разрешают путём переговоров. Срок рассмотрения письменной претензии — 10 (десять) календарных дней с момента её получения.
-  </p>
-  <p class="mb-4 text-justify">
-    5.2. При недостижении согласия споры разрешаются в судебном порядке в соответствии с действующим законодательством Российской Федерации.
-  </p>
-<div class="grid grid-cols-2 gap-6 mt-8 text-xs border-t border-zinc-300 pt-4">
-    <div>
-      <div class="font-bold mb-1">Даритель:</div>
-      <p>{{{donor_fio}}}</p>
-      <div class="mt-8 border-b border-zinc-950 w-44 h-5"></div>
-    </div>
-    <div>
-      <div class="font-bold mb-1">Одаряемый:</div>
-      <p>{{{donee_fio}}}</p>
-      <div class="mt-8 border-b border-zinc-950 w-44 h-5"></div>
-    </div>
-  </div>
-</div>`,
+    
   },
 {
     id: "child-travel-consent",
@@ -565,23 +344,7 @@ export const TEMPLATES_FAMILY: LegalTemplate[] = [
         defaultValue: "", category: "contract",
       },
     ],
-    previewTemplate: `
-<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
-  <div class="text-center font-bold text-base mb-6 text-black uppercase">Согласие на выезд несовершеннолетнего ребёнка за границу</div>
-  <div class="flex justify-between mb-6 text-xs font-semibold">
-    <div>г. {{{city}}}</div>
-    <div>«{{{date}}}»</div>
-  </div>
-  <p class="mb-4 text-justify">
-    Я, <strong>{{{parent_fio}}}</strong>, паспорт {{{parent_passport}}}, зарегистрированная(ый) по адресу: {{{parent_address}}}, даю согласие на выезд из Российской Федерации моего(ей) несовершеннолетнего(ей) сына (дочери) <strong>{{{child_fio}}}</strong>, {{{child_birthday}}} года рождения, {{{child_passport}}}, в страну <strong>{{{country}}}</strong> на период {{{travel_dates}}}.
-  </p>
-  <p class="mb-4 text-justify">
-    Выезд осуществляется в сопровождении {{{companion_fio}}}.
-  </p>
-  <p class="mb-4 text-justify">Согласие удостоверено нотариусом, настоящее согласие выдано для предъявления в органы пограничного контроля.</p>
-  <div class="border-b border-zinc-950 w-56 h-5 mt-6"></div>
-  <p class="text-xs"><strong>{{{parent_fio}}}</strong></p>
-</div>`,
+    
   },
 {
     id: "property-division",
@@ -639,46 +402,7 @@ export const TEMPLATES_FAMILY: LegalTemplate[] = [
         category: "contract",
       },
     ],
-    previewTemplate: `
-<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
-  <div class="text-center font-bold text-base mb-6 text-black uppercase">Соглашение о разделе совместно нажитого имущества</div>
-  <div class="flex justify-between mb-6 text-xs font-semibold">
-    <div>г. {{{city}}}</div>
-    <div>«{{{date}}}»</div>
-  </div>
-  <p class="mb-4 text-justify">
-    Гражданин <strong>{{{spouse1_fio}}}</strong>, паспорт {{{spouse1_passport}}}, зарегистрированный по адресу: {{{spouse1_address}}}, и гражданка <strong>{{{spouse2_fio}}}</strong>, паспорт {{{spouse2_passport}}}, зарегистрированная по адресу: {{{spouse2_address}}}, состоящие в зарегистрированном браке с {{{marriage_date}}}, в соответствии со ст. 38 СК РФ заключили настоящее соглашение о разделе имущества, нажитого в период брака:
-  </p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">1. Разделяемое имущество</div>
-  <p class="mb-4 text-justify">1.1. Стороны произвели раздел следующего совместно нажитого имущества: {{{property_list}}}.</p>
-  <p class="mb-4 text-justify">1.2. {{{children_note}}}.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">2. Порядок вступления в силу</div>
-  <p class="mb-4 text-justify">2.1. Соглашение вступает в силу с момента подписания (при разделе недвижимости — с момента государственной регистрации права).</p>
-  <p class="mb-4 text-justify">2.2. В остальном, что не предусмотрено настоящим соглашением, стороны руководствуются законодательством РФ.</p>
-  
-  <div class="font-bold mb-2 text-black text-xs uppercase">3. Форс-мажор</div>
-  <p class="mb-4 text-justify">
-    3.1. Стороны освобождаются от ответственности за частичное или полное неисполнение обязательств по настоящему договору, если оно явилось следствием обстоятельств непреодолимой силы (форс-мажора): стихийных бедствий, пожаров, наводнений, землетрясений, эпидемий, военных действий, решений органов государственной власти, а также иных обстоятельств, которые стороны не могли предвидеть и предотвратить разумными мерами.
-  </p>
-  <p class="mb-4 text-justify">
-    3.2. Сторона, для которой создалась невозможность исполнения обязательств, обязана незамедлительно, но не позднее 10 (десяти) календарных дней с момента наступления таких обстоятельств, письменно уведомить другую сторону об их возникновении. Неуведомление либо несвоевременное уведомление лишает сторону права ссылаться на форс-мажор как на основание освобождения от ответственности.
-  </p>
-  <p class="mb-4 text-justify">
-    3.3. Если обстоятельства непреодолимой силы действуют более 60 (шестидесяти) календарных дней, каждая из сторон вправе в одностороннем порядке отказаться от исполнения настоящего договора, письменно уведомив другую сторону.
-  </p>
-
-  <div class="font-bold mb-2 text-black text-xs uppercase">4. Порядок разрешения споров</div>
-  <p class="mb-4 text-justify">
-    4.1. Все споры и разногласия, возникающие из настоящего договора или в связи с ним, стороны разрешают путём переговоров. Срок рассмотрения письменной претензии — 10 (десять) календарных дней с момента её получения.
-  </p>
-  <p class="mb-4 text-justify">
-    4.2. При недостижении согласия споры разрешаются в судебном порядке в соответствии с действующим законодательством Российской Федерации.
-  </p>
-<div class="grid grid-cols-2 gap-6 mt-8 text-xs border-t border-zinc-300 pt-4">
-    <div><div class="font-bold mb-1">Супруг:</div><p class="mb-1"><strong>{{{spouse1_fio}}}</strong></p><div class="border-b border-zinc-950 w-44 h-5 mt-8"></div></div>
-    <div><div class="font-bold mb-1">Супруга:</div><p class="mb-1"><strong>{{{spouse2_fio}}}</strong></p><div class="border-b border-zinc-950 w-44 h-5 mt-8"></div></div>
-  </div>
-</div>`,
+    
   },
 {
     id: "nanny-agreement",
@@ -740,48 +464,7 @@ export const TEMPLATES_FAMILY: LegalTemplate[] = [
         category: "executor",
       },
     ],
-    previewTemplate: `
-<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
-  <div class="text-center font-bold text-base mb-6 text-black uppercase">Договор оказания услуг няни</div>
-  <div class="flex justify-between mb-6 text-xs font-semibold">
-    <div>г. {{{city}}}</div>
-    <div>«{{{date}}}»</div>
-  </div>
-  <p class="mb-4 text-justify">
-    <strong>{{{customer_fio}}}</strong>, именуемая в дальнейшем «Заказчик», с одной стороны, и <strong>{{{executor_fio}}}</strong>, паспорт {{{executor_passport}}}, именуемая в дальнейшем «Исполнитель», с другой стороны, заключили настоящий договор о нижеследующем:
-  </p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">1. Предмет договора</div>
-  <p class="mb-4 text-justify">1.1. Исполнитель обязуется осуществлять присмотр и уход за ребёнком <strong>{{{child_fio}}}</strong>, {{{child_age}}} лет, на условиях настоящего договора.</p>
-  <p class="mb-4 text-justify">1.2. Место оказания услуг: {{{work_address}}}. График: {{{work_hours}}}.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">2. Обязанности Исполнителя</div>
-  <p class="mb-4 text-justify">2.1. Исполнитель обязуется: {{{duties_list}}}; обеспечивать безопасность ребёнка, незамедлительно сообщать Заказчику о происшествиях.</p>
-  <p class="mb-4 text-justify">2.2. {{#medical_book}}Исполнитель имеет действующую медицинскую книжку и обязуется предоставлять её по требованию Заказчика.{{/medical_book}}</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">3. Оплата услуг</div>
-  <p class="mb-4 text-justify">3.1. Стоимость услуг составляет: {{{service_price}}}. Оплата производится ежемесячно не позднее 5 числа следующего месяца.</p>
-  
-  <div class="font-bold mb-2 text-black text-xs uppercase">4. Форс-мажор</div>
-  <p class="mb-4 text-justify">
-    4.1. Стороны освобождаются от ответственности за частичное или полное неисполнение обязательств по настоящему договору, если оно явилось следствием обстоятельств непреодолимой силы (форс-мажора): стихийных бедствий, пожаров, наводнений, землетрясений, эпидемий, военных действий, решений органов государственной власти, а также иных обстоятельств, которые стороны не могли предвидеть и предотвратить разумными мерами.
-  </p>
-  <p class="mb-4 text-justify">
-    4.2. Сторона, для которой создалась невозможность исполнения обязательств, обязана незамедлительно, но не позднее 10 (десяти) календарных дней с момента наступления таких обстоятельств, письменно уведомить другую сторону об их возникновении. Неуведомление либо несвоевременное уведомление лишает сторону права ссылаться на форс-мажор как на основание освобождения от ответственности.
-  </p>
-  <p class="mb-4 text-justify">
-    4.3. Если обстоятельства непреодолимой силы действуют более 60 (шестидесяти) календарных дней, каждая из сторон вправе в одностороннем порядке отказаться от исполнения настоящего договора, письменно уведомив другую сторону.
-  </p>
-
-  <div class="font-bold mb-2 text-black text-xs uppercase">5. Порядок разрешения споров</div>
-  <p class="mb-4 text-justify">
-    5.1. Все споры и разногласия, возникающие из настоящего договора или в связи с ним, стороны разрешают путём переговоров. Срок рассмотрения письменной претензии — 10 (десять) календарных дней с момента её получения.
-  </p>
-  <p class="mb-4 text-justify">
-    5.2. При недостижении согласия споры разрешаются в судебном порядке в соответствии с действующим законодательством Российской Федерации.
-  </p>
-<div class="grid grid-cols-2 gap-6 mt-8 text-xs border-t border-zinc-300 pt-4">
-    <div><div class="font-bold mb-1">Заказчик:</div><p class="mb-1"><strong>{{{customer_fio}}}</strong></p><div class="border-b border-zinc-950 w-44 h-5 mt-8"></div></div>
-    <div><div class="font-bold mb-1">Исполнитель:</div><p class="mb-1"><strong>{{{executor_fio}}}</strong></p><div class="border-b border-zinc-950 w-44 h-5 mt-8"></div></div>
-  </div>
-</div>`,
+    
   },
 {
       id: "will",
@@ -807,42 +490,7 @@ export const TEMPLATES_FAMILY: LegalTemplate[] = [
       { id: "notary", label: "Нотариус (ФИО)", type: "text", defaultValue: "", category: "notary" },
       { id: "notary_district", label: "Нотариальный округ", type: "text", defaultValue: "", category: "notary" },
     ],
-    previewTemplate: `
-<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
-  <div class="text-center font-bold text-base mb-6 text-black uppercase">Завещание</div>
-  <div class="flex justify-between mb-6 text-xs font-semibold">
-    <div>г. {{{city}}}</div>
-    <div>«{{{date}}}»</div>
-  </div>
-  <p class="mb-4 text-justify">
-    Я, <strong>{{{testator_fio}}}</strong>, {{{testator_birthdate}}} года рождения,
-    паспорт: {{{testator_passport}}}, зарегистрированный по адресу: {{{testator_living_address}}},
-    настоящим завещанием делаю следующее распоряжение (ст. 1118-1120 ГК РФ):
-  </p>
-  <p class="mb-4 text-justify font-bold">1. Распоряжение об имуществе</p>
-  <p class="mb-3 text-justify">Всё имущество, какое на день моей смерти окажется мне принадлежащим, в том числе:
-    {{{property_desc}}}, я завещаю:</p>
-  <p class="mb-2 text-justify">— {{{heir1_fio}}} — {{{heir1_share}}} (доли);</p>
-  {{{#heir2_fio}}}<p class="mb-3 text-justify">— {{{heir2_fio}}} — {{{heir2_share}}} (доли).</p>{{{/heir2_fio}}}
-  {{{#legacy_refusal}}}<p class="mb-3 text-justify font-bold">2. Иные распоряжения:</p>
-  <p class="mb-3 text-justify">{{{legacy_refusal}}}.</p>{{{/legacy_refusal}}}
-  <p class="mb-3 text-justify">
-    Содержание ст. 1149 ГК РФ (право на обязательную долю) мне нотариусом разъяснено.
-    Настоящее завещание удостоверяется в присутствии нотариуса; личностно совершено в одном экземпляре (ст. 1125 ГК РФ).
-  </p>
-  <div class="flex justify-between mt-10 text-xs">
-    <div class="w-1/2 pr-4">
-      <p class="font-bold mb-6">Завещатель: {{{testator_fio}}}</p>
-      <div class="border-b border-zinc-950 w-56 h-5 mb-1"></div>
-      <p class="text-zinc-400 text-[10px]">подпись</p>
-    </div>
-    <div class="w-1/2 pl-4">
-      <p class="font-bold mb-1">Удостоверительная надпись</p>
-      <p class="text-[10px] text-zinc-500">Нотариус: {{{notary}}} {{{#notary_district}}}<br/>{{{notary_district}}}{{{/notary_district}}}
-      <br/>Зарегистрировано в реестре № __________</p>
-    </div>
-  </div>
-</div>`,
+    
   },
 {
       id: "inheritance-acceptance",
@@ -865,41 +513,7 @@ export const TEMPLATES_FAMILY: LegalTemplate[] = [
       { id: "property_desc", label: "Состав наследства", type: "textarea", defaultValue: "", category: "property", rows: 2, validation: { required: true } },
       { id: "other_heirs", label: "Другие наследники", type: "text", defaultValue: "", category: "heir" },
     ],
-    previewTemplate: `
-<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
-  <div class="mb-8 text-xs font-semibold">
-    <p>Нотариусу {{{notary}}}</p>
-    <p>{{{notary_district}}}</p>
-    <p class="mt-2">от {{{heir_fio}}}</p>
-    <p>адрес: {{{heir_address}}}</p>
-    <p>тел.: ______________</p>
-  </div>
-  <div class="text-center font-bold text-base mb-6 text-black uppercase">Заявление о принятии наследства</div>
-  <p class="mb-4 text-justify">
-    {{{testator_death_date}}} умер(ла) {{{testator_fio}}}, {{{relation}}} наследодателя,
-    что подтверждается свидетельством о смерти серия __ № ______.
-  </p>
-  <p class="mb-4 text-justify">
-    На основании ст. 1153 ГК РФ <strong>принимаю</strong> причитающееся мне наследство, которое состоит из:
-    {{{property_desc}}}.
-  </p>
-  <p class="mb-4 text-justify">
-    Других наследников не имеется, за исключением: {{{other_heirs}}}.
-  </p>
-  <p class="mb-4 text-justify">
-    Настоящее заявление подаю в течение установленного шестимесячного срока (ст. 1154 ГК РФ).
-  </p>
-  <div class="flex justify-end text-xs mt-10">
-    <div class="text-right">
-      <p class="mb-1">«{{{date}}}» г. {{{city}}}</p>
-      <div class="flex items-end justify-between gap-16">
-        <p>{{{heir_fio}}}</p>
-        <div class="border-b border-zinc-950 w-48 h-5"></div>
-      </div>
-      <p class="text-zinc-400 text-[10px] mt-1">подпись</p>
-    </div>
-  </div>
-</div>`,
+    
   },
 {
       id: "inheritance-refusal",
@@ -921,37 +535,7 @@ export const TEMPLATES_FAMILY: LegalTemplate[] = [
       { id: "refuse_to_fio", label: "В чью пользу отказ (если есть)", type: "text", defaultValue: "", category: "heir" },
       { id: "property_desc", label: "Состав наследства", type: "textarea", defaultValue: "", category: "property", rows: 2 },
     ],
-    previewTemplate: `
-<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
-  <div class="mb-8 text-xs font-semibold">
-    <p>Нотариусу {{{notary}}}</p>
-    <p>{{{notary_district}}}</p>
-    <p class="mt-2">от {{{heir_fio}}}</p>
-    <p>адрес: {{{heir_address}}}</p>
-  </div>
-  <div class="text-center font-bold text-base mb-6 text-black uppercase">Заявление об отказе от наследства</div>
-  <p class="mb-4 text-justify">
-    {{{testator_death_date}}} умер(ла) {{{testator_fio}}}.
-  </p>
-  <p class="mb-4 text-justify">
-    Я, {{{heir_fio}}}, являясь наследником по закону (завещанию), на основании ст. 1157-1158 ГК РФ
-    <strong>отказываюсь от причитающегося мне наследства</strong>, состоящего из: {{{property_desc}}}.
-  </p>
-  {{{#refuse_to_fio}}}<p class="mb-4 text-justify">Отказ совершён в пользу: {{{refuse_to_fio}}}.</p>{{{/refuse_to_fio}}}
-  <p class="mb-4 text-justify">
-    Последствия отказа мне разъяснены и понятны. Отказ является безоговорочным и не может быть впоследствии изменён или взят обратно.
-  </p>
-  <div class="flex justify-end text-xs mt-10">
-    <div class="text-right">
-      <p class="mb-1">«{{{date}}}» г. {{{city}}}</p>
-      <div class="flex items-end justify-between gap-16">
-        <p>{{{heir_fio}}}</p>
-        <div class="border-b border-zinc-950 w-48 h-5"></div>
-      </div>
-      <p class="text-zinc-400 text-[10px] mt-1">подпись</p>
-    </div>
-  </div>
-</div>`,
+    
   },
 {
     id: "spouse-consent-purchase",
@@ -974,30 +558,7 @@ export const TEMPLATES_FAMILY: LegalTemplate[] = [
       { id: "consent_term", label: "Срок действия согласия", type: "text", defaultValue: "", category: "contract" },
       { id: "notary", label: "Нотариус", type: "text", defaultValue: "", category: "notary" },
     ],
-    previewTemplate: `
-<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
-  <div class="flex justify-between mb-6 text-xs font-semibold">
-    <div>г. {{{city}}}</div>
-    <div>«{{{date}}}»</div>
-  </div>
-  <div class="text-center font-bold text-base mb-6 text-black uppercase">Согласие супруга на приобретение недвижимости</div>
-  <p class="mb-4 text-justify">
-    Я, <strong>{{{spouse1_fio}}}</strong> (паспорт: {{{spouse1_passport}}}), состоящий(ая) в зарегистрированном браке
-    с <strong>{{{spouse2_fio}}}</strong> (паспорт: {{{spouse2_passport}}}), зарегистрированном {{{marriage_date}}},
-    настоящим даю своё нотариальное согласие на приобретение моим(ей) супругом(ой) {{{spouse2_fio}}}:
-  </p>
-  <p class="font-bold mb-2">Предмет согласия</p>
-  <p class="mb-3 text-justify">1. {{{property_desc}}} (ст. 35 СК РФ, ст. 256 ГК РФ).</p>
-  <p class="mb-3 text-justify">2. Согласие даётся на совершение сделки купли-продажи на любых условиях по усмотрению супруга(и), в том числе с использованием кредитных (ипотечных) средств.</p>
-  <p class="font-bold mb-2">Срок действия</p>
-  <p class="mb-3 text-justify">3. Настоящее согласие действительно в течение {{{consent_term}}}.</p>
-  <p class="mb-3 text-justify">4. Согласие удостоверено {{{notary}}}. Содержание статей 35 СК РФ, 256 ГК РФ нотариусом разъяснено.</p>
-  <div class="mt-8 text-xs border-t border-zinc-300 pt-4">
-    <p class="mb-1">Супруг(а), дающий(ая) согласие: {{{spouse1_fio}}}</p>
-    <div class="border-b border-zinc-950 w-56 h-5 mt-5 mb-1"></div>
-    <p class="text-zinc-400 text-[10px]">подпись</p>
-  </div>
-</div>`,
+    
   },
 {
     id: "guardianship-agreement",
@@ -1026,58 +587,7 @@ export const TEMPLATES_FAMILY: LegalTemplate[] = [
       { id: "payment", label: "Вознаграждение опекуна", type: "text", defaultValue: "", category: "payment" },
       { id: "duties", label: "Обязанности опекуна", type: "textarea", defaultValue: "", category: "contract" },
     ],
-    previewTemplate: `<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
-  <div class="text-center font-bold text-base mb-6 text-black uppercase">Договор об осуществлении опеки</div>
-  <div class="flex justify-between mb-6 text-xs font-semibold">
-    <div>г. {{{city}}}</div>
-    <div>«{{{date}}}»</div>
-  </div>
-  <p class="mb-4 text-justify">
-    <strong>{{{authority_name}}}</strong> (ИНН {{{authority_inn}}}, адрес: {{{authority_addr}}}), именуемое в дальнейшем «Орган опеки», с одной стороны,
-  </p>
-  <p class="mb-4 text-justify">
-    Гражданин <strong>{{{guardian_fio}}}</strong> (паспорт {{{guardian_passport}}}, адрес: {{{guardian_addr}}}), именуемый в дальнейшем «Опекун», с другой стороны,
-    заключили настоящий договор о нижеследующем:
-  </p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">1. Предмет договора</div>
-  <p class="mb-4 text-justify">1.1. На основании {{{basis}}} Орган опеки передаёт, а Опекун принимает на себя обязанности по опеке (попечительству) над подопечным {{{ward_fio}}}, {{{ward_birth}}} г.р.</p>
-  <p class="mb-4 text-justify">1.2. Срок действия: с {{{term_start}}} по {{{term_end}}}.</p>
-  <p class="mb-4 text-justify">1.3. {{{payment}}}.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">2. Права и обязанности опекуна</div>
-  <p class="mb-4 text-justify">2.1. {{{duties}}}.</p>
-  <p class="mb-4 text-justify">2.2. Опекун обязан представлять отчёт об использовании имущества подопечного.</p>
-  <p class="mb-4 text-justify">2.3. Опекун не вправе совершать сделки с имуществом подопечного без согласия органа опеки.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">3. Права органа опеки</div>
-  <p class="mb-4 text-justify">3.1. Орган опеки вправе осуществлять контроль за условиями жизни подопечного, требовать отчёты.</p>
-  <p class="mb-4 text-justify">3.2. Орган опеки вправе досрочно расторгнуть договор при ненадлежащем исполнении обязанностей.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">4. Прекращение договора</div>
-  <p class="mb-4 text-justify">4.1. Договор прекращается по истечении срока, при освобождении или отстранении опекуна.</p>
-
-  <div class="font-bold mb-2 text-black text-xs uppercase">5. Форс-мажор</div>
-  <p class="mb-4 text-justify">5.1. Стороны освобождаются от ответственности за частичное или полное неисполнение обязательств по настоящему договору, если оно явилось следствием обстоятельств непреодолимой силы (форс-мажора): стихийных бедствий, пожаров, наводнений, землетрясений, эпидемий, военных действий, решений органов государственной власти, а также иных обстоятельств, которые стороны не могли предвидеть и предотвратить разумными мерами.</p>
-  <p class="mb-4 text-justify">5.2. Сторона, для которой создалась невозможность исполнения обязательств, обязана незамедлительно, но не позднее 10 (десяти) календарных дней с момента наступления таких обстоятельств, письменно уведомить другую сторону об их возникновении. Неуведомление лишает сторону права ссылаться на форс-мажор.</p>
-  <p class="mb-4 text-justify">5.3. Если обстоятельства непреодолимой силы действуют более 60 (шестидесяти) календарных дней, каждая из сторон вправе в одностороннем порядке отказаться от исполнения настоящего договора, письменно уведомив другую сторону.</p>
-
-  <div class="font-bold mb-2 text-black text-xs uppercase">6. Порядок разрешения споров</div>
-  <p class="mb-4 text-justify">6.1. Все споры и разногласия, возникающие из настоящего договора или в связи с ним, стороны разрешают путём переговоров. Срок рассмотрения письменной претензии — 10 (десять) календарных дней с момента её получения.</p>
-  <p class="mb-4 text-justify">6.2. При недостижении согласия споры разрешаются в судебном порядке в соответствии с действующим законодательством Российской Федерации.</p>
-  <div class="grid grid-cols-2 gap-6 mt-8 text-xs border-t border-zinc-300 pt-4">
-    <div>
-      <div class="font-bold mb-2 uppercase text-black">Орган опеки:</div>
-      <p class="mb-1"><strong>{{{authority_name}}}</strong></p>
-      <p class="text-zinc-500 text-[11px]">ИНН: {{{authority_inn}}}</p>
-      <p class="text-zinc-500 text-[11px]">Адрес: {{{authority_addr}}}</p>
-      <div class="mt-8 border-b border-zinc-900 w-44 h-5 flex justify-end items-end text-[10px] text-zinc-400">Подпись</div>
-    </div>
-    <div>
-      <div class="font-bold mb-2 uppercase text-black">Опекун:</div>
-      <p class="mb-1"><strong>{{{guardian_fio}}}</strong></p>
-      <p class="text-zinc-500 text-[11px]">Паспорт: {{{guardian_passport}}}</p>
-      <p class="text-zinc-500 text-[11px]">Адрес: {{{guardian_addr}}}</p>
-      <div class="mt-8 border-b border-zinc-900 w-44 h-5 flex justify-end items-end text-[10px] text-zinc-400">Подпись</div>
-    </div>
-  </div>
-</div>`,
+    
   },
 {
     id: "spouse-consent-pledge",
@@ -1104,53 +614,7 @@ export const TEMPLATES_FAMILY: LegalTemplate[] = [
       { id: "secured_debt", label: "Обеспечиваемое обязательство", type: "text", defaultValue: "", category: "contract", validation: { required: true } },
       { id: "pledgee", label: "Залогодержатель", type: "text", defaultValue: "", category: "other", validation: { required: true } },
     ],
-    previewTemplate: `<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
-  <div class="text-center font-bold text-base mb-6 text-black uppercase">Согласие супруга на залог имущества</div>
-  <div class="flex justify-between mb-6 text-xs font-semibold">
-    <div>г. {{{city}}}</div>
-    <div>«{{{date}}}»</div>
-  </div>
-  <p class="mb-4 text-justify">
-    Гражданин <strong>{{{consenting_fio}}}</strong> (паспорт {{{consenting_passport}}}, адрес: {{{consenting_addr}}}), именуемый в дальнейшем «Согласие даёт», с одной стороны,
-  </p>
-  <p class="mb-4 text-justify">
-    Гражданин <strong>{{{spouse_fio}}}</strong> (паспорт {{{spouse_passport}}}, адрес: {{{spouse_addr}}}), именуемый в дальнейшем «Супруг (залогодатель)», с другой стороны,
-    заключили настоящий договор о нижеследующем:
-  </p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">1. Предмет согласия</div>
-  <p class="mb-4 text-justify">1.1. Я, {{{consenting_fio}}}, состоящий(ая) в браке с {{{spouse_fio}}} (свидетельство {{{marriage_cert}}} от {{{marriage_date}}}), даю согласие на передачу в залог совместно нажитого имущества: {{{property}}}.</p>
-  <p class="mb-4 text-justify">1.2. Обеспечиваемое обязательство: {{{secured_debt}}} перед {{{pledgee}}}.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">2. Условия</div>
-  <p class="mb-4 text-justify">2.1. Согласие даётся на условиях, которые будут определены договором залога.</p>
-  <p class="mb-4 text-justify">2.2. Настоящее согласие действительно в течение 6 месяцев с момента выдачи, если иное не установлено.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">3. Подтверждение</div>
-  <p class="mb-4 text-justify">3.1. Настоящим подтверждаю, что понимаю правовые последствия передачи имущества в залог, в том числе возможность обращения взыскания на имущество.</p>
-
-  <div class="font-bold mb-2 text-black text-xs uppercase">4. Форс-мажор</div>
-  <p class="mb-4 text-justify">4.1. Стороны освобождаются от ответственности за частичное или полное неисполнение обязательств по настоящему договору, если оно явилось следствием обстоятельств непреодолимой силы (форс-мажора): стихийных бедствий, пожаров, наводнений, землетрясений, эпидемий, военных действий, решений органов государственной власти, а также иных обстоятельств, которые стороны не могли предвидеть и предотвратить разумными мерами.</p>
-  <p class="mb-4 text-justify">4.2. Сторона, для которой создалась невозможность исполнения обязательств, обязана незамедлительно, но не позднее 10 (десяти) календарных дней с момента наступления таких обстоятельств, письменно уведомить другую сторону об их возникновении. Неуведомление лишает сторону права ссылаться на форс-мажор.</p>
-  <p class="mb-4 text-justify">4.3. Если обстоятельства непреодолимой силы действуют более 60 (шестидесяти) календарных дней, каждая из сторон вправе в одностороннем порядке отказаться от исполнения настоящего договора, письменно уведомив другую сторону.</p>
-
-  <div class="font-bold mb-2 text-black text-xs uppercase">5. Порядок разрешения споров</div>
-  <p class="mb-4 text-justify">5.1. Все споры и разногласия, возникающие из настоящего договора или в связи с ним, стороны разрешают путём переговоров. Срок рассмотрения письменной претензии — 10 (десять) календарных дней с момента её получения.</p>
-  <p class="mb-4 text-justify">5.2. При недостижении согласия споры разрешаются в судебном порядке в соответствии с действующим законодательством Российской Федерации.</p>
-  <div class="grid grid-cols-2 gap-6 mt-8 text-xs border-t border-zinc-300 pt-4">
-    <div>
-      <div class="font-bold mb-2 uppercase text-black">Согласие даёт:</div>
-      <p class="mb-1"><strong>{{{consenting_fio}}}</strong></p>
-      <p class="text-zinc-500 text-[11px]">Паспорт: {{{consenting_passport}}}</p>
-      <p class="text-zinc-500 text-[11px]">Адрес: {{{consenting_addr}}}</p>
-      <div class="mt-8 border-b border-zinc-900 w-44 h-5 flex justify-end items-end text-[10px] text-zinc-400">Подпись</div>
-    </div>
-    <div>
-      <div class="font-bold mb-2 uppercase text-black">Супруг (залогодатель):</div>
-      <p class="mb-1"><strong>{{{spouse_fio}}}</strong></p>
-      <p class="text-zinc-500 text-[11px]">Паспорт: {{{spouse_passport}}}</p>
-      <p class="text-zinc-500 text-[11px]">Адрес: {{{spouse_addr}}}</p>
-      <div class="mt-8 border-b border-zinc-900 w-44 h-5 flex justify-end items-end text-[10px] text-zinc-400">Подпись</div>
-    </div>
-  </div>
-</div>`,
+    
   },
 {
     id: "pension-app",
@@ -1178,38 +642,7 @@ export const TEMPLATES_FAMILY: LegalTemplate[] = [
       { id: "app_date", label: "Дата обращения", type: "date", defaultValue: "", category: "contract" },
       { id: "delivery_method", label: "Способ доставки", type: "select", defaultValue: "на банковский счёт", category: "contract", options: [ { label: "На банковский счёт", value: "на банковский счёт" }, { label: "Через Почту России", value: "через Почту России" }, { label: "Через организацию", value: "через организацию" } ] },
     ],
-    previewTemplate: `<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
-  <div class="text-center font-bold text-base mb-6 text-black uppercase">Заявление о назначении пенсии</div>
-  <div class="flex justify-between mb-6 text-xs font-semibold">
-    <div>г. {{{city}}}</div>
-    <div>«{{{date}}}»</div>
-  </div>
-
-  <div class="font-bold mb-2 text-black text-xs uppercase">1. Прошу</div>
-  <p class="mb-4 text-justify">1.1. Прошу назначить {{{pension_type}}} в соответствии с законодательством РФ.</p>
-  <p class="mb-4 text-justify">1.2. Страховой стаж: {{{work_experience}}} лет, ИПК: {{{ipc}}} баллов.</p>
-  <p class="mb-4 text-justify">1.3. Способ доставки: {{{delivery_method}}}.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">2. Прилагаемые документы</div>
-  <p class="mb-4 text-justify">2.1. Паспорт, СНИЛС, трудовая книжка, справки о стаже и заработке.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">3. Подтверждение</div>
-  <p class="mb-4 text-justify">3.1. Обо всех изменениях, влияющих на размер пенсии, обязуюсь сообщать в СФР.</p>
-
-  <div class="font-bold mb-2 text-black text-xs uppercase">4. Форс-мажор</div>
-  <p class="mb-4 text-justify">4.1. Стороны освобождаются от ответственности за частичное или полное неисполнение обязательств по настоящему договору, если оно явилось следствием обстоятельств непреодолимой силы (форс-мажора): стихийных бедствий, пожаров, наводнений, землетрясений, эпидемий, военных действий, решений органов государственной власти, а также иных обстоятельств, которые стороны не могли предвидеть и предотвратить разумными мерами.</p>
-  <p class="mb-4 text-justify">4.2. Сторона, для которой создалась невозможность исполнения обязательств, обязана незамедлительно, но не позднее 10 (десяти) календарных дней с момента наступления таких обстоятельств, письменно уведомить другую сторону об их возникновении. Неуведомление лишает сторону права ссылаться на форс-мажор.</p>
-  <p class="mb-4 text-justify">4.3. Если обстоятельства непреодолимой силы действуют более 60 (шестидесяти) календарных дней, каждая из сторон вправе в одностороннем порядке отказаться от исполнения настоящего договора, письменно уведомив другую сторону.</p>
-
-  <div class="font-bold mb-2 text-black text-xs uppercase">5. Порядок разрешения споров</div>
-  <p class="mb-4 text-justify">5.1. Все споры и разногласия, возникающие из настоящего договора или в связи с ним, стороны разрешают путём переговоров. Срок рассмотрения письменной претензии — 10 (десять) календарных дней с момента её получения.</p>
-  <p class="mb-4 text-justify">5.2. При недостижении согласия споры разрешаются в судебном порядке в соответствии с действующим законодательством Российской Федерации.</p>
-  <div class="mt-8 border-t border-zinc-300 pt-4 text-xs">
-    <div>
-      <div class="font-bold mb-2 uppercase text-black">Заявитель:</div>
-      <p class="mb-1"><strong>{{{applicant_fio}}}</strong></p>
-      <div class="mt-8 border-b border-zinc-900 w-44 h-5 flex justify-end items-end text-[10px] text-zinc-400">Подпись</div>
-    </div>
-  </div>
-</div>`,
+    
   },
 {
     id: "maternity-payment-app",
@@ -1237,37 +670,7 @@ export const TEMPLATES_FAMILY: LegalTemplate[] = [
       { id: "child_birth", label: "Дата рождения ребёнка (для пособия при рождении)", type: "date", defaultValue: "", category: "child" },
       { id: "app_date", label: "Дата заявления", type: "date", defaultValue: "", category: "contract" },
     ],
-    previewTemplate: `<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
-  <div class="text-center font-bold text-base mb-6 text-black uppercase">Заявление о назначении пособия</div>
-  <div class="flex justify-between mb-6 text-xs font-semibold">
-    <div>г. {{{city}}}</div>
-    <div>«{{{date}}}»</div>
-  </div>
-
-  <div class="font-bold mb-2 text-black text-xs uppercase">1. Прошу</div>
-  <p class="mb-4 text-justify">1.1. Прошу назначить и выплатить пособие: {{{benefit_type}}}.</p>
-  <p class="mb-4 text-justify">1.2. Листок нетрудоспособности: {{{sick_list}}} (период {{{maternity_start}}} — {{{maternity_end}}}).</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">2. Реквизиты</div>
-  <p class="mb-4 text-justify">2.1. Перечисление прошу производить: {{{bank_details}}}.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">3. Прилагаемые документы</div>
-  <p class="mb-4 text-justify">3.1. Паспорт, СНИЛС, справка о рождении ребёнка (при необходимости), заявление на отпуск по беременности и родам.</p>
-
-  <div class="font-bold mb-2 text-black text-xs uppercase">4. Форс-мажор</div>
-  <p class="mb-4 text-justify">4.1. Стороны освобождаются от ответственности за частичное или полное неисполнение обязательств по настоящему договору, если оно явилось следствием обстоятельств непреодолимой силы (форс-мажора): стихийных бедствий, пожаров, наводнений, землетрясений, эпидемий, военных действий, решений органов государственной власти, а также иных обстоятельств, которые стороны не могли предвидеть и предотвратить разумными мерами.</p>
-  <p class="mb-4 text-justify">4.2. Сторона, для которой создалась невозможность исполнения обязательств, обязана незамедлительно, но не позднее 10 (десяти) календарных дней с момента наступления таких обстоятельств, письменно уведомить другую сторону об их возникновении. Неуведомление лишает сторону права ссылаться на форс-мажор.</p>
-  <p class="mb-4 text-justify">4.3. Если обстоятельства непреодолимой силы действуют более 60 (шестидесяти) календарных дней, каждая из сторон вправе в одностороннем порядке отказаться от исполнения настоящего договора, письменно уведомив другую сторону.</p>
-
-  <div class="font-bold mb-2 text-black text-xs uppercase">5. Порядок разрешения споров</div>
-  <p class="mb-4 text-justify">5.1. Все споры и разногласия, возникающие из настоящего договора или в связи с ним, стороны разрешают путём переговоров. Срок рассмотрения письменной претензии — 10 (десять) календарных дней с момента её получения.</p>
-  <p class="mb-4 text-justify">5.2. При недостижении согласия споры разрешаются в судебном порядке в соответствии с действующим законодательством Российской Федерации.</p>
-  <div class="mt-8 border-t border-zinc-300 pt-4 text-xs">
-    <div>
-      <div class="font-bold mb-2 uppercase text-black">Заявитель:</div>
-      <p class="mb-1"><strong>{{{applicant_fio}}}</strong></p>
-      <div class="mt-8 border-b border-zinc-900 w-44 h-5 flex justify-end items-end text-[10px] text-zinc-400">Подпись</div>
-    </div>
-  </div>
-</div>`,
+    
   },
 {
     id: "family-budget-note",
@@ -1294,54 +697,7 @@ export const TEMPLATES_FAMILY: LegalTemplate[] = [
       { id: "savings", label: "Накопления", type: "text", defaultValue: "", category: "payment" },
       { id: "term_end", label: "Срок действия (дата)", type: "date", defaultValue: "", category: "contract" },
     ],
-    previewTemplate: `<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
-  <div class="text-center font-bold text-base mb-6 text-black uppercase">Соглашение о несении семейных расходов</div>
-  <div class="flex justify-between mb-6 text-xs font-semibold">
-    <div>г. {{{city}}}</div>
-    <div>«{{{date}}}»</div>
-  </div>
-  <p class="mb-4 text-justify">
-    Гражданин <strong>{{{husband_fio}}}</strong> (паспорт {{{husband_passport}}}, адрес: {{{husband_addr}}}), именуемый в дальнейшем «Супруг», с одной стороны,
-  </p>
-  <p class="mb-4 text-justify">
-    Гражданин <strong>{{{wife_fio}}}</strong> (паспорт {{{wife_passport}}}, адрес: {{{wife_addr}}}), именуемый в дальнейшем «Супруга», с другой стороны,
-    заключили настоящий договор о нижеследующем:
-  </p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">1. Предмет соглашения</div>
-  <p class="mb-4 text-justify">1.1. Супруги устанавливают порядок несения общих семейных расходов: {{{expenses_list}}}.</p>
-  <p class="mb-4 text-justify">1.2. Распределение: {{{split}}}.</p>
-  <p class="mb-4 text-justify">1.3. {{{savings}}}.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">2. Обязанности сторон</div>
-  <p class="mb-4 text-justify">2.1. {{{household_duty}}}.</p>
-  <p class="mb-4 text-justify">2.2. Каждый супруг вправе распоряжаться личными доходами по своему усмотрению, не ущемляя общих обязательств.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">3. Срок действия</div>
-  <p class="mb-4 text-justify">3.1. Соглашение действует до {{{term_end}}} и может быть изменено по взаимному согласию.</p>
-
-  <div class="font-bold mb-2 text-black text-xs uppercase">4. Форс-мажор</div>
-  <p class="mb-4 text-justify">4.1. Стороны освобождаются от ответственности за частичное или полное неисполнение обязательств по настоящему договору, если оно явилось следствием обстоятельств непреодолимой силы (форс-мажора): стихийных бедствий, пожаров, наводнений, землетрясений, эпидемий, военных действий, решений органов государственной власти, а также иных обстоятельств, которые стороны не могли предвидеть и предотвратить разумными мерами.</p>
-  <p class="mb-4 text-justify">4.2. Сторона, для которой создалась невозможность исполнения обязательств, обязана незамедлительно, но не позднее 10 (десяти) календарных дней с момента наступления таких обстоятельств, письменно уведомить другую сторону об их возникновении. Неуведомление лишает сторону права ссылаться на форс-мажор.</p>
-  <p class="mb-4 text-justify">4.3. Если обстоятельства непреодолимой силы действуют более 60 (шестидесяти) календарных дней, каждая из сторон вправе в одностороннем порядке отказаться от исполнения настоящего договора, письменно уведомив другую сторону.</p>
-
-  <div class="font-bold mb-2 text-black text-xs uppercase">5. Порядок разрешения споров</div>
-  <p class="mb-4 text-justify">5.1. Все споры и разногласия, возникающие из настоящего договора или в связи с ним, стороны разрешают путём переговоров. Срок рассмотрения письменной претензии — 10 (десять) календарных дней с момента её получения.</p>
-  <p class="mb-4 text-justify">5.2. При недостижении согласия споры разрешаются в судебном порядке в соответствии с действующим законодательством Российской Федерации.</p>
-  <div class="grid grid-cols-2 gap-6 mt-8 text-xs border-t border-zinc-300 pt-4">
-    <div>
-      <div class="font-bold mb-2 uppercase text-black">Супруг:</div>
-      <p class="mb-1"><strong>{{{husband_fio}}}</strong></p>
-      <p class="text-zinc-500 text-[11px]">Паспорт: {{{husband_passport}}}</p>
-      <p class="text-zinc-500 text-[11px]">Адрес: {{{husband_addr}}}</p>
-      <div class="mt-8 border-b border-zinc-900 w-44 h-5 flex justify-end items-end text-[10px] text-zinc-400">Подпись</div>
-    </div>
-    <div>
-      <div class="font-bold mb-2 uppercase text-black">Супруга:</div>
-      <p class="mb-1"><strong>{{{wife_fio}}}</strong></p>
-      <p class="text-zinc-500 text-[11px]">Паспорт: {{{wife_passport}}}</p>
-      <p class="text-zinc-500 text-[11px]">Адрес: {{{wife_addr}}}</p>
-      <div class="mt-8 border-b border-zinc-900 w-44 h-5 flex justify-end items-end text-[10px] text-zinc-400">Подпись</div>
-    </div>
-  </div>
-</div>`,
+    
   },
 {
     id: "maternity-capital-app",
@@ -1365,39 +721,7 @@ export const TEMPLATES_FAMILY: LegalTemplate[] = [
       { id: "purpose_details", label: "Цель использования", type: "textarea", defaultValue: "", category: "contract", validation: { required: true } },
       { id: "children", label: "Дети", type: "text", defaultValue: "", category: "child", validation: { required: true } },
     ],
-    previewTemplate: `<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
-  <div class="text-center font-bold text-base mb-6 text-black uppercase">Заявление о распоряжении средствами материнского капитала</div>
-  <div class="flex justify-between mb-6 text-xs font-semibold">
-    <div>г. {{{city}}}</div>
-    <div>«{{{date}}}»</div>
-  </div>
-
-  <div class="font-bold mb-2 text-black text-xs uppercase">1. Прошу</div>
-  <p class="mb-4 text-justify">1.1. Прошу направить средства материнского (семейного) капитала на: {{{direction}}}.</p>
-  <p class="mb-4 text-justify">1.2. Сумма: {{{amount}}} руб. Цель использования: {{{purpose_details}}}.</p>
-  <p class="mb-4 text-justify">1.3. Сертификат: {{{certificate}}}.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">2. Сведения</div>
-  <p class="mb-4 text-justify">2.1. Дети: {{{children}}}.</p>
-  <p class="mb-4 text-justify">2.2. Обязуюсь оформить жилое помещение в общую собственность всех членов семьи в установленный срок.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">3. Прилагаемые документы</div>
-  <p class="mb-4 text-justify">3.1. Паспорт, СНИЛС, сертификат МСК, документы по сделке (кредитный договор, выписка из ЕГРН), свидетельства о рождении детей.</p>
-
-  <div class="font-bold mb-2 text-black text-xs uppercase">4. Форс-мажор</div>
-  <p class="mb-4 text-justify">4.1. Стороны освобождаются от ответственности за частичное или полное неисполнение обязательств по настоящему договору, если оно явилось следствием обстоятельств непреодолимой силы (форс-мажора): стихийных бедствий, пожаров, наводнений, землетрясений, эпидемий, военных действий, решений органов государственной власти, а также иных обстоятельств, которые стороны не могли предвидеть и предотвратить разумными мерами.</p>
-  <p class="mb-4 text-justify">4.2. Сторона, для которой создалась невозможность исполнения обязательств, обязана незамедлительно, но не позднее 10 (десяти) календарных дней с момента наступления таких обстоятельств, письменно уведомить другую сторону об их возникновении. Неуведомление лишает сторону права ссылаться на форс-мажор.</p>
-  <p class="mb-4 text-justify">4.3. Если обстоятельства непреодолимой силы действуют более 60 (шестидесяти) календарных дней, каждая из сторон вправе в одностороннем порядке отказаться от исполнения настоящего договора, письменно уведомив другую сторону.</p>
-
-  <div class="font-bold mb-2 text-black text-xs uppercase">5. Порядок разрешения споров</div>
-  <p class="mb-4 text-justify">5.1. Все споры и разногласия, возникающие из настоящего договора или в связи с ним, стороны разрешают путём переговоров. Срок рассмотрения письменной претензии — 10 (десять) календарных дней с момента её получения.</p>
-  <p class="mb-4 text-justify">5.2. При недостижении согласия споры разрешаются в судебном порядке в соответствии с действующим законодательством Российской Федерации.</p>
-  <div class="mt-8 border-t border-zinc-300 pt-4 text-xs">
-    <div>
-      <div class="font-bold mb-2 uppercase text-black">Заявитель:</div>
-      <p class="mb-1"><strong>{{{applicant_fio}}}</strong></p>
-      <div class="mt-8 border-b border-zinc-900 w-44 h-5 flex justify-end items-end text-[10px] text-zinc-400">Подпись</div>
-    </div>
-  </div>
-</div>`,
+    
   },
 {
     id: "adoption-consent",
@@ -1420,37 +744,6 @@ export const TEMPLATES_FAMILY: LegalTemplate[] = [
       { id: "adopter", label: "Усыновитель", type: "text", defaultValue: "", category: "other", validation: { required: true } },
       { id: "consent_type", label: "Вид согласия", type: "text", defaultValue: "", category: "contract" },
     ],
-    previewTemplate: `<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
-  <div class="text-center font-bold text-base mb-6 text-black uppercase">Согласие на усыновление (удочерение) ребёнка</div>
-  <div class="flex justify-between mb-6 text-xs font-semibold">
-    <div>г. {{{city}}}</div>
-    <div>«{{{date}}}»</div>
-  </div>
-
-  <div class="font-bold mb-2 text-black text-xs uppercase">1. Согласие</div>
-  <p class="mb-4 text-justify">1.1. Я, {{{applicant_fio}}}, даю согласие на усыновление (удочерение) моего ребёнка {{{child}}}.</p>
-  <p class="mb-4 text-justify">1.2. {{{consent_type}}}. Усыновитель: {{{adopter}}}.</p>
-  <p class="mb-4 text-justify">1.3. Согласие дано добровольно, без принуждения, после разъяснения правовых последствий усыновления.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">2. Подтверждение</div>
-  <p class="mb-4 text-justify">2.1. Мне известно, что усыновление прекращает правовую связь между мной и ребёнком, а также личные неимущественные и имущественные права (ст. 137 СК РФ).</p>
-  <p class="mb-4 text-justify">2.2. Согласие может быть отозвано до вынесения решения суда об усыновлении.</p>
-  <p class="mb-4 text-justify">2.3. Согласие дано в присутствии должностного лица органа опеки и попечительства / удостоверено нотариусом.</p>
-
-  <div class="font-bold mb-2 text-black text-xs uppercase">3. Форс-мажор</div>
-  <p class="mb-4 text-justify">3.1. Стороны освобождаются от ответственности за частичное или полное неисполнение обязательств по настоящему договору, если оно явилось следствием обстоятельств непреодолимой силы (форс-мажора): стихийных бедствий, пожаров, наводнений, землетрясений, эпидемий, военных действий, решений органов государственной власти, а также иных обстоятельств, которые стороны не могли предвидеть и предотвратить разумными мерами.</p>
-  <p class="mb-4 text-justify">3.2. Сторона, для которой создалась невозможность исполнения обязательств, обязана незамедлительно, но не позднее 10 (десяти) календарных дней с момента наступления таких обстоятельств, письменно уведомить другую сторону об их возникновении. Неуведомление лишает сторону права ссылаться на форс-мажор.</p>
-  <p class="mb-4 text-justify">3.3. Если обстоятельства непреодолимой силы действуют более 60 (шестидесяти) календарных дней, каждая из сторон вправе в одностороннем порядке отказаться от исполнения настоящего договора, письменно уведомив другую сторону.</p>
-
-  <div class="font-bold mb-2 text-black text-xs uppercase">4. Порядок разрешения споров</div>
-  <p class="mb-4 text-justify">4.1. Все споры и разногласия, возникающие из настоящего договора или в связи с ним, стороны разрешают путём переговоров. Срок рассмотрения письменной претензии — 10 (десять) календарных дней с момента её получения.</p>
-  <p class="mb-4 text-justify">4.2. При недостижении согласия споры разрешаются в судебном порядке в соответствии с действующим законодательством Российской Федерации.</p>
-  <div class="mt-8 border-t border-zinc-300 pt-4 text-xs">
-    <div>
-      <div class="font-bold mb-2 uppercase text-black">Заявитель:</div>
-      <p class="mb-1"><strong>{{{applicant_fio}}}</strong></p>
-      <div class="mt-8 border-b border-zinc-900 w-44 h-5 flex justify-end items-end text-[10px] text-zinc-400">Подпись</div>
-    </div>
-  </div>
-</div>`,
+    
   }
 ];

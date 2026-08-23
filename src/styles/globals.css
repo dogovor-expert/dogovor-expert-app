@@ -1,4 +1,4 @@
-﻿@tailwind base;
+@tailwind base;
 @tailwind components;
 @tailwind utilities;
 
@@ -34,8 +34,32 @@
 }
 
 @layer base {
-  body {
+  html, body {
     @apply antialiased;
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+  body {
+    min-height: 100vh;
+  }
+}
+
+@layer components {
+  .touch-target {
+    @apply min-h-[44px] min-w-[44px] flex items-center justify-center;
+  }
+  .link-in-text {
+    @apply underline underline-offset-2 hover:no-underline;
+  }
+  .text-muted {
+    @apply text-gray-600;
+  }
+  /* Ensure links in text blocks are distinguishable */
+  p a, li a, span a, div a {
+    @apply underline underline-offset-2;
+  }
+  p a:hover, li a:hover, span a:hover, div a:hover {
+    @apply no-underline;
   }
 }
 
@@ -75,6 +99,13 @@
   }
   .scrollbar-thin::-webkit-scrollbar-thumb {
     @apply bg-gray-300 rounded-full;
+  }
+  .scrollbar-hide {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
   }
   @keyframes floatUp {
     0%, 100% { transform: translateY(0); }
@@ -206,3 +237,9 @@
   }
 }
 
+
+/* №12 аудита: видимая фокус-обводка для клавиатурной навигации (a11y). */
+:focus-visible {
+  outline: 2px solid #1d4ed8;
+  outline-offset: 2px;
+}

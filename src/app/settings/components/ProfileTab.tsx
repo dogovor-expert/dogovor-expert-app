@@ -150,7 +150,7 @@ export default function ProfileTab() {
     <form onSubmit={handleSubmit}>
       <Card variant="elevated" padding="lg">
         {loading ? (
-          <div className="flex items-center justify-center py-16 text-gray-400 text-sm">
+          <div className="flex items-center justify-center py-16 text-gray-600 text-sm">
             Загрузка профиля…
           </div>
         ) : (
@@ -172,7 +172,7 @@ export default function ProfileTab() {
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
                   disabled={uploadingAvatar}
-                  className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-white border border-gray-200 shadow-sm flex items-center justify-center text-gray-500 hover:text-brand-600 hover:border-brand-300 transition-colors"
+                  className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-white border border-gray-200 shadow-sm flex items-center justify-center text-gray-600 hover:text-brand-600 hover:border-brand-300 transition-colors"
                   title="Загрузить аватар"
                 >
                   {uploadingAvatar ? (
@@ -193,11 +193,11 @@ export default function ProfileTab() {
                 <h3 className="text-lg font-semibold text-gray-900">
                   {form.full_name || "Пользователь"}
                 </h3>
-                <p className="text-sm text-gray-500 flex items-center gap-1 mt-0.5">
+                <p className="text-sm text-gray-600 flex items-center gap-1 mt-0.5">
                   <Mail className="w-3.5 h-3.5" />
                   {profile?.email}
                 </p>
-                <p className="text-xs text-gray-400 mt-1">
+                <p className="text-xs text-gray-600 mt-1">
                   {profile?.created_at
                     ? `С нами с ${new Date(profile.created_at).toLocaleDateString("ru-RU")}`
                     : ""}
@@ -250,11 +250,11 @@ export default function ProfileTab() {
                 placeholder="Должность, ФИО — используется в конце документов"
                 className="block w-full px-4 py-2.5 text-sm transition-all duration-200 border rounded-xl border-gray-200 bg-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:border-brand-500 focus:ring-brand-500/20"
               />
-              <p className="text-xs text-gray-400 mt-1.5">{form.signature.length}/500</p>
+              <p className="text-xs text-gray-600 mt-1.5">{form.signature.length}/500</p>
             </div>
 
             <div className="flex items-center justify-between pt-2 border-t border-gray-100">
-              <p className="text-xs text-gray-400 max-w-xs hidden sm:block">
+              <p className="text-xs text-gray-600 max-w-xs hidden sm:block">
                 Реквизиты используются при автозаполнении договоров и актов
               </p>
               <Button type="submit" disabled={saving || loading} className="ml-auto">

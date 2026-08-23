@@ -46,8 +46,8 @@ export default function ProgressSteps({
         onClick={onGoToPreview}
         style={{ cursor: viewMode === "form" ? "pointer" : "default" }}
       >
-        <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${viewMode === "preview" ? "bg-brand-500 text-white" : "bg-gray-200 text-gray-500"}`}>3</div>
-        <span className={`text-xs font-medium ${viewMode === "preview" ? "text-brand-700" : "text-gray-400"}`}>Предпросмотр</span>
+        <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${viewMode === "preview" ? "bg-brand-500 text-white" : "bg-gray-200 text-gray-600"}`}>3</div>
+        <span className={`text-xs font-medium ${viewMode === "preview" ? "text-brand-700" : "text-gray-600"}`}>Предпросмотр</span>
       </div>
     </div>
   );

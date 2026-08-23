@@ -26,7 +26,7 @@ export default function SimilarTemplatesPanel({
             <p className="text-xs font-medium text-gray-700 truncate">
               {doc.name.length > 34 ? doc.name.slice(0, 34) + "..." : doc.name}
             </p>
-            <p className="text-[10px] text-gray-500 truncate">{doc.actSource}</p>
+            <p className="text-[10px] text-gray-600 truncate">{doc.actSource}</p>
           </div>
           <ArrowRight className="w-3.5 h-3.5 text-gray-300 shrink-0" />
         </button>

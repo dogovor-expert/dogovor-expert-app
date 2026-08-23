@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { Shield, ExternalLink } from "lucide-react";
 
-declare global {
+declare module "react" {
   namespace JSX {
     interface IntrinsicElements {
       "polis-online-widget-osago": {
@@ -51,7 +51,7 @@ export default function InzuroWidget() {
         <span className="inline-flex items-center gap-1 text-[10px] font-mono font-semibold uppercase tracking-wide text-white bg-brand-600 border border-brand-700 rounded px-2.5 py-1 shadow-sm">
           Партнёрский сервис
         </span>
-        <span className="text-[11px] text-gray-400">расчёт и оформление выполняет Инзуро (inzuro.ru)</span>
+        <span className="text-[11px] text-gray-600">расчёт и оформление выполняет Инзуро (inzuro.ru)</span>
       </div>
 
       {consented ? (
@@ -69,7 +69,7 @@ export default function InzuroWidget() {
             компания <b>Инзуро</b> через встроенный калькулятор. Для расчёта вам потребуется ввести
             государственный номер, VIN и паспортные данные —{" "}
             <b>эти данные передаются партнёру Инзуро и страховым компаниям</b> и не хранятся на
-            серверах Dogovor. Проверить свой коэффициент КБМ по реестру РСА можно ниже на этой странице.
+            серверах Dogovor.
           </p>
           <label className="flex items-start gap-2.5 text-xs text-gray-700 cursor-pointer select-none">
             <input
@@ -95,7 +95,7 @@ export default function InzuroWidget() {
             <Shield className="w-4 h-4" />
             Открыть калькулятор ОСАГО
           </button>
-          <p className="text-[10px] text-gray-400">
+          <p className="text-[10px] text-gray-600">
             Согласие действует для этого блока и сохраняется в вашем браузере. Вы можете отозвать его,
             очистив данные сайта (Настройки → Сброс данных).
           </p>

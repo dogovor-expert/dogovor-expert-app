@@ -41,19 +41,19 @@ export default function ZhkhPenalty() {
 
       <div className="space-y-3">
         <div className="space-y-1">
-          <label className="text-[10px] font-mono text-gray-500">Сумма долга (₽)</label>
+          <label className="text-[10px] font-mono text-gray-600">Сумма долга (₽)</label>
           <input type="number" min="0" value={sum} onChange={(e) => setSum(e.target.value)}
             placeholder="Например 25000"
             className="w-full bg-gray-50 border border-gray-200 text-xs py-2.5 px-3 rounded-lg text-gray-900 outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500" />
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-1">
-            <label className="text-[10px] font-mono text-gray-500">Дата, с которой начисляются пени</label>
+            <label className="text-[10px] font-mono text-gray-600">Дата, с которой начисляются пени</label>
             <input type="date" value={due} onChange={(e) => setDue(e.target.value)}
               className="w-full bg-gray-50 border border-gray-200 text-xs py-2.5 px-3 rounded-lg text-gray-900 outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500" />
           </div>
           <div className="space-y-1">
-            <label className="text-[10px] font-mono text-gray-500">Дата расчёта</label>
+            <label className="text-[10px] font-mono text-gray-600">Дата расчёта</label>
             <input type="date" value={paid} onChange={(e) => setPaid(e.target.value)}
               className="w-full bg-gray-50 border border-gray-200 text-xs py-2.5 px-3 rounded-lg text-gray-900 outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500" />
           </div>
@@ -70,27 +70,27 @@ export default function ZhkhPenalty() {
         <div className="bg-gray-50 rounded-xl p-4 border border-gray-200 space-y-2">
           <div className="flex items-center gap-2">
             <Check className="w-4 h-4 text-emerald-500" />
-            <span className="text-[10px] font-mono text-gray-500">Пени по {kind === "cap" ? "ч. 14.1" : "ч. 14"} ст. 155 ЖК РФ</span>
+            <span className="text-[10px] font-mono text-gray-600">Пени по {kind === "cap" ? "ч. 14.1" : "ч. 14"} ст. 155 ЖК РФ</span>
           </div>
           <p className="text-2xl font-bold text-gray-900">{fmtMoney(result.total)}</p>
-          <p className="text-[11px] text-gray-500">
+          <p className="text-[11px] text-gray-600">
             Просрочка: {result.days} дн.
           </p>
           {kind === "cap" ? (
-            <p className="text-[11px] text-gray-500">
+            <p className="text-[11px] text-gray-600">
               1/300 ставки ЦБ с 31-го дня просрочки: {fmtMoney(result.p300)}
               {result.days <= 30 && <span className="text-amber-700"> · до 31 дня пени не начисляются</span>}
             </p>
           ) : (
             <>
               {result.days > 30 && (
-                <p className="text-[11px] text-gray-500">
+                <p className="text-[11px] text-gray-600">
                   с 31-го по 90-й день (1/300): {fmtMoney(result.p300)}
                   {result.days > 90 && <> · с 91-го дня (1/130): {fmtMoney(result.p130)}</>}
                 </p>
               )}
               {result.days <= 30 && (
-                <p className="text-[11px] text-gray-500">До 31 дня просрочки пени по закону не начисляются.</p>
+                <p className="text-[11px] text-gray-600">До 31 дня просрочки пени по закону не начисляются.</p>
               )}
             </>
           )}
@@ -101,7 +101,7 @@ export default function ZhkhPenalty() {
         </div>
       )}
 
-      <p className="text-[11px] text-gray-400 leading-relaxed flex items-start gap-1.5">
+      <p className="text-[11px] text-gray-600 leading-relaxed flex items-start gap-1.5">
         {kind === "cap" ? (
           <>
             <Wrench className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />

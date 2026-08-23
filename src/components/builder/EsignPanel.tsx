@@ -63,7 +63,7 @@ export default function EsignPanel({
           </button>
         </div>
       ))}
-      <p className="text-[10px] leading-relaxed text-gray-400">
+      <p className="text-[10px] leading-relaxed text-gray-600">
         Подпись с прозрачным фоном вставится в раздел «Реквизиты и
         подписи сторон» документа при экспорте в PDF. Подпись
         сохраняется в этом браузере.

@@ -68,29 +68,7 @@ export const TEMPLATES_MIGRATION: LegalTemplate[] = [
         category: "contract",
       },
     ],
-    previewTemplate: `
-<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
-  <div class="text-center font-bold text-base mb-6 text-black uppercase">Приглашение на въезд в Российскую Федерацию</div>
-  <div class="flex justify-between mb-6 text-xs font-semibold">
-    <div>г. {{{city}}}</div>
-    <div>«{{{date}}}»</div>
-  </div>
-  <p class="mb-4 text-justify">
-    Организация <strong>{{{host_company}}}</strong> (ИНН {{{host_inn}}}, юридический адрес: {{{host_address}}}), именуемая в дальнейшем «Приглашающая сторона», приглашает гражданина <strong>{{{guest_fio}}}</strong>, {{{guest_birthday}}} года рождения, паспорт № {{{guest_passport}}}, гражданство: {{{guest_country}}}, для въезда на территорию Российской Федерации.
-  </p>
-  <p class="mb-4 text-justify">
-    Цель поездки: {{{visit_purpose}}}. Период поездки: {{{visit_dates}}}. Запрашивается {{{visa_type}}} виза сроком на {{{visa_days}}} дней.
-  </p>
-  <p class="mb-4 text-justify">
-    Приглашающая сторона обязуется обеспечить своевременный выезд приглашаемого из РФ, его материальное, медицинское и жилищное обеспечение на период пребывания, а также нести все расходы, если иное не установлено законодательством.
-  </p>
-  <div class="mt-6 text-xs border-t border-zinc-300 pt-4">
-    <div class="font-bold mb-1">Приглашающая сторона:</div>
-    <p class="mb-1"><strong>{{{host_company}}}</strong></p>
-    <div class="border-b border-zinc-950 w-56 h-5 mt-6"></div>
-    <p class="text-xs mt-1">М.П. / подпись руководителя</p>
-  </div>
-</div>`,
+    
   },
 {
     id: "migration-notification",
@@ -121,27 +99,7 @@ export const TEMPLATES_MIGRATION: LegalTemplate[] = [
         { label: "Учёба", value: "учёба" },
       ] },
     ],
-    previewTemplate: `
-<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
-  <div class="text-center font-bold text-base mb-4 text-black uppercase">Уведомление о прибытии иностранного гражданина в место пребывания</div>
-  <div class="flex justify-between mb-6 text-xs font-semibold">
-    <div>г. {{{city}}}</div>
-    <div>«{{{date}}}»</div>
-  </div>
-  <p class="mb-3 text-justify">В орган миграционного учёта (МВД России / МФЦ)</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">1. Сведения о принимающей стороне</div>
-  <p class="mb-3 text-justify">{{{host_fio}}}, документ: {{{host_doc}}}, адрес: {{{host_address}}}.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">2. Сведения об иностранном гражданине</div>
-  <p class="mb-3 text-justify">{{{foreign_fio}}}, {{{foreign_birthday}}} г.р., гражданство: {{{foreign_country}}}. Документ: {{{foreign_doc}}}. Миграционная карта: {{{migration_card}}}. Цель визита: {{{purpose}}}.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">3. Место и срок пребывания</div>
-  <p class="mb-3 text-justify">Адрес места пребывания: {{{stay_address}}}. Срок пребывания до «{{{stay_term}}}».</p>
-  <p class="mb-3 text-justify">Уведомление подаётся не позднее 7 рабочих дней со дня прибытия (ст. 20-22 ФЗ-109).</p>
-  <div class="mt-8 text-xs border-t border-zinc-300 pt-4">
-    <p class="mb-1">Принимающая сторона: {{{host_fio}}}</p>
-    <div class="border-b border-zinc-950 w-56 h-5 mt-5 mb-1"></div>
-    <p class="text-zinc-400 text-[10px]">подпись</p>
-  </div>
-</div>`,
+    
   },
 {
     id: "temp-registration-consent",
@@ -164,43 +122,7 @@ export const TEMPLATES_MIGRATION: LegalTemplate[] = [
       { id: "reg_start", label: "Срок регистрации с", type: "date", defaultValue: "", category: "contract" },
       { id: "reg_end", label: "Срок регистрации по", type: "date", defaultValue: "", category: "contract" },
     ],
-    previewTemplate: `
-<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
-  <div class="flex justify-between mb-6 text-xs font-semibold">
-    <div>г. {{{city}}}</div>
-    <div>«{{{date}}}»</div>
-  </div>
-  <div class="text-center font-bold text-base mb-6 text-black uppercase">Согласие собственника на регистрацию по месту пребывания</div>
-  <p class="mb-4 text-justify">
-    Я, <strong>{{{owner_fio}}}</strong>, паспорт: {{{owner_passport}}}, являясь собственником жилого помещения по адресу:
-    <strong>{{{address}}}</strong> (право собственности подтверждено: {{{owner_doc}}}),
-    в соответствии со ст. 80 ЖК РФ и п. 26 Правил регистрации и снятия граждан Российской Федерации с регистрационного учёта
-    по месту пребывания и по месту жительства (утв. Постановлением Правительства РФ № 713) даю согласие на регистрацию
-    по месту пребывания гражданина:
-  </p>
-  <p class="mb-3 text-justify">
-    <strong>{{{tenant_fio}}}</strong>, паспорт: {{{tenant_passport}}},
-    в указанном жилом помещении сроком с «{{{reg_start}}}» по «{{{reg_end}}}».
-  </p>
-  <p class="mb-3 text-justify">
-    Настоящее согласие действительно при предъявлении паспорта собственника и действует на протяжении всего срока регистрации.
-    Вселение не нарушает прав и законных интересов иных лиц, зарегистрированных в указанном жилом помещении.
-  </p>
-  <div class="flex justify-between mt-10 text-xs">
-    <div class="w-1/2 pr-4">
-      <p class="font-bold mb-1">Собственник:</p>
-      <p class="mb-6">{{{owner_fio}}}</p>
-      <div class="border-b border-zinc-950 w-56 h-5 mb-1"></div>
-      <p class="text-zinc-400 text-[10px]">подпись</p>
-    </div>
-    <div class="w-1/2 pl-4">
-      <p class="font-bold mb-1">Согласен (вселяемое лицо):</p>
-      <p class="mb-6">{{{tenant_fio}}}</p>
-      <div class="border-b border-zinc-950 w-56 h-5 mb-1"></div>
-      <p class="text-zinc-400 text-[10px]">подпись</p>
-    </div>
-  </div>
-</div>`,
+    
   },
 {
     id: "temporary-residence-app",
@@ -228,40 +150,7 @@ export const TEMPLATES_MIGRATION: LegalTemplate[] = [
       { id: "income", label: "Доход", type: "text", defaultValue: "", category: "payment" },
       { id: "family", label: "Члены семьи в РФ", type: "text", defaultValue: "", category: "family" },
     ],
-    previewTemplate: `<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
-  <div class="text-center font-bold text-base mb-6 text-black uppercase">Заявление о выдаче разрешения на временное проживание</div>
-  <div class="flex justify-between mb-6 text-xs font-semibold">
-    <div>г. {{{city}}}</div>
-    <div>«{{{date}}}»</div>
-  </div>
-
-  <div class="font-bold mb-2 text-black text-xs uppercase">1. Прошу</div>
-  <p class="mb-4 text-justify">1.1. Прошу выдать разрешение на временное проживание на территории РФ сроком на 3 года по основанию: {{{grounds}}}.</p>
-  <p class="mb-4 text-justify">1.2. Цель въезда и пребывания: {{{purpose}}}. Дата въезда: {{{arrival_date}}}.</p>
-  <p class="mb-4 text-justify">1.3. Адрес места пребывания: {{{address}}}. {{{family}}}.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">2. Обязательства</div>
-  <p class="mb-4 text-justify">2.1. Обязуюсь соблюдать Конституцию РФ и законодательство, не допускать действий, создающих угрозу безопасности.</p>
-  <p class="mb-4 text-justify">2.2. Обязуюсь сообщать о смене места жительства и работы в установленном порядке.</p>
-  <p class="mb-4 text-justify">2.3. Источник дохода: {{{income}}}. Работодатель: {{{employer}}}.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">3. Прилагаемые документы</div>
-  <p class="mb-4 text-justify">3.1. Паспорт, миграционная карта, справка о доходах, медицинские справки, квитанция об уплате государственной пошлины.</p>
-
-  <div class="font-bold mb-2 text-black text-xs uppercase">4. Форс-мажор</div>
-  <p class="mb-4 text-justify">4.1. Стороны освобождаются от ответственности за частичное или полное неисполнение обязательств по настоящему договору, если оно явилось следствием обстоятельств непреодолимой силы (форс-мажора): стихийных бедствий, пожаров, наводнений, землетрясений, эпидемий, военных действий, решений органов государственной власти, а также иных обстоятельств, которые стороны не могли предвидеть и предотвратить разумными мерами.</p>
-  <p class="mb-4 text-justify">4.2. Сторона, для которой создалась невозможность исполнения обязательств, обязана незамедлительно, но не позднее 10 (десяти) календарных дней с момента наступления таких обстоятельств, письменно уведомить другую сторону об их возникновении. Неуведомление лишает сторону права ссылаться на форс-мажор.</p>
-  <p class="mb-4 text-justify">4.3. Если обстоятельства непреодолимой силы действуют более 60 (шестидесяти) календарных дней, каждая из сторон вправе в одностороннем порядке отказаться от исполнения настоящего договора, письменно уведомив другую сторону.</p>
-
-  <div class="font-bold mb-2 text-black text-xs uppercase">5. Порядок разрешения споров</div>
-  <p class="mb-4 text-justify">5.1. Все споры и разногласия, возникающие из настоящего договора или в связи с ним, стороны разрешают путём переговоров. Срок рассмотрения письменной претензии — 10 (десять) календарных дней с момента её получения.</p>
-  <p class="mb-4 text-justify">5.2. При недостижении согласия споры разрешаются в судебном порядке в соответствии с действующим законодательством Российской Федерации.</p>
-  <div class="mt-8 border-t border-zinc-300 pt-4 text-xs">
-    <div>
-      <div class="font-bold mb-2 uppercase text-black">Заявитель:</div>
-      <p class="mb-1"><strong>{{{applicant_fio}}}</strong></p>
-      <div class="mt-8 border-b border-zinc-900 w-44 h-5 flex justify-end items-end text-[10px] text-zinc-400">Подпись</div>
-    </div>
-  </div>
-</div>`,
+    
   },
 {
     id: "citizenship-app",
@@ -288,40 +177,7 @@ export const TEMPLATES_MIGRATION: LegalTemplate[] = [
       { id: "family", label: "Семейное положение", type: "text", defaultValue: "", category: "family" },
       { id: "refusal_check", label: "Отсутствие обстоятельств, препятствующих приёму", type: "text", defaultValue: "", category: "contract" },
     ],
-    previewTemplate: `<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
-  <div class="text-center font-bold text-base mb-6 text-black uppercase">Заявление о приёме в гражданство Российской Федерации</div>
-  <div class="flex justify-between mb-6 text-xs font-semibold">
-    <div>г. {{{city}}}</div>
-    <div>«{{{date}}}»</div>
-  </div>
-
-  <div class="font-bold mb-2 text-black text-xs uppercase">1. Прошу</div>
-  <p class="mb-4 text-justify">1.1. Прошу принять в гражданство Российской Федерации на основании: {{{visa_type}}}.</p>
-  <p class="mb-4 text-justify">1.2. {{{russia_period}}}. Адрес: {{{address}}}.</p>
-  <p class="mb-4 text-justify">1.3. {{{family}}}.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">2. Сведения о себе</div>
-  <p class="mb-4 text-justify">2.1. Источник средств к существованию: {{{income}}}.</p>
-  <p class="mb-4 text-justify">2.2. {{{refusal_check}}}.</p>
-  <p class="mb-4 text-justify">2.3. Обязуюсь соблюдать Конституцию РФ и законодательство Российской Федерации.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">3. Прилагаемые документы</div>
-  <p class="mb-4 text-justify">3.1. Паспорт, вид на жительство, свидетельства о рождении детей, документы о доходах, квитанция об уплате государственной пошлины.</p>
-
-  <div class="font-bold mb-2 text-black text-xs uppercase">4. Форс-мажор</div>
-  <p class="mb-4 text-justify">4.1. Стороны освобождаются от ответственности за частичное или полное неисполнение обязательств по настоящему договору, если оно явилось следствием обстоятельств непреодолимой силы (форс-мажора): стихийных бедствий, пожаров, наводнений, землетрясений, эпидемий, военных действий, решений органов государственной власти, а также иных обстоятельств, которые стороны не могли предвидеть и предотвратить разумными мерами.</p>
-  <p class="mb-4 text-justify">4.2. Сторона, для которой создалась невозможность исполнения обязательств, обязана незамедлительно, но не позднее 10 (десяти) календарных дней с момента наступления таких обстоятельств, письменно уведомить другую сторону об их возникновении. Неуведомление лишает сторону права ссылаться на форс-мажор.</p>
-  <p class="mb-4 text-justify">4.3. Если обстоятельства непреодолимой силы действуют более 60 (шестидесяти) календарных дней, каждая из сторон вправе в одностороннем порядке отказаться от исполнения настоящего договора, письменно уведомив другую сторону.</p>
-
-  <div class="font-bold mb-2 text-black text-xs uppercase">5. Порядок разрешения споров</div>
-  <p class="mb-4 text-justify">5.1. Все споры и разногласия, возникающие из настоящего договора или в связи с ним, стороны разрешают путём переговоров. Срок рассмотрения письменной претензии — 10 (десять) календарных дней с момента её получения.</p>
-  <p class="mb-4 text-justify">5.2. При недостижении согласия споры разрешаются в судебном порядке в соответствии с действующим законодательством Российской Федерации.</p>
-  <div class="mt-8 border-t border-zinc-300 pt-4 text-xs">
-    <div>
-      <div class="font-bold mb-2 uppercase text-black">Заявитель:</div>
-      <p class="mb-1"><strong>{{{applicant_fio}}}</strong></p>
-      <div class="mt-8 border-b border-zinc-900 w-44 h-5 flex justify-end items-end text-[10px] text-zinc-400">Подпись</div>
-    </div>
-  </div>
-</div>`,
+    
   },
 {
     id: "patent-app",
@@ -347,40 +203,7 @@ export const TEMPLATES_MIGRATION: LegalTemplate[] = [
       { id: "address", label: "Адрес пребывания", type: "text", defaultValue: "", category: "applicant" },
       { id: "region", label: "Регион осуществления деятельности", type: "text", defaultValue: "", category: "contract", validation: { required: true } },
     ],
-    previewTemplate: `<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
-  <div class="text-center font-bold text-base mb-6 text-black uppercase">Заявление о выдаче патента на осуществление трудовой деятельности</div>
-  <div class="flex justify-between mb-6 text-xs font-semibold">
-    <div>г. {{{city}}}</div>
-    <div>«{{{date}}}»</div>
-  </div>
-
-  <div class="font-bold mb-2 text-black text-xs uppercase">1. Прошу</div>
-  <p class="mb-4 text-justify">1.1. Прошу выдать патент для осуществления трудовой деятельности в {{{region}}} по профессии {{{profession}}}.</p>
-  <p class="mb-4 text-justify">1.2. Дата въезда: {{{entry_date}}}, миграционная карта: {{{migration_card}}}.</p>
-  <p class="mb-4 text-justify">1.3. Работодатель: {{{employer}}}. Адрес пребывания: {{{address}}}.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">2. Обязательства</div>
-  <p class="mb-4 text-justify">2.1. Обязуюсь ежемесячно вносить авансовые платежи по налогу на доходы физических лиц в фиксированном размере.</p>
-  <p class="mb-4 text-justify">2.2. Обязуюсь соблюдать режим пребывания в РФ и покинуть территорию РФ по окончании срока действия патента, если патент не будет продлён.</p>
-  <p class="mb-4 text-justify">2.3. Обязуюсь осуществлять трудовую деятельность только у работодателя, указанного в патенте (или в нескольких субъектах — в соответствии с законодательством).</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">3. Прилагаемые документы</div>
-  <p class="mb-4 text-justify">3.1. Паспорт, миграционная карта, отрывная часть уведомления о прибытии, справка об отсутствии инфекционных заболеваний, квитанция об уплате государственной пошлины.</p>
-
-  <div class="font-bold mb-2 text-black text-xs uppercase">4. Форс-мажор</div>
-  <p class="mb-4 text-justify">4.1. Стороны освобождаются от ответственности за частичное или полное неисполнение обязательств по настоящему договору, если оно явилось следствием обстоятельств непреодолимой силы (форс-мажора): стихийных бедствий, пожаров, наводнений, землетрясений, эпидемий, военных действий, решений органов государственной власти, а также иных обстоятельств, которые стороны не могли предвидеть и предотвратить разумными мерами.</p>
-  <p class="mb-4 text-justify">4.2. Сторона, для которой создалась невозможность исполнения обязательств, обязана незамедлительно, но не позднее 10 (десяти) календарных дней с момента наступления таких обстоятельств, письменно уведомить другую сторону об их возникновении. Неуведомление лишает сторону права ссылаться на форс-мажор.</p>
-  <p class="mb-4 text-justify">4.3. Если обстоятельства непреодолимой силы действуют более 60 (шестидесяти) календарных дней, каждая из сторон вправе в одностороннем порядке отказаться от исполнения настоящего договора, письменно уведомив другую сторону.</p>
-
-  <div class="font-bold mb-2 text-black text-xs uppercase">5. Порядок разрешения споров</div>
-  <p class="mb-4 text-justify">5.1. Все споры и разногласия, возникающие из настоящего договора или в связи с ним, стороны разрешают путём переговоров. Срок рассмотрения письменной претензии — 10 (десять) календарных дней с момента её получения.</p>
-  <p class="mb-4 text-justify">5.2. При недостижении согласия споры разрешаются в судебном порядке в соответствии с действующим законодательством Российской Федерации.</p>
-  <div class="mt-8 border-t border-zinc-300 pt-4 text-xs">
-    <div>
-      <div class="font-bold mb-2 uppercase text-black">Заявитель:</div>
-      <p class="mb-1"><strong>{{{applicant_fio}}}</strong></p>
-      <div class="mt-8 border-b border-zinc-900 w-44 h-5 flex justify-end items-end text-[10px] text-zinc-400">Подпись</div>
-    </div>
-  </div>
-</div>`,
+    
   },
 {
     id: "residence-permit-app",
@@ -407,39 +230,6 @@ export const TEMPLATES_MIGRATION: LegalTemplate[] = [
       { id: "family", label: "Семья", type: "text", defaultValue: "", category: "family" },
       { id: "no_refusal", label: "Отсутствие препятствий", type: "text", defaultValue: "", category: "contract" },
     ],
-    previewTemplate: `<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
-  <div class="text-center font-bold text-base mb-6 text-black uppercase">Заявление о выдаче вида на жительство</div>
-  <div class="flex justify-between mb-6 text-xs font-semibold">
-    <div>г. {{{city}}}</div>
-    <div>«{{{date}}}»</div>
-  </div>
-
-  <div class="font-bold mb-2 text-black text-xs uppercase">1. Прошу</div>
-  <p class="mb-4 text-justify">1.1. Прошу выдать вид на жительство в Российской Федерации на основании: {{{grounds}}}.</p>
-  <p class="mb-4 text-justify">1.2. {{{rvp_info}}}. {{{no_refusal}}}.</p>
-  <p class="mb-4 text-justify">1.3. Адрес: {{{address}}}. {{{family}}}.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">2. Сведения</div>
-  <p class="mb-4 text-justify">2.1. Источник дохода: {{{income}}}.</p>
-  <p class="mb-4 text-justify">2.2. Обязуюсь соблюдать Конституцию РФ и законодательство, ежегодно подавать уведомление о подтверждении проживания.</p>
-  <p class="mb-4 text-justify">2.3. Согласен на обработку персональных данных.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">3. Прилагаемые документы</div>
-  <p class="mb-4 text-justify">3.1. Паспорт, РВП, справка о доходах, медицинские справки, квитанция об уплате государственной пошлины.</p>
-
-  <div class="font-bold mb-2 text-black text-xs uppercase">4. Форс-мажор</div>
-  <p class="mb-4 text-justify">4.1. Стороны освобождаются от ответственности за частичное или полное неисполнение обязательств по настоящему договору, если оно явилось следствием обстоятельств непреодолимой силы (форс-мажора): стихийных бедствий, пожаров, наводнений, землетрясений, эпидемий, военных действий, решений органов государственной власти, а также иных обстоятельств, которые стороны не могли предвидеть и предотвратить разумными мерами.</p>
-  <p class="mb-4 text-justify">4.2. Сторона, для которой создалась невозможность исполнения обязательств, обязана незамедлительно, но не позднее 10 (десяти) календарных дней с момента наступления таких обстоятельств, письменно уведомить другую сторону об их возникновении. Неуведомление лишает сторону права ссылаться на форс-мажор.</p>
-  <p class="mb-4 text-justify">4.3. Если обстоятельства непреодолимой силы действуют более 60 (шестидесяти) календарных дней, каждая из сторон вправе в одностороннем порядке отказаться от исполнения настоящего договора, письменно уведомив другую сторону.</p>
-
-  <div class="font-bold mb-2 text-black text-xs uppercase">5. Порядок разрешения споров</div>
-  <p class="mb-4 text-justify">5.1. Все споры и разногласия, возникающие из настоящего договора или в связи с ним, стороны разрешают путём переговоров. Срок рассмотрения письменной претензии — 10 (десять) календарных дней с момента её получения.</p>
-  <p class="mb-4 text-justify">5.2. При недостижении согласия споры разрешаются в судебном порядке в соответствии с действующим законодательством Российской Федерации.</p>
-  <div class="mt-8 border-t border-zinc-300 pt-4 text-xs">
-    <div>
-      <div class="font-bold mb-2 uppercase text-black">Заявитель:</div>
-      <p class="mb-1"><strong>{{{applicant_fio}}}</strong></p>
-      <div class="mt-8 border-b border-zinc-900 w-44 h-5 flex justify-end items-end text-[10px] text-zinc-400">Подпись</div>
-    </div>
-  </div>
-</div>`,
+    
   }
 ];

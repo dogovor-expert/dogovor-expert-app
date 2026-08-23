@@ -33,7 +33,7 @@ export default function Interest395() {
     <div className="space-y-4">
       <div className="space-y-3">
         <div className="space-y-1">
-          <label className="text-[10px] font-mono text-gray-500">Сумма долга (₽)</label>
+          <label className="text-[10px] font-mono text-gray-600">Сумма долга (₽)</label>
           <input
             type="number"
             min="0"
@@ -45,7 +45,7 @@ export default function Interest395() {
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-1">
-            <label className="text-[10px] font-mono text-gray-500">Начало просрочки</label>
+            <label className="text-[10px] font-mono text-gray-600">Начало просрочки</label>
             <input
               type="date"
               value={from}
@@ -54,7 +54,7 @@ export default function Interest395() {
             />
           </div>
           <div className="space-y-1">
-            <label className="text-[10px] font-mono text-gray-500">Дата расчёта</label>
+            <label className="text-[10px] font-mono text-gray-600">Дата расчёта</label>
             <input
               type="date"
               value={to}
@@ -66,7 +66,7 @@ export default function Interest395() {
 
         <div>
           <div className="flex items-center justify-between mb-1.5">
-            <label className="text-[10px] font-mono text-gray-500">Частичные оплаты (необязательно)</label>
+            <label className="text-[10px] font-mono text-gray-600">Частичные оплаты (необязательно)</label>
             <button
               onClick={() => setPayments([...payments, { date: "", amount: "" }])}
               className="flex items-center gap-1 text-[11px] font-semibold text-brand-600 hover:text-brand-700 cursor-pointer"
@@ -91,7 +91,7 @@ export default function Interest395() {
               />
               <button
                 onClick={() => setPayments(payments.filter((_, j) => j !== i))}
-                className="px-2 text-gray-400 hover:text-red-500 cursor-pointer"
+                className="px-2 text-gray-600 hover:text-red-500 cursor-pointer"
               >
                 <Trash2 className="w-4 h-4" />
               </button>
@@ -113,11 +113,11 @@ export default function Interest395() {
         <div className="bg-gray-50 rounded-xl p-4 border border-gray-200 space-y-3">
           <div className="flex items-center gap-2">
             <Check className="w-4 h-4 text-emerald-500" />
-            <span className="text-[10px] font-mono text-gray-500">Проценты по ст. 395 ГК РФ (ключевая ставка ЦБ, {currentKeyRate().toFixed(2).replace(".", ",")} % на сегодня)</span>
+            <span className="text-[10px] font-mono text-gray-600">Проценты по ст. 395 ГК РФ (ключевая ставка ЦБ, {currentKeyRate().toFixed(2).replace(".", ",")} % на сегодня)</span>
           </div>
           <p className="text-2xl font-bold text-gray-900">{fmtMoney(result.total)}</p>
           {result.remaining > 0 && (
-            <p className="text-[11px] text-gray-500">Остаток долга: {fmtMoney(result.remaining)}</p>
+            <p className="text-[11px] text-gray-600">Остаток долга: {fmtMoney(result.remaining)}</p>
           )}
           {result.periods.length > 0 && (
             <div className="max-h-40 overflow-auto space-y-1">
@@ -140,7 +140,7 @@ export default function Interest395() {
         </div>
       )}
 
-      <p className="text-[11px] text-gray-400 leading-relaxed flex items-start gap-1.5">
+      <p className="text-[11px] text-gray-600 leading-relaxed flex items-start gap-1.5">
         <Percent className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
         Расчёт по формуле Банка России: долг × ключевая ставка × дни просрочки по периодам действия ставки (365/366 дней в году). Оплаты уменьшают долг со дня внесения. Суд может иначе квалифицировать платежи (ст. 319 ГК).
       </p>

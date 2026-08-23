@@ -33,6 +33,12 @@ export interface RenderOptions {
   /** Подписи сторон (dataURL картинок). */
   signSeller?: string | null;
   signBuyer?: string | null;
+  /**
+   * HTML-шаблон превью (Mustache). Выносится из объектов шаблонов в ленивый
+   * модуль templatePreviews, чтобы не раздувать основной бандл конструктора.
+   * Если не передан — используется template.previewTemplate (для тестов/SSR).
+   */
+  previewTemplate?: string;
 }
 
 /**
@@ -131,10 +137,10 @@ export function buildPackValues(
 }
 
 /**
- * Единый движок рендера: собирает view из значений формы (с экранированием
- * пользовательского ввода — защита от XSS), прогоняет через Mustache и
- * инжектирует QR-код и подписи. Используется конструктором и страницами
- * предпросмотра — чтобы документ всегда выглядел одинаково.
+ * Единый движок рендера: собирает view из значений формы и прогоняет через
+ * Mustache (экранирование {{field}} — защита от XSS), инжектирует QR-код и
+ * подписи. Используется конструктором и страницами предпросмотра — чтобы
+ * документ всегда выглядел одинаково.
  */
 export function renderTemplateDocument(
   template: LegalTemplate,
@@ -168,7 +174,7 @@ export function renderTemplateDocument(
         items = items.map((item) => {
           const safe: Record<string, string> = {};
           Object.entries(item).forEach(([k, v]) => {
-            safe[k] = escapeHtml(String(v ?? ""));
+            safe[k] = String(v ?? "");
           });
           return safe;
         });
@@ -184,13 +190,30 @@ export function renderTemplateDocument(
         return;
       }
 
-      view[f.id] = escapeHtml(raw);
+      view[f.id] = raw;
+
+      // Для select/radio дополнительно: label выбранной опции ({{{field_label}}})
+      // и boolean-флаг вида {{{field_is_value}}} для условий Mustache {{#field_is_value}}.
+      if (
+        (f.type === "select" || f.type === "radio") &&
+        f.options &&
+        raw
+      ) {
+        const opts = (f.options as (string | { label: string; value: string })[]).map(
+          (o) => (typeof o === "string" ? { label: o, value: o } : o)
+        );
+        const opt = opts.find((o) => o.value === raw);
+        if (opt) view[`${f.id}_label`] = opt.label;
+        if (/^[a-z0-9_]+$/i.test(raw)) {
+          view[`${f.id}_is_${raw}`] = true;
+        }
+      }
     });
 
     const fieldIds = new Set(template.fields.map((f) => f.id));
     Object.entries(formValues).forEach(([key, value]) => {
       if (!fieldIds.has(key) && value && !(key in view)) {
-        view[key] = escapeHtml(String(value));
+        view[key] = String(value);
       }
     });
 
@@ -247,7 +270,28 @@ export function renderTemplateDocument(
       view.invoice_nds_pretty = fmt(nds);
     }
 
-    let html = Mustache.render(template.previewTemplate, view);
+    // Итоговая сумма для документов с таблицей позиций (УПД, графики, спецификации).
+    if (
+      template.id === "upd" || template.id === "loan-graph" ||
+      template.id === "container-spec" || template.id === "work-plan" ||
+      template.id === "customer-order" || template.id === "services-list" ||
+      template.id === "property-list" || template.id === "website-development" ||
+      template.id === "llc-establishment"
+    ) {
+      let items: { sum?: number }[] = [];
+      try {
+        items = JSON.parse(formValues.items || "[]");
+      } catch {
+        items = [];
+      }
+      const total = items.reduce((s, it) => s + Number(it.sum || 0), 0);
+      view._total_pretty = total.toLocaleString("ru-RU", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      });
+    }
+
+    let html = Mustache.render(options.previewTemplate ?? template.previewTemplate ?? "", view);
 
     // QR-код (ГОСТ Р 56042-2014) подменяет placeholder из шаблона.
     if (template.id === "invoice" && formValues.show_qr === "true" && qrSvg) {
@@ -286,7 +330,7 @@ export function renderTemplateDocument(
 
     return html;
   } catch {
-    let html = template.previewTemplate;
+    let html = options.previewTemplate ?? template.previewTemplate ?? "";
     for (const [key, value] of Object.entries(formValues)) {
       html = html.replace(
         new RegExp(`\\{\\{${key}\\}\\}`, "g"),

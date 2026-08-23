@@ -51,7 +51,7 @@ function ForgotForm() {
           <h1 className="text-2xl font-bold text-gray-900">
             Восстановление пароля
           </h1>
-          <p className="text-sm text-gray-500 mt-2">
+          <p className="text-sm text-gray-600 mt-2">
             {sent
               ? "Проверьте почту — мы отправили ссылку для сброса пароля"
               : "Укажите email — пришлём ссылку для сброса пароля"}
@@ -96,7 +96,7 @@ function ForgotForm() {
         )}
 
         <button
-          className="w-full text-center text-sm text-gray-500 hover:text-brand-600 transition-colors mt-4"
+          className="w-full text-center text-sm text-gray-600 hover:text-brand-600 transition-colors mt-4"
           onClick={() => router.push("/login")}
         >
           ← Вернуться ко входу

@@ -21,9 +21,9 @@ export default function ContractorsPanel({
   return (
     <div className="space-y-2.5">
       {contractors === null ? (
-        <p className="text-[10px] text-gray-400">Загрузка...</p>
+        <p className="text-[10px] text-gray-600">Загрузка...</p>
       ) : contractors.length === 0 ? (
-        <p className="text-[10px] text-gray-400">
+        <p className="text-[10px] text-gray-600">
           Пока нет сохранённых контрагентов: заполните реквизиты
           стороны в форме и нажмите «Сохранить».
         </p>
@@ -42,7 +42,7 @@ export default function ContractorsPanel({
                 <p className="text-[11px] font-medium text-gray-800 truncate">
                   {c.name || "Без названия"}
                 </p>
-                <p className="text-[10px] text-gray-400 truncate">
+                <p className="text-[10px] text-gray-600 truncate">
                   {c.inn ? `ИНН ${c.inn}` : ""}
                   {c.kpp ? ` • КПП ${c.kpp}` : ""}
                   {c.address ? ` • ${c.address}` : ""}

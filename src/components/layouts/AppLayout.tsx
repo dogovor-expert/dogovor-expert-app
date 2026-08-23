@@ -7,8 +7,12 @@ import { createClient } from "@/lib/supabase/client";
 import {
   FileText, Activity, Calculator,
   FolderOpen, Files, Trash2, CreditCard,
-  Settings, HelpCircle, Menu, X, Bell, ChevronDown, Search, Shield, Home, LogIn, Cookie, Shuffle
+  Settings, HelpCircle, Menu, X, Bell, ChevronDown, Shield, Home, LogIn, Cookie, Shuffle, Newspaper
 } from "lucide-react";
+import HeaderSearch from "@/components/search/HeaderSearch";
+import PromoPill from "@/components/billing/PromoPill";
+import ChatWidget from "@/components/support/ChatWidget";
+import FeedbackFab from "@/components/feedback/FeedbackModal";
 
 interface NavItem {
   icon: ReactNode;
@@ -27,7 +31,7 @@ function getDraftCount(): number {
 
 const toolNav: NavItem[] = [
   { icon: <Activity className="w-5 h-5" />, label: "Автотека", href: "/autoteka" },
-  { icon: <Calculator className="w-5 h-5" />, label: "ОСАГО & КБМ", href: "/osago" },
+  { icon: <Calculator className="w-5 h-5" />, label: "ОСАГО", href: "/osago" },
   { icon: <Shuffle className="w-5 h-5" />, label: "Конвертер", href: "/converter" },
   { icon: <Calculator className="w-5 h-5" />, label: "Калькулятор", href: "/utils" },
 ];
@@ -43,7 +47,6 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   const [draftCount, setDraftCount] = useState(0);
   const [profile, setProfile] = useState({ name: "Гость", initial: "Г", avatar: null as string | null });
   const [user, setUser] = useState<any>(null);
-  const [searchQuery, setSearchQuery] = useState("");
   const [cookieConsent, setCookieConsent] = useState<string | null>(null);
   const pathname = usePathname();
 
@@ -127,12 +130,6 @@ export default function AppLayout({ children }: { children: ReactNode }) {
     };
   }, [refreshDrafts]);
 
-  const handleSearchSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const q = searchQuery.trim();
-    window.location.href = `/templates${q ? `?q=${encodeURIComponent(q)}` : ""}`;
-  };
-
   const docNav: NavItem[] = [
     { icon: <FolderOpen className="w-5 h-5" />, label: "Мои документы", href: "/documents", badge: draftCount > 0 ? String(draftCount) : undefined },
     { icon: <Files className="w-5 h-5" />, label: "Каталог шаблонов", href: "/templates" },
@@ -146,7 +143,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
 
   const renderNav = (items: NavItem[], title?: string) => (
     <div className="mb-4">
-      {title && <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-3 mb-2">{title}</p>}
+      {title && <p className="text-[10px] font-bold text-slate-600 uppercase tracking-widest px-3 mb-2">{title}</p>}
       {items.map((item, i) => {
         const active = isActive(item.href);
         return (
@@ -173,11 +170,18 @@ export default function AppLayout({ children }: { children: ReactNode }) {
     </div>
   );
 
+  // Для админки свой интерфейс (admin/layout.tsx) — не показываем сайтовый chrome.
+  if (pathname.startsWith("/admin")) {
+    return <>{children}</>;
+  }
+
   return (
     <div className="flex h-screen overflow-hidden bg-gray-50">
-      {/* Sidebar */}
-      <aside className={`fixed inset-y-0 left-0 z-30 w-64 bg-white border-r border-gray-100 transform transition-transform duration-200 lg:relative lg:translate-x-0 flex flex-col ${
-        open ? "translate-x-0" : "-translate-x-full"
+      {/* Sidebar: on mobile it is removed from DOM when closed (hidden) to avoid horizontal overflow; on desktop it is always in flow */}
+      <aside className={`z-30 w-64 bg-white border-r border-gray-100 flex flex-col ${
+        open
+          ? "fixed inset-y-0 left-0 shadow-xl lg:static lg:shadow-none"
+          : "hidden lg:flex lg:static"
       }`}>
         <div className="flex items-center justify-between h-16 px-6 border-b border-gray-100 flex-shrink-0">
           <Link href="/" className="flex items-center gap-2.5 group">
@@ -186,8 +190,8 @@ export default function AppLayout({ children }: { children: ReactNode }) {
             </div>
             <span className="font-semibold text-gray-900 group-hover:text-brand-600 transition-colors">Dogovor.expert</span>
           </Link>
-          <button onClick={() => setOpen(false)} className="lg:hidden p-1 hover:bg-gray-100 rounded-lg">
-            <X className="w-5 h-5 text-gray-500" />
+          <button onClick={() => setOpen(false)} className="lg:hidden p-1 hover:bg-gray-100 rounded-lg" aria-label="Закрыть меню навигации">
+            <X className="w-5 h-5 text-gray-600" />
           </button>
         </div>
 
@@ -216,6 +220,18 @@ export default function AppLayout({ children }: { children: ReactNode }) {
             <span className="w-5 h-5 flex items-center justify-center"><FileText className="w-5 h-5" /></span>
             <span>Создать документ</span>
           </Link>
+          <Link
+            href="/blog"
+            onClick={() => setOpen(false)}
+            className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 mb-3 ${
+              isActive("/blog")
+                ? "bg-brand-50 text-brand-700"
+                : "text-gray-800 hover:bg-gray-50 hover:text-gray-900"
+            }`}
+          >
+            <span className="w-5 h-5 flex items-center justify-center"><Newspaper className="w-5 h-5" /></span>
+            <span>Блог</span>
+          </Link>
           <div className="border-t border-gray-100 pt-4" />
           {renderNav(toolNav, "Инструменты")}
           <div className="border-t border-gray-100 pt-4 mb-4" />
@@ -243,11 +259,11 @@ export default function AppLayout({ children }: { children: ReactNode }) {
               <span className="text-[10px] font-medium text-brand-700">152-ФЗ · документы — только в браузере</span>
             </div>
           </div>
-          <div className="mt-3 flex flex-wrap gap-x-3 gap-y-1 px-1">
-            <Link href="/privacy" className="text-[11px] text-gray-400 hover:text-brand-600 transition-colors">Политика</Link>
-            <Link href="/terms" className="text-[11px] text-gray-400 hover:text-brand-600 transition-colors">Соглашение</Link>
-            <Link href="/about" className="text-[11px] text-gray-400 hover:text-brand-600 transition-colors">О сервисе</Link>
-            <Link href="/contacts" className="text-[11px] text-gray-400 hover:text-brand-600 transition-colors">Контакты</Link>
+          <div className="mt-3 flex flex-wrap gap-x-3 gap-y-2 px-1">
+            <Link href="/privacy" className="text-[11px] leading-6 text-gray-600 hover:text-brand-600 transition-colors underline underline-offset-2 hover:no-underline">Политика</Link>
+            <Link href="/terms" className="text-[11px] leading-6 text-gray-600 hover:text-brand-600 transition-colors underline underline-offset-2 hover:no-underline">Соглашение</Link>
+            <Link href="/about" className="text-[11px] leading-6 text-gray-600 hover:text-brand-600 transition-colors underline underline-offset-2 hover:no-underline">О сервисе</Link>
+            <Link href="/contacts" className="text-[11px] leading-6 text-gray-600 hover:text-brand-600 transition-colors underline underline-offset-2 hover:no-underline">Контакты</Link>
           </div>
         </div>
       </aside>
@@ -256,27 +272,19 @@ export default function AppLayout({ children }: { children: ReactNode }) {
       {open && <div className="fixed inset-0 bg-black/20 z-20 lg:hidden" onClick={() => setOpen(false)} />}
 
       {/* Main */}
-      <div className="flex-1 flex flex-col min-w-0">
-        <header className="h-16 bg-white border-b border-gray-100 flex items-center justify-between px-6 gap-4 flex-shrink-0">
+      <div className="flex-1 flex flex-col min-w-0 max-w-full">
+        <header className="h-16 bg-white border-b border-gray-100 flex items-center justify-between px-6 gap-4 flex-shrink-0 max-w-full">
           <div className="flex items-center gap-3">
-            <button onClick={() => setOpen(true)} className="lg:hidden p-1.5 hover:bg-gray-100 rounded-lg">
+            <button onClick={() => setOpen(true)} className="lg:hidden p-1.5 hover:bg-gray-100 rounded-lg" aria-label="Открыть меню навигации">
               <Menu className="w-5 h-5 text-gray-600" />
             </button>
-            <form onSubmit={handleSearchSubmit} className="relative max-w-md hidden sm:block">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Поиск документов, шаблонов..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-80 pl-10 pr-4 py-2 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all"
-              />
-            </form>
+            <HeaderSearch />
+            <PromoPill />
           </div>
           <div className="flex items-center gap-2">
             {user ? (
               <>
-                <button className="relative p-2 hover:bg-gray-100 rounded-xl text-gray-500 transition-colors">
+                <button className="relative p-2 hover:bg-gray-100 rounded-xl text-gray-600 transition-colors">
                   <Bell className="w-5 h-5" />
                 </button>
                 <div className="relative group">
@@ -288,12 +296,12 @@ export default function AppLayout({ children }: { children: ReactNode }) {
                         profile.initial
                       )}
                     </div>
-                    <ChevronDown className="w-4 h-4 text-gray-400 hidden sm:block" />
+                    <ChevronDown className="w-4 h-4 text-gray-600 hidden sm:block" />
                   </Link>
                   <div className="absolute right-0 top-full mt-1 w-48 bg-white border border-gray-100 rounded-xl shadow-lg py-1.5 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-40">
                     <div className="px-4 py-2 border-b border-gray-50">
                       <p className="text-sm font-medium text-gray-900 truncate">{profile.name}</p>
-                      <p className="text-xs text-gray-500 truncate">{user.email}</p>
+                      <p className="text-xs text-gray-600 truncate">{user.email}</p>
                     </div>
                     <Link href="/documents" className="block px-4 py-2 text-sm text-gray-600 hover:bg-gray-50 hover:text-gray-900">
                       Мои документы
@@ -318,8 +326,13 @@ export default function AppLayout({ children }: { children: ReactNode }) {
             )}
           </div>
         </header>
-        <main className="flex-1 overflow-y-auto">{children}</main>
+        <main className="flex-1 overflow-y-auto max-w-full px-4 sm:px-6 lg:px-8">
+  <div className="max-w-7xl mx-auto w-full">{children}</div>
+</main>
       </div>
+
+      <ChatWidget />
+      {cookieConsent !== null && <FeedbackFab />}
 
       {cookieConsent === null && (
         <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 w-[calc(100%-2rem)] max-w-xl bg-white border border-gray-200 rounded-2xl shadow-xl p-4">
@@ -329,7 +342,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-semibold text-gray-900">Мы используем cookies</p>
-              <p className="text-xs text-gray-500 mt-0.5 leading-relaxed">
+              <p className="text-xs text-gray-600 mt-0.5 leading-relaxed">
                 Обезличенные данные для анализа посещаемости и улучшения сервиса. Подробнее в{" "}
                 <Link href="/privacy" className="text-brand-600 hover:underline">Политике конфиденциальности</Link>.
               </p>
@@ -349,7 +362,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
               </div>
             </div>
             <button onClick={() => acceptCookies("declined")} className="p-1 hover:bg-gray-100 rounded-lg flex-shrink-0" aria-label="Закрыть">
-              <X className="w-4 h-4 text-gray-400" />
+              <X className="w-4 h-4 text-gray-600" />
             </button>
           </div>
         </div>

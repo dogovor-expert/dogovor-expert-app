@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 import { Paragraph, Table } from "docx";
 import { TEMPLATES_AUTO } from "@/data/templates/auto";
+import { TEMPLATE_PREVIEWS } from "@/data/templatePreviews";
 import { renderTemplateDocument } from "@/lib/renderDocument";
 import { parseHtmlToDocx, exportToDocx } from "@/lib/exportDocx";
 
@@ -44,7 +45,9 @@ const VALUES: Record<string, string> = {
 function dkpHtml(): string {
   const dkp = TEMPLATES_AUTO.find((t) => t.id === "dkp-auto");
   if (!dkp) throw new Error("dkp-auto not found");
-  return renderTemplateDocument(dkp, VALUES);
+  return renderTemplateDocument(dkp, VALUES, {
+    previewTemplate: TEMPLATE_PREVIEWS[dkp.id],
+  });
 }
 
 describe("parseHtmlToDocx", () => {

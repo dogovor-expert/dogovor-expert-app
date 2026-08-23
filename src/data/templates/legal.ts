@@ -25,48 +25,7 @@ export const TEMPLATES_LEGAL: LegalTemplate[] = [
       { id: "amount", label: "Сумма требования (если денежное)", type: "text", defaultValue: "", category: "contract" },
       { id: "answer_days", label: "Срок ответа (дней)", type: "number", defaultValue: "", category: "contract" },
     ],
-    previewTemplate: `
-<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
-  <div class="flex justify-between mb-8 text-xs font-semibold">
-    <div class="w-1/2">
-      <p class="font-bold">{{{recipient_company}}}</p>
-      {{{#recipient_director}}}<p>{{{recipient_director}}}</p>{{{/recipient_director}}}
-      <p>{{{recipient_address}}}</p>
-    </div>
-    <div class="w-1/2 text-left">
-      <p>от: {{{sender_fio}}}</p>
-      <p>адрес: {{{sender_address}}}</p>
-      <p>тел.: ______________</p>
-    </div>
-  </div>
-  <div class="text-center font-bold text-base mb-6 text-black uppercase">Претензия</div>
-  <p class="mb-4 text-justify">
-    Между мной и {{{recipient_company}}} заключён договор от {{{contract_date}}} № {{{contract_number}}}
-    на {{{subject}}}.
-  </p>
-  <p class="mb-4 text-justify">
-    Условия договора нарушены: {{{violation_note}}}.
-  </p>
-  <p class="mb-4 text-justify font-bold">На основании ст. 452, 483 ГК РФ требую:</p>
-  <p class="mb-4 text-justify">
-    {{{demand}}}. {{{#amount}}}В связи с этим прошу уплатить {{{amount}}} руб.{{{/amount}}}
-  </p>
-  <p class="mb-4 text-justify">
-    Ответ прошу направить в течение {{{answer_days}}} календарных дней с момента получения настоящей претензии.
-    В случае неудовлетворения требований я буду вынужден обратиться в суд с иском, а также взыскать
-    неустойку, убытки и судебные расходы.
-  </p>
-  <div class="flex justify-end text-xs mt-10">
-    <div class="text-right">
-      <p class="mb-1">«{{{date}}}» г. {{{city}}}</p>
-      <div class="flex items-end justify-between gap-16">
-        <p>{{{sender_fio}}}</p>
-        <div class="border-b border-zinc-950 w-48 h-5"></div>
-      </div>
-      <p class="text-zinc-400 text-[10px] mt-1">подпись</p>
-    </div>
-  </div>
-</div>`,
+    
   },
 {
       id: "lawsuit-statement",
@@ -94,55 +53,7 @@ export const TEMPLATES_LEGAL: LegalTemplate[] = [
       { id: "city", label: "Город подачи", type: "text", defaultValue: "", category: "contract" },
       { id: "date", label: "Дата подачи", type: "date", defaultValue: "", category: "contract" },
     ],
-    previewTemplate: `
-<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
-  <div class="text-center text-xs font-semibold mb-4">
-    <p>В {{{court_name}}}</p>
-    {{{#court_address}}}<p>адрес суда: {{{court_address}}}</p>{{{/court_address}}}
-  </div>
-  <div class="mb-6 text-xs font-semibold">
-    <p>Истец: {{{plaintiff_fio}}}</p>
-    <p>адрес: {{{plaintiff_address}}}</p>
-    {{{#plaintiff_phone}}}<p>тел.: {{{plaintiff_phone}}}</p>{{{/plaintiff_phone}}}
-    <p class="mt-2">Ответчик: {{{defendant_fio}}}</p>
-    <p>адрес: {{{defendant_address}}}</p>
-  </div>
-  <div class="text-center font-bold text-base mb-6 text-black uppercase">Исковое заявление о взыскании долга</div>
-  <p class="mb-4 text-justify">
-    {{{base_doc_date}}} года я передал {{{defendant_fio}}} денежные средства в размере
-    <strong>{{{debt_amount}}} руб.</strong>, что подтверждается {{{base_doc}}}.
-  </p>
-  <p class="mb-4 text-justify">
-    По условиям {{{base_doc}}} ответчик обязался вернуть долг до {{{return_date}}}, однако до настоящего
-    времени денежные средства не возвращены. {{{#penalty}}}За просрочку возврата подлежат уплате проценты
-    в размере {{{penalty}}} руб.{{{/penalty}}}
-  </p>
-  <p class="mb-4 text-justify">На основании ст. 309, 310, 807-810 ГК РФ, руководствуясь ст. 131, 132 ГПК РФ, прошу:</p>
-  <p class="mb-2 text-justify">1. Взыскать с {{{defendant_fio}}} в мою пользу сумму долга в размере {{{debt_amount}}} руб.;</p>
-  {{{#penalty}}}<p class="mb-2 text-justify">2. Взыскать неустойку в размере {{{penalty}}} руб.;</p>{{{/penalty}}}
-  {{{#legal_costs}}}<p class="mb-4 text-justify">{{{penalty}}}3. Взыскать судебные расходы в размере {{{legal_costs}}} руб.{{{/legal_costs}}}</p>
-  <p class="mb-6 text-justify">
-    {{{#legal_costs}}}<span>Судебные расходы: {{{legal_costs_note}}}.</span>{{{/legal_costs}}}
-    Цена иска: {{{debt_amount}}} руб. Государственная пошлина: __________ руб.
-  </p>
-  <div class="mb-6 text-xs">
-    <p>Приложения:</p>
-    <p>1. Копия {{{base_doc}}};</p>
-    <p>2. Расчёт цены иска;</p>
-    <p>3. Квитанция об уплате госпошлины;</p>
-    <p>4. Копия искового заявления для ответчика.</p>
-  </div>
-  <div class="flex justify-end text-xs">
-    <div class="text-right">
-      <p class="mb-1">«{{{date}}}» г. {{{city}}}</p>
-      <div class="flex items-end justify-between gap-16">
-        <p>{{{plaintiff_fio}}}</p>
-        <div class="border-b border-zinc-950 w-48 h-5"></div>
-      </div>
-      <p class="text-zinc-400 text-[10px] mt-1">подпись</p>
-    </div>
-  </div>
-</div>`,
+    
   },
 {
     id: "claim-generic",
@@ -165,39 +76,7 @@ export const TEMPLATES_LEGAL: LegalTemplate[] = [
       { id: "deadline", label: "Срок исполнения требования", type: "text", defaultValue: "", category: "contract" },
       { id: "consequences", label: "Последствия неисполнения", type: "text", defaultValue: "", category: "contract" },
     ],
-    previewTemplate: `
-<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
-  <div class="mb-4 text-xs font-semibold">
-    <p>{{{recipient_fio}}}</p>
-    <p>ИНН {{{recipient_inn}}}</p>
-    <p class="mt-2">от {{{sender_fio}}}</p>
-    <p>ИНН {{{sender_inn}}}</p>
-    <p class="mt-2">исх. № ___ от «{{{date}}}»</p>
-  </div>
-  <div class="text-center font-bold text-base mb-6 text-black uppercase">Претензия</div>
-  <p class="mb-4 text-justify">
-    Между {{{sender_fio}}} и {{{recipient_fio}}} заключён {{{base_doc}}}.
-  </p>
-  <p class="mb-4 text-justify">
-    Вашей организацией нарушены условия обязательства: {{{violation}}}.
-  </p>
-  <p class="mb-4 text-justify">
-    На основании изложенного, руководствуясь ст. 309, 310 ГК РФ, требую: {{{demand}}}.
-  </p>
-  <p class="mb-4 text-justify">
-    Прошу исполнить требование в срок {{{deadline}}}.
-  </p>
-  <p class="mb-4 text-justify">
-    В случае неисполнения настоящей претензии {{{consequences}}}. Досудебный порядок урегулирования спора является обязательным (ст. 4 АПК РФ).
-  </p>
-  <div class="flex justify-end mt-10 text-xs">
-    <div class="text-right w-1/2">
-      <p class="font-bold mb-1">{{{sender_fio}}}</p>
-      <div class="border-b border-zinc-950 w-56 h-5 mb-1"></div>
-      <p class="text-zinc-400 text-[10px]">подпись</p>
-    </div>
-  </div>
-</div>`,
+    
   },
 {
     id: "court-order-app",
@@ -219,40 +98,7 @@ export const TEMPLATES_LEGAL: LegalTemplate[] = [
       { id: "base_doc", label: "Основание", type: "textarea", defaultValue: "", category: "contract", rows: 2, validation: { required: true } },
       { id: "proof", label: "Доказательства", type: "text", defaultValue: "", category: "contract" },
     ],
-    previewTemplate: `
-<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
-  <div class="mb-4 text-xs font-semibold">
-    <p>В {{{court_name}}}</p>
-    <p>{{{court_address}}}</p>
-    <p class="mt-2">Взыскатель: {{{claimant_fio}}}</p>
-    <p>адрес: {{{claimant_address}}}</p>
-    <p class="mt-2">Должник: {{{defendant_fio}}}</p>
-    <p>адрес: {{{defendant_address}}}</p>
-  </div>
-  <div class="text-center font-bold text-base mb-6 text-black uppercase">Заявление о выдаче судебного приказа</div>
-  <p class="mb-4 text-justify">
-    {{{base_doc}}}. Сумма задолженности составляет <strong>{{{claim_amount}} руб.</strong>} ({{{claim_amount_words}}}).
-  </p>
-  <p class="mb-4 text-justify">
-    Доказательства: {{{proof}}}.
-  </p>
-  <p class="mb-4 text-justify">
-    На основании ст. 121-126 ГПК РФ прошу выдать судебный приказ о взыскании с {{{defendant_fio}}} в пользу {{{claimant_fio}}} денежных средств в размере {{{claim_amount}}} руб., а также расходов по уплате государственной пошлины.
-  </p>
-  <p class="mb-6 text-justify">
-    Приложения: 1) копия {{{base_doc}}}; 2) расчёт задолженности; 3) квитанция об уплате госпошлины; 4) копия заявления для должника.
-  </p>
-  <div class="flex justify-end text-xs">
-    <div class="text-right">
-      <p class="mb-1">«{{{date}}}»</p>
-      <div class="flex items-end justify-between gap-16">
-        <p>{{{claimant_fio}}}</p>
-        <div class="border-b border-zinc-950 w-48 h-5"></div>
-      </div>
-      <p class="text-zinc-400 text-[10px] mt-1">подпись</p>
-    </div>
-  </div>
-</div>`,
+    
   },
 {
     id: "refund-claim",
@@ -280,36 +126,7 @@ export const TEMPLATES_LEGAL: LegalTemplate[] = [
         { label: "Соразмерное уменьшение цены", value: "соразмерное уменьшение цены" },
       ] },
     ],
-    previewTemplate: `
-<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
-  <div class="mb-4 text-xs font-semibold">
-    <p>{{{seller_fio}}}</p>
-    <p>адрес: {{{seller_address}}}</p>
-    <p class="mt-2">от {{{buyer_fio}}}</p>
-    <p>тел.: {{{buyer_phone}}}</p>
-    <p class="mt-2">исх. № ___ от «{{{date}}}»</p>
-  </div>
-  <div class="text-center font-bold text-base mb-6 text-black uppercase">Претензия о возврате товара</div>
-  <p class="mb-4 text-justify">
-    «{{{purchase_date}}}» я приобрёл(а) у Вас товар: {{{goods_desc}}}, стоимостью <strong>{{{goods_price}} руб.</strong>}, что подтверждается кассовым чеком.
-  </p>
-  <p class="mb-4 text-justify">
-    В процессе эксплуатации обнаружен недостаток: {{{defects}}}, что делает невозможным использование товара по назначению.
-  </p>
-  <p class="mb-4 text-justify">
-    На основании ст. 18 Закона «О защите прав потребителей» требую: {{{demand_type}}} в течение 10 дней с даты получения настоящей претензии.
-  </p>
-  <p class="mb-4 text-justify">
-    Товар готов передать для проверки качества. В случае неудовлетворения требования буду вынужден(а) обратиться в суд с требованием о возврате денежных средств, неустойки и компенсации морального вреда.
-  </p>
-  <div class="flex justify-end mt-10 text-xs">
-    <div class="text-right w-1/2">
-      <p class="font-bold mb-1">{{{buyer_fio}}}</p>
-      <div class="border-b border-zinc-950 w-56 h-5 mb-1"></div>
-      <p class="text-zinc-400 text-[10px]">подпись</p>
-    </div>
-  </div>
-</div>`,
+    
   },
 {
     id: "debt-lawsuit",
@@ -333,44 +150,7 @@ export const TEMPLATES_LEGAL: LegalTemplate[] = [
       { id: "penalty_amount", label: "Неустойка (руб.)", type: "text", defaultValue: "", category: "payment" },
       { id: "claim_total", label: "Цена иска (руб.)", type: "text", defaultValue: "", category: "payment" },
     ],
-    previewTemplate: `
-<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
-  <div class="mb-4 text-xs font-semibold">
-    <p>В {{{court_name}}}</p>
-    <p>адрес: {{{court_address}}}</p>
-    <p class="mt-2">Истец: {{{plaintiff_fio}}}</p>
-    <p>адрес: {{{plaintiff_address}}}</p>
-    <p class="mt-2">Ответчик: {{{defendant_fio}}}</p>
-    <p>адрес: {{{defendant_address}}}</p>
-    <p class="mt-2">Цена иска: {{{claim_total}}} руб.</p>
-  </div>
-  <div class="text-center font-bold text-base mb-6 text-black uppercase">Исковое заявление о взыскании задолженности</div>
-  <p class="mb-4 text-justify">
-    Между истцом и ответчиком заключён {{{base_doc}}}. Истец исполнил обязательства в полном объёме.
-  </p>
-  <p class="mb-4 text-justify">
-    Ответчик обязательства по оплате не исполнил, задолженность составляет <strong>{{{debt_amount}} руб.</strong>} ({{{debt_amount_words}}}). {{{#penalty_amount}}}За просрочку оплаты подлежит уплате неустойка в размере {{{penalty_amount}}} руб.{{{/penalty_amount}}}
-  </p>
-  <p class="mb-4 text-justify">
-    На основании ст. 309, 310, 330, 779 ГК РФ, ст. 131, 132 ГПК РФ прошу:
-  </p>
-  <p class="mb-2 text-justify">1. Взыскать с {{{defendant_fio}}} в пользу {{{plaintiff_fio}}} задолженность в размере {{{debt_amount}}} руб.;</p>
-  {{{#penalty_amount}}}<p class="mb-2 text-justify">2. Взыскать неустойку в размере {{{penalty_amount}}} руб.;</p>{{{/penalty_amount}}}
-  <p class="mb-6 text-justify">3. Взыскать судебные расходы по уплате государственной пошлины.</p>
-  <p class="mb-6 text-justify">
-    Приложения: копии договора, актов, счёта, расчёт задолженности, квитанция об уплате госпошлины, копия иска для ответчика.
-  </p>
-  <div class="flex justify-end text-xs">
-    <div class="text-right">
-      <p class="mb-1">«{{{date}}}» г. {{{city}}}</p>
-      <div class="flex items-end justify-between gap-16">
-        <p>{{{plaintiff_fio}}}</p>
-        <div class="border-b border-zinc-950 w-48 h-5"></div>
-      </div>
-      <p class="text-zinc-400 text-[10px] mt-1">подпись</p>
-    </div>
-  </div>
-</div>`,
+    
   },
 {
     id: "objection-debt-claim",
@@ -390,24 +170,7 @@ export const TEMPLATES_LEGAL: LegalTemplate[] = [
       { id: "objection_reason", label: "Доводы возражения", type: "textarea", defaultValue: "", category: "contract" },
       { id: "evidence", label: "Доказательства", type: "text", defaultValue: "", category: "contract" },
     ],
-    previewTemplate: `
-<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
-  <div class="text-center font-bold text-base mb-6 text-black uppercase">Возражение на исковое заявление</div>
-  <div class="flex justify-between mb-6 text-xs font-semibold">
-    <div>г. {{{city}}}</div>
-    <div>«{{{date}}}»</div>
-  </div>
-  <p class="mb-4 text-justify">В <strong>{{{court_name}}}</strong></p>
-  <p class="mb-4 text-justify">По делу № {{{case_number}}}. Истец: {{{plaintiff_org}}}. Ответчик: {{{defendant_org}}}.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">Возражения</div>
-  <p class="mb-4 text-justify">1. Истец заявил о взыскании задолженности, однако: {{{objection_reason}}}.</p>
-  <p class="mb-4 text-justify">2. В подтверждение возражений ответчик представляет: {{{evidence}}} (ст. 131-132 ГПК РФ).</p>
-  <p class="mb-4 text-justify">3. На основании изложенного просим суд отказать в удовлетворении исковых требований в полном объёме.</p>
-  <div class="mt-8 text-xs border-t border-zinc-300 pt-4">
-    <p class="mb-1">Ответчик: {{{defendant_org}}}</p>
-    <p class="text-zinc-500 text-[11px]">подпись</p>
-  </div>
-</div>`,
+    
   },
 {
     id: "divorce-lawsuit",
@@ -439,31 +202,7 @@ export const TEMPLATES_LEGAL: LegalTemplate[] = [
       { id: "alimony_start", label: "С какого момента взыскивать алименты", type: "text", defaultValue: "", category: "family" },
       { id: "attachments", label: "Приложения", type: "textarea", defaultValue: "", category: "other", rows: 2 },
     ],
-    previewTemplate: `
-<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
-  <div class="text-center font-bold text-base mb-6 text-black uppercase">Исковое заявление о расторжении брака и взыскании алиментов</div>
-  <div class="flex justify-between mb-6 text-xs font-semibold">
-    <div>г. {{{city}}}</div>
-    <div>«{{{date}}}»</div>
-  </div>
-  <p class="mb-4 text-justify">В <strong>{{{court_name}}}</strong></p>
-  <p class="mb-1 text-justify">Истец: {{{plaintiff_fio}}}, адрес: {{{plaintiff_address}}}, тел. {{{plaintiff_phone}}}</p>
-  <p class="mb-1 text-justify">Ответчик: {{{defendant_fio}}}, адрес: {{{defendant_address}}}</p>
-  <p class="mb-4 text-justify">Цена иска: _______________ руб. (размер алиментов за год)</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">Исковое заявление</div>
-  <p class="mb-3 text-justify">1. «{{{marriage_date}}}» между Истцом и Ответчиком зарегистрирован брак ({{{marriage_place}}}). От брака имеются дети: {{{children_info}}}.</p>
-  <p class="mb-3 text-justify">2. {{{divorce_reason}}} (ст. 21 СК РФ).</p>
-  <p class="mb-3 text-justify">3. Дети проживают с Истцом и находятся на его иждивении; Ответчик участия в содержании детей не принимает (ст. 80 СК РФ).</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">На основании изложенного прошу:</div>
-  <p class="mb-3 text-justify">1) расторгнуть брак между Истцом и Ответчиком, зарегистрированный {{{marriage_date}}};</p>
-  <p class="mb-3 text-justify">2) взыскать с Ответчика алименты на содержание детей в размере {{{alimony_claim}}} начиная с {{{alimony_start}}} (ст. 81 СК РФ).</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">Приложения:</div>
-  <p class="mb-4 text-justify">{{{attachments}}}.</p>
-  <div class="mt-8 text-xs border-t border-zinc-300 pt-4">
-    <p class="mb-1">Истец: {{{plaintiff_fio}}}</p>
-    <p class="text-zinc-500 text-[11px]">подпись</p>
-  </div>
-</div>`,
+    
   },
 {
     id: "consumer-lawsuit",
@@ -492,31 +231,7 @@ export const TEMPLATES_LEGAL: LegalTemplate[] = [
       { id: "claims_list", label: "Исковые требования", type: "textarea", defaultValue: "", category: "items", rows: 3, validation: { required: true } },
       { id: "attachments", label: "Приложения", type: "textarea", defaultValue: "", category: "other", rows: 2 },
     ],
-    previewTemplate: `
-<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
-  <div class="text-center font-bold text-base mb-6 text-black uppercase">Исковое заявление о защите прав потребителей</div>
-  <div class="flex justify-between mb-6 text-xs font-semibold">
-    <div>г. {{{city}}}</div>
-    <div>«{{{date}}}»</div>
-  </div>
-  <p class="mb-4 text-justify">В <strong>{{{court_name}}}</strong></p>
-  <p class="mb-1 text-justify">Истец: {{{plaintiff_fio}}}, адрес: {{{plaintiff_address}}}, тел. {{{plaintiff_phone}}}</p>
-  <p class="mb-4 text-justify">Ответчик: {{{defendant_org}}}, адрес: {{{defendant_address}}}, ИНН {{{defendant_inn}}}</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">Исковое заявление</div>
-  <p class="mb-3 text-justify">1. «{{{date}}}» истец приобрёл товар: {{{product_desc}}}. Стоимость: {{{price}}} руб. (ст. 454, 492 ГК РФ).</p>
-  <p class="mb-3 text-justify">2. В процессе эксплуатации выявлены недостатки: {{{defect_desc}}} (ст. 18 ЗоЗПП).</p>
-  <p class="mb-3 text-justify">3. «{{{claim_date}}}» ответчику направлена досудебная претензия, требования не удовлетворены.</p>
-  <p class="mb-3 text-justify">4. Неустойка за просрочку удовлетворения требований: {{{penalty_rate}}} (ст. 23 ЗоЗПП).</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">На основании изложенного прошу (ст. 17 ЗоЗПП):</div>
-  <p class="mb-3 text-justify">{{{claims_list}}}.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">Приложения:</div>
-  <p class="mb-4 text-justify">{{{attachments}}}. Госпошлина при цене иска до 1 млн руб. не уплачивается (п. 3 ст. 17 ЗоЗПП).</p>
-  <div class="mt-8 text-xs border-t border-zinc-300 pt-4">
-    <p class="mb-1">Истец: {{{plaintiff_fio}}}</p>
-    <div class="border-b border-zinc-950 w-56 h-5 mt-5 mb-1"></div>
-    <p class="text-zinc-400 text-[10px]">подпись</p>
-  </div>
-</div>`,
+    
   },
 {
     id: "appeal-complaint",
@@ -541,30 +256,7 @@ export const TEMPLATES_LEGAL: LegalTemplate[] = [
       { id: "prayer", label: "Просительная часть", type: "text", defaultValue: "", category: "items" },
       { id: "attachments", label: "Приложения", type: "text", defaultValue: "", category: "other" },
     ],
-    previewTemplate: `
-<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
-  <div class="text-center font-bold text-base mb-6 text-black uppercase">Апелляционная жалоба</div>
-  <div class="flex justify-between mb-6 text-xs font-semibold">
-    <div>г. {{{city}}}</div>
-    <div>«{{{date}}}»</div>
-  </div>
-  <p class="mb-4 text-justify">В <strong>{{{court_name}}}</strong></p>
-  <p class="mb-1 text-justify">По делу № {{{case_number}}}. Заявитель: {{{appellant_fio}}} ({{{appellant_status}}}).</p>
-  <p class="mb-4 text-justify">Другие лица: {{{other_party}}}.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">Апелляционная жалоба</div>
-  <p class="mb-3 text-justify">1. «{{{decision_date}}}» {{{decision_info}}}, которым иск удовлетворён.</p>
-  <p class="mb-3 text-justify">2. С решением не согласен, считаю его незаконным и необоснованным: {{{grounds}}}.</p>
-  <p class="mb-3 text-justify">3. Жалоба подаётся в срок 1 месяц со дня принятия решения в окончательной форме (ст. 321 ГПК РФ).</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">На основании изложенного прошу (ст. 320-322 ГПК РФ):</div>
-  <p class="mb-3 text-justify">{{{prayer}}}.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">Приложения:</div>
-  <p class="mb-4 text-justify">{{{attachments}}}.</p>
-  <div class="mt-8 text-xs border-t border-zinc-300 pt-4">
-    <p class="mb-1">Заявитель: {{{appellant_fio}}}</p>
-    <div class="border-b border-zinc-950 w-56 h-5 mt-5 mb-1"></div>
-    <p class="text-zinc-400 text-[10px]">подпись</p>
-  </div>
-</div>`,
+    
   },
 {
     id: "ddu-penalty-lawsuit",
@@ -594,30 +286,7 @@ export const TEMPLATES_LEGAL: LegalTemplate[] = [
       { id: "claims", label: "Требования", type: "text", defaultValue: "", category: "items" },
       { id: "attachments", label: "Приложения", type: "text", defaultValue: "", category: "other" },
     ],
-    previewTemplate: `
-<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
-  <div class="text-center font-bold text-base mb-6 text-black uppercase">Исковое заявление о взыскании неустойки по договору долевого участия</div>
-  <div class="flex justify-between mb-6 text-xs font-semibold">
-    <div>г. {{{city}}}</div>
-    <div>«{{{date}}}»</div>
-  </div>
-  <p class="mb-4 text-justify">В <strong>{{{court_name}}}</strong></p>
-  <p class="mb-1 text-justify">Истец: {{{plaintiff_fio}}}, адрес: {{{plaintiff_address}}}</p>
-  <p class="mb-4 text-justify">Ответчик: {{{defendant_org}}}, ИНН {{{defendant_inn}}}</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">Исковое заявление</div>
-  <p class="mb-3 text-justify">1. Между сторонами заключён {{{ddu_number}}} на квартиру: {{{flat_desc}}}. Цена договора: {{{ddu_price}}} руб.</p>
-  <p class="mb-3 text-justify">2. Объект должен был быть передан не позднее «{{{transfer_deadline}}}», фактически передан «{{{actual_date}}}». Просрочка составила {{{delay_days}}} дней.</p>
-  <p class="mb-3 text-justify">3. Расчёт неустойки: {{{penalty_amount}}} (ч. 2 ст. 6 214-ФЗ).</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">На основании изложенного прошу:</div>
-  <p class="mb-3 text-justify">{{{claims}}}.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">Приложения:</div>
-  <p class="mb-4 text-justify">{{{attachments}}}. Госпошлина при цене иска до 1 млн руб. не уплачивается (п. 3 ст. 17 ЗоЗПП).</p>
-  <div class="mt-8 text-xs border-t border-zinc-300 pt-4">
-    <p class="mb-1">Истец: {{{plaintiff_fio}}}</p>
-    <div class="border-b border-zinc-950 w-56 h-5 mt-5 mb-1"></div>
-    <p class="text-zinc-400 text-[10px]">подпись</p>
-  </div>
-</div>`,
+    
   },
 {
     id: "bankruptcy-app",
@@ -643,54 +312,7 @@ export const TEMPLATES_LEGAL: LegalTemplate[] = [
       { id: "income", label: "Доход и имущество", type: "text", defaultValue: "", category: "other" },
       { id: "sro", label: "Саморегулируемая организация", type: "text", defaultValue: "", category: "other" },
     ],
-    previewTemplate: `
-<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
-  <div class="mb-6">
-    <p class="mb-1">В {{{court}}}</p>
-    <p>от <strong>{{{fio}}}</strong></p>
-    <p>дата рождения: {{{birth_date}}}, место рождения: {{{birth_place}}}</p>
-    <p>ИНН: {{{inn}}}, СНИЛС: {{{snils}}}</p>
-    <p>адрес: {{{address}}}</p>
-  </div>
-  <div class="text-center font-bold text-base mb-6 text-black uppercase">Заявление о признании гражданина банкротом</div>
-  <p class="mb-3 text-justify">
-    В соответствии со ст. 213.4 ФЗ «О несостоятельности (банкротстве)» заявляю о своей неспособности удовлетворить
-    требования кредиторов по денежным обязательствам в общей сумме {{{debt_sum}}}.
-  </p>
-  <p class="mb-3 text-justify">
-    Задолженность возникла в связи с: {{{debt_reasons}}}. Срок просрочки исполнения обязательств: {{{arrears_period}}}.
-  </p>
-  <p class="mb-3 text-justify">
-    Исполнение обязательств невозможно, поскольку размер дохода и состав имущества не позволяют погасить задолженность:
-    {{{income}}}. К заявлению прилагаются список кредиторов и должников, опись имущества и документы, подтверждающие задолженность.
-  </p>
-  <p class="mb-3 text-justify">
-    На основании изложенного прошу:
-  </p>
-  <p class="mb-3 text-justify">
-    1. Признать меня несостоятельным (банкротом) и ввести процедуру реализации имущества гражданина;
-  </p>
-  <p class="mb-3 text-justify">
-    2. Утвердить финансового управляющего из числа членов СРО: {{{sro}}}.
-  </p>
-  <div class="mt-10 text-xs">
-    <p class="mb-6">Приложения: 1) список кредиторов; 2) опись имущества; 3) документы о задолженности; 4) квитанция об уплате госпошлины (300 руб.).</p>
-    <div class="flex justify-between">
-      <div class="w-1/2 pr-4">
-        <p class="font-bold mb-1">Заявитель:</p>
-        <p class="mb-6">{{{fio}}}</p>
-        <div class="border-b border-zinc-950 w-56 h-5 mb-1"></div>
-        <p class="text-zinc-400 text-[10px]">подпись</p>
-      </div>
-      <div class="w-1/2 pl-4">
-        <p class="font-bold mb-1">Дата:</p>
-        <p class="mb-6">«{{{date}}}»</p>
-        <div class="border-b border-zinc-950 w-56 h-5 mb-1"></div>
-        <p class="text-zinc-400 text-[10px]">(при подаче в суд)</p>
-      </div>
-    </div>
-  </div>
-</div>`,
+    
   },
 {
     id: "cassation-complaint",
@@ -717,33 +339,7 @@ export const TEMPLATES_LEGAL: LegalTemplate[] = [
       { id: "lower_instances", label: "Досудебное обжалование", type: "text", defaultValue: "", category: "contract" },
       { id: "violation_period", label: "Пропущен ли срок", type: "text", defaultValue: "", category: "contract" },
     ],
-    previewTemplate: `<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
-  <div class="mb-6 text-xs">
-  <p class="mb-1 text-justify">В {{{court_name}}}</p>
-  <p class="mb-1 text-justify">адрес: {{{court_address}}}</p>
-  <p class="mb-1 text-justify"><p class="mt-2">Заявитель: <strong>{{{applicant_fio}}}</strong></p></p>
-  <p class="mb-1 text-justify">адрес: {{{applicant_address}}}, тел.: {{{applicant_phone}}}</p>
-  <p class="mb-1 text-justify"><p class="mt-2">Дело № {{{case_number}}}</p></p>
-  <p class="mb-1 text-justify">Судебные постановления: {{{judgments}}}</p>
-  </div>
-  <div class="text-center font-bold text-base mb-6 text-black uppercase">Кассационная жалоба</div>
-  <div class="font-bold mb-2 text-black text-xs uppercase">1. Обстоятельства дела</div>
-  <p class="mb-4 text-justify">1.1. «{{{decision_date}}}» судом вынесено решение: {{{judgments}}}, которым разрешён спор по существу.</p>
-  <p class="mb-4 text-justify">1.2. С состоявшимися судебными постановлениями не согласен, считаю их незаконными и подлежащими отмене по следующим основаниям: {{{grounds}}}.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">2. Нарушения судов</div>
-  <p class="mb-4 text-justify">2.1. При рассмотрении дела судами допущены существенные нарушения норм права: {{{violated_rights}}}.</p>
-  <p class="mb-4 text-justify">2.2. Судами не приняты во внимание обстоятельства: {{{ignored_facts}}}, имеющие значение для правильного разрешения дела.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">3. Прошу</div>
-  <p class="mb-4 text-justify">Отменить {{{judgments}}} и направить дело на новое рассмотрение (либо принять по делу новое решение).</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">4. Приложения</div>
-  <p class="mb-4 text-justify">Копия кассационной жалобы по числу лиц, участвующих в деле;</p>
-  <p class="mb-4 text-justify">Копии судебных постановлений, принятых по делу;</p>
-  <p class="mb-4 text-justify">Квитанция об уплате государственной пошлины (при необходимости).</p>
-  <div class="mt-8 text-xs border-t border-zinc-300 pt-4">
-    <p class="mb-1">undefined: {{{applicant_fio}}}</p>
-    <div class="mt-8 border-b border-zinc-900 w-44 h-5 flex justify-end items-end text-[10px] text-zinc-400">Подпись</div>
-  </div>
-</div>`,
+    
   },
 {
     id: "counterclaim",
@@ -771,34 +367,7 @@ export const TEMPLATES_LEGAL: LegalTemplate[] = [
       { id: "claim_total_words", label: "Сумма прописью", type: "text", defaultValue: "", category: "payment" },
       { id: "basis", label: "Основания требований", type: "textarea", defaultValue: "", category: "contract", validation: { required: true } },
     ],
-    previewTemplate: `<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
-  <div class="mb-6 text-xs">
-  <p class="mb-1 text-justify">В {{{court_name}}}</p>
-  <p class="mb-1 text-justify">адрес: {{{court_address}}}</p>
-  <p class="mb-1 text-justify"><p class="mt-2">Истец: <strong>{{{applicant_fio}}}</strong></p></p>
-  <p class="mb-1 text-justify">адрес: {{{applicant_address}}}, тел.: {{{applicant_phone}}}</p>
-  <p class="mb-1 text-justify"><p class="mt-2">Ответчик: {{{defendant_fio}}}</p></p>
-  <p class="mb-1 text-justify">адрес: {{{defendant_address}}}</p>
-  <p class="mb-1 text-justify"><p class="mt-2">Цена иска: {{{claim_total}}} руб.</p></p>
-  </div>
-  <div class="text-center font-bold text-base mb-6 text-black uppercase">Встречное исковое заявление</div>
-  <div class="font-bold mb-2 text-black text-xs uppercase">1. Обстоятельства</div>
-  <p class="mb-4 text-justify">1.1. В производстве суда находится гражданское дело № {{{case_number}}} по иску {{{defendant_fio}}} к {{{applicant_fio}}} о {{{original_claim}}}.</p>
-  <p class="mb-4 text-justify">1.2. У ответчика по первоначальному иску имеются встречные требования к истцу: {{{basis}}}.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">2. Основания встречного иска</div>
-  <p class="mb-4 text-justify">2.1. Требования {{{applicant_fio}}} основаны на {{{contract_basis}}}, что подтверждается прилагаемыми документами.</p>
-  <p class="mb-4 text-justify">2.2. Совместное рассмотрение первоначального и встречного исков соответствует требованиям ст. 138 ГПК РФ, поскольку встречное требование направлено к зачёту первоначального.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">3. Прошу</div>
-  <p class="mb-4 text-justify">Взыскать с {{{defendant_fio}}} в пользу {{{applicant_fio}}} {{{claim_total}}} руб. ({{{claim_total_words}}}), а также расходы по уплате государственной пошлины.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">4. Приложения</div>
-  <p class="mb-4 text-justify">Копия искового заявления по числу лиц, участвующих в деле;</p>
-  <p class="mb-4 text-justify">Квитанция об уплате государственной пошлины;</p>
-  <p class="mb-4 text-justify">Копии документов, подтверждающих обстоятельства, на которых основаны требования.</p>
-  <div class="mt-8 text-xs border-t border-zinc-300 pt-4">
-    <p class="mb-1">undefined: {{{applicant_fio}}}</p>
-    <div class="mt-8 border-b border-zinc-900 w-44 h-5 flex justify-end items-end text-[10px] text-zinc-400">Подпись</div>
-  </div>
-</div>`,
+    
   },
 {
     id: "claim-labor",
@@ -827,38 +396,7 @@ export const TEMPLATES_LEGAL: LegalTemplate[] = [
       { id: "avg_earnings", label: "Средний заработок за время прогула", type: "textarea", defaultValue: "", category: "payment" },
       { id: "grounds", label: "Основания незаконности увольнения", type: "textarea", defaultValue: "", category: "contract", validation: { required: true } },
     ],
-    previewTemplate: `<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
-  <div class="mb-6 text-xs">
-  <p class="mb-1 text-justify">В {{{court_name}}}</p>
-  <p class="mb-1 text-justify">адрес: {{{court_address}}}</p>
-  <p class="mb-1 text-justify"><p class="mt-2">Истец: <strong>{{{applicant_fio}}}</strong></p></p>
-  <p class="mb-1 text-justify">адрес: {{{applicant_address}}}, тел.: {{{applicant_phone}}}</p>
-  <p class="mb-1 text-justify"><p class="mt-2">Ответчик: {{{defendant_fio}}}</p></p>
-  <p class="mb-1 text-justify">адрес: {{{defendant_address}}}</p>
-  <p class="mb-1 text-justify"><p class="mt-2">Цена иска: {{{claim_total}}} руб.</p></p>
-  </div>
-  <div class="text-center font-bold text-base mb-6 text-black uppercase">Исковое заявление о восстановлении на работе</div>
-  <div class="font-bold mb-2 text-black text-xs uppercase">1. Обстоятельства дела</div>
-  <p class="mb-4 text-justify">1.1. Истец с «{{{hire_date}}}» работал у ответчика в должности {{{position}}}.</p>
-  <p class="mb-4 text-justify">1.2. Приказом от {{{dismissal_date}}} истец уволен по {{{dismissal_reason}}}.</p>
-  <p class="mb-4 text-justify">1.3. Увольнение считаю незаконным: {{{grounds}}}.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">2. Нарушенные права</div>
-  <p class="mb-4 text-justify">2.1. Увольнение произведено без соблюдения порядка, установленного Трудовым кодексом РФ.</p>
-  <p class="mb-4 text-justify">2.2. В результате незаконного увольнения истец лишён заработка и испытывает нравственные страдания.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">3. Прошу</div>
-  <p class="mb-4 text-justify">Восстановить {{{applicant_fio}}} на работе в должности {{{position}}};</p>
-  <p class="mb-4 text-justify">Взыскать с {{{defendant_fio}}} средний заработок за время вынужденного прогула в размере {{{avg_earnings}}};</p>
-  <p class="mb-4 text-justify">Взыскать компенсацию морального вреда в размере {{{moral_damage}}} руб.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">4. Приложения</div>
-  <p class="mb-4 text-justify">Копия приказа о приёме на работу;</p>
-  <p class="mb-4 text-justify">Копия приказа об увольнении;</p>
-  <p class="mb-4 text-justify">Расчёт среднего заработка за время вынужденного прогула;</p>
-  <p class="mb-4 text-justify">Копия искового заявления для ответчика.</p>
-  <div class="mt-8 text-xs border-t border-zinc-300 pt-4">
-    <p class="mb-1">undefined: {{{applicant_fio}}}</p>
-    <div class="mt-8 border-b border-zinc-900 w-44 h-5 flex justify-end items-end text-[10px] text-zinc-400">Подпись</div>
-  </div>
-</div>`,
+    
   },
 {
     id: "inheritance-claim",
@@ -888,37 +426,7 @@ export const TEMPLATES_LEGAL: LegalTemplate[] = [
       { id: "acceptance", label: "Принятие наследства", type: "text", defaultValue: "", category: "contract" },
       { id: "notary_refusal", label: "Отказ нотариуса", type: "text", defaultValue: "", category: "contract" },
     ],
-    previewTemplate: `<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
-  <div class="mb-6 text-xs">
-  <p class="mb-1 text-justify">В {{{court_name}}}</p>
-  <p class="mb-1 text-justify">адрес: {{{court_address}}}</p>
-  <p class="mb-1 text-justify"><p class="mt-2">Истец: <strong>{{{applicant_fio}}}</strong></p></p>
-  <p class="mb-1 text-justify">адрес: {{{applicant_address}}}, тел.: {{{applicant_phone}}}</p>
-  <p class="mb-1 text-justify"><p class="mt-2">Ответчик: {{{defendant_fio}}}</p></p>
-  <p class="mb-1 text-justify">адрес: {{{defendant_address}}}</p>
-  </div>
-  <div class="text-center font-bold text-base mb-6 text-black uppercase">Исковое заявление о признании права собственности в порядке наследования</div>
-  <div class="font-bold mb-2 text-black text-xs uppercase">1. Обстоятельства дела</div>
-  <p class="mb-4 text-justify">1.1. «{{{death_date}}}» умер {{{testator}}} — наследодатель.</p>
-  <p class="mb-4 text-justify">1.2. Истец является наследником по {{{inheritance_basis}}}.</p>
-  <p class="mb-4 text-justify">1.3. Наследственное имущество: {{{property}}}.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">2. Принятие наследства</div>
-  <p class="mb-4 text-justify">2.1. Истец принял наследство: {{{acceptance}}}.</p>
-  <p class="mb-4 text-justify">2.2. {{{notary_refusal}}}, в связи с чем право собственности может быть признано только в судебном порядке.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">3. Прошу</div>
-  <p class="mb-4 text-justify">Признать за {{{applicant_fio}}} право собственности в порядке наследования на {{{property}}};</p>
-  <p class="mb-4 text-justify">Включить {{{property}}} в состав наследственного имущества {{{testator}}}.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">4. Приложения</div>
-  <p class="mb-4 text-justify">Копия свидетельства о смерти наследодателя;</p>
-  <p class="mb-4 text-justify">Копия документа, подтверждающего родство;</p>
-  <p class="mb-4 text-justify">Копия завещания (при наличии);</p>
-  <p class="mb-4 text-justify">Выписка из ЕГРН;</p>
-  <p class="mb-4 text-justify">Квитанция об уплате государственной пошлины.</p>
-  <div class="mt-8 text-xs border-t border-zinc-300 pt-4">
-    <p class="mb-1">undefined: {{{applicant_fio}}}</p>
-    <div class="mt-8 border-b border-zinc-900 w-44 h-5 flex justify-end items-end text-[10px] text-zinc-400">Подпись</div>
-  </div>
-</div>`,
+    
   },
 {
     id: "eviction-claim",
@@ -946,36 +454,7 @@ export const TEMPLATES_LEGAL: LegalTemplate[] = [
       { id: "grounds", label: "Основания выселения", type: "textarea", defaultValue: "", category: "contract", validation: { required: true } },
       { id: "warn_date", label: "Дата предупреждения", type: "date", defaultValue: "", category: "contract" },
     ],
-    previewTemplate: `<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
-  <div class="mb-6 text-xs">
-  <p class="mb-1 text-justify">В {{{court_name}}}</p>
-  <p class="mb-1 text-justify">адрес: {{{court_address}}}</p>
-  <p class="mb-1 text-justify"><p class="mt-2">Истец: <strong>{{{applicant_fio}}}</strong></p></p>
-  <p class="mb-1 text-justify">адрес: {{{applicant_address}}}, тел.: {{{applicant_phone}}}</p>
-  <p class="mb-1 text-justify"><p class="mt-2">Ответчик: {{{defendant_fio}}}</p></p>
-  <p class="mb-1 text-justify">адрес: {{{defendant_address}}}</p>
-  <p class="mb-1 text-justify"><p class="mt-2">Цена иска: {{{claim_total}}} руб.</p></p>
-  </div>
-  <div class="text-center font-bold text-base mb-6 text-black uppercase">Исковое заявление о выселении</div>
-  <div class="font-bold mb-2 text-black text-xs uppercase">1. Обстоятельства дела</div>
-  <p class="mb-4 text-justify">1.1. Истец является собственником жилого помещения: {{{housing}}}, на основании {{{ownership_basis}}}.</p>
-  <p class="mb-4 text-justify">1.2. Ответчик проживает в указанном помещении на основании {{{tenancy_basis}}}.</p>
-  <p class="mb-4 text-justify">1.3. Основанием для выселения является: {{{grounds}}}.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">2. Досудебные меры</div>
-  <p class="mb-4 text-justify">2.1. «{{{warn_date}}}» ответчику направлено требование об освобождении жилого помещения в срок до {{{vacate_deadline}}}.</p>
-  <p class="mb-4 text-justify">2.2. До настоящего времени требование ответчиком не исполнено.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">3. Прошу</div>
-  <p class="mb-4 text-justify">Выселить {{{defendant_fio}}} из {{{housing}}} без предоставления другого жилого помещения;</p>
-  <p class="mb-4 text-justify">Взыскать с ответчика расходы по уплате государственной пошлины.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">4. Приложения</div>
-  <p class="mb-4 text-justify">Копия искового заявления по числу лиц, участвующих в деле;</p>
-  <p class="mb-4 text-justify">Квитанция об уплате государственной пошлины;</p>
-  <p class="mb-4 text-justify">Копии документов, подтверждающих обстоятельства, на которых основаны требования.</p>
-  <div class="mt-8 text-xs border-t border-zinc-300 pt-4">
-    <p class="mb-1">undefined: {{{applicant_fio}}}</p>
-    <div class="mt-8 border-b border-zinc-900 w-44 h-5 flex justify-end items-end text-[10px] text-zinc-400">Подпись</div>
-  </div>
-</div>`,
+    
   },
 {
     id: "alimony-claim",
@@ -1004,37 +483,7 @@ export const TEMPLATES_LEGAL: LegalTemplate[] = [
       { id: "alimony_form", label: "Форма алиментов", type: "text", defaultValue: "", category: "payment", validation: { required: true } },
       { id: "help", label: "Помощь ответчика", type: "text", defaultValue: "", category: "family" },
     ],
-    previewTemplate: `<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
-  <div class="mb-6 text-xs">
-  <p class="mb-1 text-justify">В {{{court_name}}}</p>
-  <p class="mb-1 text-justify">адрес: {{{court_address}}}</p>
-  <p class="mb-1 text-justify"><p class="mt-2">Истец: <strong>{{{applicant_fio}}}</strong></p></p>
-  <p class="mb-1 text-justify">адрес: {{{applicant_address}}}, тел.: {{{applicant_phone}}}</p>
-  <p class="mb-1 text-justify"><p class="mt-2">Ответчик: {{{defendant_fio}}}</p></p>
-  <p class="mb-1 text-justify">адрес: {{{defendant_address}}}</p>
-  <p class="mb-1 text-justify"><p class="mt-2">Цена иска: {{{claim_total}}} руб.</p></p>
-  </div>
-  <div class="text-center font-bold text-base mb-6 text-black uppercase">Исковое заявление о взыскании алиментов</div>
-  <div class="font-bold mb-2 text-black text-xs uppercase">1. Обстоятельства дела</div>
-  <p class="mb-4 text-justify">1.1. От брака с ответчиком имеются несовершеннолетние дети: {{{child1}}}{{#child2}}, {{{child2}}}{{/child2}}.</p>
-  <p class="mb-4 text-justify">1.2. {{{marriage_status}}}.</p>
-  <p class="mb-4 text-justify">1.3. {{{help}}}. Ответчик обязательства по содержанию детей не исполняет.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">2. Основания требований</div>
-  <p class="mb-4 text-justify">2.1. Согласно ст. 80 СК РФ родители обязаны содержать своих несовершеннолетних детей.</p>
-  <p class="mb-4 text-justify">2.2. Алименты прошу взыскивать в размере: {{{alimony_form}}}, поскольку {{{defendant_income}}}.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">3. Прошу</div>
-  <p class="mb-4 text-justify">Взыскать с {{{defendant_fio}}} алименты на содержание детей {{{child1}}}{{#child2}}, {{{child2}}}{{/child2}} в размере {{{alimony_form}}}, начиная с даты подачи искового заявления и до совершеннолетия детей;</p>
-  <p class="mb-4 text-justify">Взыскать с ответчика расходы по уплате государственной пошлины (по требованиям о взыскании алиментов истец освобождён от уплаты пошлины — ст. 333.36 НК РФ).</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">4. Приложения</div>
-  <p class="mb-4 text-justify">Копия свидетельства о рождении ребёнка;</p>
-  <p class="mb-4 text-justify">Копия свидетельства о расторжении брака;</p>
-  <p class="mb-4 text-justify">Справка о регистрации детей по месту жительства;</p>
-  <p class="mb-4 text-justify">Копия искового заявления для ответчика.</p>
-  <div class="mt-8 text-xs border-t border-zinc-300 pt-4">
-    <p class="mb-1">undefined: {{{applicant_fio}}}</p>
-    <div class="mt-8 border-b border-zinc-900 w-44 h-5 flex justify-end items-end text-[10px] text-zinc-400">Подпись</div>
-  </div>
-</div>`,
+    
   },
 {
     id: "property-claim",
@@ -1063,35 +512,7 @@ export const TEMPLATES_LEGAL: LegalTemplate[] = [
       { id: "claim_total_words", label: "Сумма прописью", type: "text", defaultValue: "", category: "payment" },
       { id: "wanted_split", label: "Желаемый раздел", type: "textarea", defaultValue: "", category: "property", validation: { required: true } },
     ],
-    previewTemplate: `<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
-  <div class="mb-6 text-xs">
-  <p class="mb-1 text-justify">В {{{court_name}}}</p>
-  <p class="mb-1 text-justify">адрес: {{{court_address}}}</p>
-  <p class="mb-1 text-justify"><p class="mt-2">Истец: <strong>{{{applicant_fio}}}</strong></p></p>
-  <p class="mb-1 text-justify">адрес: {{{applicant_address}}}, тел.: {{{applicant_phone}}}</p>
-  <p class="mb-1 text-justify"><p class="mt-2">Ответчик: {{{defendant_fio}}}</p></p>
-  <p class="mb-1 text-justify">адрес: {{{defendant_address}}}</p>
-  <p class="mb-1 text-justify"><p class="mt-2">Цена иска: {{{claim_total}}} руб.</p></p>
-  </div>
-  <div class="text-center font-bold text-base mb-6 text-black uppercase">Исковое заявление о разделе совместно нажитого имущества</div>
-  <div class="font-bold mb-2 text-black text-xs uppercase">1. Обстоятельства дела</div>
-  <p class="mb-4 text-justify">1.1. С {{{marriage_date}}} стороны состояли в зарегистрированном браке; {{{marriage_end}}}.</p>
-  <p class="mb-4 text-justify">1.2. В период брака супругами приобретено совместное имущество: {{{property_list}}}.</p>
-  <p class="mb-4 text-justify">1.3. Соглашение о разделе имущества между сторонами не достигнуто.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">2. Основания требований</div>
-  <p class="mb-4 text-justify">2.1. Согласно ст. 38, 39 СК РФ доли супругов в совместно нажитом имуществе признаются равными.</p>
-  <p class="mb-4 text-justify">2.2. Желаемый порядок раздела: {{{wanted_split}}}.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">3. Прошу</div>
-  <p class="mb-4 text-justify">Взыскать с {{{defendant_fio}}} в пользу {{{applicant_fio}}} {{{claim_total}}} руб. ({{{claim_total_words}}}), а также расходы по уплате государственной пошлины.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">4. Приложения</div>
-  <p class="mb-4 text-justify">Копия искового заявления по числу лиц, участвующих в деле;</p>
-  <p class="mb-4 text-justify">Квитанция об уплате государственной пошлины;</p>
-  <p class="mb-4 text-justify">Копии документов, подтверждающих обстоятельства, на которых основаны требования.</p>
-  <div class="mt-8 text-xs border-t border-zinc-300 pt-4">
-    <p class="mb-1">undefined: {{{applicant_fio}}}</p>
-    <div class="mt-8 border-b border-zinc-900 w-44 h-5 flex justify-end items-end text-[10px] text-zinc-400">Подпись</div>
-  </div>
-</div>`,
+    
   },
 {
     id: "housing-claim",
@@ -1117,37 +538,7 @@ export const TEMPLATES_LEGAL: LegalTemplate[] = [
       { id: "right_basis", label: "Основание права пользования", type: "textarea", defaultValue: "", category: "contract", validation: { required: true } },
       { id: "conflict", label: "Конфликт", type: "textarea", defaultValue: "", category: "contract", validation: { required: true } },
     ],
-    previewTemplate: `<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
-  <div class="mb-6 text-xs">
-  <p class="mb-1 text-justify">В {{{court_name}}}</p>
-  <p class="mb-1 text-justify">адрес: {{{court_address}}}</p>
-  <p class="mb-1 text-justify"><p class="mt-2">Истец: <strong>{{{applicant_fio}}}</strong></p></p>
-  <p class="mb-1 text-justify">адрес: {{{applicant_address}}}, тел.: {{{applicant_phone}}}</p>
-  <p class="mb-1 text-justify"><p class="mt-2">Ответчик: {{{defendant_fio}}}</p></p>
-  <p class="mb-1 text-justify">адрес: {{{defendant_address}}}</p>
-  <p class="mb-1 text-justify"><p class="mt-2">Цена иска: {{{claim_total}}} руб.</p></p>
-  </div>
-  <div class="text-center font-bold text-base mb-6 text-black uppercase">Исковое заявление о признании права пользования жилым помещением</div>
-  <div class="font-bold mb-2 text-black text-xs uppercase">1. Обстоятельства дела</div>
-  <p class="mb-4 text-justify">1.1. Истец проживает в {{{housing}}} на основании: {{{right_basis}}}.</p>
-  <p class="mb-4 text-justify">1.2. {{{conflict}}}.</p>
-  <p class="mb-4 text-justify">1.3. Право истца на пользование жилым помещением подтверждается: {{{evidence}}}.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">2. Основания требований</div>
-  <p class="mb-4 text-justify">2.1. Согласно ст. 69, 70 ЖК РФ члены семьи нанимателя имеют равное с нанимателем право пользования жилым помещением.</p>
-  <p class="mb-4 text-justify">2.2. Действия ответчика нарушают жилищные права истца.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">3. Прошу</div>
-  <p class="mb-4 text-justify">Признать за {{{applicant_fio}}} право пользования жилым помещением: {{{housing}}};</p>
-  <p class="mb-4 text-justify">Вселить {{{applicant_fio}}} в указанное жилое помещение;</p>
-  <p class="mb-4 text-justify">Обязать {{{defendant_fio}}} не чинить препятствий в пользовании жилым помещением.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">4. Приложения</div>
-  <p class="mb-4 text-justify">Копия искового заявления по числу лиц, участвующих в деле;</p>
-  <p class="mb-4 text-justify">Квитанция об уплате государственной пошлины;</p>
-  <p class="mb-4 text-justify">Копии документов, подтверждающих обстоятельства, на которых основаны требования.</p>
-  <div class="mt-8 text-xs border-t border-zinc-300 pt-4">
-    <p class="mb-1">undefined: {{{applicant_fio}}}</p>
-    <div class="mt-8 border-b border-zinc-900 w-44 h-5 flex justify-end items-end text-[10px] text-zinc-400">Подпись</div>
-  </div>
-</div>`,
+    
   },
 {
     id: "recovery-loss-claim",
@@ -1177,36 +568,7 @@ export const TEMPLATES_LEGAL: LegalTemplate[] = [
       { id: "claim_total_words", label: "Сумма прописью", type: "text", defaultValue: "", category: "payment" },
       { id: "demand", label: "Досудебное требование", type: "text", defaultValue: "", category: "contract" },
     ],
-    previewTemplate: `<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
-  <div class="mb-6 text-xs">
-  <p class="mb-1 text-justify">В {{{court_name}}}</p>
-  <p class="mb-1 text-justify">адрес: {{{court_address}}}</p>
-  <p class="mb-1 text-justify"><p class="mt-2">Истец: <strong>{{{applicant_fio}}}</strong></p></p>
-  <p class="mb-1 text-justify">адрес: {{{applicant_address}}}, тел.: {{{applicant_phone}}}</p>
-  <p class="mb-1 text-justify"><p class="mt-2">Ответчик: {{{defendant_fio}}}</p></p>
-  <p class="mb-1 text-justify">адрес: {{{defendant_address}}}</p>
-  <p class="mb-1 text-justify"><p class="mt-2">Цена иска: {{{claim_total}}} руб.</p></p>
-  </div>
-  <div class="text-center font-bold text-base mb-6 text-black uppercase">Исковое заявление о взыскании убытков</div>
-  <div class="font-bold mb-2 text-black text-xs uppercase">1. Обстоятельства дела</div>
-  <p class="mb-4 text-justify">1.1. Между сторонами заключён {{{base_doc}}}.</p>
-  <p class="mb-4 text-justify">1.2. Ответчик допустил нарушение обязательства: {{{violation}}}.</p>
-  <p class="mb-4 text-justify">1.3. {{{demand}}}.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">2. Размер убытков</div>
-  <p class="mb-4 text-justify">2.1. В результате нарушения обязательства истцу причинены убытки: {{{losses}}}.</p>
-  <p class="mb-4 text-justify">2.2. Упущенная выгода: {{{lost_profit}}}. Общая сумма убытков составляет {{{claim_total}}} руб. ({{{claim_total_words}}}).</p>
-  <p class="mb-4 text-justify">2.3. Размер убытков подтверждается: {{{loss_evidence}}}.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">3. Прошу</div>
-  <p class="mb-4 text-justify">Взыскать с {{{defendant_fio}}} в пользу {{{applicant_fio}}} {{{claim_total}}} руб. ({{{claim_total_words}}}), а также расходы по уплате государственной пошлины.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">4. Приложения</div>
-  <p class="mb-4 text-justify">Копия искового заявления по числу лиц, участвующих в деле;</p>
-  <p class="mb-4 text-justify">Квитанция об уплате государственной пошлины;</p>
-  <p class="mb-4 text-justify">Копии документов, подтверждающих обстоятельства, на которых основаны требования.</p>
-  <div class="mt-8 text-xs border-t border-zinc-300 pt-4">
-    <p class="mb-1">undefined: {{{applicant_fio}}}</p>
-    <div class="mt-8 border-b border-zinc-900 w-44 h-5 flex justify-end items-end text-[10px] text-zinc-400">Подпись</div>
-  </div>
-</div>`,
+    
   },
 {
     id: "court-power-of-attorney",
@@ -1231,25 +593,7 @@ export const TEMPLATES_LEGAL: LegalTemplate[] = [
       { id: "powers", label: "Полномочия", type: "textarea", defaultValue: "", category: "contract", validation: { required: true } },
       { id: "valid_until", label: "Срок действия", type: "text", defaultValue: "", category: "contract", validation: { required: true } },
     ],
-    previewTemplate: `<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
-  <div class="text-center font-bold text-base mb-6 text-black uppercase">Доверенность на ведение дела в суде</div>
-  <div class="flex justify-between mb-6 text-xs font-semibold">
-    <div>г. {{{city}}}</div>
-    <div>«{{{date}}}»</div>
-  </div>
-  <p class="mb-4 text-justify">
-    Я, <strong>{{{principal_fio}}}</strong>, паспорт: {{{principal_passport}}}, зарегистрированная по адресу: {{{principal_addr}}},
-    настоящей доверенностью уполномочиваю <strong>{{{agent_fio}}}</strong>, паспорт: {{{agent_passport}}},
-    зарегистрированного по адресу: {{{agent_addr}}}, быть представителем по {{{case_info}}} (ст. 53 ГПК РФ).
-  </p>
-  <p class="mb-4 text-justify">Для чего предоставляю право: {{{powers}}}, а также совершать все необходимые процессуальные действия, расписываться за меня и выполнять все действия, связанные с данным поручением.</p>
-  <p class="mb-4 text-justify">Доверенность выдана на срок: {{{valid_until}}}. Содержание статей 185-189 ГК РФ мне известно. Доверенность может быть отменена в любое время (ст. 188 ГК РФ).</p>
-  <div class="mt-8 text-xs border-t border-zinc-300 pt-4">
-    <p class="mb-1">Доверитель: {{{principal_fio}}}</p>
-    <div class="border-b border-zinc-950 w-56 h-5 mt-5 mb-1"></div>
-    <p class="text-zinc-400 text-[10px]">подпись</p>
-  </div>
-</div>`,
+    
   },
 {
     id: "renunciation-inheritance",
@@ -1275,37 +619,7 @@ export const TEMPLATES_LEGAL: LegalTemplate[] = [
       { id: "refusal_basis", label: "Основание отказа", type: "text", defaultValue: "", category: "contract", validation: { required: true } },
       { id: "favor_person", label: "В пользу кого отказ (при отказе в пользу другого наследника)", type: "text", defaultValue: "", category: "other" },
     ],
-    previewTemplate: `<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
-  <div class="text-center font-bold text-base mb-6 text-black uppercase">Заявление об отказе от наследства</div>
-  <div class="flex justify-between mb-6 text-xs font-semibold">
-    <div>г. {{{city}}}</div>
-    <div>«{{{date}}}»</div>
-  </div>
-
-  <div class="font-bold mb-2 text-black text-xs uppercase">1. Прошу</div>
-  <p class="mb-4 text-justify">1.1. Отказываюсь от причитающегося мне наследства после смерти {{{testator}}}, умершего {{{death_date}}}.</p>
-  <p class="mb-4 text-justify">1.2. Отказ заявлен по следующему основанию: {{{refusal_basis}}}.</p>
-  <p class="mb-4 text-justify">1.3. {{#favor_person}}Отказ сделан в пользу {{{favor_person}}}.{{/favor_person}}{{^favor_person}}Отказ сделан без указания лиц, в пользу которых он совершается.{{/favor_person}}</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">2. Подтверждение</div>
-  <p class="mb-4 text-justify">2.1. Мне известно, что в соответствии со ст. 1157 ГК РФ отказ от наследства не может быть впоследствии изменён или взят обратно.</p>
-  <p class="mb-4 text-justify">2.2. Отказ от наследства подан нотариусу {{{notary}}} по адресу: {{{notary_address}}}.</p>
-
-  <div class="font-bold mb-2 text-black text-xs uppercase">3. Форс-мажор</div>
-  <p class="mb-4 text-justify">3.1. Стороны освобождаются от ответственности за частичное или полное неисполнение обязательств по настоящему договору, если оно явилось следствием обстоятельств непреодолимой силы (форс-мажора): стихийных бедствий, пожаров, наводнений, землетрясений, эпидемий, военных действий, решений органов государственной власти, а также иных обстоятельств, которые стороны не могли предвидеть и предотвратить разумными мерами.</p>
-  <p class="mb-4 text-justify">3.2. Сторона, для которой создалась невозможность исполнения обязательств, обязана незамедлительно, но не позднее 10 (десяти) календарных дней с момента наступления таких обстоятельств, письменно уведомить другую сторону об их возникновении. Неуведомление лишает сторону права ссылаться на форс-мажор.</p>
-  <p class="mb-4 text-justify">3.3. Если обстоятельства непреодолимой силы действуют более 60 (шестидесяти) календарных дней, каждая из сторон вправе в одностороннем порядке отказаться от исполнения настоящего договора, письменно уведомив другую сторону.</p>
-
-  <div class="font-bold mb-2 text-black text-xs uppercase">4. Порядок разрешения споров</div>
-  <p class="mb-4 text-justify">4.1. Все споры и разногласия, возникающие из настоящего договора или в связи с ним, стороны разрешают путём переговоров. Срок рассмотрения письменной претензии — 10 (десять) календарных дней с момента её получения.</p>
-  <p class="mb-4 text-justify">4.2. При недостижении согласия споры разрешаются в судебном порядке в соответствии с действующим законодательством Российской Федерации.</p>
-  <div class="mt-8 border-t border-zinc-300 pt-4 text-xs">
-    <div>
-      <div class="font-bold mb-2 uppercase text-black">Заявитель:</div>
-      <p class="mb-1"><strong>{{{applicant_fio}}}</strong></p>
-      <div class="mt-8 border-b border-zinc-900 w-44 h-5 flex justify-end items-end text-[10px] text-zinc-400">Подпись</div>
-    </div>
-  </div>
-</div>`,
+    
   },
 {
     id: "paternity-claim",
@@ -1332,36 +646,7 @@ export const TEMPLATES_LEGAL: LegalTemplate[] = [
       { id: "evidence", label: "Доказательства", type: "textarea", defaultValue: "", category: "contract", validation: { required: true } },
       { id: "support", label: "Материальная помощь", type: "text", defaultValue: "", category: "family" },
     ],
-    previewTemplate: `<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
-  <div class="mb-6 text-xs">
-  <p class="mb-1 text-justify">В {{{court_name}}}</p>
-  <p class="mb-1 text-justify">адрес: {{{court_address}}}</p>
-  <p class="mb-1 text-justify"><p class="mt-2">Истец: <strong>{{{applicant_fio}}}</strong></p></p>
-  <p class="mb-1 text-justify">адрес: {{{applicant_address}}}, тел.: {{{applicant_phone}}}</p>
-  <p class="mb-1 text-justify"><p class="mt-2">Ответчик: {{{defendant_fio}}}</p></p>
-  <p class="mb-1 text-justify">адрес: {{{defendant_address}}}</p>
-  </div>
-  <div class="text-center font-bold text-base mb-6 text-black uppercase">Исковое заявление об установлении отцовства</div>
-  <div class="font-bold mb-2 text-black text-xs uppercase">1. Обстоятельства</div>
-  <p class="mb-4 text-justify">1.1. {{{relationship}}}. От данных отношений родился ребёнок: {{{child}}}.</p>
-  <p class="mb-4 text-justify">1.2. Сведения об отце в свидетельстве о рождении записаны со слов матери.</p>
-  <p class="mb-4 text-justify">1.3. {{{support}}}. Ответчик отцом ребёнка себя признаёт (не признаёт), добровольно установить отцовство в ЗАГСе отказывается.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">2. Основания</div>
-  <p class="mb-4 text-justify">2.1. Согласно ст. 49 СК РФ при рождении ребёнка у родителей, не состоящих в браке, и при отсутствии совместного заявления родителей отцовство устанавливается в судебном порядке.</p>
-  <p class="mb-4 text-justify">2.2. Доказательства: {{{evidence}}}.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">3. Прошу</div>
-  <p class="mb-4 text-justify">Установить, что {{{defendant_fio}}}, {{{defendant_birth}}} года рождения, является отцом {{{child}}};</p>
-  <p class="mb-4 text-justify">Внести изменения в запись акта о рождении {{{child}}}, указав отцом {{{defendant_fio}}};</p>
-  <p class="mb-4 text-justify">Взыскать с ответчика алименты на содержание {{{child}}} в размере 1/4 части всех видов заработка.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">4. Приложения</div>
-  <p class="mb-4 text-justify">Копия искового заявления по числу лиц, участвующих в деле;</p>
-  <p class="mb-4 text-justify">Квитанция об уплате государственной пошлины;</p>
-  <p class="mb-4 text-justify">Копии документов, подтверждающих обстоятельства, на которых основаны требования.</p>
-  <div class="mt-8 text-xs border-t border-zinc-300 pt-4">
-    <p class="mb-1">undefined: {{{applicant_fio}}}</p>
-    <div class="mt-8 border-b border-zinc-900 w-44 h-5 flex justify-end items-end text-[10px] text-zinc-400">Подпись</div>
-  </div>
-</div>`,
+    
   },
 {
     id: "child-residence-claim",
@@ -1389,34 +674,7 @@ export const TEMPLATES_LEGAL: LegalTemplate[] = [
       { id: "defendant_conditions", label: "Условия проживания ответчика", type: "text", defaultValue: "", category: "contract" },
       { id: "child_opinion", label: "Мнение ребёнка", type: "text", defaultValue: "", category: "family" },
     ],
-    previewTemplate: `<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
-  <div class="mb-6 text-xs">
-  <p class="mb-1 text-justify">В {{{court_name}}}</p>
-  <p class="mb-1 text-justify">адрес: {{{court_address}}}</p>
-  <p class="mb-1 text-justify"><p class="mt-2">Истец: <strong>{{{applicant_fio}}}</strong></p></p>
-  <p class="mb-1 text-justify">адрес: {{{applicant_address}}}, тел.: {{{applicant_phone}}}</p>
-  <p class="mb-1 text-justify"><p class="mt-2">Ответчик: {{{defendant_fio}}}</p></p>
-  <p class="mb-1 text-justify">адрес: {{{defendant_address}}}</p>
-  </div>
-  <div class="text-center font-bold text-base mb-6 text-black uppercase">Исковое заявление об определении места жительства ребёнка</div>
-  <div class="font-bold mb-2 text-black text-xs uppercase">1. Обстоятельства</div>
-  <p class="mb-4 text-justify">1.1. {{{marriage_status}}}. От брака имеется ребёнок: {{{child}}}.</p>
-  <p class="mb-4 text-justify">1.2. Ребёнок в настоящее время фактически проживает с {{{child_residence}}}.</p>
-  <p class="mb-4 text-justify">1.3. Условия проживания: истец — {{{conditions}}}; ответчик — {{{defendant_conditions}}}.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">2. Основания</div>
-  <p class="mb-4 text-justify">2.1. Согласно ст. 65 СК РФ место жительства ребёнка при раздельном проживании родителей определяется соглашением родителей, а при отсутствии соглашения — судом, исходя из интересов ребёнка.</p>
-  <p class="mb-4 text-justify">2.2. {{{child_opinion}}}. Проживание с матерью соответствует интересам ребёнка.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">3. Прошу</div>
-  <p class="mb-4 text-justify">Определить место жительства {{{child}}} с {{{applicant_fio}}} по адресу: {{{applicant_address}}}.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">4. Приложения</div>
-  <p class="mb-4 text-justify">Копия искового заявления по числу лиц, участвующих в деле;</p>
-  <p class="mb-4 text-justify">Квитанция об уплате государственной пошлины;</p>
-  <p class="mb-4 text-justify">Копии документов, подтверждающих обстоятельства, на которых основаны требования.</p>
-  <div class="mt-8 text-xs border-t border-zinc-300 pt-4">
-    <p class="mb-1">undefined: {{{applicant_fio}}}</p>
-    <div class="mt-8 border-b border-zinc-900 w-44 h-5 flex justify-end items-end text-[10px] text-zinc-400">Подпись</div>
-  </div>
-</div>`,
+    
   },
 {
     id: "invalid-transaction-claim",
@@ -1445,36 +703,7 @@ export const TEMPLATES_LEGAL: LegalTemplate[] = [
       { id: "claim_total_words", label: "Сумма прописью", type: "text", defaultValue: "", category: "payment" },
       { id: "limitation", label: "Срок исковой давности", type: "text", defaultValue: "", category: "contract" },
     ],
-    previewTemplate: `<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
-  <div class="mb-6 text-xs">
-  <p class="mb-1 text-justify">В {{{court_name}}}</p>
-  <p class="mb-1 text-justify">адрес: {{{court_address}}}</p>
-  <p class="mb-1 text-justify"><p class="mt-2">Истец: <strong>{{{applicant_fio}}}</strong></p></p>
-  <p class="mb-1 text-justify">адрес: {{{applicant_address}}}, тел.: {{{applicant_phone}}}</p>
-  <p class="mb-1 text-justify"><p class="mt-2">Ответчик: {{{defendant_fio}}}</p></p>
-  <p class="mb-1 text-justify">адрес: {{{defendant_address}}}</p>
-  <p class="mb-1 text-justify"><p class="mt-2">Цена иска: {{{claim_total}}} руб.</p></p>
-  </div>
-  <div class="text-center font-bold text-base mb-6 text-black uppercase">Исковое заявление о признании сделки недействительной</div>
-  <div class="font-bold mb-2 text-black text-xs uppercase">1. Обстоятельства</div>
-  <p class="mb-4 text-justify">1.1. «{{{deal_date}}}» между истцом и ответчиком заключена сделка: {{{deal}}}.</p>
-  <p class="mb-4 text-justify">1.2. Сделка является недействительной по следующим основаниям: {{{grounds}}}.</p>
-  <p class="mb-4 text-justify">1.3. {{{limitation}}}.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">2. Правовое обоснование</div>
-  <p class="mb-4 text-justify">2.1. Согласно ст. 166-179 ГК РФ сделка, совершённая под влиянием обмана, насилия, угрозы или заблуждения, может быть признана судом недействительной.</p>
-  <p class="mb-4 text-justify">2.2. Совершённый по сделке платёж составляет {{{claim_total}}} руб. ({{{claim_total_words}}}), что подтверждается прилагаемыми документами.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">3. Прошу</div>
-  <p class="mb-4 text-justify">Признать {{{deal}}} от «{{{deal_date}}}» недействительной;</p>
-  <p class="mb-4 text-justify">Применить последствия недействительности сделки: вернуть стороны в первоначальное положение.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">4. Приложения</div>
-  <p class="mb-4 text-justify">Копия искового заявления по числу лиц, участвующих в деле;</p>
-  <p class="mb-4 text-justify">Квитанция об уплате государственной пошлины;</p>
-  <p class="mb-4 text-justify">Копии документов, подтверждающих обстоятельства, на которых основаны требования.</p>
-  <div class="mt-8 text-xs border-t border-zinc-300 pt-4">
-    <p class="mb-1">undefined: {{{applicant_fio}}}</p>
-    <div class="mt-8 border-b border-zinc-900 w-44 h-5 flex justify-end items-end text-[10px] text-zinc-400">Подпись</div>
-  </div>
-</div>`,
+    
   },
 {
     id: "private-complaint",
@@ -1500,34 +729,7 @@ export const TEMPLATES_LEGAL: LegalTemplate[] = [
       { id: "ruling_date", label: "Дата определения", type: "date", defaultValue: "", category: "contract" },
       { id: "grounds", label: "Несогласие", type: "textarea", defaultValue: "", category: "contract", validation: { required: true } },
     ],
-    previewTemplate: `<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
-  <div class="mb-6 text-xs">
-  <p class="mb-1 text-justify">В {{{court_name}}}</p>
-  <p class="mb-1 text-justify">адрес: {{{court_address}}}</p>
-  <p class="mb-1 text-justify"><p class="mt-2">Заявитель: <strong>{{{applicant_fio}}}</strong></p></p>
-  <p class="mb-1 text-justify">адрес: {{{applicant_address}}}, тел.: {{{applicant_phone}}}</p>
-  <p class="mb-1 text-justify"><p class="mt-2">Дело № {{{case_number}}}</p></p>
-  <p class="mb-1 text-justify">Заинтересованные лица: {{{other_party}}}</p>
-  </div>
-  <div class="text-center font-bold text-base mb-6 text-black uppercase">Частная жалоба на определение суда</div>
-  <div class="font-bold mb-2 text-black text-xs uppercase">1. Обстоятельства</div>
-  <p class="mb-4 text-justify">1.1. В производстве {{{court_name}}} находится гражданское дело № {{{case_number}}}.</p>
-  <p class="mb-4 text-justify">1.2. «{{{ruling_date}}}» судом вынесено определение: {{{ruling}}}.</p>
-  <p class="mb-4 text-justify">1.3. С указанным определением не согласна по следующим основаниям: {{{grounds}}}.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">2. Основания жалобы</div>
-  <p class="mb-4 text-justify">2.1. Определение нарушает право на защиту и препятствует дальнейшему движению дела.</p>
-  <p class="mb-4 text-justify">2.2. Согласно ст. 331 ГПК РФ на определение суда первой инстанции может быть подана частная жалоба.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">3. Прошу</div>
-  <p class="mb-4 text-justify">Отменить определение {{{court_name}}} от «{{{ruling_date}}}» по делу № {{{case_number}}} и разрешить вопрос по существу.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">4. Приложения</div>
-  <p class="mb-4 text-justify">Копия частной жалобы по числу лиц, участвующих в деле;</p>
-  <p class="mb-4 text-justify">Копия обжалуемого определения;</p>
-  <p class="mb-4 text-justify">Документы, подтверждающие доводы жалобы.</p>
-  <div class="mt-8 text-xs border-t border-zinc-300 pt-4">
-    <p class="mb-1">undefined: {{{applicant_fio}}}</p>
-    <div class="mt-8 border-b border-zinc-900 w-44 h-5 flex justify-end items-end text-[10px] text-zinc-400">Подпись</div>
-  </div>
-</div>`,
+    
   },
 {
     id: "enforcement-suspension-app",
@@ -1553,32 +755,6 @@ export const TEMPLATES_LEGAL: LegalTemplate[] = [
       { id: "debtor", label: "Должник", type: "text", defaultValue: "", category: "applicant" },
       { id: "grounds", label: "Основания приостановления", type: "textarea", defaultValue: "", category: "contract", validation: { required: true } },
     ],
-    previewTemplate: `<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
-  <div class="mb-6 text-xs">
-  <p class="mb-1 text-justify">В {{{court_name}}}</p>
-  <p class="mb-1 text-justify">адрес: {{{court_address}}}</p>
-  <p class="mb-1 text-justify"><p class="mt-2">Заявитель: <strong>{{{applicant_fio}}}</strong></p></p>
-  <p class="mb-1 text-justify">адрес: {{{applicant_address}}}, тел.: {{{applicant_phone}}}</p>
-  <p class="mb-1 text-justify"><p class="mt-2">Дело № {{{case_number}}}</p></p>
-  <p class="mb-1 text-justify">Исполнительное производство № {{{enforcement_number}}}</p>
-  </div>
-  <div class="text-center font-bold text-base mb-6 text-black uppercase">Заявление о приостановлении исполнительного производства</div>
-  <div class="font-bold mb-2 text-black text-xs uppercase">1. Обстоятельства</div>
-  <p class="mb-4 text-justify">1.1. В отношении заявителя возбуждено исполнительное производство № {{{enforcement_number}}} по взысканию в пользу {{{claimant}}}.</p>
-  <p class="mb-4 text-justify">1.2. Основанием для приостановления является: {{{grounds}}}.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">2. Правовое обоснование</div>
-  <p class="mb-4 text-justify">2.1. Согласно ст. 39 ФЗ «Об исполнительном производстве» исполнительное производство подлежит приостановлению судом в случае оспаривания исполнительного документа.</p>
-  <p class="mb-4 text-justify">2.2. Неприостановление исполнительного производства может привести к необоснованному взысканию денежных средств.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">3. Прошу</div>
-  <p class="mb-4 text-justify">Приостановить исполнительное производство № {{{enforcement_number}}} до разрешения дела по существу.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">4. Приложения</div>
-  <p class="mb-4 text-justify">Копия заявления по числу лиц, участвующих в деле;</p>
-  <p class="mb-4 text-justify">Копия постановления о возбуждении исполнительного производства;</p>
-  <p class="mb-4 text-justify">Копия документа, подтверждающего основание приостановления.</p>
-  <div class="mt-8 text-xs border-t border-zinc-300 pt-4">
-    <p class="mb-1">undefined: {{{applicant_fio}}}</p>
-    <div class="mt-8 border-b border-zinc-900 w-44 h-5 flex justify-end items-end text-[10px] text-zinc-400">Подпись</div>
-  </div>
-</div>`,
+    
   }
 ];

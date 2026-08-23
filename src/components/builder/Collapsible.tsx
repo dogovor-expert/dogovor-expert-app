@@ -18,19 +18,23 @@ export default function Collapsible({
   children,
 }: CollapsibleProps) {
   return (
-    <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
+    <div className="bg-white rounded-2xl border border-slate-200/70 shadow-soft overflow-hidden">
       <button
         onClick={() => onToggle(id)}
-        className="w-full flex items-center justify-between text-left group"
+        className="w-full flex items-center justify-between text-left px-4 py-3.5 group hover:bg-slate-50/60 transition-colors"
         aria-expanded={!collapsed}
       >
-        <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
-          {icon}
+        <h3 className="flex items-center gap-2.5 text-[15px] font-bold text-slate-800">
+          {icon && (
+            <span className="w-8 h-8 rounded-xl bg-brand-50 flex items-center justify-center shrink-0">
+              {icon}
+            </span>
+          )}
           {title}
         </h3>
-        <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${collapsed ? "" : "rotate-180"}`} />
+        <ChevronDown className={`w-4 h-4 text-slate-600 transition-transform duration-200 ${collapsed ? "" : "rotate-180"}`} />
       </button>
-      {!collapsed && <div className="mt-3">{children}</div>}
+      {!collapsed && <div className="px-4 pb-4 pt-0.5">{children}</div>}
     </div>
   );
 }

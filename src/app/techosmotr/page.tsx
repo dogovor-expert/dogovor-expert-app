@@ -5,7 +5,7 @@ import { Card } from "@/components/ui/Card";
 export const metadata: Metadata = {
   title: "Техосмотр 2026: диагностическая карта, ЕАИСТО, штрафы | Конструктор документов",
   description:
-    "Прохождение технического осмотра после отмены его для легковых автомобилей, единый реестр ЕАИСТО, диагностическая карта, правила для такси, автобусов и грузовиков, ответственность по ст. 12.5 КоАП.",
+    "Техосмотр в 2026: кому обязателен, реестр ЕАИСТО, диагностическая карта, правила для такси и грузовиков, штрафы по ст. 12.5 КоАП.",
   alternates: { canonical: "/techosmotr" },
 };
 
@@ -38,9 +38,9 @@ export default function TechosmotrPage() {
   return (
     <div className="max-w-3xl mx-auto px-4 py-10 space-y-6">
       <div className="space-y-2">
-        <div className="text-[10px] font-mono uppercase tracking-widest text-gray-400">Автосправочник</div>
+        <div className="text-[10px] font-mono uppercase tracking-widest text-gray-600">Автосправочник</div>
         <h1 className="text-2xl font-bold text-gray-900">Техосмотр 2026: диагностическая карта, ЕАИСТО, штрафы</h1>
-        <p className="text-sm text-gray-500">
+        <p className="text-sm text-gray-600">
           Актуальный порядок прохождения технического осмотра и проверки карты в реестре ЕАИСТО для 2026 года.
         </p>
       </div>

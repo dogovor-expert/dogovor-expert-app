@@ -29,7 +29,7 @@ export default function SumWords() {
     <div className="space-y-4">
       <div className="space-y-3">
         <div className="space-y-1">
-          <label className="text-[10px] font-mono text-gray-500">Сумма (₽)</label>
+          <label className="text-[10px] font-mono text-gray-600">Сумма (₽)</label>
           <input type="number" min="0" step="0.01" value={sum} onChange={(e) => setSum(e.target.value)}
             className="w-full bg-gray-50 border border-gray-200 text-xs py-2.5 px-3 rounded-lg text-gray-900 outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500" />
         </div>
@@ -49,7 +49,7 @@ export default function SumWords() {
         </div>
       )}
 
-      <p className="text-[11px] text-gray-400 leading-relaxed flex items-start gap-1.5">
+      <p className="text-[11px] text-gray-600 leading-relaxed flex items-start gap-1.5">
         <Hash className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
         Сумма прописью оформляется в договорах, расписках, доверенностях и претензиях — так защищаются от подмены цифр. Форма: «X рублей YY копеек» с правильными склонениями.
       </p>

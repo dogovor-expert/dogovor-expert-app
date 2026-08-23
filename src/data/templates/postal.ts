@@ -27,27 +27,7 @@ export const TEMPLATES_POSTAL: LegalTemplate[] = [
         { label: "С правом передоверия", value: "с правом передоверия" },
       ] },
     ],
-    previewTemplate: `
-<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
-  <div class="text-center font-bold text-base mb-6 text-black uppercase">Доверенность на получение почтовых отправлений</div>
-  <div class="flex justify-between mb-6 text-xs font-semibold">
-    <div>г. {{{city}}}</div>
-    <div>«{{{date}}}»</div>
-  </div>
-  <p class="mb-4 text-justify">
-    Я, <strong>{{{principal_fio}}}</strong> (паспорт: {{{principal_passport}}}, адрес: {{{principal_address}}}),
-    настоящей доверенностью уполномочиваю <strong>{{{agent_fio}}}</strong> (паспорт: {{{agent_passport}}},
-    адрес: {{{agent_address}}}) получить в {{{postal_office}}}: {{{items_list}}}, а также
-    расписываться за меня и выполнять все действия, связанные с данным поручением (ст. 185 ГК РФ).
-  </p>
-  <p class="mb-3 text-justify">Доверенность выдана {{{has_substitution}}} на срок {{{valid_until}}}.</p>
-  <p class="mb-3 text-justify">Содержание статей 185-189 ГК РФ мне известно. Доверенность может быть отменена в любое время (ст. 188 ГК РФ).</p>
-  <div class="mt-8 text-xs border-t border-zinc-300 pt-4">
-    <p class="mb-1">Доверитель: {{{principal_fio}}}</p>
-    <div class="border-b border-zinc-950 w-56 h-5 mt-5 mb-1"></div>
-    <p class="text-zinc-400 text-[10px]">подпись</p>
-  </div>
-</div>`,
+    
   },
 {
     id: "postal-search-app",
@@ -72,26 +52,7 @@ export const TEMPLATES_POSTAL: LegalTemplate[] = [
       { id: "receipt_info", label: "Квитанция об отправке", type: "text", defaultValue: "", category: "other" },
       { id: "search_claim", label: "Требование", type: "text", defaultValue: "", category: "items" },
     ],
-    previewTemplate: `
-<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
-  <div class="flex justify-between mb-6 text-xs font-semibold">
-    <div>г. {{{city}}}</div>
-    <div>«{{{date}}}»</div>
-  </div>
-  <div class="text-center font-bold text-base mb-6 text-black uppercase">Заявление о розыске почтового отправления</div>
-  <p class="mb-4 text-justify">В {{{postal_office}}}</p>
-  <p class="mb-1 text-justify">Отправитель: {{{sender_fio}}}, адрес: {{{sender_address}}}</p>
-  <p class="mb-4 text-justify">Получатель: {{{receiver_fio}}}, адрес: {{{receiver_address}}}</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">Заявление</div>
-  <p class="mb-3 text-justify">1. «{{{send_date}}}» мною было отправлено почтовое отправление: {{{item_type}}}, трек-номер {{{track_number}}} ({{{receipt_info}}}).</p>
-  <p class="mb-3 text-justify">2. В установленный контрольный срок отправление адресату не доставлено.</p>
-  <p class="mb-3 text-justify">3. На основании ст. 37 ФЗ-176 «О почтовой связи» прошу: {{{search_claim}}}. Заявление подаётся в течение 6 месяцев с даты отправки.</p>
-  <div class="mt-8 text-xs border-t border-zinc-300 pt-4">
-    <p class="mb-1">Отправитель: {{{sender_fio}}}</p>
-    <div class="border-b border-zinc-950 w-56 h-5 mt-5 mb-1"></div>
-    <p class="text-zinc-400 text-[10px]">подпись</p>
-  </div>
-</div>`,
+    
   },
 {
     id: "mail-notice",
@@ -115,36 +76,7 @@ export const TEMPLATES_POSTAL: LegalTemplate[] = [
       { id: "post_office", label: "Отделение почтовой связи", type: "text", defaultValue: "", category: "contract" },
       { id: "note", label: "Примечание", type: "text", defaultValue: "", category: "contract" },
     ],
-    previewTemplate: `<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
-  <div class="text-center font-bold text-base mb-6 text-black uppercase">Уведомление о получении почтового отправления</div>
-  <div class="flex justify-between mb-6 text-xs font-semibold">
-    <div>г. {{{city}}}</div>
-    <div>«{{{date}}}»</div>
-  </div>
-
-  <div class="font-bold mb-2 text-black text-xs uppercase">1. Уведомление</div>
-  <p class="mb-4 text-justify">1.1. Настоящим уведомляю, что {{{mail_type}}} {{{tracking}}}, отправленное «{{{sent_date}}}» в адрес {{{recipient}}}, получено адресатом «{{{received_date}}}» в {{{post_office}}}.</p>
-  <p class="mb-4 text-justify">1.2. {{{note}}}.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">2. Подтверждение</div>
-  <p class="mb-4 text-justify">2.1. Факт получения подтверждается отметкой оператора почтовой связи и подписью получателя.</p>
-  <p class="mb-4 text-justify">2.2. Документы, подтверждающие вручение, могут быть предоставлены по требованию.</p>
-
-  <div class="font-bold mb-2 text-black text-xs uppercase">3. Форс-мажор</div>
-  <p class="mb-4 text-justify">3.1. Стороны освобождаются от ответственности за частичное или полное неисполнение обязательств по настоящему договору, если оно явилось следствием обстоятельств непреодолимой силы (форс-мажора): стихийных бедствий, пожаров, наводнений, землетрясений, эпидемий, военных действий, решений органов государственной власти, а также иных обстоятельств, которые стороны не могли предвидеть и предотвратить разумными мерами.</p>
-  <p class="mb-4 text-justify">3.2. Сторона, для которой создалась невозможность исполнения обязательств, обязана незамедлительно, но не позднее 10 (десяти) календарных дней с момента наступления таких обстоятельств, письменно уведомить другую сторону об их возникновении. Неуведомление лишает сторону права ссылаться на форс-мажор.</p>
-  <p class="mb-4 text-justify">3.3. Если обстоятельства непреодолимой силы действуют более 60 (шестидесяти) календарных дней, каждая из сторон вправе в одностороннем порядке отказаться от исполнения настоящего договора, письменно уведомив другую сторону.</p>
-
-  <div class="font-bold mb-2 text-black text-xs uppercase">4. Порядок разрешения споров</div>
-  <p class="mb-4 text-justify">4.1. Все споры и разногласия, возникающие из настоящего договора или в связи с ним, стороны разрешают путём переговоров. Срок рассмотрения письменной претензии — 10 (десять) календарных дней с момента её получения.</p>
-  <p class="mb-4 text-justify">4.2. При недостижении согласия споры разрешаются в судебном порядке в соответствии с действующим законодательством Российской Федерации.</p>
-  <div class="mt-8 border-t border-zinc-300 pt-4 text-xs">
-    <div>
-      <div class="font-bold mb-2 uppercase text-black">Заявитель:</div>
-      <p class="mb-1"><strong>{{{applicant_fio}}}</strong></p>
-      <div class="mt-8 border-b border-zinc-900 w-44 h-5 flex justify-end items-end text-[10px] text-zinc-400">Подпись</div>
-    </div>
-  </div>
-</div>`,
+    
   },
 {
     id: "mail-return-app",
@@ -168,35 +100,6 @@ export const TEMPLATES_POSTAL: LegalTemplate[] = [
       { id: "new_address", label: "Новый адрес (при переадресации)", type: "text", defaultValue: "", category: "contract" },
       { id: "reason", label: "Причина", type: "text", defaultValue: "", category: "contract" },
     ],
-    previewTemplate: `<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
-  <div class="text-center font-bold text-base mb-6 text-black uppercase">Заявление на возврат почтового отправления</div>
-  <div class="flex justify-between mb-6 text-xs font-semibold">
-    <div>г. {{{city}}}</div>
-    <div>«{{{date}}}»</div>
-  </div>
-
-  <div class="font-bold mb-2 text-black text-xs uppercase">1. Прошу</div>
-  <p class="mb-4 text-justify">1.1. Прошу произвести следующее действие с почтовым отправлением {{{tracking}}}, отправленным «{{{sent_date}}}»: {{{action}}}.</p>
-  <p class="mb-4 text-justify">1.2. {{{reason}}}. {{{new_address}}}.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">2. Подтверждение</div>
-  <p class="mb-4 text-justify">2.1. Отправление находится в {{{post_office}}}.</p>
-  <p class="mb-4 text-justify">2.2. Заявление подано лично, подпись удостоверена оператором почтовой связи.</p>
-
-  <div class="font-bold mb-2 text-black text-xs uppercase">3. Форс-мажор</div>
-  <p class="mb-4 text-justify">3.1. Стороны освобождаются от ответственности за частичное или полное неисполнение обязательств по настоящему договору, если оно явилось следствием обстоятельств непреодолимой силы (форс-мажора): стихийных бедствий, пожаров, наводнений, землетрясений, эпидемий, военных действий, решений органов государственной власти, а также иных обстоятельств, которые стороны не могли предвидеть и предотвратить разумными мерами.</p>
-  <p class="mb-4 text-justify">3.2. Сторона, для которой создалась невозможность исполнения обязательств, обязана незамедлительно, но не позднее 10 (десяти) календарных дней с момента наступления таких обстоятельств, письменно уведомить другую сторону об их возникновении. Неуведомление лишает сторону права ссылаться на форс-мажор.</p>
-  <p class="mb-4 text-justify">3.3. Если обстоятельства непреодолимой силы действуют более 60 (шестидесяти) календарных дней, каждая из сторон вправе в одностороннем порядке отказаться от исполнения настоящего договора, письменно уведомив другую сторону.</p>
-
-  <div class="font-bold mb-2 text-black text-xs uppercase">4. Порядок разрешения споров</div>
-  <p class="mb-4 text-justify">4.1. Все споры и разногласия, возникающие из настоящего договора или в связи с ним, стороны разрешают путём переговоров. Срок рассмотрения письменной претензии — 10 (десять) календарных дней с момента её получения.</p>
-  <p class="mb-4 text-justify">4.2. При недостижении согласия споры разрешаются в судебном порядке в соответствии с действующим законодательством Российской Федерации.</p>
-  <div class="mt-8 border-t border-zinc-300 pt-4 text-xs">
-    <div>
-      <div class="font-bold mb-2 uppercase text-black">Заявитель:</div>
-      <p class="mb-1"><strong>{{{applicant_fio}}}</strong></p>
-      <div class="mt-8 border-b border-zinc-900 w-44 h-5 flex justify-end items-end text-[10px] text-zinc-400">Подпись</div>
-    </div>
-  </div>
-</div>`,
+    
   }
 ];

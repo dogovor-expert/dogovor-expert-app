@@ -70,13 +70,13 @@ export default function UsnNpd() {
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
-              <label className="text-[10px] font-mono text-gray-500">Доход за год (₽)</label>
+              <label className="text-[10px] font-mono text-gray-600">Доход за год (₽)</label>
               <input type="number" value={income} onChange={(e) => setIncome(e.target.value)}
                 className="w-full bg-gray-50 border border-gray-200 text-xs py-2.5 px-3 rounded-lg text-gray-900 outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500" />
             </div>
             {usnMode === "incomeMinus" && (
               <div className="space-y-1">
-                <label className="text-[10px] font-mono text-gray-500">Расходы за год (₽)</label>
+                <label className="text-[10px] font-mono text-gray-600">Расходы за год (₽)</label>
                 <input type="number" value={expenses} onChange={(e) => setExpenses(e.target.value)}
                   className="w-full bg-gray-50 border border-gray-200 text-xs py-2.5 px-3 rounded-lg text-gray-900 outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500" />
               </div>
@@ -86,12 +86,12 @@ export default function UsnNpd() {
       ) : (
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-1">
-            <label className="text-[10px] font-mono text-gray-500">Доход от физлиц (₽, 4%)</label>
+            <label className="text-[10px] font-mono text-gray-600">Доход от физлиц (₽, 4%)</label>
             <input type="number" value={ppl} onChange={(e) => setPpl(e.target.value)}
               className="w-full bg-gray-50 border border-gray-200 text-xs py-2.5 px-3 rounded-lg text-gray-900 outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500" />
           </div>
           <div className="space-y-1">
-            <label className="text-[10px] font-mono text-gray-500">Доход от юрлиц/ИП (₽, 6%)</label>
+            <label className="text-[10px] font-mono text-gray-600">Доход от юрлиц/ИП (₽, 6%)</label>
             <input type="number" value={org} onChange={(e) => setOrg(e.target.value)}
               className="w-full bg-gray-50 border border-gray-200 text-xs py-2.5 px-3 rounded-lg text-gray-900 outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500" />
           </div>
@@ -107,12 +107,12 @@ export default function UsnNpd() {
         <div className="bg-gray-50 rounded-xl p-4 border border-gray-200 space-y-1.5">
           <div className="flex items-center gap-2">
             <Check className="w-4 h-4 text-emerald-500" />
-            <span className="text-[10px] font-mono text-gray-500">{mode === "usn" ? "УСН — ст. 346.20, 164 НК РФ" : "НПД — ФЗ-422"}</span>
+            <span className="text-[10px] font-mono text-gray-600">{mode === "usn" ? "УСН — ст. 346.20, 164 НК РФ" : "НПД — ФЗ-422"}</span>
           </div>
           {result.map((line, i) => (
             <p key={i} className="text-[11px] text-gray-600">{line}</p>
           ))}
-          {mode === "usn" && <p className="text-[11px] text-gray-500">Лимит УСН 2026: 450 млн ₽ в год; НДС обязателен при доходах свыше 60 млн ₽.</p>}
+          {mode === "usn" && <p className="text-[11px] text-gray-600">Лимит УСН 2026: 450 млн ₽ в год; НДС обязателен при доходах свыше 60 млн ₽.</p>}
           {mode === "npd" && (
             <a href="/builder?id=service-agreement"
               className="inline-block mt-1 py-2 px-3 rounded-lg bg-white border border-brand-300 text-brand-600 font-bold text-[11px] hover:bg-brand-50 transition">
@@ -122,7 +122,7 @@ export default function UsnNpd() {
         </div>
       )}
 
-      <p className="text-[11px] text-gray-400 leading-relaxed flex items-start gap-1.5">
+      <p className="text-[11px] text-gray-600 leading-relaxed flex items-start gap-1.5">
         <Store className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
         Региональные ставки могут быть ниже (УСН: от 1% и 5%). С 2026 года базовая ставка НДС — 22%; на УСН при доходах 60–450 млн ₽ — НДС 5% или 7%.
       </p>

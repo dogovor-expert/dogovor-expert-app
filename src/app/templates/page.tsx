@@ -1,8 +1,11 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { LEGAL_TEMPLATES } from "@/data/legalTemplates";
-import { Search, Star, ArrowRight, Grid3X3, List } from "lucide-react";
+import { TEMPLATE_META } from "@/data/templatesMeta";
+import { Search, Star, ArrowRight, Grid3X3, List, X } from "lucide-react";
+import Highlight from "@/components/ui/Highlight";
+import { scoreText, tokenGroups, textMatchesTokens } from "@/lib/search";
 
 const TEMPLATE_CATEGORIES = [
   { id: "all", label: "Все" },
@@ -77,9 +80,29 @@ function TemplatesContent() {
 
   useEffect(() => {
     setFavorites(loadFavorites());
-    const q = new URLSearchParams(window.location.search).get("q");
+    // №10 аудита: состояние каталога восстанавливается из URL (q/cat/view).
+    const params = new URLSearchParams(window.location.search);
+    const q = params.get("q");
     if (q) setSearch(q);
+    const cat = params.get("cat");
+    if (cat) setActiveCategory(cat);
+    const view = params.get("view");
+    if (view === "list" || view === "grid") setViewMode(view);
   }, []);
+
+  useEffect(() => {
+    // №10 аудита: поиск/категория/вид синхронизируются в URL — ссылка
+    // «шаблоны недвижимости списком» открывает то же состояние.
+    const params = new URLSearchParams(window.location.search);
+    if (search.trim()) params.set("q", search.trim());
+    else params.delete("q");
+    if (activeCategory !== "all") params.set("cat", activeCategory);
+    else params.delete("cat");
+    if (viewMode !== "grid") params.set("view", viewMode);
+    else params.delete("view");
+    const qs = params.toString();
+    window.history.replaceState(null, "", qs ? `?${qs}` : window.location.pathname);
+  }, [search, activeCategory, viewMode]);
 
   const toggleFavorite = (templateId: string) => {
     setFavorites((prev) => {
@@ -98,19 +121,55 @@ function TemplatesContent() {
     });
   };
 
-  const sorted = [...LEGAL_TEMPLATES].sort((a, b) => {
+  const sorted = [...TEMPLATE_META].sort((a, b) => {
     const fa = favorites.has(a.id) ? 0 : 1;
     const fb = favorites.has(b.id) ? 0 : 1;
     return fa - fb;
   });
 
-  const filtered = sorted.filter((t) => {
-    const matchCat = activeCategory === "all" || t.category === activeCategory;
-    const matchSearch =
-      t.name.toLowerCase().includes(search.toLowerCase()) ||
-      t.description.toLowerCase().includes(search.toLowerCase());
-    return matchCat && matchSearch;
-  });
+  const filtered = useMemo(() => {
+    const tokens = tokenGroups(search);
+    const results = sorted
+      .filter((t) => activeCategory === "all" || t.category === activeCategory)
+      .filter((t) => {
+        if (tokens.length === 0) return true;
+        const searchable =
+          `${t.name} ${t.description} ${(t.suggestedDocs || []).join(" ")} ${t.actSource}`;
+        return textMatchesTokens(searchable, tokens);
+      })
+      .map((t) => ({
+        t,
+        score: tokens.length === 0
+          ? 0
+          : Math.max(scoreText(t.name, tokens, 0), scoreText(t.description, tokens, 20)),
+      }));
+    if (tokens.length > 0) {
+      results.sort((a, b) => b.score - a.score);
+    }
+    return results;
+  }, [sorted, search, activeCategory]);
+
+  const hasActiveSearch = search.trim() !== "";
+
+  useEffect(() => {
+    const q = search.trim();
+    if (q.length < 2 || filtered.length > 0) return;
+    try {
+      const raw = localStorage.getItem("dogovor_zero_queries");
+      const list = raw ? JSON.parse(raw) : [];
+      if (list.length === 0 || list[list.length - 1].q !== q) {
+        list.push({ q, ts: Date.now() });
+        localStorage.setItem("dogovor_zero_queries", JSON.stringify(list.slice(-50)));
+      }
+    } catch {
+      // ignore
+    }
+  }, [search, filtered.length]);
+
+  const clearSearch = () => {
+    setSearch("");
+    router.replace("/templates", { scroll: false });
+  };
 
   const handleUseTemplate = (templateId: string) => {
     router.push(`/builder?template=${templateId}`);
@@ -121,19 +180,34 @@ function TemplatesContent() {
       <div className="mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Каталог шаблонов</h1>
-          <p className="text-gray-500 mt-1">
-            {LEGAL_TEMPLATES.length} готовых шаблонов для создания документов
-          </p>
+          {hasActiveSearch ? (
+            <p className="text-sm text-gray-600 mt-1">
+              Найдено: {filtered.length}
+            </p>
+          ) : (
+            <p className="text-gray-600 mt-1">
+              {TEMPLATE_META.length} готовых шаблонов для создания документов
+            </p>
+          )}
         </div>
         <div className="relative max-w-xs w-full">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-600" />
           <input
             type="text"
             placeholder="Поиск шаблонов..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 text-sm border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500"
+            className="w-full pl-10 pr-10 py-2.5 text-sm border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500"
           />
+          {hasActiveSearch && (
+            <button
+              onClick={clearSearch}
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 rounded-full text-gray-600 hover:text-gray-600 hover:bg-gray-100"
+              aria-label="Очистить поиск"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          )}
         </div>
       </div>
 
@@ -142,8 +216,8 @@ function TemplatesContent() {
           {TEMPLATE_CATEGORIES.map((cat) => {
             const count =
               cat.id === "all"
-                ? LEGAL_TEMPLATES.length
-                : LEGAL_TEMPLATES.filter((t) => t.category === cat.id).length;
+                ? TEMPLATE_META.length
+                : TEMPLATE_META.filter((t) => t.category === cat.id).length;
             return (
               <button
                 key={cat.id}
@@ -158,8 +232,8 @@ function TemplatesContent() {
                 <span
                   className={`px-1.5 py-0.5 text-[11px] rounded-full font-semibold ${
                     activeCategory === cat.id
-                      ? "bg-white/20 text-white"
-                      : "bg-gray-100 text-gray-500"
+                      ? "bg-white text-brand-600"
+                      : "bg-gray-100 text-gray-600"
                   }`}
                 >
                   {count}
@@ -171,20 +245,22 @@ function TemplatesContent() {
         <div className="flex items-center gap-1 bg-white rounded-lg p-1 border border-gray-200">
           <button
             onClick={() => setViewMode("grid")}
+            aria-label="Вид: сетка"
             className={`p-2 rounded-md ${
               viewMode === "grid"
                 ? "bg-brand-100 text-brand-700"
-                : "text-gray-400 hover:text-gray-600"
+                : "text-gray-600 hover:text-gray-600"
             }`}
           >
             <Grid3X3 className="w-4 h-4" />
           </button>
           <button
             onClick={() => setViewMode("list")}
+            aria-label="Вид: список"
             className={`p-2 rounded-md ${
               viewMode === "list"
                 ? "bg-brand-100 text-brand-700"
-                : "text-gray-400 hover:text-gray-600"
+                : "text-gray-600 hover:text-gray-600"
             }`}
           >
             <List className="w-4 h-4" />
@@ -194,7 +270,7 @@ function TemplatesContent() {
 
       {viewMode === "grid" ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 pb-12 items-stretch">
-          {filtered.map((t) => {
+          {filtered.map(({ t }) => {
             const gradient = CATEGORY_COLORS[t.category] || CATEGORY_COLORS.other;
             const icon = CATEGORY_ICONS[t.category] || "📄";
             const badge = CATEGORY_BADGE[t.category] || "bg-gray-100 text-gray-600";
@@ -209,11 +285,11 @@ function TemplatesContent() {
               >
                 <div className={`h-2 bg-gradient-to-r ${gradient} shrink-0`} />
                 <div className="p-5 flex flex-col flex-1">
-                  {t.fields.length > 30 && (
+                  {t.fieldCount > 30 && (
                     <div className="flex items-center gap-1 mb-3">
                       <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
-                      <span className="text-xs font-medium text-amber-600">
-                        Расширенный: {t.fields.length} полей
+                      <span className="text-xs font-medium text-amber-700">
+                        Расширенный: {t.fieldCount} полей
                       </span>
                     </div>
                   )}
@@ -238,29 +314,31 @@ function TemplatesContent() {
                     <span className="text-2xl">{icon}</span>
                   </div>
                   <h3 className="text-base font-bold text-gray-900 mb-1 leading-snug" title={t.name}>
-                    {t.name}
+                    <Link href={`/documents/${t.id}`} className="hover:text-brand-600 transition-colors">
+                      <Highlight text={t.name} query={search} />
+                    </Link>
                     {["legal", "migration"].includes(t.category) && (
                       <span className="ml-2 align-middle text-[10px] font-semibold text-purple-700 bg-purple-50 border border-purple-100 rounded px-1.5 py-0.5 whitespace-nowrap">
                         проверьте у юриста
                       </span>
                     )}
                   </h3>
-                  <p className="text-sm text-gray-500 mb-4 leading-relaxed line-clamp-2" title={t.description}>
-                    {t.description}
+                  <p className="text-sm text-gray-600 mb-4 leading-relaxed line-clamp-2" title={t.description}>
+                    <Highlight text={t.description} query={search} />
                   </p>
                   <div className="flex items-center justify-between pt-3 border-t border-gray-100">
-                    <span className="text-xs text-gray-400">
-                      {t.actSource.split(",")[0]}
+                    <span className="text-xs text-gray-600" title={t.actSource}>
+                      {t.actSource}
                     </span>
                     <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${badge}`}>
                       {catLabel}
                     </span>
                   </div>
                   <div className="flex items-center justify-between mt-3">
-                    <span className="text-[10px] text-gray-400" title="Обновлено">
+                    <span className="text-[10px] text-gray-600" title="Обновлено">
                       {t.lastUpdated}
                     </span>
-                    <span className="text-[10px] text-gray-400">{t.fields.length} полей</span>
+                    <span className="text-[10px] text-gray-600">{t.fieldCount} полей</span>
                   </div>
                   <button
                     onClick={() => handleUseTemplate(t.id)}
@@ -276,7 +354,7 @@ function TemplatesContent() {
       ) : (
         <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden mb-12">
           <div className="divide-y divide-gray-100">
-            {filtered.map((t) => {
+            {filtered.map(({ t }) => {
               const gradient = CATEGORY_COLORS[t.category] || CATEGORY_COLORS.other;
               const icon = CATEGORY_ICONS[t.category] || "📄";
               const badge = CATEGORY_BADGE[t.category] || "bg-gray-100 text-gray-600";
@@ -295,22 +373,24 @@ function TemplatesContent() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-gray-900" title={t.name}>
-                      {t.name}
+                      <Link href={`/documents/${t.id}`} className="hover:text-brand-600 transition-colors">
+                        <Highlight text={t.name} query={search} />
+                      </Link>
                       {["legal", "migration"].includes(t.category) && (
                         <span className="ml-2 align-middle text-[10px] font-semibold text-purple-700 bg-purple-50 border border-purple-100 rounded px-1.5 py-0.5">
                           проверьте у юриста
                         </span>
                       )}
                     </p>
-                    <p className="text-xs text-gray-500 truncate" title={t.description}>
-                      {t.description}
+                    <p className="text-xs text-gray-600 truncate" title={t.description}>
+                      <Highlight text={t.description} query={search} />
                     </p>
                   </div>
                   <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${badge}`}>
                     {catLabel}
                   </span>
-                  <span className="text-xs text-gray-400">{t.fields.length} полей</span>
-                  <span className="text-[10px] text-gray-400" title="Обновлено">
+                  <span className="text-xs text-gray-600">{t.fieldCount} полей</span>
+                  <span className="text-[10px] text-gray-600" title="Обновлено">
                     {t.lastUpdated}
                   </span>
                   <button
@@ -339,14 +419,38 @@ function TemplatesContent() {
       )}
 
       {filtered.length === 0 && (
-        <div className="text-center py-16 bg-white rounded-2xl border border-gray-200 mb-12">
+        <div className="text-center py-14 bg-white rounded-2xl border border-gray-200 mb-12 px-6">
           <Search className="w-12 h-12 text-gray-300 mx-auto mb-4" />
           <h3 className="text-lg font-semibold text-gray-900 mb-1">
-            Ничего не найдено
+            {hasActiveSearch ? `Ничего не найдено по запросу «${search.trim()}»` : "Нет шаблонов в категории"}
           </h3>
-          <p className="text-sm text-gray-500">
-            Попробуйте изменить запрос или выбрать другую категорию
+          <p className="text-sm text-gray-600 mb-6">
+            {hasActiveSearch
+              ? "Попробуйте другие слова или сбросьте фильтры"
+              : "Выберите другую категорию"}
           </p>
+          {hasActiveSearch && (
+            <>
+              <div className="flex flex-wrap items-center justify-center gap-2 mb-6">
+                <span className="text-xs text-gray-600">Популярные запросы:</span>
+                {["купли-продажи", "аренда", "доверенность", "расписка", "займ"].map((s) => (
+                  <button
+                    key={s}
+                    onClick={() => setSearch(s)}
+                    className="px-3 py-1.5 text-xs font-medium text-brand-600 bg-brand-50 hover:bg-brand-100 rounded-full transition-colors"
+                  >
+                    {s}
+                  </button>
+                ))}
+              </div>
+              <button
+                onClick={clearSearch}
+                className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-600 border border-gray-200 hover:border-brand-300 hover:text-brand-600 rounded-xl transition-colors"
+              >
+                <X className="w-4 h-4" /> Сбросить поиск
+              </button>
+            </>
+          )}
         </div>
       )}
     </div>

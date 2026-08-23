@@ -1,13 +1,15 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Files, Scissors, Image as ImageIcon, FileImage, ScanText, PenLine, FileText, ShieldCheck } from "lucide-react";
-import MergePdf from "@/components/converter/MergePdf";
-import SplitPdf from "@/components/converter/SplitPdf";
-import ImagesToPdf from "@/components/converter/ImagesToPdf";
-import PdfToImages from "@/components/converter/PdfToImages";
-import OcrTool from "@/components/converter/OcrTool";
-import SignPdf from "@/components/converter/SignPdf";
-import DocxToPrint from "@/components/converter/DocxToPrint";
+import dynamic from "next/dynamic";
+
+const MergePdf = dynamic(() => import("@/components/converter/MergePdf"), { ssr: false });
+const SplitPdf = dynamic(() => import("@/components/converter/SplitPdf"), { ssr: false });
+const ImagesToPdf = dynamic(() => import("@/components/converter/ImagesToPdf"), { ssr: false });
+const PdfToImages = dynamic(() => import("@/components/converter/PdfToImages"), { ssr: false });
+const OcrTool = dynamic(() => import("@/components/converter/OcrTool"), { ssr: false });
+const SignPdf = dynamic(() => import("@/components/converter/SignPdf"), { ssr: false });
+const DocxToPrint = dynamic(() => import("@/components/converter/DocxToPrint"), { ssr: false });
 
 const tools = [
   { id: "merge", label: "Объединить PDF", icon: Files, desc: "Склеить несколько PDF в один", comp: MergePdf },
@@ -23,6 +25,20 @@ type ToolId = (typeof tools)[number]["id"];
 
 export default function ConverterPage() {
   const [active, setActive] = useState<ToolId>("merge");
+
+  // №15 аудита: инструмент можно открыть ссылкой /converter?tool=split
+  useEffect(() => {
+    const t = new URLSearchParams(window.location.search).get("tool");
+    if (t && tools.some((x) => x.id === t)) setActive(t as ToolId);
+  }, []);
+
+  const selectTool = (id: ToolId) => {
+    setActive(id);
+    const url = new URL(window.location.href);
+    url.searchParams.set("tool", id);
+    window.history.replaceState(null, "", url.pathname + "?" + url.searchParams.toString());
+  };
+
   const current = tools.find((t) => t.id === active)!;
   const Component = current.comp;
   const Icon = current.icon;
@@ -35,7 +51,7 @@ export default function ConverterPage() {
         </div>
         <div>
           <h1 className="text-xl font-bold text-gray-900">Конвертер документов</h1>
-          <p className="text-sm text-gray-500">PDF, JPG, Word, распознавание текста</p>
+          <p className="text-sm text-gray-600">PDF, JPG, Word, распознавание текста</p>
         </div>
       </div>
 
@@ -53,16 +69,16 @@ export default function ConverterPage() {
           return (
             <button
               key={t.id}
-              onClick={() => setActive(t.id)}
+              onClick={() => selectTool(t.id)}
               className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${
                 isActive
                   ? "border-brand-500 bg-brand-50 shadow-soft"
                   : "border-gray-200 bg-white hover:border-brand-300 hover:bg-gray-50"
               }`}
             >
-              <Icon className={`w-5 h-5 mb-2 ${isActive ? "text-brand-600" : "text-gray-400"}`} />
+              <Icon className={`w-5 h-5 mb-2 ${isActive ? "text-brand-600" : "text-gray-600"}`} />
               <p className={`text-xs font-semibold ${isActive ? "text-brand-700" : "text-gray-800"}`}>{t.label}</p>
-              <p className="text-[10px] text-gray-400 mt-0.5 leading-snug">{t.desc}</p>
+              <p className="text-[10px] text-gray-600 mt-0.5 leading-snug">{t.desc}</p>
             </button>
           );
         })}
@@ -76,8 +92,8 @@ export default function ConverterPage() {
         <Component />
       </div>
 
-      <div className="text-xs text-gray-400 leading-relaxed">
-        <p className="font-semibold text-gray-500 mb-1">Полезно при работе с договорами:</p>
+      <div className="text-xs text-gray-600 leading-relaxed">
+        <p className="font-semibold text-gray-600 mb-1">Полезно при работе с договорами:</p>
         <p>
           • Объедините сканы страниц договора в один PDF для отправки или нотариуса<br />
           • Распознайте скан подписанного договора в текст для хранения в CRM<br />

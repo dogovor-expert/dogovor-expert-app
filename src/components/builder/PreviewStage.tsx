@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import type { LegalTemplate } from "@/data/types";
 import DocPreview from "@/components/DocPreview";
+import { DOC_DESIGNS, type DesignId } from "@/lib/docDesign";
 import type { RefObject } from "react";
 
 interface PreviewStageProps {
@@ -20,16 +21,19 @@ interface PreviewStageProps {
   packTemplates: LegalTemplate[];
   isExporting: boolean;
   exportPages: number;
-  printRef: RefObject<HTMLDivElement>;
-  flatRef: RefObject<HTMLDivElement>;
+  printRef: RefObject<HTMLDivElement | null>;
+  flatRef: RefObject<HTMLDivElement | null>;
   renderPreview: (t?: LegalTemplate) => string;
   onPrint: () => void;
   onCopyJson: () => void;
   onExportPdf: () => void;
+onExportPdfCurrent?: () => void;
   onExportDocx: () => void;
   onOpenEmailModal: () => void;
   emailSending: boolean;
   onBackToForm: () => void;
+  designId: DesignId;
+  onDesignChange: (d: DesignId) => void;
 }
 
 export default function PreviewStage({
@@ -43,10 +47,13 @@ export default function PreviewStage({
   onPrint,
   onCopyJson,
   onExportPdf,
+  onExportPdfCurrent,
   onExportDocx,
   onOpenEmailModal,
   emailSending,
   onBackToForm,
+  designId,
+  onDesignChange,
 }: PreviewStageProps) {
   return (
     <>
@@ -68,7 +75,7 @@ export default function PreviewStage({
           <div className="flex items-center gap-3">
             <button
               onClick={onBackToForm}
-              className="inline-flex items-center gap-1.5 px-2 py-1.5 text-xs font-medium text-gray-500 hover:text-gray-900 hover:bg-gray-50 rounded-lg transition-colors"
+              className="inline-flex items-center gap-1.5 px-2 py-1.5 text-xs font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg transition-colors"
               title="Вернуться к форме"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
@@ -84,14 +91,30 @@ export default function PreviewStage({
           <div className="flex items-center gap-2">
             <button
               onClick={onPrint}
-              className="p-2 hover:bg-gray-100 rounded-lg text-gray-400 transition-colors"
+              className="p-2 hover:bg-gray-100 rounded-lg text-gray-600 transition-colors"
               title="Печать"
             >
               <Printer className="w-4 h-4" />
             </button>
+            <div className="flex items-center rounded-lg border border-gray-200 p-0.5">
+              {(Object.keys(DOC_DESIGNS) as DesignId[]).map((id) => (
+                <button
+                  key={id}
+                  onClick={() => onDesignChange(id)}
+                  title={DOC_DESIGNS[id].description}
+                  className={`px-2.5 py-1 text-[11px] font-medium rounded-md transition-colors ${
+                    designId === id
+                      ? "bg-brand-50 text-brand-700"
+                      : "text-gray-600 hover:text-gray-800"
+                  }`}
+                >
+                  {DOC_DESIGNS[id].label}
+                </button>
+              ))}
+            </div>
             <button
               onClick={onCopyJson}
-              className="p-2 hover:bg-gray-100 rounded-lg text-gray-400 transition-colors"
+              className="p-2 hover:bg-gray-100 rounded-lg text-gray-600 transition-colors"
               title="Копировать JSON"
             >
               <Copy className="w-4 h-4" />
@@ -126,6 +149,16 @@ export default function PreviewStage({
                     </span>
                   )}
                 </button>
+                {packTemplates.length > 1 && onExportPdfCurrent && (
+                  <button
+                    onClick={onExportPdfCurrent}
+                    disabled={isExporting}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-xs text-gray-700 hover:bg-gray-50 transition-colors"
+                  >
+                    <FileImage className="w-3.5 h-3.5 text-red-400" />
+                    PDF — только текущий документ
+                  </button>
+                )}
                 <button
                   onClick={onExportDocx}
                   disabled={isExporting}
@@ -164,7 +197,7 @@ export default function PreviewStage({
                 {packTemplates.length > 1 && (
                   <div className="doc-toolbar px-3 pt-3">
                     <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gray-50 border border-gray-200">
-                      <span className="text-[11px] font-semibold text-gray-500">
+                      <span className="text-[11px] font-semibold text-gray-600">
                         {i + 1}/{packTemplates.length}
                       </span>
                       <span className="text-[11px] font-medium text-gray-600 truncate">
@@ -191,7 +224,7 @@ export default function PreviewStage({
             <ArrowLeft className="w-4 h-4" />
             Вернуться к форме
           </button>
-          <span className="text-xs text-gray-400">
+          <span className="text-xs text-gray-600">
             {packTemplates.length > 1
               ? `Пакет: ${packTemplates.length} документов`
               : "Экспорт — кнопка вверху"}

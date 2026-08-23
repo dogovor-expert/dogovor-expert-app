@@ -120,10 +120,7 @@ return (
 export default function UtilsPage() {
   const [group, setGroup] = useState("law");
   const [active, setActive] = useState("docs");
-  const [today, setToday] = useState("");
-  useEffect(() => {
-    setToday(new Date().toLocaleDateString("ru-RU"));
-  }, []);
+  const today = new Date().toLocaleDateString("ru-RU");
   const currentGroup = GROUPS.find((g) => g.id === group)!;
   const current = currentGroup.tools.find((t) => t.id === active)!;
   const Icon = current.icon;
@@ -141,7 +138,7 @@ export default function UtilsPage() {
         </div>
         <div>
           <h1 className="text-xl font-bold text-gray-900">Калькуляторы и проверки</h1>
-          <p className="text-sm text-gray-500">Юридические, финансовые и справочные инструменты</p>
+          <p className="text-sm text-gray-600">Юридические, финансовые и справочные инструменты</p>
         </div>
       </div>
 
@@ -154,7 +151,7 @@ export default function UtilsPage() {
 
       {GROUPS.map((g) => (
         <div key={g.id}>
-          <p className="text-[10px] font-mono text-gray-400 uppercase mb-2">{g.label}</p>
+          <p className="text-[10px] font-mono text-gray-600 uppercase mb-2">{g.label}</p>
           <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 gap-2">
             {g.tools.map((t) => {
               const TIcon = t.icon;
@@ -169,9 +166,9 @@ export default function UtilsPage() {
                       : "border-gray-200 bg-white hover:border-brand-300 hover:bg-gray-50"
                   }`}
                 >
-                  <TIcon className={`w-5 h-5 mb-2 ${isActive ? "text-brand-600" : "text-gray-400"}`} />
+                  <TIcon className={`w-5 h-5 mb-2 ${isActive ? "text-brand-600" : "text-gray-600"}`} />
                   <p className={`text-xs font-semibold ${isActive ? "text-brand-700" : "text-gray-800"}`}>{t.label}</p>
-                  <p className="text-[10px] text-gray-400 mt-0.5 leading-snug">{t.desc}</p>
+                  <p className="text-[10px] text-gray-600 mt-0.5 leading-snug">{t.desc}</p>
                 </button>
               );
             })}
@@ -188,8 +185,8 @@ export default function UtilsPage() {
         {current.comp && <current.comp />}
       </div>
 
-      <div className="text-xs text-gray-400 leading-relaxed">
-        <p className="font-semibold text-gray-500 mb-1">Как использовать:</p>
+      <div className="text-xs text-gray-600 leading-relaxed">
+        <p className="font-semibold text-gray-600 mb-1">Как использовать:</p>
         <p>
           • Рассчитайте неустойку или проценты — и сразу составьте претензию или иск по шаблону<br />
           • Проверьте госпошлину перед подачей заявления в суд<br />

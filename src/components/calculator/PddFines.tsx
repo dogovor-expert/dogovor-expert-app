@@ -59,7 +59,7 @@ export default function PddFines() {
         <div className="space-y-3">
           <div className="flex gap-2">
             <div className="relative flex-1">
-              <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-gray-600" />
               <input type="text" value={query} onChange={(e) => setQuery(e.target.value)}
                 placeholder="Поиск: статья (12.9) или нарушение («парковка», «обгон»)"
                 className="w-full bg-gray-50 border border-gray-200 text-xs py-2.5 pl-9 pr-3 rounded-lg text-gray-900 outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500" />
@@ -74,18 +74,18 @@ export default function PddFines() {
                 </span>
                 <span className="flex-1 min-w-0">
                   <span className="block text-[11px] text-gray-700 leading-snug">{f.title}</span>
-                  <span className="block text-[10px] text-gray-400 mt-0.5">
+                  <span className="block text-[10px] text-gray-600 mt-0.5">
                     {fineLabel(f)} · {punishLabel(f.punish)}
                     {f.revokeMonths && <> — лишение {f.revokeMonths[0]}–{f.revokeMonths[1]} мес</>}
-                    {f.repeatText && <span className="text-amber-600"> · {f.repeatText}</span>}
+                    {f.repeatText && <span className="text-amber-700"> · {f.repeatText}</span>}
                   </span>
                 </span>
                 {f.noDiscount && <span className="text-[9px] text-red-500 font-bold flex-shrink-0 mt-0.5">без 50%</span>}
               </button>
             ))}
-            {filtered.length === 0 && <p className="p-4 text-[11px] text-gray-400">Ничего не найдено</p>}
+            {filtered.length === 0 && <p className="p-4 text-[11px] text-gray-600">Ничего не найдено</p>}
           </div>
-          <p className="text-[10px] text-gray-400">
+          <p className="text-[10px] text-gray-600">
             Скидка 50% (ст. 32.2 КоАП) не применяется: пьяное вождение (12.8), отказ от освидетельствования (12.26), вред здоровью (12.24), оставление места ДТП (12.27 ч. 2), повторные нарушения. При фиксации камерами лишение прав не назначается — только штраф.
           </p>
         </div>
@@ -94,14 +94,14 @@ export default function PddFines() {
       {tab === "discount" && (
         <div className="space-y-3">
           <div className="space-y-1">
-            <label className="text-[10px] font-mono text-gray-500">Статья (выберите из справочника)</label>
+            <label className="text-[10px] font-mono text-gray-600">Статья (выберите из справочника)</label>
             <input type="text" value={query} onChange={(e) => { setQuery(e.target.value); setSelected(null); setResult(null); }}
               onFocus={() => setTab("guide")}
               placeholder="Нажмите, чтобы выбрать статью"
               className="w-full bg-gray-50 border border-gray-200 text-xs py-2.5 px-3 rounded-lg text-gray-900 outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500" />
           </div>
           <div className="space-y-1">
-            <label className="text-[10px] font-mono text-gray-500">Дата постановления о штрафе</label>
+            <label className="text-[10px] font-mono text-gray-600">Дата постановления о штрафе</label>
             <input type="date" value={issued} onChange={(e) => setIssued(e.target.value)}
               className="w-full bg-gray-50 border border-gray-200 text-xs py-2.5 px-3 rounded-lg text-gray-900 outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500" />
           </div>
@@ -121,12 +121,12 @@ export default function PddFines() {
             <div className="bg-gray-50 rounded-xl p-4 border border-gray-200 space-y-2">
               <div className="flex items-center gap-2">
                 <Check className="w-4 h-4 text-emerald-500" />
-                <span className="text-[10px] font-mono text-gray-500">Скидка 50% — ст. 32.2 КоАП, 20 дней</span>
+                <span className="text-[10px] font-mono text-gray-600">Скидка 50% — ст. 32.2 КоАП, 20 дней</span>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div className="bg-white border border-gray-200 rounded-lg p-3">
-                  <p className="text-[10px] font-mono text-gray-400">Без скидки</p>
-                  <p className="text-lg font-bold text-gray-500 line-through">{fmtMoney(result.fine)}</p>
+                  <p className="text-[10px] font-mono text-gray-600">Без скидки</p>
+                  <p className="text-lg font-bold text-gray-600 line-through">{fmtMoney(result.fine)}</p>
                 </div>
                 <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-3">
                   <p className="text-[10px] font-mono text-emerald-500">Со скидкой</p>
@@ -135,8 +135,8 @@ export default function PddFines() {
                   </p>
                 </div>
               </div>
-              <p className="text-[11px] text-gray-500 flex items-start gap-1.5">
-                <Timer className="w-3.5 h-3.5 mt-0.5 flex-shrink-0 text-amber-500" />
+              <p className="text-[11px] text-gray-600 flex items-start gap-1.5">
+                <Timer className="w-3.5 h-3.5 mt-0.5 flex-shrink-0 text-amber-700" />
                 {result.withDiscount !== null
                   ? <>Оплатите до <b>{result.deadline.split("-").reverse().join(".")}</b> — осталось <b>{result.daysLeft}</b> дн. Скидка сгорает при обжаловании постановления.</>
                   : <>Скидка 50% по этой статье не применяется (нарушение входит в исключения ст. 32.2 КоАП). Оплатите в течение 60 дней, иначе дело передадут приставам.</>}
@@ -150,7 +150,7 @@ export default function PddFines() {
         </div>
       )}
 
-      <p className="text-[11px] text-gray-400 leading-relaxed flex items-start gap-1.5">
+      <p className="text-[11px] text-gray-600 leading-relaxed flex items-start gap-1.5">
         <CarFront className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
         Суммы штрафов — по гл. 12 КоАП РФ в редакции 2026 года. Все штрафы, зафиксированные камерами, выносятся без лишения прав. За повторные нарушения предусмотрены повышенные санкции.
       </p>

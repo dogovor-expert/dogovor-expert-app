@@ -7,7 +7,7 @@ import {
   ChevronRight, Briefcase, Home, Car, Coins,
   Users, FileStack, FileLock, ShieldCheck, Download
 } from "lucide-react";
-import { LEGAL_TEMPLATES } from "@/data/legalTemplates";
+import { TEMPLATE_META } from "@/data/templatesMeta";
 
 const CATEGORY_DATA = [
   { id: "auto", label: "Авто", icon: Car, grad: "from-blue-500 to-indigo-600", badge: "bg-blue-50 text-blue-700" },
@@ -18,12 +18,12 @@ const CATEGORY_DATA = [
   { id: "other", label: "Прочее", icon: FileStack, grad: "from-gray-500 to-slate-600", badge: "bg-gray-100 text-gray-600" },
 ];
 
-const POPULAR = ["raspiska-money", "dkp-auto", "dkp-flat", "arenda-flat", "dogovor-podryad", "zaem", "doverennost", "invoice"];
+const POPULAR = ["raspiska-money", "dkp-auto", "dkp-flat", "rental-flat", "contract-works", "loan-individuals", "power-attorney", "invoice"];
 
 export default function HomePage() {
   const [cat, setCat] = useState("all");
 
-  const grid = LEGAL_TEMPLATES.filter((t) =>
+  const grid = TEMPLATE_META.filter((t) =>
     cat === "all" ? POPULAR.includes(t.id) : POPULAR.includes(t.id) && t.category === cat
   );
 
@@ -36,7 +36,7 @@ export default function HomePage() {
           <div>
             <span className="inline-flex items-center gap-2 text-xs font-semibold text-brand-700 bg-white border border-brand-200 rounded-full px-3.5 py-1.5 shadow-sm">
               <span className="w-2 h-2 rounded-full bg-emerald-500" />
-              {LEGAL_TEMPLATES.length} шаблонов · бесплатно и без ограничений
+              {TEMPLATE_META.length} шаблонов · бесплатно и без ограничений
             </span>
             <h1 className="mt-5 text-4xl md:text-5xl font-extrabold tracking-tight text-gray-900 leading-[1.1]">
               Документы, которые{" "}
@@ -44,7 +44,7 @@ export default function HomePage() {
                 готовы к подписи
               </span>
             </h1>
-            <p className="mt-4 text-base text-gray-500 leading-relaxed max-w-lg">
+            <p className="mt-4 text-base text-gray-600 leading-relaxed max-w-lg">
               Заполните простые поля — и получите готовый договор, расписку или заявление. Юридическая проверка и печать включены в каждый шаблон.
             </p>
             <div className="mt-7 flex flex-wrap gap-3">
@@ -56,7 +56,7 @@ export default function HomePage() {
                 Смотреть шаблоны
               </Link>
             </div>
-            <p className="mt-4 text-xs text-gray-400">
+            <p className="mt-4 text-xs text-gray-600">
               Без карты · без подписок · данные остаются в вашем браузере
             </p>
           </div>
@@ -69,31 +69,31 @@ export default function HomePage() {
               </div>
               <div className="bg-white rounded-2xl border border-gray-200 shadow-xl p-6 pt-7">
                 <h4 className="text-sm font-bold text-gray-900">Расписка в получении денег</h4>
-                <p className="text-[10px] text-gray-400 mt-0.5 font-semibold tracking-wider uppercase">Стороны</p>
+                <p className="text-[10px] text-gray-600 mt-0.5 font-semibold tracking-wider uppercase">Стороны</p>
                 <div className="mt-2 space-y-2">
                   <div className="flex items-center justify-between px-3 py-2 bg-gray-50 border border-gray-100 rounded-lg">
-                    <span className="text-xs text-gray-500">Заимодавец</span>
+                    <span className="text-xs text-gray-600">Заимодавец</span>
                     <b className="text-xs font-semibold text-gray-900">Иванов И. И.</b>
                   </div>
                   <div className="flex items-center justify-between px-3 py-2 bg-gray-50 border border-gray-100 rounded-lg">
-                    <span className="text-xs text-gray-500">Заёмщик</span>
+                    <span className="text-xs text-gray-600">Заёмщик</span>
                     <b className="text-xs font-semibold text-gray-900">Петров П. П.</b>
                   </div>
                 </div>
-                <p className="text-[10px] text-gray-400 mt-4 font-semibold tracking-wider uppercase">Сумма и срок</p>
+                <p className="text-[10px] text-gray-600 mt-4 font-semibold tracking-wider uppercase">Сумма и срок</p>
                 <div className="mt-2 space-y-2">
                   <div className="flex items-center justify-between px-3 py-2 bg-gray-50 border border-gray-100 rounded-lg">
-                    <span className="text-xs text-gray-500">Сумма</span>
+                    <span className="text-xs text-gray-600">Сумма</span>
                     <b className="text-xs font-semibold text-gray-900">500 000 ₽</b>
                   </div>
                   <div className="flex items-center justify-between px-3 py-2 bg-gray-50 border border-gray-100 rounded-lg">
-                    <span className="text-xs text-gray-500">Проценты</span>
+                    <span className="text-xs text-gray-600">Проценты</span>
                     <b className="text-xs font-semibold text-emerald-600">без процентов ✓</b>
                   </div>
                 </div>
                 <div className="mt-4 grid grid-cols-2 gap-1.5">
                   {["Поля заполнены", "Готов к печати", "Проверен юристом", "Экспорт PDF"].map((c) => (
-                    <div key={c} className="flex items-center gap-1.5 text-[11px] text-gray-500">
+                    <div key={c} className="flex items-center gap-1.5 text-[11px] text-gray-600">
                       <span className="w-3.5 h-3.5 rounded bg-emerald-500 text-white flex items-center justify-center">
                         <FileCheck className="w-2.5 h-2.5" />
                       </span>
@@ -117,10 +117,10 @@ export default function HomePage() {
         {/* stats strip */}
         <div className="relative max-w-7xl mx-auto px-6 pb-2">
           <div className="border-y border-gray-200 bg-white/70 rounded-2xl shadow-sm grid grid-cols-2 md:grid-cols-4 gap-6 px-8 py-6">
-            {[[String(LEGAL_TEMPLATES.length), "шаблонов документов"], ["100%", "бесплатно"], ["< 5 мин", "до готового файла"], ["152-ФЗ", "данные только в браузере"]].map(([n, l]) => (
+            {[[String(TEMPLATE_META.length), "шаблонов документов"], ["100%", "бесплатно"], ["< 5 мин", "до готового файла"], ["152-ФЗ", "данные только в браузере"]].map(([n, l]) => (
               <div key={l}>
                 <div className="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-brand-600 to-purple-600 bg-clip-text text-transparent">{n}</div>
-                <div className="text-[11px] text-gray-400 font-semibold uppercase tracking-widest mt-1">{l}</div>
+                <div className="text-[11px] text-gray-600 font-semibold uppercase tracking-widest mt-1">{l}</div>
               </div>
             ))}
           </div>
@@ -132,11 +132,11 @@ export default function HomePage() {
         <div className="text-center max-w-xl mx-auto mb-10">
           <p className="text-[11px] font-bold tracking-[0.12em] uppercase text-brand-600 mb-2">Как это работает</p>
           <h2 className="text-3xl font-extrabold tracking-tight text-gray-900">Три шага до подписанного договора</h2>
-          <p className="mt-2 text-gray-500 text-sm">Никакой магии: выбираете документ, отвечаете на вопросы, скачиваете готовый файл.</p>
+          <p className="mt-2 text-gray-600 text-sm">Никакой магии: выбираете документ, отвечаете на вопросы, скачиваете готовый файл.</p>
         </div>
         <div className="grid md:grid-cols-3 gap-5">
           {[
-            { n: "1", icon: FileText, t: "Выберите шаблон", d: `Библиотека из ${LEGAL_TEMPLATES.length} готовых форм — от расписки до договора подряда, с актуальными формулировками.` },
+            { n: "1", icon: FileText, t: "Выберите шаблон", d: `Библиотека из ${TEMPLATE_META.length} готовых форм — от расписки до договора подряда, с актуальными формулировками.` },
             { n: "2", icon: Camera, t: "Заполните поля", d: "ФИО, суммы и реквизиты подскажут. Можно сфотографировать паспорт — он распознается." },
             { n: "3", icon: Download, t: "Скачайте и подпишите", d: "PDF, Word или печать. Правовой аудит проверит обязательные поля и форматы." },
           ].map((s) => (
@@ -146,7 +146,7 @@ export default function HomePage() {
                 <s.icon className="w-6 h-6 text-brand-100" />
               </div>
               <h3 className="mt-4 text-base font-bold text-gray-900">{s.t}</h3>
-              <p className="mt-1.5 text-sm text-gray-500 leading-relaxed">{s.d}</p>
+              <p className="mt-1.5 text-sm text-gray-600 leading-relaxed">{s.d}</p>
             </div>
           ))}
         </div>
@@ -167,11 +167,11 @@ export default function HomePage() {
           </div>
 
           <div className="flex flex-wrap gap-2 mb-6">
-            <button onClick={() => setCat("all")} className={`text-xs font-semibold px-4 py-2 rounded-xl border transition-colors ${cat === "all" ? "bg-brand-600 text-white border-brand-600" : "bg-white text-gray-500 border-gray-200 hover:border-brand-300"}`}>
+            <button onClick={() => setCat("all")} className={`text-xs font-semibold px-4 py-2 rounded-xl border transition-colors ${cat === "all" ? "bg-brand-600 text-white border-brand-600" : "bg-white text-gray-600 border-gray-200 hover:border-brand-300"}`}>
               Все
             </button>
             {CATEGORY_DATA.map((c) => (
-              <button key={c.id} onClick={() => setCat(c.id)} className={`text-xs font-semibold px-4 py-2 rounded-xl border transition-colors ${cat === c.id ? "bg-brand-600 text-white border-brand-600" : "bg-white text-gray-500 border-gray-200 hover:border-brand-300"}`}>
+              <button key={c.id} onClick={() => setCat(c.id)} className={`text-xs font-semibold px-4 py-2 rounded-xl border transition-colors ${cat === c.id ? "bg-brand-600 text-white border-brand-600" : "bg-white text-gray-600 border-gray-200 hover:border-brand-300"}`}>
                 {c.label}
               </button>
             ))}
@@ -193,9 +193,9 @@ export default function HomePage() {
                     <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${cd.badge}`}>{cd.label}</span>
                   </div>
                   <h3 className="text-sm font-bold text-gray-900 leading-snug group-hover:text-brand-700 transition-colors">{t.name}</h3>
-                  <p className="mt-1 text-xs text-gray-500 leading-relaxed line-clamp-2">{t.description}</p>
+                  <p className="mt-1 text-xs text-gray-600 leading-relaxed line-clamp-2">{t.description}</p>
                   <div className="mt-4 pt-4 border-t border-gray-100 flex items-center justify-between">
-                    <span className="text-[11px] text-gray-400">{t.fields.length} полей</span>
+                    <span className="text-[11px] text-gray-600">{t.fieldCount} полей</span>
                     <div className="flex items-center gap-2">
                       <span className="text-[11px] font-semibold text-emerald-600 flex items-center gap-0.5">
                         <ShieldCheck className="w-3 h-3" />Проверен
@@ -218,7 +218,7 @@ export default function HomePage() {
             <h2 className="mt-1 text-3xl font-extrabold tracking-tight text-gray-900 leading-tight">
               Фотографируете —<br />заполняется само
             </h2>
-            <p className="mt-3 text-gray-500 text-sm leading-relaxed">
+            <p className="mt-3 text-gray-600 text-sm leading-relaxed">
               Распознаём паспорт, ПТС и СТС прямо в браузере. Данные подставляются в форму автоматически, вы только проверяете.
             </p>
             <ul className="mt-6 space-y-3">
@@ -253,7 +253,7 @@ export default function HomePage() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <b className="block text-xs font-semibold text-gray-900 truncate">{r.t}</b>
-                  <span className="block text-[11px] text-gray-500 truncate">{r.d}</span>
+                  <span className="block text-[11px] text-gray-600 truncate">{r.d}</span>
                 </div>
                 <FileCheck className="w-4 h-4 text-emerald-500 flex-shrink-0" />
               </div>
@@ -279,7 +279,7 @@ export default function HomePage() {
                 <q.icon className="w-5 h-5" />
               </div>
               <h3 className="text-base font-bold text-gray-900 mb-1.5">{q.t}</h3>
-              <p className="text-sm text-gray-500 leading-relaxed">{q.d}</p>
+              <p className="text-sm text-gray-600 leading-relaxed">{q.d}</p>
             </div>
           ))}
         </div>
@@ -303,9 +303,9 @@ export default function HomePage() {
 
       {/* ======================= FOOTER ======================= */}
       <footer className="max-w-7xl mx-auto px-6 pt-16">
-        <div className="border-t border-gray-200 pt-8 pb-6 flex flex-wrap justify-between gap-6 text-xs text-gray-400">
+        <div className="border-t border-gray-200 pt-8 pb-6 flex flex-wrap justify-between gap-6 text-xs text-gray-600">
           <span>© 2026 «Dogovor.expert». Не является юридической консультацией.</span>
-          <div className="flex items-center gap-2 text-gray-400">
+          <div className="flex items-center gap-2 text-gray-600">
             <ShieldCheck className="w-4 h-4 text-emerald-500" />
             152-ФЗ · данные защищены
           </div>

@@ -5,10 +5,31 @@ import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Card } from "@/components/ui/Card";
-import { CheckCircle2, Loader2, Mail, ShieldCheck, Smartphone } from "lucide-react";
+import { CheckCircle2, Loader2, Mail, ShieldCheck, Smartphone, Flame } from "lucide-react";
 import Link from "next/link";
 import type { Provider } from "@supabase/supabase-js";
 import TurnstileCaptcha from "@/components/auth/TurnstileCaptcha";
+import CountdownTimer from "@/components/billing/CountdownTimer";
+import { currentProPrice, PRO_PRICE_OLD, PROMO_LABEL, isPromoActive, promoCountdownTarget, formatRub } from "@/lib/pricing";
+
+function RegisterPromo() {
+  if (!isPromoActive()) return null;
+  return (
+    <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-gradient-to-r from-amber-50 to-brand-50 border border-amber-200">
+      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-lg bg-amber-400 text-amber-950 text-[10px] font-bold shrink-0">
+        <Flame className="w-3 h-3" />
+        {PROMO_LABEL}
+      </span>
+      <p className="text-xs text-gray-700 leading-snug">
+        Акция для новых пользователей: PRO за{" "}
+        <span className="font-bold">{formatRub(currentProPrice())}</span>{" "}
+        <span className="text-gray-600 line-through">{formatRub(PRO_PRICE_OLD)}</span>/мес.
+        Скидка закончится через{" "}
+        <CountdownTimer endsAt={promoCountdownTarget()} compact className="font-bold tabular-nums" />
+      </p>
+    </div>
+  );
+}
 
 function translateAuthError(message: string): string {
   const m = message.toLowerCase();
@@ -44,14 +65,15 @@ function LoginForm() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [passwordConfirm, setPasswordConfirm] = useState("");
   const [code, setCode] = useState("");
-  const [mode, setMode] = useState<"link" | "password">("link");
-  const [step, setStep] = useState<"email" | "code" | "mfa">("email");
+  const [mode, setMode] = useState<"register" | "login">("register");
+  const [step, setStep] = useState<"email" | "password" | "confirm" | "code" | "mfa">("email");
   const [mfaFactor, setMfaFactor] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [oauthBusy, setOauthBusy] = useState<"google" | "yandex" | null>(null);
+  const [oauthBusy, setOauthBusy] = useState<"google" | "custom:yandex" | null>(null);
   const [agreed, setAgreed] = useState(false);
   const [captchaToken, setCaptchaToken] = useState<string | undefined>(undefined);
 
@@ -116,57 +138,146 @@ function LoginForm() {
     router.refresh();
   };
 
-  const sendCode = async () => {
+  const validateEmail = (email: string): boolean => {
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    return emailRegex.test(email);
+  };
+
+  const validatePassword = (password: string): boolean => {
+    return password.length >= 8;
+  };
+
+  const goToPasswordStep = () => {
     setError(null);
-    setInfo(null);
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      setError("Введите корректный email");
+    if (!email) {
+      setError("Введите email");
       return;
     }
+    if (!validateEmail(email)) {
+      setError("Введите корректный email (например: user@example.com)");
+      return;
+    }
+    setStep("password");
+  };
+
+  const goToEmailStep = () => {
+    setError(null);
+    setPassword("");
+    setPasswordConfirm("");
+    setStep("email");
+  };
+
+  const registerUser = async () => {
+    setError(null);
+    setInfo(null);
+    
+    // Валидация email
+    if (!email) {
+      setError("Введите email");
+      return;
+    }
+    if (!validateEmail(email)) {
+      setError("Введите корректный email (например: user@example.com)");
+      return;
+    }
+    
+    // Валидация пароля
+    if (!password) {
+      setError("Введите пароль");
+      return;
+    }
+    if (!validatePassword(password)) {
+      setError("Пароль должен содержать минимум 8 символов");
+      return;
+    }
+    
+    // Валидация подтверждения пароля
+    if (password !== passwordConfirm) {
+      setError("Пароли не совпадают");
+      return;
+    }
+    
+    // Валидация чекбокса
     if (!agreed) {
       setError("Примите условия оферты, чтобы продолжить");
       return;
     }
-    setLoading(true);
-    const { error } = await supabase.auth.signInWithOtp({
-      email,
-      options: {
-        shouldCreateUser: true,
-        emailRedirectTo: `${window.location.origin}/auth/confirm`,
-        captchaToken,
-      },
-    });
-    setLoading(false);
-    if (error) {
-      setError(translateAuthError(error.message));
+    
+    // Валидация Captcha
+    if (!captchaToken) {
+      setError("Пожалуйста, подтвердите, что вы не робот");
       return;
     }
-    setStep("code");
-    setInfo(`Код отправлен на ${email}. Если в письме ссылка — нажмите её, вход выполнится автоматически.`);
+    
+    setLoading(true);
+    
+    try {
+      // Регистрация пользователя
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/auth/confirm`,
+          captchaToken,
+        },
+      });
+      
+      if (error) {
+        setError(translateAuthError(error.message));
+        return;
+      }
+      
+      setStep("confirm");
+      setInfo(`Регистрация почти завершена! На ваш email ${email} отправлено письмо с подтверждением. Проверьте папку "Входящие" или "Спам".`);
+    } catch (err) {
+      setError("Произошла ошибка при регистрации. Попробуйте позже.");
+      console.error("Registration error:", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const signInWithPassword = async () => {
     setError(null);
     setInfo(null);
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    
+    // Валидация email
+    if (!email) {
+      setError("Введите email");
+      return;
+    }
+    if (!validateEmail(email)) {
       setError("Введите корректный email");
       return;
     }
+    
+    // Валидация пароля
     if (!password) {
       setError("Введите пароль");
       return;
     }
+    
     setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    setLoading(false);
-    if (error) {
-      setError(translateAuthError(error.message));
-      return;
+    
+    try {
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      
+      if (error) {
+        setError(translateAuthError(error.message));
+        return;
+      }
+      
+      const needsMfa = await promptMfaIfNeeded();
+      if (needsMfa) return;
+      
+      router.push(next);
+      router.refresh();
+    } catch (err) {
+      setError("Произошла ошибка при входе. Попробуйте позже.");
+      console.error("Login error:", err);
+    } finally {
+      setLoading(false);
     }
-    const needsMfa = await promptMfaIfNeeded();
-    if (needsMfa) return;
-    router.push(next);
-    router.refresh();
   };
 
   const verifyCode = async () => {
@@ -192,13 +303,13 @@ function LoginForm() {
     router.refresh();
   };
 
-  const signInWithOAuth = async (provider: "google" | "yandex") => {
+  const signInWithOAuth = async (provider: "google" | "custom:yandex") => {
     setError(null);
     setOauthBusy(provider);
     const { error } = await supabase.auth.signInWithOAuth({
       provider: provider as Provider,
       options: {
-        redirectTo: `${window.location.origin}/auth/confirm`,
+        redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`,
       },
     });
     setOauthBusy(null);
@@ -218,22 +329,34 @@ function LoginForm() {
             <Mail className="w-7 h-7" />
           </div>
           <h1 className="text-2xl font-bold text-gray-900">
-            {step === "code"
-              ? "Подтверждение кода"
-              : step === "mfa"
-                ? "Подтвердите вход"
-                : mode === "link"
-                  ? "Вход в личный кабинет"
-                  : "Вход по паролю"}
+            {step === "confirm"
+              ? "Подтверждение регистрации"
+              : step === "password"
+                ? mode === "register"
+                  ? "Создание аккаунта"
+                  : "Вход по паролю"
+                : step === "code"
+                  ? "Подтверждение кода"
+                  : step === "mfa"
+                    ? "Подтвердите вход"
+                    : mode === "register"
+                      ? "Регистрация в личном кабинете"
+                      : "Вход в личный кабинет"}
           </h1>
-          <p className="text-sm text-gray-500 mt-2">
-            {step === "code"
-              ? "Введите 6 цифр из письма"
-              : step === "mfa"
-                ? "Введите код из приложения-аутентификатора"
-                : mode === "link"
-                  ? "Без пароля: пришлём одноразовый код на почту"
-                  : "Введите email и пароль"}
+          <p className="text-sm text-gray-600 mt-2">
+            {step === "confirm"
+              ? "Остался последний шаг"
+              : step === "password"
+                ? mode === "register"
+                  ? "Придумайте пароль — он понадобится для входа"
+                  : "Введите email и пароль"
+                : step === "code"
+                  ? "Введите 6 цифр из письма"
+                  : step === "mfa"
+                    ? "Введите код из приложения-аутентификатора"
+                    : mode === "register"
+                      ? "Создайте аккаунт для сохранения документов и доступа к Pro-тарифу"
+                      : "Войдите в аккаунт для доступа к документам и Pro-тарифу"}
           </p>
         </div>
 
@@ -258,11 +381,11 @@ function LoginForm() {
                 Google
               </button>
               <button
-                onClick={() => signInWithOAuth("yandex")}
+                onClick={() => signInWithOAuth("custom:yandex")}
                 disabled={!!oauthBusy}
                 className={`${oauthBtnClass} border-gray-200 text-gray-700 disabled:opacity-60`}
               >
-                {oauthBusy === "yandex" ? (
+                {oauthBusy === "custom:yandex" ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
                 ) : (
                   <svg className="w-4 h-4" viewBox="0 0 24 24" aria-hidden="true">
@@ -276,14 +399,15 @@ function LoginForm() {
 
             <div className="flex items-center gap-3 mb-6">
               <div className="h-px flex-1 bg-gray-200" />
-              <span className="text-xs text-gray-400">или по email</span>
+              <span className="text-xs text-gray-600">или по email</span>
               <div className="h-px flex-1 bg-gray-200" />
             </div>
           </>
         )}
 
-        {step === "email" && mode === "link" ? (
+        {step === "email" && (mode === "register" || mode === "login") ? (
           <>
+            {mode === "register" && <RegisterPromo />}
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Email
             </label>
@@ -293,76 +417,121 @@ function LoginForm() {
               onChange={(e) => setEmail(e.target.value.trim())}
               placeholder="you@example.com"
               autoComplete="email"
-            />
-            {error && <p className="text-sm text-red-600 mt-2">{error}</p>}
-            <label className="flex items-start gap-2 mt-4 text-xs text-gray-500 cursor-pointer select-none">
-              <input
-                type="checkbox"
-                checked={agreed}
-                onChange={(e) => setAgreed(e.target.checked)}
-                className="w-4 h-4 mt-0.5 rounded border-gray-300 text-brand-600 focus:ring-brand-500"
-              />
-              <span>
-                Я принимаю{" "}
-                <Link href="/terms" className="text-brand-600 hover:underline">
-                  условия оферты
-                </Link>{" "}
-                и{" "}
-                <Link href="/privacy" className="text-brand-600 hover:underline">
-                  политику конфиденциальности
-                </Link>
-              </span>
-            </label>
-            <Button className="w-full mt-4" onClick={sendCode} disabled={loading}>
-              {loading ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                "Создать мой первый договор →"
-              )}
-            </Button>
-            <TurnstileCaptcha onToken={(t) => setCaptchaToken(t ?? undefined)} />
-          </>
-        ) : step === "email" && mode === "password" ? (
-          <>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Email
-            </label>
-            <Input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value.trim())}
-              placeholder="you@example.com"
-              autoComplete="email"
-            />
-            <label className="block text-sm font-medium text-gray-700 mb-2 mt-4">
-              Пароль
-            </label>
-            <Input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
-              autoComplete="current-password"
               onKeyDown={(e) => {
-                if (e.key === "Enter") void signInWithPassword();
+                if (e.key === "Enter") void goToPasswordStep();
               }}
             />
             {error && <p className="text-sm text-red-600 mt-2">{error}</p>}
-            <div className="text-right mt-2">
-              <Link
-                href="/login/forgot"
-                className="text-sm text-brand-600 hover:underline"
-              >
-                Забыли пароль?
-              </Link>
-            </div>
-            <Button
-              className="w-full mt-4"
-              onClick={signInWithPassword}
-              disabled={loading}
-            >
-              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Войти"}
+            <Button className="w-full mt-4" onClick={goToPasswordStep} disabled={loading}>
+              {loading ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                "Продолжить →"
+              )}
             </Button>
+          </>
+        ) : step === "password" ? (
+          <>
+            {mode === "register" ? (
+              <>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Пароль
+                  </label>
+                  <button
+                    className="text-xs text-brand-600 hover:underline"
+                    onClick={goToEmailStep}
+                  >
+                    ← Изменить email
+                  </button>
+                </div>
+                <Input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Минимум 8 символов"
+                  autoComplete="new-password"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") void registerUser();
+                  }}
+                />
+                <label className="block text-sm font-medium text-gray-700 mb-2 mt-4">
+                  Подтверждение пароля
+                </label>
+                <Input
+                  type="password"
+                  value={passwordConfirm}
+                  onChange={(e) => setPasswordConfirm(e.target.value)}
+                  placeholder="Повторите пароль"
+                  autoComplete="new-password"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") void registerUser();
+                  }}
+                />
+                {error && <p className="text-sm text-red-600 mt-2">{error}</p>}
+                <label className="flex items-start gap-2 mt-4 text-xs text-gray-600 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={agreed}
+                    onChange={(e) => setAgreed(e.target.checked)}
+                    className="w-4 h-4 mt-0.5 rounded border-gray-300 text-brand-600 focus:ring-brand-500"
+                  />
+                  <span>
+                    Я принимаю{" "}
+                    <Link href="/terms" className="text-brand-600 hover:underline">
+                      условия оферты
+                    </Link>{" "}
+                    и{" "}
+                    <Link href="/privacy" className="text-brand-600 hover:underline">
+                      политику конфиденциальности
+                    </Link>
+                  </span>
+                </label>
+                <TurnstileCaptcha onToken={(t) => setCaptchaToken(t ?? undefined)} />
+                <div className="mt-4">
+                  <RegisterPromo />
+                </div>
+                <Button className="w-full mt-4" onClick={registerUser} disabled={loading}>
+                  {loading ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    "Зарегистрироваться"
+                  )}
+                </Button>
+              </>
+            ) : (
+              <>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Пароль
+                </label>
+                <Input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  autoComplete="current-password"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") void signInWithPassword();
+                  }}
+                />
+                {error && <p className="text-sm text-red-600 mt-2">{error}</p>}
+                <div className="text-right mt-2">
+                  <Link
+                    href="/login/forgot"
+                    className="text-sm text-brand-600 hover:underline"
+                  >
+                    Забыли пароль?
+                  </Link>
+                </div>
+                <Button
+                  className="w-full mt-4"
+                  onClick={signInWithPassword}
+                  disabled={loading}
+                >
+                  {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Войти"}
+                </Button>
+              </>
+            )}
           </>
         ) : step === "mfa" ? (
           <>
@@ -371,7 +540,7 @@ function LoginForm() {
             </div>
             <div className="text-center mb-4">
               <p className="text-sm text-gray-700 font-medium">Двухфакторная аутентификация</p>
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-gray-600 mt-1">
                 Введите 6 цифр из приложения-аутентификатора
               </p>
             </div>
@@ -392,7 +561,7 @@ function LoginForm() {
             <Button className="w-full mt-4" onClick={verifyMfa} disabled={loading}>
               {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Подтвердить и войти"}
             </Button>
-            <p className="text-xs text-gray-400 text-center mt-3">
+            <p className="text-xs text-gray-600 text-center mt-3">
               Код генерируется в приложении при каждом входе и действителен ~30 секунд
             </p>
           </>
@@ -428,23 +597,45 @@ function LoginForm() {
           </>
         )}
 
+        {step === "confirm" && (
+          <div className="flex items-center gap-3 bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-4">
+            <CheckCircle2 className="w-5 h-5 text-emerald-600 flex-shrink-0" />
+            <p className="text-sm text-emerald-800">
+              {info ?? "Проверьте ваш email и подтвердите регистрацию по ссылке из письма."}
+            </p>
+          </div>
+        )}
+
         {step === "email" && (
           <button
-            className="w-full text-center text-sm text-gray-500 hover:text-brand-600 transition-colors mt-4"
-            onClick={() => setMode(mode === "link" ? "password" : "link")}
+            className="w-full text-center text-sm text-gray-600 hover:text-brand-600 transition-colors mt-4"
+            onClick={() => {
+              setMode(mode === "register" ? "login" : "register");
+              setStep("email");
+              setPassword("");
+              setPasswordConfirm("");
+              setAgreed(false);
+              setError(null);
+            }}
           >
-            {mode === "link"
-              ? "У меня есть пароль — войти с паролем"
-              : "Войти по одноразовому коду без пароля"}
+            {mode === "register"
+              ? "У меня уже есть аккаунт — войти"
+              : "Нет аккаунта? Зарегистрироваться"}
           </button>
+        )}
+
+        {step === "password" && mode === "register" && (
+          <p className="text-center text-xs text-gray-600 mt-3">
+            После регистрации мы отправим письмо с подтверждением на ваш email
+          </p>
         )}
       </Card>
 
-      <p className="text-center text-xs text-gray-500 mt-4 flex items-center justify-center gap-1">
+      <p className="text-center text-xs text-gray-600 mt-4 flex items-center justify-center gap-1">
         <ShieldCheck className="w-3.5 h-3.5" />
         Вход нужен только для тарифа Pro и биллинга — документы остаются в вашем браузере
       </p>
-      <p className="text-center text-xs text-gray-400 mt-1 flex items-center justify-center gap-1">
+      <p className="text-center text-xs text-gray-600 mt-1 flex items-center justify-center gap-1">
         <ShieldCheck className="w-3.5 h-3.5" />
         Бесплатно для создания черновиков · данные защищены (152-ФЗ)
       </p>

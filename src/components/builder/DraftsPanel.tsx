@@ -1,5 +1,5 @@
 import { Check, Clock, Trash2 } from "lucide-react";
-import { LEGAL_TEMPLATES } from "@/data/legalTemplates";
+import { TEMPLATE_META } from "@/data/templatesMeta";
 import type { DraftData } from "@/lib/autosave";
 
 interface DraftsPanelProps {
@@ -26,11 +26,11 @@ export default function DraftsPanel({
         <Check className="w-3.5 h-3.5" />
         Создать версию документа
       </button>
-      <p className="text-[10px] text-gray-400 leading-relaxed">
+      <p className="text-[10px] text-gray-600 leading-relaxed">
         Версии сохраняются автоматически каждые 30 секунд работы и вручную. Откатиться к любой версии можно на странице «Мои документы».
       </p>
       {draftInfos.map((d) => {
-        const t = LEGAL_TEMPLATES.find(
+        const t = TEMPLATE_META.find(
           (x) => x.id === d.templateId
         );
         const isActive = d.templateId === selectedTemplateId;
@@ -48,7 +48,7 @@ export default function DraftsPanel({
               <p className="text-xs font-medium text-gray-700 truncate">
                 {t?.name || d.templateId}
               </p>
-              <p className="text-[10px] text-gray-500">
+              <p className="text-[10px] text-gray-600">
                 {new Date(d.savedAt).toLocaleString("ru-RU")}
               </p>
             </button>

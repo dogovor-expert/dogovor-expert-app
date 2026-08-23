@@ -77,27 +77,7 @@ export const TEMPLATES_FINANCE: LegalTemplate[] = [
         category: "contract",
       },
     ],
-    previewTemplate: `
-<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
-  <div class="text-center font-bold text-base mb-6 text-black uppercase">Расписка в получении денежных средств</div>
-  <div class="flex justify-between mb-6 text-xs font-semibold">
-    <div>г. {{{city}}}</div>
-    <div>«{{{date}}}»</div>
-  </div>
-  <p class="mb-4 text-justify">
-    Я, гражданин <strong>{{{seller_fio}}}</strong>, паспорт {{{seller_passport}}}, настоящей распиской подтверждаю, что получил от гражданина <strong>{{{buyer_fio}}}</strong>, паспорт {{{buyer_passport}}}, денежную сумму в размере:
-  </p>
-  <p class="text-center font-bold text-black border-y border-zinc-300 py-3 my-4 text-base">
-    {{{contract_price}}} рублей ({{{contract_price_words}}})
-  </p>
-  <p class="mb-4 text-justify">
-    Указанная сумма выплачена мне наличными денежными средствами в полном объеме в качестве окончательного платежа за проданное транспортное средство <strong>{{{car_brand}}}</strong> в соответствии с подписанным Договором купли-продажи ТС от «{{{date}}}»
-  </p>
-  <div class="font-bold mt-12 text-xs text-right">
-    <p>Продавец:</p>
-    <div class="mt-8 border-b border-zinc-950 w-64 inline-block h-5"></div>
-  </div>
-</div>`,
+    
   },
 {
     id: "raspiska-generic",
@@ -162,28 +142,7 @@ export const TEMPLATES_FINANCE: LegalTemplate[] = [
         category: "contract",
       },
     ],
-    previewTemplate: `
-<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
-  <div class="text-center font-bold text-base mb-6 text-black uppercase">Расписка</div>
-  <div class="flex justify-between mb-6 text-xs font-semibold">
-    <div>г. {{{city}}}</div>
-    <div>«{{{date}}}»</div>
-  </div>
-  <p class="mb-4 text-justify">
-    Я, <strong>{{{recipient_fio}}}</strong>, паспорт {{{recipient_passport}}}, настоящей распиской подтверждаю получение от <strong>{{{sender_fio}}}</strong>, паспорт {{{sender_passport}}}, {{{receipt_type}}} в размере/количестве:
-  </p>
-  <p class="text-center font-bold text-black border-y border-zinc-300 py-3 my-4 text-base">
-    {{{amount}}} руб. ({{{amount_words}}})
-  </p>
-  <p class="mb-4 text-justify">Вышеуказанная сумма получена мной {{{purpose}}} {{{#dkp_reference}}}по договору {{{dkp_reference}}}{{{/dkp_reference}}}.</p>
-  <p class="mb-4 text-justify">Претензий к {{{sender_fio}}} не имею.</p>
-  <div class="flex justify-end mt-12 text-xs">
-    <div class="text-right">
-      <div class="border-b border-zinc-950 w-64 h-5 mb-1"></div>
-      <p class="text-zinc-400 text-[10px]">Подпись / ФИО получателя</p>
-    </div>
-  </div>
-</div>`,
+    
   },
 {
     id: "invoice",
@@ -279,74 +238,7 @@ export const TEMPLATES_FINANCE: LegalTemplate[] = [
         category: "payment",
       },
     ],
-    previewTemplate: `
-<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
-  <div class="text-center font-bold text-base mb-6 text-black uppercase">Счёт на оплату № {{{invoice_number}}}</div>
-  <div class="flex justify-between mb-6 text-xs font-semibold">
-    <div></div>
-    <div>от «{{{date}}}»</div>
-  </div>
-  <div class="mb-4 text-xs">
-    <p class="font-bold mb-1">Поставщик:</p>
-    <p>{{{seller_company}}}, ИНН {{{seller_inn}}}, КПП {{{seller_kpp}}}</p>
-    <p>{{{seller_address}}}</p>
-    <p>Банк: {{{seller_bank}}}, БИК {{{seller_bik}}}</p>
-    <p>Р/с {{{seller_account}}}, К/с {{{seller_corr_account}}}</p>
-  </div>
-  <div class="mb-4 text-xs">
-    <p class="font-bold mb-1">Покупатель:</p>
-    <p>{{{buyer_fio}}}</p>
-    {{{#buyer_inn}}}<p>ИНН: {{{buyer_inn}}}</p>{{{/buyer_inn}}}
-    <p>{{{buyer_address}}}</p>
-  </div>
-  <table class="w-full text-xs border border-zinc-300 mb-4 bg-white" id="invoice-items-table">
-    <thead>
-      <tr class="bg-zinc-50">
-        <th class="p-2 border border-zinc-300 text-left w-8">№</th>
-        <th class="p-2 border border-zinc-300 text-left">Наименование</th>
-        <th class="p-2 border border-zinc-300 text-center w-12">Ед.</th>
-        <th class="p-2 border border-zinc-300 text-center w-14">Кол-во</th>
-        <th class="p-2 border border-zinc-300 text-right w-20">Цена</th>
-        <th class="p-2 border border-zinc-300 text-right w-24">Сумма</th>
-      </tr>
-    </thead>
-    <tbody>
-      {{#items}}
-      <tr>
-        <td class="p-2 border border-zinc-300 text-center">{{num}}</td>
-        <td class="p-2 border border-zinc-300">{{name}}</td>
-        <td class="p-2 border border-zinc-300 text-center">{{unit}}</td>
-        <td class="p-2 border border-zinc-300 text-center">{{qty}}</td>
-        <td class="p-2 border border-zinc-300 text-right">{{price}}</td>
-        <td class="p-2 border border-zinc-300 text-right">{{sum}}</td>
-      </tr>
-      {{/items}}
-    </tbody>
-    <tfoot>
-      <tr class="bg-zinc-50 font-bold">
-        <td colspan="5" class="p-2 border border-zinc-300 text-right">ИТОГО:</td>
-        <td class="p-2 border border-zinc-300 text-right">{{{invoice_total_pretty}}}</td>
-      </tr>
-      {{#show_nds}}
-      <tr class="bg-zinc-50 font-bold">
-        <td colspan="5" class="p-2 border border-zinc-300 text-right">В т.ч. НДС {{{nds_rate}}}%:</td>
-        <td class="p-2 border border-zinc-300 text-right">{{{invoice_nds_pretty}}}</td>
-      </tr>
-      {{/show_nds}}
-    </tfoot>
-  </table>
-  <p class="text-xs mb-8">{{{payment_terms}}}</p>
-  <div class="flex justify-between items-end text-xs border-t border-zinc-300 pt-4">
-    <div>
-      <p>Руководитель / ИП</p>
-      <div class="mt-8 border-b border-zinc-950 w-64 h-5 inline-block"></div>
-      <span class="text-zinc-400 ml-2">/ {{{seller_company}}} /</span>
-    </div>
-    {{#show_qr}}
-    <div class="text-right" id="qr-placeholder"></div>
-    {{/show_qr}}
-  </div>
-</div>`,
+    
   },
 {
     id: "loan-agreement",
@@ -420,65 +312,7 @@ export const TEMPLATES_FINANCE: LegalTemplate[] = [
         ],
       },
     ],
-    previewTemplate: `
-<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
-  <div class="text-center font-bold text-base mb-6 text-black uppercase">Договор займа денежных средств</div>
-  <div class="flex justify-between mb-6 text-xs font-semibold">
-    <div>г. {{{city}}}</div>
-    <div>«{{{date}}}»</div>
-  </div>
-  <p class="mb-4 text-justify">
-    Гражданин <strong>{{{lender_fio}}}</strong>, паспорт {{{lender_passport}}}, зарегистрированный по адресу: {{{lender_address}}}, именуемый «Заимодавец», с одной стороны, и
-  </p>
-  <p class="mb-4 text-justify">
-    Гражданин <strong>{{{borrower_fio}}}</strong>, паспорт {{{borrower_passport}}}, зарегистрированный по адресу: {{{borrower_address}}}, именуемый «Заёмщик», с другой стороны, заключили договор о нижеследующем:
-  </p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">1. Предмет договора</div>
-  <p class="mb-4 text-justify">
-    1.1. Заимодавец передаёт, а Заёмщик принимает денежные средства в размере <strong>{{{loan_amount}}} руб.</strong> (прописью: {{{loan_amount_words}}}) и обязуется вернуть их в срок до «{{{loan_end}}}»
-  </p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">2. Проценты</div>
-  <p class="mb-4 text-justify">
-    2.1. Процентная ставка составляет <strong>{{{interest_rate}}}% годовых</strong>.
-  </p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">3. Порядок возврата</div>
-  <p class="mb-4 text-justify">
-    3.1. Возврат осуществляется {{{payment_schedule}}}.
-  </p>
-  
-  <div class="font-bold mb-2 text-black text-xs uppercase">4. Форс-мажор</div>
-  <p class="mb-4 text-justify">
-    4.1. Стороны освобождаются от ответственности за частичное или полное неисполнение обязательств по настоящему договору, если оно явилось следствием обстоятельств непреодолимой силы (форс-мажора): стихийных бедствий, пожаров, наводнений, землетрясений, эпидемий, военных действий, решений органов государственной власти, а также иных обстоятельств, которые стороны не могли предвидеть и предотвратить разумными мерами.
-  </p>
-  <p class="mb-4 text-justify">
-    4.2. Сторона, для которой создалась невозможность исполнения обязательств, обязана незамедлительно, но не позднее 10 (десяти) календарных дней с момента наступления таких обстоятельств, письменно уведомить другую сторону об их возникновении. Неуведомление либо несвоевременное уведомление лишает сторону права ссылаться на форс-мажор как на основание освобождения от ответственности.
-  </p>
-  <p class="mb-4 text-justify">
-    4.3. Если обстоятельства непреодолимой силы действуют более 60 (шестидесяти) календарных дней, каждая из сторон вправе в одностороннем порядке отказаться от исполнения настоящего договора, письменно уведомив другую сторону.
-  </p>
-
-  <div class="font-bold mb-2 text-black text-xs uppercase">5. Порядок разрешения споров</div>
-  <p class="mb-4 text-justify">
-    5.1. Все споры и разногласия, возникающие из настоящего договора или в связи с ним, стороны разрешают путём переговоров. Срок рассмотрения письменной претензии — 10 (десять) календарных дней с момента её получения.
-  </p>
-  <p class="mb-4 text-justify">
-    5.2. При недостижении согласия споры разрешаются в судебном порядке в соответствии с действующим законодательством Российской Федерации.
-  </p>
-<div class="grid grid-cols-2 gap-6 mt-8 text-xs border-t border-zinc-300 pt-4">
-    <div>
-      <div class="font-bold mb-2">Заимодавец:</div>
-      <p><strong>{{{lender_fio}}}</strong></p>
-      <p class="text-zinc-500 text-[11px]">Паспорт: {{{lender_passport}}}</p>
-      <div class="mt-8 border-b border-zinc-950 w-44 h-5"></div>
-    </div>
-    <div>
-      <div class="font-bold mb-2">Заёмщик:</div>
-      <p><strong>{{{borrower_fio}}}</strong></p>
-      <p class="text-zinc-500 text-[11px]">Паспорт: {{{borrower_passport}}}</p>
-      <div class="mt-8 border-b border-zinc-950 w-44 h-5"></div>
-    </div>
-  </div>
-</div>`,
+    
   },
 {
     id: "loan-company",
@@ -558,67 +392,7 @@ export const TEMPLATES_FINANCE: LegalTemplate[] = [
         defaultValue: "", category: "contract",
       },
     ],
-    previewTemplate: `
-<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
-  <div class="text-center font-bold text-base mb-6 text-black uppercase">Договор займа</div>
-  <div class="flex justify-between mb-6 text-xs font-semibold">
-    <div>г. {{{city}}}</div>
-    <div>«{{{date}}}»</div>
-  </div>
-  <p class="mb-4 text-justify">
-    <strong>{{{lender_company}}}</strong>, ИНН {{{lender_inn}}}, в лице директора {{{lender_director}}}, именуемый «Заимодавец», с одной стороны, и
-  </p>
-  <p class="mb-4 text-justify">
-    <strong>{{{borrower_company}}}</strong>, ИНН {{{borrower_inn}}}, в лице директора {{{borrower_director}}}, именуемый «Заёмщик», с другой стороны, заключили договор о нижеследующем:
-  </p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">1. Предмет договора</div>
-  <p class="mb-4 text-justify">
-    1.1. Заимодавец передаёт Заёмщику денежные средства в размере <strong>{{{loan_amount}}} руб.</strong> ({{{loan_amount_words}}}), а Заёмщик обязуется возвратить сумму займа и уплатить проценты в срок, установленный договором.
-  </p>
-  <p class="mb-4 text-justify">1.2. Цель займа: {{{purpose}}}.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">2. Проценты и порядок возврата</div>
-  <p class="mb-4 text-justify">
-    2.1. {{{interest_mode}}}; ставка — {{{interest_rate}}}% годовых.
-  </p>
-  <p class="mb-4 text-justify">
-    2.2. Срок возврата: {{{loan_term_months}}} месяцев. Порядок возврата: {{{repayment_schedule}}}.
-  </p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">3. Ответственность</div>
-  <p class="mb-4 text-justify">
-    3.1. При просрочке возврата Заёмщик уплачивает неустойку 0,1% от суммы задолженности за каждый день просрочки.
-  </p>
-  
-  <div class="font-bold mb-2 text-black text-xs uppercase">4. Форс-мажор</div>
-  <p class="mb-4 text-justify">
-    4.1. Стороны освобождаются от ответственности за частичное или полное неисполнение обязательств по настоящему договору, если оно явилось следствием обстоятельств непреодолимой силы (форс-мажора): стихийных бедствий, пожаров, наводнений, землетрясений, эпидемий, военных действий, решений органов государственной власти, а также иных обстоятельств, которые стороны не могли предвидеть и предотвратить разумными мерами.
-  </p>
-  <p class="mb-4 text-justify">
-    4.2. Сторона, для которой создалась невозможность исполнения обязательств, обязана незамедлительно, но не позднее 10 (десяти) календарных дней с момента наступления таких обстоятельств, письменно уведомить другую сторону об их возникновении. Неуведомление либо несвоевременное уведомление лишает сторону права ссылаться на форс-мажор как на основание освобождения от ответственности.
-  </p>
-  <p class="mb-4 text-justify">
-    4.3. Если обстоятельства непреодолимой силы действуют более 60 (шестидесяти) календарных дней, каждая из сторон вправе в одностороннем порядке отказаться от исполнения настоящего договора, письменно уведомив другую сторону.
-  </p>
-
-  <div class="font-bold mb-2 text-black text-xs uppercase">5. Порядок разрешения споров</div>
-  <p class="mb-4 text-justify">
-    5.1. Все споры и разногласия, возникающие из настоящего договора или в связи с ним, стороны разрешают путём переговоров. Срок рассмотрения письменной претензии — 10 (десять) календарных дней с момента её получения.
-  </p>
-  <p class="mb-4 text-justify">
-    5.2. При недостижении согласия споры разрешаются в судебном порядке в соответствии с действующим законодательством Российской Федерации.
-  </p>
-<div class="grid grid-cols-2 gap-6 mt-8 text-xs border-t border-zinc-300 pt-4">
-    <div>
-      <div class="font-bold mb-1">Заимодавец:</div>
-      <p><strong>{{{lender_company}}}</strong></p>
-      <div class="mt-8 border-b border-zinc-950 w-44 h-5"></div>
-    </div>
-    <div>
-      <div class="font-bold mb-1">Заёмщик:</div>
-      <p><strong>{{{borrower_company}}}</strong></p>
-      <div class="mt-8 border-b border-zinc-950 w-44 h-5"></div>
-    </div>
-  </div>
-</div>`,
+    
   },
 {
     id: "guarantee-agreement",
@@ -692,67 +466,7 @@ export const TEMPLATES_FINANCE: LegalTemplate[] = [
         defaultValue: "Солидарная с должником", category: "contract",
       },
     ],
-    previewTemplate: `
-<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
-  <div class="text-center font-bold text-base mb-6 text-black uppercase">Договор поручительства</div>
-  <div class="flex justify-between mb-6 text-xs font-semibold">
-    <div>г. {{{city}}}</div>
-    <div>«{{{date}}}»</div>
-  </div>
-  <p class="mb-4 text-justify">
-    <strong>{{{creditor_company}}}</strong>, ИНН {{{creditor_inn}}}, в лице директора {{{creditor_director}}}, именуемый «Кредитор», с одной стороны, и
-  </p>
-  <p class="mb-4 text-justify">
-    гражданин <strong>{{{guarantor_fio}}}</strong>, паспорт {{{guarantor_passport}}}, зарегистрированный по адресу: {{{guarantor_address}}}, именуемый «Поручитель», с другой стороны, заключили договор о нижеследующем:
-  </p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">1. Предмет договора</div>
-  <p class="mb-4 text-justify">
-    1.1. Поручитель обязуется отвечать перед Кредитором за исполнение <strong>{{{debtor_company}}}</strong> (ИНН {{{debtor_inn}}}) обязательств по договору займа от «{{{loan_date}}}» на сумму <strong>{{{loan_amount}}} руб.</strong> ({{{loan_amount_words}}}) со сроком исполнения до «{{{loan_due}}}».
-  </p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">2. Ответственность поручителя</div>
-  <p class="mb-4 text-justify">
-    2.1. Ответственность Поручителя: {{{liability_scope}}} ответственность с должником. При неисполнении обязательств Кредитор вправе требовать их исполнения от Поручителя.
-  </p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">3. Права поручителя</div>
-  <p class="mb-4 text-justify">
-    3.1. К Поручителю, исполнившему обязательство, переходят права Кредитора по этому обязательству.
-  </p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">4. Срок действия</div>
-  <p class="mb-4 text-justify">
-    4.1. Поручительство действует до «{{{loan_due}}}». Если Кредитор не предъявит иск в течение года после наступления срока, поручительство прекращается.
-  </p>
-  
-  <div class="font-bold mb-2 text-black text-xs uppercase">5. Форс-мажор</div>
-  <p class="mb-4 text-justify">
-    5.1. Стороны освобождаются от ответственности за частичное или полное неисполнение обязательств по настоящему договору, если оно явилось следствием обстоятельств непреодолимой силы (форс-мажора): стихийных бедствий, пожаров, наводнений, землетрясений, эпидемий, военных действий, решений органов государственной власти, а также иных обстоятельств, которые стороны не могли предвидеть и предотвратить разумными мерами.
-  </p>
-  <p class="mb-4 text-justify">
-    5.2. Сторона, для которой создалась невозможность исполнения обязательств, обязана незамедлительно, но не позднее 10 (десяти) календарных дней с момента наступления таких обстоятельств, письменно уведомить другую сторону об их возникновении. Неуведомление либо несвоевременное уведомление лишает сторону права ссылаться на форс-мажор как на основание освобождения от ответственности.
-  </p>
-  <p class="mb-4 text-justify">
-    5.3. Если обстоятельства непреодолимой силы действуют более 60 (шестидесяти) календарных дней, каждая из сторон вправе в одностороннем порядке отказаться от исполнения настоящего договора, письменно уведомив другую сторону.
-  </p>
-
-  <div class="font-bold mb-2 text-black text-xs uppercase">6. Порядок разрешения споров</div>
-  <p class="mb-4 text-justify">
-    6.1. Все споры и разногласия, возникающие из настоящего договора или в связи с ним, стороны разрешают путём переговоров. Срок рассмотрения письменной претензии — 10 (десять) календарных дней с момента её получения.
-  </p>
-  <p class="mb-4 text-justify">
-    6.2. При недостижении согласия споры разрешаются в судебном порядке в соответствии с действующим законодательством Российской Федерации.
-  </p>
-<div class="grid grid-cols-2 gap-6 mt-8 text-xs border-t border-zinc-300 pt-4">
-    <div>
-      <div class="font-bold mb-1">Кредитор:</div>
-      <p><strong>{{{creditor_company}}}</strong></p>
-      <div class="mt-8 border-b border-zinc-950 w-44 h-5"></div>
-    </div>
-    <div>
-      <div class="font-bold mb-1">Поручитель:</div>
-      <p>{{{guarantor_fio}}}</p>
-      <div class="mt-8 border-b border-zinc-950 w-44 h-5"></div>
-    </div>
-  </div>
-</div>`,
+    
   },
 {
     id: "credit-agreement",
@@ -780,60 +494,7 @@ export const TEMPLATES_FINANCE: LegalTemplate[] = [
         { label: "Добровольное", value: "добровольное" },
       ] },
     ],
-    previewTemplate: `
-<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
-  <div class="flex justify-between mb-6 text-xs font-semibold">
-    <div>г. {{{city}}}</div>
-    <div>«{{{date}}}»</div>
-  </div>
-  <div class="text-center font-bold text-base mb-6 text-black uppercase">Кредитный договор</div>
-  <p class="mb-4 text-justify">
-    <strong>{{{lender_fio}}}</strong> (лицензия ЦБ РФ {{{lender_license}}}), именуемый «Кредитор», с одной стороны, и
-    гражданин <strong>{{{borrower_fio}}}</strong> (паспорт {{{borrower_passport}}}), именуемый «Заёмщик», с другой стороны,
-    заключили настоящий договор (ст. 819-821 ГК РФ, ФЗ-353 «О потребительском кредите»):
-  </p>
-  <p class="font-bold mb-2">1. Условия кредита</p>
-  <p class="mb-3 text-justify">1.1. Сумма кредита: <strong>{{{credit_amount}} руб.</strong>} ({{{credit_amount_words}}}). Ставка: {{{credit_rate}}}% годовых. Срок: {{{credit_term}}} месяцев. Цель: {{{credit_purpose}}}.</p>
-  <p class="font-bold mb-2">2. Порядок погашения</p>
-  <p class="mb-3 text-justify">2.1. {{{payment_method}}}. Полная стоимость кредита указана в графике платежей.</p>
-  <p class="font-bold mb-2">3. Ответственность</p>
-  <p class="mb-3 text-justify">3.1. За просрочку уплачивается неустойка {{{penalty_rate}}}% от просроченной суммы за каждый день (ст. 330, 811 ГК РФ).</p>
-  <p class="font-bold mb-2">4. Страхование</p>
-  <p class="mb-3 text-justify">4.1. {{{insurance}}}. Заёмщик вправе досрочно вернуть кредит полностью или частично с уведомлением Кредитора.</p>
-  
-  <p class="font-bold mb-2">5. Форс-мажор</p>
-  <p class="mb-3 text-justify">
-    5.1. Стороны освобождаются от ответственности за частичное или полное неисполнение обязательств по настоящему договору, если оно явилось следствием обстоятельств непреодолимой силы (форс-мажора): стихийных бедствий, пожаров, наводнений, землетрясений, эпидемий, военных действий, решений органов государственной власти, а также иных обстоятельств, которые стороны не могли предвидеть и предотвратить разумными мерами.
-  </p>
-  <p class="mb-3 text-justify">
-    5.2. Сторона, для которой создалась невозможность исполнения обязательств, обязана незамедлительно, но не позднее 10 (десяти) календарных дней с момента наступления таких обстоятельств, письменно уведомить другую сторону об их возникновении. Неуведомление либо несвоевременное уведомление лишает сторону права ссылаться на форс-мажор как на основание освобождения от ответственности.
-  </p>
-  <p class="mb-3 text-justify">
-    5.3. Если обстоятельства непреодолимой силы действуют более 60 (шестидесяти) календарных дней, каждая из сторон вправе в одностороннем порядке отказаться от исполнения настоящего договора, письменно уведомив другую сторону.
-  </p>
-
-  <p class="font-bold mb-2">6. Порядок разрешения споров</p>
-  <p class="mb-3 text-justify">
-    6.1. Все споры и разногласия, возникающие из настоящего договора или в связи с ним, стороны разрешают путём переговоров. Срок рассмотрения письменной претензии — 10 (десять) календарных дней с момента её получения.
-  </p>
-  <p class="mb-3 text-justify">
-    6.2. При недостижении согласия споры разрешаются в судебном порядке в соответствии с действующим законодательством Российской Федерации.
-  </p>
-<div class="flex justify-between mt-10 text-xs">
-    <div class="w-1/2 pr-4">
-      <p class="font-bold mb-1">Кредитор:</p>
-      <p class="mb-6">{{{lender_fio}}}</p>
-      <div class="border-b border-zinc-950 w-56 h-5 mb-1"></div>
-      <p class="text-zinc-400 text-[10px]">подпись</p>
-    </div>
-    <div class="w-1/2 pl-4">
-      <p class="font-bold mb-1">Заёмщик:</p>
-      <p class="mb-6">{{{borrower_fio}}}</p>
-      <div class="border-b border-zinc-950 w-56 h-5 mb-1"></div>
-      <p class="text-zinc-400 text-[10px]">подпись</p>
-    </div>
-  </div>
-</div>`,
+    
   },
 {
     id: "percent-loan",
@@ -862,61 +523,7 @@ export const TEMPLATES_FINANCE: LegalTemplate[] = [
         { label: "Запрещён", value: "запрещён" },
       ] },
     ],
-    previewTemplate: `
-<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
-  <div class="flex justify-between mb-6 text-xs font-semibold">
-    <div>г. {{{city}}}</div>
-    <div>«{{{date}}}»</div>
-  </div>
-  <div class="text-center font-bold text-base mb-6 text-black uppercase">Договор процентного займа</div>
-  <p class="mb-4 text-justify">
-    Гражданин <strong>{{{lender_fio}}}</strong> (паспорт {{{lender_passport}}}), именуемый «Займодавец», с одной стороны, и
-    <strong>{{{borrower_fio}}}</strong> (ИНН {{{borrower_inn}}}), именуемый «Заёмщик», с другой стороны,
-    заключили настоящий договор (ст. 807-818 ГК РФ):
-  </p>
-  <p class="font-bold mb-2">1. Предмет договора</p>
-  <p class="mb-3 text-justify">1.1. Займодавец передаёт Заёмщику денежные средства в размере <strong>{{{loan_sum}} руб.</strong>} ({{{loan_sum_words}}}), а Заёмщик обязуется возвратить сумму займа и уплатить проценты в срок до «{{{return_date}}}».</p>
-  <p class="mb-3 text-justify">1.2. Передача денег осуществляется {{{transfer_method}}}.</p>
-  <p class="font-bold mb-2">2. Проценты</p>
-  <p class="mb-3 text-justify">2.1. За пользование займом уплачиваются проценты в размере {{{percent_rate}}}% годовых (ст. 809 ГК РФ). {{{#interest_payment}}}Проценты уплачиваются: {{{interest_payment}}}.{{{/interest_payment}}}</p>
-  <p class="font-bold mb-2">3. Ответственность</p>
-  <p class="mb-3 text-justify">3.1. При просрочке возврата начисляется неустойка {{{penalty_rate}}}% от невозвращённой суммы за каждый день просрочки (ст. 811 ГК РФ).</p>
-  <p class="font-bold mb-2">4. Досрочный возврат</p>
-  <p class="mb-3 text-justify">4.1. Досрочный возврат: {{{early_return}}}.</p>
-  
-  <p class="font-bold mb-2">5. Форс-мажор</p>
-  <p class="mb-3 text-justify">
-    5.1. Стороны освобождаются от ответственности за частичное или полное неисполнение обязательств по настоящему договору, если оно явилось следствием обстоятельств непреодолимой силы (форс-мажора): стихийных бедствий, пожаров, наводнений, землетрясений, эпидемий, военных действий, решений органов государственной власти, а также иных обстоятельств, которые стороны не могли предвидеть и предотвратить разумными мерами.
-  </p>
-  <p class="mb-3 text-justify">
-    5.2. Сторона, для которой создалась невозможность исполнения обязательств, обязана незамедлительно, но не позднее 10 (десяти) календарных дней с момента наступления таких обстоятельств, письменно уведомить другую сторону об их возникновении. Неуведомление либо несвоевременное уведомление лишает сторону права ссылаться на форс-мажор как на основание освобождения от ответственности.
-  </p>
-  <p class="mb-3 text-justify">
-    5.3. Если обстоятельства непреодолимой силы действуют более 60 (шестидесяти) календарных дней, каждая из сторон вправе в одностороннем порядке отказаться от исполнения настоящего договора, письменно уведомив другую сторону.
-  </p>
-
-  <p class="font-bold mb-2">6. Порядок разрешения споров</p>
-  <p class="mb-3 text-justify">
-    6.1. Все споры и разногласия, возникающие из настоящего договора или в связи с ним, стороны разрешают путём переговоров. Срок рассмотрения письменной претензии — 10 (десять) календарных дней с момента её получения.
-  </p>
-  <p class="mb-3 text-justify">
-    6.2. При недостижении согласия споры разрешаются в судебном порядке в соответствии с действующим законодательством Российской Федерации.
-  </p>
-<div class="flex justify-between mt-10 text-xs">
-    <div class="w-1/2 pr-4">
-      <p class="font-bold mb-1">Займодавец:</p>
-      <p class="mb-6">{{{lender_fio}}}</p>
-      <div class="border-b border-zinc-950 w-56 h-5 mb-1"></div>
-      <p class="text-zinc-400 text-[10px]">подпись</p>
-    </div>
-    <div class="w-1/2 pl-4">
-      <p class="font-bold mb-1">Заёмщик:</p>
-      <p class="mb-6">{{{borrower_fio}}}</p>
-      <div class="border-b border-zinc-950 w-56 h-5 mb-1"></div>
-      <p class="text-zinc-400 text-[10px]">подпись</p>
-    </div>
-  </div>
-</div>`,
+    
   },
 {
     id: "zero-loan",
@@ -937,60 +544,7 @@ export const TEMPLATES_FINANCE: LegalTemplate[] = [
       { id: "transfer_method", label: "Способ передачи", type: "text", defaultValue: "", category: "contract" },
       { id: "relation", label: "Особые отношения сторон", type: "text", defaultValue: "", category: "other" },
     ],
-    previewTemplate: `
-<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
-  <div class="flex justify-between mb-6 text-xs font-semibold">
-    <div>г. {{{city}}}</div>
-    <div>«{{{date}}}»</div>
-  </div>
-  <div class="text-center font-bold text-base mb-6 text-black uppercase">Договор беспроцентного займа</div>
-  <p class="mb-4 text-justify">
-    Гражданин <strong>{{{lender_fio}}}</strong>, именуемый «Займодавец», с одной стороны, и
-    <strong>{{{borrower_fio}}}</strong> (ИНН {{{borrower_inn}}}), именуемый «Заёмщик», с другой стороны,
-    заключили настоящий договор (ст. 807-818 ГК РФ):
-  </p>
-  <p class="font-bold mb-2">1. Предмет договора</p>
-  <p class="mb-3 text-justify">1.1. Займодавец передаёт Заёмщику денежные средства в размере <strong>{{{loan_sum}} руб.</strong>} ({{{loan_sum_words}}}) {{{transfer_method}}}, а Заёмщик обязуется возвратить их в срок до «{{{return_date}}}».</p>
-  <p class="font-bold mb-2">2. Беспроцентность</p>
-  <p class="mb-3 text-justify">2.1. Заём является беспроцентным: проценты за пользование суммой займа не начисляются и не уплачиваются (ст. 809 ГК РФ).</p>
-  <p class="font-bold mb-2">3. Особые условия</p>
-  <p class="mb-3 text-justify">3.1. {{{relation}}}. Договор вступает в силу с момента передачи денежных средств.</p>
-  <p class="font-bold mb-2">4. Ответственность</p>
-  <p class="mb-3 text-justify">4.1. При просрочке возврата Займодавец вправе требовать уплаты процентов по ст. 395 ГК РФ.</p>
-  
-  <p class="font-bold mb-2">5. Форс-мажор</p>
-  <p class="mb-3 text-justify">
-    5.1. Стороны освобождаются от ответственности за частичное или полное неисполнение обязательств по настоящему договору, если оно явилось следствием обстоятельств непреодолимой силы (форс-мажора): стихийных бедствий, пожаров, наводнений, землетрясений, эпидемий, военных действий, решений органов государственной власти, а также иных обстоятельств, которые стороны не могли предвидеть и предотвратить разумными мерами.
-  </p>
-  <p class="mb-3 text-justify">
-    5.2. Сторона, для которой создалась невозможность исполнения обязательств, обязана незамедлительно, но не позднее 10 (десяти) календарных дней с момента наступления таких обстоятельств, письменно уведомить другую сторону об их возникновении. Неуведомление либо несвоевременное уведомление лишает сторону права ссылаться на форс-мажор как на основание освобождения от ответственности.
-  </p>
-  <p class="mb-3 text-justify">
-    5.3. Если обстоятельства непреодолимой силы действуют более 60 (шестидесяти) календарных дней, каждая из сторон вправе в одностороннем порядке отказаться от исполнения настоящего договора, письменно уведомив другую сторону.
-  </p>
-
-  <p class="font-bold mb-2">6. Порядок разрешения споров</p>
-  <p class="mb-3 text-justify">
-    6.1. Все споры и разногласия, возникающие из настоящего договора или в связи с ним, стороны разрешают путём переговоров. Срок рассмотрения письменной претензии — 10 (десять) календарных дней с момента её получения.
-  </p>
-  <p class="mb-3 text-justify">
-    6.2. При недостижении согласия споры разрешаются в судебном порядке в соответствии с действующим законодательством Российской Федерации.
-  </p>
-<div class="flex justify-between mt-10 text-xs">
-    <div class="w-1/2 pr-4">
-      <p class="font-bold mb-1">Займодавец:</p>
-      <p class="mb-6">{{{lender_fio}}}</p>
-      <div class="border-b border-zinc-950 w-56 h-5 mb-1"></div>
-      <p class="text-zinc-400 text-[10px]">подпись</p>
-    </div>
-    <div class="w-1/2 pl-4">
-      <p class="font-bold mb-1">Заёмщик:</p>
-      <p class="mb-6">{{{borrower_fio}}}</p>
-      <div class="border-b border-zinc-950 w-56 h-5 mb-1"></div>
-      <p class="text-zinc-400 text-[10px]">подпись</p>
-    </div>
-  </div>
-</div>`,
+    
   },
 {
     id: "cession-contract",
@@ -1015,61 +569,7 @@ export const TEMPLATES_FINANCE: LegalTemplate[] = [
       { id: "notice_debtor", label: "Уведомление должника", type: "text", defaultValue: "", category: "contract" },
       { id: "rights_scope", label: "Объём передаваемых прав", type: "text", defaultValue: "", category: "contract" },
     ],
-    previewTemplate: `
-<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
-  <div class="flex justify-between mb-6 text-xs font-semibold">
-    <div>г. {{{city}}}</div>
-    <div>«{{{date}}}»</div>
-  </div>
-  <div class="text-center font-bold text-base mb-6 text-black uppercase">Договор уступки права требования (цессии)</div>
-  <p class="mb-4 text-justify">
-    <strong>{{{cedent_fio}}}</strong> (ИНН {{{cedent_inn}}}), именуемый «Цедент», с одной стороны, и
-    <strong>{{{cessionary_fio}}}</strong> (ИНН {{{cessionary_inn}}}), именуемый «Цессионарий», с другой стороны,
-    заключили настоящий договор (ст. 382-390 ГК РФ):
-  </p>
-  <p class="font-bold mb-2">1. Предмет договора</p>
-  <p class="mb-3 text-justify">1.1. Цедент уступает, а Цессионарий принимает право требования к {{{debtor_fio}}} (ИНН {{{debtor_inn}}}) по {{{base_doc}}} на сумму <strong>{{{debt_amount}} руб.</strong>} ({{{debt_amount_words}}}).</p>
-  <p class="mb-3 text-justify">1.2. Передаваемые права включают: {{{rights_scope}}} (ст. 384 ГК РФ).</p>
-  <p class="font-bold mb-2">2. Цена уступки</p>
-  <p class="mb-3 text-justify">2.1. Цена уступки права требования: <strong>{{{cession_price}} руб.</strong>} ({{{cession_price_words}}}), подлежит уплате в течение 10 рабочих дней.</p>
-  <p class="font-bold mb-2">3. Уведомление должника</p>
-  <p class="mb-3 text-justify">3.1. {{{notice_debtor}}} (ст. 385 ГК РФ). Должник вправе не исполнять обязательство новому кредитору до получения уведомления.</p>
-  <p class="font-bold mb-2">4. Ответственность цедента</p>
-  <p class="mb-3 text-justify">4.1. Цедент отвечает за действительность уступаемого требования, но не отвечает за неисполнение должником (ст. 390 ГК РФ).</p>
-  
-  <p class="font-bold mb-2">5. Форс-мажор</p>
-  <p class="mb-3 text-justify">
-    5.1. Стороны освобождаются от ответственности за частичное или полное неисполнение обязательств по настоящему договору, если оно явилось следствием обстоятельств непреодолимой силы (форс-мажора): стихийных бедствий, пожаров, наводнений, землетрясений, эпидемий, военных действий, решений органов государственной власти, а также иных обстоятельств, которые стороны не могли предвидеть и предотвратить разумными мерами.
-  </p>
-  <p class="mb-3 text-justify">
-    5.2. Сторона, для которой создалась невозможность исполнения обязательств, обязана незамедлительно, но не позднее 10 (десяти) календарных дней с момента наступления таких обстоятельств, письменно уведомить другую сторону об их возникновении. Неуведомление либо несвоевременное уведомление лишает сторону права ссылаться на форс-мажор как на основание освобождения от ответственности.
-  </p>
-  <p class="mb-3 text-justify">
-    5.3. Если обстоятельства непреодолимой силы действуют более 60 (шестидесяти) календарных дней, каждая из сторон вправе в одностороннем порядке отказаться от исполнения настоящего договора, письменно уведомив другую сторону.
-  </p>
-
-  <p class="font-bold mb-2">6. Порядок разрешения споров</p>
-  <p class="mb-3 text-justify">
-    6.1. Все споры и разногласия, возникающие из настоящего договора или в связи с ним, стороны разрешают путём переговоров. Срок рассмотрения письменной претензии — 10 (десять) календарных дней с момента её получения.
-  </p>
-  <p class="mb-3 text-justify">
-    6.2. При недостижении согласия споры разрешаются в судебном порядке в соответствии с действующим законодательством Российской Федерации.
-  </p>
-<div class="flex justify-between mt-10 text-xs">
-    <div class="w-1/2 pr-4">
-      <p class="font-bold mb-1">Цедент:</p>
-      <p class="mb-6">{{{cedent_fio}}}</p>
-      <div class="border-b border-zinc-950 w-56 h-5 mb-1"></div>
-      <p class="text-zinc-400 text-[10px]">подпись</p>
-    </div>
-    <div class="w-1/2 pl-4">
-      <p class="font-bold mb-1">Цессионарий:</p>
-      <p class="mb-6">{{{cessionary_fio}}}</p>
-      <div class="border-b border-zinc-950 w-56 h-5 mb-1"></div>
-      <p class="text-zinc-400 text-[10px]">подпись</p>
-    </div>
-  </div>
-</div>`,
+    
   },
 {
     id: "money-return-receipt",
@@ -1093,36 +593,7 @@ export const TEMPLATES_FINANCE: LegalTemplate[] = [
         { label: "Нет", value: "нет" },
       ] },
     ],
-    previewTemplate: `
-<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
-  <div class="flex justify-between mb-6 text-xs font-semibold">
-    <div>г. {{{city}}}</div>
-    <div>«{{{date}}}»</div>
-  </div>
-  <div class="text-center font-bold text-base mb-6 text-black uppercase">Расписка о возврате денежных средств</div>
-  <p class="mb-4 text-justify">
-    Я, <strong>{{{lender_fio}}}</strong> (паспорт {{{lender_passport}}}), получил(а) от <strong>{{{borrower_fio}}}</strong>
-    денежные средства в размере <strong>{{{return_sum}} руб.</strong>} ({{{return_sum_words}}}) в счёт возврата долга
-    по {{{base_doc}}}.
-  </p>
-  <p class="mb-3 text-justify">
-    Денежные средства переданы {{{return_method}}}. {{{#interest_returned}}}Проценты по договору возвращены в полном объёме.{{{/interest_returned}}}
-  </p>
-  <p class="mb-4 text-justify">
-    Претензий к Заёмщику не имею. Обязательства по {{{base_doc}}} считаются исполненными в полном объёме (ст. 408 ГК РФ).
-  </p>
-  <p class="mb-2 text-justify">
-    Настоящая расписка составлена в одном экземпляре, хранится у Заёмщика {{{borrower_fio}}}.
-  </p>
-  <div class="flex justify-end mt-10 text-xs">
-    <div class="text-right w-1/2">
-      <p class="font-bold mb-1">Получил(а):</p>
-      <p class="mb-6">{{{lender_fio}}}</p>
-      <div class="border-b border-zinc-950 w-56 h-5 mb-1"></div>
-      <p class="text-zinc-400 text-[10px]">подпись</p>
-    </div>
-  </div>
-</div>`,
+    
   },
 {
     id: "loan-individuals",
@@ -1144,55 +615,7 @@ export const TEMPLATES_FINANCE: LegalTemplate[] = [
       { id: "return_schedule", label: "Порядок возврата", type: "select", defaultValue: "единовременно по истечении срока", options: ["единовременно по истечении срока", "ежемесячными платежами"], category: "contract" },
       { id: "loan_purpose", label: "Цель займа", type: "text", defaultValue: "", category: "contract" },
     ],
-    previewTemplate: `
-<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
-  <div class="text-center font-bold text-base mb-6 text-black uppercase">Договор займа</div>
-  <div class="flex justify-between mb-6 text-xs font-semibold">
-    <div>г. {{{city}}}</div>
-    <div>«{{{date}}}»</div>
-  </div>
-  <p class="mb-4 text-justify">
-    Гражданин <strong>{{{lender_fio}}}</strong>, паспорт {{{lender_passport}}}, именуемый в дальнейшем «Займодавец», и гражданин <strong>{{{borrower_fio}}}</strong>, паспорт {{{borrower_passport}}}, именуемый в дальнейшем «Заёмщик», заключили настоящий договор о нижеследующем:
-  </p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">1. Предмет договора</div>
-  <p class="mb-4 text-justify">1.1. Займодавец передаёт Заёмщику денежные средства в размере <strong>{{{loan_amount}}} руб.</strong> ({{{loan_amount_words}}}), на {{{loan_purpose}}}.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">2. Срок и порядок возврата</div>
-  <p class="mb-4 text-justify">2.1. Заёмщик обязуется возвратить сумму займа в течение {{{loan_term}}} месяцев, порядок возврата: {{{return_schedule}}} (ст. 810 ГК РФ).</p>
-  <p class="mb-4 text-justify">2.2. Заём является беспроцентным, если иное не указано в договоре.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">3. Ответственность</div>
-  <p class="mb-4 text-justify">3.1. При просрочке возврата начисляются проценты по ст. 395 ГК РФ.</p>
-  
-  <div class="font-bold mb-2 text-black text-xs uppercase">4. Форс-мажор</div>
-  <p class="mb-4 text-justify">
-    4.1. Стороны освобождаются от ответственности за частичное или полное неисполнение обязательств по настоящему договору, если оно явилось следствием обстоятельств непреодолимой силы (форс-мажора): стихийных бедствий, пожаров, наводнений, землетрясений, эпидемий, военных действий, решений органов государственной власти, а также иных обстоятельств, которые стороны не могли предвидеть и предотвратить разумными мерами.
-  </p>
-  <p class="mb-4 text-justify">
-    4.2. Сторона, для которой создалась невозможность исполнения обязательств, обязана незамедлительно, но не позднее 10 (десяти) календарных дней с момента наступления таких обстоятельств, письменно уведомить другую сторону об их возникновении. Неуведомление либо несвоевременное уведомление лишает сторону права ссылаться на форс-мажор как на основание освобождения от ответственности.
-  </p>
-  <p class="mb-4 text-justify">
-    4.3. Если обстоятельства непреодолимой силы действуют более 60 (шестидесяти) календарных дней, каждая из сторон вправе в одностороннем порядке отказаться от исполнения настоящего договора, письменно уведомив другую сторону.
-  </p>
-
-  <div class="font-bold mb-2 text-black text-xs uppercase">5. Порядок разрешения споров</div>
-  <p class="mb-4 text-justify">
-    5.1. Все споры и разногласия, возникающие из настоящего договора или в связи с ним, стороны разрешают путём переговоров. Срок рассмотрения письменной претензии — 10 (десять) календарных дней с момента её получения.
-  </p>
-  <p class="mb-4 text-justify">
-    5.2. При недостижении согласия споры разрешаются в судебном порядке в соответствии с действующим законодательством Российской Федерации.
-  </p>
-<div class="grid grid-cols-2 gap-6 mt-8 text-xs border-t border-zinc-300 pt-4">
-    <div>
-      <div class="font-bold mb-2 uppercase text-black">Займодавец:</div>
-      <p class="mb-1"><strong>{{{lender_fio}}}</strong></p>
-      <p class="text-zinc-500 text-[11px]">подпись</p>
-    </div>
-    <div>
-      <div class="font-bold mb-2 uppercase text-black">Заёмщик:</div>
-      <p class="mb-1"><strong>{{{borrower_fio}}}</strong></p>
-      <p class="text-zinc-500 text-[11px]">подпись</p>
-    </div>
-  </div>
-</div>`,
+    
   },
 {
     id: "refuse-loan-notice",
@@ -1212,26 +635,7 @@ export const TEMPLATES_FINANCE: LegalTemplate[] = [
       { id: "return_deadline", label: "Срок возврата", type: "text", defaultValue: "", category: "contract" },
       { id: "refuse_reason", label: "Основание", type: "select", defaultValue: "досрочное истребование займа", options: ["досрочное истребование займа", "отказ от договора до передачи суммы"], category: "contract" },
     ],
-    previewTemplate: `
-<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
-  <div class="text-center font-bold text-base mb-6 text-black uppercase">Уведомление об отказе от договора займа</div>
-  <div class="flex justify-between mb-6 text-xs font-semibold">
-    <div>г. {{{city}}}</div>
-    <div>«{{{date}}}»</div>
-  </div>
-  <p class="mb-4 text-justify">
-    Займодавец <strong>{{{lender_fio}}}</strong> уведомляет Заёмщика <strong>{{{borrower_fio}}}</strong> о следующем (ст. 450.1, 810 ГК РФ):
-  </p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">1. Уведомление</div>
-  <p class="mb-4 text-justify">1.1. {{{refuse_reason}}} по договору займа {{{loan_contract}}} на сумму {{{loan_amount}}} руб.</p>
-  <p class="mb-4 text-justify">1.2. Заёмщику надлежит возвратить сумму займа {{{return_deadline}}}.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">2. Последствия</div>
-  <p class="mb-4 text-justify">2.1. При неисполнении требования Займодавец обратится в суд с исковым заявлением о взыскании задолженности.</p>
-  <div class="mt-8 text-xs border-t border-zinc-300 pt-4">
-    <p class="mb-1">Займодавец: <strong>{{{lender_fio}}}</strong></p>
-    <p class="text-zinc-500 text-[11px]">подпись</p>
-  </div>
-</div>`,
+    
   },
 {
     id: "leasing-agreement",
@@ -1258,63 +662,7 @@ export const TEMPLATES_FINANCE: LegalTemplate[] = [
       { id: "insurance_by", label: "Страхование предмета лизинга", type: "text", defaultValue: "", category: "other" },
       { id: "start_date", label: "Дата передачи предмета лизинга", type: "date", defaultValue: "", category: "contract" },
     ],
-    previewTemplate: `
-<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
-  <div class="flex justify-between mb-6 text-xs font-semibold">
-    <div>г. {{{city}}}</div>
-    <div>«{{{date}}}»</div>
-  </div>
-  <div class="text-center font-bold text-base mb-6 text-black uppercase">Договор лизинга (финансовой аренды)</div>
-  <p class="mb-4 text-justify">
-    <strong>{{{lessor_company}}}</strong> (ИНН {{{lessor_inn}}}), именуемый «Лизингодатель», с одной стороны, и
-    <strong>{{{lessee_company}}}</strong> (ИНН {{{lessee_inn}}}), именуемый «Лизингополучатель», с другой стороны,
-    заключили настоящий договор о нижеследующем (ст. 665 ГК РФ, ФЗ-164):
-  </p>
-  <p class="font-bold mb-2">1. Предмет договора</p>
-  <p class="mb-3 text-justify">1.1. Лизингодатель обязуется приобрести в собственность у продавца {{{seller_name}}} и предоставить Лизингополучателю во временное владение и пользование: {{{property_desc}}}.</p>
-  <p class="mb-3 text-justify">1.2. Предмет лизинга передаётся по акту приёма-передачи «{{{start_date}}}».</p>
-  <p class="font-bold mb-2">2. Лизинговые платежи</p>
-  <p class="mb-3 text-justify">2.1. Аванс: {{{prepay}}} руб. Ежемесячный лизинговый платёж: <strong>{{{monthly_payment}}} руб.</strong> ({{{monthly_payment_words}}}). График платежей — приложение № 1.</p>
-  <p class="mb-3 text-justify">2.2. По окончании срока {{{lease_term}}} Лизингополучатель вправе выкупить предмет лизинга по выкупной стоимости {{{buyout_price}}} руб.</p>
-  <p class="font-bold mb-2">3. Страхование</p>
-  <p class="mb-3 text-justify">3.1. {{{insurance_by}}}.</p>
-  <p class="font-bold mb-2">4. Права, обязанности и ответственность</p>
-  <p class="mb-3 text-justify">4.1. Лизингополучатель несёт ответственность за сохранность предмета лизинга и обязан поддерживать его в исправном состоянии.</p>
-  <p class="mb-3 text-justify">4.2. За просрочку лизинговых платежей уплачивается неустойка 0,1% от суммы задолженности за каждый день просрочки. Лизингодатель вправе изъять предмет лизинга при просрочке свыше 2 платежей.</p>
-  
-  <p class="font-bold mb-2">5. Форс-мажор</p>
-  <p class="mb-3 text-justify">
-    5.1. Стороны освобождаются от ответственности за частичное или полное неисполнение обязательств по настоящему договору, если оно явилось следствием обстоятельств непреодолимой силы (форс-мажора): стихийных бедствий, пожаров, наводнений, землетрясений, эпидемий, военных действий, решений органов государственной власти, а также иных обстоятельств, которые стороны не могли предвидеть и предотвратить разумными мерами.
-  </p>
-  <p class="mb-3 text-justify">
-    5.2. Сторона, для которой создалась невозможность исполнения обязательств, обязана незамедлительно, но не позднее 10 (десяти) календарных дней с момента наступления таких обстоятельств, письменно уведомить другую сторону об их возникновении. Неуведомление либо несвоевременное уведомление лишает сторону права ссылаться на форс-мажор как на основание освобождения от ответственности.
-  </p>
-  <p class="mb-3 text-justify">
-    5.3. Если обстоятельства непреодолимой силы действуют более 60 (шестидесяти) календарных дней, каждая из сторон вправе в одностороннем порядке отказаться от исполнения настоящего договора, письменно уведомив другую сторону.
-  </p>
-
-  <p class="font-bold mb-2">6. Порядок разрешения споров</p>
-  <p class="mb-3 text-justify">
-    6.1. Все споры и разногласия, возникающие из настоящего договора или в связи с ним, стороны разрешают путём переговоров. Срок рассмотрения письменной претензии — 10 (десять) календарных дней с момента её получения.
-  </p>
-  <p class="mb-3 text-justify">
-    6.2. При недостижении согласия споры разрешаются в судебном порядке в соответствии с действующим законодательством Российской Федерации.
-  </p>
-<div class="flex justify-between mt-10 text-xs">
-    <div class="w-1/2 pr-4">
-      <p class="font-bold mb-1">Лизингодатель:</p>
-      <p class="mb-6">{{{lessor_company}}}</p>
-      <div class="border-b border-zinc-950 w-56 h-5 mb-1"></div>
-      <p class="text-zinc-400 text-[10px]">подпись</p>
-    </div>
-    <div class="w-1/2 pl-4">
-      <p class="font-bold mb-1">Лизингополучатель:</p>
-      <p class="mb-6">{{{lessee_company}}}</p>
-      <div class="border-b border-zinc-950 w-56 h-5 mb-1"></div>
-      <p class="text-zinc-400 text-[10px]">подпись</p>
-    </div>
-  </div>
-</div>`,
+    
   },
 {
     id: "novation-agreement",
@@ -1338,60 +686,7 @@ export const TEMPLATES_FINANCE: LegalTemplate[] = [
       { id: "return_date", label: "Срок исполнения нового обязательства", type: "date", defaultValue: "", category: "contract" },
       { id: "interest", label: "Проценты за пользование", type: "text", defaultValue: "", category: "payment" },
     ],
-    previewTemplate: `
-<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
-  <div class="flex justify-between mb-6 text-xs font-semibold">
-    <div>г. {{{city}}}</div>
-    <div>«{{{date}}}»</div>
-  </div>
-  <div class="text-center font-bold text-base mb-6 text-black uppercase">Соглашение о новации долга</div>
-  <p class="mb-4 text-justify">
-    <strong>{{{creditor_fio}}}</strong> (паспорт: {{{creditor_passport}}}), именуемый «Кредитор», и
-    <strong>{{{debtor_fio}}}</strong> (паспорт: {{{debtor_passport}}}), именуемый «Должник», заключили
-    настоящее соглашение о нижеследующем (ст. 414 ГК РФ):
-  </p>
-  <p class="font-bold mb-2">1. Первоначальное обязательство</p>
-  <p class="mb-3 text-justify">1.1. Должник имеет перед Кредитором задолженность по обязательству: {{{original_doc}}}, в размере <strong>{{{debt_amount}}} руб.</strong> ({{{debt_amount_words}}}).</p>
-  <p class="font-bold mb-2">2. Новация</p>
-  <p class="mb-3 text-justify">2.1. Стороны договорились о замене указанного обязательства новым: {{{new_obligation}}}.</p>
-  <p class="mb-3 text-justify">2.2. С момента подписания настоящего соглашения первоначальное обязательство прекращается и возникают обязательства по новому договору займа (ст. 818 ГК РФ).</p>
-  <p class="font-bold mb-2">3. Срок и проценты</p>
-  <p class="mb-3 text-justify">3.1. Должник обязан исполнить новое обязательство в срок до «{{{return_date}}}». За пользование денежными средствами уплачиваются проценты: {{{interest}}} (ст. 809 ГК РФ).</p>
-  <p class="mb-3 text-justify">3.2. Настоящее соглашение составлено в двух экземплярах, имеющих равную юридическую силу.</p>
-  
-  <p class="font-bold mb-2">4. Форс-мажор</p>
-  <p class="mb-3 text-justify">
-    4.1. Стороны освобождаются от ответственности за частичное или полное неисполнение обязательств по настоящему договору, если оно явилось следствием обстоятельств непреодолимой силы (форс-мажора): стихийных бедствий, пожаров, наводнений, землетрясений, эпидемий, военных действий, решений органов государственной власти, а также иных обстоятельств, которые стороны не могли предвидеть и предотвратить разумными мерами.
-  </p>
-  <p class="mb-3 text-justify">
-    4.2. Сторона, для которой создалась невозможность исполнения обязательств, обязана незамедлительно, но не позднее 10 (десяти) календарных дней с момента наступления таких обстоятельств, письменно уведомить другую сторону об их возникновении. Неуведомление либо несвоевременное уведомление лишает сторону права ссылаться на форс-мажор как на основание освобождения от ответственности.
-  </p>
-  <p class="mb-3 text-justify">
-    4.3. Если обстоятельства непреодолимой силы действуют более 60 (шестидесяти) календарных дней, каждая из сторон вправе в одностороннем порядке отказаться от исполнения настоящего договора, письменно уведомив другую сторону.
-  </p>
-
-  <p class="font-bold mb-2">5. Порядок разрешения споров</p>
-  <p class="mb-3 text-justify">
-    5.1. Все споры и разногласия, возникающие из настоящего договора или в связи с ним, стороны разрешают путём переговоров. Срок рассмотрения письменной претензии — 10 (десять) календарных дней с момента её получения.
-  </p>
-  <p class="mb-3 text-justify">
-    5.2. При недостижении согласия споры разрешаются в судебном порядке в соответствии с действующим законодательством Российской Федерации.
-  </p>
-<div class="flex justify-between mt-10 text-xs">
-    <div class="w-1/2 pr-4">
-      <p class="font-bold mb-1">Кредитор:</p>
-      <p class="mb-6">{{{creditor_fio}}}</p>
-      <div class="border-b border-zinc-950 w-56 h-5 mb-1"></div>
-      <p class="text-zinc-400 text-[10px]">подпись</p>
-    </div>
-    <div class="w-1/2 pl-4">
-      <p class="font-bold mb-1">Должник:</p>
-      <p class="mb-6">{{{debtor_fio}}}</p>
-      <div class="border-b border-zinc-950 w-56 h-5 mb-1"></div>
-      <p class="text-zinc-400 text-[10px]">подпись</p>
-    </div>
-  </div>
-</div>`,
+    
   },
 {
     id: "compensation-agreement",
@@ -1415,60 +710,7 @@ export const TEMPLATES_FINANCE: LegalTemplate[] = [
       { id: "transfer_date", label: "Дата предоставления отступного", type: "date", defaultValue: "", category: "contract" },
       { id: "compensation_value", label: "Стоимость отступного (руб.)", type: "text", defaultValue: "", category: "payment" },
     ],
-    previewTemplate: `
-<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
-  <div class="flex justify-between mb-6 text-xs font-semibold">
-    <div>г. {{{city}}}</div>
-    <div>«{{{date}}}»</div>
-  </div>
-  <div class="text-center font-bold text-base mb-6 text-black uppercase">Соглашение об отступном</div>
-  <p class="mb-4 text-justify">
-    <strong>{{{creditor_fio}}}</strong> (паспорт: {{{creditor_passport}}}), именуемый «Кредитор», и
-    <strong>{{{debtor_fio}}}</strong> (паспорт: {{{debtor_passport}}}), именуемый «Должник», заключили
-    настоящее соглашение о нижеследующем (ст. 409 ГК РФ):
-  </p>
-  <p class="font-bold mb-2">1. Предмет соглашения</p>
-  <p class="mb-3 text-justify">1.1. Должник имеет перед Кредитором денежное обязательство в размере <strong>{{{debt_amount}}} руб.</strong> ({{{debt_amount_words}}}) по обязательству: {{{original_doc}}}.</p>
-  <p class="mb-3 text-justify">1.2. В качестве отступного Должник предоставляет Кредитору: {{{compensation}}}, стоимостью {{{compensation_value}}} руб.</p>
-  <p class="font-bold mb-2">2. Порядок предоставления</p>
-  <p class="mb-3 text-justify">2.1. Отступное предоставляется «{{{transfer_date}}}» и оформляется актом приёма-передачи.</p>
-  <p class="mb-3 text-justify">2.2. Обязательство прекращается с момента фактического предоставления отступного (ст. 409 ГК РФ). С указанного момента стороны не имеют взаимных претензий по обязательству.</p>
-  <p class="font-bold mb-2">3. Заключительные положения</p>
-  <p class="mb-3 text-justify">3.1. Настоящее соглашение составлено в двух экземплярах, имеющих равную юридическую силу.</p>
-  
-  <p class="font-bold mb-2">4. Форс-мажор</p>
-  <p class="mb-3 text-justify">
-    4.1. Стороны освобождаются от ответственности за частичное или полное неисполнение обязательств по настоящему договору, если оно явилось следствием обстоятельств непреодолимой силы (форс-мажора): стихийных бедствий, пожаров, наводнений, землетрясений, эпидемий, военных действий, решений органов государственной власти, а также иных обстоятельств, которые стороны не могли предвидеть и предотвратить разумными мерами.
-  </p>
-  <p class="mb-3 text-justify">
-    4.2. Сторона, для которой создалась невозможность исполнения обязательств, обязана незамедлительно, но не позднее 10 (десяти) календарных дней с момента наступления таких обстоятельств, письменно уведомить другую сторону об их возникновении. Неуведомление либо несвоевременное уведомление лишает сторону права ссылаться на форс-мажор как на основание освобождения от ответственности.
-  </p>
-  <p class="mb-3 text-justify">
-    4.3. Если обстоятельства непреодолимой силы действуют более 60 (шестидесяти) календарных дней, каждая из сторон вправе в одностороннем порядке отказаться от исполнения настоящего договора, письменно уведомив другую сторону.
-  </p>
-
-  <p class="font-bold mb-2">5. Порядок разрешения споров</p>
-  <p class="mb-3 text-justify">
-    5.1. Все споры и разногласия, возникающие из настоящего договора или в связи с ним, стороны разрешают путём переговоров. Срок рассмотрения письменной претензии — 10 (десять) календарных дней с момента её получения.
-  </p>
-  <p class="mb-3 text-justify">
-    5.2. При недостижении согласия споры разрешаются в судебном порядке в соответствии с действующим законодательством Российской Федерации.
-  </p>
-<div class="flex justify-between mt-10 text-xs">
-    <div class="w-1/2 pr-4">
-      <p class="font-bold mb-1">Кредитор:</p>
-      <p class="mb-6">{{{creditor_fio}}}</p>
-      <div class="border-b border-zinc-950 w-56 h-5 mb-1"></div>
-      <p class="text-zinc-400 text-[10px]">подпись</p>
-    </div>
-    <div class="w-1/2 pl-4">
-      <p class="font-bold mb-1">Должник:</p>
-      <p class="mb-6">{{{debtor_fio}}}</p>
-      <div class="border-b border-zinc-950 w-56 h-5 mb-1"></div>
-      <p class="text-zinc-400 text-[10px]">подпись</p>
-    </div>
-  </div>
-</div>`,
+    
   },
 {
     id: "donation-agreement",
@@ -1491,61 +733,7 @@ export const TEMPLATES_FINANCE: LegalTemplate[] = [
       { id: "report_order", label: "Порядок отчётности", type: "text", defaultValue: "", category: "other" },
       { id: "transfer_date", label: "Дата передачи", type: "date", defaultValue: "", category: "contract" },
     ],
-    previewTemplate: `
-<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
-  <div class="flex justify-between mb-6 text-xs font-semibold">
-    <div>г. {{{city}}}</div>
-    <div>«{{{date}}}»</div>
-  </div>
-  <div class="text-center font-bold text-base mb-6 text-black uppercase">Договор пожертвования</div>
-  <p class="mb-4 text-justify">
-    <strong>{{{donor_fio}}}</strong> (паспорт: {{{donor_passport}}}), именуемый «Жертвователь», с одной стороны, и
-    <strong>{{{donee_fio}}}</strong> (ИНН {{{donee_inn}}}), именуемый «Одаряемый», с другой стороны,
-    заключили настоящий договор о нижеследующем (ст. 582 ГК РФ):
-  </p>
-  <p class="font-bold mb-2">1. Предмет договора</p>
-  <p class="mb-3 text-justify">1.1. Жертвователь безвозмездно передаёт Одаряемому в общеполезных целях: {{{donation_item}}}.</p>
-  <p class="mb-3 text-justify">1.2. Передача осуществляется «{{{transfer_date}}}».</p>
-  <p class="font-bold mb-2">2. Целевое назначение</p>
-  <p class="mb-3 text-justify">2.1. Имущество должно использоваться исключительно в целях: {{{purpose}}}.</p>
-  <p class="mb-3 text-justify">2.2. {{{report_order}}}.</p>
-  <p class="font-bold mb-2">3. Отмена пожертвования</p>
-  <p class="mb-3 text-justify">3.1. При использовании имущества не по назначению Жертвователь вправе требовать отмены пожертвования (ст. 582 п. 5 ГК РФ).</p>
-  <p class="mb-3 text-justify">3.2. Настоящий договор составлен в двух экземплярах, имеющих равную юридическую силу.</p>
-  
-  <p class="font-bold mb-2">4. Форс-мажор</p>
-  <p class="mb-3 text-justify">
-    4.1. Стороны освобождаются от ответственности за частичное или полное неисполнение обязательств по настоящему договору, если оно явилось следствием обстоятельств непреодолимой силы (форс-мажора): стихийных бедствий, пожаров, наводнений, землетрясений, эпидемий, военных действий, решений органов государственной власти, а также иных обстоятельств, которые стороны не могли предвидеть и предотвратить разумными мерами.
-  </p>
-  <p class="mb-3 text-justify">
-    4.2. Сторона, для которой создалась невозможность исполнения обязательств, обязана незамедлительно, но не позднее 10 (десяти) календарных дней с момента наступления таких обстоятельств, письменно уведомить другую сторону об их возникновении. Неуведомление либо несвоевременное уведомление лишает сторону права ссылаться на форс-мажор как на основание освобождения от ответственности.
-  </p>
-  <p class="mb-3 text-justify">
-    4.3. Если обстоятельства непреодолимой силы действуют более 60 (шестидесяти) календарных дней, каждая из сторон вправе в одностороннем порядке отказаться от исполнения настоящего договора, письменно уведомив другую сторону.
-  </p>
-
-  <p class="font-bold mb-2">5. Порядок разрешения споров</p>
-  <p class="mb-3 text-justify">
-    5.1. Все споры и разногласия, возникающие из настоящего договора или в связи с ним, стороны разрешают путём переговоров. Срок рассмотрения письменной претензии — 10 (десять) календарных дней с момента её получения.
-  </p>
-  <p class="mb-3 text-justify">
-    5.2. При недостижении согласия споры разрешаются в судебном порядке в соответствии с действующим законодательством Российской Федерации.
-  </p>
-<div class="flex justify-between mt-10 text-xs">
-    <div class="w-1/2 pr-4">
-      <p class="font-bold mb-1">Жертвователь:</p>
-      <p class="mb-6">{{{donor_fio}}}</p>
-      <div class="border-b border-zinc-950 w-56 h-5 mb-1"></div>
-      <p class="text-zinc-400 text-[10px]">подпись</p>
-    </div>
-    <div class="w-1/2 pl-4">
-      <p class="font-bold mb-1">Одаряемый:</p>
-      <p class="mb-6">{{{donee_fio}}}</p>
-      <div class="border-b border-zinc-950 w-56 h-5 mb-1"></div>
-      <p class="text-zinc-400 text-[10px]">подпись</p>
-    </div>
-  </div>
-</div>`,
+    
   },
 {
     id: "mortgage-loan",
@@ -1571,61 +759,7 @@ export const TEMPLATES_FINANCE: LegalTemplate[] = [
       { id: "pledge_reg", label: "Регистрация ипотеки", type: "text", defaultValue: "", category: "contract" },
       { id: "penalty", label: "Неустойка", type: "text", defaultValue: "", category: "contract" },
     ],
-    previewTemplate: `
-<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
-  <div class="flex justify-between mb-6 text-xs font-semibold">
-    <div>г. {{{city}}}</div>
-    <div>«{{{date}}}»</div>
-  </div>
-  <div class="text-center font-bold text-base mb-6 text-black uppercase">Договор займа с обеспечением ипотекой</div>
-  <p class="mb-4 text-justify">
-    <strong>{{{lender_fio}}}</strong> (паспорт: {{{lender_passport}}}), именуемый «Займодавец», и
-    <strong>{{{borrower_fio}}}</strong> (паспорт: {{{borrower_passport}}}), именуемый «Заёмщик», заключили
-    настоящий договор о нижеследующем (ст. 807, 334 ГК РФ, ФЗ-102):
-  </p>
-  <p class="font-bold mb-2">1. Заём</p>
-  <p class="mb-3 text-justify">1.1. Займодавец передаёт Заёмщику денежные средства в размере <strong>{{{loan_amount}}} руб.</strong> ({{{loan_amount_words}}}) под {{{interest_rate}}}% годовых на срок до «{{{return_date}}}».</p>
-  <p class="font-bold mb-2">2. Обеспечение исполнения</p>
-  <p class="mb-3 text-justify">2.1. Исполнение обязательств обеспечивается ипотекой (залогом) недвижимого имущества: {{{pledge_desc}}}. Оценочная стоимость предмета залога: {{{pledge_value}}} руб. (ст. 339 ГК РФ).</p>
-  <p class="mb-3 text-justify">2.2. {{{pledge_reg}}}. Ипотека возникает с момента государственной регистрации (ст. 11 ФЗ-102).</p>
-  <p class="font-bold mb-2">3. Обращение взыскания</p>
-  <p class="mb-3 text-justify">3.1. При неисполнении обязательств Займодавец вправе обратить взыскание на предмет залога (ст. 348-349 ГК РФ, ст. 50-51 ФЗ-102).</p>
-  <p class="font-bold mb-2">4. Ответственность</p>
-  <p class="mb-3 text-justify">4.1. За просрочку возврата займа Заёмщик уплачивает неустойку {{{penalty}}} от суммы задолженности за каждый день просрочки (ст. 330, 811 ГК РФ).</p>
-  
-  <p class="font-bold mb-2">5. Форс-мажор</p>
-  <p class="mb-3 text-justify">
-    5.1. Стороны освобождаются от ответственности за частичное или полное неисполнение обязательств по настоящему договору, если оно явилось следствием обстоятельств непреодолимой силы (форс-мажора): стихийных бедствий, пожаров, наводнений, землетрясений, эпидемий, военных действий, решений органов государственной власти, а также иных обстоятельств, которые стороны не могли предвидеть и предотвратить разумными мерами.
-  </p>
-  <p class="mb-3 text-justify">
-    5.2. Сторона, для которой создалась невозможность исполнения обязательств, обязана незамедлительно, но не позднее 10 (десяти) календарных дней с момента наступления таких обстоятельств, письменно уведомить другую сторону об их возникновении. Неуведомление либо несвоевременное уведомление лишает сторону права ссылаться на форс-мажор как на основание освобождения от ответственности.
-  </p>
-  <p class="mb-3 text-justify">
-    5.3. Если обстоятельства непреодолимой силы действуют более 60 (шестидесяти) календарных дней, каждая из сторон вправе в одностороннем порядке отказаться от исполнения настоящего договора, письменно уведомив другую сторону.
-  </p>
-
-  <p class="font-bold mb-2">6. Порядок разрешения споров</p>
-  <p class="mb-3 text-justify">
-    6.1. Все споры и разногласия, возникающие из настоящего договора или в связи с ним, стороны разрешают путём переговоров. Срок рассмотрения письменной претензии — 10 (десять) календарных дней с момента её получения.
-  </p>
-  <p class="mb-3 text-justify">
-    6.2. При недостижении согласия споры разрешаются в судебном порядке в соответствии с действующим законодательством Российской Федерации.
-  </p>
-<div class="flex justify-between mt-10 text-xs">
-    <div class="w-1/2 pr-4">
-      <p class="font-bold mb-1">Займодавец:</p>
-      <p class="mb-6">{{{lender_fio}}}</p>
-      <div class="border-b border-zinc-950 w-56 h-5 mb-1"></div>
-      <p class="text-zinc-400 text-[10px]">подпись</p>
-    </div>
-    <div class="w-1/2 pl-4">
-      <p class="font-bold mb-1">Заёмщик:</p>
-      <p class="mb-6">{{{borrower_fio}}}</p>
-      <div class="border-b border-zinc-950 w-56 h-5 mb-1"></div>
-      <p class="text-zinc-400 text-[10px]">подпись</p>
-    </div>
-  </div>
-</div>`,
+    
   },
 {
     id: "debt-restructuring",
@@ -1654,58 +788,7 @@ export const TEMPLATES_FINANCE: LegalTemplate[] = [
       { id: "percent_change", label: "Изменение процентов/неустойки", type: "text", defaultValue: "", category: "payment" },
       { id: "rights_note", label: "Сохраняются права кредитора", type: "text", defaultValue: "", category: "contract" },
     ],
-    previewTemplate: `<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
-  <div class="text-center font-bold text-base mb-6 text-black uppercase">Соглашение о реструктуризации долга</div>
-  <div class="flex justify-between mb-6 text-xs font-semibold">
-    <div>г. {{{city}}}</div>
-    <div>«{{{date}}}»</div>
-  </div>
-  <p class="mb-4 text-justify">
-    Гражданин <strong>{{{creditor_fio}}}</strong> (паспорт {{{creditor_passport}}}, адрес: {{{creditor_addr}}}), именуемый в дальнейшем «Кредитор», с одной стороны,
-  </p>
-  <p class="mb-4 text-justify">
-    Гражданин <strong>{{{debtor_fio}}}</strong> (паспорт {{{debtor_passport}}}, адрес: {{{debtor_addr}}}), именуемый в дальнейшем «Должник», с другой стороны,
-    заключили настоящий договор о нижеследующем:
-  </p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">1. Предмет соглашения</div>
-  <p class="mb-4 text-justify">1.1. Стороны подтверждают наличие задолженности Должника перед Кредитором в размере <strong>{{{debt_total}}} ({{{debt_words}}}) рублей</strong>, возникшей на основании: {{{basis_doc}}}.</p>
-  <p class="mb-4 text-justify">1.2. Стороны договариваются о реструктуризации долга на условиях, установленных настоящим соглашением.</p>
-  <p class="mb-4 text-justify">1.3. {{{rights_note}}}.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">2. Условия реструктуризации</div>
-  <p class="mb-4 text-justify">2.1. Новый график платежей: {{{new_schedule}}}.</p>
-  <p class="mb-4 text-justify">2.2. Окончательный расчёт — до {{{last_pay}}}.</p>
-  <p class="mb-4 text-justify">2.3. {{{percent_change}}}.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">3. Обязательства должника</div>
-  <p class="mb-4 text-justify">3.1. Должник обязуется соблюдать новый график платежей.</p>
-  <p class="mb-4 text-justify">3.2. При просрочке более 60 дней Кредитор вправе требовать досрочного погашения всей суммы долга.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">4. Ответственность сторон</div>
-  <p class="mb-4 text-justify">4.1. В случае неисполнения соглашения задолженность подлежит взысканию в полном объёме в судебном порядке.</p>
-
-  <div class="font-bold mb-2 text-black text-xs uppercase">5. Форс-мажор</div>
-  <p class="mb-4 text-justify">5.1. Стороны освобождаются от ответственности за частичное или полное неисполнение обязательств по настоящему договору, если оно явилось следствием обстоятельств непреодолимой силы (форс-мажора): стихийных бедствий, пожаров, наводнений, землетрясений, эпидемий, военных действий, решений органов государственной власти, а также иных обстоятельств, которые стороны не могли предвидеть и предотвратить разумными мерами.</p>
-  <p class="mb-4 text-justify">5.2. Сторона, для которой создалась невозможность исполнения обязательств, обязана незамедлительно, но не позднее 10 (десяти) календарных дней с момента наступления таких обстоятельств, письменно уведомить другую сторону об их возникновении. Неуведомление лишает сторону права ссылаться на форс-мажор.</p>
-  <p class="mb-4 text-justify">5.3. Если обстоятельства непреодолимой силы действуют более 60 (шестидесяти) календарных дней, каждая из сторон вправе в одностороннем порядке отказаться от исполнения настоящего договора, письменно уведомив другую сторону.</p>
-
-  <div class="font-bold mb-2 text-black text-xs uppercase">6. Порядок разрешения споров</div>
-  <p class="mb-4 text-justify">6.1. Все споры и разногласия, возникающие из настоящего договора или в связи с ним, стороны разрешают путём переговоров. Срок рассмотрения письменной претензии — 10 (десять) календарных дней с момента её получения.</p>
-  <p class="mb-4 text-justify">6.2. При недостижении согласия споры разрешаются в судебном порядке в соответствии с действующим законодательством Российской Федерации.</p>
-  <div class="grid grid-cols-2 gap-6 mt-8 text-xs border-t border-zinc-300 pt-4">
-    <div>
-      <div class="font-bold mb-2 uppercase text-black">Кредитор:</div>
-      <p class="mb-1"><strong>{{{creditor_fio}}}</strong></p>
-      <p class="text-zinc-500 text-[11px]">Паспорт: {{{creditor_passport}}}</p>
-      <p class="text-zinc-500 text-[11px]">Адрес: {{{creditor_addr}}}</p>
-      <div class="mt-8 border-b border-zinc-900 w-44 h-5 flex justify-end items-end text-[10px] text-zinc-400">Подпись</div>
-    </div>
-    <div>
-      <div class="font-bold mb-2 uppercase text-black">Должник:</div>
-      <p class="mb-1"><strong>{{{debtor_fio}}}</strong></p>
-      <p class="text-zinc-500 text-[11px]">Паспорт: {{{debtor_passport}}}</p>
-      <p class="text-zinc-500 text-[11px]">Адрес: {{{debtor_addr}}}</p>
-      <div class="mt-8 border-b border-zinc-900 w-44 h-5 flex justify-end items-end text-[10px] text-zinc-400">Подпись</div>
-    </div>
-  </div>
-</div>`,
+    
   },
 {
     id: "payment-deferral",
@@ -1734,55 +817,7 @@ export const TEMPLATES_FINANCE: LegalTemplate[] = [
       { id: "last_pay", label: "Дата последнего платежа", type: "date", defaultValue: "", category: "payment", validation: { required: true } },
       { id: "penalty", label: "Неустойка за просрочку", type: "text", defaultValue: "", category: "payment" },
     ],
-    previewTemplate: `<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
-  <div class="text-center font-bold text-base mb-6 text-black uppercase">Соглашение о рассрочке платежа</div>
-  <div class="flex justify-between mb-6 text-xs font-semibold">
-    <div>г. {{{city}}}</div>
-    <div>«{{{date}}}»</div>
-  </div>
-  <p class="mb-4 text-justify">
-    <strong>{{{creditor_company}}}</strong> (ИНН {{{creditor_inn}}}, адрес: {{{creditor_addr}}}), именуемое в дальнейшем «Кредитор», с одной стороны,
-  </p>
-  <p class="mb-4 text-justify">
-    <strong>{{{debtor_company}}}</strong> (ИНН {{{debtor_inn}}}, адрес: {{{debtor_addr}}}), именуемое в дальнейшем «Должник», с другой стороны,
-    заключили настоящий договор о нижеследующем:
-  </p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">1. Предмет соглашения</div>
-  <p class="mb-4 text-justify">1.1. Стороны подтверждают наличие задолженности Должника в размере <strong>{{{debt_total}}} ({{{debt_words}}}) рублей</strong> по обязательству: {{{basis_doc}}}.</p>
-  <p class="mb-4 text-justify">1.2. Кредитор предоставляет Должнику рассрочку погашения задолженности на условиях настоящего соглашения.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">2. Порядок погашения</div>
-  <p class="mb-4 text-justify">2.1. График платежей: {{{installments}}}.</p>
-  <p class="mb-4 text-justify">2.2. Первый платёж — {{{first_pay}}}, окончательный расчёт — {{{last_pay}}}.</p>
-  <p class="mb-4 text-justify">2.3. Должник вправе погасить задолженность досрочно полностью или частично.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">3. Ответственность</div>
-  <p class="mb-4 text-justify">3.1. {{{penalty}}}.</p>
-  <p class="mb-4 text-justify">3.2. При просрочке двух платежей подряд Кредитор вправе потребовать досрочного погашения всей суммы.</p>
-
-  <div class="font-bold mb-2 text-black text-xs uppercase">4. Форс-мажор</div>
-  <p class="mb-4 text-justify">4.1. Стороны освобождаются от ответственности за частичное или полное неисполнение обязательств по настоящему договору, если оно явилось следствием обстоятельств непреодолимой силы (форс-мажора): стихийных бедствий, пожаров, наводнений, землетрясений, эпидемий, военных действий, решений органов государственной власти, а также иных обстоятельств, которые стороны не могли предвидеть и предотвратить разумными мерами.</p>
-  <p class="mb-4 text-justify">4.2. Сторона, для которой создалась невозможность исполнения обязательств, обязана незамедлительно, но не позднее 10 (десяти) календарных дней с момента наступления таких обстоятельств, письменно уведомить другую сторону об их возникновении. Неуведомление лишает сторону права ссылаться на форс-мажор.</p>
-  <p class="mb-4 text-justify">4.3. Если обстоятельства непреодолимой силы действуют более 60 (шестидесяти) календарных дней, каждая из сторон вправе в одностороннем порядке отказаться от исполнения настоящего договора, письменно уведомив другую сторону.</p>
-
-  <div class="font-bold mb-2 text-black text-xs uppercase">5. Порядок разрешения споров</div>
-  <p class="mb-4 text-justify">5.1. Все споры и разногласия, возникающие из настоящего договора или в связи с ним, стороны разрешают путём переговоров. Срок рассмотрения письменной претензии — 10 (десять) календарных дней с момента её получения.</p>
-  <p class="mb-4 text-justify">5.2. При недостижении согласия споры разрешаются в судебном порядке в соответствии с действующим законодательством Российской Федерации.</p>
-  <div class="grid grid-cols-2 gap-6 mt-8 text-xs border-t border-zinc-300 pt-4">
-    <div>
-      <div class="font-bold mb-2 uppercase text-black">Кредитор:</div>
-      <p class="mb-1"><strong>{{{creditor_company}}}</strong></p>
-      <p class="text-zinc-500 text-[11px]">ИНН: {{{creditor_inn}}}</p>
-      <p class="text-zinc-500 text-[11px]">Адрес: {{{creditor_addr}}}</p>
-      <div class="mt-8 border-b border-zinc-900 w-44 h-5 flex justify-end items-end text-[10px] text-zinc-400">Подпись</div>
-    </div>
-    <div>
-      <div class="font-bold mb-2 uppercase text-black">Должник:</div>
-      <p class="mb-1"><strong>{{{debtor_company}}}</strong></p>
-      <p class="text-zinc-500 text-[11px]">ИНН: {{{debtor_inn}}}</p>
-      <p class="text-zinc-500 text-[11px]">Адрес: {{{debtor_addr}}}</p>
-      <div class="mt-8 border-b border-zinc-900 w-44 h-5 flex justify-end items-end text-[10px] text-zinc-400">Подпись</div>
-    </div>
-  </div>
-</div>`,
+    
   },
 {
     id: "offset-agreement",
@@ -1809,53 +844,7 @@ export const TEMPLATES_FINANCE: LegalTemplate[] = [
       { id: "offset_words", label: "Сумма прописью", type: "text", defaultValue: "", category: "payment", validation: { required: true } },
       { id: "remainder", label: "Остаток после зачёта", type: "text", defaultValue: "", category: "contract" },
     ],
-    previewTemplate: `<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
-  <div class="text-center font-bold text-base mb-6 text-black uppercase">Соглашение о зачёте взаимных требований</div>
-  <div class="flex justify-between mb-6 text-xs font-semibold">
-    <div>г. {{{city}}}</div>
-    <div>«{{{date}}}»</div>
-  </div>
-  <p class="mb-4 text-justify">
-    <strong>{{{side1_company}}}</strong> (ИНН {{{side1_inn}}}, адрес: {{{side1_addr}}}), именуемое в дальнейшем «Сторона 1», с одной стороны,
-  </p>
-  <p class="mb-4 text-justify">
-    <strong>{{{side2_company}}}</strong> (ИНН {{{side2_inn}}}, адрес: {{{side2_addr}}}), именуемое в дальнейшем «Сторона 2», с другой стороны,
-    заключили настоящий договор о нижеследующем:
-  </p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">1. Предмет соглашения</div>
-  <p class="mb-4 text-justify">1.1. Сторона 1 имеет требование к Стороне 2: {{{claim1}}}.</p>
-  <p class="mb-4 text-justify">1.2. Сторона 2 имеет требование к Стороне 1: {{{claim2}}}.</p>
-  <p class="mb-4 text-justify">1.3. Стороны производят зачёт встречных однородных требований на сумму <strong>{{{offset_sum}}} ({{{offset_words}}}) рублей</strong>.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">2. Порядок зачёта</div>
-  <p class="mb-4 text-justify">2.1. С момента вступления настоящего соглашения в силу встречные требования прекращаются в сумме зачёта.</p>
-  <p class="mb-4 text-justify">2.2. {{{remainder}}}.</p>
-  <p class="mb-4 text-justify">2.3. Соглашение является документом, подтверждающим прекращение обязательств (ст. 410 ГК РФ).</p>
-
-  <div class="font-bold mb-2 text-black text-xs uppercase">3. Форс-мажор</div>
-  <p class="mb-4 text-justify">3.1. Стороны освобождаются от ответственности за частичное или полное неисполнение обязательств по настоящему договору, если оно явилось следствием обстоятельств непреодолимой силы (форс-мажора): стихийных бедствий, пожаров, наводнений, землетрясений, эпидемий, военных действий, решений органов государственной власти, а также иных обстоятельств, которые стороны не могли предвидеть и предотвратить разумными мерами.</p>
-  <p class="mb-4 text-justify">3.2. Сторона, для которой создалась невозможность исполнения обязательств, обязана незамедлительно, но не позднее 10 (десяти) календарных дней с момента наступления таких обстоятельств, письменно уведомить другую сторону об их возникновении. Неуведомление лишает сторону права ссылаться на форс-мажор.</p>
-  <p class="mb-4 text-justify">3.3. Если обстоятельства непреодолимой силы действуют более 60 (шестидесяти) календарных дней, каждая из сторон вправе в одностороннем порядке отказаться от исполнения настоящего договора, письменно уведомив другую сторону.</p>
-
-  <div class="font-bold mb-2 text-black text-xs uppercase">4. Порядок разрешения споров</div>
-  <p class="mb-4 text-justify">4.1. Все споры и разногласия, возникающие из настоящего договора или в связи с ним, стороны разрешают путём переговоров. Срок рассмотрения письменной претензии — 10 (десять) календарных дней с момента её получения.</p>
-  <p class="mb-4 text-justify">4.2. При недостижении согласия споры разрешаются в судебном порядке в соответствии с действующим законодательством Российской Федерации.</p>
-  <div class="grid grid-cols-2 gap-6 mt-8 text-xs border-t border-zinc-300 pt-4">
-    <div>
-      <div class="font-bold mb-2 uppercase text-black">Сторона 1:</div>
-      <p class="mb-1"><strong>{{{side1_company}}}</strong></p>
-      <p class="text-zinc-500 text-[11px]">ИНН: {{{side1_inn}}}</p>
-      <p class="text-zinc-500 text-[11px]">Адрес: {{{side1_addr}}}</p>
-      <div class="mt-8 border-b border-zinc-900 w-44 h-5 flex justify-end items-end text-[10px] text-zinc-400">Подпись</div>
-    </div>
-    <div>
-      <div class="font-bold mb-2 uppercase text-black">Сторона 2:</div>
-      <p class="mb-1"><strong>{{{side2_company}}}</strong></p>
-      <p class="text-zinc-500 text-[11px]">ИНН: {{{side2_inn}}}</p>
-      <p class="text-zinc-500 text-[11px]">Адрес: {{{side2_addr}}}</p>
-      <div class="mt-8 border-b border-zinc-900 w-44 h-5 flex justify-end items-end text-[10px] text-zinc-400">Подпись</div>
-    </div>
-  </div>
-</div>`,
+    
   },
 {
     id: "debt-acknowledgment",
@@ -1882,54 +871,7 @@ export const TEMPLATES_FINANCE: LegalTemplate[] = [
       { id: "due_date", label: "Срок возврата (дата)", type: "date", defaultValue: "", category: "payment" },
       { id: "acknowledge_note", label: "Заявление о признании", type: "text", defaultValue: "", category: "contract" },
     ],
-    previewTemplate: `<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
-  <div class="text-center font-bold text-base mb-6 text-black uppercase">Соглашение о признании долга</div>
-  <div class="flex justify-between mb-6 text-xs font-semibold">
-    <div>г. {{{city}}}</div>
-    <div>«{{{date}}}»</div>
-  </div>
-  <p class="mb-4 text-justify">
-    Гражданин <strong>{{{creditor_fio}}}</strong> (паспорт {{{creditor_passport}}}, адрес: {{{creditor_addr}}}), именуемый в дальнейшем «Кредитор», с одной стороны,
-  </p>
-  <p class="mb-4 text-justify">
-    Гражданин <strong>{{{debtor_fio}}}</strong> (паспорт {{{debtor_passport}}}, адрес: {{{debtor_addr}}}), именуемый в дальнейшем «Должник», с другой стороны,
-    заключили настоящий договор о нижеследующем:
-  </p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">1. Предмет соглашения</div>
-  <p class="mb-4 text-justify">1.1. Должник признаёт наличие задолженности перед Кредитором в размере <strong>{{{debt_sum}}} ({{{debt_words}}}) рублей</strong>, возникшей на основании: {{{basis_doc}}}.</p>
-  <p class="mb-4 text-justify">1.2. {{{acknowledge_note}}}.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">2. Условия возврата</div>
-  <p class="mb-4 text-justify">2.1. Задолженность подлежит возврату в срок до {{{due_date}}}.</p>
-  <p class="mb-4 text-justify">2.2. Допускается досрочное погашение без дополнительных санкций.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">3. Юридические последствия</div>
-  <p class="mb-4 text-justify">3.1. Подписание настоящего соглашения является признанием долга и в соответствии со ст. 203 ГК РФ прерывает течение срока исковой давности.</p>
-  <p class="mb-4 text-justify">3.2. В случае невозврата долга в срок Кредитор вправе обратиться в суд.</p>
-
-  <div class="font-bold mb-2 text-black text-xs uppercase">4. Форс-мажор</div>
-  <p class="mb-4 text-justify">4.1. Стороны освобождаются от ответственности за частичное или полное неисполнение обязательств по настоящему договору, если оно явилось следствием обстоятельств непреодолимой силы (форс-мажора): стихийных бедствий, пожаров, наводнений, землетрясений, эпидемий, военных действий, решений органов государственной власти, а также иных обстоятельств, которые стороны не могли предвидеть и предотвратить разумными мерами.</p>
-  <p class="mb-4 text-justify">4.2. Сторона, для которой создалась невозможность исполнения обязательств, обязана незамедлительно, но не позднее 10 (десяти) календарных дней с момента наступления таких обстоятельств, письменно уведомить другую сторону об их возникновении. Неуведомление лишает сторону права ссылаться на форс-мажор.</p>
-  <p class="mb-4 text-justify">4.3. Если обстоятельства непреодолимой силы действуют более 60 (шестидесяти) календарных дней, каждая из сторон вправе в одностороннем порядке отказаться от исполнения настоящего договора, письменно уведомив другую сторону.</p>
-
-  <div class="font-bold mb-2 text-black text-xs uppercase">5. Порядок разрешения споров</div>
-  <p class="mb-4 text-justify">5.1. Все споры и разногласия, возникающие из настоящего договора или в связи с ним, стороны разрешают путём переговоров. Срок рассмотрения письменной претензии — 10 (десять) календарных дней с момента её получения.</p>
-  <p class="mb-4 text-justify">5.2. При недостижении согласия споры разрешаются в судебном порядке в соответствии с действующим законодательством Российской Федерации.</p>
-  <div class="grid grid-cols-2 gap-6 mt-8 text-xs border-t border-zinc-300 pt-4">
-    <div>
-      <div class="font-bold mb-2 uppercase text-black">Кредитор:</div>
-      <p class="mb-1"><strong>{{{creditor_fio}}}</strong></p>
-      <p class="text-zinc-500 text-[11px]">Паспорт: {{{creditor_passport}}}</p>
-      <p class="text-zinc-500 text-[11px]">Адрес: {{{creditor_addr}}}</p>
-      <div class="mt-8 border-b border-zinc-900 w-44 h-5 flex justify-end items-end text-[10px] text-zinc-400">Подпись</div>
-    </div>
-    <div>
-      <div class="font-bold mb-2 uppercase text-black">Должник:</div>
-      <p class="mb-1"><strong>{{{debtor_fio}}}</strong></p>
-      <p class="text-zinc-500 text-[11px]">Паспорт: {{{debtor_passport}}}</p>
-      <p class="text-zinc-500 text-[11px]">Адрес: {{{debtor_addr}}}</p>
-      <div class="mt-8 border-b border-zinc-900 w-44 h-5 flex justify-end items-end text-[10px] text-zinc-400">Подпись</div>
-    </div>
-  </div>
-</div>`,
+    
   },
 {
     id: "currency-exchange",
@@ -1956,55 +898,7 @@ export const TEMPLATES_FINANCE: LegalTemplate[] = [
       { id: "exchange_date", label: "Дата обмена", type: "date", defaultValue: "", category: "contract" },
       { id: "notes", label: "Особые условия", type: "text", defaultValue: "", category: "contract" },
     ],
-    previewTemplate: `<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
-  <div class="text-center font-bold text-base mb-6 text-black uppercase">Договор мены валюты</div>
-  <div class="flex justify-between mb-6 text-xs font-semibold">
-    <div>г. {{{city}}}</div>
-    <div>«{{{date}}}»</div>
-  </div>
-  <p class="mb-4 text-justify">
-    Гражданин <strong>{{{side1_fio}}}</strong> (паспорт {{{side1_passport}}}, адрес: {{{side1_addr}}}), именуемый в дальнейшем «Сторона 1», с одной стороны,
-  </p>
-  <p class="mb-4 text-justify">
-    Гражданин <strong>{{{side2_fio}}}</strong> (паспорт {{{side2_passport}}}, адрес: {{{side2_addr}}}), именуемый в дальнейшем «Сторона 2», с другой стороны,
-    заключили настоящий договор о нижеследующем:
-  </p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">1. Предмет договора</div>
-  <p class="mb-4 text-justify">1.1. Сторона 1 передаёт Стороне 2: {{{currency1}}}.</p>
-  <p class="mb-4 text-justify">1.2. Сторона 2 передаёт Стороне 1: {{{currency2}}}.</p>
-  <p class="mb-4 text-justify">1.3. Курс обмена: {{{rate}}}. Дата обмена: {{{exchange_date}}}.</p>
-  <p class="mb-4 text-justify">1.4. {{{notes}}}.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">2. Порядок исполнения</div>
-  <p class="mb-4 text-justify">2.1. Обмен производится одновременно при подписании настоящего договора.</p>
-  <p class="mb-4 text-justify">2.2. Претензии по подлинности и качеству банкнот не принимаются после передачи средств.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">3. Ответственность сторон</div>
-  <p class="mb-4 text-justify">3.1. Стороны несут ответственность за достоверность предоставляемой информации.</p>
-
-  <div class="font-bold mb-2 text-black text-xs uppercase">4. Форс-мажор</div>
-  <p class="mb-4 text-justify">4.1. Стороны освобождаются от ответственности за частичное или полное неисполнение обязательств по настоящему договору, если оно явилось следствием обстоятельств непреодолимой силы (форс-мажора): стихийных бедствий, пожаров, наводнений, землетрясений, эпидемий, военных действий, решений органов государственной власти, а также иных обстоятельств, которые стороны не могли предвидеть и предотвратить разумными мерами.</p>
-  <p class="mb-4 text-justify">4.2. Сторона, для которой создалась невозможность исполнения обязательств, обязана незамедлительно, но не позднее 10 (десяти) календарных дней с момента наступления таких обстоятельств, письменно уведомить другую сторону об их возникновении. Неуведомление лишает сторону права ссылаться на форс-мажор.</p>
-  <p class="mb-4 text-justify">4.3. Если обстоятельства непреодолимой силы действуют более 60 (шестидесяти) календарных дней, каждая из сторон вправе в одностороннем порядке отказаться от исполнения настоящего договора, письменно уведомив другую сторону.</p>
-
-  <div class="font-bold mb-2 text-black text-xs uppercase">5. Порядок разрешения споров</div>
-  <p class="mb-4 text-justify">5.1. Все споры и разногласия, возникающие из настоящего договора или в связи с ним, стороны разрешают путём переговоров. Срок рассмотрения письменной претензии — 10 (десять) календарных дней с момента её получения.</p>
-  <p class="mb-4 text-justify">5.2. При недостижении согласия споры разрешаются в судебном порядке в соответствии с действующим законодательством Российской Федерации.</p>
-  <div class="grid grid-cols-2 gap-6 mt-8 text-xs border-t border-zinc-300 pt-4">
-    <div>
-      <div class="font-bold mb-2 uppercase text-black">Сторона 1:</div>
-      <p class="mb-1"><strong>{{{side1_fio}}}</strong></p>
-      <p class="text-zinc-500 text-[11px]">Паспорт: {{{side1_passport}}}</p>
-      <p class="text-zinc-500 text-[11px]">Адрес: {{{side1_addr}}}</p>
-      <div class="mt-8 border-b border-zinc-900 w-44 h-5 flex justify-end items-end text-[10px] text-zinc-400">Подпись</div>
-    </div>
-    <div>
-      <div class="font-bold mb-2 uppercase text-black">Сторона 2:</div>
-      <p class="mb-1"><strong>{{{side2_fio}}}</strong></p>
-      <p class="text-zinc-500 text-[11px]">Паспорт: {{{side2_passport}}}</p>
-      <p class="text-zinc-500 text-[11px]">Адрес: {{{side2_addr}}}</p>
-      <div class="mt-8 border-b border-zinc-900 w-44 h-5 flex justify-end items-end text-[10px] text-zinc-400">Подпись</div>
-    </div>
-  </div>
-</div>`,
+    
   },
 {
     id: "bank-deposit-agreement",
@@ -2033,55 +927,7 @@ export const TEMPLATES_FINANCE: LegalTemplate[] = [
       { id: "interest_pay", label: "Выплата процентов", type: "text", defaultValue: "", category: "payment" },
       { id: "withdrawal", label: "Условия досрочного снятия", type: "text", defaultValue: "", category: "contract" },
     ],
-    previewTemplate: `<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
-  <div class="text-center font-bold text-base mb-6 text-black uppercase">Договор банковского вклада</div>
-  <div class="flex justify-between mb-6 text-xs font-semibold">
-    <div>г. {{{city}}}</div>
-    <div>«{{{date}}}»</div>
-  </div>
-  <p class="mb-4 text-justify">
-    Гражданин <strong>{{{depositor_fio}}}</strong> (паспорт {{{depositor_passport}}}, адрес: {{{depositor_addr}}}), именуемый в дальнейшем «Вкладчик», с одной стороны,
-  </p>
-  <p class="mb-4 text-justify">
-    <strong>{{{bank_name}}}</strong> (ИНН {{{bank_inn}}}, адрес: {{{bank_addr}}}), именуемое в дальнейшем «Банк», с другой стороны,
-    заключили настоящий договор о нижеследующем:
-  </p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">1. Предмет договора</div>
-  <p class="mb-4 text-justify">1.1. Вкладчик вносит, а Банк принимает денежные средства в размере <strong>{{{deposit_sum}}} ({{{deposit_words}}}) рублей</strong> во вклад на срок с {{{term_start}}} по {{{term_end}}}.</p>
-  <p class="mb-4 text-justify">1.2. Процентная ставка: {{{rate}}}% годовых.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">2. Проценты</div>
-  <p class="mb-4 text-justify">2.1. {{{interest_pay}}}.</p>
-  <p class="mb-4 text-justify">2.2. Проценты начисляются со дня, следующего за днём поступления средств, по день возврата включительно.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">3. Права и обязанности сторон</div>
-  <p class="mb-4 text-justify">3.1. Банк обязуется вернуть сумму вклада и проценты в порядке, предусмотренном договором.</p>
-  <p class="mb-4 text-justify">3.2. {{{withdrawal}}}.</p>
-  <p class="mb-4 text-justify">3.3. Вклад застрахован государственной системой страхования вкладов (АСВ, до 1,4 млн рублей).</p>
-
-  <div class="font-bold mb-2 text-black text-xs uppercase">4. Форс-мажор</div>
-  <p class="mb-4 text-justify">4.1. Стороны освобождаются от ответственности за частичное или полное неисполнение обязательств по настоящему договору, если оно явилось следствием обстоятельств непреодолимой силы (форс-мажора): стихийных бедствий, пожаров, наводнений, землетрясений, эпидемий, военных действий, решений органов государственной власти, а также иных обстоятельств, которые стороны не могли предвидеть и предотвратить разумными мерами.</p>
-  <p class="mb-4 text-justify">4.2. Сторона, для которой создалась невозможность исполнения обязательств, обязана незамедлительно, но не позднее 10 (десяти) календарных дней с момента наступления таких обстоятельств, письменно уведомить другую сторону об их возникновении. Неуведомление лишает сторону права ссылаться на форс-мажор.</p>
-  <p class="mb-4 text-justify">4.3. Если обстоятельства непреодолимой силы действуют более 60 (шестидесяти) календарных дней, каждая из сторон вправе в одностороннем порядке отказаться от исполнения настоящего договора, письменно уведомив другую сторону.</p>
-
-  <div class="font-bold mb-2 text-black text-xs uppercase">5. Порядок разрешения споров</div>
-  <p class="mb-4 text-justify">5.1. Все споры и разногласия, возникающие из настоящего договора или в связи с ним, стороны разрешают путём переговоров. Срок рассмотрения письменной претензии — 10 (десять) календарных дней с момента её получения.</p>
-  <p class="mb-4 text-justify">5.2. При недостижении согласия споры разрешаются в судебном порядке в соответствии с действующим законодательством Российской Федерации.</p>
-  <div class="grid grid-cols-2 gap-6 mt-8 text-xs border-t border-zinc-300 pt-4">
-    <div>
-      <div class="font-bold mb-2 uppercase text-black">Вкладчик:</div>
-      <p class="mb-1"><strong>{{{depositor_fio}}}</strong></p>
-      <p class="text-zinc-500 text-[11px]">Паспорт: {{{depositor_passport}}}</p>
-      <p class="text-zinc-500 text-[11px]">Адрес: {{{depositor_addr}}}</p>
-      <div class="mt-8 border-b border-zinc-900 w-44 h-5 flex justify-end items-end text-[10px] text-zinc-400">Подпись</div>
-    </div>
-    <div>
-      <div class="font-bold mb-2 uppercase text-black">Банк:</div>
-      <p class="mb-1"><strong>{{{bank_name}}}</strong></p>
-      <p class="text-zinc-500 text-[11px]">ИНН: {{{bank_inn}}}</p>
-      <p class="text-zinc-500 text-[11px]">Адрес: {{{bank_addr}}}</p>
-      <div class="mt-8 border-b border-zinc-900 w-44 h-5 flex justify-end items-end text-[10px] text-zinc-400">Подпись</div>
-    </div>
-  </div>
-</div>`,
+    
   },
 {
     id: "loan-employee",
@@ -2111,55 +957,7 @@ export const TEMPLATES_FINANCE: LegalTemplate[] = [
       { id: "repayment", label: "Порядок возврата", type: "text", defaultValue: "", category: "payment", validation: { required: true } },
       { id: "agreement_term", label: "Срок договора (дата)", type: "date", defaultValue: "", category: "contract" },
     ],
-    previewTemplate: `<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
-  <div class="text-center font-bold text-base mb-6 text-black uppercase">Договор займа работнику</div>
-  <div class="flex justify-between mb-6 text-xs font-semibold">
-    <div>г. {{{city}}}</div>
-    <div>«{{{date}}}»</div>
-  </div>
-  <p class="mb-4 text-justify">
-    <strong>{{{employer_company}}}</strong> (ИНН {{{employer_inn}}}, адрес: {{{employer_addr}}}), именуемое в дальнейшем «Работодатель», с одной стороны,
-  </p>
-  <p class="mb-4 text-justify">
-    Гражданин <strong>{{{employee_fio}}}</strong> (паспорт {{{employee_passport}}}, адрес: {{{employee_addr}}}), именуемый в дальнейшем «Работник», с другой стороны,
-    заключили настоящий договор о нижеследующем:
-  </p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">1. Предмет договора</div>
-  <p class="mb-4 text-justify">1.1. Работодатель передаёт Работнику заём в размере <strong>{{{loan_sum}}} ({{{loan_words}}}) рублей</strong> на цель: {{{purpose}}}.</p>
-  <p class="mb-4 text-justify">1.2. Проценты за пользование займом: {{{percent}}}% годовых.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">2. Порядок возврата</div>
-  <p class="mb-4 text-justify">2.1. {{{repayment}}}.</p>
-  <p class="mb-4 text-justify">2.2. Срок полного возврата: {{{return_term}}}.</p>
-  <p class="mb-4 text-justify">2.3. Работник вправе вернуть заём досрочно без дополнительных санкций.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">3. Права и обязанности сторон</div>
-  <p class="mb-4 text-justify">3.1. При увольнении Работника до полного погашения займа остаток удерживается при окончательном расчёте, при недостаточности — возмещается Работником.</p>
-  <p class="mb-4 text-justify">3.2. Работодатель вправе требовать досрочного возврата при нарушении условий договора.</p>
-
-  <div class="font-bold mb-2 text-black text-xs uppercase">4. Форс-мажор</div>
-  <p class="mb-4 text-justify">4.1. Стороны освобождаются от ответственности за частичное или полное неисполнение обязательств по настоящему договору, если оно явилось следствием обстоятельств непреодолимой силы (форс-мажора): стихийных бедствий, пожаров, наводнений, землетрясений, эпидемий, военных действий, решений органов государственной власти, а также иных обстоятельств, которые стороны не могли предвидеть и предотвратить разумными мерами.</p>
-  <p class="mb-4 text-justify">4.2. Сторона, для которой создалась невозможность исполнения обязательств, обязана незамедлительно, но не позднее 10 (десяти) календарных дней с момента наступления таких обстоятельств, письменно уведомить другую сторону об их возникновении. Неуведомление лишает сторону права ссылаться на форс-мажор.</p>
-  <p class="mb-4 text-justify">4.3. Если обстоятельства непреодолимой силы действуют более 60 (шестидесяти) календарных дней, каждая из сторон вправе в одностороннем порядке отказаться от исполнения настоящего договора, письменно уведомив другую сторону.</p>
-
-  <div class="font-bold mb-2 text-black text-xs uppercase">5. Порядок разрешения споров</div>
-  <p class="mb-4 text-justify">5.1. Все споры и разногласия, возникающие из настоящего договора или в связи с ним, стороны разрешают путём переговоров. Срок рассмотрения письменной претензии — 10 (десять) календарных дней с момента её получения.</p>
-  <p class="mb-4 text-justify">5.2. При недостижении согласия споры разрешаются в судебном порядке в соответствии с действующим законодательством Российской Федерации.</p>
-  <div class="grid grid-cols-2 gap-6 mt-8 text-xs border-t border-zinc-300 pt-4">
-    <div>
-      <div class="font-bold mb-2 uppercase text-black">Работодатель:</div>
-      <p class="mb-1"><strong>{{{employer_company}}}</strong></p>
-      <p class="text-zinc-500 text-[11px]">ИНН: {{{employer_inn}}}</p>
-      <p class="text-zinc-500 text-[11px]">Адрес: {{{employer_addr}}}</p>
-      <div class="mt-8 border-b border-zinc-900 w-44 h-5 flex justify-end items-end text-[10px] text-zinc-400">Подпись</div>
-    </div>
-    <div>
-      <div class="font-bold mb-2 uppercase text-black">Работник:</div>
-      <p class="mb-1"><strong>{{{employee_fio}}}</strong></p>
-      <p class="text-zinc-500 text-[11px]">Паспорт: {{{employee_passport}}}</p>
-      <p class="text-zinc-500 text-[11px]">Адрес: {{{employee_addr}}}</p>
-      <div class="mt-8 border-b border-zinc-900 w-44 h-5 flex justify-end items-end text-[10px] text-zinc-400">Подпись</div>
-    </div>
-  </div>
-</div>`,
+    
   },
 {
     id: "pledge-agreement",
@@ -2187,57 +985,7 @@ export const TEMPLATES_FINANCE: LegalTemplate[] = [
       { id: "due_date", label: "Срок исполнения обязательства (дата)", type: "date", defaultValue: "", category: "contract", validation: { required: true } },
       { id: "possession", label: "Оставление предмета залога", type: "text", defaultValue: "", category: "contract" },
     ],
-    previewTemplate: `<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
-  <div class="text-center font-bold text-base mb-6 text-black uppercase">Договор залога имущества</div>
-  <div class="flex justify-between mb-6 text-xs font-semibold">
-    <div>г. {{{city}}}</div>
-    <div>«{{{date}}}»</div>
-  </div>
-  <p class="mb-4 text-justify">
-    Гражданин <strong>{{{pledgor_fio}}}</strong> (паспорт {{{pledgor_passport}}}, адрес: {{{pledgor_addr}}}), именуемый в дальнейшем «Залогодатель», с одной стороны,
-  </p>
-  <p class="mb-4 text-justify">
-    Гражданин <strong>{{{pledgee_fio}}}</strong> (паспорт {{{pledgee_passport}}}, адрес: {{{pledgee_addr}}}), именуемый в дальнейшем «Залогодержатель», с другой стороны,
-    заключили настоящий договор о нижеследующем:
-  </p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">1. Предмет договора</div>
-  <p class="mb-4 text-justify">1.1. В обеспечение обязательства: {{{secured_debt}}} на сумму <strong>{{{debt_sum}}} рублей</strong>, Залогодатель передаёт Залогодержателю в залог имущество: {{{pledge_item}}}.</p>
-  <p class="mb-4 text-justify">1.2. Оценочная стоимость предмета залога: {{{pledge_value}}} рублей.</p>
-  <p class="mb-4 text-justify">1.3. {{{possession}}}.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">2. Условия залога</div>
-  <p class="mb-4 text-justify">2.1. Срок исполнения обеспечиваемого обязательства: {{{due_date}}}.</p>
-  <p class="mb-4 text-justify">2.2. Залогодержатель вправе обратить взыскание на предмет залога при неисполнении обязательства (ст. 348 ГК РФ).</p>
-  <p class="mb-4 text-justify">2.3. Учёт залога регистрируется в Реестре уведомлений о залоге движимого имущества (ФНП).</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">3. Обязанности залогодателя</div>
-  <p class="mb-4 text-justify">3.1. Не отчуждать предмет залога без согласия Залогодержателя, страховать его, содержать в исправном состоянии.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">4. Прекращение залога</div>
-  <p class="mb-4 text-justify">4.1. Залог прекращается с исполнением обеспечиваемого обязательства.</p>
-
-  <div class="font-bold mb-2 text-black text-xs uppercase">5. Форс-мажор</div>
-  <p class="mb-4 text-justify">5.1. Стороны освобождаются от ответственности за частичное или полное неисполнение обязательств по настоящему договору, если оно явилось следствием обстоятельств непреодолимой силы (форс-мажора): стихийных бедствий, пожаров, наводнений, землетрясений, эпидемий, военных действий, решений органов государственной власти, а также иных обстоятельств, которые стороны не могли предвидеть и предотвратить разумными мерами.</p>
-  <p class="mb-4 text-justify">5.2. Сторона, для которой создалась невозможность исполнения обязательств, обязана незамедлительно, но не позднее 10 (десяти) календарных дней с момента наступления таких обстоятельств, письменно уведомить другую сторону об их возникновении. Неуведомление лишает сторону права ссылаться на форс-мажор.</p>
-  <p class="mb-4 text-justify">5.3. Если обстоятельства непреодолимой силы действуют более 60 (шестидесяти) календарных дней, каждая из сторон вправе в одностороннем порядке отказаться от исполнения настоящего договора, письменно уведомив другую сторону.</p>
-
-  <div class="font-bold mb-2 text-black text-xs uppercase">6. Порядок разрешения споров</div>
-  <p class="mb-4 text-justify">6.1. Все споры и разногласия, возникающие из настоящего договора или в связи с ним, стороны разрешают путём переговоров. Срок рассмотрения письменной претензии — 10 (десять) календарных дней с момента её получения.</p>
-  <p class="mb-4 text-justify">6.2. При недостижении согласия споры разрешаются в судебном порядке в соответствии с действующим законодательством Российской Федерации.</p>
-  <div class="grid grid-cols-2 gap-6 mt-8 text-xs border-t border-zinc-300 pt-4">
-    <div>
-      <div class="font-bold mb-2 uppercase text-black">Залогодатель:</div>
-      <p class="mb-1"><strong>{{{pledgor_fio}}}</strong></p>
-      <p class="text-zinc-500 text-[11px]">Паспорт: {{{pledgor_passport}}}</p>
-      <p class="text-zinc-500 text-[11px]">Адрес: {{{pledgor_addr}}}</p>
-      <div class="mt-8 border-b border-zinc-900 w-44 h-5 flex justify-end items-end text-[10px] text-zinc-400">Подпись</div>
-    </div>
-    <div>
-      <div class="font-bold mb-2 uppercase text-black">Залогодержатель:</div>
-      <p class="mb-1"><strong>{{{pledgee_fio}}}</strong></p>
-      <p class="text-zinc-500 text-[11px]">Паспорт: {{{pledgee_passport}}}</p>
-      <p class="text-zinc-500 text-[11px]">Адрес: {{{pledgee_addr}}}</p>
-      <div class="mt-8 border-b border-zinc-900 w-44 h-5 flex justify-end items-end text-[10px] text-zinc-400">Подпись</div>
-    </div>
-  </div>
-</div>`,
+    
   },
 {
     id: "debt-transfer-agreement",
@@ -2267,66 +1015,7 @@ export const TEMPLATES_FINANCE: LegalTemplate[] = [
       { id: "pay_deadline", label: "Срок погашения", type: "text", defaultValue: "", category: "contract" },
       { id: "consent", label: "Согласие кредитора", type: "text", defaultValue: "", category: "contract" },
     ],
-    previewTemplate: `<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
-  <div class="text-center font-bold text-base mb-6 text-black uppercase">Договор перевода долга</div>
-  <div class="flex justify-between mb-6 text-xs font-semibold">
-    <div>г. {{{city}}}</div>
-    <div>«{{{date}}}»</div>
-  </div>
-  <p class="mb-4 text-justify">
-    Гражданин <strong>{{{creditor_fio}}}</strong> (паспорт {{{creditor_passport}}}, адрес: {{{creditor_addr}}}), именуемый в дальнейшем «Кредитор», с одной стороны,
-  </p>
-  <p class="mb-4 text-justify">
-    Гражданин <strong>{{{debtor_fio}}}</strong> (паспорт {{{debtor_passport}}}, адрес: {{{debtor_addr}}}), именуемый в дальнейшем «Первоначальный должник», с другой стороны,
-    заключили настоящий договор о нижеследующем:
-  </p>
-  <p class="mb-4 text-justify">
-    Гражданин <strong>{{{newdebtor_fio}}}</strong> (паспорт {{{newdebtor_passport}}}, адрес: {{{newdebtor_addr}}}), именуемый в дальнейшем «Новый должник»,
-    заключили настоящий договор о нижеследующем:
-  </p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">1. Предмет договора</div>
-  <p class="mb-4 text-justify">1.1. Первоначальный должник переводит на Нового должника обязательство по {{{basis}}} в размере <strong>{{{debt_amount}}} ({{{debt_words}}}) рублей</strong>.</p>
-  <p class="mb-4 text-justify">1.2. {{{consent}}}. Кредитор настоящим договором подтверждает согласие на перевод долга.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">2. Права и обязанности</div>
-  <p class="mb-4 text-justify">2.1. Новый должник обязуется исполнить обязательство в срок: {{{pay_deadline}}}.</p>
-  <p class="mb-4 text-justify">2.2. Первоначальный должник несёт ответственность за действительность переведённого долга, но освобождается от исполнения обязательства перед кредитором.</p>
-  <p class="mb-4 text-justify">2.3. Кредитор сохраняет права, связанные с обязательством (неустойка, проценты), если иное не предусмотрено настоящим договором.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">3. Заключительные положения</div>
-  <p class="mb-4 text-justify">3.1. Договор вступает в силу с момента подписания всеми сторонами.</p>
-  <p class="mb-4 text-justify">3.2. Перевод долга, основанный на сделке, требующей государственной регистрации, подлежит регистрации в установленном порядке.</p>
-
-  <div class="font-bold mb-2 text-black text-xs uppercase">4. Форс-мажор</div>
-  <p class="mb-4 text-justify">4.1. Стороны освобождаются от ответственности за частичное или полное неисполнение обязательств по настоящему договору, если оно явилось следствием обстоятельств непреодолимой силы (форс-мажора): стихийных бедствий, пожаров, наводнений, землетрясений, эпидемий, военных действий, решений органов государственной власти, а также иных обстоятельств, которые стороны не могли предвидеть и предотвратить разумными мерами.</p>
-  <p class="mb-4 text-justify">4.2. Сторона, для которой создалась невозможность исполнения обязательств, обязана незамедлительно, но не позднее 10 (десяти) календарных дней с момента наступления таких обстоятельств, письменно уведомить другую сторону об их возникновении. Неуведомление лишает сторону права ссылаться на форс-мажор.</p>
-  <p class="mb-4 text-justify">4.3. Если обстоятельства непреодолимой силы действуют более 60 (шестидесяти) календарных дней, каждая из сторон вправе в одностороннем порядке отказаться от исполнения настоящего договора, письменно уведомив другую сторону.</p>
-
-  <div class="font-bold mb-2 text-black text-xs uppercase">5. Порядок разрешения споров</div>
-  <p class="mb-4 text-justify">5.1. Все споры и разногласия, возникающие из настоящего договора или в связи с ним, стороны разрешают путём переговоров. Срок рассмотрения письменной претензии — 10 (десять) календарных дней с момента её получения.</p>
-  <p class="mb-4 text-justify">5.2. При недостижении согласия споры разрешаются в судебном порядке в соответствии с действующим законодательством Российской Федерации.</p>
-  <div class="grid grid-cols-2 gap-6 mt-8 text-xs border-t border-zinc-300 pt-4">
-    <div>
-      <div class="font-bold mb-2 uppercase text-black">Кредитор:</div>
-      <p class="mb-1"><strong>{{{creditor_fio}}}</strong></p>
-      <p class="text-zinc-500 text-[11px]">Паспорт: {{{creditor_passport}}}</p>
-      <p class="text-zinc-500 text-[11px]">Адрес: {{{creditor_addr}}}</p>
-      <div class="mt-8 border-b border-zinc-900 w-44 h-5 flex justify-end items-end text-[10px] text-zinc-400">Подпись</div>
-    </div>
-    <div>
-      <div class="font-bold mb-2 uppercase text-black">Первоначальный должник:</div>
-      <p class="mb-1"><strong>{{{debtor_fio}}}</strong></p>
-      <p class="text-zinc-500 text-[11px]">Паспорт: {{{debtor_passport}}}</p>
-      <p class="text-zinc-500 text-[11px]">Адрес: {{{debtor_addr}}}</p>
-      <div class="mt-8 border-b border-zinc-900 w-44 h-5 flex justify-end items-end text-[10px] text-zinc-400">Подпись</div>
-    </div>
-    <div>
-      <div class="font-bold mb-2 uppercase text-black">Новый должник:</div>
-      <p class="mb-1"><strong>{{{newdebtor_fio}}}</strong></p>
-      <p class="text-zinc-500 text-[11px]">Паспорт: {{{newdebtor_passport}}}</p>
-      <p class="text-zinc-500 text-[11px]">Адрес: {{{newdebtor_addr}}}</p>
-      <div class="mt-8 border-b border-zinc-900 w-44 h-5 flex justify-end items-end text-[10px] text-zinc-400">Подпись</div>
-    </div>
-  </div>
-</div>`,
+    
   },
 {
     id: "movable-pledge",
@@ -2354,54 +1043,6 @@ export const TEMPLATES_FINANCE: LegalTemplate[] = [
       { id: "storage", label: "Хранение предмета залога", type: "text", defaultValue: "", category: "contract" },
       { id: "register_note", label: "Регистрация уведомления", type: "text", defaultValue: "", category: "contract" },
     ],
-    previewTemplate: `<div class="pl-[35mm] pr-[8mm] pt-[20mm] pb-[19mm] font-serif text-base leading-normal text-zinc-900 bg-white shadow-lg border border-zinc-200">
-  <div class="text-center font-bold text-base mb-6 text-black uppercase">Договор залога движимого имущества</div>
-  <div class="flex justify-between mb-6 text-xs font-semibold">
-    <div>г. {{{city}}}</div>
-    <div>«{{{date}}}»</div>
-  </div>
-  <p class="mb-4 text-justify">
-    Гражданин <strong>{{{lender_fio}}}</strong> (паспорт {{{lender_passport}}}, адрес: {{{lender_addr}}}), именуемый в дальнейшем «Залогодержатель», с одной стороны,
-  </p>
-  <p class="mb-4 text-justify">
-    Гражданин <strong>{{{pledger_fio}}}</strong> (паспорт {{{pledger_passport}}}, адрес: {{{pledger_addr}}}), именуемый в дальнейшем «Залогодатель», с другой стороны,
-    заключили настоящий договор о нижеследующем:
-  </p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">1. Предмет договора</div>
-  <p class="mb-4 text-justify">1.1. Залогодатель передаёт в залог Залогодержателю имущество: {{{pledged_item}}}, оценочной стоимостью {{{pledged_value}}} руб.</p>
-  <p class="mb-4 text-justify">1.2. Залог обеспечивает исполнение обязательства по {{{secured_deal}}} на сумму {{{secured_amount}}} руб.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">2. Права и обязанности</div>
-  <p class="mb-4 text-justify">2.1. {{{storage}}}. Залогодатель не вправе отчуждать предмет залога без согласия Залогодержателя.</p>
-  <p class="mb-4 text-justify">2.2. При неисполнении обеспеченного обязательства Залогодержатель вправе обратить взыскание на предмет залога во внесудебном или судебном порядке (ст. 349-350 ГК РФ).</p>
-  <p class="mb-4 text-justify">2.3. {{{register_note}}}.</p>
-  <div class="font-bold mb-2 text-black text-xs uppercase">3. Ответственность</div>
-  <p class="mb-4 text-justify">3.1. При утрате или повреждении предмета залога залогодатель вправе заменить его равноценным имуществом с согласия залогодержателя.</p>
-  <p class="mb-4 text-justify">3.2. Удовлетворение требований залогодержателя производится из стоимости предмета залога преимущественно перед другими кредиторами.</p>
-
-  <div class="font-bold mb-2 text-black text-xs uppercase">4. Форс-мажор</div>
-  <p class="mb-4 text-justify">4.1. Стороны освобождаются от ответственности за частичное или полное неисполнение обязательств по настоящему договору, если оно явилось следствием обстоятельств непреодолимой силы (форс-мажора): стихийных бедствий, пожаров, наводнений, землетрясений, эпидемий, военных действий, решений органов государственной власти, а также иных обстоятельств, которые стороны не могли предвидеть и предотвратить разумными мерами.</p>
-  <p class="mb-4 text-justify">4.2. Сторона, для которой создалась невозможность исполнения обязательств, обязана незамедлительно, но не позднее 10 (десяти) календарных дней с момента наступления таких обстоятельств, письменно уведомить другую сторону об их возникновении. Неуведомление лишает сторону права ссылаться на форс-мажор.</p>
-  <p class="mb-4 text-justify">4.3. Если обстоятельства непреодолимой силы действуют более 60 (шестидесяти) календарных дней, каждая из сторон вправе в одностороннем порядке отказаться от исполнения настоящего договора, письменно уведомив другую сторону.</p>
-
-  <div class="font-bold mb-2 text-black text-xs uppercase">5. Порядок разрешения споров</div>
-  <p class="mb-4 text-justify">5.1. Все споры и разногласия, возникающие из настоящего договора или в связи с ним, стороны разрешают путём переговоров. Срок рассмотрения письменной претензии — 10 (десять) календарных дней с момента её получения.</p>
-  <p class="mb-4 text-justify">5.2. При недостижении согласия споры разрешаются в судебном порядке в соответствии с действующим законодательством Российской Федерации.</p>
-  <div class="grid grid-cols-2 gap-6 mt-8 text-xs border-t border-zinc-300 pt-4">
-    <div>
-      <div class="font-bold mb-2 uppercase text-black">Залогодержатель:</div>
-      <p class="mb-1"><strong>{{{lender_fio}}}</strong></p>
-      <p class="text-zinc-500 text-[11px]">Паспорт: {{{lender_passport}}}</p>
-      <p class="text-zinc-500 text-[11px]">Адрес: {{{lender_addr}}}</p>
-      <div class="mt-8 border-b border-zinc-900 w-44 h-5 flex justify-end items-end text-[10px] text-zinc-400">Подпись</div>
-    </div>
-    <div>
-      <div class="font-bold mb-2 uppercase text-black">Залогодатель:</div>
-      <p class="mb-1"><strong>{{{pledger_fio}}}</strong></p>
-      <p class="text-zinc-500 text-[11px]">Паспорт: {{{pledger_passport}}}</p>
-      <p class="text-zinc-500 text-[11px]">Адрес: {{{pledger_addr}}}</p>
-      <div class="mt-8 border-b border-zinc-900 w-44 h-5 flex justify-end items-end text-[10px] text-zinc-400">Подпись</div>
-    </div>
-  </div>
-</div>`,
+    
   }
 ];

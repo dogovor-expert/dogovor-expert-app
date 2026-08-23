@@ -5,7 +5,7 @@ import { SITE_CONTACT_EMAIL, SITE_NAME, SITE_LEGAL_NAME, SITE_LEGAL_INN } from "
 
 export const metadata: Metadata = {
   title: "Политика конфиденциальности",
-  description: `Политика обработки персональных данных сервиса ${SITE_NAME}. Данные документов обрабатываются в вашем браузере (152-ФЗ); передача данных партнёрским сервисам — только с вашего согласия.`,
+  description: `Политика обработки персональных данных Dogovor.expert: данные документов в браузере (152-ФЗ), передача партнёрам — только с согласия.`,
   alternates: { canonical: "/privacy" },
 };
 
@@ -103,7 +103,7 @@ export default function PrivacyPage() {
         </div>
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Политика конфиденциальности</h1>
-          <p className="text-gray-500 text-sm">Обновлено: 16.08.2026</p>
+          <p className="text-gray-600 text-sm">Обновлено: 16.08.2026</p>
         </div>
       </div>
       <div className="mb-8">

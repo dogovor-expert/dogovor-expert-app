@@ -15,28 +15,47 @@ function RiskHeatmap({ results }: { results: AuditResult[] }) {
           ? { label: "Средний риск", color: "text-amber-700", bar: "bg-amber-500", width: `${score}%` }
           : { label: "Высокий риск", color: "text-red-700", bar: "bg-red-500", width: `${score}%` };
 
+  const ringColor =
+    score < 30 ? "#10b981" : score < 60 ? "#f59e0b" : "#ef4444";
+  const R = 26;
+  const C = 2 * Math.PI * R;
   return (
-    <div className="p-3 rounded-lg border border-gray-200 bg-white">
-      <div className="flex items-center justify-between mb-2">
-        <span className={`text-xs font-bold ${level.color}`}>
-          {level.label} · {errorCount} ошибок, {warningCount} предупреждений
-        </span>
-        <span className="text-[10px] text-gray-400">риск {score}/100</span>
+    <div className="flex items-center gap-4 rounded-2xl border border-slate-200/70 bg-slate-50/60 p-4">
+      <div className="relative w-[72px] h-[72px] shrink-0">
+        <svg viewBox="0 0 72 72" className="w-full h-full -rotate-90">
+          <circle cx={36} cy={36} r={R} fill="none" stroke="#e2e8f0" strokeWidth={7} />
+          <circle
+            cx={36}
+            cy={36}
+            r={R}
+            fill="none"
+            stroke={ringColor}
+            strokeWidth={7}
+            strokeDasharray={`${(Math.min(100, score) / 100) * C} ${C}`}
+            strokeLinecap="round"
+          />
+        </svg>
+        <div className="absolute inset-0 flex items-center justify-center">
+          <span className="text-sm font-bold" style={{ color: ringColor }}>
+            {score}
+          </span>
+        </div>
       </div>
-      <div className="h-2 rounded-full bg-gradient-to-r from-emerald-400 via-amber-400 to-red-500 overflow-hidden relative">
-        <div
-          className="absolute inset-y-0 left-0 bg-gray-200/40"
-          style={{ width: `${100 - score}%`, right: 0, left: "auto" }}
-        />
-        <div className="absolute inset-y-0 left-0 w-0.5 bg-gray-900" style={{ left: `${score}%` }} />
+      <div className="min-w-0">
+        <div className={`text-[13px] font-bold ${level.color}`}>
+          {level.label}
+        </div>
+        <div className="text-[10.5px] text-slate-600 mt-0.5">
+          {errorCount} ошибок · {warningCount} предупреждений
+        </div>
+        <p className="mt-1.5 text-[10.5px] text-slate-600 leading-snug">
+          {errorCount === 0 && warningCount === 0
+            ? "Документ заполнен корректно, критических рисков нет."
+            : errorCount > 0
+              ? "Исправьте ошибки до подписания — они могут аннулировать договор."
+              : "Можно подписывать, но устраните предупреждения."}
+        </p>
       </div>
-      <p className="mt-2 text-[10px] text-gray-500 leading-snug">
-        {errorCount === 0 && warningCount === 0
-          ? "Документ заполнен корректно, критических рисков не обнаружено."
-          : errorCount > 0
-            ? "Исправьте ошибки до подписания: они могут сделать документ недействительным."
-            : "Документ можно подписывать, но рекомендуем устранить предупреждения."}
-      </p>
     </div>
   );
 }
@@ -46,7 +65,7 @@ function getAuditIcon(type: string) {
     case "error":
       return <AlertCircle className="w-4 h-4 text-red-500" />;
     case "warning":
-      return <AlertTriangle className="w-4 h-4 text-amber-500" />;
+      return <AlertTriangle className="w-4 h-4 text-amber-700" />;
     case "success":
       return <CheckCircle className="w-4 h-4 text-emerald-500" />;
     default:
@@ -101,14 +120,14 @@ export default function AuditPanel({
             type="button"
             onClick={() => onResultClick(r.field)}
             title="Перейти к полю"
-            className={`w-full flex items-start gap-2 p-2.5 rounded-lg border text-xs text-left transition-colors ${getAuditBg(r.type)} hover:bg-white`}
+            className={`w-full flex items-start gap-2 p-3 rounded-xl border text-xs text-left transition-all bg-white border-slate-100 hover:border-slate-200 hover:shadow-sm ${r.type === "error" ? "hover:border-red-200" : r.type === "warning" ? "hover:border-amber-200" : "hover:border-emerald-200"}`}
           >
             {row}
           </button>
         ) : (
           <div
             key={i}
-            className={`flex items-start gap-2 p-2.5 rounded-lg border text-xs ${getAuditBg(r.type)}`}
+            className={`flex items-start gap-2 p-3 rounded-xl border text-xs bg-white border-slate-100 ${r.type === "error" ? "border-l-4 border-l-red-400" : r.type === "warning" ? "border-l-4 border-l-amber-400" : "border-l-4 border-l-emerald-400"}`}
           >
             {row}
           </div>

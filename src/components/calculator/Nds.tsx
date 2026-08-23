@@ -48,13 +48,13 @@ export default function Nds() {
 
       <div className="space-y-3">
         <div className="space-y-1">
-          <label className="text-[10px] font-mono text-gray-500">{label} (₽)</label>
+          <label className="text-[10px] font-mono text-gray-600">{label} (₽)</label>
           <input type="number" min="0" value={amount} onChange={(e) => { setAmount(e.target.value); setResult(null); }}
             placeholder="Например 100000"
             className="w-full bg-gray-50 border border-gray-200 text-xs py-2.5 px-3 rounded-lg text-gray-900 outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500" />
         </div>
         <div className="space-y-1">
-          <label className="text-[10px] font-mono text-gray-500">Ставка НДС</label>
+          <label className="text-[10px] font-mono text-gray-600">Ставка НДС</label>
           <div className="grid grid-cols-5 gap-1.5">
             {NDS_RATES.map((r) => (
               <button key={r.value} onClick={() => { setRate(r.value); setResult(null); }}
@@ -66,7 +66,7 @@ export default function Nds() {
               </button>
             ))}
           </div>
-          <p className="text-[10px] text-gray-400">{NDS_RATES.find((r) => r.value === rate)?.note}</p>
+          <p className="text-[10px] text-gray-600">{NDS_RATES.find((r) => r.value === rate)?.note}</p>
         </div>
         <button onClick={calc}
           className="w-full py-2.5 bg-indigo-500 text-white rounded-xl hover:bg-indigo-600 font-bold text-xs transition cursor-pointer">
@@ -80,23 +80,23 @@ export default function Nds() {
         <div className="bg-gray-50 rounded-xl p-4 border border-gray-200 space-y-2">
           <div className="flex items-center gap-2">
             <Check className="w-4 h-4 text-emerald-500" />
-            <span className="text-[10px] font-mono text-gray-500">НДС {rate}% — ст. 164 НК РФ (22% с 2026)</span>
+            <span className="text-[10px] font-mono text-gray-600">НДС {rate}% — ст. 164 НК РФ (22% с 2026)</span>
           </div>
           <div className="grid grid-cols-3 gap-2 text-center">
             <div>
-              <p className="text-[10px] font-mono text-gray-400">Без НДС</p>
+              <p className="text-[10px] font-mono text-gray-600">Без НДС</p>
               <p className="text-sm font-bold text-gray-900">{result.base.toLocaleString("ru-RU")} ₽</p>
             </div>
             <div>
-              <p className="text-[10px] font-mono text-gray-400">НДС</p>
+              <p className="text-[10px] font-mono text-gray-600">НДС</p>
               <p className="text-sm font-bold text-emerald-600">{result.tax.toLocaleString("ru-RU")} ₽</p>
             </div>
             <div>
-              <p className="text-[10px] font-mono text-gray-400">С НДС</p>
+              <p className="text-[10px] font-mono text-gray-600">С НДС</p>
               <p className="text-sm font-bold text-gray-900">{result.total.toLocaleString("ru-RU")} ₽</p>
             </div>
           </div>
-          <p className="text-[11px] text-gray-500 border-t border-gray-200 pt-2">{rublesInWords(result.total)}</p>
+          <p className="text-[11px] text-gray-600 border-t border-gray-200 pt-2">{rublesInWords(result.total)}</p>
           <a href="/builder?id=invoice-oferta"
             className="inline-block mt-1 py-2 px-3 rounded-lg bg-white border border-brand-300 text-brand-600 font-bold text-[11px] hover:bg-brand-50 transition">
             Счёт с НДС по шаблону →
@@ -104,7 +104,7 @@ export default function Nds() {
         </div>
       )}
 
-      <p className="text-[11px] text-gray-400 leading-relaxed flex items-start gap-1.5">
+      <p className="text-[11px] text-gray-600 leading-relaxed flex items-start gap-1.5">
         <BadgePercent className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
         С 1 января 2026 основная ставка НДС — 22% (ранее 20%). Пониженная 10% — продовольствие, детские товары, книги. Спецставки 5% и 7% — для УСН-налогоплательщиков с переходом на уплату НДС.
       </p>

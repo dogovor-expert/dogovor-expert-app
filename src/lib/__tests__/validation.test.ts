@@ -54,6 +54,44 @@ describe("isFieldVisible", () => {
     expect(isFieldVisible(field, { is_company: "false" })).toBe(false);
     expect(isFieldVisible(field, {})).toBe(false);
   });
+
+  it("массив dependsOn — видны, только если выполнены ВСЕ зависимости (AND)", () => {
+    const field = {
+      id: "seller_passport_series",
+      label: "Паспорт (Серия)",
+      type: "text" as const,
+      defaultValue: "",
+      category: "seller" as const,
+      dependsOn: [
+        { fieldId: "seller_status", value: "person" },
+        { fieldId: "seller_data_mode", value: "full" },
+      ],
+    };
+    expect(
+      isFieldVisible(field, { seller_status: "person", seller_data_mode: "full" })
+    ).toBe(true);
+    expect(
+      isFieldVisible(field, { seller_status: "ip", seller_data_mode: "full" })
+    ).toBe(false);
+    expect(
+      isFieldVisible(field, { seller_status: "person", seller_data_mode: "brief" })
+    ).toBe(false);
+    expect(isFieldVisible(field, {})).toBe(false);
+  });
+
+  it("dependsOn.values в массиве — значение входит в список", () => {
+    const field = {
+      id: "seller_fio",
+      label: "ФИО",
+      type: "text" as const,
+      defaultValue: "",
+      category: "seller" as const,
+      dependsOn: [{ fieldId: "seller_status", values: ["person", "ip"] }],
+    };
+    expect(isFieldVisible(field, { seller_status: "person" })).toBe(true);
+    expect(isFieldVisible(field, { seller_status: "ip" })).toBe(true);
+    expect(isFieldVisible(field, { seller_status: "legal" })).toBe(false);
+  });
 });
 
 describe("normalizeOptions", () => {

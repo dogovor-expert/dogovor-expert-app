@@ -84,7 +84,7 @@ export default function ImagesToPdf() {
             <ImageIcon className="w-6 h-6 text-brand-500" />
           </div>
           <div className="text-sm font-semibold text-gray-900">Выберите изображения</div>
-          <div className="text-xs text-gray-500">JPG, PNG, WEBP. Каждая картинка — на отдельной странице A4. Данные не покидают ваш браузер.</div>
+          <div className="text-xs text-gray-600">JPG, PNG, WEBP. Каждая картинка — на отдельной странице A4. Данные не покидают ваш браузер.</div>
         </button>
       ) : (
         <div className="space-y-3">
@@ -92,7 +92,7 @@ export default function ImagesToPdf() {
             {files.map((f, i) => (
               <div key={`${f.name}-${i}`} className="relative bg-gray-50 border border-gray-200 rounded-xl p-3 group">
                 <p className="text-[11px] font-medium text-gray-800 truncate pr-5">{f.name}</p>
-                <p className="text-[10px] text-gray-400">{formatBytes(f.size)}</p>
+                <p className="text-[10px] text-gray-600">{formatBytes(f.size)}</p>
                 <button onClick={() => removeFile(i)}
                   className="absolute top-1.5 right-1.5 p-1 rounded-lg hover:bg-red-50 text-red-400 hover:text-red-600 cursor-pointer">
                   <X className="w-3.5 h-3.5" />
@@ -103,7 +103,7 @@ export default function ImagesToPdf() {
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1">
-              <label className="text-[10px] font-mono text-gray-500 uppercase">Ориентация страницы</label>
+              <label className="text-[10px] font-mono text-gray-600 uppercase">Ориентация страницы</label>
               <select value={orientation} onChange={(e) => setOrientation(e.target.value as typeof orientation)}
                 className="w-full bg-gray-50 border border-gray-200 text-xs py-2.5 px-3 rounded-lg text-gray-900 outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500">
                 <option value="auto">По изображению</option>
@@ -112,7 +112,7 @@ export default function ImagesToPdf() {
               </select>
             </div>
             <div className="space-y-1">
-              <label className="text-[10px] font-mono text-gray-500 uppercase">Поля (мм) — {margin}</label>
+              <label className="text-[10px] font-mono text-gray-600 uppercase">Поля (мм) — {margin}</label>
               <input type="range" min={0} max={30} value={margin} onChange={(e) => setMargin(Number(e.target.value))}
                 className="w-full accent-brand-500" />
             </div>

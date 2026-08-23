@@ -71,7 +71,7 @@ function ResetForm() {
           <h1 className="text-2xl font-bold text-gray-900">
             Новый пароль
           </h1>
-          <p className="text-sm text-gray-500 mt-2">
+          <p className="text-sm text-gray-600 mt-2">
             Придумайте новый пароль для входа
           </p>
         </div>
