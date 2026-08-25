@@ -18,6 +18,7 @@ import {
   Cloud,
   Upload,
   Loader2,
+  HardDrive,
 } from "lucide-react";
 import { getAllDrafts, clearDraft, clearDraftVersions, getDraftVersions, restoreDraftVersion, type DraftData, type DraftVersion } from "@/lib/autosave";
 import { exportDocument, getConnectedProviders } from "@/lib/cloud/manager";
@@ -237,6 +238,38 @@ export default function DocumentsPage() {
     clearDraft(templateId);
     clearDraftVersions(templateId);
     loadDocs();
+  };
+
+  const handleMigrateToVault = async (templateId: string) => {
+    const server = await fetch("/api/documents").then((r) =>
+      r.ok ? r.json() : null
+    );
+    const rows = server?.data ?? [];
+    const s = rows.find((x: ServerDoc) => x.template_id === templateId);
+    if (!s) return;
+    try {
+      // Сохраняем в vault
+      const { saveVaultDoc, draftToVaultPayload } = await import("@/lib/vault/documents");
+      const { loadDraft } = await import("@/lib/autosave");
+      const draft = loadDraft(templateId);
+      if (draft) {
+        await saveVaultDoc(templateId, draftToVaultPayload(draft));
+      } else {
+        await saveVaultDoc(templateId, {
+          values: s.fields,
+          checklist: s.checklist,
+          activeTab: "",
+          savedAt: s.updated_at,
+        });
+      }
+      // Удаляем с сервера
+      await fetch(`/api/documents/${s.id}`, { method: "DELETE" });
+      clearDraft(templateId);
+      clearDraftVersions(templateId);
+      loadDocs();
+    } catch (e) {
+      alert(`Ошибка миграции: ${(e as Error).message}`);
+    }
   };
 
   const handleOpen = (templateId: string) => {
@@ -579,6 +612,13 @@ export default function DocumentsPage() {
                               )}
                             </>
                           )}
+                          <button
+                            onClick={() => handleMigrateToVault(doc.id)}
+                            className="p-1.5 hover:bg-blue-50 rounded-lg text-blue-600 hover:text-blue-700 transition-colors"
+                            title="Перенести в локальное защищённое хранилище (удалить с сервера)"
+                          >
+                            <HardDrive className="w-4 h-4" />
+                          </button>
                           <button
                             onClick={() => handleDelete(doc.id)}
                             className="p-1.5 hover:bg-red-50 rounded-lg text-gray-600 hover:text-red-500 transition-colors"

@@ -16,6 +16,7 @@ const DEFAULT_SCOPES = [
   "files.metadata.write",
   "account_info.read",
 ];
+const OFFLINE_SCOPES = [...DEFAULT_SCOPES, "offline"]; // для refresh_token
 
 export class DropboxProvider implements CloudProvider {
   readonly id = "dropbox" as const;
@@ -39,11 +40,9 @@ export class DropboxProvider implements CloudProvider {
     config: CloudConfig,
     codeOrUrl: string
   ): Promise<CloudTokens> {
-    // codeOrUrl — это либо code (если мы уже извлекли), либо полный URL с ?code=
     const code = parseCodeFromUrl(codeOrUrl) || codeOrUrl;
     if (!code) throw new Error("Authorization code не найден");
 
-    // code_verifier должен быть тем же, что при генерации challenge
     const verifier = sessionStorage.getItem("dbx_pkce_verifier");
     if (!verifier) throw new Error("PKCE verifier утерян (сессия сброшена)");
 
@@ -69,6 +68,36 @@ export class DropboxProvider implements CloudProvider {
     return {
       provider: "dropbox",
       accessToken: data.access_token,
+      refreshToken: data.refresh_token, // сохраняем refresh_token
+      expiresAt: data.expires_in ? Date.now() + data.expires_in * 1000 : undefined,
+      tokenType: data.token_type,
+      scope: data.scope,
+    };
+  }
+
+  /** Обновление access_token через refresh_token (offline access). */
+  async refreshTokens(tokens: CloudTokens): Promise<CloudTokens> {
+    if (!tokens.refreshToken) throw new Error("Нет refresh_token — нужен повторный вход");
+    const { getClientId } = await import("../manager");
+    const body = new URLSearchParams({
+      grant_type: "refresh_token",
+      refresh_token: tokens.refreshToken,
+      client_id: getClientId("dropbox") || "",
+    });
+    const res = await fetch(DROPBOX_TOKEN, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body,
+    });
+    if (!res.ok) {
+      const txt = await res.text().catch(() => "");
+      throw new Error(`Dropbox token refresh ${res.status}: ${txt}`);
+    }
+    const data = await res.json();
+    return {
+      provider: "dropbox",
+      accessToken: data.access_token,
+      refreshToken: tokens.refreshToken,
       expiresAt: data.expires_in ? Date.now() + data.expires_in * 1000 : undefined,
       tokenType: data.token_type,
       scope: data.scope,
@@ -100,7 +129,7 @@ export class DropboxProvider implements CloudProvider {
     const pkce = await createPKCE();
     sessionStorage.setItem("dbx_pkce_verifier", pkce.codeVerifier);
 
-    const scopes = config.scopes.length ? config.scopes : DEFAULT_SCOPES;
+    const scopes = config.scopes.length ? config.scopes : OFFLINE_SCOPES;
     const authUrl = buildAuthUrl(DROPBOX_AUTH, {
       client_id: config.clientId,
       response_type: "code",
@@ -112,7 +141,6 @@ export class DropboxProvider implements CloudProvider {
     });
 
     const resultUrl = await openAuthPopup(authUrl);
-    // resultUrl — это URL с ?code=... (попап закрылся после редиректа на наш origin)
     return resultUrl;
   }
 

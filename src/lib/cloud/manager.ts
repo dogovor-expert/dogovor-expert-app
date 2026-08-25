@@ -26,6 +26,27 @@ const PROVIDERS: Record<CloudProviderId, CloudProvider> = {
   dropbox: dropboxProvider,
 };
 
+/** Экспоненциальный бэкофф с джиттером для повторных попыток. */
+async function withRetry<T>(
+  fn: () => Promise<T>,
+  maxAttempts = 3,
+  baseDelayMs = 500
+): Promise<T> {
+  let lastError: Error;
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      return await fn();
+    } catch (e) {
+      lastError = e as Error;
+      if (attempt === maxAttempts) throw lastError;
+      // экспоненциальный бэкофф: 500ms, 1000ms, 2000ms + jitter
+      const delay = baseDelayMs * Math.pow(2, attempt - 1) + Math.random() * 200;
+      await new Promise((r) => setTimeout(r, delay));
+    }
+  }
+  throw lastError!;
+}
+
 const CONFIG_KEY = "cloud_config_v1";
 
 interface StoredConfig {
@@ -178,7 +199,7 @@ export async function exportDocument(
   }
 
   const remotePath = `${opts.remotePath.replace(/\/$/, "")}/${opts.fileName}${ext}`;
-  return provider.uploadFile(tokens, remotePath, blob, contentType);
+  return withRetry(() => provider.uploadFile(tokens, remotePath, blob, contentType));
 }
 
 /** Экспорт всех документов vault в облако (как зашифрованный бэкап). */
@@ -196,11 +217,13 @@ export async function exportAllVaultDocuments(
   for (const doc of docs) {
     try {
       const blob = new Blob([JSON.stringify(doc.payload)], { type: "application/json" });
-      await provider.uploadFile(
-        tokens,
-        `${remoteFolder}/${doc.meta.title.replace(/[/\\]/g, "_")}.json`,
-        blob,
-        "application/json"
+      await withRetry(() =>
+        provider.uploadFile(
+          tokens,
+          `${remoteFolder}/${doc.meta.title.replace(/[/\\]/g, "_")}.json`,
+          blob,
+          "application/json"
+        )
       );
       results.success++;
     } catch (e) {
