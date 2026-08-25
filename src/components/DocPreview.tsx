@@ -23,6 +23,8 @@ interface DocPreviewProps {
   design?: DesignId;
   /** Водяной знак бесплатного тарифа (рисуется в подвале). */
   watermark?: string;
+  /** Внешний ref на корень печати (#print-root) для react-to-print. */
+  printRef?: React.Ref<HTMLDivElement>;
 }
 
 /**
@@ -36,6 +38,8 @@ export default function DocPreview({
   onPagesChange,
   design,
   watermark,
+  /** Внешний ref на корень печати (#print-root) для react-to-print. */
+  printRef,
 }: DocPreviewProps) {
   const measureRef = useRef<HTMLDivElement | null>(null);
   const [pages, setPages] = useState<DocPage[]>([]);
@@ -191,7 +195,7 @@ export default function DocPreview({
 
   if (pages.length === 0) {
     return (
-      <div id="print-root" className="flex flex-col items-center gap-6 py-4">
+      <div id="print-root" ref={printRef} className="flex flex-col items-center gap-6 py-4">
         <div className={`a4-sheet doc-skin-${designTokens.id}`}>
           <div dangerouslySetInnerHTML={{ __html: html }} />
           {renderChrome(0, 1)}
@@ -201,7 +205,7 @@ export default function DocPreview({
   }
 
   return (
-    <div id="print-root" className="flex flex-col items-center gap-6 py-4">
+    <div id="print-root" ref={printRef} className="flex flex-col items-center gap-6 py-4">
       {pages.map((page, i) => (
         <div key={i} className={`a4-sheet doc-skin-${designTokens.id}`}>
           <div
