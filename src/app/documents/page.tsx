@@ -15,8 +15,15 @@ import {
   Clock,
   Pencil,
   X,
+  Cloud,
+  Upload,
+  Loader2,
 } from "lucide-react";
 import { getAllDrafts, clearDraft, clearDraftVersions, getDraftVersions, restoreDraftVersion, type DraftData, type DraftVersion } from "@/lib/autosave";
+import { exportDocument, getConnectedProviders } from "@/lib/cloud/manager";
+import { getVaultDoc, draftToVaultPayload } from "@/lib/vault/documents";
+import { initVault } from "@/lib/vault/keyManager";
+import type { CloudProviderId } from "@/lib/cloud/types";
 import { TEMPLATE_META } from "@/data/templatesMeta";
 import Highlight from "@/components/ui/Highlight";
 import { tokenGroups, textMatchesTokens, scoreText } from "@/lib/search";
@@ -66,6 +73,10 @@ export default function DocumentsPage() {
   const [importCount, setImportCount] = useState(0);
   const [importing, setImporting] = useState(false);
   const [importToast, setImportToast] = useState<string | null>(null);
+  const [cloudProviders, setCloudProviders] = useState<Array<{id: string; name: string}>>([]);
+  const [exporting, setExporting] = useState<string | null>(null);
+  const [exportToast, setExportToast] = useState<string | null>(null);
+  const [exportMenuOpen, setExportMenuOpen] = useState<string | null>(null);
   const perPage = 10;
 
   const toDocItem = useCallback((id: string, fields: Record<string, string>, savedAt: string): DocItem => {
@@ -158,6 +169,23 @@ export default function DocumentsPage() {
     loadDocs();
   }, [loadDocs]);
 
+  useEffect(() => {
+    async function loadCloud() {
+      await initVault();
+      const providers = await getConnectedProviders();
+      setCloudProviders(providers.map((p) => ({ id: p.id, name: p.name })));
+    }
+    loadCloud();
+  }, []);
+
+  useEffect(() => {
+    function handleClickOutside() {
+      setExportMenuOpen(null);
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   const filtered = docs
     .filter((d) => {
       if (typeFilter !== "all" && d.typeName !== typeFilter) return false;
@@ -217,6 +245,61 @@ export default function DocumentsPage() {
 
   const handlePreview = (templateId: string) => {
     router.push(`/preview?template=${templateId}`);
+  };
+
+  const handleExportToCloud = async (templateId: string, providerId: string) => {
+    setExporting(templateId);
+    setExportToast(null);
+    try {
+      // Получаем документ из vault (если есть) или из localStorage
+      const vaultDoc = await getVaultDoc(templateId);
+      let pdfBlob: Blob | undefined;
+      let vaultBlob: Blob | undefined;
+      let fileName: string;
+      const tpl = TEMPLATE_META.find((t) => t.id === templateId);
+      if (vaultDoc) {
+        vaultBlob = new Blob([JSON.stringify(vaultDoc)], { type: "application/json" });
+        // Генерируем PDF для альтернативы
+        const { renderTemplateDocument } = await import("@/lib/renderDocument");
+        const { buildPdf } = await import("@/lib/exportPdf");
+        const html = renderTemplateDocument(
+          { id: templateId, name: tpl?.name || templateId, fields: [] } as any,
+          vaultDoc.values,
+          { qrSvg: null, signSeller: vaultDoc.esignSeller, signBuyer: vaultDoc.esignBuyer, previewTemplate: undefined }
+        );
+        const { blob } = await buildPdf(html, { design: "classic", pageNumbers: true });
+        pdfBlob = blob;
+        fileName = `${tpl?.name || templateId}_${new Date().toISOString().slice(0, 10)}`;
+      } else {
+        // fallback: localStorage draft
+        const { loadDraft } = await import("@/lib/autosave");
+        const draft = loadDraft(templateId);
+        if (!draft) throw new Error("Документ не найден");
+        const { renderTemplateDocument } = await import("@/lib/renderDocument");
+        const { buildPdf } = await import("@/lib/exportPdf");
+        const html = renderTemplateDocument(
+          { id: templateId, name: tpl?.name || templateId, fields: [] } as any,
+          draft.values,
+          { qrSvg: null, signSeller: null, signBuyer: null, previewTemplate: undefined }
+        );
+        const { blob } = await buildPdf(html, { design: "classic", pageNumbers: true });
+        pdfBlob = blob;
+        vaultBlob = new Blob([JSON.stringify(draftToVaultPayload(draft))], { type: "application/json" });
+        fileName = `${tpl?.name || templateId}_${new Date().toISOString().slice(0, 10)}`;
+      }
+      await exportDocument(providerId as CloudProviderId, { pdfBlob, vaultBlob }, {
+        format: "vault-backup",
+        fileName,
+        remotePath: "/Dogovor.expert",
+      });
+      setExportToast(`Экспортировано в ${cloudProviders.find((p) => p.id === providerId)?.name || providerId}`);
+      setTimeout(() => setExportToast(null), 4000);
+    } catch (e) {
+      setExportToast(`Ошибка: ${(e as Error).message}`);
+      setTimeout(() => setExportToast(null), 4000);
+    } finally {
+      setExporting(null);
+    }
   };
 
   const [historyDoc, setHistoryDoc] = useState<DocItem | null>(null);
@@ -430,7 +513,7 @@ export default function DocumentsPage() {
                         </div>
                       </TableCell>
                       <TableCell>
-                        <div className="flex items-center gap-1">
+                        <div className="flex items-center gap-1 relative">
                           <button
                             onClick={() => handlePreview(doc.id)}
                             className="p-1.5 hover:bg-brand-50 rounded-lg text-brand-500 transition-colors"
@@ -452,6 +535,50 @@ export default function DocumentsPage() {
                           >
                             <Clock className="w-4 h-4" />
                           </button>
+                          {cloudProviders.length > 0 && (
+                            <>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setExportMenuOpen(exportMenuOpen === doc.id ? null : doc.id);
+                                }}
+                                className={`p-1.5 rounded-lg transition-colors ${
+                                  exportMenuOpen === doc.id
+                                    ? "bg-brand-100 text-brand-600"
+                                    : "hover:bg-gray-100 text-gray-600"
+                                }`}
+                                title="Экспорт в облако"
+                              >
+                                <Cloud className="w-4 h-4" />
+                              </button>
+                              {exportMenuOpen === doc.id && (
+                                <div
+                                  className="absolute right-0 top-full mt-1 w-48 bg-white border border-gray-200 rounded-xl shadow-lg py-1 z-10"
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  {cloudProviders.map((p) => (
+                                    <button
+                                      key={p.id}
+                                      onClick={() => {
+                                        handleExportToCloud(doc.id, p.id);
+                                        setExportMenuOpen(null);
+                                      }}
+                                      disabled={exporting === doc.id}
+                                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                                    >
+                                      <Upload className="w-4 h-4" />
+                                      {p.name}
+                                      {exporting === doc.id && (
+                                        <span className="ml-auto">
+                                          <Loader2 className="w-4 h-4 animate-spin" />
+                                        </span>
+                                      )}
+                                    </button>
+                                  ))}
+                                </div>
+                              )}
+                            </>
+                          )}
                           <button
                             onClick={() => handleDelete(doc.id)}
                             className="p-1.5 hover:bg-red-50 rounded-lg text-gray-600 hover:text-red-500 transition-colors"
