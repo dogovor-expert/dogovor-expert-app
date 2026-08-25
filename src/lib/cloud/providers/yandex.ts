@@ -1,7 +1,7 @@
 // Яндекс.Диск — OAuth implicit (token в фрагменте) + REST API.
 // См. https://yandex.ru/dev/disk/api/concepts/quickstart.html
 
-import type { CloudProvider, CloudTokens, CloudConfig } from "../types";
+import type { CloudProvider, CloudTokens, CloudConfig, CloudFolder } from "../types";
 import { buildAuthUrl, parseTokenFromFragment } from "../oauth";
 
 const YANDEX_AUTH = "https://oauth.yandex.ru/authorize";
@@ -121,6 +121,27 @@ export class YandexDiskProvider implements CloudProvider {
       `/resources?path=${encodeURIComponent(path)}&limit=100`
     );
     return resp._embedded?.items || [];
+  }
+
+  /** Список папок (для folder picker) */
+  async listFolders(tokens: CloudTokens, path: string = "/"): Promise<CloudFolder[]> {
+    const items = await this.listFiles(tokens, path);
+    return items
+      .filter((item: any) => item.type === "dir")
+      .map((item: any) => ({
+        name: item.name,
+        path: item.path,
+        isFolder: true as const,
+      }));
+  }
+
+  /** Создание папки (Yandex Disk API) */
+  async createFolder(tokens: CloudTokens, path: string): Promise<void> {
+    await this.request(
+      tokens,
+      `/resources?path=${encodeURIComponent(path)}`,
+      { method: "PUT" }
+    );
   }
 }
 

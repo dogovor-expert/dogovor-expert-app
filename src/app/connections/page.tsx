@@ -16,6 +16,7 @@ import {
   Info,
   Loader2,
   X,
+  FolderOpen,
 } from "lucide-react";
 import {
   getAllProviders,
@@ -31,6 +32,7 @@ import {
 import { listVaultDocs, getVaultDoc } from "@/lib/vault/documents";
 import { initVault, isUnlocked } from "@/lib/vault/keyManager";
 import type { CloudProviderId } from "@/lib/cloud/types";
+import FolderPicker from "@/components/FolderPicker";
 
 interface ProviderStatus {
   id: CloudProviderId;
@@ -54,6 +56,7 @@ export default function ConnectionsPage() {
   const [importPassphrase, setImportPassphrase] = useState("");
   const [importError, setImportError] = useState<string | null>(null);
   const [importSuccess, setImportSuccess] = useState<string | null>(null);
+  const [folderPicker, setFolderPicker] = useState<{ providerId: CloudProviderId; onConfirm: (path: string) => void } | null>(null);
 
   useEffect(() => {
     async function init() {
@@ -106,22 +109,27 @@ export default function ConnectionsPage() {
   };
 
   const handleExportAll = async (id: CloudProviderId) => {
-    setExporting(id);
-    setExportResult(null);
-    try {
-      const docs = [];
-      const metaList = await listVaultDocs();
-      for (const meta of metaList) {
-        const payload = await getVaultDoc(meta.templateId);
-        if (payload) docs.push({ meta, payload });
-      }
-      const result = await exportAllVaultDocuments(id, docs);
-      setExportResult(result);
-    } catch (e) {
-      setExportResult({ success: 0, failed: [(e as Error).message] });
-    } finally {
-      setExporting(null);
-    }
+    setFolderPicker({
+      providerId: id,
+      onConfirm: async (folderPath) => {
+        setExporting(id);
+        setExportResult(null);
+        try {
+          const docs = [];
+          const metaList = await listVaultDocs();
+          for (const meta of metaList) {
+            const payload = await getVaultDoc(meta.templateId);
+            if (payload) docs.push({ meta, payload });
+          }
+          const result = await exportAllVaultDocuments(id, docs, folderPath);
+          setExportResult(result);
+        } catch (e) {
+          setExportResult({ success: 0, failed: [(e as Error).message] });
+        } finally {
+          setExporting(null);
+        }
+      },
+    });
   };
 
   const handleListImportFiles = async (id: CloudProviderId) => {
@@ -403,36 +411,24 @@ export default function ConnectionsPage() {
         </Card>
       ))}
 
-      <Card className="border-amber-200 bg-amber-50/50">
-        <div className="p-4">
-          <div className="flex items-start gap-3">
-            <Info className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
-            <div className="text-sm text-gray-800 space-y-1">
-              <p className="font-medium">Важные заметки о приватности:</p>
-              <ul className="list-disc list-inside space-y-1">
-                <li>
-                  <strong>Яндекс.Диск</strong> — серверы в РФ, полностью совместим с 152-ФЗ.
-                  Рекомендуем для юридических документов.
-                </li>
-                <li>
-                  <strong>Google Drive / Dropbox</strong> — серверы в США. Передача ПД
-                  граждан РФ на эти серверы требует отдельного согласия и уведомления
-                  РКН (ст. 12 152-ФЗ). Используйте осознанно.
-                </li>
-                <li>
-                  Экспорт «Vault backup» загружает <strong>уже зашифрованные</strong>
-                  данные (AES-256-GCM). Даже если облачный провайдер получит доступ к
-                  файлам, он не прочитает содержимое без вашего пароля/устройства.
-                </li>
-                <li>
-                  PDF-экспорт загружает <strong>расшифрованный</strong> документ.
-                  Используйте только для печати/передачи контрагенту, понимая риски.
-                </li>
-              </ul>
-            </div>
+      {folderPicker && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => setFolderPicker(null)}>
+          <div
+            className="bg-white rounded-2xl p-5 w-full max-w-md shadow-2xl max-h-[80vh] overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <FolderPicker
+              providerId={folderPicker.providerId}
+              onSelect={async (path) => {
+                await folderPicker.onConfirm(path);
+                setFolderPicker(null);
+              }}
+              onCancel={() => setFolderPicker(null)}
+              initialPath="/Dogovor.expert"
+            />
           </div>
         </div>
-      </Card>
+      )}
     </div>
   );
 }

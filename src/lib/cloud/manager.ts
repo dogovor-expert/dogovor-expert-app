@@ -18,6 +18,9 @@ import {
   listConnectedProviders,
   isTokenValid,
 } from "./tokenStore";
+
+// Реэкспорт для удобства
+export { loadCloudTokens, isTokenValid } from "./tokenStore";
 import { openAuthPopup, parseTokenFromFragment } from "./oauth";
 
 const PROVIDERS: Record<CloudProviderId, CloudProvider> = {
