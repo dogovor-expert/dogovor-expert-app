@@ -110,3 +110,7 @@ export async function metaGet<T>(
 export async function metaPut(key: string, value: unknown): Promise<void> {
   await idbPut(STORE.meta, { key, value });
 }
+
+export async function metaDelete(key: string): Promise<void> {
+  await idbDelete(STORE.meta, key);
+}

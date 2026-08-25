@@ -25,6 +25,8 @@ import {
   disconnectProvider,
   getConnectedProviders,
   exportAllVaultDocuments,
+  listCloudFiles,
+  importVaultFromCloud,
 } from "@/lib/cloud/manager";
 import { listVaultDocs, getVaultDoc } from "@/lib/vault/documents";
 import { initVault, isUnlocked } from "@/lib/vault/keyManager";
@@ -47,6 +49,11 @@ export default function ConnectionsPage() {
   const [vaultReady, setVaultReady] = useState(false);
   const [exporting, setExporting] = useState<CloudProviderId | null>(null);
   const [exportResult, setExportResult] = useState<{ success: number; failed: string[] } | null>(null);
+  const [importing, setImporting] = useState<CloudProviderId | null>(null);
+  const [importFiles, setImportFiles] = useState<Array<{ name: string; path: string; size: number; modified: string }> | null>(null);
+  const [importPassphrase, setImportPassphrase] = useState("");
+  const [importError, setImportError] = useState<string | null>(null);
+  const [importSuccess, setImportSuccess] = useState<string | null>(null);
 
   useEffect(() => {
     async function init() {
@@ -114,6 +121,35 @@ export default function ConnectionsPage() {
       setExportResult({ success: 0, failed: [(e as Error).message] });
     } finally {
       setExporting(null);
+    }
+  };
+
+  const handleListImportFiles = async (id: CloudProviderId) => {
+    setImporting(id);
+    setImportFiles(null);
+    setImportError(null);
+    setImportSuccess(null);
+    setImportPassphrase("");
+    try {
+      const files = await listCloudFiles(id);
+      setImportFiles(files.filter((f) => f.name.endsWith(".json")));
+    } catch (e) {
+      setImportError((e as Error).message);
+    } finally {
+      setImporting(null);
+    }
+  };
+
+  const handleImportFile = async (id: CloudProviderId, filePath: string) => {
+    setImportError(null);
+    setImportSuccess(null);
+    try {
+      await importVaultFromCloud(id, filePath, importPassphrase || undefined);
+      setImportSuccess("Хранилище успешно восстановлено из облака!");
+      setImportFiles(null);
+      setImportPassphrase("");
+    } catch (e) {
+      setImportError((e as Error).message);
     }
   };
 
@@ -260,6 +296,24 @@ export default function ConnectionsPage() {
                     )}
                   </Button>
                   <Button
+                    variant="outline"
+                    onClick={() => handleListImportFiles(st.id)}
+                    disabled={importing === st.id || !vaultReady}
+                    className="flex-1"
+                  >
+                    {importing === st.id ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                        Загрузка списка…
+                      </>
+                    ) : (
+                      <>
+                        <Download className="w-4 h-4 mr-2" />
+                        Импорт из облака
+                      </>
+                    )}
+                  </Button>
+                  <Button
                     variant="ghost"
                     onClick={() => handleDisconnect(st.id)}
                     className="text-red-600 hover:bg-red-50"
@@ -288,6 +342,60 @@ export default function ConnectionsPage() {
                       детали
                     </button>
                   </>
+                )}
+              </div>
+            </div>
+          )}
+
+          {importFiles && importing === st.id && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => setImportFiles(null)}>
+              <div
+                className="bg-white rounded-2xl p-5 w-full max-w-md shadow-2xl max-h-[80vh] overflow-y-auto"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="font-semibold text-gray-900">Импорт из {st.name}</h3>
+                  <button onClick={() => setImportFiles(null)} className="p-1 hover:bg-gray-100 rounded-lg">
+                    <X className="w-5 h-5 text-gray-500" />
+                  </button>
+                </div>
+
+                {importFiles.length === 0 ? (
+                  <div className="text-center py-8 text-gray-600">
+                    <p>В папке /Dogovor.expert/vault-backup нет файлов .json</p>
+                    <p className="text-xs mt-2">Сначала сделайте экспорт (vault backup)</p>
+                  </div>
+                ) : (
+                  <div className="space-y-2 max-h-60 overflow-y-auto">
+                    {importFiles.map((f) => (
+                      <button
+                        key={f.path}
+                        onClick={() => handleImportFile(st.id, f.path)}
+                        disabled={!!importPassphrase && importPassphrase.length < 8}
+                        className="w-full text-left p-3 rounded-xl border hover:bg-gray-50 transition-colors disabled:opacity-50"
+                      >
+                        <div className="font-medium text-gray-900 truncate">{f.name}</div>
+                        <div className="text-xs text-gray-500 flex items-center gap-2">
+                          <span>{(f.size / 1024).toFixed(1)} KB</span>
+                          <span>{new Date(f.modified).toLocaleString("ru-RU")}</span>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {(importFiles?.length ?? 0) > 0 && (
+                  <div className="mt-4 space-y-2">
+                    <Input
+                      label="Пароль от бэкапа (если был установлен)"
+                      type="password"
+                      value={importPassphrase}
+                      onChange={(e) => setImportPassphrase(e.target.value)}
+                      placeholder="Оставьте пустым, если пароля не было"
+                    />
+                    {importError && <p className="text-xs text-red-500">{importError}</p>}
+                    {importSuccess && <p className="text-xs text-emerald-600">{importSuccess}</p>}
+                  </div>
                 )}
               </div>
             </div>

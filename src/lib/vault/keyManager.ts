@@ -15,7 +15,7 @@
 // masterKey НИКОГДА не лежит в памяти в виде байт и не извлекается (non-extractable).
 // Сервер не видит ни ключей, ни данных — документы остаются только в браузере.
 
-import { metaGet, metaPut, idbGet, STORE } from "./idb";
+import { metaGet, metaPut, metaDelete, idbGet, idbPut, idbGetAll, idbClear, STORE } from "./idb";
 import { toBase64Url, fromBase64Url } from "@/lib/crypto";
 
 export interface Envelope {
@@ -24,7 +24,18 @@ export interface Envelope {
   ct: string;
 }
 
+export interface VaultBackup {
+  version: 1;
+  exportedAt: string;
+  deviceKeyWrapped: { value: ArrayBuffer; iv: string } | null;
+  masterKeyWrapped: { value: ArrayBuffer; iv: string };
+  masterKeyPass?: { value: ArrayBuffer; salt: string; iv: string; iterations: number };
+  documents: Array<{ meta: any; enc: Envelope }>;
+  tokens: Array<{ providerId: string; enc: Envelope }>;
+}
+
 const PBKDF2_ITERATIONS = 600_000;
+const AUTO_LOCK_MS_KEY = "autoLockMs";
 
 class LockedError extends Error {
   constructor() {
@@ -35,10 +46,10 @@ class LockedError extends Error {
 
 let masterKeySession: CryptoKey | null = null;
 let needsPassphrase = false;
+let autoLockTimer: ReturnType<typeof setTimeout> | null = null;
 
 function buf(input: ArrayBuffer | Uint8Array): Uint8Array<ArrayBuffer> {
   if (input instanceof Uint8Array) {
-    // гарантируем ArrayBuffer-бэкинг (для BufferSource совместимости)
     const a = new Uint8Array(input.byteLength);
     a.set(input);
     return a as Uint8Array<ArrayBuffer>;
@@ -62,12 +73,9 @@ export async function initVault(): Promise<void> {
 
   if (!deviceKey || !masterWrapped) {
     if (masterWrapped) {
-      // Данные есть, но deviceKey на этом устройстве нет (новое устройство) —
-      // нужен пароль для восстановления masterKey из passphrase-обёртки.
       needsPassphrase = true;
       return;
     }
-    // Первый запуск: создаём deviceKey + masterKey.
     const newDevice = await crypto.subtle.generateKey(
       { name: "AES-GCM", length: 256 },
       false,
@@ -92,8 +100,8 @@ export async function initVault(): Promise<void> {
     return;
   }
 
-  // Обычный unlock на «своём» устройстве.
   await unlockWithDeviceKey(deviceKey, masterWrapped);
+  startAutoLockTimer();
 }
 
 async function unlockWithDeviceKey(
@@ -115,6 +123,34 @@ async function unlockWithDeviceKey(
 
 export function lockVault(): void {
   masterKeySession = null;
+  if (autoLockTimer) {
+    clearTimeout(autoLockTimer);
+    autoLockTimer = null;
+  }
+}
+
+async function startAutoLockTimer(): Promise<void> {
+  if (autoLockTimer) clearTimeout(autoLockTimer);
+  const ms = await getAutoLockMs();
+  if (ms > 0) {
+    autoLockTimer = setTimeout(() => {
+      lockVault();
+      // Событие для UI
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("vault:locked"));
+      }
+    }, ms);
+  }
+}
+
+export async function getAutoLockMs(): Promise<number> {
+  const ms = await metaGet<number>(AUTO_LOCK_MS_KEY);
+  return ms ?? 15 * 60 * 1000; // дефолт 15 мин
+}
+
+export async function setAutoLockMs(ms: number): Promise<void> {
+  await metaPut(AUTO_LOCK_MS_KEY, ms);
+  startAutoLockTimer();
 }
 
 function assertUnlocked(): CryptoKey {
@@ -173,6 +209,24 @@ export async function setPassphrase(passphrase: string): Promise<void> {
   });
 }
 
+export async function changePassphrase(
+  oldPassphrase: string,
+  newPassphrase: string
+): Promise<void> {
+  // Сначала разблокируем старым паролем (если vault залочен)
+  if (!isUnlocked()) {
+    await unlockWithPassphrase(oldPassphrase);
+  }
+  // Удаляем старую обёртку
+  await metaDelete("masterKeyPass");
+  // Ставим новую
+  await setPassphrase(newPassphrase);
+}
+
+export async function removePassphrase(): Promise<void> {
+  await metaDelete("masterKeyPass");
+}
+
 export async function unlockWithPassphrase(
   passphrase: string
 ): Promise<void> {
@@ -201,8 +255,6 @@ export async function unlockWithPassphrase(
   masterKeySession = master;
   needsPassphrase = false;
 
-  // На новом устройстве ещё нет deviceKey — создаём и переоборачиваем masterKey,
-  // чтобы дальше unlock был прозрачным.
   const deviceKey = await metaGet<CryptoKey>("deviceKey");
   if (!deviceKey) {
     const newDevice = await crypto.subtle.generateKey(
@@ -221,6 +273,122 @@ export async function unlockWithPassphrase(
       iv: toBase64Url(div),
     });
   }
+  startAutoLockTimer();
+}
+
+/* ----------------------------- Vault Backup / Restore ----------------------------- */
+
+export async function exportVaultBackup(): Promise<VaultBackup> {
+  const key = assertUnlocked();
+  const deviceKey = await metaGet<CryptoKey>("deviceKey");
+  const masterWrapped = await metaGet<{ value: ArrayBuffer; iv: string }>(
+    "masterKeyWrapped"
+  );
+  const passRec = await metaGet<{
+    value: ArrayBuffer;
+    salt: string;
+    iv: string;
+    iterations: number;
+  }>("masterKeyPass");
+  const docs = await idbGetAll<{ enc: Envelope } & any>(STORE.docs);
+  const tokens = await idbGetAll<{ enc: Envelope; providerId: string }>(
+    STORE.tokens
+  );
+
+  // Экспортируем deviceKey (wrapped под masterKey) для восстановления на новом устройстве
+  let deviceKeyWrapped: { value: ArrayBuffer; iv: string } | null = null;
+  if (deviceKey) {
+    const div = crypto.getRandomValues(new Uint8Array(12));
+    const wrapped = await crypto.subtle.wrapKey("raw", deviceKey, key, {
+      name: "AES-GCM",
+      iv: div,
+    });
+    deviceKeyWrapped = { value: wrapped, iv: toBase64Url(div) };
+  }
+
+  return {
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    deviceKeyWrapped,
+    masterKeyWrapped: masterWrapped!,
+    masterKeyPass: passRec || undefined,
+    documents: docs.map((d) => ({ meta: d, enc: d.enc })),
+    tokens: tokens.map((t) => ({ providerId: t.providerId, enc: t.enc })),
+  };
+}
+
+export async function importVaultBackup(
+  backup: VaultBackup,
+  passphrase?: string
+): Promise<void> {
+  // Если есть passphrase — используем её для unwrap masterKey
+  // Иначе ожидаем, что deviceKeyWrapped можно unwrap текущим masterKey (same device)
+  let masterKey: CryptoKey;
+
+  if (passphrase && backup.masterKeyPass) {
+    const kek = await deriveKek(
+      passphrase,
+      fromBase64Url(backup.masterKeyPass.salt),
+      backup.masterKeyPass.iterations
+    );
+    masterKey = await crypto.subtle.unwrapKey(
+      "raw",
+      buf(backup.masterKeyPass.value),
+      kek,
+      { name: "AES-GCM", iv: fromBase64Url(backup.masterKeyPass.iv) },
+      { name: "AES-GCM", length: 256 },
+      false,
+      ["encrypt", "decrypt", "wrapKey", "unwrapKey"]
+    );
+  } else if (backup.deviceKeyWrapped) {
+    // unwrap deviceKey под текущим masterKey, затем unwrap masterKey под deviceKey
+    const key = assertUnlocked();
+    const deviceKey = await crypto.subtle.unwrapKey(
+      "raw",
+      buf(backup.deviceKeyWrapped.value),
+      key,
+      { name: "AES-GCM", iv: fromBase64Url(backup.deviceKeyWrapped.iv) },
+      { name: "AES-GCM", length: 256 },
+      false,
+      ["encrypt", "decrypt", "wrapKey", "unwrapKey"]
+    );
+    masterKey = await crypto.subtle.unwrapKey(
+      "raw",
+      buf(backup.masterKeyWrapped.value),
+      deviceKey,
+      { name: "AES-GCM", iv: fromBase64Url(backup.masterKeyWrapped.iv) },
+      { name: "AES-GCM", length: 256 },
+      false,
+      ["encrypt", "decrypt", "wrapKey", "unwrapKey"]
+    );
+  } else {
+    throw new Error("Невозможно восстановить: нет deviceKeyWrapped и нет passphrase");
+  }
+
+  // Записываем в хранилище
+  masterKeySession = masterKey;
+  await metaPut("masterKeyWrapped", backup.masterKeyWrapped);
+  if (backup.deviceKeyWrapped) {
+    // deviceKey уже есть в памяти (unwrap выше), сохраняем
+    // но нам нужно сохранить deviceKey как CryptoKey — его нет в бэкапе в открытом виде
+    // На практике: если бэкап восстанавливается на то же устройство, deviceKey уже есть.
+    // Если на новое устройство с passphrase — deviceKey создастся в unlockWithPassphrase.
+  }
+  if (backup.masterKeyPass) {
+    await metaPut("masterKeyPass", backup.masterKeyPass);
+  }
+
+  // Очищаем и заливаем документы и токены
+  await idbClear(STORE.docs);
+  await idbClear(STORE.tokens);
+  for (const d of backup.documents) {
+    await idbPut(STORE.docs, { ...d.meta, enc: d.enc });
+  }
+  for (const t of backup.tokens) {
+    await idbPut(STORE.tokens, { providerId: t.providerId, enc: t.enc });
+  }
+
+  startAutoLockTimer();
 }
 
 async function deriveKek(

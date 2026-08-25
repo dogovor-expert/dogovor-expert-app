@@ -7,6 +7,7 @@ import { YandexMetrika } from "@/components/analytics/YandexMetrika";
 import { YandexMetrikaPageView } from "@/components/analytics/YandexMetrikaPageView";
 import { SITE_URL, SITE_NAME, SITE_DESCRIPTION, SITE_KEYWORDS, SITE_CONTACT_EMAIL } from "@/lib/site";
 import { Inter, Playfair_Display, JetBrains_Mono } from "next/font/google";
+import VaultWrapper from "@/components/VaultWrapper";
 
 // Самохостинг шрифтов через next/font: Google Fonts скачиваются при сборке и
 // отдаются с нашего домена (без внешнего раунд-трипа в fonts.googleapis.com).
@@ -95,7 +96,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Canonical />
       </head>
       <body className="font-sans">
-        <AppLayout>{children}</AppLayout>
+        <VaultWrapper>
+          <AppLayout>{children}</AppLayout>
+        </VaultWrapper>
         <YandexMetrika />
         <YandexMetrikaPageView />
       </body>
