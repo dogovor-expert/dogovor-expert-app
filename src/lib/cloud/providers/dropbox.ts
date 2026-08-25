@@ -2,7 +2,7 @@
 // См. https://www.dropbox.com/developers/documentation/http/documentation#oauth2-authorize
 // https://dropbox.tech/developers/pkce--what-and-why-
 
-import type { CloudProvider, CloudTokens, CloudConfig } from "../types";
+import type { CloudProvider, CloudTokens, CloudConfig, CloudFolder } from "../types";
 import { buildAuthUrl, createPKCE, openAuthPopup, parseCodeFromUrl } from "../oauth";
 
 const DROPBOX_AUTH = "https://www.dropbox.com/oauth2/authorize";
@@ -197,6 +197,54 @@ export class DropboxProvider implements CloudProvider {
       name: data.name?.display_name,
       email: data.email,
     };
+  }
+
+  /** Список папок (для folder picker) */
+  async listFolders(tokens: CloudTokens, path: string = "/"): Promise<CloudFolder[]> {
+    const res = await fetch(`${DROPBOX_API}/files/list_folder`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${tokens.accessToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        path: path === "/" ? "" : path,
+        recursive: false,
+        include_media_info: false,
+        include_deleted: false,
+        include_has_explicit_shared_members: false,
+        include_mounted_folders: true,
+        include_non_downloadable_files: true,
+      }),
+    });
+    if (!res.ok) {
+      const txt = await res.text().catch(() => "");
+      throw new Error(`Dropbox list_folder ${res.status}: ${txt}`);
+    }
+    const data = await res.json();
+    return (data.entries || [])
+      .filter((e: any) => e[".tag"] === "folder")
+      .map((e: any) => ({
+        name: e.name,
+        path: e.path_display,
+        isFolder: true as const,
+      }));
+  }
+
+  /** Создание папки (Dropbox API) */
+  async createFolder(tokens: CloudTokens, path: string): Promise<void> {
+    const res = await fetch(`${DROPBOX_API}/files/create_folder_v2`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${tokens.accessToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ path, autorename: false }),
+    });
+    if (!res.ok) {
+      const txt = await res.text().catch(() => "");
+      throw new Error(`Dropbox create_folder ${res.status}: ${txt}`);
+    }
   }
 }
 

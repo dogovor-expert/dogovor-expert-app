@@ -2,7 +2,7 @@
 // Чистый client-side: загружаем gsi клиент, initTokenClient, requestAccessToken.
 // См. https://developers.google.com/identity/oauth2/web/reference/js-reference
 
-import type { CloudProvider, CloudTokens, CloudConfig } from "../types";
+import type { CloudProvider, CloudTokens, CloudConfig, CloudFolder } from "../types";
 
 const GOOGLE_API = "https://www.googleapis.com";
 const DRIVE_UPLOAD = "https://www.googleapis.com/upload/drive/v3/files";
@@ -191,6 +191,49 @@ export class GoogleDriveProvider implements CloudProvider {
     );
     const data = await res.json();
     return { name: data.name, email: data.email };
+  }
+
+  /** Список папок (для folder picker) */
+  async listFolders(tokens: CloudTokens, folderPath: string = "/"): Promise<CloudFolder[]> {
+    const folderName = folderPath.split("/").pop() || "Dogovor.expert";
+    const folders = await this.searchFile(tokens, folderName);
+    let folderId = folders[0]?.id;
+    if (!folderId) return [];
+
+    const q = encodeURIComponent(
+      `'${folderId}' in parents and mimeType = 'application/vnd.google-apps.folder' and trashed = false`
+    );
+    const res = await this.authedFetch(
+      tokens,
+      `https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id,name)`
+    );
+    const data = await res.json();
+    return (data.files || []).map((f: any) => ({
+      name: f.name,
+      path: f.id,
+      isFolder: true as const,
+    }));
+  }
+
+  /** Создание папки (Google Drive API) */
+  async createFolder(tokens: CloudTokens, name: string, parentPath: string): Promise<string> {
+    // Находим parent folder ID
+    const parentName = parentPath.split("/").pop() || "Dogovor.expert";
+    const folders = await this.searchFile(tokens, parentName);
+    const parentId = folders[0]?.id;
+
+    const metadata = {
+      name,
+      mimeType: "application/vnd.google-apps.folder",
+      parents: parentId ? [parentId] : [],
+    };
+    const res = await this.authedFetch(tokens, "https://www.googleapis.com/drive/v3/files", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(metadata),
+    });
+    const data = await res.json();
+    return data.id;
   }
 }
 

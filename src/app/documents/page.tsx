@@ -25,6 +25,7 @@ import { exportDocument, getConnectedProviders } from "@/lib/cloud/manager";
 import { getVaultDoc, draftToVaultPayload } from "@/lib/vault/documents";
 import { initVault } from "@/lib/vault/keyManager";
 import type { CloudProviderId } from "@/lib/cloud/types";
+import FolderPicker from "@/components/FolderPicker";
 import { TEMPLATE_META } from "@/data/templatesMeta";
 import Highlight from "@/components/ui/Highlight";
 import { tokenGroups, textMatchesTokens, scoreText } from "@/lib/search";
@@ -78,6 +79,7 @@ export default function DocumentsPage() {
   const [exporting, setExporting] = useState<string | null>(null);
   const [exportToast, setExportToast] = useState<string | null>(null);
   const [exportMenuOpen, setExportMenuOpen] = useState<string | null>(null);
+  const [folderPicker, setFolderPicker] = useState<{ providerId: CloudProviderId; docId: string; format: "pdf" | "vault-backup" } | null>(null);
   const perPage = 10;
 
   const toDocItem = useCallback((id: string, fields: Record<string, string>, savedAt: string): DocItem => {
@@ -281,6 +283,15 @@ export default function DocumentsPage() {
   };
 
   const handleExportToCloud = async (templateId: string, providerId: string) => {
+    setExportMenuOpen(null);
+    setFolderPicker({
+      providerId: providerId as CloudProviderId,
+      docId: templateId,
+      format: "vault-backup",
+    });
+  };
+
+  const handleExportToCloudWithPath = async (templateId: string, providerId: CloudProviderId, format: "pdf" | "vault-backup", folderPath: string) => {
     setExporting(templateId);
     setExportToast(null);
     try {
@@ -320,10 +331,10 @@ export default function DocumentsPage() {
         vaultBlob = new Blob([JSON.stringify(draftToVaultPayload(draft))], { type: "application/json" });
         fileName = `${tpl?.name || templateId}_${new Date().toISOString().slice(0, 10)}`;
       }
-      await exportDocument(providerId as CloudProviderId, { pdfBlob, vaultBlob }, {
-        format: "vault-backup",
+      await exportDocument(providerId, { pdfBlob, vaultBlob }, {
+        format,
         fileName,
-        remotePath: "/Dogovor.expert",
+        remotePath: folderPath,
       });
       setExportToast(`Экспортировано в ${cloudProviders.find((p) => p.id === providerId)?.name || providerId}`);
       setTimeout(() => setExportToast(null), 4000);
@@ -586,27 +597,32 @@ export default function DocumentsPage() {
                               </button>
                               {exportMenuOpen === doc.id && (
                                 <div
-                                  className="absolute right-0 top-full mt-1 w-48 bg-white border border-gray-200 rounded-xl shadow-lg py-1 z-10"
+                                  className="absolute right-0 top-full mt-1 w-56 bg-white border border-gray-200 rounded-xl shadow-lg py-1 z-10"
                                   onClick={(e) => e.stopPropagation()}
                                 >
                                   {cloudProviders.map((p) => (
-                                    <button
-                                      key={p.id}
-                                      onClick={() => {
-                                        handleExportToCloud(doc.id, p.id);
-                                        setExportMenuOpen(null);
-                                      }}
-                                      disabled={exporting === doc.id}
-                                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 disabled:opacity-50"
-                                    >
-                                      <Upload className="w-4 h-4" />
-                                      {p.name}
-                                      {exporting === doc.id && (
-                                        <span className="ml-auto">
-                                          <Loader2 className="w-4 h-4 animate-spin" />
-                                        </span>
-                                      )}
-                                    </button>
+                                    <div key={p.id} className="px-2 py-1">
+                                      <p className="px-3 py-1 text-xs font-medium text-gray-500 uppercase">{p.name}</p>
+                                      {["vault-backup", "pdf"].map((fmt) => (
+                                        <button
+                                          key={fmt}
+                                          onClick={() => {
+                                            handleExportToCloud(doc.id, p.id);
+                                            setExportMenuOpen(null);
+                                          }}
+                                          disabled={exporting === doc.id}
+                                          className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                                        >
+                                          <Upload className="w-4 h-4" />
+                                          {fmt === "vault-backup" ? "Vault backup (.json)" : "PDF (.pdf)"}
+                                          {exporting === doc.id && (
+                                            <span className="ml-auto">
+                                              <Loader2 className="w-4 h-4 animate-spin" />
+                                            </span>
+                                          )}
+                                        </button>
+                                      ))}
+                                    </div>
                                   ))}
                                 </div>
                               )}
@@ -764,6 +780,25 @@ export default function DocumentsPage() {
       {importToast && (
         <div className="fixed bottom-6 right-6 bg-emerald-600 text-white px-5 py-3 rounded-xl shadow-lg text-sm font-medium z-50 animate-fade-in">
           {importToast}
+        </div>
+      )}
+
+      {folderPicker && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => setFolderPicker(null)}>
+          <div
+            className="bg-white rounded-2xl p-5 w-full max-w-md shadow-2xl max-h-[80vh] overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <FolderPicker
+              providerId={folderPicker.providerId}
+              onSelect={async (path) => {
+                await handleExportToCloudWithPath(folderPicker.docId, folderPicker.providerId, folderPicker.format, path);
+                setFolderPicker(null);
+              }}
+              onCancel={() => setFolderPicker(null)}
+              initialPath="/Dogovor.expert"
+            />
+          </div>
         </div>
       )}
     </div>

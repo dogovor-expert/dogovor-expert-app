@@ -27,6 +27,13 @@ export interface CloudProvider {
   ): Promise<CloudTokens>;
   /** Обновление access_token (если поддерживается провайдером) */
   refreshTokens?(tokens: CloudTokens): Promise<CloudTokens>;
+  /** Список папок (для folder picker) */
+  listFolders?(tokens: CloudTokens, path: string): Promise<CloudFolder[]>;
+  /** Создание папки (для folder picker) */
+  createFolder?(
+    tokens: CloudTokens,
+    ...args: any[]
+  ): Promise<void | string>;
   /** Загрузка файла в облако */
   uploadFile(
     tokens: CloudTokens,
@@ -38,6 +45,12 @@ export interface CloudProvider {
   downloadFile(tokens: CloudTokens, path: string): Promise<Blob>;
   /** Получение информации о пользователе/диске (для проверки подключения) */
   getUserInfo(tokens: CloudTokens): Promise<{ name?: string; email?: string }>;
+}
+
+export interface CloudFolder {
+  name: string;
+  path: string;
+  isFolder: true;
 }
 
 export interface CloudConfig {
