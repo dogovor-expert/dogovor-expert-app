@@ -65,6 +65,22 @@ export function requiresPassphrase(): boolean {
   return needsPassphrase;
 }
 
+/**
+ * Тихая разблокировка без пароля, если это возможно.
+ * На «своём» устройстве deviceKey сохранён в IndexedDB, поэтому после
+ * автолока/перезагрузки хранилище можно разблокировать прозрачно.
+ * Возвращает false только если нужен ввод пароля (новое устройство).
+ */
+export async function ensureUnlockedSilently(): Promise<boolean> {
+  if (isUnlocked()) return true;
+  try {
+    await initVault();
+  } catch {
+    return false;
+  }
+  return isUnlocked();
+}
+
 export async function initVault(): Promise<void> {
   const deviceKey = await metaGet<CryptoKey>("deviceKey");
   const masterWrapped = await metaGet<{ value: ArrayBuffer; iv: string }>(

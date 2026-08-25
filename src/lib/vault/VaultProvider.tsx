@@ -5,6 +5,7 @@ import {
   useEffect,
   useState,
   useCallback,
+  useRef,
   ReactNode,
 } from "react";
 import {
@@ -12,6 +13,7 @@ import {
   lockVault,
   isUnlocked,
   requiresPassphrase,
+  ensureUnlockedSilently,
   unlockWithPassphrase,
   setPassphrase,
   changePassphrase,
@@ -23,6 +25,7 @@ import {
   setAutoLockMs,
   type VaultBackup,
 } from "./keyManager";
+import VaultUnlockDialog from "@/components/vault/VaultUnlockDialog";
 
 interface VaultContextValue {
   unlocked: boolean;
@@ -31,6 +34,12 @@ interface VaultContextValue {
   autoLockMs: number;
   unlock: (passphrase: string) => Promise<void>;
   lock: () => void;
+  /**
+   * Гарантирует, что хранилище расшифровано перед операцией.
+   * Сначала пробует тихую разблокировку (deviceKey), затем —
+   * показывает диалог ввода пароля. Возвращает false при отмене.
+   */
+  requireUnlock: () => Promise<boolean>;
   setPassphrase: (passphrase: string) => Promise<void>;
   changePassphrase: (oldP: string, newP: string) => Promise<void>;
   removePassphrase: () => Promise<void>;
@@ -49,6 +58,7 @@ const emptyContext: VaultContextValue = {
   autoLockMs: 15 * 60 * 1000,
   unlock: async () => {},
   lock: () => {},
+  requireUnlock: async () => false,
   setPassphrase: async () => {},
   changePassphrase: async () => {},
   removePassphrase: async () => {},
@@ -64,6 +74,8 @@ export function VaultProvider({ children }: { children: ReactNode }) {
   const [hasPassphraseState, setHasPassphraseState] = useState(false);
   const [autoLockMs, setAutoLockMsState] = useState(15 * 60 * 1000);
   const [loading, setLoading] = useState(true);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const resolverRef = useRef<((ok: boolean) => void) | null>(null);
 
   const refresh = useCallback(async () => {
     const [u, n, h, a] = await Promise.all([
@@ -87,8 +99,9 @@ export function VaultProvider({ children }: { children: ReactNode }) {
     init();
 
     function onLocked() {
+      // Автолок очищает только сессию — на своём устройстве тихая
+      // разблокировка возможна, поэтому needsPassphrase НЕ трогаем.
       setUnlocked(false);
-      setNeedsPassphrase(true);
     }
     window.addEventListener("vault:locked", onLocked);
     return () => window.removeEventListener("vault:locked", onLocked);
@@ -99,10 +112,40 @@ export function VaultProvider({ children }: { children: ReactNode }) {
     await refresh();
   };
 
+  /**
+   * Гарантирует расшифровку хранилища. Тихо разблокирует через deviceKey;
+   * если это невозможно (новое устройство) — показывает диалог пароля.
+   */
+  const requireUnlock = useCallback(async (): Promise<boolean> => {
+    const okSilent = await ensureUnlockedSilently();
+    if (okSilent) {
+      await refresh();
+      return true;
+    }
+    // Нужен пароль — открываем диалог и ждём результат
+    const ok = await new Promise<boolean>((resolve) => {
+      resolverRef.current = resolve;
+      setDialogOpen(true);
+    });
+    if (ok) await refresh();
+    return ok;
+  }, [refresh]);
+
   const lock = () => {
     lockVault();
     setUnlocked(false);
-    setNeedsPassphrase(true);
+  };
+
+  const handleDialogUnlocked = () => {
+    setDialogOpen(false);
+    resolverRef.current?.(true);
+    resolverRef.current = null;
+  };
+
+  const handleDialogCancel = () => {
+    setDialogOpen(false);
+    resolverRef.current?.(false);
+    resolverRef.current = null;
   };
 
   const doSetPassphrase = async (passphrase: string) => {
@@ -150,6 +193,7 @@ export function VaultProvider({ children }: { children: ReactNode }) {
     autoLockMs,
     unlock,
     lock,
+    requireUnlock,
     setPassphrase: doSetPassphrase,
     changePassphrase: doChangePassphrase,
     removePassphrase: doRemovePassphrase,
@@ -162,6 +206,14 @@ export function VaultProvider({ children }: { children: ReactNode }) {
   return (
     <VaultContext.Provider value={value}>
       {children}
+      {!loading && (
+        <VaultUnlockDialog
+          open={dialogOpen}
+          mandatory={needsPassphrase}
+          onUnlocked={handleDialogUnlocked}
+          onCancel={handleDialogCancel}
+        />
+      )}
     </VaultContext.Provider>
   );
 }

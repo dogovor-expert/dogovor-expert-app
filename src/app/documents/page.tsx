@@ -24,6 +24,7 @@ import { getAllDrafts, clearDraft, clearDraftVersions, getDraftVersions, restore
 import { exportDocument, getConnectedProviders } from "@/lib/cloud/manager";
 import { getVaultDoc, draftToVaultPayload } from "@/lib/vault/documents";
 import { initVault } from "@/lib/vault/keyManager";
+import { useVault } from "@/lib/vault/VaultProvider";
 import type { CloudProviderId } from "@/lib/cloud/types";
 import FolderPicker from "@/components/FolderPicker";
 import { TEMPLATE_META } from "@/data/templatesMeta";
@@ -66,6 +67,7 @@ const CATEGORY_BADGE: Record<string, { variant: "blue" | "green" | "amber" | "gr
 
 export default function DocumentsPage() {
   const router = useRouter();
+  const { requireUnlock } = useVault();
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
   const [sortBy, setSortBy] = useState<"date" | "name">("date");
@@ -243,6 +245,14 @@ export default function DocumentsPage() {
   };
 
   const handleMigrateToVault = async (templateId: string) => {
+    // Гарантируем расшифровку хранилища: тихо через deviceKey,
+    // при необходимости — диалог пароля.
+    const ok = await requireUnlock();
+    if (!ok) {
+      setExportToast("Операция отменена — хранилище осталось заблокированным");
+      setTimeout(() => setExportToast(null), 4000);
+      return;
+    }
     const server = await fetch("/api/documents").then((r) =>
       r.ok ? r.json() : null
     );
@@ -269,6 +279,8 @@ export default function DocumentsPage() {
       clearDraft(templateId);
       clearDraftVersions(templateId);
       loadDocs();
+      setExportToast("Документ перенесён в защищённое хранилище на этом устройстве");
+      setTimeout(() => setExportToast(null), 4000);
     } catch (e) {
       alert(`Ошибка миграции: ${(e as Error).message}`);
     }
@@ -295,6 +307,13 @@ export default function DocumentsPage() {
     setExporting(templateId);
     setExportToast(null);
     try {
+      // Читаем vault-документ: при блокировке — тихая разблокировка/диалог
+      const ok = await requireUnlock();
+      if (!ok) {
+        setExportToast("Операция отменена — хранилище осталось заблокированным");
+        setTimeout(() => setExportToast(null), 4000);
+        return;
+      }
       // Получаем документ из vault (если есть) или из localStorage
       const vaultDoc = await getVaultDoc(templateId);
       let pdfBlob: Blob | undefined;
@@ -402,6 +421,30 @@ export default function DocumentsPage() {
         </div>
       </div>
 
+      {/* Подсказка про облачные диски — пока не подключён ни один */}
+      {cloudProviders.length === 0 && (
+        <Link
+          href="/connections"
+          className="mb-6 flex items-center gap-3 p-4 rounded-xl border border-dashed border-gray-300 bg-white hover:border-brand-400 hover:bg-brand-50/40 transition-colors group"
+        >
+          <div className="w-9 h-9 rounded-lg bg-gray-100 group-hover:bg-brand-100 flex items-center justify-center flex-shrink-0 transition-colors">
+            <Cloud className="w-4.5 h-4.5 text-gray-500 group-hover:text-brand-600 transition-colors" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium text-gray-900">
+              Подключите облачный диск для резервных копий
+            </p>
+            <p className="text-xs text-gray-600 mt-0.5">
+              Яндекс.Диск, Google Drive или Dropbox — документы выгружаются
+              в зашифрованном виде, только по вашему нажатию.
+            </p>
+          </div>
+          <span className="text-sm font-medium text-brand-600 flex-shrink-0">
+            Настроить →
+          </span>
+        </Link>
+      )}
+
       {importCount > 0 && (
         <div className="mb-6 p-4 rounded-xl border border-brand-200 bg-brand-50/60 flex flex-col sm:flex-row sm:items-center gap-3">
           <div className="flex items-center gap-3 flex-1">
@@ -417,8 +460,7 @@ export default function DocumentsPage() {
               </p>
             </div>
           </div>
-          <Button
-            variant="primary"
+          <Button            variant="primary"
             size="sm"
             onClick={handleImport}
             disabled={importing}
@@ -579,27 +621,40 @@ export default function DocumentsPage() {
                           >
                             <Clock className="w-4 h-4" />
                           </button>
-                          {cloudProviders.length > 0 && (
-                            <>
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setExportMenuOpen(exportMenuOpen === doc.id ? null : doc.id);
-                                }}
-                                className={`p-1.5 rounded-lg transition-colors ${
-                                  exportMenuOpen === doc.id
-                                    ? "bg-brand-100 text-brand-600"
-                                    : "hover:bg-gray-100 text-gray-600"
-                                }`}
-                                title="Экспорт в облако"
-                              >
-                                <Cloud className="w-4 h-4" />
-                              </button>
-                              {exportMenuOpen === doc.id && (
-                                <div
-                                  className="absolute right-0 top-full mt-1 w-56 bg-white border border-gray-200 rounded-xl shadow-lg py-1 z-10"
-                                  onClick={(e) => e.stopPropagation()}
-                                >
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setExportMenuOpen(exportMenuOpen === doc.id ? null : doc.id);
+                            }}
+                            className={`p-1.5 rounded-lg transition-colors ${
+                              exportMenuOpen === doc.id
+                                ? "bg-brand-100 text-brand-600"
+                                : "hover:bg-gray-100 text-gray-600"
+                            }`}
+                            title={cloudProviders.length > 0 ? "Экспорт в облако" : "Подключить облачный диск"}
+                          >
+                            <Cloud className="w-4 h-4" />
+                          </button>
+                          {exportMenuOpen === doc.id && (
+                            <div
+                              className="absolute right-0 top-full mt-1 w-56 bg-white border border-gray-200 rounded-xl shadow-lg py-1 z-10"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              {cloudProviders.length === 0 ? (
+                                <>
+                                  <p className="px-3 py-2 text-xs text-gray-500 leading-snug">
+                                    Облачный диск ещё не подключён
+                                  </p>
+                                  <Link
+                                    href="/connections"
+                                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-brand-600 hover:bg-brand-50"
+                                  >
+                                    <Cloud className="w-4 h-4" />
+                                    Подключить Яндекс/Google/Dropbox
+                                  </Link>
+                                </>
+                              ) : (
+                                <>
                                   {cloudProviders.map((p) => (
                                     <div key={p.id} className="px-2 py-1">
                                       <p className="px-3 py-1 text-xs font-medium text-gray-500 uppercase">{p.name}</p>
@@ -624,9 +679,18 @@ export default function DocumentsPage() {
                                       ))}
                                     </div>
                                   ))}
-                                </div>
+                                </>
                               )}
-                            </>
+                              <div className="border-t border-gray-100 mt-1 pt-1">
+                                <Link
+                                  href="/connections"
+                                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-brand-600 hover:bg-brand-50"
+                                >
+                                  <Plus className="w-4 h-4" />
+                                  Управление дисками…
+                                </Link>
+                              </div>
+                            </div>
                           )}
                           <button
                             onClick={() => handleMigrateToVault(doc.id)}
