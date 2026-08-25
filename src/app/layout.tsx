@@ -6,6 +6,13 @@ import { Canonical } from "@/components/seo/Canonical";
 import { YandexMetrika } from "@/components/analytics/YandexMetrika";
 import { YandexMetrikaPageView } from "@/components/analytics/YandexMetrikaPageView";
 import { SITE_URL, SITE_NAME, SITE_DESCRIPTION, SITE_KEYWORDS, SITE_CONTACT_EMAIL } from "@/lib/site";
+import { Inter, Playfair_Display, JetBrains_Mono } from "next/font/google";
+
+// Самохостинг шрифтов через next/font: Google Fonts скачиваются при сборке и
+// отдаются с нашего домена (без внешнего раунд-трипа в fonts.googleapis.com).
+const inter = Inter({ subsets: ["latin", "cyrillic"], variable: "--font-inter", display: "swap" });
+const playfair = Playfair_Display({ subsets: ["latin", "cyrillic"], variable: "--font-playfair", display: "swap" });
+const jetbrains = JetBrains_Mono({ subsets: ["latin", "cyrillic"], variable: "--font-jetbrains", display: "swap" });
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -55,7 +62,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="ru">
+    <html lang="ru" className={`${inter.variable} ${playfair.variable} ${jetbrains.variable}`}>
       <head>
         <JsonLd
           data={[
@@ -87,7 +94,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
         <Canonical />
       </head>
-      <body>
+      <body className="font-sans">
         <AppLayout>{children}</AppLayout>
         <YandexMetrika />
         <YandexMetrikaPageView />
