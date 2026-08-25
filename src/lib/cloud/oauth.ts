@@ -47,16 +47,24 @@ export function openAuthPopup(
     "oauth",
     `width=${width},height=${height},left=${left},top=${top}`
   );
-  if (!popup) throw new Error("Попап заблокирован браузером — разрешите всплывающие окна");
+  if (!popup) throw new Error("Попап заблокирован браузером — разрешите всплывающие окна для этого сайта");
 
   return new Promise((resolve, reject) => {
+    const startedAt = Date.now();
     const timer = setInterval(() => {
       if (popup.closed) {
         clearInterval(timer);
-        reject(new Error("Окно авторизации закрыто пользователем"));
+        const waited = Date.now() - startedAt;
+        reject(
+          new Error(
+            waited < 2000
+              ? "Окно авторизации закрылось слишком быстро — проверьте, что браузер не блокирует всплывающие окна"
+              : "Авторизация не завершена. Если в окне была ошибка вида «приложение не найдено» — Client ID указан неверно. Проверьте его и Redirect URI по инструкции на этой странице"
+          )
+        );
       }
       try {
-        // Попробуем прочитать location — сработает, если redirect_uri того же origin
+        // Читаем location — сработает после редиректа на наш origin
         const href = popup.location.href;
         const hash = popup.location.hash;
         if (hash && (hash.includes("access_token=") || hash.includes("code=") || hash.includes("error="))) {
@@ -64,14 +72,13 @@ export function openAuthPopup(
           popup.close();
           resolve(hash);
         }
-        // Если редирект вернул на нашу страницу с query code (Dropbox PKCE)
         if (href.includes("code=") || href.includes("error=")) {
           clearInterval(timer);
           popup.close();
           resolve(href);
         }
       } catch {
-        // cross-origin — пока popup не редиректился на наш origin, location недоступен
+        // cross-origin — пока провайдер не вернул нас на свой origin
       }
     }, 100);
   });

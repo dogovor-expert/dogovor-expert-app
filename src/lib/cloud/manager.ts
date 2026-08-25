@@ -139,6 +139,13 @@ export async function connectProvider(
     // Яндекс: implicit token в фрагменте попапа
     const authUrl = provider.buildAuthUrl(config);
     const fragment = await openAuthPopup(authUrl);
+    // Понятные ошибки от Яндекса (error=access_denied, app not found и т.п.)
+    if (fragment.includes("error=")) {
+      const sp = new URLSearchParams(fragment.replace(/^#/, ""));
+      const err = sp.get("error") || "unknown";
+      if (err === "access_denied") throw new Error("Доступ не выдан: вы отказались в окне Яндекса. Повторите и нажмите «Разрешить».");
+      throw new Error(`Яндекс отклонил авторизацию (${err}). Проверьте Client ID и Redirect URI по инструкции на этой странице.`);
+    }
     tokens = await provider.exchangeCodeForTokens(config, fragment);
   }
 
