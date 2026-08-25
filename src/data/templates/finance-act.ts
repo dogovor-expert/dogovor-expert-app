@@ -66,12 +66,12 @@ function signPairLeft(field1: string, label1: string, field2: string, label2: st
   return `
   <div class="flex justify-between items-end text-xs border-t border-zinc-300 pt-4 mt-10">
     <div>
-      <p class="font-bold mb-1">{{{${field1}}}}</p>
+      <p class="font-bold mb-1">{{${field1}}}</p>
       <div class="border-b border-zinc-950 w-56 h-5 mb-1"></div>
       <p class="text-zinc-400 text-[10px]">${label1}</p>
     </div>
     <div class="text-right">
-      <p class="font-bold mb-1">{{{${field2}}}}</p>
+      <p class="font-bold mb-1">{{${field2}}}</p>
       <div class="border-b border-zinc-950 w-56 h-5 mb-1"></div>
       <p class="text-zinc-400 text-[10px]">${label2}</p>
     </div>

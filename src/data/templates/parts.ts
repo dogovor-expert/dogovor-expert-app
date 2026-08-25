@@ -69,23 +69,23 @@ export function sideFields(
 export function sideBlock(s: string, role: string): string {
   return `
       {{#${s}_status_is_person}}
-        <p class="mb-1 text-sm"><strong>${role}: {{{${s}_name}}}</strong></p>
-        {{#${s}_passport}}<p class="text-xs mb-0.5">Паспорт: {{{${s}_passport}}}</p>{{/${s}_passport}}
-        {{#${s}_address}}<p class="text-xs mb-0.5">Адрес: {{{${s}_address}}}</p>{{/${s}_address}}
-        {{#${s}_phone}}<p class="text-xs mb-0.5">Телефон: {{{${s}_phone}}}</p>{{/${s}_phone}}
+        <p class="mb-1 text-sm"><strong>${role}: {{${s}_name}}</strong></p>
+        {{#${s}_passport}}<p class="text-xs mb-0.5">Паспорт: {{${s}_passport}}</p>{{/${s}_passport}}
+        {{#${s}_address}}<p class="text-xs mb-0.5">Адрес: {{${s}_address}}</p>{{/${s}_address}}
+        {{#${s}_phone}}<p class="text-xs mb-0.5">Телефон: {{${s}_phone}}</p>{{/${s}_phone}}
       {{/${s}_status_is_person}}
       {{#${s}_status_is_ip}}
-        <p class="mb-1 text-sm"><strong>Индивидуальный предприниматель {{{${s}_name}}}</strong></p>
-        {{#${s}_inn}}<p class="text-xs mb-0.5">ИНН: {{{${s}_inn}}}</p>{{/${s}_inn}}
-        {{#${s}_address}}<p class="text-xs mb-0.5">Адрес: {{{${s}_address}}}</p>{{/${s}_address}}
-        {{#${s}_phone}}<p class="text-xs mb-0.5">Телефон: {{{${s}_phone}}}</p>{{/${s}_phone}}
+        <p class="mb-1 text-sm"><strong>Индивидуальный предприниматель {{${s}_name}}</strong></p>
+        {{#${s}_inn}}<p class="text-xs mb-0.5">ИНН: {{${s}_inn}}</p>{{/${s}_inn}}
+        {{#${s}_address}}<p class="text-xs mb-0.5">Адрес: {{${s}_address}}</p>{{/${s}_address}}
+        {{#${s}_phone}}<p class="text-xs mb-0.5">Телефон: {{${s}_phone}}</p>{{/${s}_phone}}
       {{/${s}_status_is_ip}}
       {{#${s}_status_is_legal}}
-        <p class="mb-1 text-sm"><strong>{{{${s}_name}}}</strong></p>
-        {{#${s}_inn}}<p class="text-xs mb-0.5">ИНН: {{{${s}_inn}}}</p>{{/${s}_inn}}
-        {{#${s}_rep}}<p class="text-xs mb-0.5">В лице: {{{${s}_rep}}}, действующего на основании {{{${s}_basis}}}</p>{{/${s}_rep}}
-        {{#${s}_address}}<p class="text-xs mb-0.5">Адрес: {{{${s}_address}}}</p>{{/${s}_address}}
-        {{#${s}_phone}}<p class="text-xs mb-0.5">Телефон: {{{${s}_phone}}}</p>{{/${s}_phone}}
+        <p class="mb-1 text-sm"><strong>{{${s}_name}}</strong></p>
+        {{#${s}_inn}}<p class="text-xs mb-0.5">ИНН: {{${s}_inn}}</p>{{/${s}_inn}}
+        {{#${s}_rep}}<p class="text-xs mb-0.5">В лице: {{${s}_rep}}, действующего на основании {{${s}_basis}}</p>{{/${s}_rep}}
+        {{#${s}_address}}<p class="text-xs mb-0.5">Адрес: {{${s}_address}}</p>{{/${s}_address}}
+        {{#${s}_phone}}<p class="text-xs mb-0.5">Телефон: {{${s}_phone}}</p>{{/${s}_phone}}
       {{/${s}_status_is_legal}}`;
 }
 
@@ -128,18 +128,18 @@ export function rentIntro(l: string, t: string): string {
 export function pairIntro(s1: string, r1: string, s2: string, r2: string): string {
   return `
   <p class="mb-4 text-justify">
-    {{#${s1}_status_is_person}}Гражданин(-ка) РФ <strong>{{{${s1}_name}}}</strong>{{/${s1}_status_is_person}}
-    {{#${s1}_status_is_ip}}Индивидуальный предприниматель <strong>{{{${s1}_name}}}</strong>{{/${s1}_status_is_ip}}
-    {{#${s1}_status_is_legal}}<strong>{{{${s1}_name}}}</strong>{{/${s1}_status_is_legal}}
-    {{#${s1}_status_is_legal}}{{#${s1}_rep}}в лице {{{${s1}_rep}}}, действующего на основании {{{${s1}_basis}}},{{/${s1}_rep}}{{/${s1}_status_is_legal}}
-    {{#${s1}_inn}}ИНН {{{${s1}_inn}}},{{/${s1}_inn}} именуемый(ая) в дальнейшем «${r1}», с одной стороны, и
+    {{#${s1}_status_is_person}}Гражданин(-ка) РФ <strong>{{${s1}_name}}</strong>{{/${s1}_status_is_person}}
+    {{#${s1}_status_is_ip}}Индивидуальный предприниматель <strong>{{${s1}_name}}</strong>{{/${s1}_status_is_ip}}
+    {{#${s1}_status_is_legal}}<strong>{{${s1}_name}}</strong>{{/${s1}_status_is_legal}}
+    {{#${s1}_status_is_legal}}{{#${s1}_rep}}в лице {{${s1}_rep}}, действующего на основании {{${s1}_basis}},{{/${s1}_rep}}{{/${s1}_status_is_legal}}
+    {{#${s1}_inn}}ИНН {{${s1}_inn}},{{/${s1}_inn}} именуемый(ая) в дальнейшем «${r1}», с одной стороны, и
   </p>
   <p class="mb-4 text-justify">
-    {{#${s2}_status_is_person}}гражданин(-ка) РФ <strong>{{{${s2}_name}}}</strong>{{/${s2}_status_is_person}}
-    {{#${s2}_status_is_ip}}индивидуальный предприниматель <strong>{{{${s2}_name}}}</strong>{{/${s2}_status_is_ip}}
-    {{#${s2}_status_is_legal}}<strong>{{{${s2}_name}}}</strong>{{/${s2}_status_is_legal}}
-    {{#${s2}_status_is_legal}}{{#${s2}_rep}}в лице {{{${s2}_rep}}}, действующего на основании {{{${s2}_basis}}},{{/${s2}_rep}}{{/${s2}_status_is_legal}}
-    {{#${s2}_inn}}ИНН {{{${s2}_inn}}},{{/${s2}_inn}} именуемый(ая) в дальнейшем «${r2}», с другой стороны, заключили настоящий договор о нижеследующем:
+    {{#${s2}_status_is_person}}гражданин(-ка) РФ <strong>{{${s2}_name}}</strong>{{/${s2}_status_is_person}}
+    {{#${s2}_status_is_ip}}индивидуальный предприниматель <strong>{{${s2}_name}}</strong>{{/${s2}_status_is_ip}}
+    {{#${s2}_status_is_legal}}<strong>{{${s2}_name}}</strong>{{/${s2}_status_is_legal}}
+    {{#${s2}_status_is_legal}}{{#${s2}_rep}}в лице {{${s2}_rep}}, действующего на основании {{${s2}_basis}},{{/${s2}_rep}}{{/${s2}_status_is_legal}}
+    {{#${s2}_inn}}ИНН {{${s2}_inn}},{{/${s2}_inn}} именуемый(ая) в дальнейшем «${r2}», с другой стороны, заключили настоящий договор о нижеследующем:
   </p>`;
 }
 
@@ -148,22 +148,22 @@ export function pairSign(s1: string, r1: string, s2: string, r2: string): string
   <div class="grid grid-cols-2 gap-6 mt-8 text-xs border-t border-zinc-300 pt-4">
     <div>
       <div class="font-bold mb-1 uppercase text-black">${r1}:</div>
-      {{#${s1}_status_is_person}}<p class="mb-1"><strong>{{{${s1}_name}}}</strong></p>{{/${s1}_status_is_person}}
-      {{#${s1}_status_is_ip}}<p class="mb-1"><strong>ИП {{{${s1}_name}}}</strong></p>{{/${s1}_status_is_ip}}
-      {{#${s1}_status_is_legal}}<p class="mb-1"><strong>{{{${s1}_name}}}</strong></p>{{/${s1}_status_is_legal}}
-      {{#${s1}_inn}}<p class="text-zinc-500 text-[11px]">ИНН: {{{${s1}_inn}}}</p>{{/${s1}_inn}}
-      {{#${s1}_address}}<p class="text-zinc-500 text-[11px]">Адрес: {{{${s1}_address}}}</p>{{/${s1}_address}}
-      {{#${s1}_phone}}<p class="text-zinc-500 text-[11px]">Телефон: {{{${s1}_phone}}}</p>{{/${s1}_phone}}
+      {{#${s1}_status_is_person}}<p class="mb-1"><strong>{{${s1}_name}}</strong></p>{{/${s1}_status_is_person}}
+      {{#${s1}_status_is_ip}}<p class="mb-1"><strong>ИП {{${s1}_name}}</strong></p>{{/${s1}_status_is_ip}}
+      {{#${s1}_status_is_legal}}<p class="mb-1"><strong>{{${s1}_name}}</strong></p>{{/${s1}_status_is_legal}}
+      {{#${s1}_inn}}<p class="text-zinc-500 text-[11px]">ИНН: {{${s1}_inn}}</p>{{/${s1}_inn}}
+      {{#${s1}_address}}<p class="text-zinc-500 text-[11px]">Адрес: {{${s1}_address}}</p>{{/${s1}_address}}
+      {{#${s1}_phone}}<p class="text-zinc-500 text-[11px]">Телефон: {{${s1}_phone}}</p>{{/${s1}_phone}}
       <div class="mt-8 border-b border-zinc-900 w-44 h-5 flex justify-end items-end text-[10px] text-zinc-400">Подпись</div>
     </div>
     <div>
       <div class="font-bold mb-1 uppercase text-black">${r2}:</div>
-      {{#${s2}_status_is_person}}<p class="mb-1"><strong>{{{${s2}_name}}}</strong></p>{{/${s2}_status_is_person}}
-      {{#${s2}_status_is_ip}}<p class="mb-1"><strong>ИП {{{${s2}_name}}}</strong></p>{{/${s2}_status_is_ip}}
-      {{#${s2}_status_is_legal}}<p class="mb-1"><strong>{{{${s2}_name}}}</strong></p>{{/${s2}_status_is_legal}}
-      {{#${s2}_inn}}<p class="text-zinc-500 text-[11px]">ИНН: {{{${s2}_inn}}}</p>{{/${s2}_inn}}
-      {{#${s2}_address}}<p class="text-zinc-500 text-[11px]">Адрес: {{{${s2}_address}}}</p>{{/${s2}_address}}
-      {{#${s2}_phone}}<p class="text-zinc-500 text-[11px]">Телефон: {{{${s2}_phone}}}</p>{{/${s2}_phone}}
+      {{#${s2}_status_is_person}}<p class="mb-1"><strong>{{${s2}_name}}</strong></p>{{/${s2}_status_is_person}}
+      {{#${s2}_status_is_ip}}<p class="mb-1"><strong>ИП {{${s2}_name}}</strong></p>{{/${s2}_status_is_ip}}
+      {{#${s2}_status_is_legal}}<p class="mb-1"><strong>{{${s2}_name}}</strong></p>{{/${s2}_status_is_legal}}
+      {{#${s2}_inn}}<p class="text-zinc-500 text-[11px]">ИНН: {{${s2}_inn}}</p>{{/${s2}_inn}}
+      {{#${s2}_address}}<p class="text-zinc-500 text-[11px]">Адрес: {{${s2}_address}}</p>{{/${s2}_address}}
+      {{#${s2}_phone}}<p class="text-zinc-500 text-[11px]">Телефон: {{${s2}_phone}}</p>{{/${s2}_phone}}
       <div class="mt-8 border-b border-zinc-900 w-44 h-5 flex justify-end items-end text-[10px] text-zinc-400">Подпись</div>
     </div>
   </div>
