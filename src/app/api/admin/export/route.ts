@@ -6,7 +6,13 @@ import { getDirectory } from "@/lib/admin-data";
 function csvEscape(v: unknown): string {
   if (v === null || v === undefined) return "";
   const s = String(v);
-  return /[",\n;]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  // Prevent CSV formula injection: prefix with ' if starts with = + - @
+  const hasFormulaPrefix = /^[=+\-@]/.test(s);
+  const needsQuotes = /[",\n;]/.test(s);
+  let result = s;
+  if (hasFormulaPrefix) result = "'" + result;
+  if (needsQuotes) result = `"${result.replace(/"/g, '""')}"`;
+  return result;
 }
 
 function toCsv(rows: Record<string, unknown>[], headers: string[], keys: string[]): string {

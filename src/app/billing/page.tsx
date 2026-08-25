@@ -75,7 +75,7 @@ export default function BillingPage() {
       }
       const json = await res.json().catch(() => null);
       if (!res.ok) {
-        showToast(json?.error === "unauthorized" ? "Войдите в аккаунт, чтобы оформить подписку" : "Не удалось создать платёж. Попробуйте позже");
+        showToast(json?.error === "unauthorized" ? "Войдите в аккаунт, чтобы оформить подписку" : (json?.detail ? `Ошибка оплаты: ${json.detail}` : "Не удалось создать платёж. Попробуйте позже"));
         setPaying(false);
         return;
       }

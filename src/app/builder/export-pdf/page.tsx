@@ -71,9 +71,12 @@ function ExportPdfInner() {
       const docs: string[] = [];
       const list = packTemplates.length > 0 ? packTemplates : [template];
 
+      const { TEMPLATE_PREVIEWS } = await import("@/data/templatePreviews");
+      const { loadDraft } = await import("@/lib/autosave");
       for (const t of list) {
-        const { TEMPLATE_PREVIEWS } = await import("@/data/templatePreviews");
-        const html = renderTemplateDocument(t, buildTemplateDefaults(t), {
+        const draft = loadDraft(t.id);
+        const values = draft?.values ?? buildTemplateDefaults(t);
+        const html = renderTemplateDocument(t, values, {
           previewTemplate: TEMPLATE_PREVIEWS[t.id],
         });
         docs.push(html);

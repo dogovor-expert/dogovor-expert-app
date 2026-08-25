@@ -32,7 +32,7 @@ import { syncDraft, syncDelete, setUserFlag } from "@/lib/sync";
 import { createClient } from "@/lib/supabase/client";
 import { renderTemplateDocument, buildPackValues } from "@/lib/renderDocument";
 import { getSigning, canShowSignSheet } from "@/data/signingMeta";
-import { DOC_DESIGNS, type DesignId } from "@/lib/docDesign";
+import { type DesignId } from "@/lib/docDesign";
 import { buildTemplateDefaults, getGreeting, normalizeTypography, todayStr } from "@/lib/format";
 import dynamic from "next/dynamic";
 import ProgressSteps from "@/components/builder/ProgressSteps";
@@ -81,6 +81,7 @@ function HomeContent() {
       const pid = p ? preferBrief(p) : p;
       if (pid && LEGAL_TEMPLATES.find((t) => t.id === pid)) {
         setSelectedTemplateId(pid);
+        try { localStorage.setItem("dogovor_last_template", pid); } catch {}
         setWizardStep("form");
         return true;
       }
@@ -95,7 +96,13 @@ function HomeContent() {
     return () => clearTimeout(t);
   }, []);
 
-  const [selectedTemplateId, setSelectedTemplateId] = useState<string>("dkp-auto-short");
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string>(() => {
+    try {
+      const saved = localStorage.getItem("dogovor_last_template");
+      if (saved && LEGAL_TEMPLATES.some((t) => t.id === saved)) return saved;
+    } catch {}
+    return "dkp-auto-short";
+  });
   const [wizardStep, setWizardStep] = useState<"select" | "form">("select");
   const [formValues, setFormValues] = useState<Record<string, string>>(() => {
     const t =
@@ -159,7 +166,7 @@ function HomeContent() {
     setToast(msg);
     setTimeout(() => setToast(null), 4000);
   };
-  const [designId, setDesignId] = useState<DesignId>("classic");
+  const designId: DesignId = "classic";
   const [signSeller, setSignSeller] = useState<string | null>(null);
   const [signBuyer, setSignBuyer] = useState<string | null>(null);
 
@@ -821,6 +828,7 @@ function HomeContent() {
     });
     pendingMergeRef.current = merged;
     setSelectedTemplateId(templateId);
+    try { localStorage.setItem("dogovor_last_template", templateId); } catch {}
   };
 
   const openDraft = (d: DraftData) => {
@@ -833,6 +841,7 @@ function HomeContent() {
       setDraftInfos(getAllDrafts());
     } else {
       setSelectedTemplateId(d.templateId);
+      try { localStorage.setItem("dogovor_last_template", d.templateId); } catch {}
     }
   };
 
@@ -1361,9 +1370,13 @@ function HomeContent() {
       .catch(() => undefined);
   };
 
-  const costCalc = calculateCosts(
-    Number(formValues.contract_price || 0),
-    ownershipYears ? Number(ownershipYears) : undefined
+  const costCalc = useMemo(
+    () =>
+      calculateCosts(
+        Number(formValues.contract_price || 0),
+        ownershipYears ? Number(ownershipYears) : undefined
+      ),
+    [formValues.contract_price, ownershipYears]
   );
 
   const hasContractPrice = template.fields.some((f) => f.id === "contract_price");
@@ -1440,6 +1453,7 @@ function HomeContent() {
             onToggleFavorite={toggleFavorite}
             onSelectTemplate={(id) => {
               setSelectedTemplateId(preferBrief(id));
+              try { localStorage.setItem("dogovor_last_template", preferBrief(id)); } catch {}
               setWizardStep("form");
             }}
           />
@@ -1583,8 +1597,12 @@ function HomeContent() {
                   onOpenEmailModal={handleExportEmail}
                   emailSending={emailSending}
                   onBackToForm={backToForm}
-                  designId={designId}
-                  onDesignChange={setDesignId}
+                  watermark={
+                    subscriptionActive
+                      ? undefined
+                      : "Сформировано бесплатно на сервисе Dogovor"
+                  }
+                  onPagesChange={setExportPages}
                 />
               </div>
             )}
@@ -1856,6 +1874,7 @@ function HomeContent() {
 
       {drawingFor && (
         <SignCanvasModal
+          isOpen={true}
           drawingFor={drawingFor}
           onClose={() => setDrawingFor(null)}
           onSave={saveDrawnSign}
@@ -1863,7 +1882,7 @@ function HomeContent() {
       )}
 
       {paywallOpen && (
-        <PaywallModal onClose={() => setPaywallOpen(false)} />
+        <PaywallModal isOpen={true} onClose={() => setPaywallOpen(false)} />
       )}
 
       {emailModalOpen && (

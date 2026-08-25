@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { limiters, clientIp, checkRateLimit, rateLimitResponse } from "@/lib/ratelimit";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const PDF_MAGIC = "%PDF-";
 
 const BODY_HTML = (safeFilename: string) => `<div style="font-family:Arial,sans-serif;max-width:520px;margin:0 auto;padding:24px;">
   <h2 style="margin:0 0 12px;color:#111827;">Ваш документ готов</h2>
@@ -35,16 +36,29 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "bad body" }, { status: 400 });
   }
 
-  const email = typeof body.email === "string" ? body.email.trim() : "";
+  // Email bombing prevention: only allow sending to authenticated user's email
+  const userEmail = user.email ?? "";
+  const email = typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
+  if (email !== userEmail.toLowerCase()) {
+    return NextResponse.json({ error: "forbidden" }, { status: 403 });
+  }
+  if (!EMAIL_RE.test(email) || email.length > 254) {
+    return NextResponse.json({ error: "invalid_email" }, { status: 400 });
+  }
+
   const filename =
     typeof body.filename === "string" ? body.filename.trim() : "document";
   const pdfBase64 =
     typeof body.pdfBase64 === "string" ? body.pdfBase64 : "";
 
-  if (!EMAIL_RE.test(email) || email.length > 254) {
-    return NextResponse.json({ error: "invalid_email" }, { status: 400 });
+  // Cap at 10MB base64 (~7.5MB binary)
+  const MAX_BASE64 = 10_000_000;
+  if (!pdfBase64 || pdfBase64.length > MAX_BASE64) {
+    return NextResponse.json({ error: "invalid_pdf" }, { status: 400 });
   }
-  if (!pdfBase64 || pdfBase64.length > 30_000_000) {
+  // Verify PDF magic bytes
+  const pdfHeader = atob(pdfBase64.slice(0, 20));
+  if (!pdfHeader.startsWith(PDF_MAGIC)) {
     return NextResponse.json({ error: "invalid_pdf" }, { status: 400 });
   }
 

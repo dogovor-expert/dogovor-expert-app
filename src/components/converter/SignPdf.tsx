@@ -1,11 +1,18 @@
 "use client";
 import { useRef, useState, useCallback, useEffect } from "react";
-import { PenLine, Loader2, Download, Check, X, AlertTriangle } from "lucide-react";
+import { PenLine, Loader2, Download, Check, X, AlertTriangle, Shield, FileText, ChevronDown } from "lucide-react";
 import { downloadBytes, formatBytes } from "@/lib/converter/download";
+import { PDFDocument } from "pdf-lib";
+import dynamic from "next/dynamic";
+
+const UKEPSigner = dynamic(() => import("@/components/builder/UKEPSigner").then(m => ({ default: m.UKEPSigner })), { ssr: false });
+
+type SignMode = 'facsimile' | 'ukep';
 
 export default function SignPdf() {
+  const [mode, setMode] = useState<SignMode>('facsimile');
   const [file, setFile] = useState<File | null>(null);
-  const [sign, setSign] = useState<{ url: string; w: number; h: number } | null>(null);
+  const [sign, setSign] = useState<{ url: string; w: number; h: number; type: string } | null>(null);
   const [pageCount, setPageCount] = useState(0);
   const [page, setPage] = useState(1);
   const [pos, setPos] = useState<{ x: number; y: number }>({ x: 50, y: 50 });
@@ -13,6 +20,7 @@ export default function SignPdf() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
+  const [pdfBytes, setPdfBytes] = useState<Uint8Array | null>(null);
   const pdfInput = useRef<HTMLInputElement>(null);
   const signInput = useRef<HTMLInputElement>(null);
 
@@ -23,8 +31,9 @@ export default function SignPdf() {
     setError(null);
     setDone(false);
     try {
-      const { PDFDocument } = await import("pdf-lib");
-      const doc = await PDFDocument.load(new Uint8Array(await f.arrayBuffer()), { ignoreEncryption: true });
+      const arrayBuffer = await f.arrayBuffer();
+      setPdfBytes(new Uint8Array(arrayBuffer));
+      const doc = await PDFDocument.load(new Uint8Array(arrayBuffer), { ignoreEncryption: true });
       setPageCount(doc.getPageCount());
       setPage(1);
       setPos({ x: 50, y: 50 });
@@ -37,7 +46,7 @@ export default function SignPdf() {
     const f = list?.[0];
     if (!f || !f.type.startsWith("image/")) return;
     const img = new Image();
-    img.onload = () => setSign({ url: URL.createObjectURL(f), w: img.naturalWidth, h: img.naturalHeight });
+    img.onload = () => setSign({ url: URL.createObjectURL(f), w: img.naturalWidth, h: img.naturalHeight, type: f.type });
     img.src = URL.createObjectURL(f);
     setDone(false);
   };
@@ -115,20 +124,18 @@ export default function SignPdf() {
     canvas.addEventListener("pointerleave", up);
   };
 
-  const apply = async () => {
+  const applyFacsimile = async () => {
     if (!file || !sign) return;
     setBusy(true);
     setError(null);
     setDone(false);
     try {
-      const { PDFDocument, degrees } = await import("pdf-lib");
       const doc = await PDFDocument.load(new Uint8Array(await file.arrayBuffer()), { ignoreEncryption: true });
       const pg = doc.getPage(page - 1);
       const { width, height } = pg.getSize();
-      const rot = pg.getRotation().angle;
       const imgBytes = await fetch(sign.url).then((r) => r.arrayBuffer());
-      const img = sign.url.startsWith("data:image/png") || sign.url.includes(".png") || sign.url.startsWith("blob:") 
-        ? await doc.embedPng(imgBytes) : await doc.embedJpg(imgBytes);
+      const isPng = sign.type === "image/png" || sign.url.startsWith("data:image/png");
+      const img = isPng ? await doc.embedPng(imgBytes) : await doc.embedJpg(imgBytes);
       const maxDim = Math.max(sign.w, sign.h);
       const targetW = width * (signScale / 100) * (sign.w / maxDim);
       const targetH = height * (signScale / 100) * (sign.h / maxDim);
@@ -145,7 +152,13 @@ export default function SignPdf() {
     }
   };
 
-  return (
+  const handleModeChange = (newMode: SignMode) => {
+    setMode(newMode);
+    setError(null);
+    setDone(false);
+  };
+
+  const renderFacsimileTab = () => (
     <div className="space-y-4">
       <input ref={pdfInput} type="file" accept="application/pdf,.pdf" className="hidden"
         onChange={(e) => { onPdf(e.target.files); e.target.value = ""; }} />
@@ -205,7 +218,7 @@ export default function SignPdf() {
 
           <div className="text-[10px] text-gray-600 text-center">Подпись можно перетащить мышью на нужное место. Подписанный документ скачается без загрузки на сервер.</div>
 
-          <button onClick={apply} disabled={busy || !sign}
+          <button onClick={applyFacsimile} disabled={busy || !sign}
             className="w-full py-2.5 bg-brand-500 text-white rounded-xl hover:bg-brand-600 font-bold text-sm transition disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer">
             {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <PenLine className="w-4 h-4" />}
             {busy ? "Подписание..." : "Подписать и скачать"}
@@ -224,6 +237,67 @@ export default function SignPdf() {
           <AlertTriangle className="w-4 h-4 mt-0.5 flex-shrink-0" />{error}
         </div>
       )}
+    </div>
+  );
+
+  return (
+    <div className="space-y-4">
+      <div className="flex gap-1 border-b border-gray-200">
+        <button
+          onClick={() => handleModeChange('facsimile')}
+          className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-t-xl transition-colors ${
+            mode === 'facsimile'
+              ? 'bg-brand-50 text-brand-700 border-b-2 border-brand-500 -mb-px'
+              : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+          }`}
+        >
+          <PenLine className="w-4 h-4" />
+          Факсимиле
+        </button>
+        <button
+          onClick={() => handleModeChange('ukep')}
+          className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-t-xl transition-colors ${
+            mode === 'ukep'
+              ? 'bg-brand-50 text-brand-700 border-b-2 border-brand-500 -mb-px'
+              : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+          }`}
+        >
+          <Shield className="w-4 h-4" />
+          УКЭП (квалифицированная ЭП)
+        </button>
+      </div>
+
+      <div className="bg-white border border-gray-200 rounded-b-xl rounded-t-none p-4">
+        {mode === 'facsimile' && renderFacsimileTab()}
+        {mode === 'ukep' && file && pdfBytes && (
+          <UKEPSigner
+            pdfBytes={pdfBytes}
+            fileName={file.name}
+          />
+        )}
+        {mode === 'ukep' && file && !pdfBytes && (
+          <div className="text-center py-8 text-gray-500">
+            <Loader2 className="w-8 h-8 animate-spin mx-auto mb-2 text-brand-500" />
+            <p className="text-sm text-gray-600">Загрузка документа...</p>
+          </div>
+        )}
+        {mode === 'ukep' && !file && (
+          <div className="text-center py-8 text-gray-500">
+            <FileText className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+            <p className="font-medium text-gray-900">Сначала загрузите PDF документ</p>
+            <p className="text-sm text-gray-500 mt-1">Переключитесь на вкладку «Факсимиле», чтобы выбрать файл</p>
+          </div>
+        )}
+      </div>
+
+      <div className="text-xs text-gray-500 text-center mt-2">
+        {mode === 'facsimile' && (
+          <>Факсимиле — это изображение подписи. Юридической силы УКЭП не имеет. Используйте для внутренних документов.</>
+        )}
+        {mode === 'ukep' && (
+          <>Квалифицированная электронная подпись (УКЭП) через КриптоПро. Требуется токен/смарт-карта и установленный плагин.</>
+        )}
+      </div>
     </div>
   );
 }

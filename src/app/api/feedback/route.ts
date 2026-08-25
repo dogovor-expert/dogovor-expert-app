@@ -139,7 +139,10 @@ export async function POST(req: Request) {
     if (!m) continue;
     const mime = m[1];
     if (!["image/png", "image/jpeg", "image/webp"].includes(mime)) continue;
-    const buf = Buffer.from(m[2], "base64");
+    // Check base64 length before decoding (prevent memory DoS)
+    const base64Data = m[2];
+    if (base64Data.length > 7_000_000) continue; // ~5MB decoded
+    const buf = Buffer.from(base64Data, "base64");
     if (buf.length > 5 * 1024 * 1024) continue;
     const ext = mime === "image/png" ? "png" : mime === "image/webp" ? "webp" : "jpg";
     const path = `${id}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;

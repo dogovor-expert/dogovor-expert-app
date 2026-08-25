@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { collectReport } from "@/lib/apipoint";
+import { collectReport } from "@/lib/tronk";
 import { limiters, checkRateLimit, rateLimitResponse } from "@/lib/ratelimit";
 
 const DAY_MS = 86400000;
@@ -50,6 +50,9 @@ function isYooKassaIp(ip: string | null): boolean {
 }
 
 function clientIp(req: Request): string | null {
+  // На Vercel x-vercel-forwarded-for задаётся инфраструктурой и не может быть подделан клиентом
+  const vff = req.headers.get("x-vercel-forwarded-for");
+  if (vff) return vff.split(",")[0].trim();
   const xff = req.headers.get("x-forwarded-for");
   if (xff) return xff.split(",")[0].trim();
   const real = req.headers.get("x-real-ip");
@@ -157,13 +160,27 @@ export async function POST(req: Request) {
         payload = dup[0].payload;
       } else {
         try {
-          payload = (await collectReport(vin)).sources;
+          payload = (await collectReport(vin, meta.premium === true)).sources;
         } catch {
           payload = null;
         }
       }
 
-      if (payload) {
+      if (payload && payload.error) {
+        // Источник недоступен (нет доступа / баланс / сбой генерации).
+        await admin
+          .from("reports")
+          .update({ status: "failed", payload: { error: "provider_unavailable" } })
+          .eq("user_id", row.user_id)
+          .eq("vin", vin);
+      } else if (payload && payload.tronk_task_id) {
+        // Генерация ещё идёт — оставляем pending, финал доведёт /api/autoteka/check.
+        await admin
+          .from("reports")
+          .update({ status: "pending", payload })
+          .eq("user_id", row.user_id)
+          .eq("vin", vin);
+      } else if (payload && Object.keys(payload).length > 0) {
         await admin
           .from("reports")
           .update({ status: "ready", payload })
@@ -182,7 +199,7 @@ export async function POST(req: Request) {
     const plan = meta.plan ?? "pro";
 
     // Если подписка с автопродлением ещё активна — продлеваем период,
-    // иначе создаём новую запись (обычная оплата).
+    // иначе проверяем, есть ли уже активная подписка (предотвращаем дубликаты).
     const { data: subs } = await admin
       .from("subscriptions")
       .select("id, period_end, auto_renewal, yookassa_payment_method_id")
@@ -195,17 +212,32 @@ export async function POST(req: Request) {
       (s) => s.period_end && new Date(String(s.period_end)) > now
     );
 
-    if (activeSub && activeSub.auto_renewal) {
-      const base = new Date(String(activeSub.period_end));
-      const extended = new Date(base.getTime() + 30 * DAY_MS);
-      await admin
-        .from("subscriptions")
-        .update({
-          period_end: extended.toISOString(),
-          yookassa_payment_method_id: paymentMethodId ?? activeSub.yookassa_payment_method_id,
-        })
-        .eq("id", activeSub.id);
+    if (activeSub) {
+      if (activeSub.auto_renewal) {
+        // Продлеваем автопродление
+        const base = new Date(String(activeSub.period_end));
+        const extended = new Date(base.getTime() + 30 * DAY_MS);
+        await admin
+          .from("subscriptions")
+          .update({
+            period_end: extended.toISOString(),
+            yookassa_payment_method_id: paymentMethodId ?? activeSub.yookassa_payment_method_id,
+          })
+          .eq("id", activeSub.id);
+      } else {
+        // Есть активная подписка без автопродления — просто продлеваем её
+        const base = new Date(String(activeSub.period_end));
+        const extended = new Date(base.getTime() + 30 * DAY_MS);
+        await admin
+          .from("subscriptions")
+          .update({
+            period_end: extended.toISOString(),
+            yookassa_payment_method_id: paymentMethodId ?? activeSub.yookassa_payment_method_id,
+          })
+          .eq("id", activeSub.id);
+      }
     } else {
+      // Нет активных подписок — создаём новую
       const end = new Date(now.getTime() + 30 * DAY_MS);
       await admin.from("subscriptions").insert({
         user_id: row.user_id,

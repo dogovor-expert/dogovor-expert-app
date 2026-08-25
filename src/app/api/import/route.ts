@@ -3,6 +3,14 @@ import { createClient } from "@/lib/supabase/server";
 
 export const maxDuration = 60;
 
+const MAX_IMPORT = 50;
+const ALLOWED_TEMPLATE_IDS = [
+  "dkp-auto", "dkp-auto-short", "rental", "rental-short", "loan", "loan-short",
+  "gift", "gift-short", "act-transfer-auto", "act-transfer-auto-short",
+  "receipt", "receipt-short", "procuration", "procuration-short",
+  // Add more as needed
+];
+
 export async function POST(req: Request) {
   const supabase = await createClient();
   const {
@@ -12,19 +20,25 @@ export async function POST(req: Request) {
 
   const body = await req.json().catch(() => null);
   const drafts = Array.isArray(body?.drafts) ? body.drafts : [];
-  if (drafts.length === 0) {
-    return NextResponse.json({ error: "no drafts" }, { status: 400 });
+  if (drafts.length === 0 || drafts.length > MAX_IMPORT) {
+    return NextResponse.json({ error: "invalid drafts count" }, { status: 400 });
   }
 
-  const rows = drafts.map((d: any) => ({
-    user_id: user.id,
-    template_id: String(d.templateId ?? ""),
-    title: String(d.title ?? ""),
-    fields: d.values ?? {},
-    checklist: d.checklist ?? {},
-    versions: d.versions ?? [],
-    status: "draft",
-  }));
+  const rows = drafts.map((d: any) => {
+    const templateId = String(d.templateId ?? "");
+    if (!ALLOWED_TEMPLATE_IDS.includes(templateId)) {
+      throw new Error(`invalid template_id: ${templateId}`);
+    }
+    return {
+      user_id: user.id,
+      template_id: templateId,
+      title: String(d.title ?? "").slice(0, 200),
+      fields: d.values ?? {},
+      checklist: d.checklist ?? {},
+      versions: d.versions ?? [],
+      status: "draft",
+    };
+  });
 
   // тихо пропускаем конфликты по template_id (одна активная версия на шаблон)
   const { data, error } = await supabase

@@ -53,8 +53,8 @@ export function ndflTax(annualIncome: number, children: number): { tax: number; 
     }
     taxable = Math.max(0, annualIncome - deductions * 12);
   }
-  const bracket = NDFL_BRACKETS.find((b) => annualIncome <= b.upTo)!;
-  return { tax: annualIncome * bracket.rate / 100 - bracket.subtract, deductions };
+  const bracket = NDFL_BRACKETS.find((b) => taxable <= b.upTo)!;
+  return { tax: Math.max(0, taxable * bracket.rate / 100 - bracket.subtract), deductions };
 }
 
 export function propertyReturn(purchasePrice: number, interestPaid?: number): { refund: number; limit: number; refundInterest: number } {
@@ -64,13 +64,14 @@ export function propertyReturn(purchasePrice: number, interestPaid?: number): { 
   return { refund: Math.round(refund), limit, refundInterest: Math.round(refundInterest) };
 }
 
-/** УСН: ставки, минимальный налог 1% для «доходы-расходы», порог НДС 60 млн. */
+/** УСН: ставки, минимальный налог 1% для «доходы-расходы», порог НДС 20 млн (2026). */
 export function usnTax(income: number, expenses: number, mode: "income" | "incomeMinus"): {
   tax: number;
   minTax: number;
   rate: number;
   vatStatus: "no" | "rate5" | "rate7";
   vatRate: number;
+  usnLost: boolean;
 } {
   const rate = mode === "income" ? 6 : 15;
   const tax = mode === "income" ? income * 0.06 : Math.max(income * 0.15 - expenses * 0, income * 0.15 - 0);
@@ -78,8 +79,13 @@ export function usnTax(income: number, expenses: number, mode: "income" | "incom
   const taxBase = mode === "income" ? income * 0.06 : (income - expenses) * 0.15;
   const minTax = mode === "incomeMinus" ? income * 0.01 : 0;
   let vatStatus: "no" | "rate5" | "rate7" = "no";
-  if (income > 60_000_000) vatStatus = income <= 250_000_000 ? "rate5" : "rate7";
-  return { tax: Math.round(Math.max(taxBase, minTax)), minTax: Math.round(minTax), rate, vatStatus, vatRate: vatStatus === "rate5" ? 5 : vatStatus === "rate7" ? 7 : 0 };
+  let usnLost = false;
+  if (income > 20_000_000) {
+    if (income <= 272_500_000) vatStatus = "rate5";
+    else if (income <= 490_500_000) vatStatus = "rate7";
+    else usnLost = true;
+  }
+  return { tax: Math.round(Math.max(taxBase, minTax)), minTax: Math.round(minTax), rate, vatStatus, vatRate: vatStatus === "rate5" ? 5 : vatStatus === "rate7" ? 7 : 0, usnLost };
 }
 
 /** НПД: 4%/6%, вычет 10 000 ₽ (пока не исчерпан — 3%/4%). */

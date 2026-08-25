@@ -1,10 +1,23 @@
+"use client";
+import { useEffect, useState } from "react";
 import Script from "next/script";
 import { YANDEX_METRIKA_ID } from "@/lib/site";
 
 const ENABLED = YANDEX_METRIKA_ID && YANDEX_METRIKA_ID !== "XXXXXXXX";
 
 export function YandexMetrika() {
-  if (!ENABLED) return null;
+  const [consent, setConsent] = useState<string | null>(null);
+
+  useEffect(() => {
+    try {
+      setConsent(localStorage.getItem("dogovor_cookie_consent"));
+    } catch {
+      setConsent(null);
+    }
+  }, []);
+
+  if (!ENABLED || consent !== "accepted") return null;
+
   return (
     <>
       <Script id="yandex-metrika" strategy="afterInteractive">

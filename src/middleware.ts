@@ -2,7 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
 const AUTH_PAGES = new Set(["/login"]);
-const PROTECTED_PREFIXES = ["/dashboard", "/settings", "/trash", "/billing", "/security", "/debug"];
+const PROTECTED_PREFIXES = ["/dashboard", "/settings", "/trash", "/billing", "/security"];
 
 function decodeB64url(input: string): string {
   const b64 = input.replace(/-/g, "+").replace(/_/g, "/");
@@ -41,6 +41,39 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   let response = NextResponse.next({ request });
 
+  // Публичные маршруты — ранний возврат без обращения к Supabase (экономия 50-200мс TTFB)
+  const isPublicRoute = 
+    pathname === "/" ||
+    pathname.startsWith("/templates") ||
+    pathname.startsWith("/documents/") && !pathname.startsWith("/documents") ||
+    pathname.startsWith("/blog") ||
+    pathname.startsWith("/converter") ||
+    pathname.startsWith("/utils") ||
+    pathname.startsWith("/osago") ||
+    pathname.startsWith("/dkp") ||
+    pathname.startsWith("/autoteka") ||
+    pathname.startsWith("/techosmotr") ||
+    pathname.startsWith("/tahograph") ||
+    pathname.startsWith("/about") ||
+    pathname.startsWith("/contacts") ||
+    pathname.startsWith("/privacy") ||
+    pathname.startsWith("/terms") ||
+    pathname.startsWith("/help") ||
+    pathname.startsWith("/preview") ||
+    pathname.startsWith("/_next") ||
+    pathname.startsWith("/api/") ||
+    pathname.startsWith("/favicon") ||
+    pathname.startsWith("/icon") ||
+    pathname.startsWith("/manifest") ||
+    pathname.startsWith("/robots") ||
+    pathname.startsWith("/sitemap") ||
+    pathname.startsWith("/og-image") ||
+    pathname.startsWith("/apple-icon");
+
+  if (isPublicRoute) {
+    return response;
+  }
+
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -69,15 +102,13 @@ export async function middleware(request: NextRequest) {
     pathname === "/documents" ||
     pathname === "/documents/";
   const isAdminPage = pathname.startsWith("/admin");
+  const isDebugPage = pathname.startsWith("/debug");
 
-  if (isAdminPage) {
+  if (isAdminPage || isDebugPage) {
     if (!user) return NextResponse.redirect(new URL("/login", request.url));
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("is_admin")
-      .eq("id", user.id)
-      .single();
-    if (!profile?.is_admin) {
+    // Проверяем is_admin в JWT app_metadata (быстро, без запроса к БД)
+    const isAdmin = user.app_metadata?.is_admin === true;
+    if (!isAdmin) {
       return NextResponse.redirect(new URL("/dashboard", request.url));
     }
     // Вторая линия защиты: требуем 2FA (aal2).

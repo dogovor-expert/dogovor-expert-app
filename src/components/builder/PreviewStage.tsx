@@ -12,9 +12,9 @@ import {
   Printer,
 } from "lucide-react";
 import type { LegalTemplate } from "@/data/types";
-import DocPreview from "@/components/DocPreview";
-import { DOC_DESIGNS, type DesignId } from "@/lib/docDesign";
+import PdfPreview from "@/components/PdfPreview";
 import type { RefObject } from "react";
+import { useState, useRef, useEffect } from "react";
 
 interface PreviewStageProps {
   template: LegalTemplate;
@@ -32,8 +32,10 @@ onExportPdfCurrent?: () => void;
   onOpenEmailModal: () => void;
   emailSending: boolean;
   onBackToForm: () => void;
-  designId: DesignId;
-  onDesignChange: (d: DesignId) => void;
+  /** Водяной знак бесплатного тарифа для превью (зеркалит PDF). */
+  watermark?: string;
+  /** Число страниц в сгенерированном PDF. */
+  onPagesChange?: (n: number) => void;
 }
 
 export default function PreviewStage({
@@ -52,9 +54,22 @@ export default function PreviewStage({
   onOpenEmailModal,
   emailSending,
   onBackToForm,
-  designId,
-  onDesignChange,
+  watermark,
+  onPagesChange,
 }: PreviewStageProps) {
+  const [exportMenuOpen, setExportMenuOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setExportMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   return (
     <>
       <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 flex items-center gap-3">
@@ -96,22 +111,6 @@ export default function PreviewStage({
             >
               <Printer className="w-4 h-4" />
             </button>
-            <div className="flex items-center rounded-lg border border-gray-200 p-0.5">
-              {(Object.keys(DOC_DESIGNS) as DesignId[]).map((id) => (
-                <button
-                  key={id}
-                  onClick={() => onDesignChange(id)}
-                  title={DOC_DESIGNS[id].description}
-                  className={`px-2.5 py-1 text-[11px] font-medium rounded-md transition-colors ${
-                    designId === id
-                      ? "bg-brand-50 text-brand-700"
-                      : "text-gray-600 hover:text-gray-800"
-                  }`}
-                >
-                  {DOC_DESIGNS[id].label}
-                </button>
-              ))}
-            </div>
             <button
               onClick={onCopyJson}
               className="p-2 hover:bg-gray-100 rounded-lg text-gray-600 transition-colors"
@@ -119,11 +118,13 @@ export default function PreviewStage({
             >
               <Copy className="w-4 h-4" />
             </button>
-            <div className="relative group">
+            <div className="relative" ref={dropdownRef}>
               <button
-                onClick={onExportPdf}
+                onClick={() => setExportMenuOpen(!exportMenuOpen)}
                 disabled={isExporting}
                 className="inline-flex items-center justify-center font-medium transition-all px-4 py-2 text-sm rounded-xl gap-2 bg-brand-500 text-white hover:bg-brand-600 disabled:opacity-50"
+                aria-expanded={exportMenuOpen}
+                aria-haspopup="true"
               >
                 {isExporting ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
@@ -133,53 +134,55 @@ export default function PreviewStage({
                   <Download className="w-4 h-4" />
                 )}
                 Скачать
-                <ChevronDown className="w-3 h-3" />
+                <ChevronDown className={`w-3 h-3 transition-transform ${exportMenuOpen ? "rotate-180" : ""}`} />
               </button>
-              <div className="absolute right-0 mt-1 w-52 bg-white border border-gray-200 rounded-xl shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-10">
-                <button
-                  onClick={onExportPdf}
-                  disabled={isExporting}
-                  className="w-full flex items-center gap-2 px-3 py-2 text-xs text-gray-700 hover:bg-gray-50 rounded-t-xl transition-colors"
-                >
-                  <FileImage className="w-3.5 h-3.5 text-red-500" />
-                  Скачать PDF
-                  {exportPages > 0 && (
-                    <span className="ml-auto text-[10px] text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded-full">
-                      {exportPages} стр.
-                    </span>
-                  )}
-                </button>
-                {packTemplates.length > 1 && onExportPdfCurrent && (
+              {exportMenuOpen && (
+                <div className="absolute right-0 mt-1 w-52 bg-white border border-gray-200 rounded-xl shadow-lg z-10 animate-in fade-in-0 zoom-in-95">
                   <button
-                    onClick={onExportPdfCurrent}
+                    onClick={() => { onExportPdf(); setExportMenuOpen(false); }}
+                    disabled={isExporting}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-xs text-gray-700 hover:bg-gray-50 rounded-t-xl transition-colors"
+                  >
+                    <FileImage className="w-3.5 h-3.5 text-red-500" />
+                    Скачать PDF
+                    {exportPages > 0 && (
+                      <span className="ml-auto text-[10px] text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded-full">
+                        {exportPages} стр.
+                      </span>
+                    )}
+                  </button>
+                  {packTemplates.length > 1 && onExportPdfCurrent && (
+                    <button
+                      onClick={() => { onExportPdfCurrent(); setExportMenuOpen(false); }}
+                      disabled={isExporting}
+                      className="w-full flex items-center gap-2 px-3 py-2 text-xs text-gray-700 hover:bg-gray-50 transition-colors"
+                    >
+                      <FileImage className="w-3.5 h-3.5 text-red-400" />
+                      PDF — только текущий документ
+                    </button>
+                  )}
+                  <button
+                    onClick={() => { onExportDocx(); setExportMenuOpen(false); }}
                     disabled={isExporting}
                     className="w-full flex items-center gap-2 px-3 py-2 text-xs text-gray-700 hover:bg-gray-50 transition-colors"
                   >
-                    <FileImage className="w-3.5 h-3.5 text-red-400" />
-                    PDF — только текущий документ
+                    <FileText className="w-3.5 h-3.5 text-blue-500" />
+                    Скачать DOCX
                   </button>
-                )}
-                <button
-                  onClick={onExportDocx}
-                  disabled={isExporting}
-                  className="w-full flex items-center gap-2 px-3 py-2 text-xs text-gray-700 hover:bg-gray-50 transition-colors"
-                >
-                  <FileText className="w-3.5 h-3.5 text-blue-500" />
-                  Скачать DOCX
-                </button>
-                <button
-                  onClick={onOpenEmailModal}
-                  disabled={emailSending}
-                  className="w-full flex items-center gap-2 px-3 py-2 text-xs text-gray-700 hover:bg-gray-50 rounded-b-xl transition-colors"
-                >
-                  {emailSending ? (
-                    <Loader2 className="w-3.5 h-3.5 text-emerald-500 animate-spin" />
-                  ) : (
-                    <Mail className="w-3.5 h-3.5 text-emerald-500" />
-                  )}
-                  Отправить на email
-                </button>
-              </div>
+                  <button
+                    onClick={() => { onOpenEmailModal(); setExportMenuOpen(false); }}
+                    disabled={emailSending}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-xs text-gray-700 hover:bg-gray-50 rounded-b-xl transition-colors"
+                  >
+                    {emailSending ? (
+                      <Loader2 className="w-3.5 h-3.5 text-emerald-500 animate-spin" />
+                    ) : (
+                      <Mail className="w-3.5 h-3.5 text-emerald-500" />
+                    )}
+                    Отправить на email
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -192,23 +195,12 @@ export default function PreviewStage({
         )}
         <div className="overflow-x-auto">
           <div ref={printRef}>
-            {packTemplates.map((t, i) => (
-              <div key={t.id}>
-                {packTemplates.length > 1 && (
-                  <div className="doc-toolbar px-3 pt-3">
-                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gray-50 border border-gray-200">
-                      <span className="text-[11px] font-semibold text-gray-600">
-                        {i + 1}/{packTemplates.length}
-                      </span>
-                      <span className="text-[11px] font-medium text-gray-600 truncate">
-                        {t.name}
-                      </span>
-                    </div>
-                  </div>
-                )}
-                <DocPreview html={renderPreview(t)} />
-              </div>
-            ))}
+            <PdfPreview
+              docs={packTemplates.map((t) => renderPreview(t))}
+              design="classic"
+              watermark={watermark}
+              onPagesChange={onPagesChange}
+            />
           </div>
         </div>
         <div

@@ -9,7 +9,7 @@ export interface AdminUser {
 }
 
 /**
- * Возвращает текущего админа (по сессии из cookie + флагу profiles.is_admin)
+ * Возвращает текущего админа (по JWT app_metadata.is_admin + флагу profiles.is_admin как fallback)
  * или null. Используется как вторая линия защиты (поверх middleware).
  */
 export async function getAdminUser(): Promise<AdminUser | null> {
@@ -32,6 +32,12 @@ export async function getAdminUser(): Promise<AdminUser | null> {
   } = await supabase.auth.getUser();
   if (!user) return null;
 
+  // Primary check: JWT app_metadata (fast, no DB round-trip)
+  if (user.app_metadata?.is_admin === true) {
+    return { id: user.id, email: user.email ?? null };
+  }
+
+  // Fallback: profiles table (defense in depth, in case JWT is stale)
   const { data: profile } = await supabase
     .from("profiles")
     .select("is_admin")
