@@ -1,14 +1,30 @@
 "use client";
-import { useState, useEffect, useMemo, Suspense } from "react";
+import { useState, useEffect, useMemo, Suspense, useRef } from "react";
 import { useSearchParams } from "next/navigation";
+import { useReactToPrint } from "react-to-print";
 import DocPreview from "@/components/DocPreview";
 import { LEGAL_TEMPLATES } from "@/data/legalTemplates";
 import { TEMPLATE_PREVIEWS } from "@/data/templatePreviews";
 import { loadDraft } from "@/lib/autosave";
 import { renderTemplateDocument } from "@/lib/renderDocument";
-import { buildTemplateDefaults } from "@/lib/format";
+import { buildTemplateDefaults, todayStr } from "@/lib/format";
+import { buildPdf } from "@/lib/exportPdf";
+import { saveAs } from "file-saver";
 import { encodeShareState, decodeShareState, type SharePayload } from "@/lib/shareState";
-import { Download, Printer, ChevronLeft, Share2, Check } from "lucide-react";
+import { Download, Printer, ChevronLeft, Share2, Check, FileDown } from "lucide-react";
+
+// Кастомные шрифты документа — предзагружаем перед печатью, чтобы в PDF/
+// на бумаге не было подмены шрифта (FOUT) и архивная вёрстка совпадала
+// с экраном (подход react-to-print: проп fonts гарантирует загрузку).
+type PrintFont = { family: string; source: string; weight?: string; style?: string };
+const PRINT_FONTS: PrintFont[] = [
+  { family: "PT Astra Sans", source: "/fonts/pt-astra-regular.ttf", weight: "400", style: "normal" },
+  { family: "PT Astra Sans", source: "/fonts/pt-astra-bold.ttf", weight: "700", style: "normal" },
+  { family: "PT Astra Sans", source: "/fonts/pt-astra-italic.ttf", weight: "400", style: "italic" },
+  { family: "PT Astra Sans", source: "/fonts/pt-astra-bolditalic.ttf", weight: "700", style: "italic" },
+  { family: "PT Serif", source: "/fonts/pt-serif-regular.ttf", weight: "400", style: "normal" },
+  { family: "PT Serif", source: "/fonts/pt-serif-bold.ttf", weight: "700", style: "normal" },
+];
 
 export default function PreviewPage() {
   return (
@@ -38,6 +54,23 @@ function PreviewContent() {
   const [esignSeller, setEsignSeller] = useState<string | null>(null);
   const [esignBuyer, setEsignBuyer] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [pdfBusy, setPdfBusy] = useState(false);
+
+  const printRef = useRef<HTMLDivElement>(null);
+
+  // Профессиональная печать через react-to-print: библиотека сама копирует
+  // DOM #print-root + все стили страницы в реальный iframe и вызывает
+  // print(). Глобальный @media print из globals.css (там body * скрыт, а
+  // #print-root виден и .a4-sheet получает A4) переносится в iframe вместе со
+  // стилями, поэтому никаких «пустых страниц». Проп fonts гарантирует, что
+  // кастомные PT Astra Sans / PT Serif загружены ДО печати — без подмены
+  // шрифта (FOUT).
+  const reactToPrint = useReactToPrint({
+    contentRef: printRef,
+    documentTitle: () => template.name,
+    fonts: PRINT_FONTS,
+    preserveAfterPrint: true,
+  });
 
   const template = useMemo(
     () => LEGAL_TEMPLATES.find((t) => t.id === templateId) || LEGAL_TEMPLATES[0],
@@ -93,12 +126,34 @@ function PreviewContent() {
     }
   }, [template, templateId, shared]);
 
-  // Печать: используем нативный window.print() + корректный @media print в
-  // globals.css (там #print-root изолируется, body * прячется, .a4-sheet
-  // получает A4-раскладку). Это стандарт для SPA, без хрупких off-screen
-  // iframe и гонок загрузки внешнего CSS, которые давали пустую печать.
+  // Печать через react-to-print (см. описание хука выше).
   const handlePrint = () => {
-    window.print();
+    void reactToPrint();
+  };
+
+  // Архивный PDF клиентским движком (pdf-lib, buildPdf) — как в Google Docs
+  // по качеству, но генерится в браузере, без сервера. Переиспользуем тот же
+  // renderTemplateDocument + те же значения/подписи, что и на экране.
+  const handleDownloadPdf = async () => {
+    if (pdfBusy) return;
+    setPdfBusy(true);
+    try {
+      const html = renderTemplateDocument(template, values, {
+        qrSvg: null,
+        signSeller: esignSeller,
+        signBuyer: esignBuyer,
+        previewTemplate: TEMPLATE_PREVIEWS[template.id],
+      });
+      const { blob } = await buildPdf(html, {
+        design: "classic",
+        pageNumbers: true,
+      });
+      saveAs(blob, `${template.name}_${todayStr()}.pdf`);
+    } catch (e) {
+      console.error("PDF export error:", e);
+    } finally {
+      setPdfBusy(false);
+    }
   };
 
   const handleShare = async () => {
@@ -162,6 +217,15 @@ function PreviewContent() {
             {copied ? "Скопировано" : "Поделиться"}
           </button>
           <button
+            onClick={handleDownloadPdf}
+            disabled={pdfBusy}
+            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-100 transition-colors disabled:opacity-50"
+            title="Скачать документ в виде PDF (архивное качество)"
+          >
+            <FileDown className="w-4 h-4" />
+            {pdfBusy ? "Готовим PDF…" : "Скачать PDF"}
+          </button>
+          <button
             onClick={handleDownload}
             className="hidden sm:inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-100 transition-colors"
           >
@@ -193,7 +257,7 @@ function PreviewContent() {
       )}
 
       <div className="flex-1 overflow-auto p-6 sm:p-10">
-        <DocPreview html={html} onPagesChange={setPageCount} />
+        <DocPreview html={html} onPagesChange={setPageCount} printRef={printRef} />
       </div>
 
       <footer className="bg-white border-t border-gray-200 flex items-center justify-between px-4 sm:px-6 h-14 flex-shrink-0 print:hidden">
