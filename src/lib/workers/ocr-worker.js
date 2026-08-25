@@ -1,6 +1,6 @@
 /**
  * @typedef {import("tesseract.js").Worker} TesseractWorker
- * @typedef {{type: "recognize", file: File, lang: string} | {type: "terminate"}} OcrMessage
+ * @typedef {{type: "recognize", file: File, lang?: string} | {type: "terminate"} OcrMessage
  * @typedef {{type: "progress", progress: number} | {type: "result", text: string} | {type: "error", message: string} | {type: "ready"}} OcrResponse
  */
 
@@ -10,12 +10,26 @@ import { createWorker } from "tesseract.js";
 let tesseractWorker = null;
 
 /**
- * @param {string} lang
+ * Инициализирует persistent worker с русским языком.
+ * Использует локальные языковые данные из /workers/tessdata/
  * @returns {Promise<TesseractWorker>}
  */
-async function initWorker(lang) {
-  if (tesseractWorker) await tesseractWorker.terminate();
-  tesseractWorker = await createWorker(lang);
+async function initWorker() {
+  if (tesseractWorker) return tesseractWorker;
+
+  // Используем локальные языковые данные (только rus доступен в /workers/tessdata/)
+  // workerPath и langPath указывают на локальные файлы, а не CDN
+  tesseractWorker = await createWorker("rus", 1, {
+    workerPath: "/workers/",
+    langPath: "/workers/tessdata/",
+    corePath: "/workers/",
+    logger: (m) => {
+      if (m.status === "recognizing text") {
+        self.postMessage({ type: "progress", progress: Math.round(m.progress * 100) });
+      }
+    },
+  });
+
   return tesseractWorker;
 }
 
@@ -32,14 +46,7 @@ self.onmessage = async /** @param {MessageEvent<OcrMessage>} e */ (e) => {
 
   if (msg.type === "recognize") {
     try {
-      /** @type {TesseractWorker} */
-      const w = await initWorker(msg.lang);
-      // В tesseract.js v5 logger передаётся через setLogger
-      w.setLogger((m) => {
-        if (m.status === "recognizing text") {
-          self.postMessage({ type: "progress", progress: Math.round(m.progress * 100) });
-        }
-      });
+      const w = await initWorker();
       const { data } = await w.recognize(msg.file);
       self.postMessage({ type: "result", text: data.text });
     } catch (err) {

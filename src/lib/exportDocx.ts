@@ -57,7 +57,7 @@ function lineUnits(design: DesignTokens, lh: number): number {
   return Math.round(240 * lh);
 }
 
-function alignFrom(el: HTMLElement): Align | undefined {
+export function alignFrom(el: HTMLElement): Align | undefined {
   const cls = el.className || "";
   if (cls.includes("text-center")) return AlignmentType.CENTER;
   if (cls.includes("text-right")) return AlignmentType.RIGHT;

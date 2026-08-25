@@ -67,7 +67,7 @@ export const KOAP_CHAPTER_12: KoapFine[] = [
 
 export function discountDeadline(issuedAt: string): string {
   const d = new Date(issuedAt + "T00:00:00");
-  d.setDate(d.getDate() + 20);
+  d.setDate(d.getDate() + 30);
   const y = d.getFullYear();
   const m = String(d.getMonth() + 1).padStart(2, "0");
   const day = String(d.getDate()).padStart(2, "0");
@@ -78,7 +78,7 @@ export function fineWithDiscount(f: KoapFine): number | null {
   if (f.noDiscount) return null;
   if (f.fineMin === null || f.fineMax === null) return null;
   const amount = f.fineMax;
-  return Math.round(amount * 0.5);
+  return Math.round(amount * 0.75);
 }
 
 export function fineLabel(f: KoapFine): string {

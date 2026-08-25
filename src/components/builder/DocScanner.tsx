@@ -133,7 +133,7 @@ export default function DocScanner({
         reject(new Error(`Worker error: ${err.message}`));
       };
 
-      worker.postMessage({ type: "recognize", file, lang: "rus+eng" });
+      worker.postMessage({ type: "recognize", file });
     });
   };
 

@@ -98,20 +98,6 @@ export default function DebugPdfPage() {
             </option>
           ))}
         </select>
-        <select
-          value={designId}
-          onChange={(e) => {
-            setDesignId(e.target.value as DesignId);
-            setPageCount(null);
-          }}
-          className="border border-gray-300 rounded-lg px-3 py-2 text-sm"
-        >
-          {(Object.keys(DOC_DESIGNS) as DesignId[]).map((id) => (
-            <option key={id} value={id}>
-              {DOC_DESIGNS[id].label}
-            </option>
-          ))}
-        </select>
         <button
           onClick={handleDownload}
           disabled={busy}

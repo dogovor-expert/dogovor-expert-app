@@ -89,7 +89,9 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "local";
+  const ip = req.headers.get("x-vercel-forwarded-for")?.split(",")[0]?.trim()
+    || req.headers.get("x-forwarded-for")?.split(",")[0]?.trim()
+    || "local";
   if (!checkRate(ip)) {
     return NextResponse.json({ error: "rate limit" }, { status: 429 });
   }

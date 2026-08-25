@@ -1,0 +1,199 @@
+'use client';
+import { useState, useEffect, useCallback } from 'react';
+
+declare global {
+  interface Window {
+    cadesplugin?: Promise<any>;
+    cadespluginLoaded?: boolean;
+  }
+}
+
+export interface CertInfo {
+  thumbprint: string;
+  subjectName: string;
+  issuerName: string;
+  validFrom: string;
+  validTo: string;
+  isQualified: boolean;
+  hasPrivateKey: boolean;
+}
+
+export function useCryptoPro() {
+  const [ready, setReady] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [certificates, setCertificates] = useState<CertInfo[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const initPlugin = async () => {
+      try {
+        if (!window.cadesplugin) {
+          setError('КриптоПро Browser Plugin не найден. Установите плагин и перезагрузите страницу.');
+          return;
+        }
+
+        await window.cadesplugin;
+        setReady(true);
+        setError(null);
+      } catch (e: any) {
+        setError('Ошибка инициализации КриптоПро: ' + (e.message || String(e)));
+        setReady(false);
+      }
+    };
+
+    if (document.readyState === 'complete') {
+      initPlugin();
+    } else {
+      window.addEventListener('load', initPlugin);
+      return () => window.removeEventListener('load', initPlugin);
+    }
+  }, []);
+
+  const loadCertificates = useCallback(async () => {
+    if (!ready || !window.cadesplugin) return;
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      const cadesplugin = await window.cadesplugin;
+
+      const store = await cadesplugin.CreateObjectAsync('CAdESCOM.Store');
+      await store.Open(
+        cadesplugin.CAPICOM_CURRENT_USER_STORE,
+        cadesplugin.CAPICOM_MY_STORE,
+        cadesplugin.CAPICOM_STORE_OPEN_MAXIMUM_ALLOWED
+      );
+
+      const certs = await store.Certificates;
+      const count = await certs.Count;
+      const result: CertInfo[] = [];
+
+      for (let i = 1; i <= count; i++) {
+        try {
+          const cert = await certs.Item(i);
+          const thumbprint = await cert.Thumbprint;
+          const subject = await cert.SubjectName;
+          const issuer = await cert.IssuerName;
+          const validFrom = await cert.ValidFromDate;
+          const validTo = await cert.ValidToDate;
+          const hasPrivateKey = await cert.HasPrivateKey();
+
+          const isQualified = 
+            subject.includes('OGRN') || 
+            subject.includes('ОГРН') ||
+            subject.includes('SNILS') ||
+            subject.includes('СНИЛС') ||
+            subject.includes('INN') ||
+            subject.includes('ИНН');
+
+          if (hasPrivateKey) {
+            result.push({
+              thumbprint,
+              subjectName: subject,
+              issuerName: issuer,
+              validFrom,
+              validTo,
+              isQualified,
+              hasPrivateKey,
+            });
+          }
+        } catch (e) {
+          console.warn('Error reading certificate', i, e);
+        }
+      }
+
+      await store.Close();
+      setCertificates(result.filter(c => c.isQualified));
+    } catch (e: any) {
+      setError('Ошибка чтения сертификатов: ' + (e.message || String(e)));
+      setCertificates([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [ready]);
+
+  const signData = useCallback(async (
+    data: Uint8Array,
+    thumbprint: string,
+    options?: {
+      detached?: boolean;
+      encodingType?: number;
+    }
+  ): Promise<string> => {
+    if (!window.cadesplugin) throw new Error('Плагин не загружен');
+
+    const cadesplugin = await window.cadesplugin;
+
+    const base64 = btoa(String.fromCharCode(...data));
+
+    const signer = await cadesplugin.CreateObjectAsync('CAdESCOM.CPSigner');
+    await signer.propset_Certificate(thumbprint);
+    await signer.propset_Options(cadesplugin.CAPICOM_CERTIFICATE_INCLUDE_WHOLE_CHAIN);
+
+    const cadesAttrs = await cadesplugin.CreateObjectAsync('CAdESCOM.CPAttribute');
+    await cadesAttrs.propset_Name(cadesplugin.CAPICOM_AUTHENTICATED_ATTRIBUTE_SIGNING_TIME);
+    await cadesAttrs.propset_Value(new Date());
+
+    const attrs = await signer.AuthenticatedAttributes2;
+    await attrs.Add(cadesAttrs);
+
+    const signedData = await cadesplugin.CreateObjectAsync('CAdESCOM.CadesSignedData');
+    await signedData.propset_ContentEncoding(cadesplugin.CADESCOM_BASE64_TO_BINARY);
+    await signedData.propset_Content(base64);
+
+    const encodingType = options?.encodingType ?? cadesplugin.CADESCOM_ENCODE_BASE64;
+    const detached = options?.detached ?? false;
+
+    const signature = await signedData.SignCades(
+      signer,
+      cadesplugin.CADESCOM_CADES_BES,
+      detached,
+      encodingType
+    );
+
+    return signature;
+  }, []);
+
+  return {
+    ready,
+    error,
+    certificates,
+    loading,
+    loadCertificates,
+    signData,
+  };
+}
+
+export function loadCryptoProScript(): Promise<void> {
+  return new Promise((resolve, reject) => {
+    if (typeof window === 'undefined') {
+      reject(new Error('Not in browser'));
+      return;
+    }
+
+    if (window.cadespluginLoaded) {
+      resolve();
+      return;
+    }
+
+    const existingScript = document.querySelector('script[src*="cadesplugin"]');
+    if (existingScript) {
+      window.cadespluginLoaded = true;
+      resolve();
+      return;
+    }
+
+    const script = document.createElement('script');
+    script.src = 'https://www.cryptopro.ru/sites/default/files/products/cades/current_release_2_0/cadesplugin_api.js';
+    script.async = true;
+    script.onload = () => {
+      window.cadespluginLoaded = true;
+      resolve();
+    };
+    script.onerror = () => reject(new Error('Failed to load cadesplugin_api.js'));
+    document.head.appendChild(script);
+  });
+}

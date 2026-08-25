@@ -2,8 +2,11 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isValidInn } from "@/lib/inn";
+import { isSameOrigin } from "@/lib/admin-auth";
 
 const FIELDS = ["full_name", "phone", "company", "inn", "avatar_url", "signature"];
+
+const SIGNATURE_RE = /^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/;
 
 export async function GET() {
   const supabase = await createClient();
@@ -23,6 +26,7 @@ export async function GET() {
 }
 
 export async function PATCH(req: Request) {
+  if (!isSameOrigin(req)) return NextResponse.json({ error: "forbidden" }, { status: 403 });
   const supabase = await createClient();
   const {
     data: { user },
@@ -50,6 +54,9 @@ export async function PATCH(req: Request) {
     }
     if (key === "avatar_url" && trimmed !== "" && !trimmed.startsWith(process.env.NEXT_PUBLIC_SUPABASE_URL + "/storage/v1/object/public/avatars/")) {
       return NextResponse.json({ error: "invalid avatar_url" }, { status: 400 });
+    }
+    if (key === "signature" && trimmed !== "" && !SIGNATURE_RE.test(trimmed)) {
+      return NextResponse.json({ error: "invalid signature format" }, { status: 400 });
     }
     update[key] = trimmed.slice(0, 500);
   }
@@ -79,7 +86,8 @@ export async function PATCH(req: Request) {
   return NextResponse.json({ data });
 }
 
-export async function DELETE() {
+export async function DELETE(req: Request) {
+  if (!isSameOrigin(req)) return NextResponse.json({ error: "forbidden" }, { status: 403 });
   const supabase = await createClient();
   const {
     data: { user },

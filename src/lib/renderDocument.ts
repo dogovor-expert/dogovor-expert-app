@@ -1,4 +1,5 @@
 import Mustache from "mustache";
+import DOMPurify from "isomorphic-dompurify";
 import type { LegalTemplate } from "@/data/types";
 import { rublesToWords } from "@/lib/words";
 import { declineFullName, looksLikeFullName } from "@/lib/names";
@@ -25,6 +26,21 @@ function escapeHtml(value: string): string {
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#39;");
+}
+
+function sanitizeHtml(html: string): string {
+  return DOMPurify.sanitize(html, {
+    ALLOWED_TAGS: [
+      "p", "br", "strong", "em", "u", "span", "div", "table", "thead", "tbody", "tr", "th", "td",
+      "ul", "ol", "li", "h1", "h2", "h3", "h4", "h5", "h6", "blockquote", "pre", "code",
+      "img", "a", "hr", "b", "i", "small", "sup", "sub", "mark", "del", "ins"
+    ],
+    ALLOWED_ATTR: ["class", "style", "href", "src", "alt", "title", "target", "rel", "id"],
+    ALLOW_DATA_ATTR: false,
+    KEEP_CONTENT: true,
+    RETURN_DOM: false,
+    RETURN_DOM_FRAGMENT: false,
+  });
 }
 
 export interface RenderOptions {
@@ -192,8 +208,8 @@ export function renderTemplateDocument(
 
       view[f.id] = raw;
 
-      // Для select/radio дополнительно: label выбранной опции ({{{field_label}}})
-      // и boolean-флаг вида {{{field_is_value}}} для условий Mustache {{#field_is_value}}.
+      // Для select/radio дополнительно: label выбранной опции ({{field_label}})
+      // и boolean-флаг вида {{field_is_value}} для условий Mustache {{#field_is_value}}.
       if (
         (f.type === "select" || f.type === "radio") &&
         f.options &&
@@ -293,15 +309,6 @@ export function renderTemplateDocument(
 
     let html = Mustache.render(options.previewTemplate ?? template.previewTemplate ?? "", view);
 
-    // QR-код (ГОСТ Р 56042-2014) подменяет placeholder из шаблона.
-    if (template.id === "invoice" && formValues.show_qr === "true" && qrSvg) {
-      html = html.replace(
-        '<div class="text-right" id="qr-placeholder"></div>',
-        '<div class="text-right"><div id="qr-anchor">' + qrSvg + "</div>" +
-          '<p class="text-[10px] text-zinc-400 mt-1">QR-код для оплаты</p></div>'
-      );
-    }
-
     const injectSign = (
       htmlStr: string,
       pattern: RegExp,
@@ -328,6 +335,19 @@ export function renderTemplateDocument(
       signBuyer
     );
 
+    html = sanitizeHtml(html);
+
+    // QR-код (ГОСТ Р 56042-2014): вставляем ПОСЛЕ санитизации.
+    // qrSvg формируется библиотекой qrcode из данных счёта и не содержит
+    // пользовательской HTML-разметки (текст кодируется в модули, а не в теги).
+    if (template.id === "invoice" && formValues.show_qr === "true" && qrSvg) {
+      html = html.replace(
+        '<div class="text-right" id="qr-placeholder"></div>',
+        '<div class="text-right"><div id="qr-anchor">' + qrSvg + "</div>" +
+          '<p class="text-[10px] text-zinc-400 mt-1">QR-код для оплаты</p></div>'
+      );
+    }
+
     return html;
   } catch {
     let html = options.previewTemplate ?? template.previewTemplate ?? "";
@@ -337,6 +357,6 @@ export function renderTemplateDocument(
         escapeHtml(value || "___________________")
       );
     }
-    return html;
+    return sanitizeHtml(html);
   }
 }

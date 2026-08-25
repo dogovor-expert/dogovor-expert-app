@@ -32,6 +32,62 @@
   font-style: italic;
   font-display: swap;
 }
+@font-face {
+  font-family: "PT Serif";
+  src: url('/fonts/pt-serif-regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "PT Serif";
+  src: url('/fonts/pt-serif-bold.ttf') format('truetype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "PT Serif";
+  src: url('/fonts/pt-serif-italic.ttf') format('truetype');
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: "PT Serif";
+  src: url('/fonts/pt-serif-bolditalic.ttf') format('truetype');
+  font-weight: 700;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Inter Doc";
+  src: url('/fonts/inter-regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Inter Doc";
+  src: url('/fonts/inter-bold.ttf') format('truetype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Inter Doc";
+  src: url('/fonts/inter-italic.ttf') format('truetype');
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Inter Doc";
+  src: url('/fonts/inter-bolditalic.ttf') format('truetype');
+  font-weight: 700;
+  font-style: italic;
+  font-display: swap;
+}
 
 @layer base {
   html, body {
@@ -160,6 +216,92 @@
     text-align: center;
     font-size: 10px;
     color: #71717a;
+  }
+
+  /* ===== Design skins: on-screen preview mirrors the PDF render (DOC_DESIGNS) ===== */
+  .a4-sheet.doc-skin-classic {
+    font-size: 14px;
+    line-height: 1.22;
+    font-family: "PT Serif", "Times New Roman", serif;
+    color: #111111;
+  }
+  .a4-sheet.doc-skin-minimal,
+  .a4-sheet.doc-skin-brand {
+    font-size: 14px;
+    line-height: 1.22;
+    font-family: "Inter Doc", "Inter", system-ui, sans-serif;
+    color: #1A1A1A;
+  }
+  .a4-sheet.doc-skin-classic .font-serif { font-family: "PT Serif", "Times New Roman", serif !important; }
+  .a4-sheet.doc-skin-minimal .font-serif,
+  .a4-sheet.doc-skin-brand .font-serif { font-family: "Inter Doc", "Inter", system-ui, sans-serif !important; }
+
+  /* tailwind text sizes -> pt-based px to match the PDF engine (sizeFromClass) */
+  .a4-sheet.doc-skin-classic .text-base, .a4-sheet.doc-skin-minimal .text-base, .a4-sheet.doc-skin-brand .text-base { font-size: 14px !important; }
+  .a4-sheet.doc-skin-classic .text-sm, .a4-sheet.doc-skin-minimal .text-sm, .a4-sheet.doc-skin-brand .text-sm { font-size: 14px !important; }
+  .a4-sheet.doc-skin-classic .text-xs, .a4-sheet.doc-skin-minimal .text-xs, .a4-sheet.doc-skin-brand .text-xs { font-size: 12px !important; }
+  .a4-sheet.doc-skin-classic .text-\[10px\], .a4-sheet.doc-skin-minimal .text-\[10px\], .a4-sheet.doc-skin-brand .text-\[10px\] { font-size: 10px !important; }
+  .a4-sheet.doc-skin-classic .text-\[11px\], .a4-sheet.doc-skin-minimal .text-\[11px\], .a4-sheet.doc-skin-brand .text-\[11px\] { font-size: 11px !important; }
+  .a4-sheet.doc-skin-classic .text-\[12px\], .a4-sheet.doc-skin-minimal .text-\[12px\], .a4-sheet.doc-skin-brand .text-\[12px\] { font-size: 12px !important; }
+  .a4-sheet.doc-skin-classic .text-\[13px\], .a4-sheet.doc-skin-minimal .text-\[13px\], .a4-sheet.doc-skin-brand .text-\[13px\] { font-size: 13px !important; }
+  .a4-sheet.doc-skin-classic .text-\[14px\], .a4-sheet.doc-skin-minimal .text-\[14px\], .a4-sheet.doc-skin-brand .text-\[14px\] { font-size: 14px !important; }
+  .a4-sheet.doc-skin-classic .text-\[16px\], .a4-sheet.doc-skin-minimal .text-\[16px\], .a4-sheet.doc-skin-brand .text-\[16px\] { font-size: 16px !important; }
+  .a4-sheet.doc-skin-classic .text-\[18px\], .a4-sheet.doc-skin-minimal .text-\[18px\], .a4-sheet.doc-skin-brand .text-\[18px\] { font-size: 18px !important; }
+
+  /* document title */
+  .a4-sheet.doc-skin-classic .doc-title { font-size: 20px !important; color: #1A3C6C !important; }
+  .a4-sheet.doc-skin-minimal .doc-title { font-size: 20px !important; color: #0F766E !important; }
+  .a4-sheet.doc-skin-brand .doc-title { font-size: 20px !important; color: #2563EB !important; }
+
+  /* subheadings (font-bold uppercase) — PDF renders at subheadingFontSize (≈15px) */
+  .a4-sheet.doc-skin-classic .font-bold.uppercase { color: #1A3C6C !important; font-size: 15px !important; }
+  .a4-sheet.doc-skin-minimal .font-bold.uppercase { color: #0F766E !important; font-size: 15px !important; }
+  .a4-sheet.doc-skin-brand .font-bold.uppercase { color: #2563EB !important; font-size: 15px !important; }
+
+  /* sides titles */
+  .a4-sheet.doc-skin-classic .doc-sides-title { background: #EEF1F7 !important; color: #1A3C6C !important; font-weight: 700; padding: 6px 10px; margin-bottom: 6px; border-radius: 2px; }
+  .a4-sheet.doc-skin-minimal .doc-sides-title { background: transparent !important; color: #0F766E !important; font-weight: 700; padding: 0 0 4px 0; margin-bottom: 8px; border-bottom: 0.6px solid #E2E4E9; }
+  .a4-sheet.doc-skin-brand .doc-sides-title { background: transparent !important; color: #2563EB !important; font-weight: 700; padding: 0 0 0 8px; margin-bottom: 8px; border-left: 2.5px solid #2563EB; }
+
+  /* price box */
+  .a4-sheet.doc-skin-classic .doc-price { border: 1px solid #1A3C6C !important; padding: 8px 10px; }
+  .a4-sheet.doc-skin-minimal .doc-price { border: 1px solid #0F766E !important; padding: 8px 10px; }
+  .a4-sheet.doc-skin-brand .doc-price { border: 1px solid #2563EB !important; padding: 8px 10px; }
+
+  /* tables */
+  .a4-sheet.doc-skin-classic table, .a4-sheet.doc-skin-classic th, .a4-sheet.doc-skin-classic td { border: 0.5px solid #B9BEC8 !important; }
+  .a4-sheet.doc-skin-classic th { background: #EEF1F7 !important; }
+  .a4-sheet.doc-skin-minimal table, .a4-sheet.doc-skin-minimal th, .a4-sheet.doc-skin-minimal td { border: 0 !important; border-bottom: 0.5px solid #D9DCE2 !important; }
+  .a4-sheet.doc-skin-minimal th { background: transparent !important; }
+  .a4-sheet.doc-skin-brand table { border-top: 1px solid #2563EB !important; }
+  .a4-sheet.doc-skin-brand th, .a4-sheet.doc-skin-brand td { border: 0 !important; border-bottom: 0.5px solid #D9DCE2 !important; }
+  .a4-sheet.doc-skin-brand th { background: transparent !important; }
+
+  /* page margins per design (mm -> px, 1mm ≈ 3.78px) */
+  .a4-sheet.doc-skin-classic .font-serif { padding: 76px 57px 76px 83px !important; }
+  .a4-sheet.doc-skin-minimal .font-serif,
+  .a4-sheet.doc-skin-brand .font-serif { padding: 68px 68px 68px 76px !important; }
+
+  /* preview chrome: header wordmark + footer (mirror exportPdf) */
+  .doc-preview-header, .doc-preview-footer {
+    position: absolute;
+    left: 0;
+    right: 0;
+    pointer-events: none;
+    z-index: 3;
+  }
+  .doc-preview-header { top: 0; }
+  .doc-preview-footer { bottom: 0; }
+
+  /* PDF-backed preview (rendered via pdf.js) — same sheet look as print */
+  .a4-sheet-img {
+    width: 794px;
+    max-width: 100%;
+    height: auto;
+    background: #fff;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.12), 0 1px 3px rgba(0, 0, 0, 0.08);
+    border-radius: 2px;
+    display: block;
   }
 }
 

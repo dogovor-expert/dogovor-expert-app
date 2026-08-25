@@ -11,8 +11,8 @@ export async function POST(req: Request) {
   } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
 
-  const shopId = process.env.YOOKASSA_SHOP_ID;
-  const secretKey = process.env.YOOKASSA_SECRET_KEY;
+  const shopId = (process.env.YOOKASSA_SHOP_ID ?? "").trim();
+  const secretKey = (process.env.YOOKASSA_SECRET_KEY ?? "").trim();
   if (!shopId || !secretKey) {
     return NextResponse.json({ error: "payment_unavailable" }, { status: 503 });
   }
@@ -42,13 +42,22 @@ export async function POST(req: Request) {
   });
 
   if (!res.ok) {
-    return NextResponse.json({ error: "provider_error" }, { status: 502 });
+    const detail = await res.text().catch(() => "");
+    console.error("[billing/create-payment] YooKassa create payment failed", res.status, detail);
+    let providerDetail = "";
+    try { const j = JSON.parse(detail); providerDetail = j.description || j.code || detail; } catch { providerDetail = detail; }
+    return NextResponse.json({ error: "provider_error", yookassa_status: res.status, detail: providerDetail }, { status: 502 });
   }
   const payment = await res.json();
   if (payment.status !== "pending" || !payment.confirmation?.confirmation_url) {
+    console.error("[billing/create-payment] YooKassa unexpected payment state", JSON.stringify(payment));
     return NextResponse.json({ error: "provider_unexpected" }, { status: 502 });
   }
 
+  if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    console.error("[billing/create-payment] SUPABASE_SERVICE_ROLE_KEY is not set");
+    return NextResponse.json({ error: "config_error", detail: "SUPABASE_SERVICE_ROLE_KEY не задан на сервере" }, { status: 503 });
+  }
   const admin = createAdminClient();
   const { data, error } = await admin
     .from("payments")
@@ -63,7 +72,7 @@ export async function POST(req: Request) {
     .select()
     .single();
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) return NextResponse.json({ error: error.message, detail: error.message }, { status: 500 });
   return NextResponse.json({
     confirmation_url: payment.confirmation.confirmation_url,
     payment_id: data.id,

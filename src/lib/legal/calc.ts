@@ -170,7 +170,8 @@ export function calc395WithPayments(
     (c) => parseDate(c.from).getTime() > parseDate(fromStr).getTime() && parseDate(c.from).getTime() <= parseDate(toStr).getTime()
   ).map((c) => ({ date: c.from, kind: "rate" as const }));
 
-  const events = [...rateChanges, ...evSorted].sort((a, b) => (a.date < b.date ? -1 : 1));
+  const endEvent = { date: toStr, kind: "end" as const };
+  const events = [...rateChanges, ...evSorted, endEvent].sort((a, b) => (a.date < b.date ? -1 : 1));
 
   const periods: InterestPeriod[] = [];
   let cursor = fromStr;
@@ -183,7 +184,7 @@ export function calc395WithPayments(
     if (evMs <= cursorMs) continue;
     const rate = rateOn(cursor);
     let days = Math.round((evMs - cursorMs) / 86400000);
-    const isLast = evMs === parseDate(toStr).getTime();
+    const isLast = ev.kind === "end";
     if (isLast) days += 1;
     if (days > 0 && balance > 0) {
       const amount = (balance * rate / 100 * (days / daysInYear(cursor)));

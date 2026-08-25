@@ -57,10 +57,21 @@ function translateAuthError(message: string): string {
   return message;
 }
 
+function isSafeRedirect(url: string | null): url is string {
+  if (!url) return false;
+  try {
+    const parsed = new URL(url, window.location.origin);
+    return parsed.origin === window.location.origin && parsed.pathname.startsWith("/");
+  } catch {
+    return false;
+  }
+}
+
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const next = searchParams.get("next") ?? "/dashboard";
+  const rawNext = searchParams.get("next");
+  const next = isSafeRedirect(rawNext) ? rawNext : "/dashboard";
   const supabase = createClient();
 
   const [email, setEmail] = useState("");

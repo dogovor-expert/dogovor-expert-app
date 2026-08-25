@@ -41,18 +41,21 @@ describe("renderTemplateDocument", () => {
     expect(html).not.toContain("&amp;amp;");
   });
 
-  it("слэши и кавычки экранируются ровно один раз", () => {
+  it("слэши и кавычки экранируются: нет сырых тегов, & экранируется", () => {
     const html = renderTemplateDocument(dkpLikeTemplate, {
       comment: `O"Brien <b>&</b>`,
     });
-    expect(html).toContain("&quot;");
-    expect(html).not.toContain("&amp;quot;");
+    // DOMPurify нормализует &quot; → " (безопасно в тексте), но сырой тег недопустим.
+    expect(html).toContain('O"Brien');
+    expect(html).not.toContain("<b>");
     expect(html).toContain("&lt;b&gt;");
+    expect(html).toContain("&amp;");
+    expect(html).not.toContain("&amp;quot;");
   });
 
   it("дата рендерится словесно-цифровым способом", () => {
     const html = renderTemplateDocument(dkpLikeTemplate, { date: "2026-05-27" });
-    expect(html).toContain("27\u00A0мая\u00A02026\u00A0г.");
+    expect(html).toContain("27&nbsp;мая&nbsp;2026&nbsp;г.");
   });
 
   it("сумма прописью подставляется автоматически (_words)", () => {

@@ -1,9 +1,11 @@
 "use client";
 
 import { useLayoutEffect, useRef, useState } from "react";
+import { getDesign, type DesignId } from "@/lib/docDesign";
 
 const A4_W = 794;
 const A4_H = 1123;
+const MM_TO_PX = 3.7795;
 
 export interface DocPage {
   rootClass: string;
@@ -17,6 +19,10 @@ interface DocPreviewProps {
   showPageNumbers?: boolean;
   /** Сообщить родителю число страниц, когда разметка изменится. */
   onPagesChange?: (count: number) => void;
+  /** Дизайн документа (Классика / Деловой минимализм / Фирменный). */
+  design?: DesignId;
+  /** Водяной знак бесплатного тарифа (рисуется в подвале). */
+  watermark?: string;
 }
 
 /**
@@ -28,9 +34,70 @@ export default function DocPreview({
   html,
   showPageNumbers = true,
   onPagesChange,
+  design,
+  watermark,
 }: DocPreviewProps) {
   const measureRef = useRef<HTMLDivElement | null>(null);
   const [pages, setPages] = useState<DocPage[]>([]);
+
+  const designTokens = getDesign(design);
+  const ml = Math.round(designTokens.marginLeft * MM_TO_PX);
+  const mr = Math.round(designTokens.marginRight * MM_TO_PX);
+  const mt = Math.round(designTokens.marginTop * MM_TO_PX);
+  const strong = designTokens.logoWeight === "strong";
+  const wordColor = strong ? "#" + designTokens.accent : "#26262b";
+  const wordSize = Math.round((strong ? designTokens.smallFontSize : designTokens.tinyFontSize) * 4 / 3);
+  const tagSize = Math.round(designTokens.tinyFontSize * 0.9 * 4 / 3);
+  const ruleColor = "#" + designTokens.ruleColor;
+  const grayColor = "#" + designTokens.grayText;
+  const headerAlign =
+    designTokens.headerAlign === "center"
+      ? "center"
+      : designTokens.headerAlign === "right"
+        ? "right"
+        : "left";
+
+  const renderChrome = (i: number, total: number) => (
+    <>
+      <div
+        className="doc-preview-header"
+        style={{ paddingLeft: ml, paddingRight: mr, paddingTop: Math.max(6, mt - 26), textAlign: headerAlign }}
+      >
+        <div style={{ fontWeight: 700, fontSize: wordSize, color: wordColor, lineHeight: 1.1 }}>
+          {designTokens.wordmark}
+        </div>
+        <div style={{ fontSize: tagSize, color: grayColor, lineHeight: 1.2 }}>
+          {designTokens.tagline}
+        </div>
+        {designTokens.id !== "classic" && (
+          <div style={{ borderTop: `0.5px solid ${ruleColor}`, marginTop: 4 }} />
+        )}
+      </div>
+      <div
+        className="doc-preview-footer"
+        style={{ paddingLeft: ml, paddingRight: mr, paddingBottom: 10 }}
+      >
+        {watermark && (
+          <div style={{ textAlign: "center", fontSize: tagSize, color: "#8b8b93", marginBottom: 2 }}>
+            {watermark}
+          </div>
+        )}
+        <div
+          style={{
+            borderTop: `0.5px solid ${ruleColor}`,
+            paddingTop: 4,
+            display: "flex",
+            justifyContent: "space-between",
+            fontSize: 10,
+            color: grayColor,
+          }}
+        >
+          <span>{showPageNumbers ? `Стр. ${i + 1} из ${total}` : ""}</span>
+          <span>Сформировано на {designTokens.siteUrl}</span>
+        </div>
+      </div>
+    </>
+  );
 
   useLayoutEffect(() => {
     if (!html) return;
@@ -125,10 +192,10 @@ export default function DocPreview({
   if (pages.length === 0) {
     return (
       <div id="print-root" className="flex flex-col items-center gap-6 py-4">
-        <div
-          className="a4-sheet"
-          dangerouslySetInnerHTML={{ __html: html }}
-        />
+        <div className={`a4-sheet doc-skin-${designTokens.id}`}>
+          <div dangerouslySetInnerHTML={{ __html: html }} />
+          {renderChrome(0, 1)}
+        </div>
       </div>
     );
   }
@@ -136,16 +203,12 @@ export default function DocPreview({
   return (
     <div id="print-root" className="flex flex-col items-center gap-6 py-4">
       {pages.map((page, i) => (
-        <div key={i} className="a4-sheet">
+        <div key={i} className={`a4-sheet doc-skin-${designTokens.id}`}>
           <div
             className={page.rootClass}
             dangerouslySetInnerHTML={{ __html: page.html }}
           />
-          {showPageNumbers && (
-            <span className="a4-page-number">
-              Стр. {i + 1} из {pages.length}
-            </span>
-          )}
+          {renderChrome(i, pages.length)}
         </div>
       ))}
     </div>
