@@ -210,6 +210,87 @@ export async function exportAllVaultDocuments(
   return results;
 }
 
+/** Список файлов в папке облака (для выбора бэкапа). */
+export async function listCloudFiles(
+  providerId: CloudProviderId,
+  remoteFolder: string = "/Dogovor.expert/vault-backup"
+): Promise<Array<{ name: string; path: string; size: number; modified: string }>> {
+  const provider = getProvider(providerId);
+  const tokens = await loadCloudTokens(providerId);
+  if (!tokens) throw new Error(`Провайдер ${providerId} не подключен`);
+  if (!isTokenValid(tokens)) throw new Error(`Токен ${providerId} истёк`);
+
+  // У провайдеров разные методы листинга - используем общий через download метаданных
+  if (providerId === "yandex") {
+    const yandex = provider as any;
+    const items = await yandex.listFiles(tokens, remoteFolder);
+    return items.map((f: any) => ({
+      name: f.name,
+      path: f.path,
+      size: f.size || 0,
+      modified: f.modified || f.created || new Date().toISOString(),
+    }));
+  }
+  if (providerId === "google") {
+    const google = provider as any;
+    const items = await google.searchFile(tokens, ""); // поиск всех в папке - упрощение
+    return items.map((f: any) => ({
+      name: f.name,
+      path: f.id,
+      size: 0,
+      modified: new Date().toISOString(),
+    }));
+  }
+  if (providerId === "dropbox") {
+    const dropbox = provider as any;
+    // Dropbox list folder
+    const res = await fetch("https://api.dropboxapi.com/2/files/list_folder", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${tokens.accessToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ path: remoteFolder, recursive: false }),
+    });
+    if (!res.ok) throw new Error("Dropbox list failed");
+    const data = await res.json();
+    return (data.entries || [])
+      .filter((e: any) => e[".tag"] === "file")
+      .map((e: any) => ({
+        name: e.name,
+        path: e.path_display,
+        size: e.size,
+        modified: e.server_modified,
+      }));
+  }
+  return [];
+}
+
+/** Скачивание файла бэкапа из облака. */
+export async function downloadCloudFile(
+  providerId: CloudProviderId,
+  remotePath: string
+): Promise<Blob> {
+  const provider = getProvider(providerId);
+  const tokens = await loadCloudTokens(providerId);
+  if (!tokens) throw new Error(`Провайдер ${providerId} не подключен`);
+  if (!isTokenValid(tokens)) throw new Error(`Токен ${providerId} истёк`);
+  return provider.downloadFile(tokens, remotePath);
+}
+
+/** Импорт vault бэкапа из облака. */
+export async function importVaultFromCloud(
+  providerId: CloudProviderId,
+  remotePath: string,
+  passphrase?: string
+): Promise<void> {
+  const blob = await downloadCloudFile(providerId, remotePath);
+  const text = await blob.text();
+  const backup = JSON.parse(text);
+  const { importVaultBackup } = await import("@/lib/vault/keyManager");
+  await importVaultBackup(backup, passphrase);
+}
+
 // Реэкспорт для удобства
 export { openAuthPopup, parseTokenFromFragment } from "./oauth";
 export type { CloudTokens, CloudConfig } from "./types";

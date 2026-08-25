@@ -160,6 +160,30 @@ export class GoogleDriveProvider implements CloudProvider {
     return data.files || [];
   }
 
+  async listFiles(tokens: CloudTokens, folderPath: string = "/"): Promise<Array<{ name: string; path: string; size: number; modified: string }>> {
+    // Google Drive не имеет иерархических путей как файловая система.
+    // Ищем папку Dogovor.expert по имени, затем файлы внутри.
+    const folderName = folderPath.split("/").pop() || "Dogovor.expert";
+    const folders = await this.searchFile(tokens, folderName);
+    let folderId = folders[0]?.id;
+    if (!folderId) {
+      // Папки нет - возвращаем пустой массив
+      return [];
+    }
+    const q = encodeURIComponent(`'${folderId}' in parents and trashed = false`);
+    const res = await this.authedFetch(
+      tokens,
+      `https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id,name,size,modifiedTime)`
+    );
+    const data = await res.json();
+    return (data.files || []).map((f: any) => ({
+      name: f.name,
+      path: f.id,
+      size: parseInt(f.size || "0", 10),
+      modified: f.modifiedTime,
+    }));
+  }
+
   async getUserInfo(tokens: CloudTokens): Promise<{ name?: string; email?: string }> {
     const res = await this.authedFetch(
       tokens,

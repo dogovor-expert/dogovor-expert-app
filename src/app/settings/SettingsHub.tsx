@@ -1,16 +1,18 @@
 "use client";
 import { useSearchParams, useRouter } from "next/navigation";
-import { User, Shield, Bell, Database } from "lucide-react";
+import { User, Shield, Bell, Database, HardDrive } from "lucide-react";
 import ProfileTab from "./components/ProfileTab";
 import SecurityTab from "./components/SecurityTab";
 import NotificationsTab from "./components/NotificationsTab";
 import DataTab from "./components/DataTab";
+import VaultTab from "./components/VaultTab";
 
 const TABS = [
   { id: "profile", label: "Профиль", icon: User },
   { id: "security", label: "Безопасность", icon: Shield },
   { id: "notifications", label: "Уведомления", icon: Bell },
   { id: "data", label: "Данные", icon: Database },
+  { id: "vault", label: "Защищённое хранилище", icon: HardDrive },
 ] as const;
 
 type TabId = (typeof TABS)[number]["id"];
@@ -55,6 +57,7 @@ export default function SettingsHub() {
       {active === "security" && <SecurityTab />}
       {active === "notifications" && <NotificationsTab />}
       {active === "data" && <DataTab />}
+      {active === "vault" && <VaultTab />}
     </div>
   );
 }
