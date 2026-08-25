@@ -247,35 +247,72 @@ export function calcSalaryDelayPeriods(
   return { periods, total: Math.round(total * 100) / 100, days: daysTotal };
 }
 
+const ZHKKH_DECREE_CAP_RATE = 9.5;
+const ZHKKH_DECREE_START = "2022-03-26";
+const ZHKKH_DECREE_END = "2026-12-31";
+
+/**
+ * Ставка ключевой ставки ЦБ для дня просрочки по ЖКХ (ч. 14 ст. 155 ЖК РФ):
+ * берём ставку, действовавшую в этот день. Для периода 26.03.2022–31.12.2026
+ * действует льготное правило ПП РФ № 474 / № 329 — ставка не выше
+ * min(9,5%, ставки на день фактической оплаты).
+ */
+function zhkhRateForDay(dayStr: string, paymentDayStr: string): number {
+  const d = parseDate(dayStr).getTime();
+  if (d >= parseDate(ZHKKH_DECREE_START).getTime() && d <= parseDate(ZHKKH_DECREE_END).getTime()) {
+    return Math.min(ZHKKH_DECREE_CAP_RATE, rateOn(paymentDayStr));
+  }
+  return rateOn(dayStr);
+}
+
 /**
  * Пени за ЖКХ — ч. 14 ст. 155 ЖК РФ:
  * с 31-го по 90-й день — 1/300 ключевой ставки, с 91-го дня — 1/130.
+ * Ставка считается ПО ДНЯМ просрочки (а не на дату расчёта), с учётом
+ * льготного периода ПП РФ № 474 / № 329 (см. zhkhRateForDay).
  */
-export function calcZhkhPenalty(sum: number, days: number): { p300: number; p130: number; total: number } {
-  const rate = rateOn(today());
-  const d31_90 = Math.max(0, Math.min(days, 90) - 30);
-  const d91 = Math.max(0, days - 90);
-  const p300 = sum * rate / 100 / 300 * d31_90;
-  const p130 = sum * rate / 100 / 130 * d91;
+export function calcZhkhPenalty(sum: number, fromDate: string, toDate: string): { p300: number; p130: number; total: number; days: number } {
+  const totalDays = daysBetween(fromDate, toDate) + 1;
+  let p300 = 0;
+  let p130 = 0;
+  for (let i = 0; i < totalDays; i++) {
+    const day = plusDays(fromDate, i);
+    const dayNum = i + 1;
+    if (dayNum <= 30) continue;
+    const rate = zhkhRateForDay(day, toDate);
+    if (dayNum <= 90) {
+      p300 += (sum * rate) / 100 / 300;
+    } else {
+      p130 += (sum * rate) / 100 / 130;
+    }
+  }
+  p300 = Math.round(p300 * 100) / 100;
+  p130 = Math.round(p130 * 100) / 100;
   return {
-    p300: Math.round(p300 * 100) / 100,
-    p130: Math.round(p130 * 100) / 100,
+    p300,
+    p130,
     total: Math.round((p300 + p130) * 100) / 100,
+    days: totalDays,
   };
 }
 
 /**
  * Пени за взносы на капремонт — ч. 14.1 ст. 155 ЖК РФ:
  * 1/300 ключевой ставки с 31-го дня просрочки (без повышения до 1/130).
+ * Ставка считается по дням с учётом льготного периода ПП РФ № 474 / № 329.
  */
-export function calcCapRepairPenalty(sum: number, days: number): { p300: number; total: number } {
-  const rate = rateOn(today());
-  const d = Math.max(0, days - 30);
-  const p300 = sum * rate / 100 / 300 * d;
-  return {
-    p300: Math.round(p300 * 100) / 100,
-    total: Math.round(p300 * 100) / 100,
-  };
+export function calcCapRepairPenalty(sum: number, fromDate: string, toDate: string): { p300: number; p130: number; total: number; days: number } {
+  const totalDays = daysBetween(fromDate, toDate) + 1;
+  let p300 = 0;
+  for (let i = 0; i < totalDays; i++) {
+    const day = plusDays(fromDate, i);
+    const dayNum = i + 1;
+    if (dayNum <= 30) continue;
+    const rate = zhkhRateForDay(day, toDate);
+    p300 += (sum * rate) / 100 / 300;
+  }
+  p300 = Math.round(p300 * 100) / 100;
+  return { p300, p130: 0, total: p300, days: totalDays };
 }
 
 /**
@@ -328,14 +365,29 @@ export interface CourtFeeResult {
   base: string;
 }
 
+/**
+ * Госпошлина по неимущественному иску — пп. 3 п. 1 ст. 333.19 НК РФ
+ * (ред. ФЗ № 259-ФЗ от 08.08.2024, применяется к делам с 09.09.2024):
+ * физлицо 3000 ₽, организация 20 000 ₽.
+ */
 export function courtFeeNonProperty(): { child: number; org: number } {
   return { child: 3000, org: 20000 };
 }
 
+/**
+ * Апелляционная (и частная) жалоба — пп. 19 п. 1 ст. 333.19 НК РФ
+ * (ред. ФЗ № 259-ФЗ от 08.08.2024): фиксированная 3000 ₽ / 15 000 ₽.
+ * До 09.09.2024 действовало правило «50% от неимущественной», заменённое
+ * с 2024 года фиксированными ставками (не менять на 1500/10000!).
+ */
 export function courtFeeAppeal(): { child: number; org: number } {
   return { child: 3000, org: 15000 };
 }
 
+/**
+ * Кассационная жалоба — пп. 20 п. 1 ст. 333.19 НК РФ
+ * (ред. ФЗ № 259-ФЗ от 08.08.2024): фиксированная 5000 ₽ / 20 000 ₽.
+ */
 export function courtFeeCassation(): { child: number; org: number } {
   return { child: 5000, org: 20000 };
 }
@@ -345,13 +397,16 @@ export function courtFeeAlimony(): number {
 }
 
 /**
- * Неустойка по договору (законные варианты: 1/300, 1/150, 1/130 ключевой ставки, либо договорной % в день / % годовых).
+ * Неустойка по договору (ст. 330 ГК РФ). Законные пени f300/f150/f130 привязаны к
+ * ключевой ставке ЦБ, действовавшей в период просрочки (считается по дням, а не на
+ * дату расчёта). Для perDay/perYear ставка задаётся пользователем.
  */
 export function calcContractPenalty(
   sum: number,
   rate: number,
   mode: "perDay" | "perYear" | "f300" | "f150" | "f130",
-  days: number
+  days: number,
+  startDate?: string
 ): number {
   let daily: number;
   if (mode === "perDay") {
@@ -359,9 +414,14 @@ export function calcContractPenalty(
   } else if (mode === "perYear") {
     daily = rate / 100 / 365;
   } else {
-    const key = rateOn(today());
+    const start = startDate && startDate.length > 0 ? startDate : plusDays(today(), -(days - 1));
     const denom = mode === "f300" ? 300 : mode === "f150" ? 150 : 130;
-    daily = key / 100 / denom;
+    let acc = 0;
+    for (let i = 0; i < days; i++) {
+      const key = rateOn(plusDays(start, i));
+      acc += (sum * key) / 100 / denom;
+    }
+    return Math.round(acc * 100) / 100;
   }
   return Math.round(sum * daily * days * 100) / 100;
 }

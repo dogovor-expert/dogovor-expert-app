@@ -10,7 +10,6 @@ import TurnstileCaptcha from "@/components/auth/TurnstileCaptcha";
 
 function ForgotForm() {
   const router = useRouter();
-  const supabase = createClient();
   const [email, setEmail] = useState("");
   const [sent, setSent] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -19,6 +18,7 @@ function ForgotForm() {
 
   const sendReset = async () => {
     setError(null);
+    const supabase = createClient();
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       setError("Введите корректный email");
       return;

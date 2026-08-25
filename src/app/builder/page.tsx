@@ -12,8 +12,6 @@ import {
   Eye,
   Wrench,
   Crown,
-  Mail,
-  X,
   Loader2,
   Camera,
   ChevronDown,
@@ -31,6 +29,7 @@ import { saveDraft, loadDraft, clearDraft, clearDraftVersions, getAllDrafts, pus
 import { syncDraft, syncDelete, setUserFlag } from "@/lib/sync";
 import { createClient } from "@/lib/supabase/client";
 import { renderTemplateDocument, buildPackValues } from "@/lib/renderDocument";
+import { Modal } from "@/components/ui/Modal";
 import { getSigning, canShowSignSheet } from "@/data/signingMeta";
 import { type DesignId } from "@/lib/docDesign";
 import { buildTemplateDefaults, getGreeting, normalizeTypography, todayStr } from "@/lib/format";
@@ -1885,76 +1884,60 @@ function HomeContent() {
         <PaywallModal isOpen={true} onClose={() => setPaywallOpen(false)} />
       )}
 
-      {emailModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="w-full max-w-md bg-white rounded-2xl shadow-xl">
-            <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
-              <div className="flex items-center gap-2">
-                <Mail className="w-4 h-4 text-emerald-600" />
-                <h3 className="text-sm font-semibold text-gray-900">
-                  Отправить документ на email
-                </h3>
-              </div>
-              <button
-                onClick={() => setEmailModalOpen(false)}
-                className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-600 transition-colors"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-            <div className="px-5 py-4">
-              <label
-                htmlFor="email-address"
-                className="block text-xs font-medium text-gray-600 mb-1.5"
-              >
-                Адрес электронной почты
-              </label>
-              <input
-                id="email-address"
-                type="email"
-                value={emailAddress}
-                onChange={(e) => setEmailAddress(e.target.value)}
-                placeholder="you@example.com"
-                className="w-full px-3 py-2 text-sm rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
-              />
-              {emailStatus && (
-                <p
-                  className={`mt-2 text-xs ${
-                    emailStatus.kind === "ok"
-                      ? "text-emerald-600"
-                      : "text-red-600"
-                  }`}
-                >
-                  {emailStatus.text}
-                </p>
-              )}
-              <p className="mt-3 text-[11px] text-gray-600">
-                На почту придёт PDF с документом ({packTemplates.length}{" "}
-                {packTemplates.length > 1 ? "документов" : "документ"}). Ссылки
-                для скачивания активны всегда.
-              </p>
-            </div>
-            <div className="px-5 py-4 border-t border-gray-100 flex items-center justify-end gap-2">
-              <button
-                onClick={() => setEmailModalOpen(false)}
-                className="inline-flex items-center justify-center font-medium px-4 py-2 text-sm rounded-xl bg-white text-gray-700 hover:bg-gray-50 border border-gray-200"
-              >
-                Отмена
-              </button>
-              <button
-                onClick={handleSendEmail}
-                disabled={emailSending}
-                className="inline-flex items-center justify-center font-medium px-4 py-2 text-sm rounded-xl gap-2 bg-emerald-500 text-white hover:bg-emerald-600 disabled:opacity-50"
-              >
-                {emailSending && (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                )}
-                Отправить
-              </button>
-            </div>
+      <Modal
+        isOpen={emailModalOpen}
+        onClose={() => setEmailModalOpen(false)}
+        title="Отправить документ на email"
+      >
+        <div className="space-y-4">
+          <div className="space-y-1">
+            <label
+              htmlFor="email-address"
+              className="block text-xs font-medium text-gray-600 mb-1.5"
+            >
+              Адрес электронной почты
+            </label>
+            <input
+              id="email-address"
+              type="email"
+              value={emailAddress}
+              onChange={(e) => setEmailAddress(e.target.value)}
+              placeholder="you@example.com"
+              className="w-full px-3 py-2 text-sm rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+            />
+          </div>
+          {emailStatus && (
+            <p
+              className={`text-xs ${
+                emailStatus.kind === "ok" ? "text-emerald-600" : "text-red-600"
+              }`}
+            >
+              {emailStatus.text}
+            </p>
+          )}
+          <p className="text-[11px] text-gray-600">
+            На почту придёт PDF с документом ({packTemplates.length}{" "}
+            {packTemplates.length > 1 ? "документов" : "документ"}). Ссылки
+            для скачивания активны всегда.
+          </p>
+          <div className="flex items-center justify-end gap-2">
+            <button
+              onClick={() => setEmailModalOpen(false)}
+              className="inline-flex items-center justify-center font-medium px-4 py-2 text-sm rounded-xl bg-white text-gray-700 hover:bg-gray-50 border border-gray-200"
+            >
+              Отмена
+            </button>
+            <button
+              onClick={handleSendEmail}
+              disabled={emailSending}
+              className="inline-flex items-center justify-center font-medium px-4 py-2 text-sm rounded-xl gap-2 bg-emerald-500 text-white hover:bg-emerald-600 disabled:opacity-50"
+            >
+              {emailSending && <Loader2 className="w-4 h-4 animate-spin" />}
+              Отправить
+            </button>
           </div>
         </div>
-      )}
+      </Modal>
 
       {toast && (
         <div className="fixed bottom-6 right-6 bg-gray-900 text-white px-5 py-3 rounded-xl shadow-lg text-sm font-medium z-50 max-w-sm">

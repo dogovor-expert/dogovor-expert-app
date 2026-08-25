@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { Check, FileWarning } from "lucide-react";
-import { calcContractPenalty, fmtMoney, currentKeyRate } from "@/lib/legal/calc";
+import { calcContractPenalty, fmtMoney, currentKeyRate, today, plusDays } from "@/lib/legal/calc";
 
 type Mode = "perDay" | "perYear" | "f300" | "f150" | "f130";
 
@@ -18,6 +18,7 @@ export default function ContractPenalty() {
   const [mode, setMode] = useState<Mode>("perDay");
   const [rate, setRate] = useState("0.5");
   const [days, setDays] = useState("");
+  const [start, setStart] = useState("");
   const [result, setResult] = useState<{ total: number; daily: number } | null>(null);
   const [error, setError] = useState("");
 
@@ -26,10 +27,9 @@ export default function ContractPenalty() {
     const d = parseInt(days);
     if (isNaN(s) || s <= 0) { setError("Укажите сумму обязательства"); return; }
     if (isNaN(d) || d <= 0) { setError("Укажите количество дней просрочки"); return; }
-    const r = parseFloat(rate) || 0;
-    const total = calcContractPenalty(s, r, mode, d);
-    const daily = mode === "perDay" ? r / 100 : mode === "perYear" ? r / 100 / 365 : null;
-    setResult({ total, daily: daily ?? 0 });
+    const startDate = start && start.length > 0 ? start : plusDays(today(), -(d - 1));
+    const total = calcContractPenalty(s, parseFloat(rate) || 0, mode, d, startDate);
+    setResult({ total, daily: total / d });
     setError("");
   };
 
@@ -67,6 +67,11 @@ export default function ContractPenalty() {
           <div className="space-y-1">
             <label className="text-[10px] font-mono text-gray-600">Дней просрочки</label>
             <input type="number" min="0" value={days} onChange={(e) => setDays(e.target.value)}
+              className="w-full bg-gray-50 border border-gray-200 text-xs py-2.5 px-3 rounded-lg text-gray-900 outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500" />
+          </div>
+          <div className="space-y-1">
+            <label className="text-[10px] font-mono text-gray-600">Дата начала просрочки</label>
+            <input type="date" value={start} onChange={(e) => setStart(e.target.value)}
               className="w-full bg-gray-50 border border-gray-200 text-xs py-2.5 px-3 rounded-lg text-gray-900 outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500" />
           </div>
         </div>

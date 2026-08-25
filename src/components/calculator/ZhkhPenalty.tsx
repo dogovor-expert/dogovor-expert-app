@@ -15,14 +15,10 @@ export default function ZhkhPenalty() {
     const s = parseFloat(sum);
     if (isNaN(s) || s <= 0) { setError("Укажите сумму долга"); return; }
     if (!due || !paid || due > paid) { setError("Проверьте даты"); return; }
-    const days = Math.round((new Date(paid).getTime() - new Date(due).getTime()) / 86400000);
-    if (kind === "cap") {
-      const r = calcCapRepairPenalty(s, days);
-      setResult({ total: r.total, p300: r.p300, p130: 0, days });
-    } else {
-      const r = calcZhkhPenalty(s, days);
-      setResult({ total: r.total, p300: r.p300, p130: r.p130, days });
-    }
+    const r = kind === "cap"
+      ? calcCapRepairPenalty(s, due, paid)
+      : calcZhkhPenalty(s, due, paid);
+    setResult({ total: r.total, p300: r.p300, p130: r.p130, days: r.days });
     setError("");
   };
 
