@@ -2,8 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
-
 @font-face {
   font-family: "PT Astra Sans";
   src: url('/fonts/pt-astra-regular.ttf') format('truetype');
@@ -229,12 +227,12 @@
   .a4-sheet.doc-skin-brand {
     font-size: 14px;
     line-height: 1.22;
-    font-family: "Inter Doc", "Inter", system-ui, sans-serif;
+    font-family: "Inter Doc", var(--font-inter), system-ui, sans-serif;
     color: #1A1A1A;
   }
   .a4-sheet.doc-skin-classic .font-serif { font-family: "PT Serif", "Times New Roman", serif !important; }
   .a4-sheet.doc-skin-minimal .font-serif,
-  .a4-sheet.doc-skin-brand .font-serif { font-family: "Inter Doc", "Inter", system-ui, sans-serif !important; }
+  .a4-sheet.doc-skin-brand .font-serif { font-family: "Inter Doc", var(--font-inter), system-ui, sans-serif !important; }
 
   /* tailwind text sizes -> pt-based px to match the PDF engine (sizeFromClass) */
   .a4-sheet.doc-skin-classic .text-base, .a4-sheet.doc-skin-minimal .text-base, .a4-sheet.doc-skin-brand .text-base { font-size: 14px !important; }
