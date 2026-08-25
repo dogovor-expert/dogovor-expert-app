@@ -7,7 +7,8 @@ import { TEMPLATE_PREVIEWS } from "@/data/templatePreviews";
 import { loadDraft } from "@/lib/autosave";
 import { renderTemplateDocument } from "@/lib/renderDocument";
 import { buildTemplateDefaults } from "@/lib/format";
-import { Download, Printer, ChevronLeft } from "lucide-react";
+import { encodeShareState, decodeShareState, type SharePayload } from "@/lib/shareState";
+import { Download, Printer, ChevronLeft, Share2, Check } from "lucide-react";
 
 export default function PreviewPage() {
   return (
@@ -31,117 +32,92 @@ function PreviewContent() {
   const [loaded, setLoaded] = useState(false);
   const [html, setHtml] = useState("");
   const [noDraft, setNoDraft] = useState(false);
+  const [fromShare, setFromShare] = useState(false);
+  const [shared, setShared] = useState<SharePayload | null>(null);
+  const [values, setValues] = useState<Record<string, string>>({});
+  const [esignSeller, setEsignSeller] = useState<string | null>(null);
+  const [esignBuyer, setEsignBuyer] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
 
   const template = useMemo(
     () => LEGAL_TEMPLATES.find((t) => t.id === templateId) || LEGAL_TEMPLATES[0],
     [templateId]
   );
 
+  // Share-ссылка (d=...) декодируется синхронно до рендера — контент
+  // появляется мгновенно, без fetch, как в serverless-share паттерне.
   useEffect(() => {
-    const draft = loadDraft(templateId);
+    const decoded = decodeShareState(searchParams.get("d"));
+    setShared(decoded);
+  }, [searchParams]);
+
+  useEffect(() => {
     // Черновик хранится в localStorage и привязан к устройству. На другом
-    // устройстве/в приватном режиме его нет — вместо «Черновик не найден»
-    // показываем документ с дефолтными значениями шаблона, чтобы предпросмотр
-    // и печать всегда работали.
-    const values = draft ? draft.values : buildTemplateDefaults(template);
-    setNoDraft(!draft);
+    // устройстве/в приватном режиме его нет. Приоритет источников:
+    //   1) share-ссылка (d=) — перенос между устройствами
+    //   2) localStorage черновик
+    //   3) дефолтные значения шаблона
+    // иначе предпросмотр и печать всегда работают.
+    const draft = loadDraft(templateId);
+    let srcValues: Record<string, string>;
+    let isShare = false;
+    if (shared) {
+      srcValues = { ...buildTemplateDefaults(template), ...shared.values };
+      isShare = true;
+    } else if (draft) {
+      srcValues = draft.values;
+    } else {
+      srcValues = buildTemplateDefaults(template);
+    }
+    setValues(srcValues);
+    setFromShare(isShare);
+    setNoDraft(!draft && !shared);
+
     try {
-      const esignSeller = localStorage.getItem("esign_seller");
-      const esignBuyer = localStorage.getItem("esign_buyer");
+      const lsSeller = localStorage.getItem("esign_seller");
+      const lsBuyer = localStorage.getItem("esign_buyer");
+      const seller = shared?.signSeller ?? lsSeller;
+      const buyer = shared?.signBuyer ?? lsBuyer;
+      setEsignSeller(seller);
+      setEsignBuyer(buyer);
       setHtml(
-        renderTemplateDocument(template, values, {
+        renderTemplateDocument(template, srcValues, {
           qrSvg: null,
-          signSeller: esignSeller,
-          signBuyer: esignBuyer,
+          signSeller: seller,
+          signBuyer: buyer,
           previewTemplate: TEMPLATE_PREVIEWS[template.id],
         })
       );
     } finally {
       setLoaded(true);
     }
-  }, [template, templateId]);
+  }, [template, templateId, shared]);
 
+  // Печать: используем нативный window.print() + корректный @media print в
+  // globals.css (там #print-root изолируется, body * прячется, .a4-sheet
+  // получает A4-раскладку). Это стандарт для SPA, без хрупких off-screen
+  // iframe и гонок загрузки внешнего CSS, которые давали пустую печать.
   const handlePrint = () => {
-    // Профессиональный подход (react-to-print / Google Docs): печатаем из
-    // выделенного iframe, в который копируем только #print-root + стили
-    // страницы. Тогда сторонние виджеты (Jivo и т.п., висящие в body
-    // родительской страницы) в печать не попадают.
-    //
-    // Важно: iframe должен иметь РЕАЛЬНЫЕ размеры. Chromium масштабирует
-    // печать iframe по ширине самого фрейма — при width/height:0 контент
-    // схлопывается в 0 и печатается пустым. display:none тоже ломает
-    // contentWindow.print() в Chrome 65+, поэтому прячем через
-    // visibility:hidden + вынос за экран.
-    const printRoot = document.getElementById("print-root");
-    if (!printRoot) {
-      window.print();
+    window.print();
+  };
+
+  const handleShare = async () => {
+    const encoded = encodeShareState({
+      values,
+      signSeller: esignSeller,
+      signBuyer: esignBuyer,
+    });
+    const url = `${window.location.origin}${window.location.pathname}?template=${template.id}&d=${encoded}`;
+    try {
+      await navigator.clipboard.writeText(url);
+    } catch {
+      // clipboard может быть недоступен (http / старый браузер) — даём
+      // пользователю самому скопировать через prompt.
+      window.prompt("Скопируйте ссылку:", url);
       return;
     }
-    const iframe = document.createElement("iframe");
-    iframe.setAttribute("aria-hidden", "true");
-    iframe.style.cssText =
-      "position:fixed;left:-10000px;top:0;width:210mm;height:297mm;border:0;visibility:hidden;z-index:-1;";
-    document.body.appendChild(iframe);
-
-    const doc = iframe.contentDocument;
-    if (!doc) {
-      iframe.remove();
-      window.print();
-      return;
-    }
-
-    const origin = window.location.origin;
-    const styles = Array.from(
-      document.querySelectorAll('style, link[rel="stylesheet"]')
-    )
-      // Во фрейме базовый URL — страница сайта, но для надёжности делаем
-      // пути /_next/... абсолютными относительно origin.
-      .map((el) => el.outerHTML.replace(/(href|src)="\//g, `$1="${origin}/`))
-      .join("\n");
-
-    // Нейтрализуем глобальный @media print из globals.css (он прячет контент
-    // через visibility:hidden). Здесь печатаем ТОЛЬКО документ, поэтому
-    // принудительно делаем всё видимым и задаём A4-раскладку.
-    const resetStyle = `
-      <style>
-        @page { size: A4; margin: 0; }
-        html, body { margin: 0; padding: 0; background: #fff !important; }
-        @media print { body * { visibility: visible !important; } }
-        #print-root { width: 210mm; margin: 0; padding: 0 !important; display: block !important; }
-        .a4-sheet { page-break-after: always; break-after: page; box-shadow: none !important; border: none !important; border-radius: 0 !important; }
-        .a4-sheet:last-child { page-break-after: auto; break-after: auto; }
-        .doc-toolbar, .doc-preview-caption, .no-print { display: none !important; }
-      </style>`;
-
-    doc.open();
-    doc.write(
-      `<!DOCTYPE html><html lang="ru"><head><meta charset="utf-8" />` +
-        `<title>${template.name} — печать</title>${styles}${resetStyle}` +
-        `</head><body>${printRoot.outerHTML}</body></html>`
-    );
-    doc.close();
-
-    let printed = false;
-    const cleanup = () => iframe.remove();
-    const doPrint = () => {
-      if (printed) return;
-      printed = true;
-      try {
-        iframe.contentWindow?.focus();
-        iframe.contentWindow?.print();
-      } finally {
-        // Удаляем фрейм чуть позже, чтобы печать успела стартовать.
-        setTimeout(cleanup, 500);
-      }
-    };
-
-    if (doc.readyState === "complete") {
-      setTimeout(doPrint, 300);
-    } else {
-      iframe.onload = () => setTimeout(doPrint, 300);
-      // fallback, если событие load не наступило (например, упал один из стилей)
-      setTimeout(doPrint, 2000);
-    }
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   };
 
   const handleDownload = () => {
@@ -178,6 +154,14 @@ function PreviewContent() {
         </div>
         <div className="flex items-center gap-1">
           <button
+            onClick={handleShare}
+            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-100 transition-colors"
+            title="Скопировать ссылку на документ (откроется на любом устройстве)"
+          >
+            {copied ? <Check className="w-4 h-4 text-green-600" /> : <Share2 className="w-4 h-4" />}
+            {copied ? "Скопировано" : "Поделиться"}
+          </button>
+          <button
             onClick={handleDownload}
             className="hidden sm:inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-100 transition-colors"
           >
@@ -194,7 +178,14 @@ function PreviewContent() {
         </div>
       </header>
 
-      {noDraft && (
+      {fromShare && (
+        <div className="bg-blue-50 border-b border-blue-200 text-blue-800 text-xs px-4 sm:px-6 py-2 print:hidden">
+          Документ открыт по общей ссылке — его можно сразу распечатать или
+          скопировать/отредактировать в конструкторе.
+        </div>
+      )}
+
+      {noDraft && !fromShare && (
         <div className="bg-amber-50 border-b border-amber-200 text-amber-800 text-xs px-4 sm:px-6 py-2 print:hidden">
           Предпросмотр шаблона: данные не заполнены (черновик не найден в этом
           браузере). Откройте конструктор, чтобы подставить свои значения.
@@ -207,7 +198,7 @@ function PreviewContent() {
 
       <footer className="bg-white border-t border-gray-200 flex items-center justify-between px-4 sm:px-6 h-14 flex-shrink-0 print:hidden">
         <span className="text-xs text-gray-600">
-          Черновик хранится локально в вашем браузере
+          {fromShare ? "Открыто по общей ссылке" : "Черновик хранится локально в вашем браузере"}
         </span>
         <div className="flex items-center gap-2">
           <button
