@@ -7,7 +7,8 @@ import { createClient } from "@/lib/supabase/client";
 import {
   FileText, Activity, Calculator,
   FolderOpen, Files, Trash2, CreditCard,
-  Settings, HelpCircle, Menu, X, Bell, ChevronDown, Shield, Home, LogIn, Cookie, Shuffle, Newspaper
+  Settings, HelpCircle, Menu, X, Bell, ChevronDown, Shield, Home, LogIn, Cookie, Shuffle, Newspaper,
+  HardDrive
 } from "lucide-react";
 import HeaderSearch from "@/components/search/HeaderSearch";
 import PromoPill from "@/components/billing/PromoPill";
@@ -39,6 +40,7 @@ const toolNav: NavItem[] = [
 const accountNav: NavItem[] = [
   { icon: <CreditCard className="w-5 h-5" />, label: "Биллинг", href: "/billing" },
   { icon: <Settings className="w-5 h-5" />, label: "Настройки", href: "/settings" },
+  { icon: <HardDrive className="w-5 h-5" />, label: "Облачные диски", href: "/connections" },
   { icon: <HelpCircle className="w-5 h-5" />, label: "Помощь", href: "/help" },
 ];
 
