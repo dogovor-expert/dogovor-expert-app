@@ -25,6 +25,8 @@ export interface CloudProvider {
     config: CloudConfig,
     codeOrFragment: string
   ): Promise<CloudTokens>;
+  /** Обновление access_token (если поддерживается провайдером) */
+  refreshTokens?(tokens: CloudTokens): Promise<CloudTokens>;
   /** Загрузка файла в облако */
   uploadFile(
     tokens: CloudTokens,
