@@ -10,7 +10,15 @@ import { renderTemplateDocument } from "@/lib/renderDocument";
 import { buildTemplateDefaults, todayStr } from "@/lib/format";
 import { buildPdf } from "@/lib/exportPdf";
 import { saveAs } from "file-saver";
-import { encodeShareState, decodeShareState, type SharePayload } from "@/lib/shareState";
+import {
+  encodeShareState,
+  decodeShareState,
+  encodeShareStateV2,
+  decodeShareStateV2,
+  isEncryptedShare,
+  type SharePayload,
+  type EncryptedShareLink,
+} from "@/lib/shareState";
 import { Download, Printer, ChevronLeft, Share2, Check, FileDown } from "lucide-react";
 
 // Кастомные шрифты документа — предзагружаем перед печатью, чтобы в PDF/
@@ -77,11 +85,29 @@ function PreviewContent() {
     [templateId]
   );
 
-  // Share-ссылка (d=...) декодируется синхронно до рендера — контент
-  // появляется мгновенно, без fetch, как в serverless-share паттерне.
+  // Share-ссылка (d=...) декодируется до рендера — контент появляется
+  // мгновенно, без fetch, как в serverless-share паттерне.
+  //   • legacy (?d=<lz-string>) — ПД видны в query (оставлено для старых ссылок)
+  //   • v2 (?d=<aes-gcm>&#k=<key>) — zero-knowledge: ключ только во фрагменте,
+  //     который браузер НЕ отправляет на сервер, сервер видит лишь ciphertext.
   useEffect(() => {
-    const decoded = decodeShareState(searchParams.get("d"));
-    setShared(decoded);
+    let cancelled = false;
+    (async () => {
+      const d = searchParams.get("d");
+      const k = window.location.hash.startsWith("#k=")
+        ? decodeURIComponent(window.location.hash.slice(3))
+        : null;
+      let decoded: SharePayload | null = null;
+      if (d && isEncryptedShare(d)) {
+        decoded = await decodeShareStateV2(d, k);
+      } else {
+        decoded = decodeShareState(d);
+      }
+      if (!cancelled) setShared(decoded);
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [searchParams]);
 
   useEffect(() => {
@@ -157,12 +183,15 @@ function PreviewContent() {
   };
 
   const handleShare = async () => {
-    const encoded = encodeShareState({
+    // Zero-knowledge share: шифруем AES-256-GCM случайным ключом, ключ
+    // кладём в #фрагмент URL (никогда не уходит на сервер). Сервер видит
+    // только ciphertext в ?d= — ПД не покидают браузер в открытом виде.
+    const link: EncryptedShareLink = await encodeShareStateV2({
       values,
       signSeller: esignSeller,
       signBuyer: esignBuyer,
     });
-    const url = `${window.location.origin}${window.location.pathname}?template=${template.id}&d=${encoded}`;
+    const url = `${window.location.origin}${window.location.pathname}?template=${template.id}&d=${link.d}#k=${encodeURIComponent(link.k)}`;
     try {
       await navigator.clipboard.writeText(url);
     } catch {
