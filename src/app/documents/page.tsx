@@ -27,6 +27,7 @@ import { initVault } from "@/lib/vault/keyManager";
 import { useVault } from "@/lib/vault/VaultProvider";
 import type { CloudProviderId } from "@/lib/cloud/types";
 import FolderPicker from "@/components/FolderPicker";
+import CloudExportMenu from "@/components/cloud/CloudExportMenu";
 import { TEMPLATE_META } from "@/data/templatesMeta";
 import Highlight from "@/components/ui/Highlight";
 import { tokenGroups, textMatchesTokens, scoreText } from "@/lib/search";
@@ -80,7 +81,6 @@ export default function DocumentsPage() {
   const [cloudProviders, setCloudProviders] = useState<Array<{id: string; name: string}>>([]);
   const [exporting, setExporting] = useState<string | null>(null);
   const [exportToast, setExportToast] = useState<string | null>(null);
-  const [exportMenuOpen, setExportMenuOpen] = useState<string | null>(null);
   const [folderPicker, setFolderPicker] = useState<{ providerId: CloudProviderId; docId: string; format: "pdf" | "vault-backup" } | null>(null);
   const perPage = 10;
 
@@ -181,14 +181,6 @@ export default function DocumentsPage() {
       setCloudProviders(providers.map((p) => ({ id: p.id, name: p.name })));
     }
     loadCloud();
-  }, []);
-
-  useEffect(() => {
-    function handleClickOutside() {
-      setExportMenuOpen(null);
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   const filtered = docs
@@ -294,13 +286,20 @@ export default function DocumentsPage() {
     router.push(`/preview?template=${templateId}`);
   };
 
-  const handleExportToCloud = async (templateId: string, providerId: string) => {
-    setExportMenuOpen(null);
+  const handleExportPick = (
+    templateId: string,
+    providerId: string,
+    providerName: string,
+    format: "vault-backup" | "pdf"
+  ) => {
     setFolderPicker({
       providerId: providerId as CloudProviderId,
       docId: templateId,
-      format: "vault-backup",
+      format,
     });
+    // Подсказка в тосте, что следующим шагом будет выбор папки
+    setExportToast(`Куда сохранить в ${providerName}? Выберите папку`);
+    setTimeout(() => setExportToast(null), 3500);
   };
 
   const handleExportToCloudWithPath = async (templateId: string, providerId: CloudProviderId, format: "pdf" | "vault-backup", folderPath: string) => {
@@ -621,77 +620,17 @@ export default function DocumentsPage() {
                           >
                             <Clock className="w-4 h-4" />
                           </button>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setExportMenuOpen(exportMenuOpen === doc.id ? null : doc.id);
-                            }}
-                            className={`p-1.5 rounded-lg transition-colors ${
-                              exportMenuOpen === doc.id
-                                ? "bg-brand-100 text-brand-600"
-                                : "hover:bg-gray-100 text-gray-600"
-                            }`}
-                            title={cloudProviders.length > 0 ? "Экспорт в облако" : "Подключить облачный диск"}
-                          >
-                            <Cloud className="w-4 h-4" />
-                          </button>
-                          {exportMenuOpen === doc.id && (
-                            <div
-                              className="absolute right-0 top-full mt-1 w-56 bg-white border border-gray-200 rounded-xl shadow-lg py-1 z-10"
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              {cloudProviders.length === 0 ? (
-                                <>
-                                  <p className="px-3 py-2 text-xs text-gray-500 leading-snug">
-                                    Облачный диск ещё не подключён
-                                  </p>
-                                  <Link
-                                    href="/connections"
-                                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-brand-600 hover:bg-brand-50"
-                                  >
-                                    <Cloud className="w-4 h-4" />
-                                    Подключить Яндекс/Google/Dropbox
-                                  </Link>
-                                </>
-                              ) : (
-                                <>
-                                  {cloudProviders.map((p) => (
-                                    <div key={p.id} className="px-2 py-1">
-                                      <p className="px-3 py-1 text-xs font-medium text-gray-500 uppercase">{p.name}</p>
-                                      {["vault-backup", "pdf"].map((fmt) => (
-                                        <button
-                                          key={fmt}
-                                          onClick={() => {
-                                            handleExportToCloud(doc.id, p.id);
-                                            setExportMenuOpen(null);
-                                          }}
-                                          disabled={exporting === doc.id}
-                                          className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 disabled:opacity-50"
-                                        >
-                                          <Upload className="w-4 h-4" />
-                                          {fmt === "vault-backup" ? "Vault backup (.json)" : "PDF (.pdf)"}
-                                          {exporting === doc.id && (
-                                            <span className="ml-auto">
-                                              <Loader2 className="w-4 h-4 animate-spin" />
-                                            </span>
-                                          )}
-                                        </button>
-                                      ))}
-                                    </div>
-                                  ))}
-                                </>
-                              )}
-                              <div className="border-t border-gray-100 mt-1 pt-1">
-                                <Link
-                                  href="/connections"
-                                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-brand-600 hover:bg-brand-50"
-                                >
-                                  <Plus className="w-4 h-4" />
-                                  Управление дисками…
-                                </Link>
-                              </div>
-                            </div>
-                          )}
+                          <CloudExportMenu
+                            providers={cloudProviders}
+                            busy={exporting === doc.id}
+                            triggerTitle={
+                              cloudProviders.length > 0
+                                ? "Экспорт в облако: бэкап или PDF"
+                                : "Подключите Яндекс / Google / Dropbox"
+                            }
+                            onPick={(pid, pname, fmt) => handleExportPick(doc.id, pid, pname, fmt)}
+                            onManage={() => router.push("/connections")}
+                          />
                           <button
                             onClick={() => handleMigrateToVault(doc.id)}
                             className="p-1.5 hover:bg-blue-50 rounded-lg text-blue-600 hover:text-blue-700 transition-colors"
