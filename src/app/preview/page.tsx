@@ -1,8 +1,7 @@
 "use client";
-import { useState, useEffect, useMemo, Suspense, useRef } from "react";
+import { useState, useEffect, useMemo, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
-import { useReactToPrint } from "react-to-print";
-import DocPreview from "@/components/DocPreview";
+import PdfPreview from "@/components/PdfPreview";
 import { LEGAL_TEMPLATES } from "@/data/legalTemplates";
 import { TEMPLATE_PREVIEWS } from "@/data/templatePreviews";
 import { loadDraft } from "@/lib/autosave";
@@ -19,7 +18,7 @@ import {
   type SharePayload,
   type EncryptedShareLink,
 } from "@/lib/shareState";
-import { Download, Printer, ChevronLeft, Share2, Check, FileDown } from "lucide-react";
+import { Download, Printer, ChevronLeft, Share2, Check, FileDown, Loader2 } from "lucide-react";
 
 // Кастомные шрифты документа — предзагружаем перед печатью, чтобы в PDF/
 // на бумаге не было подмены шрифта (FOUT) и архивная вёрстка совпадала
@@ -63,22 +62,6 @@ function PreviewContent() {
   const [esignBuyer, setEsignBuyer] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [pdfBusy, setPdfBusy] = useState(false);
-
-  const printRef = useRef<HTMLDivElement>(null);
-
-  // Профессиональная печать через react-to-print: библиотека сама копирует
-  // DOM #print-root + все стили страницы в реальный iframe и вызывает
-  // print(). Глобальный @media print из globals.css (там body * скрыт, а
-  // #print-root виден и .a4-sheet получает A4) переносится в iframe вместе со
-  // стилями, поэтому никаких «пустых страниц». Проп fonts гарантирует, что
-  // кастомные PT Astra Sans / PT Serif загружены ДО печати — без подмены
-  // шрифта (FOUT).
-  const reactToPrint = useReactToPrint({
-    contentRef: printRef,
-    documentTitle: () => template.name,
-    fonts: PRINT_FONTS,
-    preserveAfterPrint: true,
-  });
 
   const template = useMemo(
     () => LEGAL_TEMPLATES.find((t) => t.id === templateId) || LEGAL_TEMPLATES[0],
@@ -152,9 +135,39 @@ function PreviewContent() {
     }
   }, [template, templateId, shared]);
 
-  // Печать через react-to-print (см. описание хука выше).
-  const handlePrint = () => {
-    void reactToPrint();
+  // Печать через генерацию PDF и печать через iframe (надежно во всех браузерах).
+  const handlePrint = async () => {
+    if (pdfBusy) return;
+    setPdfBusy(true);
+    try {
+      const html = renderTemplateDocument(template, values, {
+        qrSvg: null,
+        signSeller: esignSeller,
+        signBuyer: esignBuyer,
+        previewTemplate: TEMPLATE_PREVIEWS[template.id],
+      });
+      const { blob } = await buildPdf(html, {
+        design: "classic",
+        pageNumbers: true,
+      });
+      const url = URL.createObjectURL(blob);
+      const iframe = document.createElement("iframe");
+      iframe.style.display = "none";
+      iframe.src = url;
+      document.body.appendChild(iframe);
+      iframe.onload = () => {
+        iframe.contentWindow?.focus();
+        iframe.contentWindow?.print();
+        setTimeout(() => {
+          document.body.removeChild(iframe);
+          URL.revokeObjectURL(url);
+        }, 1000);
+      };
+    } catch (e) {
+      console.error("Print error:", e);
+    } finally {
+      setPdfBusy(false);
+    }
   };
 
   // Архивный PDF клиентским движком (pdf-lib, buildPdf) — как в Google Docs
@@ -286,7 +299,13 @@ function PreviewContent() {
       )}
 
       <div className="flex-1 overflow-auto p-6 sm:p-10">
-        <DocPreview html={html} onPagesChange={setPageCount} printRef={printRef} />
+        <div>
+          <PdfPreview
+            docs={[html]}
+            design="classic"
+            onPagesChange={setPageCount}
+          />
+        </div>
       </div>
 
       <footer className="bg-white border-t border-gray-200 flex items-center justify-between px-4 sm:px-6 h-14 flex-shrink-0 print:hidden">
