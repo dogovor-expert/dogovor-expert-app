@@ -18,6 +18,11 @@ export interface PdfPreviewProps {
   design?: DesignId;
   watermark?: string;
   onPagesChange?: (n: number) => void;
+  /** id корня печати (по умолчанию "print-root"). Позволяет иметь
+   *  несколько экземпляров без конфликта id. */
+  rootId?: string;
+  /** Доп. класс на корневой div (напр. скрыть на экране, показать при печати). */
+  className?: string;
 }
 
 /**
@@ -25,7 +30,7 @@ export interface PdfPreviewProps {
  * (buildPdf) и отрисовываем страницы через pdf.js. Пагинация, шрифты,
  * акценты и логика «уместить на страницу» совпадают с экспортом на 100%.
  */
-export default function PdfPreview({ docs, design, watermark, onPagesChange }: PdfPreviewProps) {
+export default function PdfPreview({ docs, design, watermark, onPagesChange, rootId = "print-root", className }: PdfPreviewProps) {
   const [pages, setPages] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const reqId = useRef(0);
@@ -89,7 +94,7 @@ export default function PdfPreview({ docs, design, watermark, onPagesChange }: P
 
   if (loading && pages.length === 0) {
     return (
-      <div className="flex flex-col items-center gap-3 py-10 text-gray-500">
+      <div id={rootId} className={`flex flex-col items-center gap-3 py-10 text-gray-500 ${className || ""}`}>
         <Loader2 className="w-6 h-6 animate-spin" />
         <span className="text-xs">Подготовка предпросмотра…</span>
       </div>
@@ -97,7 +102,7 @@ export default function PdfPreview({ docs, design, watermark, onPagesChange }: P
   }
 
   return (
-    <div id="print-root" className="flex flex-col items-center gap-6 py-4">
+    <div id={rootId} className={`flex flex-col items-center gap-6 py-4 ${className || ""}`}>
       {pages.map((src, i) => (
         // eslint-disable-next-line @next/next/no-img-element
         <img key={i} src={src} alt={"Страница " + (i + 1)} className="a4-sheet-img" />

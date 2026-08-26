@@ -196,6 +196,7 @@ export default function PreviewStage({
         <div className="overflow-x-auto">
           <div ref={printRef}>
             <PdfPreview
+              rootId="preview-stage"
               docs={packTemplates.map((t) => renderPreview(t))}
               design="classic"
               watermark={watermark}
