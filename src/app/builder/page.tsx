@@ -95,20 +95,9 @@ function HomeContent() {
     return () => clearTimeout(t);
   }, []);
 
-  const [selectedTemplateId, setSelectedTemplateId] = useState<string>(() => {
-    try {
-      const saved = localStorage.getItem("dogovor_last_template");
-      if (saved && LEGAL_TEMPLATES.some((t) => t.id === saved)) return saved;
-    } catch {}
-    return "dkp-auto-short";
-  });
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string>("dkp-auto-short");
   const [wizardStep, setWizardStep] = useState<"select" | "form">("select");
-  const [formValues, setFormValues] = useState<Record<string, string>>(() => {
-    const t =
-      LEGAL_TEMPLATES.find((x) => x.id === selectedTemplateId) ||
-      LEGAL_TEMPLATES[0];
-    return buildTemplateDefaults(t);
-  });
+  const [formValues, setFormValues] = useState<Record<string, string>>({});
   const [activeTab, setActiveTab] =
     useState<TemplateField["category"]>("seller");
   const [scanPhotos, setScanPhotos] = useState<Record<string, string[]>>({});
@@ -175,6 +164,49 @@ function HomeContent() {
       setUserFlag(Boolean(data.user));
     });
   }, []);
+
+  // Загрузка шаблона из localStorage на клиенте (после гидратации)
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("dogovor_last_template");
+      if (saved && LEGAL_TEMPLATES.some((t) => t.id === saved)) {
+        setSelectedTemplateId(saved);
+      }
+    } catch {}
+  }, []);
+
+  // Инициализация formValues после загрузки selectedTemplateId
+  useEffect(() => {
+    if (selectedTemplateId) {
+      const template = LEGAL_TEMPLATES.find((x) => x.id === selectedTemplateId) || LEGAL_TEMPLATES[0];
+      
+      // Вычисляем tabs из полей шаблона
+      const tabsList = Array.from(
+        new Set(template.fields.map((f) => f.category))
+      ) as TemplateField["category"][];
+      
+      // Пытаемся загрузить черновик
+      const draft = loadDraft(selectedTemplateId);
+      if (draft) {
+        // Черновик может не содержать полей, добавленных в шаблон позже —
+        // новые поля получают дефолтные значения (статусы сторон и т.п.).
+        setFormValues({ ...buildTemplateDefaults(template), ...draft.values });
+        setChecklist(draft.checklist);
+        setScanPhotos(draft.photos || {});
+        const draftTab = draft.activeTab as TemplateField["category"];
+        const tabsList = Array.from(
+          new Set(template.fields.map((f) => f.category))
+        ) as TemplateField["category"][];
+        setActiveTab(
+          (tabsList.includes(draftTab) ? draftTab : tabsList[0]) as TemplateField["category"]
+        );
+      } else {
+        setFormValues(buildTemplateDefaults(template));
+        setChecklist({});
+        setScanPhotos({});
+      }
+    }
+  }, [selectedTemplateId]);
 
   useEffect(() => {
     fetch("/api/profile")
