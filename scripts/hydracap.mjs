@@ -1,0 +1,12 @@
+import { chromium } from "playwright";
+const url = process.argv[2];
+const browser = await chromium.launch();
+const page = await (await browser.newContext()).newPage();
+const errs = [];
+page.on("pageerror", (e) => errs.push(String(e)));
+page.on("console", (m) => { if (m.type() === "error") errs.push("CONSOLE: " + m.text()); });
+await page.goto(url, { waitUntil: "load", timeout: 30000 });
+await page.waitForTimeout(2500);
+console.log("URL:", url);
+for (const e of errs) console.log("----\n" + e.slice(0, 1500));
+await browser.close();

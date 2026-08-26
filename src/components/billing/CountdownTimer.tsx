@@ -16,12 +16,19 @@ export default function CountdownTimer({
   compact,
   className = "",
 }: CountdownTimerProps) {
-  const [now, setNow] = useState(() => Date.now());
+  const [now, setNow] = useState(() => endsAt);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
+    setNow(Date.now());
     const t = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(t);
   }, []);
+
+  // До монтирования на сервере и клиенте рендерим одинаково (избегаем
+  // hydration mismatch из-за Date.now()).
+  if (!mounted) return null;
 
   const diff = Math.max(0, endsAt - now);
   if (diff <= 0) return null;
