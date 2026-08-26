@@ -29,6 +29,7 @@ import { saveDraft, loadDraft, clearDraft, clearDraftVersions, getAllDrafts, pus
 import { syncDraft, syncDelete, setUserFlag } from "@/lib/sync";
 import { createClient } from "@/lib/supabase/client";
 import { renderTemplateDocument, buildPackValues } from "@/lib/renderDocument";
+import PdfPreview from "@/components/PdfPreview";
 import { Modal } from "@/components/ui/Modal";
 import { getSigning, canShowSignSheet } from "@/data/signingMeta";
 import { type DesignId } from "@/lib/docDesign";
@@ -948,9 +949,7 @@ function HomeContent() {
   };
 
   const handlePrint = () => {
-    setTimeout(() => {
-      window.print();
-    }, 100);
+    window.print();
   };
 
   const handleCopyJson = () => {
@@ -1266,6 +1265,15 @@ function HomeContent() {
   };
 
   const [qrSvg, setQrSvg] = useState("");
+
+  // Актуальный документ для печати (#print-root). Пересчитывается с debounce,
+  // чтобы не пересобирать PDF на каждый ввод (иначе форма лагает).
+  const [printDoc, setPrintDoc] = useState<string>(() => renderPreview());
+  useEffect(() => {
+    const id = setTimeout(() => setPrintDoc(renderPreview()), 600);
+    return () => clearTimeout(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [formValues, signSeller, signBuyer, template, qrSvg]);
   const qrCacheKey = `${formValues.show_qr}|${formValues.items}|${formValues.seller_company}|${formValues.seller_account}|${formValues.seller_bank}|${formValues.seller_bik}|${formValues.seller_corr_account}|${formValues.seller_inn}|${formValues.seller_kpp}|${formValues.invoice_number}`;
   useEffect(() => {
     if (
@@ -1976,6 +1984,17 @@ function HomeContent() {
           {toast}
         </div>
       )}
+
+      {/* Всегда доступный источник печати: актуальный документ рендерится в
+          #print-root (как на /preview). Скрыт на экране, но показывается при
+          печати — window.print() работает из любого режима, без аудита/предпросмотра. */}
+      <PdfPreview
+        rootId="print-root"
+        className="print-src"
+        docs={[printDoc]}
+        design="classic"
+        watermark={subscriptionActive ? undefined : "Сформировано бесплатно на сервисе Dogovor"}
+      />
     </div>
   );
 }

@@ -301,6 +301,12 @@
     border-radius: 2px;
     display: block;
   }
+
+  /* Скрытый на экране, но печатаемый источник печати (#print-root) — см.
+     builder/page.tsx. При печати #print-root показывается через @media print. */
+  .print-src {
+    display: none;
+  }
 }
 
 @media print {
