@@ -135,39 +135,13 @@ function PreviewContent() {
     }
   }, [template, templateId, shared]);
 
-  // Печать через генерацию PDF и печать через iframe (надежно во всех браузерах).
-  const handlePrint = async () => {
-    if (pdfBusy) return;
-    setPdfBusy(true);
-    try {
-      const html = renderTemplateDocument(template, values, {
-        qrSvg: null,
-        signSeller: esignSeller,
-        signBuyer: esignBuyer,
-        previewTemplate: TEMPLATE_PREVIEWS[template.id],
-      });
-      const { blob } = await buildPdf(html, {
-        design: "classic",
-        pageNumbers: true,
-      });
-      const url = URL.createObjectURL(blob);
-      const iframe = document.createElement("iframe");
-      iframe.style.display = "none";
-      iframe.src = url;
-      document.body.appendChild(iframe);
-      iframe.onload = () => {
-        iframe.contentWindow?.focus();
-        iframe.contentWindow?.print();
-        setTimeout(() => {
-          document.body.removeChild(iframe);
-          URL.revokeObjectURL(url);
-        }, 1000);
-      };
-    } catch (e) {
-      console.error("Print error:", e);
-    } finally {
-      setPdfBusy(false);
-    }
+  // Печать: используем уже отрисованные страницы-картинки в #print-root
+  // (они рисуются PdfPreview через pdf.js и идентичны скачанному PDF).
+  // Печатаем прямым window.print() внутри жеста пользователя — без iframe
+  // и нативного PDF-плагина, которые ненадёжны (display:none ломает
+  // рендер плагина, мобильные браузеры не умеют programmatic print плагина).
+  const handlePrint = () => {
+    window.print();
   };
 
   // Архивный PDF клиентским движком (pdf-lib, buildPdf) — как в Google Docs
@@ -230,7 +204,7 @@ function PreviewContent() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 flex flex-col">
+    <div id="preview-app" className="min-h-screen bg-gray-100 flex flex-col">
       <header className="bg-white border-b border-gray-200 flex items-center justify-between px-4 sm:px-6 h-14 flex-shrink-0 print:hidden">
         <div className="flex items-center gap-3">
           <a

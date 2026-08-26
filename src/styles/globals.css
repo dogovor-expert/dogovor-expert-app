@@ -312,7 +312,18 @@
   html, body {
     width: 210mm;
     min-height: auto !important;
+    height: auto !important;
+    overflow: visible !important;
     background: #fff !important;
+  }
+
+  /* Схлопываем экранную обёрку, чтобы скрытые (visibility:hidden) блоки
+     не создавали пустые страницы при печати. */
+  #preview-app {
+    display: block !important;
+    min-height: 0 !important;
+    height: auto !important;
+    overflow: visible !important;
   }
 
   body * {
@@ -331,11 +342,31 @@
     width: 210mm;
     padding: 0 !important;
     margin: 0 !important;
-    display: block !important;
+    display: flex !important;
+    flex-direction: column;
+    gap: 0 !important;
     transform: none !important;
   }
 
-.a4-sheet {
+  /* Каждая отрисованная страница-картинка = отдельный лист при печати. */
+  #print-root .a4-sheet-img {
+    width: 210mm !important;
+    max-width: 100% !important;
+    height: auto !important;
+    margin: 0 auto !important;
+    box-shadow: none !important;
+    border: none !important;
+    border-radius: 0 !important;
+    page-break-after: always !important;
+    break-after: page !important;
+  }
+
+  #print-root .a4-sheet-img:last-child {
+    page-break-after: auto !important;
+    break-after: auto !important;
+  }
+
+  .a4-sheet {
     width: 210mm;
     height: 297mm;
     margin: 0;
