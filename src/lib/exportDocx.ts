@@ -11,6 +11,7 @@ import {
   BorderStyle,
   ShadingType,
   TabStopType,
+  UnderlineType,
   WidthType,
   TextRun,
   ImageRun,
@@ -40,6 +41,8 @@ interface InlineItem {
   bold: boolean;
   italic: boolean;
   img?: { data: Uint8Array; width: number; height: number };
+  /** Длина (в символах «0») линии для заполнения; рисуется подчёркиванием. */
+  blank?: number;
 }
 
 function hasClass(el: HTMLElement, token: string): boolean {
@@ -77,6 +80,13 @@ function collectInline(node: Node, bold = false, italic = false): InlineItem[] {
     const el = n as HTMLElement;
     const tag = el.tagName.toLowerCase();
     if (tag === "br") return;
+    if (hasClass(el, "blank-field")) {
+      const style = el.getAttribute("style") || "";
+      const m = style.match(/min-width:\s*(\d+)ch/i);
+      const n = m ? Number(m[1]) : 0;
+      if (n > 0) out.push({ bold: b, italic: i, blank: n });
+      return;
+    }
     if (tag === "img") {
       const src = el.getAttribute("src") || "";
       const m = src.match(/^data:image\/png;base64,(.+)$/);
@@ -111,6 +121,16 @@ function toRuns(
         type: "png",
         data: it.img.data,
         transformation: { width: it.img.width, height: it.img.height },
+      });
+    }
+    if (it.blank) {
+      return new TextRun({
+        text: "\u00A0".repeat(it.blank),
+        size: opts.size ?? halfPoints(design.bodyFontSize),
+        font: design.fonts.family,
+        bold: opts.boldAll ?? it.bold,
+        italics: it.italic,
+        underline: { type: UnderlineType.SINGLE, color: design.ruleColor === "auto" ? undefined : design.ruleColor },
       });
     }
     return new TextRun({

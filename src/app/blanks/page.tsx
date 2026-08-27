@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { LEGAL_TEMPLATES } from "@/data/templates";
-import type { LegalTemplate } from "@/data/types";
+import BlanksBrowser, { type BlankCategory, type BlankItem } from "@/components/blank/BlanksBrowser";
 
 export const metadata: Metadata = {
   title: "Скачать пустые бланки договоров — бесплатно PDF и Word",
@@ -51,11 +51,18 @@ const CATEGORY_LABELS: Record<string, string> = {
 };
 
 export default function BlanksIndexPage() {
-  const groups = CATEGORY_ORDER.map((cat) => ({
+  const items: BlankItem[] = LEGAL_TEMPLATES.map((t) => ({
+    id: t.id,
+    name: t.name,
+    description: t.description,
+    category: t.category,
+  }));
+
+  const categories: BlankCategory[] = CATEGORY_ORDER.map((cat) => ({
     id: cat,
     label: CATEGORY_LABELS[cat],
-    items: LEGAL_TEMPLATES.filter((t) => t.category === cat),
-  })).filter((g) => g.items.length > 0);
+    count: LEGAL_TEMPLATES.filter((t) => t.category === cat).length,
+  })).filter((c) => c.count > 0);
 
   return (
     <div className="p-6 max-w-5xl mx-auto space-y-10">
@@ -93,35 +100,52 @@ export default function BlanksIndexPage() {
         </div>
       </section>
 
-      {groups.map((group) => (
-        <section key={group.id}>
-          <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-            {group.label}
-            <span className="text-sm font-normal text-gray-400">
-              ({group.items.length})
-            </span>
-          </h2>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {group.items.map((t: LegalTemplate) => (
-              <Link
-                key={t.id}
-                href={`/blanks/${t.id}`}
-                className="group bg-white border border-gray-200 rounded-xl p-4 hover:border-indigo-300 hover:shadow-sm transition"
-              >
-                <p className="text-sm font-semibold text-gray-900 group-hover:text-indigo-600 leading-snug">
-                  {t.name}
-                </p>
-                <p className="text-xs text-gray-500 mt-1.5 line-clamp-2 leading-relaxed">
-                  {t.description}
-                </p>
-                <p className="text-xs text-indigo-600 mt-2 font-medium">
-                  Скачать бланк →
-                </p>
-              </Link>
-            ))}
-          </div>
-        </section>
-      ))}
+      <section className="bg-indigo-50/60 border border-indigo-100 rounded-2xl p-5 text-sm text-gray-700 leading-relaxed">
+        <p className="font-semibold text-gray-900 mb-1">Как заполнить бланк от руки</p>
+        <p>
+          1. Скачайте бланк в PDF или Word.{" "}
+          2. Печатайте или заполняйте от руки чёрной/синей ручкой в отведённых
+          местах (линии для заполнения). 3. Впишите дату, реквизиты и подписи
+          сторон. 4. При необходимости заверьте у нотариуса. Готовый документ
+          можно подписать электронной подписью прямо на сайте.
+        </p>
+      </section>
+
+      <PopularBlanks items={items} />
+
+      <BlanksBrowser items={items} categories={categories} />
     </div>
+  );
+}
+
+const POPULAR_IDS = [
+  "dkp-auto",
+  "dogovor-arendy-kvartiry",
+  "raspiska-money",
+  "akt-priema-kvartiry",
+  "akt-naym",
+  "raspiska-generic",
+];
+
+function PopularBlanks({ items }: { items: BlankItem[] }) {
+  const popular = POPULAR_IDS.map((id) => items.find((i) => i.id === id)).filter(
+    (x): x is BlankItem => Boolean(x)
+  );
+  if (popular.length === 0) return null;
+  return (
+    <section>
+      <h2 className="text-lg font-bold text-gray-900 mb-3">Популярные бланки</h2>
+      <div className="flex flex-wrap gap-2">
+        {popular.map((t) => (
+          <Link
+            key={t.id}
+            href={`/blanks/${t.id}`}
+            className="px-4 py-2 rounded-xl bg-white border border-gray-200 text-sm text-gray-700 hover:border-indigo-300 hover:text-indigo-600 transition"
+          >
+            {t.name}
+          </Link>
+        ))}
+      </div>
+    </section>
   );
 }

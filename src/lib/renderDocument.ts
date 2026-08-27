@@ -374,33 +374,48 @@ function blankToken(id: string): string {
   return `${BLANK_PREFIX}${id}${BLANK_SUFFIX}`;
 }
 
-/** Длина (в символах/единицах) поля-пробела в зависимости от типа поля. */
+/** Длина (в символах/единицах «0») поля-пробела, приближённая к реальному заполнению. */
 function blankSize(f: TemplateField): number {
-  if (f.type === "date") return 12;
-  if (f.type === "number") return 14;
-  if (f.type === "select" || f.type === "radio") return 16;
-  if (/phone|email|tel/i.test(f.id)) return 16;
-  if (/fio|name|company|owner|address|famili|firm|org|recipient|sender|landlord|tenant/i.test(f.id)) return 24;
-  return 18;
+  const id = f.id.toLowerCase();
+  // Реквизиты / коды
+  if (/inn|кпп/i.test(id)) return 14;
+  if (/ogrn|огрн/i.test(id)) return 16;
+  if (/snils|снилс/i.test(id)) return 16;
+  if (/bic|бик/i.test(id)) return 10;
+  if (/account|расчётн|расчетн/i.test(id)) return 22;
+  // Паспорт / серия-номер
+  if (/passport|паспорт|seria|серия|series|номер/i.test(id)) return 20;
+  // Даты
+  if (f.type === "date" || /date|дата/i.test(id)) return 14;
+  // Суммы
+  if (/sum|money|price|amount|стоимост|цена|сумм/i.test(id)) return 22;
+  // Числовые / выбор
+  if (f.type === "number") return 16;
+  if (f.type === "select" || f.type === "radio") return 18;
+  // Контакты
+  if (/phone|email|tel|тел|почт/i.test(id)) return 22;
+  // Длинные текстовые: ФИО, адрес, организация, стороны
+  if (/fio|name|company|owner|address|famili|firm|org|recipient|sender|landlord|tenant|фамил|имя|организац|адрес|покупател|продав|арендодател|арендатор/i.test(id)) return 30;
+  return 20;
 }
 
 /**
- * Заменяет маркеры пустого бланка на видимые «пробелы для заполнения»:
- * - html: стилизованный span (линия), раскрывается CSS .blank-field;
- * - pdf/docx: последовательность подчёркиваний (универсально для обоих движков).
+ * Заменяет маркеры пустого бланка на видимые «пробелы для заполнения».
+ * Во всех режимах используется один и тот же элемент <span class="blank-field">,
+ * чтобы превью (CSS-линия) и экспортируемые PDF/Word (инлайн-подчёркивание)
+ * выглядели одинаково. Длина линии задана через style="min-width:Nch".
  */
 export function applyBlankMarkers(
   html: string,
   template: LegalTemplate,
   mode: "html" | "pdf" | "docx" = "html"
 ): string {
+  void mode;
   for (const f of template.fields) {
     const token = blankToken(f.id);
     if (!html.includes(token)) continue;
-    const marker =
-      mode === "html"
-        ? `<span class="blank-field" style="min-width:${blankSize(f)}ch">&#8203;</span>`
-        : "_".repeat(blankSize(f));
+    const size = blankSize(f);
+    const marker = `<span class="blank-field" style="min-width:${size}ch">&#8203;</span>`;
     html = html.split(token).join(marker);
   }
   return html;
