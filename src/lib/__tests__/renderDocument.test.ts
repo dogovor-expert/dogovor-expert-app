@@ -178,20 +178,6 @@ it("checkbox false не рендерит секцию", () => {
     expect(html).not.toContain("QR</svg>");
   });
 
-  it("подпись продавца вставляется перед блоком", () => {
-    const html = renderTemplateDocument(
-      dkpLikeTemplate,
-      {},
-      { signSeller: "data:image/png;base64,AAA" }
-    );
-    expect(html).toContain("data:image/png;base64,AAA");
-    expect(html).toContain("alt=\"подпись\"");
-  });
-
-  it("без подписи блок не трогается", () => {
-    const html = renderTemplateDocument(dkpLikeTemplate, {});
-    expect(html).not.toContain("alt=\"подпись\"");
-  });
 });
 
 describe("buildPackValues", () => {

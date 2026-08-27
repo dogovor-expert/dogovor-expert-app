@@ -342,7 +342,7 @@ function TemplatesContent() {
                   </div>
                   <button
                     onClick={() => handleUseTemplate(t.id)}
-                    className="mt-auto pt-4 w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-brand-500 text-white text-sm font-medium opacity-0 group-hover:opacity-100 transition-all hover:bg-brand-600"
+                    className="mt-auto pt-4 w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-brand-500 text-white text-sm font-medium opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 max-md:opacity-100 transition-all hover:bg-brand-600"
                   >
                     Использовать <ArrowRight className="w-4 h-4" />
                   </button>

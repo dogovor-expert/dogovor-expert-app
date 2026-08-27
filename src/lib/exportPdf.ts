@@ -905,7 +905,7 @@ function nodeRuns(node: Node): Run[] {
 
 function hasClass(el: HTMLElement, token: string): boolean {
   const cls = el.className || "";
-  return cls.split(/\s+/).includes(token) || cls.includes(token);
+  return cls.split(/\s+/).filter(Boolean).includes(token);
 }
 
 function marginFrom(el: HTMLElement, fallback: number): number {
@@ -1082,6 +1082,8 @@ function collectBlocks(
                 if (runs.length) b.push({ kind: "paragraph", runs, align: "left", indent: 0, bullet: false, fontSize: sizeFromClass(sc.className || "", design, design.smallFontSize), marginBottom: marginFrom(sc, 4) });
               }
             });
+          } else if (hasClass(c, "border-b")) {
+            b.push({ kind: "line", label: (c.textContent || "").trim(), fontSize: sizeFromClass(c.className || "", design, design.tinyFontSize), marginBottom: 6 });
           } else {
             const runs = nodeRuns(c);
             if (runs.length) b.push({ kind: "paragraph", runs, align: "left", indent: 0, bullet: false, fontSize: sizeFromClass(c.className || "", design, design.smallFontSize), marginBottom: 2 });

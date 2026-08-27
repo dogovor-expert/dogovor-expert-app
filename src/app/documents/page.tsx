@@ -327,7 +327,7 @@ export default function DocumentsPage() {
         const html = renderTemplateDocument(
           { id: templateId, name: tpl?.name || templateId, fields: [] } as any,
           vaultDoc.values,
-          { qrSvg: null, signSeller: vaultDoc.esignSeller, signBuyer: vaultDoc.esignBuyer, previewTemplate: undefined }
+          { qrSvg: null, previewTemplate: undefined }
         );
         const { blob } = await buildPdf(html, { design: "classic", pageNumbers: true });
         pdfBlob = blob;
@@ -342,7 +342,7 @@ export default function DocumentsPage() {
         const html = renderTemplateDocument(
           { id: templateId, name: tpl?.name || templateId, fields: [] } as any,
           draft.values,
-          { qrSvg: null, signSeller: null, signBuyer: null, previewTemplate: undefined }
+          { qrSvg: null, previewTemplate: undefined }
         );
         const { blob } = await buildPdf(html, { design: "classic", pageNumbers: true });
         pdfBlob = blob;
