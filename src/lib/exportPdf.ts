@@ -39,12 +39,16 @@ interface Run {
   text: string;
   bold: boolean;
   italic: boolean;
+  /** Длина (в символах «0») линии для заполнения; пустой текст с подчёркиванием. */
+  blank?: number;
 }
 
 interface Word {
   text: string;
   bold: boolean;
   italic: boolean;
+  /** Длина (в символах «0») линии для заполнения; пустой текст с подчёркиванием. */
+  blank?: number;
 }
 
 type Block =
@@ -139,7 +143,9 @@ function layoutLines(words: Word[], fontSize: number, maxWidth: number, measure:
   }
 
   for (const w of expanded) {
-    const ww = measure(w.text, fontSize, w.bold, w.italic);
+    const ww = w.blank
+      ? measure("0", fontSize, w.bold, w.italic) * w.blank
+      : measure(w.text, fontSize, w.bold, w.italic);
     const add = pendingSpace ? ww + spaceWidth : ww;
     if (cur.length && curWidth + add > maxWidth) {
       lines.push({ words: cur, widths: curWidths, totalWidth: curWidth });
@@ -162,6 +168,10 @@ function layoutLines(words: Word[], fontSize: number, maxWidth: number, measure:
 function toWords(runs: Run[]): Word[] {
   const words: Word[] = [];
   for (const r of runs) {
+    if (r.blank) {
+      words.push({ text: "", bold: r.bold, italic: r.italic, blank: r.blank });
+      continue;
+    }
     let i = 0;
     const text = r.text;
     while (i < text.length) {
@@ -480,7 +490,7 @@ class Renderer {
 
     const sameStyle = line.words.every(
       (wd) => wd.bold === line.words[0].bold && wd.italic === line.words[0].italic
-    );
+    ) && !line.words.some((wd) => wd.blank);
     if (sameStyle) {
       const first = line.words[0];
       const font = first.italic && first.bold ? this.fonts.bolditalic : first.italic ? this.fonts.italic : first.bold ? this.fonts.bold : this.fonts.regular;
@@ -497,7 +507,18 @@ class Renderer {
     let cursor = x;
     line.words.forEach((wd, i) => {
       const font = wd.italic && wd.bold ? this.fonts.bolditalic : wd.italic ? this.fonts.italic : wd.bold ? this.fonts.bold : this.fonts.regular;
-      this.page.drawText(wd.text, { x: cursor, y, size: fontSize, font, ...(color ? { color } : {}) });
+      if (wd.blank) {
+        const w = line.widths[i];
+        const ly = y - Math.max(2, fontSize * 0.12);
+        this.page.drawLine({
+          start: { x: cursor, y: ly },
+          end: { x: cursor + w, y: ly },
+          thickness: 0.7,
+          color: this.ruleRgb(),
+        });
+      } else {
+        this.page.drawText(wd.text, { x: cursor, y, size: fontSize, font, ...(color ? { color } : {}) });
+      }
       cursor += line.widths[i] + (i < line.words.length - 1 ? spaceWidth + extraSpace : 0);
     });
   }
@@ -895,6 +916,13 @@ function nodeRuns(node: Node): Run[] {
     const el = n as HTMLElement;
     const tag = el.tagName.toLowerCase();
     if (tag === "br") return;
+    if (hasClass(el, "blank-field")) {
+      const style = el.getAttribute("style") || "";
+      const m = style.match(/min-width:\s*(\d+)ch/i);
+      const n = m ? Number(m[1]) : 0;
+      if (n > 0) out.push({ text: "", bold, italic, blank: n });
+      return;
+    }
     const nb = bold || tag === "strong" || tag === "b";
     const ni = italic || tag === "em" || tag === "i";
     el.childNodes.forEach((c) => walk(c, nb, ni));

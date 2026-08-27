@@ -23,17 +23,20 @@ describe("пустой бланк", () => {
     expect(html).toContain(t.name);
   });
 
-  it("в pdf-режиме поля заменяются подчёркиваниями, маркеров нет", () => {
+  it("в pdf-режиме поля заменяются линиями (blank-field), маркеров нет", () => {
     const html = renderBlank("pdf");
     expect(html).not.toContain("__BLANK__");
     expect(html).toContain("dogovor.expert");
-    expect(html).toMatch(/_+/);
+    expect(html).toContain("blank-field");
+    expect(html).toMatch(/min-width:\s*\d+ch/);
   });
 
-  it("в docx-режиме поля заменяются подчёркиваниями", () => {
+  it("в docx-режиме поля заменяются линиями (blank-field)", () => {
     const html = renderBlank("docx");
     expect(html).not.toContain("__BLANK__");
     expect(html).toContain("dogovor.expert");
+    expect(html).toContain("blank-field");
+    expect(html).toMatch(/min-width:\s*\d+ch/);
   });
 
   it("applyBlankMarkers корректно раскрывает маркер конкретного поля", () => {
