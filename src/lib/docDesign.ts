@@ -132,13 +132,8 @@ export function sizeFromClass(
   ) {
     return design.subheadingFontSize;
   }
-  if (cls.includes("text-[10px]")) return pxToPt(10);
-  if (cls.includes("text-[11px]")) return pxToPt(11);
-  if (cls.includes("text-[12px]")) return pxToPt(12);
-  if (cls.includes("text-[13px]")) return pxToPt(13);
-  if (cls.includes("text-[14px]")) return pxToPt(14);
-  if (cls.includes("text-[16px]")) return pxToPt(16);
-  if (cls.includes("text-[18px]")) return pxToPt(18);
+  const px = cls.match(/text-\[(\d+)px\]/);
+  if (px) return pxToPt(parseInt(px[1], 10));
   if (cls.includes("text-xs")) return pxToPt(12);
   if (cls.includes("text-sm")) return pxToPt(14);
   if (cls.includes("text-base")) return pxToPt(16);

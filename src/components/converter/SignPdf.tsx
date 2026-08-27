@@ -1,303 +1,104 @@
 "use client";
-import { useRef, useState, useCallback, useEffect } from "react";
-import { PenLine, Loader2, Download, Check, X, AlertTriangle, Shield, FileText, ChevronDown } from "lucide-react";
-import { downloadBytes, formatBytes } from "@/lib/converter/download";
-import { PDFDocument } from "pdf-lib";
+import { useRef, useState } from "react";
+import { Loader2, FileText, Shield } from "lucide-react";
 import dynamic from "next/dynamic";
 
-const UKEPSigner = dynamic(() => import("@/components/builder/UKEPSigner").then(m => ({ default: m.UKEPSigner })), { ssr: false });
-
-type SignMode = 'facsimile' | 'ukep';
+const UKEPSigner = dynamic(
+  () => import("@/components/builder/UKEPSigner").then((m) => ({ default: m.UKEPSigner })),
+  { ssr: false }
+);
 
 export default function SignPdf() {
-  const [mode, setMode] = useState<SignMode>('facsimile');
   const [file, setFile] = useState<File | null>(null);
-  const [sign, setSign] = useState<{ url: string; w: number; h: number; type: string } | null>(null);
-  const [pageCount, setPageCount] = useState(0);
-  const [page, setPage] = useState(1);
-  const [pos, setPos] = useState<{ x: number; y: number }>({ x: 50, y: 50 });
-  const [signScale, setSignScale] = useState(40);
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [done, setDone] = useState(false);
   const [pdfBytes, setPdfBytes] = useState<Uint8Array | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const pdfInput = useRef<HTMLInputElement>(null);
-  const signInput = useRef<HTMLInputElement>(null);
 
   const onPdf = async (list: FileList | null) => {
     const f = list?.[0];
     if (!f) return;
     setFile(f);
     setError(null);
-    setDone(false);
     try {
       const arrayBuffer = await f.arrayBuffer();
       setPdfBytes(new Uint8Array(arrayBuffer));
-      const doc = await PDFDocument.load(new Uint8Array(arrayBuffer), { ignoreEncryption: true });
-      setPageCount(doc.getPageCount());
-      setPage(1);
-      setPos({ x: 50, y: 50 });
     } catch {
       setError("Не удалось прочитать PDF — файл повреждён или защищён паролем");
     }
   };
 
-  const onSign = (list: FileList | null) => {
-    const f = list?.[0];
-    if (!f || !f.type.startsWith("image/")) return;
-    const img = new Image();
-    img.onload = () => setSign({ url: URL.createObjectURL(f), w: img.naturalWidth, h: img.naturalHeight, type: f.type });
-    img.src = URL.createObjectURL(f);
-    setDone(false);
-  };
-
-  const dragRef = useRef<{ startX: number; startY: number; originX: number; originY: number } | null>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-
-  const drawPreview = useCallback(() => {
-    const canvas = canvasRef.current;
-    if (!canvas || !file) return;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-    (async () => {
-      try {
-        const pdfjs = await import("pdfjs-dist");
-        const { GlobalWorkerOptions } = pdfjs;
-        GlobalWorkerOptions.workerSrc = "/workers/pdf.worker.min.mjs";
-        const task = pdfjs.getDocument({ data: await file.arrayBuffer() });
-        const doc = await task.promise;
-        const pg = await doc.getPage(page);
-        const baseW = canvas.width / 1;
-        const scale = baseW / pg.getViewport({ scale: 1 }).width;
-        const viewport = pg.getViewport({ scale: scale * 1 });
-        canvas.width = Math.floor(viewport.width);
-        canvas.height = Math.floor(viewport.height);
-        ctx.fillStyle = "#ffffff";
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        await pg.render({ canvas, viewport }).promise;
-        if (sign) {
-          const w = canvas.width * (signScale / 100) * (sign.w / Math.max(sign.w, sign.h));
-          const h = canvas.width * (signScale / 100) * (sign.h / Math.max(sign.w, sign.h));
-          const img = new Image();
-          img.src = sign.url;
-          await new Promise((res) => (img.onload = res));
-          const px = (pos.x / 100) * canvas.width;
-          const py = (pos.y / 100) * canvas.height;
-          ctx.drawImage(img, px, py, w, h);
-        }
-        await task.destroy();
-      } catch {
-        /* preview errors are non-fatal */
-      }
-    })();
-  }, [file, page, pos, sign, signScale]);
-
-  useEffect(() => {
-    drawPreview();
-  }, [drawPreview]);
-
-  const onPointerDown = (e: React.PointerEvent<HTMLCanvasElement>) => {
-    if (!sign) return;
-    const rect = e.currentTarget.getBoundingClientRect();
-    dragRef.current = {
-      startX: e.clientX,
-      startY: e.clientY,
-      originX: pos.x,
-      originY: pos.y,
-    };
-    const canvas = e.currentTarget;
-    const move = (ev: PointerEvent) => {
-      const dx = ((ev.clientX - rect.left) / rect.width) * 100;
-      const dy = ((ev.clientY - rect.top) / rect.height) * 100;
-      setPos({
-        x: Math.min(95, Math.max(0, dx)),
-        y: Math.min(95, Math.max(0, dy)),
-      });
-    };
-    const up = () => {
-      canvas.removeEventListener("pointermove", move);
-      canvas.removeEventListener("pointerup", up);
-      canvas.removeEventListener("pointerleave", up);
-    };
-    canvas.addEventListener("pointermove", move);
-    canvas.addEventListener("pointerup", up);
-    canvas.addEventListener("pointerleave", up);
-  };
-
-  const applyFacsimile = async () => {
-    if (!file || !sign) return;
-    setBusy(true);
-    setError(null);
-    setDone(false);
-    try {
-      const doc = await PDFDocument.load(new Uint8Array(await file.arrayBuffer()), { ignoreEncryption: true });
-      const pg = doc.getPage(page - 1);
-      const { width, height } = pg.getSize();
-      const imgBytes = await fetch(sign.url).then((r) => r.arrayBuffer());
-      const isPng = sign.type === "image/png" || sign.url.startsWith("data:image/png");
-      const img = isPng ? await doc.embedPng(imgBytes) : await doc.embedJpg(imgBytes);
-      const maxDim = Math.max(sign.w, sign.h);
-      const targetW = width * (signScale / 100) * (sign.w / maxDim);
-      const targetH = height * (signScale / 100) * (sign.h / maxDim);
-      const x = (pos.x / 100) * width;
-      const y = height - (pos.y / 100) * height - targetH;
-      pg.drawImage(img, { x, y, width: targetW, height: targetH });
-      const saved = await doc.save({ useObjectStreams: true });
-      downloadBytes(saved, file.name.replace(/\.pdf$/i, "") + "-signed.pdf");
-      setDone(true);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Не удалось подписать PDF");
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const handleModeChange = (newMode: SignMode) => {
-    setMode(newMode);
-    setError(null);
-    setDone(false);
-  };
-
-  const renderFacsimileTab = () => (
+  return (
     <div className="space-y-4">
-      <input ref={pdfInput} type="file" accept="application/pdf,.pdf" className="hidden"
-        onChange={(e) => { onPdf(e.target.files); e.target.value = ""; }} />
-      <input ref={signInput} type="file" accept="image/png,image/jpeg,.png,.jpg,.jpeg" className="hidden"
-        onChange={(e) => { onSign(e.target.files); e.target.value = ""; }} />
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-        <button
-          onClick={() => pdfInput.current?.click()}
-          className="border-2 border-dashed border-gray-200 rounded-xl p-6 flex flex-col items-center gap-2 hover:border-brand-400 hover:bg-brand-50/30 transition-all cursor-pointer"
-        >
-          <span className="text-xs font-semibold text-gray-900">1. PDF для подписи</span>
-          <span className="text-[11px] text-gray-600">{file ? file.name : "Выберите файл"}</span>
-        </button>
-        <button
-          onClick={() => signInput.current?.click()}
-          className="border-2 border-dashed border-gray-200 rounded-xl p-6 flex flex-col items-center gap-2 hover:border-brand-400 hover:bg-brand-50/30 transition-all cursor-pointer"
-        >
-          <span className="text-xs font-semibold text-gray-900">2. Изображение подписи</span>
-          <span className="text-[11px] text-gray-600">{sign ? "Подпись загружена ✓" : "PNG или JPG (подпись с прозрачным фоном — лучше PNG)"}</span>
-        </button>
+      <div className="flex items-center gap-3 p-4 bg-blue-50 border border-blue-200 rounded-xl">
+        <Shield className="w-6 h-6 text-blue-600" />
+        <div>
+          <p className="font-semibold text-blue-800">Квалифицированная электронная подпись (УКЭП)</p>
+          <p className="text-sm text-blue-600 mt-0.5">
+            Документ подписывается вашей УКЭП через КриптоПро. Сервис не имеет доступа к закрытому ключу.
+          </p>
+        </div>
       </div>
 
-      {sign && (
-        <div className="flex items-center gap-2 rounded-xl bg-gray-50 border border-gray-200 px-3 py-2">
-          <img src={sign.url} alt="Подпись" className="h-10 object-contain" />
-          <button onClick={() => setSign(null)}
-            className="p-1 rounded-lg hover:bg-red-50 text-red-400 hover:text-red-600 cursor-pointer ml-auto" title="Убрать">
-            <X className="w-4 h-4" />
-          </button>
-        </div>
+      <input
+        ref={pdfInput}
+        type="file"
+        accept="application/pdf,.pdf"
+        className="hidden"
+        onChange={(e) => {
+          onPdf(e.target.files);
+          e.target.value = "";
+        }}
+      />
+
+      {!file && (
+        <button
+          onClick={() => pdfInput.current?.click()}
+          className="w-full border-2 border-dashed border-gray-200 rounded-xl p-8 flex flex-col items-center gap-2 hover:border-brand-400 hover:bg-brand-50/30 transition-all cursor-pointer"
+        >
+          <FileText className="w-10 h-10 text-gray-300" />
+          <span className="font-medium text-gray-900">Выберите PDF для подписания</span>
+          <span className="text-sm text-gray-500">PDF-файл будет обработан локально в браузере</span>
+        </button>
       )}
 
       {file && (
-        <div className="space-y-3">
-          <div className="flex items-center gap-4">
-            <div className="space-y-1 flex-1">
-              <label className="text-[10px] font-mono text-gray-600 uppercase">Страница — {page} из {pageCount}</label>
-              <input type="range" min={1} max={pageCount} value={page}
-                onChange={(e) => setPage(Number(e.target.value))}
-                className="w-full accent-brand-500" />
-            </div>
-            <div className="space-y-1 flex-1">
-              <label className="text-[10px] font-mono text-gray-600 uppercase">Размер — {signScale}%</label>
-              <input type="range" min={10} max={100} value={signScale}
-                onChange={(e) => setSignScale(Number(e.target.value))}
-                className="w-full accent-brand-500" />
-            </div>
+        <div className="space-y-2">
+          <div className="flex items-center gap-2 rounded-xl bg-gray-50 border border-gray-200 px-3 py-2">
+            <FileText className="w-4 h-4 text-gray-500" />
+            <span className="text-sm text-gray-700 truncate">{file.name}</span>
+            <button
+              onClick={() => {
+                setFile(null);
+                setPdfBytes(null);
+              }}
+              className="ml-auto text-xs text-gray-500 hover:text-red-500"
+            >
+              Выбрать другой
+            </button>
           </div>
-
-          <canvas
-            ref={canvasRef}
-            onPointerDown={onPointerDown}
-            className={`w-full rounded-xl border border-gray-200 bg-white ${sign ? "cursor-move" : "cursor-default"}`}
-            style={{ touchAction: "none" }}
-          />
-
-          <div className="text-[10px] text-gray-600 text-center">Подпись можно перетащить мышью на нужное место. Подписанный документ скачается без загрузки на сервер.</div>
-
-          <button onClick={applyFacsimile} disabled={busy || !sign}
-            className="w-full py-2.5 bg-brand-500 text-white rounded-xl hover:bg-brand-600 font-bold text-sm transition disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer">
-            {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <PenLine className="w-4 h-4" />}
-            {busy ? "Подписание..." : "Подписать и скачать"}
-          </button>
+          {pdfBytes ? (
+            <UKEPSigner
+              pdfBytes={pdfBytes}
+              fileName={file.name}
+              onBack={() => {
+                setFile(null);
+                setPdfBytes(null);
+              }}
+            />
+          ) : (
+            <div className="text-center py-8 text-gray-500">
+              <Loader2 className="w-8 h-8 animate-spin mx-auto mb-2 text-brand-500" />
+              <p className="text-sm text-gray-600">Загрузка документа...</p>
+            </div>
+          )}
         </div>
       )}
 
-      {done && (
-        <div className="rounded-xl p-3 flex items-center gap-2.5 text-xs bg-emerald-50 border border-emerald-200 text-emerald-700">
-          <Check className="w-4 h-4 text-emerald-500" />
-          Подписанный PDF скачан
-        </div>
-      )}
       {error && (
         <div className="rounded-xl p-3 flex items-start gap-2 text-xs bg-red-50 border border-red-200 text-red-700">
-          <AlertTriangle className="w-4 h-4 mt-0.5 flex-shrink-0" />{error}
+          <span>{error}</span>
         </div>
       )}
-    </div>
-  );
-
-  return (
-    <div className="space-y-4">
-      <div className="flex gap-1 border-b border-gray-200">
-        <button
-          onClick={() => handleModeChange('facsimile')}
-          className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-t-xl transition-colors ${
-            mode === 'facsimile'
-              ? 'bg-brand-50 text-brand-700 border-b-2 border-brand-500 -mb-px'
-              : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
-          }`}
-        >
-          <PenLine className="w-4 h-4" />
-          Факсимиле
-        </button>
-        <button
-          onClick={() => handleModeChange('ukep')}
-          className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-t-xl transition-colors ${
-            mode === 'ukep'
-              ? 'bg-brand-50 text-brand-700 border-b-2 border-brand-500 -mb-px'
-              : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
-          }`}
-        >
-          <Shield className="w-4 h-4" />
-          УКЭП (квалифицированная ЭП)
-        </button>
-      </div>
-
-      <div className="bg-white border border-gray-200 rounded-b-xl rounded-t-none p-4">
-        {mode === 'facsimile' && renderFacsimileTab()}
-        {mode === 'ukep' && file && pdfBytes && (
-          <UKEPSigner
-            pdfBytes={pdfBytes}
-            fileName={file.name}
-          />
-        )}
-        {mode === 'ukep' && file && !pdfBytes && (
-          <div className="text-center py-8 text-gray-500">
-            <Loader2 className="w-8 h-8 animate-spin mx-auto mb-2 text-brand-500" />
-            <p className="text-sm text-gray-600">Загрузка документа...</p>
-          </div>
-        )}
-        {mode === 'ukep' && !file && (
-          <div className="text-center py-8 text-gray-500">
-            <FileText className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-            <p className="font-medium text-gray-900">Сначала загрузите PDF документ</p>
-            <p className="text-sm text-gray-500 mt-1">Переключитесь на вкладку «Факсимиле», чтобы выбрать файл</p>
-          </div>
-        )}
-      </div>
-
-      <div className="text-xs text-gray-500 text-center mt-2">
-        {mode === 'facsimile' && (
-          <>Факсимиле — это изображение подписи. Юридической силы УКЭП не имеет. Используйте для внутренних документов.</>
-        )}
-        {mode === 'ukep' && (
-          <>Квалифицированная электронная подпись (УКЭП) через КриптоПро. Требуется токен/смарт-карта и установленный плагин.</>
-        )}
-      </div>
     </div>
   );
 }

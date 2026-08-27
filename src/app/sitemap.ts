@@ -37,10 +37,18 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${SITE_URL}/about`, changeFrequency: "monthly", priority: 0.3 },
     { url: `${SITE_URL}/contacts`, changeFrequency: "monthly", priority: 0.4 },
     { url: `${SITE_URL}/blog`, changeFrequency: "weekly", priority: 0.8 },
+    { url: `${SITE_URL}/blanks`, changeFrequency: "weekly", priority: 0.9 },
   ];
 
   const documents: MetadataRoute.Sitemap = LEGAL_TEMPLATES.map((t) => ({
     url: `${SITE_URL}/documents/${t.id}`,
+    changeFrequency: "monthly" as const,
+    priority: 0.7,
+    lastModified: parseLastUpdated(t.lastUpdated),
+  }));
+
+  const blanks: MetadataRoute.Sitemap = LEGAL_TEMPLATES.map((t) => ({
+    url: `${SITE_URL}/blanks/${t.id}`,
     changeFrequency: "monthly" as const,
     priority: 0.7,
     lastModified: parseLastUpdated(t.lastUpdated),
@@ -53,5 +61,5 @@ export default function sitemap(): MetadataRoute.Sitemap {
     lastModified: parseLastUpdated(p.updatedAt),
   }));
 
-  return [...staticPages, ...documents, ...blog];
+  return [...staticPages, ...documents, ...blanks, ...blog];
 }

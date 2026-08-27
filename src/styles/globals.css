@@ -420,3 +420,12 @@
   outline: 2px solid #1d4ed8;
   outline-offset: 2px;
 }
+
+/* Пустой бланк: линия для ручного заполнения (режим предпросмотра на сайте). */
+.blank-field {
+  display: inline-block;
+  border-bottom: 1.5px solid #334155;
+  height: 1.15em;
+  vertical-align: -2px;
+  margin: 0 2px;
+}

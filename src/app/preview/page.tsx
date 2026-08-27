@@ -58,8 +58,6 @@ function PreviewContent() {
   const [fromShare, setFromShare] = useState(false);
   const [shared, setShared] = useState<SharePayload | null>(null);
   const [values, setValues] = useState<Record<string, string>>({});
-  const [esignSeller, setEsignSeller] = useState<string | null>(null);
-  const [esignBuyer, setEsignBuyer] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [pdfBusy, setPdfBusy] = useState(false);
 
@@ -116,17 +114,9 @@ function PreviewContent() {
     setNoDraft(!draft && !shared);
 
     try {
-      const lsSeller = localStorage.getItem("esign_seller");
-      const lsBuyer = localStorage.getItem("esign_buyer");
-      const seller = shared?.signSeller ?? lsSeller;
-      const buyer = shared?.signBuyer ?? lsBuyer;
-      setEsignSeller(seller);
-      setEsignBuyer(buyer);
       setHtml(
         renderTemplateDocument(template, srcValues, {
           qrSvg: null,
-          signSeller: seller,
-          signBuyer: buyer,
           previewTemplate: TEMPLATE_PREVIEWS[template.id],
         })
       );
@@ -153,8 +143,6 @@ function PreviewContent() {
     try {
       const html = renderTemplateDocument(template, values, {
         qrSvg: null,
-        signSeller: esignSeller,
-        signBuyer: esignBuyer,
         previewTemplate: TEMPLATE_PREVIEWS[template.id],
       });
       const { blob } = await buildPdf(html, {
@@ -175,8 +163,6 @@ function PreviewContent() {
     // только ciphertext в ?d= — ПД не покидают браузер в открытом виде.
     const link: EncryptedShareLink = await encodeShareStateV2({
       values,
-      signSeller: esignSeller,
-      signBuyer: esignBuyer,
     });
     const url = `${window.location.origin}${window.location.pathname}?template=${template.id}&d=${link.d}#k=${encodeURIComponent(link.k)}`;
     try {

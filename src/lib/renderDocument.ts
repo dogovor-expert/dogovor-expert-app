@@ -1,6 +1,6 @@
 import Mustache from "mustache";
 import DOMPurify from "isomorphic-dompurify";
-import type { LegalTemplate } from "@/data/types";
+import type { LegalTemplate, TemplateField } from "@/data/types";
 import { rublesToWords } from "@/lib/words";
 import { declineFullName, looksLikeFullName } from "@/lib/names";
 
@@ -46,15 +46,21 @@ function sanitizeHtml(html: string): string {
 export interface RenderOptions {
   /** Готовый SVG QR-кода (для счёта, ГОСТ Р 56042-2014). */
   qrSvg?: string | null;
-  /** Подписи сторон (dataURL картинок). */
-  signSeller?: string | null;
-  signBuyer?: string | null;
   /**
    * HTML-шаблон превью (Mustache). Выносится из объектов шаблонов в ленивый
    * модуль templatePreviews, чтобы не раздувать основной бандл конструктора.
    * Если не передан — используется template.previewTemplate (для тестов/SSR).
    */
   previewTemplate?: string;
+  /**
+   * Режим «пустой бланк»: вместо значений полей подставляются маркеры для
+   * ручного заполнения (подчёркнутые строки/пробелы). Используется для
+   * скачивания пустых форм. Маркеры раскрываются в applyBlankMarkers по
+   * нужному представлению (html для предпросмотра, pdf/docx для выгрузки).
+   */
+  blank?: boolean;
+  /** Представление маркеров пустого бланка. По умолчанию "html". */
+  blankMode?: "html" | "pdf" | "docx";
 }
 
 /**
@@ -163,12 +169,24 @@ export function renderTemplateDocument(
   formValues: Record<string, string>,
   options: RenderOptions = {}
 ): string {
-  const { qrSvg = null, signSeller = null, signBuyer = null } = options;
+  const { qrSvg = null } = options;
   try {
     const view: Record<string, unknown> = {};
 
     template.fields.forEach((f) => {
       const raw = formValues[f.id] || "";
+
+      // Режим «пустой бланк»: вместо значений — маркеры для ручного заполнения.
+      if (options.blank) {
+        if (f.type === "repeating") {
+          view[f.id] = [];
+        } else if (f.type === "checkbox") {
+          view[f.id] = false;
+        } else {
+          view[f.id] = blankToken(f.id);
+        }
+        return;
+      }
 
       if (f.type === "checkbox") {
         view[f.id] = raw === "true";
@@ -309,33 +327,12 @@ export function renderTemplateDocument(
 
     let html = Mustache.render(options.previewTemplate ?? template.previewTemplate ?? "", view);
 
-    const injectSign = (
-      htmlStr: string,
-      pattern: RegExp,
-      src: string | null
-    ): string => {
-      if (!src) return htmlStr;
-      const img =
-        '<div class="text-left mb-1"><img src="' +
-        src +
-        '" alt="подпись" style="height:40px;max-width:140px;object-fit:contain;" /></div>';
-      return pattern.test(htmlStr)
-        ? htmlStr.replace(pattern, img + "$&")
-        : htmlStr;
-    };
-
-    html = injectSign(
-      html,
-      /<div[^>]*class="[^"]*"[^>]*>\s*Подпись\s*Продавца\s*<\/div>/,
-      signSeller
-    );
-    html = injectSign(
-      html,
-      /<div[^>]*class="[^"]*"[^>]*>\s*Подпись\s*Покупателя\s*<\/div>/,
-      signBuyer
-    );
-
     html = sanitizeHtml(html);
+
+    if (options.blank) {
+      html = applyBlankMarkers(html, template, options.blankMode ?? "html");
+      html += buildBlankFooter(template);
+    }
 
     // QR-код (ГОСТ Р 56042-2014): вставляем ПОСЛЕ санитизации.
     // qrSvg формируется библиотекой qrcode из данных счёта и не содержит
@@ -357,6 +354,59 @@ export function renderTemplateDocument(
         escapeHtml(value || "___________________")
       );
     }
+    if (options.blank) {
+      html = applyBlankMarkers(html, template, options.blankMode ?? "html");
+      html = html.replace(/\{\{[^}]+\}\}/g, "___________________");
+      html += buildBlankFooter(template);
+    }
     return sanitizeHtml(html);
   }
+}
+
+// ---------------------------------------------------------------------------
+// Пустой бланк: маркеры и их раскрытие в конкретное представление.
+// ---------------------------------------------------------------------------
+
+const BLANK_PREFIX = "__BLANK__";
+const BLANK_SUFFIX = "__";
+
+function blankToken(id: string): string {
+  return `${BLANK_PREFIX}${id}${BLANK_SUFFIX}`;
+}
+
+/** Длина (в символах/единицах) поля-пробела в зависимости от типа поля. */
+function blankSize(f: TemplateField): number {
+  if (f.type === "date") return 12;
+  if (f.type === "number") return 14;
+  if (f.type === "select" || f.type === "radio") return 16;
+  if (/phone|email|tel/i.test(f.id)) return 16;
+  if (/fio|name|company|owner|address|famili|firm|org|recipient|sender|landlord|tenant/i.test(f.id)) return 24;
+  return 18;
+}
+
+/**
+ * Заменяет маркеры пустого бланка на видимые «пробелы для заполнения»:
+ * - html: стилизованный span (линия), раскрывается CSS .blank-field;
+ * - pdf/docx: последовательность подчёркиваний (универсально для обоих движков).
+ */
+export function applyBlankMarkers(
+  html: string,
+  template: LegalTemplate,
+  mode: "html" | "pdf" | "docx" = "html"
+): string {
+  for (const f of template.fields) {
+    const token = blankToken(f.id);
+    if (!html.includes(token)) continue;
+    const marker =
+      mode === "html"
+        ? `<span class="blank-field" style="min-width:${blankSize(f)}ch">&#8203;</span>`
+        : "_".repeat(blankSize(f));
+    html = html.split(token).join(marker);
+  }
+  return html;
+}
+
+/** Подпись с адресом сайта — брендирование каждого скачанного бланка. */
+function buildBlankFooter(template: LegalTemplate): string {
+  return `<div class="blank-source text-center text-[10px] text-zinc-400 mt-6 pt-3 border-t border-zinc-200">Пустой бланк «${escapeHtml(template.name)}» — подготовлен на Dogovor.expert. Бесплатно заполняйте онлайн или от руки: dogovor.expert</div>`;
 }

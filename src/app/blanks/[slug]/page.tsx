@@ -7,6 +7,8 @@ import type { LegalTemplate } from "@/data/types";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { faqForTemplate, faqJsonLd, breadcrumbJsonLd } from "@/lib/seo/faq";
 import { buildIntro, fieldsSummary } from "@/lib/seo/intro";
+import { renderTemplateDocument } from "@/lib/renderDocument";
+import BlankDownloadButtons from "@/components/blank/BlankDownloadButtons";
 
 const YEAR = new Date().getFullYear();
 const SITE_URL = "https://dogovor.expert";
@@ -25,25 +27,26 @@ export function generateMetadata({ params }: { params: Promise<{ slug: string }>
   return params.then(async ({ slug }) => {
     const t = slugToTemplate(slug);
     if (!t) return {};
-    const desc = `${t.description} Заполнение онлайн за 5 минут: PDF и DOCX, без регистрации, бесплатно. Образец ${YEAR} года.`;
-    const url = `/documents/${t.id}`;
+    const desc = `Скачайте пустой бланк «${t.name}» бесплатно в PDF и Word. Готовая форма для ручного заполнения с адресом сайта dogovor.expert. ${t.description}`;
+    const url = `/blanks/${t.id}`;
     return {
-      title: `${t.name} — образец ${YEAR}: составить и скачать бесплатно`,
-        description: truncateWord(desc, 200),
+      title: `Скачать пустой бланк «${t.name}» — PDF и Word бесплатно`,
+      description: truncateWord(desc, 200),
+      keywords: [
+        `скачать бланк ${t.name}`,
+        `пустой бланк ${t.name}`,
+        "бланк договора скачать бесплатно",
+        "образец бланка",
+      ],
       robots: {
         index: true,
         follow: true,
-        googleBot: {
-          index: true,
-          follow: true,
-          "max-image-preview": "large",
-          "max-snippet": -1,
-        },
+        googleBot: { index: true, follow: true, "max-image-preview": "large", "max-snippet": -1 },
       },
       alternates: { canonical: url },
       openGraph: {
-        title: `${t.name} — образец ${YEAR}`,
-      description: truncateWord(desc, 200),
+        title: `Скачать пустой бланк «${t.name}» — PDF и Word`,
+        description: truncateWord(desc, 200),
         url,
         type: "website",
       },
@@ -58,19 +61,21 @@ function truncateWord(text: string, max: number): string {
   return (lastSpace > max * 0.6 ? cut.slice(0, lastSpace) : text.slice(0, max)) + "…";
 }
 
-export default async function DocumentPage({
-  params,
-}: {
-  params: Promise<{ slug: string }>;
-}) {
+export default async function BlankPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const t = slugToTemplate(slug);
   if (!t) notFound();
 
-  const url = `/documents/${t.id}`;
-  const intro = buildIntro(t);
-  const summary = fieldsSummary(t);
+  const url = `/blanks/${t.id}`;
+  const { TEMPLATE_PREVIEWS } = await import("@/data/templatePreviews");
+  const previewHtml = renderTemplateDocument(t, {}, {
+    previewTemplate: TEMPLATE_PREVIEWS[t.id] ?? t.previewTemplate,
+    blank: true,
+    blankMode: "html",
+  });
+
   const faq = faqForTemplate(t.category);
+  const summary = fieldsSummary(t);
   const related = (t.suggestedDocs || [])
     .map((id) => LEGAL_TEMPLATES.find((x) => x.id === id))
     .filter((x): x is LegalTemplate => Boolean(x))
@@ -83,13 +88,14 @@ export default async function DocumentPage({
           breadcrumbJsonLd([
             { name: "Главная", path: "/" },
             { name: "Каталог шаблонов", path: "/templates" },
+            { name: "Бланки", path: "/blanks" },
             { name: t.name, path: url },
           ]),
           faqJsonLd(faq),
           {
             "@context": "https://schema.org",
             "@type": "WebPage",
-            name: t.name,
+            name: `Пустой бланк «${t.name}»`,
             description: t.description,
             url: `${SITE_URL}${url}`,
             inLanguage: "ru",
@@ -103,6 +109,8 @@ export default async function DocumentPage({
         <ChevronRight className="w-3 h-3" />
         <Link href="/templates" className="hover:text-brand-600">Каталог шаблонов</Link>
         <ChevronRight className="w-3 h-3" />
+        <Link href="/blanks" className="hover:text-brand-600">Бланки</Link>
+        <ChevronRight className="w-3 h-3" />
         <span className="text-gray-600">{t.name}</span>
       </nav>
 
@@ -110,47 +118,48 @@ export default async function DocumentPage({
         <div className="w-12 h-12 rounded-xl bg-indigo-50 border border-indigo-200 flex items-center justify-center text-indigo-500 flex-shrink-0">
           <FileText className="h-6 w-6" />
         </div>
-        <div>
+        <div className="flex-1">
           <p className="text-[10px] font-mono uppercase tracking-widest text-indigo-500 mb-1">
-            Бесплатно · Без регистрации · {t.actSource}
+            Пустой бланк · Бесплатно · {t.actSource}
           </p>
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">{t.name}</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
+            Пустой бланк «{t.name}»
+          </h1>
           <p className="text-sm text-gray-600 mt-1.5 max-w-2xl leading-relaxed">
-            Образец {YEAR} года: заполните форму — документ сформируется автоматически.
-            Печать на листе А4, экспорт в PDF и DOCX.
+            Готовая форма для ручного заполнения. Скачайте в PDF или Word, распечатайте
+            и заполните от руки — или откройте на компьютере. На бланке указан адрес
+            сайта dogovor.expert.
           </p>
-        </div>
-        <div className="sm:ml-auto flex items-center gap-3 flex-shrink-0">
-          <Link
-            href={`/blanks/${t.id}`}
-            className="inline-flex items-center gap-2 px-5 py-3 bg-white border border-indigo-200 text-indigo-700 rounded-xl hover:bg-indigo-50 font-bold text-sm transition cursor-pointer"
-          >
-            <Download className="w-4 h-4" />
-            Пустой бланк
-          </Link>
-          <Link
-            href={`/builder?template=${t.id}`}
-            className="inline-flex items-center gap-2 px-5 py-3 bg-indigo-500 text-white rounded-xl hover:bg-indigo-600 font-bold text-sm transition cursor-pointer"
-          >
-            Составить документ
-            <ChevronRight className="w-4 h-4" />
-          </Link>
         </div>
       </section>
 
-      <section className="space-y-3">
-        {intro.map((p, i) => (
-          <p key={i} className="text-sm text-gray-600 leading-relaxed">
-            {p}
-          </p>
-        ))}
+      <section className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
+        <h2 className="text-sm font-semibold text-gray-900 mb-4">
+          Скачать пустой бланк
+        </h2>
+        <BlankDownloadButtons templateId={t.id} />
+      </section>
+
+      <section>
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide">
+            Предпросмотр бланка
+          </h2>
+          <span className="text-xs text-gray-400">формат А4</span>
+        </div>
+        <div className="mx-auto w-full max-w-[794px] bg-white shadow-xl rounded-lg overflow-hidden ring-1 ring-gray-100">
+          <div
+            className="p-6 sm:p-10 text-[13px] leading-relaxed text-zinc-900"
+            dangerouslySetInnerHTML={{ __html: previewHtml }}
+          />
+        </div>
       </section>
 
       <div className="grid grid-cols-3 gap-3 text-center">
         {[
-          { icon: Clock, title: "5 минут", text: "на заполнение" },
+          { icon: Clock, title: "Заполняйте от руки", text: "или на компьютере" },
           { icon: ShieldCheck, title: "Юридическая сила", text: `по ${t.actSource.split(",")[0]}` },
-          { icon: Download, title: "PDF и DOCX", text: "экспорт и печать" },
+          { icon: Download, title: "PDF и Word", text: "бесплатно, без регистрации" },
         ].map((f) => (
           <div key={f.title} className="bg-white border border-gray-200 rounded-xl py-4 px-2">
             <f.icon className="w-5 h-5 mx-auto text-indigo-500" />
@@ -161,9 +170,7 @@ export default async function DocumentPage({
       </div>
 
       <section>
-        <h2 className="text-lg font-bold text-gray-900 mb-4">
-          Что входит в документ
-        </h2>
+        <h2 className="text-lg font-bold text-gray-900 mb-4">Что входит в бланк</h2>
         <div className="bg-white border border-gray-200 rounded-xl p-5 space-y-3">
           {summary.map((s) => (
             <p key={s} className="text-sm text-gray-700 flex items-start gap-2.5">
@@ -176,14 +183,12 @@ export default async function DocumentPage({
 
       {related.length > 0 && (
         <section>
-          <h2 className="text-lg font-bold text-gray-900 mb-4">
-            Связанные документы
-          </h2>
+          <h2 className="text-lg font-bold text-gray-900 mb-4">Похожие бланки</h2>
           <div className="grid sm:grid-cols-2 gap-3">
             {related.map((r) => (
               <Link
                 key={r.id}
-                href={`/documents/${r.id}`}
+                href={`/blanks/${r.id}`}
                 className="bg-white border border-gray-200 rounded-xl p-4 hover:border-indigo-300 hover:shadow-sm transition group"
               >
                 <p className="text-sm font-semibold text-gray-900 group-hover:text-indigo-600">
@@ -217,18 +222,17 @@ export default async function DocumentPage({
       </section>
 
       <section className="bg-indigo-600 rounded-2xl px-6 py-8 text-center">
-        <h2 className="text-xl font-bold text-white">
-          Составьте документ за 5 минут
-        </h2>
+        <h2 className="text-xl font-bold text-white">Заполнить онлайн за 5 минут</h2>
         <p className="text-sm text-indigo-200 mt-1.5 max-w-xl mx-auto">
           <Sparkles className="w-4 h-4 inline mr-1" />
-          Никакой регистрации: откройте форму, введите данные — документ готов к печати.
+          Не хотите писать от руки? Откройте конструктор, введите данные — документ
+          сформируется автоматически и будет готов к печати.
         </p>
         <Link
           href={`/builder?template=${t.id}`}
           className="mt-5 inline-flex items-center gap-2 px-6 py-3 bg-white text-indigo-700 rounded-xl hover:bg-indigo-50 font-bold text-sm transition cursor-pointer"
         >
-          Составить документ бесплатно
+          Заполнить документ бесплатно
           <ChevronRight className="w-4 h-4" />
         </Link>
       </section>

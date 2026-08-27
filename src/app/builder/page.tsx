@@ -1,6 +1,5 @@
 "use client";
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
-import type { ChangeEvent } from "react";
 import {
   FileText,
   Shield,
@@ -43,7 +42,6 @@ import Collapsible from "@/components/builder/Collapsible";
 import RelatedDocsPanel from "@/components/builder/RelatedDocsPanel";
 import type { MyApproval } from "@/components/builder/ApprovalPanel";
 import TemplateInfoPanel from "@/components/builder/TemplateInfoPanel";
-import EsignPanel from "@/components/builder/EsignPanel";
 import SigningPanel from "@/components/builder/SigningPanel";
 import PaywallModal from "@/components/builder/PaywallModal";
 // №7 аудита: необязательные панели грузим лениво — меньше First Load JS.
@@ -57,7 +55,6 @@ const ContractorsPanel = dynamic(() => import("@/components/builder/ContractorsP
 const ChecklistPanel = dynamic(() => import("@/components/builder/ChecklistPanel"), { ssr: false });
 const AuditPanel = dynamic(() => import("@/components/builder/AuditPanel"), { ssr: false });
 const CostsPanel = dynamic(() => import("@/components/builder/CostsPanel"), { ssr: false });
-const SignCanvasModal = dynamic(() => import("@/components/builder/SignCanvasModal"), { ssr: false });
 import PersonsPanel, { type PersonRow } from "@/components/builder/PersonsPanel";
 import { roleToPerson, personToFields } from "@/lib/personMapping";
 import { getTemplateRoles } from "@/lib/docRequirements";
@@ -156,8 +153,6 @@ function HomeContent() {
     setTimeout(() => setToast(null), 4000);
   };
   const designId: DesignId = "classic";
-  const [signSeller, setSignSeller] = useState<string | null>(null);
-  const [signBuyer, setSignBuyer] = useState<string | null>(null);
 
   useEffect(() => {
     const supabase = createClient();
@@ -221,61 +216,6 @@ function HomeContent() {
       .catch(() => {});
   }, []);
 
-  useEffect(() => {
-    try {
-      setSignSeller(localStorage.getItem("esign_seller"));
-      setSignBuyer(localStorage.getItem("esign_buyer"));
-    } catch {}
-  }, []);
-
-  useEffect(() => {
-    try {
-      if (signSeller) localStorage.setItem("esign_seller", signSeller);
-    } catch {}
-  }, [signSeller]);
-  useEffect(() => {
-    try {
-      if (signBuyer) localStorage.setItem("esign_buyer", signBuyer);
-    } catch {}
-  }, [signBuyer]);
-
-  const clearSign = (who: "seller" | "buyer") => {
-    try {
-      if (who === "seller") {
-        setSignSeller(null);
-        localStorage.removeItem("esign_seller");
-      } else {
-        setSignBuyer(null);
-        localStorage.removeItem("esign_buyer");
-      }
-    } catch {}
-  };
-
-  const [drawingFor, setDrawingFor] = useState<"seller" | "buyer" | null>(
-    null
-  );
-
-  const handleSignUpload =
-    (who: "seller" | "buyer") =>
-    (e: ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0];
-      if (!file || !file.type.startsWith("image/")) return;
-      const reader = new FileReader();
-      reader.onload = () => {
-        if (typeof reader.result === "string") {
-          if (who === "seller") setSignSeller(reader.result);
-          else setSignBuyer(reader.result);
-        }
-      };
-      reader.readAsDataURL(file);
-      e.target.value = "";
-    };
-
-  const saveDrawnSign = (who: "seller" | "buyer", dataUrl: string) => {
-    if (who === "seller") setSignSeller(dataUrl);
-    else setSignBuyer(dataUrl);
-    setDrawingFor(null);
-  };
 
   const [dadataKey, setDadataKey] = useState<string>("");
   const [subscriptionActive, setSubscriptionActive] = useState(false);
@@ -1234,8 +1174,6 @@ function HomeContent() {
       : formValuesRef.current;
     return renderTemplateDocument(t, srcValues, {
       qrSvg: t.id === "invoice" ? qrSvg : null,
-      signSeller,
-      signBuyer,
       previewTemplate: previewMap[t.id] ?? "",
     });
   };
@@ -1273,7 +1211,7 @@ function HomeContent() {
     const id = setTimeout(() => setPrintDoc(renderPreview()), 600);
     return () => clearTimeout(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [formValues, signSeller, signBuyer, template, qrSvg]);
+  }, [formValues, template, qrSvg]);
   const qrCacheKey = `${formValues.show_qr}|${formValues.items}|${formValues.seller_company}|${formValues.seller_account}|${formValues.seller_bank}|${formValues.seller_bik}|${formValues.seller_corr_account}|${formValues.seller_inn}|${formValues.seller_kpp}|${formValues.invoice_number}`;
   useEffect(() => {
     if (
@@ -1880,21 +1818,6 @@ function HomeContent() {
               )}
 
               <Collapsible
-                id="esign"
-                title="Подписи сторон (e-sign)"
-                collapsed={!!collapsedSections["esign"]}
-                onToggle={toggleSection}
-              >
-                <EsignPanel
-                  signSeller={signSeller}
-                  signBuyer={signBuyer}
-                  onClear={clearSign}
-                  onUpload={handleSignUpload}
-                  onDraw={setDrawingFor}
-                />
-              </Collapsible>
-
-              <Collapsible
                 id="signing"
                 title="Подписание и протокол (ПЭП)"
                 collapsed={!!collapsedSections["signing"]}
@@ -1909,15 +1832,6 @@ function HomeContent() {
             </>)}
           </div>)}
         </div>
-      )}
-
-      {drawingFor && (
-        <SignCanvasModal
-          isOpen={true}
-          drawingFor={drawingFor}
-          onClose={() => setDrawingFor(null)}
-          onSave={saveDrawnSign}
-        />
       )}
 
       {paywallOpen && (

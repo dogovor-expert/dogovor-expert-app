@@ -44,7 +44,7 @@ interface InlineItem {
 
 function hasClass(el: HTMLElement, token: string): boolean {
   const cls = el.className || "";
-  return cls.split(/\s+/).includes(token) || cls.includes(token);
+  return cls.split(/\s+/).includes(token);
 }
 
 /** pt → полупункты (docx.js size). */

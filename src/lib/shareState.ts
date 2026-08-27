@@ -23,8 +23,6 @@ export const MAX_SHARE_LENGTH = 30000;
 
 export interface SharePayload {
   values: Record<string, string>;
-  signSeller?: string | null;
-  signBuyer?: string | null;
 }
 
 export function encodeShareState(payload: SharePayload): string {
@@ -32,13 +30,9 @@ export function encodeShareState(payload: SharePayload): string {
     JSON.stringify({
       v: 1,
       values: payload.values,
-      s: payload.signSeller || undefined,
-      b: payload.signBuyer || undefined,
     })
   );
   if (full.length <= MAX_SHARE_LENGTH) return full;
-  // Тяжёлые подписи (dataURL) не влезают в лимит URL — шарим без них,
-  // документ по-прежнему рабочий, просто без «живых» подписей.
   return LZString.compressToEncodedURIComponent(
     JSON.stringify({ v: 1, values: payload.values })
   );
@@ -52,16 +46,12 @@ export function decodeShareState(encoded: string | null): SharePayload | null {
     const parsed = JSON.parse(json) as {
       v?: number;
       values?: Record<string, string>;
-      s?: string;
-      b?: string;
     };
     if (!parsed || typeof parsed.values !== "object" || parsed.values === null) {
       return null;
     }
     return {
       values: parsed.values,
-      signSeller: parsed.s ?? null,
-      signBuyer: parsed.b ?? null,
     };
   } catch {
     return null;
@@ -84,8 +74,6 @@ export async function encodeShareStateV2(
   const result = await encryptJsonForShare({
     v: 2,
     values: payload.values,
-    s: payload.signSeller || undefined,
-    b: payload.signBuyer || undefined,
   });
   return result;
 }
@@ -103,16 +91,12 @@ export async function decodeShareStateV2(
     const parsed = await decryptJsonFromShare<{
       v?: number;
       values?: Record<string, string>;
-      s?: string;
-      b?: string;
     }>(d, k);
     if (!parsed || typeof parsed.values !== "object" || parsed.values === null) {
       return null;
     }
     return {
       values: parsed.values,
-      signSeller: parsed.s ?? null,
-      signBuyer: parsed.b ?? null,
     };
   } catch {
     return null;

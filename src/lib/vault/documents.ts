@@ -21,8 +21,6 @@ export interface VaultDocPayload {
   activeTab: string;
   savedAt: string;
   photos?: Record<string, string[]>;
-  esignSeller?: string | null;
-  esignBuyer?: string | null;
   versions?: DraftVersion[];
 }
 
@@ -78,15 +76,13 @@ export async function listVaultDocs(): Promise<VaultDocMeta[]> {
 }
 
 /** Конвертер из старого DraftData (localStorage) в VaultDocPayload */
-export function draftToVaultPayload(d: DraftData, esignSeller?: string | null, esignBuyer?: string | null): VaultDocPayload {
+export function draftToVaultPayload(d: DraftData): VaultDocPayload {
   return {
     values: d.values,
     checklist: d.checklist,
     activeTab: d.activeTab,
     savedAt: d.savedAt,
     photos: d.photos,
-    esignSeller: esignSeller ?? null,
-    esignBuyer: esignBuyer ?? null,
     versions: undefined, // версии отдельно в localStorage (dogovor_versions_*)
   };
 }
