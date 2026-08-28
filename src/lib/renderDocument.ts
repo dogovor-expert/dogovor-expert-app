@@ -173,7 +173,8 @@ export function renderTemplateDocument(
   try {
     const view: Record<string, unknown> = {};
 
-    template.fields.forEach((f) => {
+    const blankSeenGroups = new Set<string>();
+    for (const f of template.fields) {
       const raw = formValues[f.id] || "";
 
       // Режим «пустой бланк»: вместо значений — маркеры для ручного заполнения.
@@ -183,19 +184,29 @@ export function renderTemplateDocument(
         } else if (f.type === "checkbox") {
           view[f.id] = false;
         } else {
-          view[f.id] = blankToken(f.id);
+          // Скрываем дублирующиеся варианты одного реквизита (напр.
+          // seller_ip_inn / seller_org_inn, seller_address / seller_ip_address /
+          // seller_org_address), иначе в пустом бланке появляются повторяющиеся
+          // строки «ИНН:» / «Адрес:». В бланке показываем только один вариант.
+          const groupKey = f.id.replace(/_(ip|org|legal)(?=_)/i, "");
+          if (blankSeenGroups.has(groupKey)) {
+            view[f.id] = "";
+          } else {
+            blankSeenGroups.add(groupKey);
+            view[f.id] = blankToken(f.id);
+          }
         }
-        return;
+        continue;
       }
 
       if (f.type === "checkbox") {
         view[f.id] = raw === "true";
-        return;
+        continue;
       }
 
       if (f.type === "date" && raw) {
         view[f.id] = formatRuDate(raw);
-        return;
+        continue;
       }
 
       if (f.type === "repeating") {
@@ -221,7 +232,7 @@ export function renderTemplateDocument(
           num: idx + 1,
           ...item,
         }));
-        return;
+        continue;
       }
 
       view[f.id] = raw;
@@ -242,7 +253,7 @@ export function renderTemplateDocument(
           view[`${f.id}_is_${raw}`] = true;
         }
       }
-    });
+    }
 
     const fieldIds = new Set(template.fields.map((f) => f.id));
     Object.entries(formValues).forEach(([key, value]) => {
@@ -387,8 +398,8 @@ function blankSize(f: TemplateField): number {
   if (/passport|паспорт|seria|серия|series|номер/i.test(id)) return 20;
   // Даты
   if (f.type === "date" || /date|дата/i.test(id)) return 14;
-  // Суммы
-  if (/sum|money|price|amount|стоимост|цена|сумм/i.test(id)) return 22;
+  // Суммы (в т.ч. цена прописью) — больше места для ручного заполнения
+  if (/sum|money|price|amount|стоимост|цена|сумм/i.test(id)) return 40;
   // Числовые / выбор
   if (f.type === "number") return 16;
   if (f.type === "select" || f.type === "radio") return 18;
