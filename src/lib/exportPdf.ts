@@ -509,12 +509,12 @@ class Renderer {
       const font = wd.italic && wd.bold ? this.fonts.bolditalic : wd.italic ? this.fonts.italic : wd.bold ? this.fonts.bold : this.fonts.regular;
       if (wd.blank) {
         const w = line.widths[i];
-        const ly = y - Math.max(2, fontSize * 0.12);
+        const ly = y - Math.max(2.5, fontSize * 0.16);
         this.page.drawLine({
           start: { x: cursor, y: ly },
           end: { x: cursor + w, y: ly },
-          thickness: 0.7,
-          color: this.ruleRgb(),
+          thickness: 1.1,
+          color: this.rgb(0.18, 0.18, 0.22),
         });
       } else {
         this.page.drawText(wd.text, { x: cursor, y, size: fontSize, font, ...(color ? { color } : {}) });
