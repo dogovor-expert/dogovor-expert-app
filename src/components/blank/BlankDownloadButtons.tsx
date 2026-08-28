@@ -4,7 +4,7 @@ import { useState } from "react";
 import { LEGAL_TEMPLATES } from "@/data/legalTemplates";
 import { renderTemplateDocument } from "@/lib/renderDocument";
 import { saveAs } from "file-saver";
-import { Download, FileText, FileType2, Loader2 } from "lucide-react";
+import { Download, FileText, FileType2, Loader2, Printer } from "lucide-react";
 
 function safeFileName(name: string): string {
   const cleaned = name
@@ -15,8 +15,63 @@ function safeFileName(name: string): string {
 }
 
 export default function BlankDownloadButtons({ templateId }: { templateId: string }) {
-  const [busy, setBusy] = useState<null | "pdf" | "docx">(null);
+  const [busy, setBusy] = useState<null | "pdf" | "docx" | "print">(null);
   const [error, setError] = useState<string | null>(null);
+
+  const handlePrint = async () => {
+    setBusy("print");
+    setError(null);
+    let iframe: HTMLIFrameElement | null = null;
+    let url = "";
+    try {
+      const t = LEGAL_TEMPLATES.find((x) => x.id === templateId);
+      if (!t) throw new Error("Шаблон не найден");
+
+      const { TEMPLATE_PREVIEWS } = await import("@/data/templatePreviews");
+      const previewTemplate = TEMPLATE_PREVIEWS[t.id] ?? t.previewTemplate;
+      const html = renderTemplateDocument(t, {}, {
+        previewTemplate,
+        blank: true,
+        blankMode: "pdf",
+      });
+
+      const { buildPdf } = await import("@/lib/exportPdf");
+      const { blob } = await buildPdf(html, {
+        design: "classic",
+        pageNumbers: true,
+      });
+
+      url = URL.createObjectURL(blob);
+      iframe = document.createElement("iframe");
+      iframe.style.position = "fixed";
+      iframe.style.right = "0";
+      iframe.style.bottom = "0";
+      iframe.style.width = "0px";
+      iframe.style.height = "0px";
+      iframe.style.border = "0";
+      iframe.onload = () => {
+        try {
+          iframe?.contentWindow?.focus();
+          iframe?.contentWindow?.print();
+        } catch {
+          /* ignore */
+        }
+        setTimeout(() => {
+          if (url) URL.revokeObjectURL(url);
+          iframe?.remove();
+        }, 60000);
+      };
+      iframe.src = url;
+      document.body.appendChild(iframe);
+    } catch (e) {
+      console.error("Blank print error:", e);
+      setError("Не удалось подготовить печать. Попробуйте скачать PDF.");
+      if (url) URL.revokeObjectURL(url);
+      iframe?.remove();
+    } finally {
+      setBusy(null);
+    }
+  };
 
   const handleDownload = async (format: "pdf" | "docx") => {
     setBusy(format);
@@ -84,6 +139,19 @@ export default function BlankDownloadButtons({ templateId }: { templateId: strin
           Скачать Word
         </button>
       </div>
+      <button
+        type="button"
+        onClick={handlePrint}
+        disabled={busy !== null}
+        className="inline-flex items-center justify-center gap-2 px-5 py-3 w-full bg-white border border-gray-300 text-gray-700 rounded-xl font-semibold text-sm hover:bg-gray-50 disabled:opacity-60 transition"
+      >
+        {busy === "print" ? (
+          <Loader2 className="w-5 h-5 animate-spin" />
+        ) : (
+          <Printer className="w-5 h-5" />
+        )}
+        Печатать пустой бланк
+      </button>
       <p className="text-xs text-gray-500 flex items-center gap-1.5">
         <Download className="w-3.5 h-3.5" />
         Пустой бланк с адресом сайта dogovor.expert — заполняйте от руки или онлайн.
