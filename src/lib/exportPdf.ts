@@ -513,8 +513,8 @@ class Renderer {
         this.page.drawLine({
           start: { x: cursor, y: ly },
           end: { x: cursor + w, y: ly },
-          thickness: 1.1,
-          color: this.rgb(0.18, 0.18, 0.22),
+          thickness: 0.7,
+          color: this.ruleRgb(),
         });
       } else {
         this.page.drawText(wd.text, { x: cursor, y, size: fontSize, font, ...(color ? { color } : {}) });
@@ -936,6 +936,13 @@ function hasClass(el: HTMLElement, token: string): boolean {
   return cls.split(/\s+/).filter(Boolean).includes(token);
 }
 
+// Инлайновые теги: их НЕЛЬЗЯ вырезать из абзаца, иначе <span class="blank-field">
+// (линия для ручного заполнения) теряется. Для таких элементов весь блок
+// обрабатывается через nodeRuns() целиком.
+const INLINE_TAGS = new Set([
+  "strong", "b", "em", "i", "span", "u", "a", "br", "small", "sub", "sup", "mark", "code", "label", "abbr",
+]);
+
 function marginFrom(el: HTMLElement, fallback: number): number {
   const cls = el.className || "";
   if (cls.includes("mb-8")) return 24;
@@ -1159,6 +1166,35 @@ function collectBlocks(
                 ? design.subheadingFontSize
                 : sizeFromClass(cls, design, design.bodyFontSize),
             marginBottom: marginFrom(el, 12),
+            color: isDocTitle || isHeading || isSubheading ? "brand" : undefined,
+          });
+        }
+        return;
+      }
+
+      // Если все дочерние узлы — инлайновые (strong/em/span/...), обрабатываем
+      // весь элемент целиком через nodeRuns(el). Иначе clone.children.forEach(c => c.remove())
+      // физически вырезает <span class="blank-field"> и линия для ручного заполнения
+      // не рисуется (оставался только голый текст).
+      const allInline = children.every((c) => INLINE_TAGS.has((c.tagName || "").toLowerCase()));
+      if (allInline) {
+        const runs = nodeRuns(el);
+        if (runs.length) {
+          const align = cls.includes("text-center") ? "center" : cls.includes("text-right") ? "right" : "justify";
+          const boldAll = cls.includes("font-bold") || isDocTitle;
+          if (boldAll) runs.forEach((r) => (r.bold = true));
+          target.push({
+            kind: "paragraph",
+            runs,
+            align: isDocTitle ? "center" : align,
+            indent: 0,
+            bullet: false,
+            fontSize: isDocTitle
+              ? design.titleFontSize
+              : isSubheading || isHeading
+                ? design.subheadingFontSize
+                : sizeFromClass(cls, design, design.bodyFontSize),
+            marginBottom: marginFrom(el, 6),
             color: isDocTitle || isHeading || isSubheading ? "brand" : undefined,
           });
         }
