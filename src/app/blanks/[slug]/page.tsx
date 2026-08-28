@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { existsSync, readFileSync } from "node:fs";
+import { join } from "node:path";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Clock, Download, FileText, ShieldCheck, ChevronRight, Check, Sparkles } from "lucide-react";
@@ -21,6 +23,30 @@ export function generateStaticParams() {
 
 function slugToTemplate(slug: string): LegalTemplate | undefined {
   return LEGAL_TEMPLATES.find((t) => t.id === slug);
+}
+
+/**
+ * Статические превью-картинки бланка (сгенерированы скриптом
+ * scripts/generate-blank-previews.mts из того же buildPdf, что и кнопка
+ * «Скачать PDF»). Возвращает список путей по страницам либо [] — тогда
+ * страница откатывается на старый HTML-превью (безопасный переход).
+ */
+function getBlankPreviewImages(slug: string): string[] {
+  try {
+    const manifestPath = join(process.cwd(), "public", "blank-previews", "index.json");
+    if (!existsSync(manifestPath)) return [];
+    const manifest = JSON.parse(readFileSync(manifestPath, "utf8")) as Record<string, number>;
+    const n = manifest[slug];
+    if (!n) return [];
+    const imgs: string[] = [];
+    for (let i = 1; i <= n; i++) {
+      const rel = `/blank-previews/${slug}-${i}.jpg`;
+      if (existsSync(join(process.cwd(), "public", rel))) imgs.push(rel);
+    }
+    return imgs;
+  } catch {
+    return [];
+  }
 }
 
 export function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
@@ -73,6 +99,8 @@ export default async function BlankPage({ params }: { params: Promise<{ slug: st
     blank: true,
     blankMode: "html",
   });
+
+  const previewImages = getBlankPreviewImages(t.id);
 
   const faq = faqForTemplate(t.category);
   const summary = fieldsSummary(t);
@@ -148,10 +176,24 @@ export default async function BlankPage({ params }: { params: Promise<{ slug: st
           <span className="text-xs text-gray-400">формат А4</span>
         </div>
         <div className="mx-auto w-full max-w-[794px] bg-white shadow-xl rounded-lg overflow-hidden ring-1 ring-gray-100">
-          <div
-            className="p-6 sm:p-10 text-[13px] leading-relaxed text-zinc-900"
-            dangerouslySetInnerHTML={{ __html: previewHtml }}
-          />
+          {previewImages.length > 0 ? (
+            <div className="flex flex-col gap-3 p-3 sm:p-4">
+              {previewImages.map((src, i) => (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  key={i}
+                  src={src}
+                  alt={`Пустой бланк «${t.name}», страница ${i + 1}`}
+                  className="w-full h-auto rounded"
+                />
+              ))}
+            </div>
+          ) : (
+            <div
+              className="p-6 sm:p-10 text-[13px] leading-relaxed text-zinc-900"
+              dangerouslySetInnerHTML={{ __html: previewHtml }}
+            />
+          )}
         </div>
       </section>
 
