@@ -12,8 +12,7 @@ import {
 } from "lucide-react";
 import HeaderSearch from "@/components/search/HeaderSearch";
 import PromoPill from "@/components/billing/PromoPill";
-import ChatWidget from "@/components/support/ChatWidget";
-import FeedbackFab from "@/components/feedback/FeedbackModal";
+import SupportLauncher from "@/components/support/SupportLauncher";
 
 interface NavItem {
   icon: ReactNode;
@@ -334,8 +333,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
 </main>
       </div>
 
-      <ChatWidget />
-      {cookieConsent !== null && <FeedbackFab />}
+      {cookieConsent !== null && <SupportLauncher />}
 
       {cookieConsent === null && (
         <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 w-[calc(100%-2rem)] max-w-xl bg-white border border-gray-200 rounded-2xl shadow-xl p-4">
