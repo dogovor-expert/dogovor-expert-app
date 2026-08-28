@@ -39,6 +39,8 @@ export const limiters = {
   feedbackForm: mk("rl:feedback-form", 10, "60 s"),
   /** Админ-мутации (смена статусов, прав) — 30/мин на IP. */
   adminAction: mk("rl:admin-action", 30, "60 s"),
+  /** Чат с поддержкой — 30 сообщений/мин на IP (защита от спама). */
+  chat: mk("rl:chat", 30, "60 s"),
 };
 
 export function clientIp(req: Request): string {
