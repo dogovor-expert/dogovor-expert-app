@@ -52,7 +52,7 @@ export async function initiateRecurringRenewal(
         amount: { value: price.toFixed(2), currency: "RUB" },
         capture: true,
         payment_method_id: sub.yookassa_payment_method_id,
-        description: "PRO-подписка · 30 дней · автопродление",
+        description: "PRO-подписка · 30 дней · автопродление (recurring)",
         metadata: {
           user_id: sub.user_id,
           plan: sub.plan ?? "pro",
