@@ -7,6 +7,7 @@ import type { CloudProvider, CloudTokens, CloudConfig, CloudFolder } from "../ty
 const GOOGLE_API = "https://www.googleapis.com";
 const DRIVE_UPLOAD = "https://www.googleapis.com/upload/drive/v3/files";
 const DEFAULT_SCOPES = ["https://www.googleapis.com/auth/drive.file"]; // per-file access
+const OFFLINE_SCOPES = [...DEFAULT_SCOPES, "https://www.googleapis.com/auth/drive.offline"]; // для refresh_token
 
 let gisLoaded = false;
 let gisLoadPromise: Promise<void> | null = null;
@@ -69,17 +70,22 @@ export class GoogleDriveProvider implements CloudProvider {
     _codeOrFragment: string
   ): Promise<CloudTokens> {
     await loadGIS();
-    const scopes = config.scopes.length ? config.scopes : DEFAULT_SCOPES;
+    // offline access для получения refresh_token
+    const scopes = config.scopes.length ? config.scopes : OFFLINE_SCOPES;
 
     return new Promise((resolve, reject) => {
       if (!window.google?.accounts?.oauth2) {
         reject(new Error("Google Identity Services не загружен"));
         return;
       }
-      const client = window.google.accounts.oauth2.initTokenClient({
+      // Используем type assertion для доступа к access_type и refresh_token
+      // которые есть в runtime но нет в типах @types/google-identity-services
+      const clientConfig: any = {
         client_id: config.clientId,
         scope: scopes.join(" "),
-        callback: (resp) => {
+        access_type: "offline",
+        prompt: "consent",
+        callback: (resp: any) => {
           if (resp.error) {
             reject(new Error(`Google OAuth error: ${resp.error}`));
             return;
@@ -87,14 +93,42 @@ export class GoogleDriveProvider implements CloudProvider {
           resolve({
             provider: "google",
             accessToken: resp.access_token,
+            refreshToken: resp.refresh_token,
             expiresAt: Date.now() + resp.expires_in * 1000,
             tokenType: "Bearer",
             scope: scopes.join(" "),
           });
         },
-      });
+      };
+      const client = window.google.accounts.oauth2.initTokenClient(clientConfig);
       client.requestAccessToken({ prompt: "consent" });
     });
+  }
+
+  /** Обновление access_token через refresh_token через серверный эндпоинт. */
+  async refreshTokens(tokens: CloudTokens): Promise<CloudTokens> {
+    if (!tokens.refreshToken) throw new Error("Нет refresh_token — нужен повторный вход");
+
+    const res = await fetch("/api/cloud/refresh-token", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ provider: "google", refreshToken: tokens.refreshToken }),
+    });
+
+    if (!res.ok) {
+      const txt = await res.text().catch(() => "");
+      throw new Error(`Google token refresh failed: ${txt}`);
+    }
+
+    const data = await res.json();
+    return {
+      provider: "google",
+      accessToken: data.accessToken,
+      refreshToken: tokens.refreshToken, // refresh_token обычно не меняется
+      expiresAt: data.expiresAt,
+      tokenType: "Bearer",
+      scope: data.scope,
+    };
   }
 
   private async authedFetch(

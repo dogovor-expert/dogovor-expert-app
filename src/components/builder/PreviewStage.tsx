@@ -27,7 +27,7 @@ interface PreviewStageProps {
   onPrint: () => void;
   onCopyJson: () => void;
   onExportPdf: () => void;
-onExportPdfCurrent?: () => void;
+  onExportPdfCurrent?: () => void;
   onExportDocx: () => void;
   onOpenEmailModal: () => void;
   emailSending: boolean;
@@ -36,6 +36,10 @@ onExportPdfCurrent?: () => void;
   watermark?: string;
   /** Число страниц в сгенерированном PDF. */
   onPagesChange?: (n: number) => void;
+  /** HTML обложки пакета (SHA-256 таблица) */
+  coverHtml?: string | null;
+  /** HTML листа подписей/соглашения на ПЭП */
+  signHtml?: string | null;
 }
 
 export default function PreviewStage({
@@ -56,6 +60,8 @@ export default function PreviewStage({
   onBackToForm,
   watermark,
   onPagesChange,
+  coverHtml,
+  signHtml,
 }: PreviewStageProps) {
   const [exportMenuOpen, setExportMenuOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -197,7 +203,11 @@ export default function PreviewStage({
           <div ref={printRef}>
             <PdfPreview
               rootId="preview-stage"
-              docs={packTemplates.map((t) => renderPreview(t))}
+              docs={[
+                ...(coverHtml ? [coverHtml] : []),
+                ...packTemplates.map((t) => renderPreview(t)),
+                ...(signHtml ? [signHtml] : []),
+              ]}
               design="classic"
               watermark={watermark}
               onPagesChange={onPagesChange}

@@ -1,13 +1,16 @@
-// Яндекс.Диск — OAuth implicit (token в фрагменте) + REST API.
+// Яндекс.Диск — OAuth authorization code flow с offline scope для refresh_token + REST API.
 // См. https://yandex.ru/dev/disk/api/concepts/quickstart.html
+// https://yandex.ru/dev/oauth/doc/dg/reference/token.html
 
 import type { CloudProvider, CloudTokens, CloudConfig, CloudFolder } from "../types";
 import { buildAuthUrl, parseTokenFromFragment } from "../oauth";
 
 const YANDEX_AUTH = "https://oauth.yandex.ru/authorize";
+const YANDEX_TOKEN = "https://oauth.yandex.ru/token";
 const YANDEX_API = "https://cloud-api.yandex.net/v1/disk";
 
 const DEFAULT_SCOPES = ["cloud_api:disk.write", "cloud_api:disk.read", "cloud_api:disk.info"];
+const OFFLINE_SCOPES = [...DEFAULT_SCOPES, "offline"]; // для refresh_token
 
 export class YandexDiskProvider implements CloudProvider {
   readonly id = "yandex" as const;
@@ -21,9 +24,10 @@ export class YandexDiskProvider implements CloudProvider {
   }
 
   buildAuthUrl(config: CloudConfig): string {
-    const scopes = config.scopes.length ? config.scopes : DEFAULT_SCOPES;
+    // Используем authorization code flow с offline scope для получения refresh_token
+    const scopes = config.scopes.length ? config.scopes : OFFLINE_SCOPES;
     return buildAuthUrl(YANDEX_AUTH, {
-      response_type: "token",
+      response_type: "code",
       client_id: config.clientId,
       scope: scopes.join(" "),
       redirect_uri: config.redirectUri,
@@ -31,10 +35,45 @@ export class YandexDiskProvider implements CloudProvider {
   }
 
   async exchangeCodeForTokens(
-    _config: CloudConfig,
-    fragment: string
+    config: CloudConfig,
+    codeOrFragment: string
   ): Promise<CloudTokens> {
-    const parsed = parseTokenFromFragment(fragment);
+    // Поддерживаем оба варианта: code (новый flow) или fragment (старый implicit)
+    const code = codeOrFragment.includes("code=")
+      ? new URLSearchParams(codeOrFragment.replace(/^\?/, "")).get("code")
+      : null;
+    
+    if (code) {
+      // Authorization code flow — обмен кода на токены
+      const body = new URLSearchParams({
+        code,
+        grant_type: "authorization_code",
+        client_id: config.clientId,
+        redirect_uri: config.redirectUri,
+      });
+
+      const res = await fetch(YANDEX_TOKEN, {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body,
+      });
+      if (!res.ok) {
+        const txt = await res.text().catch(() => "");
+        throw new Error(`Yandex token exchange ${res.status}: ${txt}`);
+      }
+      const data = await res.json();
+      return {
+        provider: "yandex",
+        accessToken: data.access_token,
+        refreshToken: data.refresh_token,
+        expiresAt: data.expires_in ? Date.now() + data.expires_in * 1000 : undefined,
+        tokenType: data.token_type,
+        scope: data.scope,
+      };
+    }
+
+    // Fallback: старый implicit flow (fragment с access_token)
+    const parsed = parseTokenFromFragment(codeOrFragment);
     if (!parsed) throw new Error("Токен не найден в фрагменте URL");
     return {
       provider: "yandex",
@@ -44,6 +83,36 @@ export class YandexDiskProvider implements CloudProvider {
         : undefined,
       tokenType: parsed.tokenType,
       scope: DEFAULT_SCOPES.join(" "),
+    };
+  }
+
+  /** Обновление access_token через refresh_token (offline access). */
+  async refreshTokens(tokens: CloudTokens): Promise<CloudTokens> {
+    if (!tokens.refreshToken) throw new Error("Нет refresh_token — нужен повторный вход");
+    
+    const body = new URLSearchParams({
+      grant_type: "refresh_token",
+      refresh_token: tokens.refreshToken,
+      client_id: (await import("../manager")).getClientId("yandex") || "",
+    });
+
+    const res = await fetch(YANDEX_TOKEN, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body,
+    });
+    if (!res.ok) {
+      const txt = await res.text().catch(() => "");
+      throw new Error(`Yandex token refresh ${res.status}: ${txt}`);
+    }
+    const data = await res.json();
+    return {
+      provider: "yandex",
+      accessToken: data.access_token,
+      refreshToken: data.refresh_token || tokens.refreshToken,
+      expiresAt: data.expires_in ? Date.now() + data.expires_in * 1000 : undefined,
+      tokenType: data.token_type,
+      scope: data.scope,
     };
   }
 

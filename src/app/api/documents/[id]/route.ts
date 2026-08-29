@@ -23,6 +23,7 @@ export async function PATCH(req: Request, { params }: Params) {
     "status",
     "template_id",
     "is_favorite",
+    "deleted_at",
   ] as const;
   type AllowedField = (typeof allowedFields)[number];
   const updates: Record<string, unknown> = {};
@@ -51,7 +52,7 @@ export async function PATCH(req: Request, { params }: Params) {
 
 export async function DELETE(_req: Request, { params }: Params) {
   const { id } = await params;
-  const supabase = await await createClient();
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -67,7 +68,7 @@ export async function DELETE(_req: Request, { params }: Params) {
 
   const { error } = await supabase
     .from("documents")
-    .delete()
+    .update({ status: "trashed", deleted_at: new Date().toISOString() })
     .eq("id", id)
     .eq("user_id", user.id);
 

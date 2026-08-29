@@ -45,3 +45,28 @@ export function isTokenValid(tokens: CloudTokens | null): boolean {
   if (!tokens.expiresAt) return true; // нет срока — считаем валидным
   return Date.now() + 60_000 < tokens.expiresAt;
 }
+
+/** Обновление токенов провайдера через refresh_token. */
+export async function refreshProviderTokens(providerId: CloudProviderId): Promise<CloudTokens | null> {
+  const tokens = await loadCloudTokens(providerId);
+  if (!tokens?.refreshToken) return null;
+
+  let newTokens: CloudTokens | null = null;
+
+  if (providerId === "yandex") {
+    const { yandexDiskProvider } = await import("./providers/yandex");
+    newTokens = await yandexDiskProvider.refreshTokens(tokens);
+  } else if (providerId === "google") {
+    const { googleDriveProvider } = await import("./providers/google");
+    newTokens = await googleDriveProvider.refreshTokens(tokens);
+  } else if (providerId === "dropbox") {
+    const { dropboxProvider } = await import("./providers/dropbox");
+    newTokens = await dropboxProvider.refreshTokens(tokens);
+  }
+
+  if (newTokens) {
+    await saveCloudTokens(newTokens);
+    return newTokens;
+  }
+  return null;
+}

@@ -10,8 +10,9 @@ export async function GET() {
 
   const { data, error } = await supabase
     .from("documents")
-    .select("id, template_id, title, fields, checklist, versions, status, created_at, updated_at")
+    .select("id, template_id, title, fields, checklist, versions, status, deleted_at, created_at, updated_at")
     .eq("user_id", user.id)
+    .is("deleted_at", null)
     .order("updated_at", { ascending: false });
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
