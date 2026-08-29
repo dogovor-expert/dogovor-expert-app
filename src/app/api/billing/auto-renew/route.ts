@@ -29,8 +29,8 @@ export async function POST(req: Request) {
     (s) => s.status === "active" && s.period_end && new Date(String(s.period_end)) >= now
   );
 
-  if (!active || !active.auto_renewal) {
-    return NextResponse.json({ error: "no_active_auto_renewal" }, { status: 400 });
+  if (!active) {
+    return NextResponse.json({ error: "no_active_subscription" }, { status: 400 });
   }
   if (!active.yookassa_payment_method_id) {
     return NextResponse.json({ error: "no_saved_payment_method" }, { status: 400 });

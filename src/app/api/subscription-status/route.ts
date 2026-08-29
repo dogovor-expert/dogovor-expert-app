@@ -28,6 +28,6 @@ export async function GET() {
     period_end: active?.period_end ?? null,
     auto_renewal: active?.auto_renewal ?? false,
     has_payment_method: !!active?.yookassa_payment_method_id,
-    renew_link_available: !!active?.auto_renewal && !!active?.yookassa_payment_method_id,
+    renew_link_available: !!active?.yookassa_payment_method_id,
   });
 }
