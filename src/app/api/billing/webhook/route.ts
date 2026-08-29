@@ -3,6 +3,10 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { collectReport } from "@/lib/tronk";
 import { limiters, checkRateLimit, rateLimitResponse } from "@/lib/ratelimit";
 
+// Увеличенный таймаут для этого роута — collectReport может выполняться
+// до ~45 секунд. Полноценный фикс — вынос в фоновую очередь (TODO).
+export const maxDuration = 60;
+
 const DAY_MS = 86400000;
 
 // Официальный список IP-адресов ЮKassa для входящих уведомлений:
@@ -139,7 +143,19 @@ export async function POST(req: Request) {
   if (!verified.ok) return NextResponse.json({ ok: true });
   const paid = verified.status === "succeeded";
 
-  await admin.from("payments").update({ status: paid ? "paid" : "failed" }).eq("id", row.id);
+  const { data: updatedRows } = await admin
+    .from("payments")
+    .update({ status: paid ? "paid" : "failed" })
+    .eq("id", row.id)
+    .neq("status", "paid")
+    .select("id");
+
+  // Если ни одна строка не обновилась — значит другой параллельный вебхук
+  // уже успел пометить платёж как "paid" первым. Прерываем обработку,
+  // чтобы не продлевать подписку дважды.
+  if (paid && (!updatedRows || updatedRows.length === 0)) {
+    return NextResponse.json({ ok: true, skipped: "already processed concurrently" });
+  }
 
   if (paid) {
     const meta = row.meta ?? {};

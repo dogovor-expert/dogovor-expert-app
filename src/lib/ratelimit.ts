@@ -41,6 +41,8 @@ export const limiters = {
   adminAction: mk("rl:admin-action", 30, "60 s"),
   /** Чат с поддержкой — 30 сообщений/мин на IP (защита от спама). */
   chat: mk("rl:chat", 30, "60 s"),
+  /** DADATA suggest/find — 40 запросов/мин на IP. */
+  dadata: mk("rl:dadata", 40, "60 s"),
 };
 
 export function clientIp(req: Request): string {

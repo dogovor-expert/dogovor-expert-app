@@ -1,17 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { limiters, checkRateLimit, rateLimitResponse, clientIp } from "@/lib/ratelimit";
 
 const DADATA_HOST = "https://suggestions.dadata.ru/suggestions/api/4_1/rs";
 
-interface RateEntry {
-  hits: number[];
-}
-
-const ipHits = new Map<string, RateEntry>();
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24 часа для findById/party
 const partyCache = new Map<string, { ts: number; body: unknown }>();
-
-const RATE_LIMIT_PER_MIN = 40;
 
 async function hasActiveSubscription(): Promise<boolean> {
   const supabase = await createClient();
@@ -32,16 +26,6 @@ async function hasActiveSubscription(): Promise<boolean> {
       s.period_end &&
       new Date(String(s.period_end)) >= now
   );
-}
-
-function checkRate(ip: string): boolean {
-  const now = Date.now();
-  const entry = ipHits.get(ip) ?? { hits: [] };
-  entry.hits = entry.hits.filter((t) => now - t < 60_000);
-  if (entry.hits.length >= RATE_LIMIT_PER_MIN) return false;
-  entry.hits.push(now);
-  ipHits.set(ip, entry);
-  return true;
 }
 
 function sanitizeParty(data: any): Record<string, unknown> {
@@ -120,12 +104,8 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const ip = req.headers.get("x-vercel-forwarded-for")?.split(",")[0]?.trim()
-    || req.headers.get("x-forwarded-for")?.split(",")[0]?.trim()
-    || "local";
-  if (!checkRate(ip)) {
-    return NextResponse.json({ error: "rate limit" }, { status: 429 });
-  }
+  const rl = await checkRateLimit(limiters.dadata, clientIp(req));
+  if (!rl.ok) return rateLimitResponse(rl.retryAfter);
 
   if (query.length > 200) {
     return NextResponse.json({ error: "query too long" }, { status: 400 });
