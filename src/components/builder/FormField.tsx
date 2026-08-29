@@ -59,10 +59,20 @@ export default function FormField({
         ? ("suggest-fms-unit" as const)
         : field.id.includes("address")
           ? ("suggest-address" as const)
-          : null
+          : field.id.includes("fio")
+            ? ("suggest-fio" as const)
+            : field.id.includes("passport_series") || field.id.includes("passport_number")
+              ? ("suggest-passport" as const)
+              : null
       : null;
   const { suggestions, loading, query, clear } = useDadataSuggest(
-    suggestOp === "suggest-fms-unit" ? "suggest-fms-unit" : "suggest-address"
+    suggestOp === "suggest-fms-unit"
+      ? "suggest-fms-unit"
+      : suggestOp === "suggest-fio"
+      ? "suggest-fio"
+      : suggestOp === "suggest-passport"
+      ? "suggest-passport"
+      : "suggest-address"
   );
   const [showSuggest, setShowSuggest] = useState(false);
   const pickedRef = useRef(false);
@@ -84,6 +94,25 @@ export default function FormField({
         [`${prefix}_passport_issued_by`]: opt.sub,
         [`${prefix}_passport_by`]: opt.sub,
         [`${prefix}_passport_issued`]: opt.sub,
+      };
+    }
+    if (suggestOp === "suggest-fio") {
+      const prefix = field.id.replace(/_fio$/, "");
+      extra = {
+        ...extra,
+        [`${prefix}birthday`]: extra.birthdate || "",
+        [`${prefix}snils`]: extra.snils || "",
+        [`${prefix}inn`]: extra.inn || "",
+      };
+    }
+    if (suggestOp === "suggest-passport") {
+      const prefix = field.id.replace(/(passport_series|passport_number)$/, "");
+      extra = {
+        ...extra,
+        [`${prefix}passport_issued_by`]: extra.issued_by || extra.passport_issued_by || "",
+        [`${prefix}passport_by`]: extra.issued_by || extra.passport_issued_by || "",
+        [`${prefix}passport_issued`]: extra.issue_date || extra.passport_issue_date || "",
+        [`${prefix}passport_code`]: extra.code || extra.passport_code || "",
       };
     }
     if (Object.keys(extra).length > 0 && onSuggestFill) {

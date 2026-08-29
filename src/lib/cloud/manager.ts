@@ -17,6 +17,7 @@ import {
   deleteCloudTokens,
   listConnectedProviders,
   isTokenValid,
+  refreshProviderTokens,
 } from "./tokenStore";
 
 // Реэкспорт для удобства
@@ -29,7 +30,10 @@ const PROVIDERS: Record<CloudProviderId, CloudProvider> = {
   dropbox: dropboxProvider,
 };
 
-/** Экспоненциальный бэкофф с джиттером для повторных попыток. */
+const YANDEX_TOKEN = "https://oauth.yandex.ru/token";
+const GOOGLE_TOKEN = "https://oauth2.googleapis.com/token";
+
+/** Экспоненциальный бэкофф с джиттером для повторных попыток + авто-refresh при 401. */
 async function withRetry<T>(
   fn: () => Promise<T>,
   maxAttempts = 3,
@@ -41,6 +45,17 @@ async function withRetry<T>(
       return await fn();
     } catch (e) {
       lastError = e as Error;
+      const err = e as any;
+      // Авто-refresh при 401 (токен истёк) — попытка обновить и повторить ОДИН раз
+      if (attempt === 1 && (err?.message?.includes?.("401") || err?.message?.includes?.("истёк") || err?.message?.includes?.("expired"))) {
+        try {
+          await refreshProviderTokens(err.provider || "unknown");
+          // Повторяем один раз после refresh
+          return await fn();
+        } catch {
+          // refresh не удался — падаем в общий цикл
+        }
+      }
       if (attempt === maxAttempts) throw lastError;
       // экспоненциальный бэкофф: 500ms, 1000ms, 2000ms + jitter
       const delay = baseDelayMs * Math.pow(2, attempt - 1) + Math.random() * 200;

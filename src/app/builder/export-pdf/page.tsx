@@ -16,15 +16,12 @@ function ExportPdfInner() {
   const [template, setTemplate] = useState<LegalTemplate | null>(null);
   const [packTemplates, setPackTemplates] = useState<LegalTemplate[]>([]);
   const [design, setDesign] = useState<string>("classic");
-  const [watermark, setWatermark] = useState(false);
-
   useEffect(() => {
     async function init() {
       try {
         const templateParam = searchParams.get("template");
         const packParam = searchParams.get("pack");
         const designParam = searchParams.get("design");
-        const watermarkParam = searchParams.get("watermark");
 
         if (!templateParam) {
           setError("Не указан шаблон для экспорта");
@@ -41,7 +38,6 @@ function ExportPdfInner() {
 
         setTemplate(t);
         setDesign((designParam as "classic" | "modern" | "minimal") || "classic");
-        setWatermark(watermarkParam === "true");
 
         // Если передан pack — собираем пакет
         if (packParam) {
@@ -88,7 +84,7 @@ function ExportPdfInner() {
       const { buildPdf } = await import("@/lib/exportPdf");
       const { blob } = await buildPdf(docs, {
         design: design as "brand" | "classic" | "minimal",
-        watermark: watermark ? "Сформировано бесплатно на сервисе Dogovor" : undefined,
+        watermark: undefined,
         pageNumbers: true,
       });
 
@@ -158,7 +154,6 @@ function ExportPdfInner() {
             <ul className="space-y-1 text-left">
               <li>Дизайн: {design === "classic" ? "Классический" : design === "modern" ? "Современный" : "Минимальный"}</li>
               <li>Нумерация страниц: включена</li>
-              <li>Водяной знак: {watermark ? "да (бесплатный тариф)" : "нет (Pro)"}</li>
             </ul>
           </div>
 

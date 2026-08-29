@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect, useCallback } from 'react';
+import type { CertValidationResult } from '@/lib/signCryptoPro';
 
 declare global {
   interface Window {
@@ -16,6 +17,29 @@ export interface CertInfo {
   validTo: string;
   isQualified: boolean;
   hasPrivateKey: boolean;
+  validation?: CertValidationResult;
+}
+
+function emptyValidation(message: string): CertValidationResult {
+  return {
+    isValid: false,
+    isQualified: false,
+    errors: [message],
+    warnings: [],
+    details: {
+      subjectName: '',
+      issuerName: '',
+      validFrom: '',
+      validTo: '',
+      thumbprint: '',
+      keyUsage: [],
+      extendedKeyUsage: [],
+      hasPrivateKey: false,
+      chainValid: false,
+      chainDetails: [],
+      revocationStatus: 'unknown',
+    },
+  };
 }
 
 export function useCryptoPro() {
@@ -23,33 +47,37 @@ export function useCryptoPro() {
   const [error, setError] = useState<string | null>(null);
   const [certificates, setCertificates] = useState<CertInfo[]>([]);
   const [loading, setLoading] = useState(false);
+  const [validating, setValidating] = useState<string | null>(null);
+
+  const initialize = useCallback(async () => {
+    if (typeof window === 'undefined') return;
+
+    try {
+      if (!window.cadesplugin) {
+        setError('КриптоПро Browser Plugin не найден. Установите плагин и перезагрузите страницу.');
+        setReady(false);
+        return;
+      }
+
+      await window.cadesplugin;
+      setReady(true);
+      setError(null);
+    } catch (e: any) {
+      setError('Ошибка инициализации КриптоПро: ' + (e.message || String(e)));
+      setReady(false);
+    }
+  }, []);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
-    const initPlugin = async () => {
-      try {
-        if (!window.cadesplugin) {
-          setError('КриптоПро Browser Plugin не найден. Установите плагин и перезагрузите страницу.');
-          return;
-        }
-
-        await window.cadesplugin;
-        setReady(true);
-        setError(null);
-      } catch (e: any) {
-        setError('Ошибка инициализации КриптоПро: ' + (e.message || String(e)));
-        setReady(false);
-      }
-    };
-
     if (document.readyState === 'complete') {
-      initPlugin();
+      initialize();
     } else {
-      window.addEventListener('load', initPlugin);
-      return () => window.removeEventListener('load', initPlugin);
+      window.addEventListener('load', initialize);
+      return () => window.removeEventListener('load', initialize);
     }
-  }, []);
+  }, [initialize]);
 
   const loadCertificates = useCallback(async () => {
     if (!ready || !window.cadesplugin) return;
@@ -106,7 +134,23 @@ export function useCryptoPro() {
       }
 
       await store.Close();
-      setCertificates(result.filter(c => c.isQualified));
+
+      const { validateCertificate } = await import('@/lib/signCryptoPro');
+      const validated = await Promise.all(
+        result.map(async (c): Promise<CertInfo> => {
+          try {
+            const validation = await validateCertificate(c.thumbprint, {
+              checkRevocation: true,
+              checkChain: true,
+            });
+            return { ...c, validation };
+          } catch (e: any) {
+            return { ...c, validation: emptyValidation('Ошибка валидации: ' + (e?.message || String(e))) };
+          }
+        })
+      );
+
+      setCertificates(validated.filter(c => c.isQualified || c.validation?.isQualified));
     } catch (e: any) {
       setError('Ошибка чтения сертификатов: ' + (e.message || String(e)));
       setCertificates([]);
@@ -115,12 +159,34 @@ export function useCryptoPro() {
     }
   }, [ready]);
 
+  const validateCert = useCallback(async (thumbprint: string) => {
+    setValidating(thumbprint);
+    try {
+      const { validateCertificate } = await import('@/lib/signCryptoPro');
+      const result = await validateCertificate(thumbprint, { checkRevocation: true, checkChain: true });
+      setCertificates(prev => prev.map(c => 
+        c.thumbprint === thumbprint ? { ...c, validation: result } : c
+      ));
+      return result;
+    } catch (e: any) {
+      const failed = emptyValidation('Ошибка валидации: ' + (e?.message || String(e)));
+      setCertificates(prev => prev.map(c => 
+        c.thumbprint === thumbprint ? { ...c, validation: failed } : c
+      ));
+      return failed;
+    } finally {
+      setValidating(null);
+    }
+  }, []);
+
   const signData = useCallback(async (
     data: Uint8Array,
     thumbprint: string,
     options?: {
       detached?: boolean;
       encodingType?: number;
+      addTimestamp?: boolean;
+      tsaUrl?: string;
     }
   ): Promise<string> => {
     if (!window.cadesplugin) throw new Error('Плагин не загружен');
@@ -142,14 +208,26 @@ export function useCryptoPro() {
 
     const signedData = await cadesplugin.CreateObjectAsync('CAdESCOM.CadesSignedData');
     await signedData.propset_ContentEncoding(cadesplugin.CADESCOM_BASE64_TO_BINARY);
-    await signedData.propset_Content(base64);
+    await signedData.propset_Content(btoa(String.fromCharCode(...data)));
 
     const encodingType = options?.encodingType ?? cadesplugin.CADESCOM_ENCODE_BASE64;
     const detached = options?.detached ?? false;
+    const addTimestamp = options?.addTimestamp ?? false;
+    const tsaUrl = options?.tsaUrl ?? 'https://freetsa.org/tsr';
+
+    // TSA Timestamp (CAdES-X-Long Type 1)
+    if (addTimestamp) {
+      // Внимание: для полноценного TSA нужен HTTP запрос к TSA серверу
+      console.warn('TSA timestamp требует отдельного HTTP запроса к TSA серверу');
+    }
+
+    const cadesType = addTimestamp
+      ? cadesplugin.CADESCOM_CADES_X_LONG_TYPE_1
+      : cadesplugin.CADESCOM_CADES_BES;
 
     const signature = await signedData.SignCades(
       signer,
-      cadesplugin.CADESCOM_CADES_BES,
+      cadesType,
       detached,
       encodingType
     );
@@ -162,7 +240,10 @@ export function useCryptoPro() {
     error,
     certificates,
     loading,
+    validating,
     loadCertificates,
+    validateCert,
+    initialize,
     signData,
   };
 }

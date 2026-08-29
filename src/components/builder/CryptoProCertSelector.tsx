@@ -1,6 +1,15 @@
 'use client';
 import { useState } from 'react';
-import { Loader2, ShieldCheck, AlertCircle, ExternalLink } from 'lucide-react';
+import {
+  Loader2,
+  ShieldCheck,
+  AlertCircle,
+  ExternalLink,
+  CheckCircle,
+  AlertTriangle,
+  Info,
+  RefreshCw,
+} from 'lucide-react';
 import { useCryptoPro, loadCryptoProScript, type CertInfo } from '@/hooks/useCryptoPro';
 
 interface CryptoProCertSelectorProps {
@@ -8,16 +17,42 @@ interface CryptoProCertSelectorProps {
   onBack?: () => void;
 }
 
+type RevocationStatus = 'valid' | 'revoked' | 'unknown' | 'offline';
+
+function revocationLabel(status?: RevocationStatus): string {
+  switch (status) {
+    case 'valid':
+      return 'OK';
+    case 'revoked':
+      return 'Отозван';
+    case 'offline':
+      return 'Нет связи';
+    default:
+      return '—';
+  }
+}
+
 export function CryptoProCertSelector({ onSelect, onBack }: CryptoProCertSelectorProps) {
-  const { ready, error, certificates, loading, loadCertificates } = useCryptoPro();
+  const {
+    ready,
+    error,
+    certificates,
+    loading,
+    loadCertificates,
+    validating,
+    validateCert,
+    initialize,
+  } = useCryptoPro();
   const [installing, setInstalling] = useState(false);
 
   const handleInstallClick = async () => {
     setInstalling(true);
     try {
       await loadCryptoProScript();
-      setInstalling(false);
+      await initialize();
     } catch {
+      // Ошибка отобразится через поле error хука.
+    } finally {
       setInstalling(false);
     }
   };
@@ -165,25 +200,155 @@ export function CryptoProCertSelector({ onSelect, onBack }: CryptoProCertSelecto
         <div className="space-y-2">
           <p className="text-sm font-medium text-gray-900">Найдено сертификатов: {certificates.length}</p>
           <div className="space-y-2 max-h-96 overflow-y-auto">
-            {certificates.map((cert) => (
-              <button
-                key={cert.thumbprint}
-                onClick={() => onSelect(cert.thumbprint, cert)}
-                className="w-full text-left p-4 border border-gray-200 rounded-xl hover:bg-blue-50 hover:border-brand-300 transition-all"
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium text-gray-900 truncate">{cert.subjectName}</p>
-                    <div className="flex flex-wrap items-center gap-2 mt-1.5 text-xs text-gray-500">
-                      <span>Издатель: {cert.issuerName}</span>
-                      <span>•</span>
-                      <span>Действителен до: {new Date(cert.validTo).toLocaleDateString('ru-RU')}</span>
-                    </div>
+            {certificates.map((cert) => {
+              const validation = cert.validation;
+              const isChecking = validating === cert.thumbprint;
+              const isPending = !validation && !isChecking;
+              const isValid = validation?.isValid;
+              const isQualified = validation?.isQualified;
+
+              return (
+                <div key={cert.thumbprint} className="border border-gray-200 rounded-xl overflow-hidden">
+                  <div className="flex items-stretch">
+                    <button
+                      type="button"
+                      onClick={() => { if (!isPending && !isChecking) onSelect(cert.thumbprint, cert); }}
+                      disabled={isPending || isChecking}
+                      className="flex-1 min-w-0 text-left p-4 hover:bg-blue-50 transition-all disabled:cursor-wait"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1">
+                            <p className="font-medium text-gray-900 truncate">{cert.subjectName}</p>
+                            {isChecking && <Loader2 className="w-4 h-4 animate-spin text-brand-500" />}
+                            {isPending && <Loader2 className="w-4 h-4 animate-spin text-gray-400" />}
+                          </div>
+                          <div className="flex flex-wrap items-center gap-2 mt-1.5 text-xs text-gray-500">
+                            <span>Издатель: {cert.issuerName}</span>
+                            <span>•</span>
+                            <span>Действителен до: {new Date(cert.validTo).toLocaleDateString('ru-RU')}</span>
+                          </div>
+
+                          {isPending ? (
+                            <p className="mt-2 text-xs text-gray-400">Проверка сертификата...</p>
+                          ) : validation ? (
+                            <>
+                              <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                                <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${
+                                  isValid ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'
+                                }`}>
+                                  <CheckCircle className="w-3 h-3" />
+                                  {isValid ? 'Валиден' : 'Невалиден'}
+                                </span>
+                                {validation.isQualified && (
+                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 text-xs font-medium">
+                                    <ShieldCheck className="w-3 h-3" />
+                                    УКЭП
+                                  </span>
+                                )}
+                                {validation.warnings.length > 0 && (
+                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 text-xs font-medium">
+                                    <AlertTriangle className="w-3 h-3" />
+                                    {validation.warnings.length} предупр.
+                                  </span>
+                                )}
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gray-100 text-gray-700 text-xs">
+                                  <Info className="w-3 h-3" />
+                                  Цепочка: {validation.details.chainValid ? '✓' : '✗'}
+                                </span>
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gray-100 text-gray-700 text-xs">
+                                  <Info className="w-3 h-3" />
+                                  Отзыв: {revocationLabel(validation.details.revocationStatus)}
+                                </span>
+                              </div>
+
+                              {validation.errors.length > 0 && (
+                                <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded-lg text-xs text-red-700">
+                                  {validation.errors.map((e, i) => (
+                                    <div key={i} className="flex items-center gap-1">
+                                      <AlertCircle className="w-3 h-3 flex-shrink-0" />
+                                      {e}
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                              {validation.warnings.length > 0 && (
+                                <div className="mt-2 p-2 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-700">
+                                  {validation.warnings.map((w, i) => (
+                                    <div key={i} className="flex items-center gap-1">
+                                      <AlertTriangle className="w-3 h-3 flex-shrink-0" />
+                                      {w}
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                              {validation.details.chainDetails.length > 0 && (
+                                <details className="mt-2">
+                                  <summary className="text-xs text-gray-500 cursor-pointer">Цепочка доверия ({validation.details.chainDetails.length})</summary>
+                                  <div className="mt-1 space-y-1 text-[11px] text-gray-600">
+                                    {validation.details.chainDetails.map((c, i) => (
+                                      <div key={i} className="flex items-center gap-1.5 px-2 py-1 bg-gray-50 rounded">
+                                        <span className="font-mono text-[10px] text-gray-400">{i + 1}.</span>
+                                        <span className="truncate flex-1">{c.subjectName}</span>
+                                        {c.isTrustedRoot && <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 text-[10px]">Доверен</span>}
+                                        {c.isRoot && <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-gray-100 text-gray-600 text-[10px]">Корневой</span>}
+                                      </div>
+                                    ))}
+                                  </div>
+                                </details>
+                              )}
+                              {validation.details.keyUsage.length > 0 && (
+                                <details className="mt-2">
+                                  <summary className="text-xs text-gray-500 cursor-pointer">Key Usage</summary>
+                                  <div className="mt-1 flex flex-wrap gap-1">
+                                    {validation.details.keyUsage.map((u, i) => (
+                                      <span key={i} className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 text-[10px]">{u}</span>
+                                    ))}
+                                  </div>
+                                </details>
+                              )}
+                              {validation.details.extendedKeyUsage.length > 0 && (
+                                <details className="mt-2">
+                                  <summary className="text-xs text-gray-500 cursor-pointer">Extended Key Usage</summary>
+                                  <div className="mt-1 flex flex-wrap gap-1">
+                                    {validation.details.extendedKeyUsage.map((u, i) => (
+                                      <span key={i} className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] ${
+                                        u.includes('qcSign') ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-700'
+                                      }`}>{u}</span>
+                                    ))}
+                                  </div>
+                                </details>
+                              )}
+                            </>
+                          ) : null}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {validation ? (
+                            isValid && isQualified ? (
+                              <ShieldCheck className="w-5 h-5 text-green-500 flex-shrink-0" />
+                            ) : isValid ? (
+                              <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
+                            ) : (
+                              <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
+                            )
+                          ) : null}
+                        </div>
+                      </div>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => validateCert(cert.thumbprint)}
+                      disabled={isChecking}
+                      title="Проверить снова"
+                      className="flex-shrink-0 px-3 border-l border-gray-100 text-gray-400 hover:text-brand-600 hover:bg-blue-50 transition-colors disabled:opacity-50"
+                    >
+                      <RefreshCw className={`w-4 h-4 ${isChecking ? 'animate-spin' : ''}`} />
+                    </button>
                   </div>
-                  <ShieldCheck className="w-5 h-5 text-green-500 flex-shrink-0" />
                 </div>
-              </button>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}

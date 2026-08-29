@@ -7,7 +7,7 @@ export interface SuggestOption {
   extra?: Record<string, string>;
 }
 
-type SuggestOp = "suggest-fms-unit" | "suggest-address";
+type SuggestOp = "suggest-fms-unit" | "suggest-address" | "suggest-fio" | "find-fio" | "suggest-passport";
 
 interface DadataSuggestion {
   value?: string;
@@ -28,6 +28,47 @@ function mapSuggestion(s: DadataSuggestion, op: SuggestOp): SuggestOption | null
       value: `${code} — ${name}`,
       fillValue: code,
       sub: name,
+    };
+  }
+  if (op === "suggest-fio" || op === "find-fio") {
+    const d = s.data ?? {};
+    const fio = [String(d.surname ?? ""), String(d.name ?? ""), String(d.patronymic ?? "")]
+      .filter(Boolean)
+      .join(" ");
+    if (!fio) return null;
+    const extra: Record<string, string> = {};
+    if (d.gender) extra.gender = d.gender === "MALE" ? "М" : "Ж";
+    if (d.birthdate) extra.birthdate = String(d.birthdate);
+    if (d.passport_series) extra.passport_series = String(d.passport_series);
+    if (d.passport_number) extra.passport_number = String(d.passport_number);
+    if (d.passport_issue_date) extra.passport_issue_date = String(d.passport_issue_date);
+    if (d.passport_issued_by) extra.passport_issued_by = String(d.passport_issued_by);
+    if (d.passport_code) extra.passport_code = String(d.passport_code);
+    if (d.snils) extra.snils = String(d.snils);
+    if (d.inn) extra.inn = String(d.inn);
+    const value = String(s.value ?? "");
+    return {
+      value: fio || value,
+      fillValue: fio || value,
+      sub: `Пол: ${d.gender === "MALE" ? "М" : d.gender === "FEMALE" ? "Ж" : "—"} ${d.birthdate ? `, ${d.birthdate}` : ""}`,
+      extra,
+    };
+  }
+  if (op === "suggest-passport") {
+    const d = s.data ?? {};
+    const series = String(d.passport_series ?? "");
+    const number = String(d.passport_number ?? "");
+    if (!series && !number) return null;
+    const extra: Record<string, string> = {};
+    if (d.passport_issue_date) extra.issue_date = String(d.passport_issue_date);
+    if (d.passport_issued_by) extra.issued_by = String(d.passport_issued_by);
+    if (d.passport_code) extra.code = String(d.passport_code);
+    const value = `${series} ${number}`.trim();
+    return {
+      value,
+      fillValue: value,
+      sub: `Выдан: ${d.passport_issued_by ?? "—"} ${d.passport_issue_date ? `, ${d.passport_issue_date}` : ""}`,
+      extra,
     };
   }
   const value = String(s.value ?? "");
@@ -98,7 +139,19 @@ export function useDadataSuggest(op: SuggestOp) {
         if (mySeq === seq.current) setSuggestions([]);
         return;
       }
-      const direct = await fetch(`${DADATA_HOST}/suggest/${op === "suggest-fms-unit" ? "fms_unit" : "address"}`, {
+      const opMap: Record<string, string> = {
+    "suggest-fms-unit": "fms_unit",
+    "suggest-address": "address",
+    "suggest-fio": "fio",
+    "suggest-passport": "passport",
+    "find-fio": "fio", // find-fio использует findById/fio (POST), не suggest
+  };
+  const directOp = opMap[op] || "address";
+  // find-fio использует findById/fio — другой endpoint
+  const directUrl = op === "find-fio"
+    ? `${DADATA_HOST}/findById/fio`
+    : `${DADATA_HOST}/suggest/${directOp}`;
+  const direct = await fetch(directUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Token ${key}` },
         body: JSON.stringify({ query: clean, count: 8 }),

@@ -71,6 +71,24 @@ function sanitizeFmsUnit(data: any): Record<string, unknown> {
   };
 }
 
+function sanitizeFio(data: any): Record<string, unknown> {
+  return {
+    value: String(data.value ?? ""),
+    surname: String(data.data?.surname ?? ""),
+    name: String(data.data?.name ?? ""),
+    patronymic: String(data.data?.patronymic ?? ""),
+    gender: String(data.data?.gender ?? ""),
+    birthdate: String(data.data?.birthdate ?? ""),
+    passport_series: String(data.data?.passport_series ?? ""),
+    passport_number: String(data.data?.passport_number ?? ""),
+    passport_issue_date: String(data.data?.passport_issue_date ?? ""),
+    passport_issued_by: String(data.data?.passport_issued_by ?? ""),
+    passport_code: String(data.data?.passport_code ?? ""),
+    snils: String(data.data?.snils ?? ""),
+    inn: String(data.data?.inn ?? ""),
+  };
+}
+
 export async function POST(req: NextRequest) {
   if (!process.env.DADATA_API_KEY) {
     // Клиентский компромисс не нужен: фронт при 503 использует локальный ключ.
@@ -119,6 +137,13 @@ export async function POST(req: NextRequest) {
     cacheable = true;
   } else if (op === "suggest-party") {
     endpoint = "/suggest/party";
+  } else if (op === "suggest-fio") {
+    endpoint = "/suggest/fio";
+  } else if (op === "find-fio") {
+    endpoint = "/findById/fio";
+    cacheable = true;
+  } else if (op === "suggest-passport") {
+    endpoint = "/suggest/passport";
   } else if (op === "suggest-address") {
     endpoint = "/suggest/address";
   } else if (op === "suggest-fms-unit") {
@@ -162,7 +187,9 @@ export async function POST(req: NextRequest) {
         ? s
         : op === "suggest-fms-unit"
           ? sanitizeFmsUnit(s as Record<string, unknown>)
-          : sanitizeParty(s as Record<string, unknown>)
+          : op === "suggest-fio" || op === "find-fio" || op === "suggest-passport"
+            ? sanitizeFio(s as Record<string, unknown>)
+            : sanitizeParty(s as Record<string, unknown>)
     );
     const result = { suggestions };
 

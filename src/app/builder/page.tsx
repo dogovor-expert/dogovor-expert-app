@@ -147,6 +147,8 @@ function HomeContent() {
     };
   }, [selectedTemplateId, packTemplateIds]);
   const [signSheetEnabled, setSignSheetEnabled] = useState(false);
+  const [coverHtml, setCoverHtml] = useState<string | null>(null);
+  const [signHtml, setSignHtml] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
   const showToast = (msg: string) => {
     setToast(msg);
@@ -349,6 +351,64 @@ function HomeContent() {
         filled > 0
           ? { text: `Заполнено полей: ${filled} (данные ЕГРЮЛ)`, ok: true }
           : { text: "Организация найдена, но совпадающих полей в форме нет", ok: false }
+      );
+    } catch {
+      setDadataMsg({ text: "Ошибка запроса к DADATA", ok: false });
+    } finally {
+      setDadataLoading(false);
+    }
+  };
+
+  const lookupFioByPassport = async (fieldId: string) => {
+    const prefix = fieldId.replace(/(passport_series|passport_number)$/, "");
+    const series = (formValuesRef.current[`${prefix}passport_series`] || "").replace(/\D/g, "");
+    const number = (formValuesRef.current[`${prefix}passport_number`] || "").replace(/\D/g, "");
+    if (series.length !== 4 || number.length !== 6) {
+      setDadataMsg({ text: "Неверный формат паспорта (серия 4 цифры, номер 6 цифр)", ok: false });
+      return;
+    }
+    setDadataLoading(true);
+    setDadataMsg(null);
+    try {
+      const query = `${series} ${number}`;
+      const { status, json } = await callDadata("find-fio", query);
+      if (status === 401 || status === 403) {
+        setDadataMsg({ text: "Ключ DADATA недействителен — проверьте его", ok: false });
+        return;
+      }
+      if (status === 503 && !json) {
+        setDadataMsg({
+          text: "Введите бесплатный ключ DADATA ниже или подключите подписку для авто-заполнения",
+          ok: false,
+        });
+        return;
+      }
+      if (!json || !json.suggestions?.length) {
+        setDadataMsg({ text: "Физлицо по этому паспорту не найдено", ok: false });
+        return;
+      }
+      const s = json.suggestions[0];
+      const d = s.data ?? {};
+      let filled = 0;
+      template.fields.forEach((f) => {
+        if (!f.id.startsWith(prefix)) return;
+        let v: string | undefined;
+        if (f.id.includes("fio")) v = [d.surname, d.name, d.patronymic].filter(Boolean).join(" ");
+        else if (f.id.includes("birthday")) v = d.birthdate || "";
+        else if (f.id.includes("passport_issued_by")) v = d.passport_issued_by || "";
+        else if (f.id.includes("passport_issue_date")) v = d.passport_issue_date || "";
+        else if (f.id.includes("passport_code")) v = d.passport_code || "";
+        else if (f.id.includes("snils")) v = d.snils || "";
+        else if (f.id.includes("inn")) v = d.inn || "";
+        if (v) {
+          handleFieldChange(f.id, v);
+          filled++;
+        }
+      });
+      setDadataMsg(
+        filled > 0
+          ? { text: `Заполнено полей: ${filled} (данные МВД)`, ok: true }
+          : { text: "Физлицо найдено, но совпадающих полей в форме нет", ok: false }
       );
     } catch {
       setDadataMsg({ text: "Ошибка запроса к DADATA", ok: false });
@@ -921,7 +981,7 @@ function HomeContent() {
     const params = new URLSearchParams({
       template: template.id,
       design: designId,
-      watermark: subscriptionActive ? "false" : "true",
+      watermark: "false",
     });
     if (scope === "pack" && packTemplates.length > 1) {
       params.set("pack", ids);
@@ -1068,6 +1128,35 @@ function HomeContent() {
     }
   };
 
+  // Вычисление обложки и листа подписей для превью пакета
+  useEffect(() => {
+    if (packTemplates.length <= 1) {
+      setCoverHtml(null);
+      setSignHtml(null);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      try {
+        const [cover, sign] = await Promise.all([
+          buildCoverHtml(),
+          signSheetEnabled ? buildSignHtml() : Promise.resolve(null as string | null),
+        ]);
+        if (!cancelled) {
+          setCoverHtml(cover);
+          setSignHtml(sign);
+        }
+      } catch (err) {
+        console.error("Cover/Sign sheet error:", err);
+        if (!cancelled) {
+          setCoverHtml(null);
+          setSignHtml(null);
+        }
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [packTemplates, signSheetEnabled, formValues, designId]);
+
   const handleExportDocx = async () => {
     if (!subscriptionActive) {
       setPaywallOpen(true);
@@ -1129,9 +1218,7 @@ function HomeContent() {
       const { blob } = await buildPdf(docs, {
         title: packTemplates.length > 1 ? "Паспорт сделки" : template.name,
         design: designId,
-        watermark: subscriptionActive
-          ? undefined
-          : "Сформировано бесплатно на сервисе Dogovor",
+        watermark: undefined,
       });
       const buf = await blob.arrayBuffer();
       let bin = "";
@@ -1574,12 +1661,10 @@ function HomeContent() {
                   onOpenEmailModal={handleExportEmail}
                   emailSending={emailSending}
                   onBackToForm={backToForm}
-                  watermark={
-                    subscriptionActive
-                      ? undefined
-                      : "Сформировано бесплатно на сервисе Dogovor"
-                  }
+                  watermark={undefined}
                   onPagesChange={setExportPages}
+                  coverHtml={coverHtml}
+                  signHtml={signHtml}
                 />
               </div>
             )}
@@ -1661,14 +1746,30 @@ function HomeContent() {
               )}
             </>) : (<>
               {/* Document assembly tools */}
-              {showScanner && (
+              {showScanner && subscriptionActive ? (
                 <DocScanner
                   template={template}
                   photos={scanPhotos}
                   onPhotosChange={handlePhotosChange}
                   onFieldChange={handleFieldChange}
                 />
-              )}
+              ) : showScanner && !subscriptionActive ? (
+                <div className="rounded-2xl border-2 border-dashed border-brand-300 bg-brand-50 p-6 text-center">
+                  <div className="mx-auto w-14 h-14 rounded-full bg-brand-100 flex items-center justify-center mb-3">
+                    <Crown className="w-7 h-7 text-brand-600" />
+                  </div>
+                  <h4 className="font-semibold text-gray-900">Сканер документов — функция PRO</h4>
+                  <p className="text-sm text-gray-600 mt-1 mb-4">
+                    Фотографируйте паспорт, ПТС или СТС — OCR автоматически заполнит поля договора.
+                  </p>
+                  <button
+                    onClick={() => setPaywallOpen(true)}
+                    className="px-4 py-2 bg-brand-600 text-white rounded-xl text-sm font-medium hover:bg-brand-700 transition"
+                  >
+                    Оформить PRO и включить сканер
+                  </button>
+                </div>
+              ) : null}
               <button
                 type="button"
                 onClick={() => setShowScanner(!showScanner)}
@@ -1907,7 +2008,7 @@ function HomeContent() {
         className="print-src"
         docs={[printDoc]}
         design="classic"
-        watermark={subscriptionActive ? undefined : "Сформировано бесплатно на сервисе Dogovor"}
+        watermark={undefined}
       />
     </div>
   );

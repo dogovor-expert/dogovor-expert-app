@@ -2,48 +2,91 @@
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Search, Trash2, RotateCcw, AlertTriangle, Clock, FileText, Info } from "lucide-react";
 import { tokenGroups, textMatchesTokens } from "@/lib/search";
 
-interface DeletedDoc {
-  id: number;
-  name: string;
-  type: string;
-  deletedBy: string;
-  deletedAt: string;
-  expiresAt: string;
-  size: string;
+interface TrashedDoc {
+  id: string;
+  template_id: string;
+  title: string;
+  fields: Record<string, string>;
+  status: string;
+  deleted_at: string;
+  created_at: string;
+  updated_at: string;
 }
 
-const initialDocs: DeletedDoc[] = [
-  { id: 1, name: "ДКП на Lada Vesta (черновик)", type: "ДКП", deletedBy: "Иван И.", deletedAt: "24.05.2026 15:30", expiresAt: "24.06.2026", size: "1.2 MB" },
-  { id: 2, name: "Старая доверенность 2024", type: "Доверенность", deletedBy: "Петр П.", deletedAt: "22.05.2026 11:20", expiresAt: "22.06.2026", size: "0.8 MB" },
-  { id: 3, name: "Заявление в ГИБДД (дубль)", type: "ГИБДД", deletedBy: "Сидор С.", deletedAt: "20.05.2026 09:15", expiresAt: "20.06.2026", size: "1.5 MB" },
-  { id: 4, name: "Акт осмотра от 15.03.2026", type: "Акт", deletedBy: "Иван И.", deletedAt: "18.05.2026 16:45", expiresAt: "18.06.2026", size: "0.6 MB" },
-  { id: 5, name: "ДКП на мотоцикл (старый)", type: "ДКП", deletedBy: "Петр П.", deletedAt: "15.05.2026 14:00", expiresAt: "15.06.2026", size: "2.1 MB" },
-  { id: 6, name: "Договор аренды (отменён)", type: "Договор", deletedBy: "Анна К.", deletedAt: "12.05.2026 10:30", expiresAt: "12.06.2026", size: "1.8 MB" },
-  { id: 7, name: "Черновик заявления от 05.05", type: "Заявление", deletedBy: "Сидор С.", deletedAt: "10.05.2026 08:00", expiresAt: "10.06.2026", size: "0.4 MB" },
-  { id: 8, name: "Уведомление о ДТП (тест)", type: "ОСАГО", deletedBy: "Мария С.", deletedAt: "08.05.2026 17:50", expiresAt: "08.06.2026", size: "0.9 MB" },
-];
+const TEMPLATE_NAMES: Record<string, string> = {
+  "dkp-auto": "ДКП автомобиля",
+  "act-transfer-auto": "Акт приёма-передачи ТС",
+  "power-of-attorney-auto": "Доверенность на авто",
+  "loan-agreement": "Договор займа",
+  "rental-flat": "Договор аренды квартиры",
+  // ... можно расширить при необходимости
+};
+
+function getTemplateName(templateId: string, title: string): string {
+  if (title) return title;
+  return TEMPLATE_NAMES[templateId] || templateId;
+}
+
+function getTemplateType(templateId: string): string {
+  if (templateId.includes("dkp") || templateId.includes("sale")) return "ДКП";
+  if (templateId.includes("power") || templateId.includes("attorney")) return "Доверенность";
+  if (templateId.includes("rental") || templateId.includes("lease")) return "Договор";
+  if (templateId.includes("loan") || templateId.includes("receipt")) return "Расписка";
+  if (templateId.includes("act") || templateId.includes("transfer")) return "Акт";
+  if (templateId.includes("statement") || templateId.includes("application")) return "Заявление";
+  if (templateId.includes("osago") || templateId.includes("insurance")) return "ОСАГО";
+  return "Документ";
+}
 
 const typeColor: Record<string, "red" | "blue" | "green" | "purple" | "amber" | "gray"> = {
   ДКП: "red",
   Доверенность: "blue",
-  ГИБДД: "green",
-  Акт: "purple",
+  Аренда: "green",
+  Расписка: "purple",
+  Акт: "amber",
   Договор: "amber",
   Заявление: "gray",
   ОСАГО: "red",
+  default: "gray",
 };
 
 export default function TrashPage() {
-  const [docs, setDocs] = useState(initialDocs);
+  const [docs, setDocs] = useState<TrashedDoc[]>([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [selected, setSelected] = useState<Set<number>>(new Set());
+  const [selected, setSelected] = useState<Set<string>>(new Set());
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [toast, setToast] = useState<{ text: string; type: "ok" | "error" } | null>(null);
 
-  const toggleSelect = (id: number) => {
+  const showToast = (text: string, type: "ok" | "error" = "ok") => {
+    setToast({ text, type });
+    setTimeout(() => setToast(null), 3000);
+  };
+
+  const loadDocs = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/trash");
+      if (!res.ok) throw new Error("Failed to load");
+      const { data } = await res.json();
+      setDocs(Array.isArray(data) ? data : []);
+    } catch {
+      showToast("Не удалось загрузить корзину", "error");
+      setDocs([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadDocs();
+  }, [loadDocs]);
+
+  const toggleSelect = (id: string) => {
     const next = new Set(selected);
     next.has(id) ? next.delete(id) : next.add(id);
     setSelected(next);
@@ -57,26 +100,80 @@ export default function TrashPage() {
     }
   };
 
-  const handleRestore = () => {
-    setDocs(prev => prev.filter(d => !selected.has(d.id)));
-    setSelected(new Set());
+  const handleRestore = async () => {
+    if (selected.size === 0) return;
+    try {
+      const res = await fetch("/api/trash", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: Array.from(selected) }),
+      });
+      if (!res.ok) throw new Error("Restore failed");
+      showToast(`Восстановлено: ${selected.size}`);
+      setSelected(new Set());
+      loadDocs();
+    } catch {
+      showToast("Не удалось восстановить", "error");
+    }
   };
 
   const handlePermanentDelete = () => {
     setConfirmDelete(true);
   };
 
-  const confirmPermanentDelete = () => {
-    setDocs(prev => prev.filter(d => !selected.has(d.id)));
-    setSelected(new Set());
-    setConfirmDelete(false);
+  const confirmPermanentDelete = async () => {
+    if (selected.size === 0) return;
+    try {
+      const res = await fetch("/api/trash", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: Array.from(selected) }),
+      });
+      if (!res.ok) throw new Error("Purge failed");
+      showToast(`Навсегда удалено: ${selected.size}`);
+      setSelected(new Set());
+      setConfirmDelete(false);
+      loadDocs();
+    } catch {
+      showToast("Не удалось удалить навсегда", "error");
+      setConfirmDelete(false);
+    }
   };
 
   const filtered = docs.filter(d => {
     const tokens = tokenGroups(search);
     if (tokens.length === 0) return true;
-    return textMatchesTokens(`${d.name} ${d.type}`, tokens);
+    const name = getTemplateName(d.template_id, d.title);
+    return textMatchesTokens(`${name} ${getTemplateType(d.template_id)}`, tokens);
   });
+
+  const formatDate = (iso: string) => {
+    const d = new Date(iso);
+    return d.toLocaleString("ru-RU", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
+  };
+
+  const formatExpiry = (deletedAt: string) => {
+    const d = new Date(deletedAt);
+    const exp = new Date(d.getTime() + 30 * 24 * 60 * 60 * 1000);
+    const now = new Date();
+    const daysLeft = Math.floor((exp.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+    const isExpiringSoon = daysLeft >= 0 && daysLeft <= 7;
+    const isExpired = daysLeft < 0;
+    return { text: isExpired ? "Просрочен" : isExpiringSoon ? `${daysLeft} дн.` : exp.toLocaleDateString("ru-RU"), isExpired, isExpiringSoon, daysLeft };
+  };
+
+  if (loading) {
+    return (
+      <div className="p-6 max-w-7xl mx-auto">
+        <div className="flex items-center justify-center py-20">
+          <div className="text-center">
+            <div className="w-8 h-8 animate-spin mx-auto border-3 border-brand-500 border-t-transparent rounded-full" />
+            <p className="mt-4 text-gray-600">Загрузка корзины…</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 max-w-7xl mx-auto">
@@ -116,6 +213,12 @@ export default function TrashPage() {
         </Card>
       )}
 
+      {toast && (
+        <div className={`fixed bottom-6 right-6 px-5 py-3 rounded-xl shadow-lg text-sm font-medium z-50 animate-fade-in ${toast.type === "ok" ? "bg-emerald-500 text-white" : "bg-red-500 text-white"}`}>
+          {toast.text}
+        </div>
+      )}
+
       <div className="flex items-center gap-3 mb-4">
         <div className="relative flex-1">
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-600" />
@@ -139,53 +242,59 @@ export default function TrashPage() {
           <span className="w-24 text-center">Действия</span>
         </div>
         <div className="divide-y divide-gray-50">
-          {filtered.map(doc => {
-            const expDate = new Date(doc.expiresAt.split(".").reverse().join("-"));
-            const now = new Date();
-            const daysLeft = Math.floor((expDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-            const isExpiringSoon = daysLeft >= 0 && daysLeft <= 7;
-            const isExpired = daysLeft < 0;
-            return (
-              <div key={doc.id} className={`flex items-center gap-3 px-5 py-4 transition-colors hover:bg-gray-50/50 ${selected.has(doc.id) ? "bg-brand-50/50" : ""}`}>
-                <input type="checkbox" checked={selected.has(doc.id)} onChange={() => toggleSelect(doc.id)} className="rounded border-gray-300" />
-                <div className="flex-1 flex items-center gap-3 min-w-0">
-                  <div className="w-9 h-9 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0">
-                    <FileText className="w-4 h-4 text-gray-600" />
+          {filtered.length === 0 ? (
+            <div className="px-5 py-12 text-center text-gray-500">
+              <Trash2 className="w-12 h-12 mx-auto text-gray-300 mb-3" />
+              <p>Корзина пуста</p>
+            </div>
+          ) : (
+            filtered.map(doc => {
+              const name = getTemplateName(doc.template_id, doc.title);
+              const type = getTemplateType(doc.template_id);
+              const { text: expText, isExpired, isExpiringSoon } = formatExpiry(doc.deleted_at);
+              const typeVariant = typeColor[type] || "gray";
+              return (
+                <div key={doc.id} className={`flex items-center gap-3 px-5 py-4 transition-colors hover:bg-gray-50/50 ${selected.has(doc.id) ? "bg-brand-50/50" : ""}`}>
+                  <input type="checkbox" checked={selected.has(doc.id)} onChange={() => toggleSelect(doc.id)} className="rounded border-gray-300" />
+                  <div className="flex-1 flex items-center gap-3 min-w-0">
+                    <div className="w-9 h-9 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0">
+                      <FileText className="w-4 h-4 text-gray-600" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-gray-900 truncate">{name}</p>
+                      <p className="text-xs text-gray-600">Удалён: {formatDate(doc.deleted_at)}</p>
+                    </div>
                   </div>
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium text-gray-900 truncate">{doc.name}</p>
-                    <p className="text-xs text-gray-600">Удалил: {doc.deletedBy}</p>
+                  <Badge variant={typeVariant} size="sm" className="hidden sm:inline-flex">{type}</Badge>
+                  <span className="text-xs text-gray-600 w-28 text-center hidden md:block">{formatDate(doc.deleted_at)}</span>
+                  <span className={`text-xs w-24 text-center flex items-center justify-center gap-1 hidden sm:flex ${isExpired ? "text-red-600 font-medium" : isExpiringSoon ? "text-amber-700 font-medium" : "text-gray-600"}`}>
+                    {expText}
+                  </span>
+                  <span className="text-xs text-gray-600 w-14 text-center">—</span>
+                  <div className="flex items-center gap-1 w-24 justify-center">
+                    <button
+                      onClick={() => {
+                        setSelected(new Set([doc.id]));
+                        handleRestore();
+                      }}
+                      className="p-1.5 hover:bg-emerald-50 rounded-lg text-emerald-600 transition-colors" title="Восстановить"
+                    >
+                      <RotateCcw className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => {
+                        setSelected(new Set([doc.id]));
+                        setConfirmDelete(true);
+                      }}
+                      className="p-1.5 hover:bg-red-50 rounded-lg text-red-500 transition-colors" title="Удалить навсегда"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
                   </div>
                 </div>
-                <Badge variant={typeColor[doc.type] || "gray"} size="sm" className="hidden sm:inline-flex">{doc.type}</Badge>
-                <span className="text-xs text-gray-600 w-28 text-center hidden md:block">{doc.deletedAt}</span>
-                <span className={`text-xs w-24 text-center flex items-center justify-center gap-1 hidden sm:flex ${isExpired ? "text-red-600 font-medium" : isExpiringSoon ? "text-amber-700 font-medium" : "text-gray-600"}`}>
-                  {isExpired ? <>Просрочен</> : isExpiringSoon ? <><Clock className="w-3 h-3" />{daysLeft} дн.</> : doc.expiresAt}
-                </span>
-                <span className="text-xs text-gray-600 w-14 text-center">{doc.size}</span>
-                <div className="flex items-center gap-1 w-24 justify-center">
-                  <button
-                    onClick={() => {
-                      setSelected(new Set([doc.id]));
-                      handleRestore();
-                    }}
-                    className="p-1.5 hover:bg-emerald-50 rounded-lg text-emerald-600 transition-colors" title="Восстановить"
-                  >
-                    <RotateCcw className="w-4 h-4" />
-                  </button>
-                  <button
-                    onClick={() => {
-                      setSelected(new Set([doc.id]));
-                      setConfirmDelete(true);
-                    }}
-                    className="p-1.5 hover:bg-red-50 rounded-lg text-red-500 transition-colors" title="Удалить навсегда"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
-            );
-          })}
+              );
+            })
+          )}
         </div>
         <div className="px-5 py-3 border-t border-gray-100 flex items-center justify-between text-xs text-gray-600">
           <span>Показано: {filtered.length} из {docs.length}</span>
