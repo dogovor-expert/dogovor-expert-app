@@ -200,6 +200,21 @@ export default function DocScanner({
   };
 
   const handleFile = async (slot: DocSlot, file: File) => {
+    const MAX_FILE_SIZE_MB = 15;
+    if (file.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
+      setResults((r) => ({
+        ...r,
+        [slot.id]: {
+          ok: false,
+          filled: 0,
+          missing: [],
+          filledFields: [],
+          error: true,
+          slotId: slot.id,
+        },
+      }));
+      return;
+    }
     setScanningSlot(slot.id);
     setResults((r) => ({ ...r, [slot.id]: null }));
     try {
