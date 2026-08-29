@@ -2,6 +2,7 @@
 import { useRef, useState } from "react";
 import { Loader2, FileText, Shield } from "lucide-react";
 import dynamic from "next/dynamic";
+import { usePaywall } from "@/hooks/usePaywall";
 
 const UKEPSigner = dynamic(
   () => import("@/components/builder/UKEPSigner").then((m) => ({ default: m.UKEPSigner })),
@@ -13,6 +14,7 @@ export default function SignPdf() {
   const [pdfBytes, setPdfBytes] = useState<Uint8Array | null>(null);
   const [error, setError] = useState<string | null>(null);
   const pdfInput = useRef<HTMLInputElement>(null);
+  const { subscriptionActive, openPaywall, modal } = usePaywall();
 
   const onPdf = async (list: FileList | null) => {
     const f = list?.[0];
@@ -80,6 +82,8 @@ export default function SignPdf() {
             <UKEPSigner
               pdfBytes={pdfBytes}
               fileName={file.name}
+              subscriptionActive={subscriptionActive}
+              onUpgrade={openPaywall}
               onBack={() => {
                 setFile(null);
                 setPdfBytes(null);
@@ -99,6 +103,8 @@ export default function SignPdf() {
           <span>{error}</span>
         </div>
       )}
+
+      {modal}
     </div>
   );
 }

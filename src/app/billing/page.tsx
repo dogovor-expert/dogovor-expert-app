@@ -4,7 +4,24 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/Table";
 import { useCallback, useEffect, useState } from "react";
-import { Banknote, CreditCard, CheckCircle2, Clock, AlertCircle, ShieldCheck, Lock, RefreshCw, CalendarClock, Flame } from "lucide-react";
+import {
+  Banknote,
+  CreditCard,
+  CheckCircle2,
+  Clock,
+  AlertCircle,
+  ShieldCheck,
+  Lock,
+  RefreshCw,
+  CalendarClock,
+  Flame,
+  Sparkles,
+  FileSearch,
+  History,
+  Users,
+  Stamp,
+  Package,
+} from "lucide-react";
 import { currentProPrice, PRO_PRICE_OLD, PRO_PRICE, PROMO_LABEL, isPromoActive, promoCountdownTarget, formatRub } from "@/lib/pricing";
 import CountdownTimer from "@/components/billing/CountdownTimer";
 
@@ -16,6 +33,78 @@ interface PaymentRow {
   meta: { plan?: string } | null;
   created_at: string;
 }
+
+interface Feature {
+  lead?: string;
+  text: string;
+}
+
+const FREE_FEATURES: string[] = [
+  "Создание и скачивание документов (PDF с водяным знаком)",
+  "Все шаблоны и пустые бланки",
+  "Базовые калькуляторы и справочники",
+  "DADATA — через ваш собственный ключ",
+];
+
+const PRO_FEATURES: Feature[] = [
+  { lead: "DADATA на нашем ключе", text: " — автозаполнение по ИНН, адрес, ФИО" },
+  { lead: "Сканер документов (OCR)", text: " — паспорт, ПТС, СТС → в поля" },
+  { lead: "Экспорт в DOCX и PDF", text: " без водяного знака" },
+  { lead: "УКЭП (КриптоПро)", text: " — квалифицированная электронная подпись" },
+  { lead: "Согласование с контрагентом", text: " — ссылка и правки второй стороной" },
+  { lead: "Облачные диски", text: ": Яндекс.Диск, Google Drive, Dropbox" },
+  { lead: "Пакет документов за раз", text: ": КП → договор → акт → счёт" },
+  { lead: "Autoteka", text: " — 5 отчётов о проверке авто в месяц" },
+  { lead: "Приоритетная поддержка", text: "" },
+];
+
+const COMPARISON: { label: string; free: string; pro: string }[] = [
+  { label: "Генерация документов", free: "✓", pro: "✓" },
+  { label: "PDF без водяного знака", free: "—", pro: "✓" },
+  { label: "Экспорт в DOCX", free: "—", pro: "✓" },
+  { label: "DADATA (наш ключ, автозаполнение)", free: "свой ключ", pro: "✓" },
+  { label: "Сканер документов (OCR)", free: "—", pro: "✓" },
+  { label: "УКЭП (квалифицированная подпись)", free: "—", pro: "✓" },
+  { label: "Согласование с контрагентом", free: "—", pro: "✓" },
+  { label: "Облачные диски (Яндекс/Google/Dropbox)", free: "—", pro: "✓" },
+  { label: "Пакет документов (КП → договор → акт)", free: "—", pro: "✓" },
+  { label: "Autoteka (проверка авто)", free: "поштучно", pro: "5/мес" },
+  { label: "Приоритетная поддержка", free: "—", pro: "✓" },
+];
+
+const TRUST = [
+  { icon: ShieldCheck, text: "Защита персональных данных по 152-ФЗ" },
+  { icon: CreditCard, text: "Оплата ЮKassa: МИР, Visa, Mastercard, СБП" },
+  { icon: FileSearch, text: "369 проверенных шаблонов договоров" },
+  { icon: RefreshCw, text: "Отмена подписки в любой момент" },
+];
+
+const FAQ = [
+  {
+    q: "Можно ли отменить подписку?",
+    a: "Да, в любой момент в один клик. Доступ сохраняется до конца оплаченного периода.",
+  },
+  {
+    q: "Чем отличается DADATA в PRO?",
+    a: "В PRO автозаполнение реквизитов работает на нашем ключе автоматически — достаточно ввести ИНН. На бесплатном тарифе нужно подставить свой ключ DADATA.",
+  },
+  {
+    q: "Что делает сканер документов?",
+    a: "Сфотографируйте паспорт, ПТС или СТС — система распознает данные и подставит их в нужные поля договора.",
+  },
+  {
+    q: "Что такое УКЭП и зачем она в PRO?",
+    a: "УКЭП — квалифицированная электронная подпись (через КриптоПро). Она придаёт договору юридическую силу без бумаги. В PRO можно подобрать сертификат и подписать документ прямо в конструкторе.",
+  },
+  {
+    q: "Как работает согласование с контрагентом?",
+    a: "Сформируйте ссылку или QR на документ и отправьте второй стороне. Контрагент увидит договор и внесёт правки в защищённом виде — файлы не нужно пересылать по почте.",
+  },
+  {
+    q: "Что такое пакет документов?",
+    a: "Один раз заполняете данные сделки — и PRO собирает сразу пакет: коммерческое предложение, договор, акт и счёт. Экономит время на повторном вводе.",
+  },
+];
 
 export default function BillingPage() {
   const [plan, setPlan] = useState("free");
@@ -142,188 +231,227 @@ export default function BillingPage() {
   };
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
-      <div className="flex items-center gap-4 mb-8">
-        <div className="w-12 h-12 rounded-xl bg-brand-100 flex items-center justify-center">
-          <Banknote className="w-6 h-6 text-brand-600" />
-        </div>
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Платежи и счета</h1>
-          <p className="text-gray-600 text-sm">Подписка PRO и история оплат</p>
-        </div>
-      </div>
-
-      {justPaid && (
-        <div className="mb-6 flex items-center gap-2 bg-emerald-50 border border-emerald-200 rounded-xl p-4">
-          <CheckCircle2 className="w-5 h-5 text-emerald-500 flex-shrink-0" />
-          <p className="text-sm text-emerald-800">Оплата получена. Подписка PRO активируется после подтверждения платежа — обычно в течение пары минут.</p>
-        </div>
-      )}
-
-      {justRenewed && (
-        <div className="mb-6 flex items-center gap-2 bg-emerald-50 border border-emerald-200 rounded-xl p-4">
-          <RefreshCw className="w-5 h-5 text-emerald-500 flex-shrink-0" />
-          <p className="text-sm text-emerald-800">Запрос на продление отправлен — подписка продлится после подтверждения платежа.</p>
-        </div>
-      )}
-
-      {activePlan && periodEnd && new Date(periodEnd).getTime() - Date.now() < 5 * 86400000 && new Date(periodEnd).getTime() >= Date.now() && (
-        <div className="mb-6 flex items-center gap-2 bg-amber-50 border border-amber-200 rounded-xl p-4">
-          <AlertCircle className="w-5 h-5 text-amber-700 flex-shrink-0" />
-          <p className="text-sm text-amber-800">
-            Подписка PRO истекает {new Date(periodEnd).toLocaleDateString("ru-RU", { day: "numeric", month: "long" })}.
-            {autoRenewal ? " Продлите в один клик ниже." : " Включите автопродление или продлите подписку ниже."}
+    <div className="min-h-screen bg-slate-50">
+      <div className="max-w-5xl mx-auto px-6 py-12">
+        {/* HERO */}
+        <div className="text-center mb-10">
+          {promo && (
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-100 text-amber-800 text-xs font-bold">
+              <Flame className="w-3.5 h-3.5" />
+              Акция {PROMO_LABEL} — успевайте до 20 сентября
+            </span>
+          )}
+          <h1 className="text-3xl md:text-5xl font-bold mt-5 text-gray-900">
+            PRO-подписка для тех, кто составляет договоры всерьёз
+          </h1>
+          <p className="text-slate-600 mt-4 max-w-2xl mx-auto text-lg">
+            Автозаполнение по ИНН, сканер паспорта, экспорт в DOCX, УКЭП и согласование с контрагентом. Открывайте и подписывайте сделки за минуты.
           </p>
         </div>
-      )}
 
-      {loading ? (
-        <p className="text-sm text-gray-600 py-10 text-center">Загрузка…</p>
-      ) : (
-        <>
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-            <div className="lg:col-span-2">
-              <Card variant="default" padding="md">
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="font-semibold text-gray-900 flex items-center gap-2">
-                    <ShieldCheck className="w-4 h-4 text-brand-500" />
-                    Тариф PRO
-                  </h2>
-                  {activePlan && <Badge variant="green" size="sm" dot>Активен</Badge>}
-                </div>
-                <div className={`p-4 rounded-xl mb-4 ${activePlan ? "bg-gradient-to-br from-emerald-500 to-teal-600" : "bg-gradient-to-br from-brand-500 to-brand-600"} text-white`}>
-                  <div className="flex items-center justify-between gap-2">
-                    <p className="text-sm font-medium opacity-90">{activePlan ? "PRO" : "Бесплатный"}</p>
-                    {!activePlan && promo && (
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-400 text-amber-950 text-[10px] font-bold">
-                        <Flame className="w-3 h-3" />
-                        Акция {PROMO_LABEL}
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-2xl font-bold mt-1">
-                    {formatRub(price)}
-                    <span className="text-base font-normal opacity-80"> / месяц</span>
-                    {!activePlan && promo && (
-                      <span className="ml-2 text-lg font-semibold opacity-60 line-through">
-                        {formatRub(PRO_PRICE_OLD)}
-                      </span>
-                    )}
-                  </p>
-                  {!activePlan && (
-                    <p className="text-sm opacity-80 mt-1">
-                      {promo
-                        ? `Выгода ${formatRub(savings)} при оформлении сегодня`
-                        : "Переходите на PRO — оформите за минуту"}
-                    </p>
-                  )}
-                  {!activePlan && promo && (
-                    <div className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1">
-                      <span className="text-xs opacity-90">
-                        Обычная цена {formatRub(PRO_PRICE_OLD)} вернётся через:
-                      </span>
-                      <CountdownTimer endsAt={promoCountdownTarget()} compact className="text-sm font-bold tabular-nums" />
-                    </div>
-                  )}
-                </div>
-                <ul className="space-y-2 mb-4">
-                  {[
-                    "Неограниченные расчёты без рекламы",
-                    "Экспорт расчётов в PDF",
-                    "История расчётов и избранное",
-                    "Все калькуляторы и справочники",
-                    "Приоритетная поддержка",
-                  ].map((feature) => (
-                    <li key={feature} className="flex items-center gap-2 text-sm text-gray-600">
-                      <CheckCircle2 className="w-4 h-4 text-emerald-500 flex-shrink-0" />
-                      {feature}
-                    </li>
-                  ))}
-                </ul>
-                <Button variant="primary" size="md" onClick={pay} disabled={paying || activePlan} className="w-full">
-                  <CreditCard className="w-4 h-4" />
-                  {paying ? "Создаём платёж…" : activePlan ? "Подписка активна" : `Оформить PRO за ${formatRub(price)}`}
-                </Button>
-                {!activePlan && promo && (
-                  <p className="text-[11px] text-gray-600 mt-2 flex items-start gap-1.5">
-                    <CheckCircle2 className="w-3.5 h-3.5 mt-0.5 text-emerald-500 flex-shrink-0" />
-                    Отмена в любой момент без комиссий. После окончания акции цена вернётся к {formatRub(PRO_PRICE_OLD)}/мес.
-                  </p>
-                )}
+        {justPaid && (
+          <div className="mb-6 flex items-center gap-2 bg-emerald-50 border border-emerald-200 rounded-xl p-4">
+            <CheckCircle2 className="w-5 h-5 text-emerald-500 flex-shrink-0" />
+            <p className="text-sm text-emerald-800">Оплата получена. Подписка PRO активируется после подтверждения платежа — обычно в течение пары минут.</p>
+          </div>
+        )}
 
-                {activePlan && (
-                  <div className="mt-4 p-4 rounded-xl border border-gray-200 bg-gray-50 space-y-3">
-                    <div className="flex items-center justify-between gap-3">
-                      <div className="flex items-center gap-2 text-sm text-gray-700">
-                        <RefreshCw className="w-4 h-4 text-brand-500" />
-                        Автопродление
-                      </div>
-                      <button
-                        onClick={toggleAutoRenewal}
-                        disabled={togglingAuto}
-                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${autoRenewal ? "bg-emerald-500" : "bg-gray-300"} disabled:opacity-50`}
-                        title={autoRenewal ? "Выключить автопродление" : "Включить автопродление"}
-                      >
-                        <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${autoRenewal ? "translate-x-5" : "translate-x-0.5"}`} />
-                      </button>
-                    </div>
-                    {autoRenewal && hasPaymentMethod && (
-                      <button
-                        onClick={renewNow}
-                        disabled={renewing}
-                        className="w-full inline-flex items-center justify-center gap-2 px-3 py-2 text-xs font-medium rounded-lg border border-gray-200 bg-white hover:bg-gray-50 transition-colors disabled:opacity-50"
-                      >
-                        <CalendarClock className="w-3.5 h-3.5 text-brand-500" />
-                        {renewing ? "Продлеваем…" : "Продлить сейчас (списание с сохранённой карты)"}
-                      </button>
-                    )}
-                    {periodEnd && (
-                      <p className="text-xs text-gray-600">
-                        Действует до:{" "}
-                        <span className="font-medium text-gray-700">
-                          {new Date(periodEnd).toLocaleDateString("ru-RU", {
-                            day: "numeric",
-                            month: "long",
-                            year: "numeric",
-                          })}
-                        </span>
-                      </p>
-                    )}
-                    <p className="text-[11px] text-gray-600">
-                      {autoRenewal
-                        ? "Карта сохранена в ЮKassa. Продление в один клик — без повторного ввода данных карты. Отключить можно в любой момент."
-                        : "Включите автопродление, чтобы продлевать PRO в один клик. Карта сохранится в ЮKassa (безопасное хранение)."}
-                    </p>
-                  </div>
-                )}
+        {justRenewed && (
+          <div className="mb-6 flex items-center gap-2 bg-emerald-50 border border-emerald-200 rounded-xl p-4">
+            <RefreshCw className="w-5 h-5 text-emerald-500 flex-shrink-0" />
+            <p className="text-sm text-emerald-800">Запрос на продление отправлен — подписка продлится после подтверждения платежа.</p>
+          </div>
+        )}
 
-                <p className="text-[11px] text-gray-600 mt-3 flex items-start gap-1.5">
-                  <Lock className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
-                  Оплата через ЮKassa: МИР, Visa, Mastercard, СБП.
-                </p>
-              </Card>
+        {activePlan && periodEnd && new Date(periodEnd).getTime() - Date.now() < 5 * 86400000 && new Date(periodEnd).getTime() >= Date.now() && (
+          <div className="mb-6 flex items-center gap-2 bg-amber-50 border border-amber-200 rounded-xl p-4">
+            <AlertCircle className="w-5 h-5 text-amber-700 flex-shrink-0" />
+            <p className="text-sm text-amber-800">
+              Подписка PRO истекает {new Date(periodEnd).toLocaleDateString("ru-RU", { day: "numeric", month: "long" })}.
+              {autoRenewal ? " Продлите в один клик ниже." : " Включите автопродление или продлите подписку ниже."}
+            </p>
+          </div>
+        )}
+
+        {/* PRICING CARDS */}
+        <div className="grid md:grid-cols-2 gap-6 items-start">
+          {/* FREE */}
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+            <div className="bg-gradient-to-br from-slate-100 to-slate-200 p-6">
+              <h3 className="font-semibold text-slate-700">Бесплатный</h3>
+              <p className="text-3xl font-bold text-slate-900 mt-2">0 ₽<span className="text-base font-normal text-slate-500"> / навсегда</span></p>
+              <p className="text-sm text-slate-500 mt-1">Удобный старт</p>
             </div>
-
-            <Card variant="default" padding="md" className="h-full">
-              <h2 className="font-semibold text-gray-900 mb-4">Текущий тариф</h2>
-              <div className="p-4 rounded-xl bg-gray-50 border border-gray-200 mb-4">
-                <p className="text-xs text-gray-600">Ваш план</p>
-                <p className="text-xl font-bold text-gray-900 mt-0.5 capitalize">{plan}</p>
-                <p className="text-xs text-gray-600 mt-0.5">{activePlan ? "действует сейчас" : "удобный старт — бесплатно"}</p>
-              </div>
-              <p className="text-xs text-gray-600 leading-relaxed">
-                В PRO входят все калькуляторы: НДС, штрафы ГИБДД, утильсбор, растаможка, КАСКО и другие — без ограничений.
-              </p>
-            </Card>
+            <div className="p-6">
+              <ul className="space-y-3 text-sm text-slate-600">
+                {FREE_FEATURES.map((f) => (
+                  <li key={f} className="flex gap-2">
+                    <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0" />
+                    {f}
+                  </li>
+                ))}
+              </ul>
+              <Button variant="outline" size="lg" className="w-full mt-6" disabled>
+                Всегда бесплатно
+              </Button>
+            </div>
           </div>
 
-          <Card variant="default" padding="none">
+          {/* PRO */}
+          <div className="bg-white rounded-2xl border-2 border-brand-500 shadow-lg overflow-hidden relative">
+            <div className="absolute top-4 right-4 px-2.5 py-1 rounded-full bg-amber-400 text-amber-950 text-[10px] font-bold">ПОПУЛЯРНО</div>
+            <div className="bg-gradient-to-br from-brand-500 to-brand-600 p-6 text-white">
+              <div className="flex items-center justify-between">
+                <h3 className="font-semibold opacity-90">PRO</h3>
+                {activePlan && (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/20 text-[11px] font-semibold">
+                    <CheckCircle2 className="w-3 h-3" /> Активна
+                  </span>
+                )}
+              </div>
+              <p className="text-4xl font-bold mt-2">
+                {formatRub(price)}
+                <span className="text-base font-normal opacity-80"> / месяц</span>
+                {promo && (
+                  <span className="ml-2 text-lg font-semibold opacity-60 line-through">{formatRub(PRO_PRICE_OLD)}</span>
+                )}
+              </p>
+              {promo ? (
+                <p className="text-sm opacity-90 mt-1">Экономия {formatRub(savings)} при оформлении сегодня</p>
+              ) : (
+                <p className="text-sm opacity-90 mt-1">Полный набор инструментов для договоров</p>
+              )}
+            </div>
+            <div className="p-6">
+              <ul className="space-y-3 text-sm text-slate-700">
+                {PRO_FEATURES.map((f) => (
+                  <li key={f.lead ?? f.text} className="flex gap-2">
+                    <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0" />
+                    {f.lead ? <><b>{f.lead}</b>{f.text}</> : f.text}
+                  </li>
+                ))}
+              </ul>
+
+              {activePlan ? (
+                <div className="mt-6 p-4 rounded-xl border border-gray-200 bg-gray-50 space-y-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-2 text-sm text-gray-700">
+                      <RefreshCw className="w-4 h-4 text-brand-500" />
+                      Автопродление
+                    </div>
+                    <button
+                      onClick={toggleAutoRenewal}
+                      disabled={togglingAuto}
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${autoRenewal ? "bg-emerald-500" : "bg-gray-300"} disabled:opacity-50`}
+                      title={autoRenewal ? "Выключить автопродление" : "Включить автопродление"}
+                    >
+                      <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${autoRenewal ? "translate-x-5" : "translate-x-0.5"}`} />
+                    </button>
+                  </div>
+                  {autoRenewal && hasPaymentMethod && (
+                    <button
+                      onClick={renewNow}
+                      disabled={renewing}
+                      className="w-full inline-flex items-center justify-center gap-2 px-3 py-2 text-xs font-medium rounded-lg border border-gray-200 bg-white hover:bg-gray-50 transition-colors disabled:opacity-50"
+                    >
+                      <CalendarClock className="w-3.5 h-3.5 text-brand-500" />
+                      {renewing ? "Продлеваем…" : "Продлить сейчас (списание с сохранённой карты)"}
+                    </button>
+                  )}
+                  {periodEnd && (
+                    <p className="text-xs text-gray-600">
+                      Действует до:{" "}
+                      <span className="font-medium text-gray-700">
+                        {new Date(periodEnd).toLocaleDateString("ru-RU", { day: "numeric", month: "long", year: "numeric" })}
+                      </span>
+                    </p>
+                  )}
+                  <p className="text-[11px] text-gray-600">
+                    {autoRenewal
+                      ? "Карта сохранена в ЮKassa. Продление в один клик — без повторного ввода данных. Отключить можно в любой момент."
+                      : "Включите автопродление, чтобы продлевать PRO в один клик. Карта сохранится в ЮKassa."}
+                  </p>
+                </div>
+              ) : (
+                <Button variant="primary" size="lg" className="w-full mt-6" onClick={pay} disabled={paying}>
+                  <Sparkles className="w-4 h-4" />
+                  {paying ? "Создаём платёж…" : `Оформить PRO за ${formatRub(price)}`}
+                </Button>
+              )}
+
+              <p className="text-[11px] text-slate-500 mt-3 flex items-start gap-1.5">
+                <Lock className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
+                Оплата через ЮKassa: МИР, Visa, Mastercard, СБП. Отмена в любой момент.
+                {promo && ` После акции цена вернётся к ${formatRub(PRO_PRICE_OLD)}/мес.`}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* COMPARISON TABLE */}
+        <section className="mt-14">
+          <h2 className="text-2xl font-bold text-center mb-6 text-gray-900">Сравнение возможностей</h2>
+          <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+            <Table variant="default">
+              <TableHead>
+                <TableRow>
+                  <TableHeader>Возможность</TableHeader>
+                  <TableHeader className="text-center">Бесплатный</TableHeader>
+                  <TableHeader className="text-center text-brand-600">PRO</TableHeader>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {COMPARISON.map((row) => (
+                  <TableRow key={row.label}>
+                    <TableCell>{row.label}</TableCell>
+                    <TableCell className={`text-center ${row.free === "✓" ? "text-emerald-500" : row.free === "—" ? "text-slate-300" : "text-xs text-slate-500"}`}>
+                      {row.free}
+                    </TableCell>
+                    <TableCell className={`text-center ${row.pro === "✓" ? "text-emerald-500" : row.pro === "—" ? "text-slate-300" : "text-slate-700 font-medium"}`}>
+                      {row.pro}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </section>
+
+        {/* TRUST STRIP */}
+        <section className="mt-12 grid grid-cols-2 md:grid-cols-4 gap-4">
+          {TRUST.map((t) => {
+            const Icon = t.icon;
+            return (
+              <div key={t.text} className="bg-white rounded-xl border border-slate-200 p-4 flex items-center gap-3">
+                <Icon className="w-6 h-6 text-brand-600 shrink-0" />
+                <span className="text-xs text-slate-600">{t.text}</span>
+              </div>
+            );
+          })}
+        </section>
+
+        {/* FAQ */}
+        <section className="mt-14 mb-20 max-w-3xl mx-auto">
+          <h2 className="text-2xl font-bold text-center mb-6 text-gray-900">Частые вопросы</h2>
+          <div className="space-y-3">
+            {FAQ.map((item) => (
+              <details key={item.q} className="bg-white rounded-xl border border-slate-200 p-4">
+                <summary className="font-medium cursor-pointer">{item.q}</summary>
+                <p className="text-sm text-slate-600 mt-2">{item.a}</p>
+              </details>
+            ))}
+          </div>
+        </section>
+
+        {/* PAYMENT HISTORY */}
+        {!loading && (
+          <Card variant="default" padding="none" className="mb-10">
             <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
               <h2 className="font-semibold text-gray-900">История платежей</h2>
               <span className="text-xs text-gray-600">Всего: {payments.length}</span>
             </div>
             {payments.length === 0 ? (
-              <p className="text-sm text-gray-600 py-8 text-center">Платежей пока нет — оформите PRO, и история появится здесь</p>
+              <p className="text-sm text-gray-600 py-8 text-center">Платежей пока нет — офорmite PRO, и история появится здесь</p>
             ) : (
               <Table variant="default">
                 <TableHead>
@@ -356,14 +484,16 @@ export default function BillingPage() {
               </Table>
             )}
           </Card>
-        </>
-      )}
+        )}
 
-      {toast && (
-        <div className="fixed bottom-6 right-6 bg-gray-900 text-white px-5 py-3 rounded-xl shadow-lg text-sm font-medium z-50 animate-fade-in">
-          {toast}
-        </div>
-      )}
+        {loading && <p className="text-sm text-gray-600 py-10 text-center">Загрузка…</p>}
+
+        {toast && (
+          <div className="fixed bottom-6 right-6 bg-gray-900 text-white px-5 py-3 rounded-xl shadow-lg text-sm font-medium z-50 animate-fade-in">
+            {toast}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

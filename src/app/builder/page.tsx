@@ -33,6 +33,7 @@ import { Modal } from "@/components/ui/Modal";
 import { getSigning, canShowSignSheet } from "@/data/signingMeta";
 import { type DesignId } from "@/lib/docDesign";
 import { buildTemplateDefaults, getGreeting, normalizeTypography, todayStr } from "@/lib/format";
+import { downloadBytes } from "@/lib/converter/download";
 import dynamic from "next/dynamic";
 import ProgressSteps from "@/components/builder/ProgressSteps";
 import TemplateSelector from "@/components/builder/TemplateSelector";
@@ -222,6 +223,11 @@ function HomeContent() {
   const [dadataKey, setDadataKey] = useState<string>("");
   const [subscriptionActive, setSubscriptionActive] = useState(false);
   const [paywallOpen, setPaywallOpen] = useState(false);
+  const [paywallTitle, setPaywallTitle] = useState<string | undefined>(undefined);
+  const requirePro = (title?: string) => {
+    setPaywallTitle(title);
+    setPaywallOpen(true);
+  };
   const [emailModalOpen, setEmailModalOpen] = useState(false);
   const [emailAddress, setEmailAddress] = useState("");
   const [emailSending, setEmailSending] = useState(false);
@@ -270,7 +276,7 @@ function HomeContent() {
     const res = await fetch("/api/dadata", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ op, query, count }),
+      body: JSON.stringify({ op, query, count, apiKey: dadataKey.trim() }),
     });
     if (res.status !== 503) {
       return { status: res.status, json: res.ok ? await res.json() : null };
@@ -976,18 +982,29 @@ function HomeContent() {
   };
 
   const handleExportPdf = async (scope: "pack" | "current" = "pack") => {
-    const docs = scope === "pack" && packTemplates.length > 1 ? packTemplates : [template];
-    const ids = docs.map((t) => t.id).join(",");
-    const params = new URLSearchParams({
-      template: template.id,
-      design: designId,
-      watermark: "false",
-    });
-    if (scope === "pack" && packTemplates.length > 1) {
-      params.set("pack", ids);
+    if (scope === "pack" && packTemplates.length > 1 && !subscriptionActive) {
+      requirePro("Пакетный экспорт — функция PRO");
+      return;
     }
-    const url = `/builder/export-pdf?${params.toString()}`;
-    window.open(url, "_blank");
+    setIsExporting(true);
+    try {
+      const docs = await collectExportDocs(scope);
+      const isPack = scope === "pack" && packTemplates.length > 1;
+      const fileName = isPack ? `Паспорт_сделки_${todayStr()}` : `${template.name}_${todayStr()}`;
+      const { buildPdf } = await import("@/lib/exportPdf");
+      const { blob } = await buildPdf(docs, {
+        title: isPack ? "Паспорт сделки" : template.name,
+        design: designId,
+        watermark: undefined,
+      });
+      const buf = await blob.arrayBuffer();
+      downloadBytes(new Uint8Array(buf), fileName + ".pdf");
+    } catch (e) {
+      console.error("PDF export error:", e);
+      showToast("Не удалось сформировать PDF. Попробуйте ещё раз.");
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   /** Сбор HTML-документов для экспорта: пакет целиком или один документ. */
@@ -1424,7 +1441,12 @@ function HomeContent() {
         }
         setApprovalMsg("Изменения контрагента применены к форме");
       })
-      .catch(() => setApprovalMsg("Ссылка истекла или удалена"));
+      .catch(() => setApprovalMsg("Ссылка истекла или удалена"))
+      .finally(() => {
+        // Сбрасываем флаг «контрагент внёс изменения» у владельца
+        fetch(`/api/approval/${a.token}`, { method: "PATCH" }).catch(() => {});
+        loadMyApprovals();
+      });
   };
 
   const copyApprovalLink = (a: MyApproval) => {
@@ -1837,6 +1859,8 @@ function HomeContent() {
                   onApply={applyApproval}
                   onCopyLink={copyApprovalLink}
                   onToggleQr={showApprovalQr}
+                  subscriptionActive={subscriptionActive}
+                  onUpgrade={() => requirePro("Согласование с контрагентом — функция PRO")}
                 />
               </Collapsible>
               {similarTemplates.length > 0 && (
@@ -1936,7 +1960,7 @@ function HomeContent() {
       )}
 
       {paywallOpen && (
-        <PaywallModal isOpen={true} onClose={() => setPaywallOpen(false)} />
+        <PaywallModal isOpen={true} onClose={() => setPaywallOpen(false)} title={paywallTitle} />
       )}
 
       <Modal

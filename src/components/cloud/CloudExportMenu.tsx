@@ -83,6 +83,9 @@ interface CloudExportMenuProps {
   onManage: () => void;
   /** Текст тултипа на кнопке-триггере */
   triggerTitle?: string;
+  /** Если подписка не PRO, действия вместо экспорта вызывают onUpgrade (шлюз) */
+  subscriptionActive?: boolean;
+  onUpgrade?: () => void;
 }
 
 const MENU_W = 264;
@@ -93,6 +96,8 @@ export default function CloudExportMenu({
   onPick,
   onManage,
   triggerTitle,
+  subscriptionActive = false,
+  onUpgrade,
 }: CloudExportMenuProps) {
   const [open, setOpen] = useState(false);
   const [pos, setPos] = useState<{ left: number; top: number } | null>(null);
@@ -187,6 +192,10 @@ export default function CloudExportMenu({
               <button
                 onClick={() => {
                   setOpen(false);
+                  if (!subscriptionActive) {
+                    onUpgrade?.();
+                    return;
+                  }
                   onManage();
                 }}
                 className="w-full flex items-center gap-3 px-2.5 py-2.5 rounded-xl hover:bg-brand-50 transition-colors text-left"
@@ -217,6 +226,10 @@ export default function CloudExportMenu({
                         disabled={busy}
                         onClick={() => {
                           setOpen(false);
+                          if (!subscriptionActive) {
+                            onUpgrade?.();
+                            return;
+                          }
                           onPick(p.id, p.name, "vault-backup");
                         }}
                         title="Зашифрованная резервная копия (.json)"
@@ -229,6 +242,10 @@ export default function CloudExportMenu({
                         disabled={busy}
                         onClick={() => {
                           setOpen(false);
+                          if (!subscriptionActive) {
+                            onUpgrade?.();
+                            return;
+                          }
                           onPick(p.id, p.name, "pdf");
                         }}
                         title="PDF-копия документа"
@@ -247,6 +264,10 @@ export default function CloudExportMenu({
               <button
                 onClick={() => {
                   setOpen(false);
+                  if (!subscriptionActive) {
+                    onUpgrade?.();
+                    return;
+                  }
                   onManage();
                 }}
                 className="w-full flex items-center gap-2 px-2.5 py-2 rounded-xl text-xs text-gray-600 hover:bg-gray-50 transition-colors"

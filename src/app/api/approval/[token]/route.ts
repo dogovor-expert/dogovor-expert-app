@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { limiters, clientIp, checkRateLimit, rateLimitResponse } from "@/lib/ratelimit";
 
@@ -24,10 +25,15 @@ export async function GET(
     return NextResponse.json({ error: "expired" }, { status: 410 });
   }
 
-  await admin
-    .from("approvals")
-    .update({ opened_count: Number(data.opened_count ?? 0) + 1 })
-    .eq("id", data.id);
+  // Считаем открытие только при первичном просмотре контрагентом (?view=1).
+  // Повторные fetch (обновления, применение владельцем) счётчик не увеличивают.
+  const isView = new URL(req.url).searchParams.get("view") === "1";
+  if (isView) {
+    await admin
+      .from("approvals")
+      .update({ opened_count: Number(data.opened_count ?? 0) + 1 })
+      .eq("id", data.id);
+  }
 
   return NextResponse.json({
     templateId: data.template_id,
@@ -78,6 +84,39 @@ export async function PUT(
     })
     .eq("id", existing.id);
 
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  return NextResponse.json({ ok: true });
+}
+
+/** Владелец применил правки контрагента — сбрасываем флаг changed. */
+export async function PATCH(
+  req: Request,
+  { params }: { params: Promise<{ token: string }> }
+) {
+  const { token } = await params;
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+
+  const admin = createAdminClient();
+  const { data: existing, error: findError } = await admin
+    .from("approvals")
+    .select("id, user_id")
+    .eq("token", token)
+    .single();
+  if (findError || !existing) {
+    return NextResponse.json({ error: "not found" }, { status: 404 });
+  }
+  if (existing.user_id !== user.id) {
+    return NextResponse.json({ error: "forbidden" }, { status: 403 });
+  }
+
+  const { error } = await admin
+    .from("approvals")
+    .update({ changed: false, updated_at: new Date().toISOString() })
+    .eq("id", existing.id);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ ok: true });
 }

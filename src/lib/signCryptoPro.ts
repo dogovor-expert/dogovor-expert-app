@@ -515,7 +515,7 @@ export async function signPdfWithCryptoPro(
     console.warn('Предупреждения сертификата:', validation.warnings);
   }
 
-  const base64 = btoa(String.fromCharCode(...pdfBytes));
+  const base64 = uint8ToBase64(pdfBytes);
 
   const signer = await cadesplugin.CreateObjectAsync('CAdESCOM.CPSigner');
   await signer.propset_Certificate(thumbprint);
@@ -550,23 +550,46 @@ export async function signPdfWithCryptoPro(
     ? cadesplugin.CADESCOM_ENCODE_BINARY
     : cadesplugin.CADESCOM_ENCODE_BASE64;
 
-  const detached = options.detached ?? false;
+  const detached = options.detached ?? true;
 
   // Поддержка CAdES-X-Long Type 1 (addTimestamp = true)
   const cadesType = options.addTimestamp
     ? cadesplugin.CADESCOM_CADES_X_LONG_TYPE_1
     : cadesplugin.CADESCOM_CADES_BES;
 
+  // Реальная метка времени от TSA (если запрошена) — через свойство плагина
+  if (options.addTimestamp) {
+    const tsaUrl = options.tsaUrl || 'https://freetsa.org/tsr';
+    try {
+      await signer.propset_TSAAddress(tsaUrl);
+    } catch (e) {
+      console.warn('Не удалось установить TSA-адрес:', e);
+    }
+  }
+
   const signature = await signedData.SignCades(
     signer,
     cadesType,
-    options.detached ?? false,
+    detached,
     options.encodingType === 'binary'
       ? cadesplugin.CADESCOM_ENCODE_BINARY
       : cadesplugin.CADESCOM_ENCODE_BASE64
   );
 
   return signature;
+}
+
+/** Преобразует Uint8Array в base64 без spread (безопасно для больших файлов). */
+function uint8ToBase64(bytes: Uint8Array): string {
+  let binary = '';
+  const chunk = 0x8000;
+  for (let i = 0; i < bytes.length; i += chunk) {
+    binary += String.fromCharCode.apply(
+      null,
+      Array.from(bytes.subarray(i, i + chunk)) as unknown as number[]
+    );
+  }
+  return btoa(binary);
 }
 
 export async function signDataWithCryptoPro(

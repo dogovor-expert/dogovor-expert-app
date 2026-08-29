@@ -28,6 +28,7 @@ import { useVault } from "@/lib/vault/VaultProvider";
 import type { CloudProviderId } from "@/lib/cloud/types";
 import FolderPicker from "@/components/FolderPicker";
 import CloudExportMenu from "@/components/cloud/CloudExportMenu";
+import { usePaywall } from "@/hooks/usePaywall";
 import { TEMPLATE_META } from "@/data/templatesMeta";
 import Highlight from "@/components/ui/Highlight";
 import { tokenGroups, textMatchesTokens, scoreText } from "@/lib/search";
@@ -69,6 +70,7 @@ const CATEGORY_BADGE: Record<string, { variant: "blue" | "green" | "amber" | "gr
 export default function DocumentsPage() {
   const router = useRouter();
   const { requireUnlock } = useVault();
+  const { subscriptionActive: cloudPro, openPaywall: openCloudPaywall, modal: cloudPaywallModal } = usePaywall();
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
   const [sortBy, setSortBy] = useState<"date" | "name">("date");
@@ -630,6 +632,8 @@ export default function DocumentsPage() {
                             }
                             onPick={(pid, pname, fmt) => handleExportPick(doc.id, pid, pname, fmt)}
                             onManage={() => router.push("/connections")}
+                            subscriptionActive={cloudPro}
+                            onUpgrade={openCloudPaywall}
                           />
                           <button
                             onClick={() => handleMigrateToVault(doc.id)}
@@ -804,6 +808,8 @@ export default function DocumentsPage() {
           </div>
         </div>
       )}
+
+      {cloudPaywallModal}
     </div>
   );
 }

@@ -6,6 +6,23 @@ import { createAdminClient } from "@/lib/supabase/admin";
 const STD_PRICE = 199;
 const PREM_PRICE = 299;
 const VIN_RE = /^[A-HJ-NPR-Z0-9]{17}$/;
+const PRO_MONTHLY_FREE = 5;
+
+async function isProUser(admin: any, userId: string): Promise<boolean> {
+  const { data: subs } = await admin
+    .from("subscriptions")
+    .select("status, period_end")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false })
+    .limit(5);
+  const now = new Date();
+  return (subs ?? []).some(
+    (s: any) =>
+      s.status === "active" &&
+      s.period_end &&
+      new Date(String(s.period_end)) >= now
+  );
+}
 
 export async function POST(req: Request) {
   const supabase = await createClient();
@@ -43,6 +60,58 @@ export async function POST(req: Request) {
     .limit(1);
   if (existing && existing.length > 0) {
     return NextResponse.json({ error: "already_purchased" }, { status: 409 });
+  }
+
+  // PRO-перк: 5 бесплатных отчётов в месяц. Если квота есть — генерируем бесплатно.
+  try {
+    const pro = await isProUser(admin, user.id);
+    if (pro) {
+      const ym = new Date().toISOString().slice(0, 7); // YYYY-MM
+      const { data: usageRow } = await admin
+        .from("autoteka_usage")
+        .select("used")
+        .eq("user_id", user.id)
+        .eq("ym", ym)
+        .single();
+      const used = Number(usageRow?.used ?? 0);
+      if (used < PRO_MONTHLY_FREE) {
+        const { collectReport } = await import("@/lib/tronk");
+        const bundle = await collectReport(vin, premium);
+        const ready = Boolean((bundle.sources as any)?.reportjson);
+        const reportRow = await admin
+          .from("reports")
+          .insert({
+            user_id: user.id,
+            vin,
+            payment_id: randomUUID(),
+            status: ready ? "ready" : "pending",
+            payload: bundle.sources,
+          })
+          .select()
+          .single();
+        if (reportRow.error) {
+          return NextResponse.json({ error: reportRow.error.message }, { status: 500 });
+        }
+        await admin
+          .from("autoteka_usage")
+          .upsert(
+            { user_id: user.id, ym, used: used + 1 },
+            { onConflict: "user_id,ym" }
+          );
+        return NextResponse.json({
+          free: true,
+          report_id: reportRow.data.id,
+          status: ready ? "ready" : "pending",
+        });
+      }
+      // Квота исчерпана — идём по платному пути
+      return NextResponse.json(
+        { error: "quota_exceeded", free_limit: PRO_MONTHLY_FREE, used },
+        { status: 402 }
+      );
+    }
+  } catch {
+    // Таблица авто-квоты ещё не создана (нужна миграция) — молча переходим к платеже.
   }
 
   const host = req.headers.get("host") ?? "dogovor.expert";

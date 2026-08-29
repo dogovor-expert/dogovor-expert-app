@@ -1,26 +1,33 @@
 'use client';
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { Loader2, Check, AlertCircle, Shield, FileText, ArrowLeft } from 'lucide-react';
 import { PDFDocument } from 'pdf-lib';
 import { CryptoProCertSelector } from './CryptoProCertSelector';
 import { signPdfWithCryptoPro } from '@/lib/signCryptoPro';
-import { createPAdESFromCMS_Alternative as createPAdESFromCMS } from '@/lib/embedPades';
+import { preparePAdESPlaceholder, embedCms, hexLengthOfCms, uint8ArrayToHex } from '@/lib/embedPades';
 import { downloadBytes } from '@/lib/converter/download';
+
+// Длина CMS детерминирована для конкретного сертификата (detached) → кэшируем, чтобы не запрашивать PIN дважды
+const cmsLengthCache = new Map<string, number>();
 
 interface UKEPSignerProps {
   pdfBytes: Uint8Array;
   fileName?: string;
   onClose?: () => void;
   onBack?: () => void;
+  /** Если подписка не PRO, выбор способа подписи открывает шлюз onUpgrade */
+  subscriptionActive?: boolean;
+  onUpgrade?: () => void;
 }
 
 type Step = 'provider' | 'certificate' | 'signing' | 'done' | 'error';
 
-export function UKEPSigner({ pdfBytes, fileName = 'document', onClose, onBack }: UKEPSignerProps) {
+export function UKEPSigner({ pdfBytes, fileName = 'document', onClose, onBack, subscriptionActive = false, onUpgrade }: UKEPSignerProps) {
   const [step, setStep] = useState<Step>('provider');
   const [selectedCert, setSelectedCert] = useState<{ thumbprint: string; subjectName: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [signerName, setSignerName] = useState('');
+  const signingRef = useRef(false);
 
   const handleProviderSelect = useCallback((provider: 'cryptopro' | 'rutoken') => {
     if (provider === 'cryptopro') {
@@ -39,19 +46,13 @@ export function UKEPSigner({ pdfBytes, fileName = 'document', onClose, onBack }:
   }, []);
 
   const handleSign = useCallback(async () => {
-    if (!selectedCert) return;
+    if (!selectedCert || signingRef.current) return;
+    signingRef.current = true;
 
     setError(null);
 
     try {
-      const cmsBase64 = await signPdfWithCryptoPro(pdfBytes, selectedCert.thumbprint, {
-        detached: false,
-        encodingType: 'base64',
-        addSigningTime: true,
-      });
-
-      const signedPdf = await createPAdESFromCMS(pdfBytes, {
-        cmsBase64,
+      const opts = {
         signerName,
         signingDate: new Date(),
         reason: 'Подписано квалифицированной электронной подписью',
@@ -59,7 +60,36 @@ export function UKEPSigner({ pdfBytes, fileName = 'document', onClose, onBack }:
           pageIndex: 0,
           showVisualSignature: true,
         },
+      };
+
+      // 1) Узнаём длину CMS для этого сертификата (детерминирована) — кэшируем
+      let cmsLen = cmsLengthCache.get(selectedCert.thumbprint);
+      if (!cmsLen) {
+        const probe = await preparePAdESPlaceholder(pdfBytes, 8192, opts);
+        const cmsProbe = await signPdfWithCryptoPro(probe.signedContent, selectedCert.thumbprint, {
+          detached: true,
+          encodingType: 'base64',
+          addSigningTime: true,
+        });
+        cmsLen = hexLengthOfCms(cmsProbe);
+        cmsLengthCache.set(selectedCert.thumbprint, cmsLen);
+      }
+
+      // 2) Готовим плейсхолдер точной длины и подписываем gap-удалённый контент
+      const { placeholder, signedContent } = await preparePAdESPlaceholder(pdfBytes, cmsLen, opts);
+      const cmsBase64 = await signPdfWithCryptoPro(signedContent, selectedCert.thumbprint, {
+        detached: true,
+        encodingType: 'base64',
+        addSigningTime: true,
       });
+
+      const cmsHex = uint8ArrayToHex(Uint8Array.from(atob(cmsBase64), c => c.charCodeAt(0)));
+      if (cmsHex.length !== cmsLen) {
+        throw new Error(`Длина CMS не совпала с плейсхолдером (${cmsHex.length} ≠ ${cmsLen})`);
+      }
+
+      // 3) Встраиваем CMS в плейсхолдер
+      const signedPdf = embedCms(placeholder, cmsHex);
 
       const downloadName = fileName.replace(/\.pdf$/i, '') + '-signed-ukep.pdf';
       downloadBytes(signedPdf, downloadName);
@@ -67,10 +97,18 @@ export function UKEPSigner({ pdfBytes, fileName = 'document', onClose, onBack }:
       setStep('done');
     } catch (e: any) {
       console.error('UKEP signing error:', e);
+      signingRef.current = false;
       setError(e.message || 'Неизвестная ошибка при подписании');
       setStep('error');
     }
   }, [pdfBytes, fileName, selectedCert, signerName]);
+
+  // Автозапуск подписания при переходе на шаг 'signing'
+  useEffect(() => {
+    if (step === 'signing' && selectedCert) {
+      handleSign();
+    }
+  }, [step, selectedCert, handleSign]);
 
   const handleRetry = useCallback(() => {
     setError(null);
@@ -120,7 +158,13 @@ export function UKEPSigner({ pdfBytes, fileName = 'document', onClose, onBack }:
 
         <div className="space-y-3">
           <button
-            onClick={() => handleProviderSelect('cryptopro')}
+            onClick={() => {
+              if (!subscriptionActive) {
+                onUpgrade?.();
+                return;
+              }
+              handleProviderSelect('cryptopro');
+            }}
             className="w-full p-4 border-2 border-gray-200 rounded-xl hover:border-brand-400 hover:bg-brand-50/30 transition-all text-left"
           >
             <div className="flex items-center gap-3">
@@ -209,10 +253,9 @@ export function UKEPSigner({ pdfBytes, fileName = 'document', onClose, onBack }:
 
         <button
           onClick={handleSign}
-          disabled
-          className="mt-6 w-full px-4 py-2.5 bg-brand-500 text-white rounded-xl font-medium text-sm opacity-50 cursor-not-allowed"
+          className="mt-6 w-full px-4 py-2.5 bg-brand-500 text-white rounded-xl font-medium text-sm hover:bg-brand-600 transition-colors"
         >
-          Подписывается...
+          Подписать документ
         </button>
       </div>
     );

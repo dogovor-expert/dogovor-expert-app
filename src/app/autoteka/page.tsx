@@ -189,9 +189,16 @@ export default function AutotekaPage() {
       if (res.status === 503 || !res.ok) {
         if (json?.error === "payment_unavailable") {
           setError("Оплата временно недоступна — попробуйте позже");
+        } else if (json?.error === "quota_exceeded") {
+          setError(`Лимит бесплатных отчётов PRO (${json.free_limit}/мес) исчерпан — оформите платный отчёт`);
         } else {
           setError(json?.detail ? `Ошибка оплаты: ${json.detail}` : "Не удалось создать платёж. Попробуйте позже");
         }
+        return;
+      }
+      if (json.free) {
+        setStatus("pending");
+        check(vin);
         return;
       }
       window.location.href = json.confirmation_url;
