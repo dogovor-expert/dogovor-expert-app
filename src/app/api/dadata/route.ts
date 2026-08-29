@@ -90,17 +90,30 @@ function sanitizeFio(data: any): Record<string, unknown> {
 }
 
 export async function POST(req: NextRequest) {
-  if (!process.env.DADATA_API_KEY) {
-    // Клиентский компромисс не нужен: фронт при 503 использует локальный ключ.
+  let body: { op?: string; query?: string; count?: number; apiKey?: string };
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ error: "bad body" }, { status: 400 });
+  }
+
+  const { op, query, count = 10, apiKey } = body;
+  if (!op || typeof query !== "string" || !query.trim()) {
+    return NextResponse.json({ error: "bad params" }, { status: 400 });
+  }
+
+  // Пользователь может подставить собственный PRO-ключ DADATA (он проксируется к DADATA).
+  const effectiveKey = apiKey?.trim() || process.env.DADATA_API_KEY;
+  if (!effectiveKey) {
     return NextResponse.json(
       { error: "DADATA_API_KEY not configured", fallback: true },
       { status: 503 }
     );
   }
 
-  // Серверный ключ расходуется только подписчиками: бесплатные пользователи
-  // автозаполняют реквизиты собственным ключом на бесплатном тарифе DADATA.
-  if (!(await hasActiveSubscription())) {
+  // Подписка требуется только при использовании общего серверного ключа.
+  // Свой ключ — пользователь сам отвечает за лимиты/оплату DADATA.
+  if (!apiKey?.trim() && !(await hasActiveSubscription())) {
     return NextResponse.json(
       { error: "subscription required", fallback: true },
       { status: 503 }
@@ -114,17 +127,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "rate limit" }, { status: 429 });
   }
 
-  let body: { op?: string; query?: string; count?: number };
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: "bad body" }, { status: 400 });
-  }
-
-  const { op, query, count = 10 } = body;
-  if (!op || typeof query !== "string" || !query.trim()) {
-    return NextResponse.json({ error: "bad params" }, { status: 400 });
-  }
   if (query.length > 200) {
     return NextResponse.json({ error: "query too long" }, { status: 400 });
   }
@@ -165,7 +167,7 @@ export async function POST(req: NextRequest) {
       headers: {
         "Content-Type": "application/json",
         Accept: "application/json",
-        Authorization: `Token ${process.env.DADATA_API_KEY}`,
+        Authorization: `Token ${effectiveKey}`,
       },
       body: JSON.stringify({ query: query.trim(), count: safeCount }),
       cache: "no-store",

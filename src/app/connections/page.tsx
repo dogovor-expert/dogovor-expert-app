@@ -25,14 +25,15 @@ import {
   connectProvider,
   disconnectProvider,
   getConnectedProviders,
-  exportAllVaultDocuments,
+  exportDocument,
   listCloudFiles,
   importVaultFromCloud,
 } from "@/lib/cloud/manager";
-import { listVaultDocs, getVaultDoc } from "@/lib/vault/documents";
+import { exportVaultBackup } from "@/lib/vault/keyManager";
 import { initVault, isUnlocked } from "@/lib/vault/keyManager";
 import type { CloudProviderId } from "@/lib/cloud/types";
 import FolderPicker from "@/components/FolderPicker";
+import { usePaywall } from "@/hooks/usePaywall";
 
 interface ProviderStatus {
   id: CloudProviderId;
@@ -46,6 +47,7 @@ interface ProviderStatus {
 }
 
 export default function ConnectionsPage() {
+  const { guard, modal: cloudPaywallModal } = usePaywall();
   const [statuses, setStatuses] = useState<ProviderStatus[]>([]);
   const [loading, setLoading] = useState(true);
   const [vaultReady, setVaultReady] = useState(false);
@@ -95,6 +97,7 @@ export default function ConnectionsPage() {
   };
 
   const handleConnect = async (id: CloudProviderId) => {
+    if (!guard()) return;
     setStatuses((s) => s.map((st) => (st.id === id ? { ...st, connecting: true, error: undefined } : st)));
     try {
       await connectProvider(id);
@@ -110,20 +113,26 @@ export default function ConnectionsPage() {
   };
 
   const handleExportAll = async (id: CloudProviderId) => {
+    if (!guard()) return;
     setFolderPicker({
       providerId: id,
       onConfirm: async (folderPath) => {
         setExporting(id);
         setExportResult(null);
         try {
-          const docs = [];
-          const metaList = await listVaultDocs();
-          for (const meta of metaList) {
-            const payload = await getVaultDoc(meta.templateId);
-            if (payload) docs.push({ meta, payload });
-          }
-          const result = await exportAllVaultDocuments(id, docs, folderPath);
-          setExportResult(result);
+          // Цельный бэкап хранилища (ключи + документы + токены) — совместим с importVaultFromCloud.
+          const backup = await exportVaultBackup();
+          const blob = new Blob([JSON.stringify(backup)], { type: "application/json" });
+          const fileName = `vault-backup-${new Date().toISOString().slice(0, 10)}`;
+          await exportDocument(
+            id,
+            { vaultBlob: blob },
+            { format: "vault-backup", fileName, remotePath: folderPath }
+          );
+          setExportResult({
+            success: backup.documents.length,
+            failed: [],
+          });
         } catch (e) {
           setExportResult({ success: 0, failed: [(e as Error).message] });
         } finally {
@@ -134,6 +143,7 @@ export default function ConnectionsPage() {
   };
 
   const handleListImportFiles = async (id: CloudProviderId) => {
+    if (!guard()) return;
     setImporting(id);
     setImportFiles(null);
     setImportError(null);
@@ -504,6 +514,8 @@ export default function ConnectionsPage() {
           </div>
         </div>
       )}
+
+      {cloudPaywallModal}
     </div>
   );
 }

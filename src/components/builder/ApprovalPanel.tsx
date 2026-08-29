@@ -31,6 +31,9 @@ interface ApprovalPanelProps {
   onApply: (a: MyApproval) => void;
   onCopyLink: (a: MyApproval) => void;
   onToggleQr: (token: string) => void;
+  /** Если подписка не PRO, вместо создания ссылки вызываем onUpgrade (шлюз) */
+  subscriptionActive?: boolean;
+  onUpgrade?: () => void;
 }
 
 export default function ApprovalPanel({
@@ -46,6 +49,8 @@ export default function ApprovalPanel({
   onApply,
   onCopyLink,
   onToggleQr,
+  subscriptionActive = false,
+  onUpgrade,
 }: ApprovalPanelProps) {
   return (
     <div className="space-y-3">
@@ -75,7 +80,13 @@ export default function ApprovalPanel({
         </label>
       </div>
       <button
-        onClick={onCreate}
+        onClick={() => {
+          if (!subscriptionActive) {
+            onUpgrade?.();
+            return;
+          }
+          onCreate();
+        }}
         disabled={approvalBusy}
         className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium bg-brand-50 text-brand-700 hover:bg-brand-100 border border-brand-100 disabled:opacity-60 transition-colors"
       >

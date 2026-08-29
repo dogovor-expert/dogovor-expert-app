@@ -27,7 +27,7 @@ export default function ApprovePage() {
   const [template, setTemplate] = useState<LegalTemplate | null>(null);
 
   useEffect(() => {
-    fetch(`/api/approval/${token}`)
+    fetch(`/api/approval/${token}?view=1`)
       .then((r) => (r.ok ? r.json() : r.json().then((j) => Promise.reject(new Error(j.error || "Ошибка")))))
       .then((d) => {
         setData(d);

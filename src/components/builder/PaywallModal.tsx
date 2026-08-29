@@ -7,9 +7,10 @@ import { Modal } from "@/components/ui/Modal";
 interface PaywallModalProps {
   isOpen: boolean;
   onClose: () => void;
+  title?: string;
 }
 
-export default function PaywallModal({ isOpen, onClose }: PaywallModalProps) {
+export default function PaywallModal({ isOpen, onClose, title = "Экспорт в DOCX — функция PRO" }: PaywallModalProps) {
   const promo = isPromoActive();
   const price = currentProPrice();
 
@@ -17,7 +18,7 @@ export default function PaywallModal({ isOpen, onClose }: PaywallModalProps) {
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="Экспорт в DOCX — функция PRO"
+      title={title}
       size="sm"
       showCloseButton
       closeOnOverlayClick

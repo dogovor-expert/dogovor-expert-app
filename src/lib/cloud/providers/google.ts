@@ -172,14 +172,10 @@ export class GoogleDriveProvider implements CloudProvider {
   }
 
   async downloadFile(tokens: CloudTokens, path: string): Promise<Blob> {
-    // Найти файл по имени (Google Drive требует fileId для download).
-    // Для простоты: ищем файл по имени в корне/папке Dogovor.expert.
-    const files = await this.searchFile(tokens, path.split("/").pop() || "document");
-    if (!files.length) throw new Error("Файл не найден на Google Drive");
-    const fileId = files[0].id;
+    // listFiles возвращает path = fileId, поэтому скачиваем напрямую по id.
     const res = await this.authedFetch(
       tokens,
-      `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`
+      `https://www.googleapis.com/drive/v3/files/${path}?alt=media`
     );
     return res.blob();
   }
@@ -194,17 +190,10 @@ export class GoogleDriveProvider implements CloudProvider {
     return data.files || [];
   }
 
-  async listFiles(tokens: CloudTokens, folderPath: string = "/"): Promise<Array<{ name: string; path: string; size: number; modified: string }>> {
+  async listFiles(tokens: CloudTokens, _folderPath: string = "/"): Promise<Array<{ name: string; path: string; size: number; modified: string }>> {
     // Google Drive не имеет иерархических путей как файловая система.
-    // Ищем папку Dogovor.expert по имени, затем файлы внутри.
-    const folderName = folderPath.split("/").pop() || "Dogovor.expert";
-    const folders = await this.searchFile(tokens, folderName);
-    let folderId = folders[0]?.id;
-    if (!folderId) {
-      // Папки нет - возвращаем пустой массив
-      return [];
-    }
-    const q = encodeURIComponent(`'${folderId}' in parents and trashed = false`);
+    // Бэкапы выгружаются как отдельные файлы; ищем их по имени по всему диску.
+    const q = encodeURIComponent("name contains 'vault-backup' and trashed = false");
     const res = await this.authedFetch(
       tokens,
       `https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id,name,size,modifiedTime)`
