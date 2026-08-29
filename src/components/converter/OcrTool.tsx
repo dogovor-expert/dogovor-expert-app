@@ -47,6 +47,13 @@ export default function OcrTool() {
   const onFile = async (list: FileList | null) => {
     const f = list?.[0];
     if (!f) return;
+
+    const MAX_FILE_SIZE_MB = 15;
+    if (f.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
+      setError(`Файл слишком большой (${(f.size / 1024 / 1024).toFixed(1)} МБ). Максимальный размер — ${MAX_FILE_SIZE_MB} МБ.`);
+      return;
+    }
+
     setFile(f);
     setError(null);
     setResult(null);
