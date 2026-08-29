@@ -106,8 +106,21 @@ export async function middleware(request: NextRequest) {
 
   if (isAdminPage || isDebugPage) {
     if (!user) return NextResponse.redirect(new URL("/login", request.url));
-    // Проверяем is_admin в JWT app_metadata (быстро, без запроса к БД)
-    const isAdmin = user.app_metadata?.is_admin === true;
+    // Сначала JWT app_metadata (быстро), потом profiles.is_admin (fallback)
+    let isAdmin = user.app_metadata?.is_admin === true;
+    if (!isAdmin) {
+      const supabase = createServerClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        { cookies: { getAll: () => request.cookies.getAll(), setAll: () => {} } }
+      );
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("is_admin")
+        .eq("id", user.id)
+        .single();
+      isAdmin = profile?.is_admin === true;
+    }
     if (!isAdmin) {
       return NextResponse.redirect(new URL("/dashboard", request.url));
     }
