@@ -6,6 +6,13 @@ const PAGES = [
   { name: "Каталог шаблонов", path: "/templates" },
   { name: "Билдер (форма)", path: "/builder?template=dkp-auto-short" },
   { name: "Сканер документов", path: "/builder?template=dkp-auto-short" },
+  { name: "Вход / регистрация", path: "/login" },
+  { name: "Конвертер", path: "/converter" },
+  { name: "Калькуляторы", path: "/utils" },
+  { name: "Автоподбор (VIN)", path: "/autoteka" },
+  { name: "ОСАГО", path: "/osago" },
+  { name: "Техосмотр", path: "/techosmotr" },
+  { name: "Тахограф", path: "/tahograph" },
   { name: "Обратная связь", path: "/contacts" },
 ];
 

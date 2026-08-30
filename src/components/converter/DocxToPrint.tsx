@@ -19,6 +19,11 @@ export default function DocxToPrint() {
       setError("Поддерживается только формат DOCX (Word 2007+)");
       return;
     }
+    const MAX_FILE_SIZE_MB = 50; // PDF-файлы обычно крупнее фото, лимит выше чем в OCR
+    if (f.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
+      setError(`Файл слишком большой (${(f.size / 1024 / 1024).toFixed(1)} МБ). Максимальный размер — ${MAX_FILE_SIZE_MB} МБ.`);
+      return;
+    }
     setFile(f);
     setError(null);
     setDone(false);

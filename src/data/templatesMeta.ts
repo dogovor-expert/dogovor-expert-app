@@ -525,7 +525,7 @@ export const TEMPLATE_META: TemplateMeta[] = [
       "act-transfer-auto",
       "raspiska-money"
     ],
-    "fieldCount": 17
+    "fieldCount": 19
   },
   {
     "id": "raspiska-money",
@@ -910,7 +910,7 @@ export const TEMPLATE_META: TemplateMeta[] = [
     "suggestedDocs": [
       "akt-priema-kvartiry"
     ],
-    "fieldCount": 17
+    "fieldCount": 18
   },
   {
     "id": "dsp",
@@ -922,7 +922,7 @@ export const TEMPLATE_META: TemplateMeta[] = [
     "suggestedDocs": [
       "dkp-flat"
     ],
-    "fieldCount": 10
+    "fieldCount": 11
   },
   {
     "id": "rental-commercial",
@@ -1947,7 +1947,7 @@ export const TEMPLATE_META: TemplateMeta[] = [
       "power-of-attorney-docs",
       "goods-power-of-attorney"
     ],
-    "fieldCount": 10
+    "fieldCount": 11
   },
   {
     "id": "addendum-generic",
@@ -2861,6 +2861,20 @@ export const TEMPLATE_META: TemplateMeta[] = [
     "fieldCount": 17
   },
   {
+    "id": "enterprise-sale",
+    "name": "Договор купли-продажи предприятия",
+    "category": "business",
+    "description": "Договор купли-продажи предприятия как имущественного комплекса (ст. 560 ГК РФ). Обязательные приложения: акт инвентаризации, бухгалтерский баланс, перечень долгов, реестр претензий.",
+    "actSource": "ст. 560–566 ГК РФ",
+    "lastUpdated": "Август 2026",
+    "suggestedDocs": [
+      "act-inventory",
+      "balance-sheet",
+      "debt-register"
+    ],
+    "fieldCount": 16
+  },
+  {
     "id": "rental-office",
     "name": "Договор аренды офиса",
     "category": "realty",
@@ -3306,6 +3320,20 @@ export const TEMPLATE_META: TemplateMeta[] = [
       "job-description"
     ],
     "fieldCount": 7
+  },
+  {
+    "id": "internship-contract",
+    "name": "Договор со стажёром",
+    "category": "business",
+    "description": "Трудовой договор со стажёром по ст. 351.9 ТК РФ (введена 246-ФЗ, вступает в силу с 01.03.2027). Срок стажировки не может превышать 6 месяцев. До 01.03.2027 шаблон носит превентивный характер.",
+    "actSource": "ст. 351.9 ТК РФ (Федеральный закон от 01.03.2027 № 246-ФЗ)",
+    "lastUpdated": "Август 2026",
+    "suggestedDocs": [
+      "employment-contract",
+      "personal-data-consent",
+      "internal-rules"
+    ],
+    "fieldCount": 20
   },
   {
     "id": "claim-rent",
@@ -4146,7 +4174,7 @@ export const TEMPLATE_META: TemplateMeta[] = [
     "name": "Доверенность на получение документов",
     "category": "other",
     "description": "Доверенность на получение готовых документов (справок, свидетельств, удостоверений) в организациях.",
-    "actSource": "ст. 185 ГК РФ",
+    "actSource": "ст. 185–189 ГК РФ",
     "lastUpdated": "Август 2026",
     "suggestedDocs": [],
     "fieldCount": 12
