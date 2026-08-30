@@ -187,6 +187,7 @@ export default async function BlankPage({ params }: { params: Promise<{ slug: st
                   <img
                     src={src}
                     alt={`Пустой бланк «${t.name}», страница ${i + 1}`}
+                    loading="lazy"
                     className="w-full h-auto"
                   />
                 </div>
