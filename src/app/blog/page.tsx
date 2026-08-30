@@ -6,20 +6,7 @@ import BlogList from "@/components/blog/BlogList";
 
 const SITE_URL = "https://dogovor.expert";
 const YEAR = new Date().getFullYear();
-
-export const metadata: Metadata = {
-  title: `Блог о договорах: инструкции, налоги, риски — ${YEAR}`,
-  description:
-    "Статьи юристов о договорах: аренда, ГПХ и самозанятость, расписки, доверенности, ДКП авто. Разбор с нормами ГК РФ, ТК РФ и НК РФ.",
-  alternates: { canonical: "/blog" },
-  openGraph: {
-    title: `Блог о договорах — ${YEAR}`,
-    description:
-      "Инструкции по договорам: аренда, ГПХ, расписки, доверенности. Простым языком, с нормами закона.",
-    url: "/blog",
-    type: "website",
-  },
-};
+const POSTS_PER_PAGE = 10;
 
 const CATEGORY_LABELS: Record<string, string> = {
   аренда: "Аренда жилья",
@@ -29,28 +16,72 @@ const CATEGORY_LABELS: Record<string, string> = {
   право: "Право",
 };
 
-export default function BlogPage() {
+interface BlogPageProps {
+  searchParams: Promise<{ cat?: string }>;
+}
+
+export async function generateMetadata({ searchParams }: BlogPageProps): Promise<Metadata> {
+  const { cat } = await searchParams;
+  const categoryLabel = cat ? CATEGORY_LABELS[cat] || cat : "Все материалы";
+  return {
+    title: `Блог о договорах: ${categoryLabel} — ${YEAR}`,
+    description:
+      "Статьи юристов о договорах: аренда, ГПХ и самозанятость, расписки, доверенности, ДКП авто. Разбор с нормами ГК РФ, ТК РФ и НК РФ.",
+    alternates: {
+      canonical: cat ? `/blog?cat=${cat}` : `/blog`,
+    },
+    openGraph: {
+      title: `Блог о договорах — ${categoryLabel} | ${YEAR}`,
+      description:
+        "Инструкции по договорам: аренда, ГПХ, расписки, доверенности. Простым языком, с нормами закона.",
+      url: cat ? `/blog?cat=${cat}` : `/blog`,
+      type: "website",
+    },
+  };
+}
+
+export default async function BlogPage({ searchParams }: BlogPageProps) {
+  const { cat } = await searchParams;
+  const filtered = cat ? BLOG_POSTS.filter((p) => p.category === cat) : BLOG_POSTS;
+  const totalPages = Math.ceil(filtered.length / POSTS_PER_PAGE);
+  const currentPosts = filtered.slice(0, POSTS_PER_PAGE);
+  const categoryLabel = cat ? CATEGORY_LABELS[cat] || cat : "Все материалы";
+  const nextUrl = totalPages > 1 ? (cat ? `/blog/page/2?cat=${cat}` : `/blog/page/2`) : null;
+
+  const breadcrumbs = [
+    { name: "Главная", path: "/" },
+    { name: "Блог", path: "/blog" },
+    { name: categoryLabel, path: cat ? `/blog?cat=${cat}` : `/blog` },
+  ];
+
   return (
     <div className="min-h-screen bg-slate-50 lg:min-h-0 lg:h-full lg:overflow-hidden">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8 lg:h-full">
         <JsonLd
           data={[
-            breadcrumbJsonLd([
-              { name: "Главная", path: "/" },
-              { name: "Блог", path: "/blog" },
-            ]),
+            breadcrumbJsonLd(breadcrumbs),
             {
               "@context": "https://schema.org",
               "@type": "CollectionPage",
-              name: "Блог о договорах",
+              name: `Блог о договорах: ${categoryLabel}`,
               description:
                 "Статьи о договорах: аренда, ГПХ, расписки, доверенности, ДКП авто.",
-              url: `${SITE_URL}/blog`,
+              url: `${SITE_URL}${cat ? `/blog?cat=${cat}` : `/blog`}`,
               inLanguage: "ru",
             },
           ]}
         />
-        <BlogList posts={BLOG_POSTS} labels={CATEGORY_LABELS} />
+        <BlogList
+          allPosts={BLOG_POSTS}
+          currentPosts={currentPosts}
+          currentPage={1}
+          totalPages={totalPages}
+          postsPerPage={POSTS_PER_PAGE}
+          currentCategory={cat || "all"}
+          labels={CATEGORY_LABELS}
+          prevUrl={undefined}
+          nextUrl={nextUrl}
+        />
       </div>
     </div>
   );
