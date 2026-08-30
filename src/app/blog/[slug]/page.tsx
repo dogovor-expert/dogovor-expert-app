@@ -170,17 +170,17 @@ export default async function BlogPostPage({
       {related.length > 0 && (
         <section>
           <h2 className="text-lg font-bold text-gray-900 mb-4">Читайте также</h2>
-          <div className="space-y-2.5">
+          <div className="grid sm:grid-cols-2 gap-3">
             {related.map((r) => (
               <Link
                 key={r.slug}
                 href={`/blog/${r.slug}`}
-                className="group block bg-white border border-gray-200 rounded-xl px-4 py-3 hover:border-indigo-300 hover:shadow-sm transition"
+                className="group block bg-white border border-gray-200 rounded-xl px-4 py-4 hover:border-indigo-300 hover:shadow-sm transition"
               >
-                <p className="text-sm font-semibold text-gray-900 group-hover:text-indigo-600">
+                <p className="text-sm font-semibold text-gray-900 group-hover:text-indigo-600 leading-snug">
                   {r.title}
                 </p>
-                <p className="text-xs text-gray-600 mt-1 leading-relaxed line-clamp-1">
+                <p className="text-xs text-gray-600 mt-1.5 leading-relaxed line-clamp-2">
                   {r.description}
                 </p>
               </Link>

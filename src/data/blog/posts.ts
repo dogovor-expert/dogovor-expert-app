@@ -19,6 +19,7 @@ export interface BlogPost {
   sections: BlogSection[];
   faq: BlogFaqItem[];
   relatedDocs: string[];
+  relatedPosts?: string[];
 }
 
 export const BLOG_POSTS: BlogPost[] = [
@@ -100,6 +101,11 @@ export const BLOG_POSTS: BlogPost[] = [
       },
     ],
     relatedDocs: ["rental-flat", "akt-priema-kvartiry"],
+    relatedPosts: [
+      "chto-delat-esli-arendator-ne-platit",
+      "kak-snyat-kvartiru-bezopasno",
+      "arenda-11-mesyacev-nalog",
+    ],
   },
   {
     slug: "chto-delat-esli-arendator-ne-platit",
@@ -180,6 +186,11 @@ export const BLOG_POSTS: BlogPost[] = [
       },
     ],
     relatedDocs: ["rental-flat"],
+    relatedPosts: [
+      "kak-rastorgnut-dogovor-arendy-kvartiry",
+      "arenda-nezhilogo-pomesheniya",
+      "kak-vzyskat-dolg-po-raspiske-cherez-sud",
+    ],
   },
   {
     slug: "arenda-11-mesyacev-nalog",
@@ -260,6 +271,11 @@ export const BLOG_POSTS: BlogPost[] = [
       },
     ],
     relatedDocs: ["rental-flat"],
+    relatedPosts: [
+      "nuzhno-li-registrirovat-dogovor-arendy",
+      "kak-vernut-nalogovyj-vychet",
+      "posutochnaya-arenda-kvartiry",
+    ],
   },
   {
     slug: "nuzhno-li-registrirovat-dogovor-arendy",
@@ -335,6 +351,11 @@ export const BLOG_POSTS: BlogPost[] = [
       },
     ],
     relatedDocs: ["rental-flat"],
+    relatedPosts: [
+      "arenda-11-mesyacev-nalog",
+      "arenda-nezhilogo-pomesheniya",
+      "kak-rastorgnut-dogovor-arendy-kvartiry",
+    ],
   },
   {
     slug: "nuzhen-li-notarius-pri-dkp-avto",
@@ -416,6 +437,11 @@ export const BLOG_POSTS: BlogPost[] = [
       },
     ],
     relatedDocs: ["dkp-auto", "act-transfer-auto", "power-of-attorney-car"],
+    relatedPosts: [
+      "kak-kupit-avto-bez-problem",
+      "registraciya-avto-v-gibdd",
+      "prodazha-avto-po-doverennosti",
+    ],
   },
   {
     slug: "podryad-ili-okazanie-uslug-raznica",
@@ -486,6 +512,11 @@ export const BLOG_POSTS: BlogPost[] = [
       },
     ],
     relatedDocs: ["contract-works", "service-agreement"],
+    relatedPosts: [
+      "kak-privlech-ispolnitelya-podryad",
+      "dogovor-okazaniya-uslug-samozanyatym",
+      "trudovoy-dogovor-ili-gph",
+    ],
   },
   {
     slug: "trudovoy-dogovor-ili-gph",
@@ -556,6 +587,11 @@ export const BLOG_POSTS: BlogPost[] = [
       },
     ],
     relatedDocs: ["gph-contract", "labour-contract", "selfemployed-contract"],
+    relatedPosts: [
+      "kak-zaklyuchit-trudovoy-dogovor",
+      "nalogi-samozanyatogo-po-dogovoru-gph",
+      "dogovor-okazaniya-uslug-samozanyatym",
+    ],
   },
   {
     slug: "nalogi-samozanyatogo-po-dogovoru-gph",
@@ -626,6 +662,11 @@ export const BLOG_POSTS: BlogPost[] = [
       },
     ],
     relatedDocs: ["selfemployed-contract", "gph-contract"],
+    relatedPosts: [
+      "dogovor-okazaniya-uslug-samozanyatym",
+      "trudovoy-dogovor-ili-gph",
+      "kak-vernut-nalogovyj-vychet",
+    ],
   },
   {
     slug: "dopuschevaya-pretenziya-kak-sostavit",
@@ -696,6 +737,11 @@ export const BLOG_POSTS: BlogPost[] = [
       },
     ],
     relatedDocs: ["claim-letter", "termination-agreement"],
+    relatedPosts: [
+      "kak-sostavit-pretenziyu-kompanii",
+      "kak-vzyskat-dolg-po-raspiske-cherez-sud",
+      "srok-iskovoy-davnosti",
+    ],
   },
   {
     slug: "dogovor-okazaniya-uslug-samozanyatym",
@@ -766,6 +812,11 @@ export const BLOG_POSTS: BlogPost[] = [
       },
     ],
     relatedDocs: ["selfemployed-contract", "act-services", "service-agreement"],
+    relatedPosts: [
+      "nalogi-samozanyatogo-po-dogovoru-gph",
+      "podryad-ili-okazanie-uslug-raznica",
+      "trudovoy-dogovor-ili-gph",
+    ],
   },
   {
     slug: "kak-vernut-dolg-po-raspiske-bez-suda",
@@ -844,6 +895,11 @@ export const BLOG_POSTS: BlogPost[] = [
       },
     ],
     relatedDocs: ["raspiska-money", "claim-letter"],
+    relatedPosts: [
+      "kak-vzyskat-dolg-po-raspiske-cherez-sud",
+      "raspiska-ili-rospiska",
+      "dogovor-zaima-mezhdu-fizlicami",
+    ],
   },
   {
     slug: "kak-vzyskat-dolg-po-raspiske-cherez-sud",
@@ -922,6 +978,11 @@ export const BLOG_POSTS: BlogPost[] = [
       },
     ],
     relatedDocs: ["raspiska-money", "lawsuit-statement", "court-order-app"],
+    relatedPosts: [
+      "kak-vernut-dolg-po-raspiske-bez-suda",
+      "srok-iskovoy-davnosti",
+      "raspiska-ili-rospiska",
+    ],
   },
   {
     slug: "raspiska-ili-rospiska",
@@ -1000,6 +1061,11 @@ export const BLOG_POSTS: BlogPost[] = [
       },
     ],
     relatedDocs: ["raspiska-money"],
+    relatedPosts: [
+      "dogovor-zaima-mezhdu-fizlicami",
+      "kak-vernut-dolg-po-raspiske-bez-suda",
+      "kak-vzyskat-dolg-po-raspiske-cherez-sud",
+    ],
   },
   {
     slug: "generalnaya-doverennost-chto-daet",
@@ -1078,6 +1144,11 @@ export const BLOG_POSTS: BlogPost[] = [
       },
     ],
     relatedDocs: ["power-attorney", "court-power-of-attorney", "power-of-attorney-car"],
+    relatedPosts: [
+      "kak-oformit-doverennost",
+      "prodazha-avto-po-doverennosti",
+      "prodazha-avto-v-rassrochku",
+    ],
   },
   {
     slug: "prodazha-avto-po-doverennosti",
@@ -1149,6 +1220,11 @@ export const BLOG_POSTS: BlogPost[] = [
       },
     ],
     relatedDocs: ["power-of-attorney-car", "dkp-auto"],
+    relatedPosts: [
+      "kak-oformit-doverennost",
+      "nuzhen-li-notarius-pri-dkp-avto",
+      "registraciya-avto-v-gibdd",
+    ],
   },
   {
     slug: "kak-kupit-avto-bez-problem",
@@ -1226,6 +1302,11 @@ export const BLOG_POSTS: BlogPost[] = [
       },
     ],
     relatedDocs: ["dkp-auto", "act-transfer-auto", "auto-condition-act"],
+    relatedPosts: [
+      "prodazha-avto-v-rassrochku",
+      "registraciya-avto-v-gibdd",
+      "nuzhen-li-notarius-pri-dkp-avto",
+    ],
   },
   {
     slug: "prodazha-avto-v-rassrochku",
@@ -1303,6 +1384,11 @@ export const BLOG_POSTS: BlogPost[] = [
       },
     ],
     relatedDocs: ["car-installment", "dkp-auto", "car-trade-in"],
+    relatedPosts: [
+      "kak-kupit-avto-bez-problem",
+      "registraciya-avto-v-gibdd",
+      "nuzhen-li-notarius-pri-dkp-avto",
+    ],
   },
   {
     slug: "arenda-avtomobilya-chto-nuzhno",
@@ -1380,6 +1466,11 @@ export const BLOG_POSTS: BlogPost[] = [
       },
     ],
     relatedDocs: ["rental-auto", "auto-lease", "car-rental-daily"],
+    relatedPosts: [
+      "posutochnaya-arenda-kvartiry",
+      "arenda-nezhilogo-pomesheniya",
+      "kak-kupit-avto-bez-problem",
+    ],
   },
   {
     slug: "registraciya-avto-v-gibdd",
@@ -1457,6 +1548,11 @@ export const BLOG_POSTS: BlogPost[] = [
       },
     ],
     relatedDocs: ["gibdd-reg-app", "dkp-auto", "act-transfer-auto"],
+    relatedPosts: [
+      "kak-kupit-avto-bez-problem",
+      "nuzhen-li-notarius-pri-dkp-avto",
+      "prodazha-avto-po-doverennosti",
+    ],
   },
   {
     slug: "kak-vernut-avto-po-garantii",
@@ -1534,6 +1630,11 @@ export const BLOG_POSTS: BlogPost[] = [
       },
     ],
     relatedDocs: ["car-warranty-order", "car-repair", "refund-claim"],
+    relatedPosts: [
+      "zashchita-prav-potrebiteley",
+      "kak-sostavit-pretenziyu-kompanii",
+      "kak-kupit-avto-bez-problem",
+    ],
   },
   {
     slug: "dogovor-zaima-mezhdu-fizlicami",
@@ -1611,6 +1712,11 @@ export const BLOG_POSTS: BlogPost[] = [
       },
     ],
     relatedDocs: ["loan-individuals", "raspiska-money", "loan-graph"],
+    relatedPosts: [
+      "zalog-pri-dolge-kak-oformit",
+      "poruchitel-za-dolg-pravila",
+      "raspiska-ili-rospiska",
+    ],
   },
   {
     slug: "zalog-pri-dolge-kak-oformit",
@@ -1688,6 +1794,11 @@ export const BLOG_POSTS: BlogPost[] = [
       },
     ],
     relatedDocs: ["pledge-agreement", "movable-pledge", "car-pledge"],
+    relatedPosts: [
+      "dogovor-zaima-mezhdu-fizlicami",
+      "poruchitel-za-dolg-pravila",
+      "kak-vzyskat-dolg-po-raspiske-cherez-sud",
+    ],
   },
   {
     slug: "kak-vernut-nalogovyj-vychet",
@@ -1765,6 +1876,11 @@ export const BLOG_POSTS: BlogPost[] = [
       },
     ],
     relatedDocs: ["tax-deduction-app"],
+    relatedPosts: [
+      "arenda-11-mesyacev-nalog",
+      "nalogi-samozanyatogo-po-dogovoru-gph",
+      "dogovor-zaima-mezhdu-fizlicami",
+    ],
   },
   {
     slug: "poruchitel-za-dolg-pravila",
@@ -1842,6 +1958,11 @@ export const BLOG_POSTS: BlogPost[] = [
       },
     ],
     relatedDocs: ["guarantee-agreement", "loan-individuals"],
+    relatedPosts: [
+      "dogovor-zaima-mezhdu-fizlicami",
+      "zalog-pri-dolge-kak-oformit",
+      "kak-vzyskat-dolg-po-raspiske-cherez-sud",
+    ],
   },
   {
     slug: "kak-oformit-doverennost",
@@ -1919,6 +2040,11 @@ export const BLOG_POSTS: BlogPost[] = [
       },
     ],
     relatedDocs: ["power-of-attorney-car", "court-power-of-attorney", "power-of-attorney-docs"],
+    relatedPosts: [
+      "generalnaya-doverennost-chto-daet",
+      "prodazha-avto-po-doverennosti",
+      "srok-iskovoy-davnosti",
+    ],
   },
   {
     slug: "srok-iskovoy-davnosti",
@@ -1996,6 +2122,11 @@ export const BLOG_POSTS: BlogPost[] = [
       },
     ],
     relatedDocs: ["claim-generic", "debt-lawsuit", "lawsuit-statement"],
+    relatedPosts: [
+      "kak-vzyskat-dolg-po-raspiske-cherez-sud",
+      "kak-sostavit-pretenziyu-kompanii",
+      "zashchita-prav-potrebiteley",
+    ],
   },
   {
     slug: "kak-sostavit-pretenziyu-kompanii",
@@ -2073,6 +2204,11 @@ export const BLOG_POSTS: BlogPost[] = [
       },
     ],
     relatedDocs: ["claim-letter", "claim-generic", "refund-claim"],
+    relatedPosts: [
+      "dopuschevaya-pretenziya-kak-sostavit",
+      "zashchita-prav-potrebiteley",
+      "kak-vernut-avto-po-garantii",
+    ],
   },
   {
     slug: "zashchita-prav-potrebiteley",
@@ -2150,6 +2286,11 @@ export const BLOG_POSTS: BlogPost[] = [
       },
     ],
     relatedDocs: ["refund-claim", "consumer-lawsuit", "lawsuit-statement"],
+    relatedPosts: [
+      "kak-vernut-avto-po-garantii",
+      "kak-sostavit-pretenziyu-kompanii",
+      "srok-iskovoy-davnosti",
+    ],
   },
   {
     slug: "kak-privlech-ispolnitelya-podryad",
@@ -2227,6 +2368,11 @@ export const BLOG_POSTS: BlogPost[] = [
       },
     ],
     relatedDocs: ["contract-works", "subcontract", "house-repair"],
+    relatedPosts: [
+      "podryad-ili-okazanie-uslug-raznica",
+      "dogovor-postavki-usloviya",
+      "dogovor-okazaniya-uslug-samozanyatym",
+    ],
   },
   {
     slug: "dogovor-postavki-usloviya",
@@ -2304,6 +2450,11 @@ export const BLOG_POSTS: BlogPost[] = [
       },
     ],
     relatedDocs: ["supply-contract", "supply-b2b", "goods-sale", "terminate-supply"],
+    relatedPosts: [
+      "soglashenie-o-konfidencialnosti",
+      "kak-privlech-ispolnitelya-podryad",
+      "dogovor-okazaniya-uslug-samozanyatym",
+    ],
   },
   {
     slug: "soglashenie-o-konfidencialnosti",
@@ -2381,6 +2532,11 @@ export const BLOG_POSTS: BlogPost[] = [
       },
     ],
     relatedDocs: ["agreement-confidentiality", "nda-employee"],
+    relatedPosts: [
+      "dogovor-postavki-usloviya",
+      "kak-zaklyuchit-trudovoy-dogovor",
+      "kak-privlech-ispolnitelya-podryad",
+    ],
   },
   {
     slug: "kak-zaklyuchit-trudovoy-dogovor",
@@ -2458,6 +2614,11 @@ export const BLOG_POSTS: BlogPost[] = [
       },
     ],
     relatedDocs: ["labour-contract", "labour-contract-fixed", "parttime-contract"],
+    relatedPosts: [
+      "trudovoy-dogovor-ili-gph",
+      "kak-privlech-ispolnitelya-podryad",
+      "soglashenie-o-konfidencialnosti",
+    ],
   },
   {
     slug: "arenda-nezhilogo-pomesheniya",
@@ -2535,6 +2696,11 @@ export const BLOG_POSTS: BlogPost[] = [
       },
     ],
     relatedDocs: ["rental-commercial", "rental-office", "dkp-nonresidential"],
+    relatedPosts: [
+      "nuzhno-li-registrirovat-dogovor-arendy",
+      "arenda-11-mesyacev-nalog",
+      "kak-rastorgnut-dogovor-arendy-kvartiry",
+    ],
   },
   {
     slug: "kak-snyat-kvartiru-bezopasno",
@@ -2612,6 +2778,11 @@ export const BLOG_POSTS: BlogPost[] = [
       },
     ],
     relatedDocs: ["rental-flat", "tenancy-flat", "rental-residential"],
+    relatedPosts: [
+      "posutochnaya-arenda-kvartiry",
+      "kak-rastorgnut-dogovor-arendy-kvartiry",
+      "arenda-11-mesyacev-nalog",
+    ],
   },
   {
     slug: "posutochnaya-arenda-kvartiry",
@@ -2689,6 +2860,11 @@ export const BLOG_POSTS: BlogPost[] = [
       },
     ],
     relatedDocs: ["rental-daily", "tenancy-flat", "rental-flat"],
+    relatedPosts: [
+      "kak-snyat-kvartiru-bezopasno",
+      "arenda-11-mesyacev-nalog",
+      "kak-rastorgnut-dogovor-arendy-kvartiry",
+    ],
   },
 ];
 
@@ -2696,9 +2872,15 @@ export function getBlogPost(slug: string): BlogPost | undefined {
   return BLOG_POSTS.find((p) => p.slug === slug);
 }
 
-export function getRelatedPosts(slug: string, limit = 3): BlogPost[] {
+export function getRelatedPosts(slug: string, limit = 4): BlogPost[] {
   const current = getBlogPost(slug);
   if (!current) return [];
+  if (current.relatedPosts && current.relatedPosts.length > 0) {
+    return current.relatedPosts
+      .map((s) => getBlogPost(s))
+      .filter((p): p is BlogPost => p !== undefined && p.slug !== slug)
+      .slice(0, limit);
+  }
   return BLOG_POSTS.filter(
     (p) => p.slug !== slug && p.category === current.category
   ).slice(0, limit);
