@@ -706,7 +706,12 @@ function Marketing() {
           <h2 className="text-3xl sm:text-4xl font-bold text-gray-900">Что входит в каждый тариф</h2>
           <p className="mt-4 text-gray-600">Открытый образец отчёта — листайте стрелками или кликом по краям.</p>
         </div>
-        <div className="mt-12 overflow-x-auto">
+        <div
+          className="mt-12 overflow-x-auto"
+          tabIndex={0}
+          role="region"
+          aria-label="Сравнение возможностей тарифов"
+        >
           <table className="w-full max-w-4xl mx-auto text-sm border-collapse">
             <thead>
               <tr className="text-gray-600">

@@ -28,7 +28,6 @@ import { saveDraft, loadDraft, clearDraft, clearDraftVersions, getAllDrafts, pus
 import { syncDraft, syncDelete, setUserFlag } from "@/lib/sync";
 import { createClient } from "@/lib/supabase/client";
 import { renderTemplateDocument, buildPackValues } from "@/lib/renderDocument";
-import PdfPreview from "@/components/PdfPreview";
 import { Modal } from "@/components/ui/Modal";
 import { getSigning, canShowSignSheet } from "@/data/signingMeta";
 import { type DesignId } from "@/lib/docDesign";
@@ -56,6 +55,9 @@ const ContractorsPanel = dynamic(() => import("@/components/builder/ContractorsP
 const ChecklistPanel = dynamic(() => import("@/components/builder/ChecklistPanel"), { ssr: false });
 const AuditPanel = dynamic(() => import("@/components/builder/AuditPanel"), { ssr: false });
 const CostsPanel = dynamic(() => import("@/components/builder/CostsPanel"), { ssr: false });
+// PdfPreview — скрытый источник печати (#print-root); грузится только на клиенте
+// (ssr: false), чтобы не раздувать SSR-HTML /builder и не тащить pdf-рендер.
+const PdfPreview = dynamic(() => import("@/components/PdfPreview"), { ssr: false });
 import PersonsPanel, { type PersonRow } from "@/components/builder/PersonsPanel";
 import { roleToPerson, personToFields } from "@/lib/personMapping";
 import { getTemplateRoles } from "@/lib/docRequirements";

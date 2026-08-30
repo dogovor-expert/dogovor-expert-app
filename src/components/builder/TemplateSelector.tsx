@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { Search, Star } from "lucide-react";
 import { TEMPLATE_META } from "@/data/templatesMeta";
 import Highlight from "@/components/ui/Highlight";
@@ -63,6 +64,16 @@ export default function TemplateSelector({
   onToggleFavorite,
   onSelectTemplate,
 }: TemplateSelectorProps) {
+  // P0.2: сетка из 369 чипов не рендерится на сервере (иначе она раздувает
+  // SSR-HTML /builder до сотен КБ). Список грузится целиком на клиенте после
+  // гидратации — данные TEMPLATE_META уже в клиентском бандле, fetch не нужен.
+  // Гейт на mounted убирает hydration mismatch: SSR и первый клиентский рендер
+  // показывают skeleton, затем появляется полный список.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const filteredTemplates = (() => {
     const tokens = tokenGroups(templateSearch);
     const inCategory = TEMPLATE_META.filter(
@@ -150,7 +161,20 @@ export default function TemplateSelector({
 
       {/* Template Cards — compact chips */}
       <div className="flex gap-3 overflow-x-auto pb-3 scrollbar-thin [scrollbar-width:thin]">
-        {filteredTemplates.map((t) => {
+        {!mounted &&
+          Array.from({ length: 8 }).map((_, i) => (
+            <div
+              key={`skeleton-${i}`}
+              className="flex flex-col items-center justify-center gap-2 w-[160px] px-3 py-4 rounded-xl border-2 border-gray-200 flex-shrink-0"
+              aria-hidden="true"
+            >
+              <span className="w-9 h-9 rounded-lg bg-gray-200 animate-pulse flex-shrink-0" />
+              <span className="h-3 w-28 rounded bg-gray-200 animate-pulse" />
+              <span className="h-3 w-24 rounded bg-gray-200 animate-pulse" />
+            </div>
+          ))}
+        {mounted &&
+          filteredTemplates.map((t) => {
           const colors = CATEGORY_COLORS[t.category] || CATEGORY_COLORS.other;
           const isSelected = selectedTemplateId === t.id;
           return (

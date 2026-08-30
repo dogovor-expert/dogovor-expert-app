@@ -58,6 +58,13 @@ const CATEGORY_BADGE: Record<string, string> = {
 
 const FAVORITES_KEY = "dogovor_favorites";
 
+// P0.1: каталог пагинируется — при SSR рендерится только первый экран
+// (первые 24 карточки), остальные шаблоны подгружаются кнопкой «Показать ещё».
+// Это сокращает HTML-ответ /templates с ~1.1 MB до нескольких сотен КБ,
+// не ломая SEO (первые 24 карточки видны поисковикам) и поиск (работает по всем).
+const INITIAL_VISIBLE = 24;
+const PAGE_SIZE = 24;
+
 function loadFavorites(): Set<string> {
   try {
     const raw = localStorage.getItem(FAVORITES_KEY);
@@ -77,6 +84,20 @@ function TemplatesContent() {
   const [search, setSearch] = useState("");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
+  // Сколько карточек показано. При SSR (пустой поиск, категория «все») — только
+  // первый экран для SEO + быстрый LCP; остальное — по кнопке «Показать ещё».
+  const [visibleCount, setVisibleCount] = useState(INITIAL_VISIBLE);
+
+  // Фильтр/поиск показываем целиком (не пагинируем результат поиска),
+  // чтобы интерактив не усложнялся; начальный HTML при этом мал, т.к.
+  // в SSR поиск/категория пустые, а visibleCount = INITIAL_VISIBLE.
+  useEffect(() => {
+    if (search.trim() || activeCategory !== "all") {
+      setVisibleCount(Number.POSITIVE_INFINITY);
+    } else {
+      setVisibleCount(INITIAL_VISIBLE);
+    }
+  }, [search, activeCategory]);
 
   useEffect(() => {
     setFavorites(loadFavorites());
@@ -270,7 +291,7 @@ function TemplatesContent() {
 
       {viewMode === "grid" ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 pb-12 items-stretch">
-          {filtered.map(({ t }) => {
+          {filtered.slice(0, visibleCount).map(({ t }) => {
             const gradient = CATEGORY_COLORS[t.category] || CATEGORY_COLORS.other;
             const icon = CATEGORY_ICONS[t.category] || "📄";
             const badge = CATEGORY_BADGE[t.category] || "bg-gray-100 text-gray-600";
@@ -354,7 +375,7 @@ function TemplatesContent() {
       ) : (
         <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden mb-12">
           <div className="divide-y divide-gray-100">
-            {filtered.map(({ t }) => {
+            {filtered.slice(0, visibleCount).map(({ t }) => {
               const gradient = CATEGORY_COLORS[t.category] || CATEGORY_COLORS.other;
               const icon = CATEGORY_ICONS[t.category] || "📄";
               const badge = CATEGORY_BADGE[t.category] || "bg-gray-100 text-gray-600";
@@ -417,6 +438,22 @@ function TemplatesContent() {
           </div>
         </div>
       )}
+
+      {Number.isFinite(visibleCount) &&
+        visibleCount < filtered.length && (
+          <div className="text-center pb-14">
+            <button
+              onClick={() =>
+                setVisibleCount((n) =>
+                  Math.min(n + PAGE_SIZE, filtered.length)
+                )
+              }
+              className="px-6 py-3 text-sm font-medium text-brand-600 bg-brand-50 hover:bg-brand-100 border border-brand-200 rounded-xl transition-colors"
+            >
+              Показать ещё ({filtered.length - visibleCount})
+            </button>
+          </div>
+        )}
 
       {filtered.length === 0 && (
         <div className="text-center py-14 bg-white rounded-2xl border border-gray-200 mb-12 px-6">
