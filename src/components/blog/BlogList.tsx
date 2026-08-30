@@ -1,8 +1,5 @@
-"use client";
-
-import { useState } from "react";
 import Link from "next/link";
-import { Home, Car, Briefcase, Wallet, Scale, ChevronRight, FileText, ArrowRight } from "lucide-react";
+import { Home, Car, Briefcase, Wallet, Scale, ChevronRight, FileText, ChevronLeft } from "lucide-react";
 import type { BlogPost } from "@/data/blog/posts";
 
 const ICONS: Record<string, typeof Home> = {
@@ -20,17 +17,39 @@ const fmt = (d: string) => {
 };
 const read = (d: string) => Math.max(3, Math.round(d.length / 150) + 3) + " мин";
 
-export default function BlogList({
-  posts,
-  labels,
-}: {
-  posts: BlogPost[];
+interface BlogListProps {
+  allPosts: BlogPost[];
+  currentPosts: BlogPost[];
+  currentPage: number;
+  totalPages: number;
+  postsPerPage: number;
+  currentCategory: string;
   labels: Record<string, string>;
-}) {
-  const [active, setActive] = useState("all");
-  const cats = Array.from(new Set(posts.map((p) => p.category)));
+  prevUrl?: string;
+  nextUrl?: string | null;
+}
+
+export default function BlogList({
+  allPosts,
+  currentPosts,
+  currentPage,
+  totalPages,
+  postsPerPage,
+  currentCategory,
+  labels,
+  prevUrl,
+  nextUrl,
+}: BlogListProps) {
+  const cats = Array.from(new Set(allPosts.map((p) => p.category)));
   const Icon = (c: string) => ICONS[c] || Home;
-  const filtered = active === "all" ? posts : posts.filter((p) => p.category === active);
+
+  const buildCatUrl = (cat: string) =>
+    cat === "all" ? "/blog" : `/blog?cat=${cat}`;
+
+  const buildPageUrl = (page: number, cat: string) => {
+    if (page <= 1) return buildCatUrl(cat);
+    return cat === "all" ? `/blog/page/${page}` : `/blog/page/${page}?cat=${cat}`;
+  };
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-[1fr_290px] gap-7 lg:h-full lg:overflow-hidden">
@@ -56,33 +75,33 @@ export default function BlogList({
         </header>
 
         <div className="flex flex-wrap gap-2 mb-6">
-          <button
-            onClick={() => setActive("all")}
+          <Link
+            href={buildCatUrl("all")}
             className={`text-sm font-semibold px-3.5 py-1.5 rounded-full border transition ${
-              active === "all"
+              currentCategory === "all"
                 ? "bg-brand-600 text-white border-brand-600"
                 : "bg-white text-slate-600 border-slate-200 hover:text-brand-700 hover:border-brand-200"
             }`}
           >
             Все материалы
-          </button>
+          </Link>
           {cats.map((c) => (
-            <button
+            <Link
               key={c}
-              onClick={() => setActive(c)}
+              href={buildCatUrl(c)}
               className={`text-sm font-semibold px-3.5 py-1.5 rounded-full border transition ${
-                active === c
+                currentCategory === c
                   ? "bg-brand-600 text-white border-brand-600"
                   : "bg-white text-slate-600 border-slate-200 hover:text-brand-700 hover:border-brand-200"
               }`}
             >
               {labels[c] || c}
-            </button>
+            </Link>
           ))}
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-          {filtered.map((p) => {
+          {currentPosts.map((p) => {
             const C = Icon(p.category);
             return (
               <Link
@@ -112,6 +131,69 @@ export default function BlogList({
           })}
         </div>
 
+        {totalPages > 1 && (
+          <nav className="mt-10 flex items-center justify-center gap-2" aria-label="Пагинация">
+            {prevUrl && (
+              <Link
+                href={prevUrl}
+                className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-brand-600 bg-brand-50 border border-brand-200 rounded-xl hover:bg-brand-100 transition"
+              >
+                <ChevronLeft className="w-4 h-4" />
+                Назад
+              </Link>
+            )}
+            <div className="flex items-center gap-1">
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => {
+                if (totalPages <= 7) {
+                  return (
+                    <Link
+                      key={p}
+                      href={buildPageUrl(p, currentCategory)}
+                      className={`w-10 h-10 flex items-center justify-center text-sm font-semibold rounded-xl transition ${
+                        p === currentPage
+                          ? "bg-brand-600 text-white"
+                          : "text-slate-600 hover:bg-slate-100"
+                      }`}
+                      aria-current={p === currentPage ? "page" : undefined}
+                    >
+                      {p}
+                    </Link>
+                  );
+                }
+                if (p === 1 || p === totalPages || (p >= currentPage - 1 && p <= currentPage + 1)) {
+                  return (
+                    <Link
+                      key={p}
+                      href={buildPageUrl(p, currentCategory)}
+                      className={`w-10 h-10 flex items-center justify-center text-sm font-semibold rounded-xl transition ${
+                        p === currentPage
+                          ? "bg-brand-600 text-white"
+                          : "text-slate-600 hover:bg-slate-100"
+                      }`}
+                      aria-current={p === currentPage ? "page" : undefined}
+                    >
+                      {p}
+                    </Link>
+                  );
+                }
+                if (p === currentPage - 2 || p === currentPage + 2) {
+                  return <span key={p} className="w-10 h-10 flex items-center justify-center text-slate-400">…</span>;
+                }
+                return null;
+              })}
+            </div>
+            {nextUrl && (
+              <Link
+                href={nextUrl}
+                className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-brand-600 bg-brand-50 border border-brand-200 rounded-xl hover:bg-brand-100 transition"
+              >
+                Вперёд
+                <ChevronRight className="w-4 h-4" />
+              </Link>
+            )}
+          </nav>
+        )}
+
         <section className="mt-12 bg-brand-600 rounded-3xl px-6 py-9 text-center">
           <h2 className="text-2xl font-bold text-white">Нужен сам договор, а не статья?</h2>
           <p className="mt-2 text-sm text-brand-100 max-w-xl mx-auto">
@@ -119,7 +201,7 @@ export default function BlogList({
           </p>
           <Link
             href="/templates"
-            className="mt-5 inline-flex items-center gap-2 px-6 py-3 bg-white text-brand-700 rounded-xl hover:bg-brand-50 font-bold text-sm transition"
+            className="mt-5 inline-flex items-center gap-2 px-6 py-3 bg-white text-brand-700 rounded-xl hover:bg-indigo-50 font-bold text-sm transition cursor-pointer"
           >
             <FileText className="w-4 h-4" />
             Перейти к шаблонам
@@ -132,7 +214,7 @@ export default function BlogList({
       <aside className="hidden lg:block lg:h-full lg:overflow-y-auto lg:pl-1 lg:min-h-0 lg:scrollbar-hide">
         <div className="bg-white border border-slate-200 rounded-2xl p-5">
           <h4 className="text-xs font-bold uppercase tracking-wide text-slate-600 mb-3">Популярное</h4>
-          {posts.slice(0, 5).map((p, i) => (
+          {allPosts.slice(0, 5).map((p, i) => (
             <Link
               key={p.slug}
               href={`/blog/${p.slug}`}
@@ -147,14 +229,14 @@ export default function BlogList({
 
           <h4 className="text-xs font-bold uppercase tracking-wide text-slate-600 mb-1 mt-5">Категории</h4>
           {cats.map((c) => (
-            <button
+            <Link
               key={c}
-              onClick={() => setActive(c)}
+              href={buildCatUrl(c)}
               className="w-full flex items-center justify-between py-2 border-b border-slate-100 last:border-0 group text-left"
             >
               <span className="text-sm font-semibold text-slate-700 group-hover:text-brand-700">{labels[c] || c}</span>
-              <span className="text-xs text-slate-600">{posts.filter((p) => p.category === c).length}</span>
-            </button>
+              <span className="text-xs text-slate-600">{allPosts.filter((p) => p.category === c).length}</span>
+            </Link>
           ))}
         </div>
       </aside>
