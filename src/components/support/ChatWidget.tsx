@@ -1,4 +1,4 @@
-// Бывший Jivo-виджет заменён на единый SupportLauncher (src/components/support/SupportLauncher.tsx),
+// Единый SupportLauncher (src/components/support/SupportLauncher.tsx) — собственный виджет поддержки.
 // который объединяет чат с поддержкой (Telegram-мост) и форму «Сообщить о проблеме».
 // Оставляем openChat() для обратной совместимости (help/page.tsx и др.).
 

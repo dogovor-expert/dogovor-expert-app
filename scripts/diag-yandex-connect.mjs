@@ -51,7 +51,7 @@ const bodyErr = (await page.locator("body").innerText()).match(/Client ID[^.\n]*
 console.log("подсказки в body:", bodyErr);
 
 console.log("\n--- Консольные ошибки страницы ---");
-console.log(JSON.stringify(errors.filter((e) => !e.includes("jivo") && !e.includes("net::")).slice(0, 5), null, 2));
+console.log(JSON.stringify(errors.filter((e) => !e.includes("net::")).slice(0, 5), null, 2));
 
 await page.screenshot({ path: "C:/Users/alikpc/AppData/Local/Temp/opencode/yandex-connect-diag.png" });
 await browser.close();

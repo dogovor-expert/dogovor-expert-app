@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { isSameOrigin } from "@/lib/admin-auth";
 import { limiters, clientIp, checkRateLimit, rateLimitResponse } from "@/lib/ratelimit";
 import { sendEmail, sendTelegram, SUPPORT_EMAIL } from "@/lib/mail";
 
@@ -82,6 +83,9 @@ export async function GET() {
 }
 
 export async function PATCH(req: Request) {
+  // CSRF: смена статуса лида — только same-origin.
+  if (!isSameOrigin(req)) return NextResponse.json({ error: "forbidden" }, { status: 403 });
+
   const supabase = await requireAdmin();
   if (!supabase) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
 

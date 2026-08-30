@@ -23,16 +23,16 @@ const esc = (s: unknown) =>
 
 async function sendNotification(p: {
   ticketNo: string; type: string; docName: string | null; tool: string | null;
-  message: string; email: string; tech: unknown; screenshotUrls: string[];
+  message: string; email: string; tech: unknown; screenshotPaths: string[];
 }) {
   const zeptoToken = process.env.ZEPTOMAIL_TOKEN;
   const resendKey = process.env.RESEND_API_KEY;
   if (!zeptoToken && !resendKey) return;
 
-  const shots = p.screenshotUrls.length
-    ? `<p style="margin:0 0 12px;color:#374151;">Скриншоты: ${p.screenshotUrls
-        .map((u) => `<a href="${esc(u)}">${esc(u)}</a>`)
-        .join("<br>")}</p>`
+  // C5: бакет приватный — ссылки на скриншоты не публикуем в письме (ПДн).
+  // Админ смотрит скриншоты в панели по signed URL.
+  const shots = p.screenshotPaths.length
+    ? `<p style="margin:0 0 12px;color:#374151;">Скриншоты: ${p.screenshotPaths.length} шт. — доступны в админке по signed URL.</p>`
     : "";
 
   const html = `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:24px;">
@@ -130,8 +130,8 @@ export async function POST(req: Request) {
   const id = randomUUID();
   const ticketNo = "FB-" + id.replace(/-/g, "").slice(0, 6).toUpperCase();
 
-  // Скриншоты -> Storage
-  const screenshotUrls: string[] = [];
+  // Скриншоты -> Storage (C5: бакет приватный, храним путь, отдаём через signed URL)
+  const screenshotPaths: string[] = [];
   const shots = Array.isArray(body.screenshots) ? body.screenshots.slice(0, 3) : [];
   for (const s of shots) {
     if (!s || typeof s.dataUrl !== "string" || !s.dataUrl.startsWith("data:")) continue;
@@ -150,8 +150,7 @@ export async function POST(req: Request) {
       .from("feedback")
       .upload(path, buf, { contentType: mime, upsert: false });
     if (upErr) continue;
-    const { data: urlData } = supabase.storage.from("feedback").getPublicUrl(path);
-    if (urlData?.publicUrl) screenshotUrls.push(urlData.publicUrl);
+    screenshotPaths.push(path);
   }
 
   const tech = body.tech && typeof body.tech === "object" ? body.tech : null;
@@ -165,14 +164,14 @@ export async function POST(req: Request) {
     tool,
     message,
     email,
-    screenshots: screenshotUrls.length ? screenshotUrls : null,
+    screenshots: screenshotPaths.length ? screenshotPaths : null,
     tech,
     consent: true,
     status: "new",
   });
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  await sendNotification({ ticketNo, type, docName, tool, message, email, tech, screenshotUrls });
+  await sendNotification({ ticketNo, type, docName, tool, message, email, tech, screenshotPaths });
 
   return NextResponse.json({ ok: true, ticket_no: ticketNo });
 }
@@ -193,7 +192,26 @@ export async function GET(req: Request) {
 
   const { data, error } = await query;
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json({ data });
+
+  // C5: бакет приватный — отдаём скриншоты только админу через signed URL (5 мин).
+  const rows = await Promise.all(
+    (data ?? []).map(async (row: { screenshots?: string[] | null }) => {
+      if (Array.isArray(row.screenshots) && row.screenshots.length) {
+        const signed = await Promise.all(
+          row.screenshots.map(async (p: string) => {
+            const { data: sd } = await supabase.storage
+              .from("feedback")
+              .createSignedUrl(p, 300);
+            return sd?.signedUrl ?? null;
+          })
+        );
+        return { ...row, screenshots: signed.filter(Boolean) as string[] };
+      }
+      return row;
+    })
+  );
+
+  return NextResponse.json({ data: rows });
 }
 
 // ===== Админ: смена статуса заявки =====

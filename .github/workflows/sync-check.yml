@@ -1,4 +1,4 @@
-name: Template Sync Check
+name: CI
 
 on:
   push:
@@ -6,20 +6,35 @@ on:
   pull_request:
 
 jobs:
-  check:
+  verify:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '22'
-          cache: 'npm'
+          node-version: "24"
+          cache: "npm"
 
+      # C6: tsx и @napi-rs/canvas теперь в devDependencies — npm ci поставит их.
       - run: npm ci
 
+      # Линт (ESLint 9 через next lint)
+      - name: Lint
+        run: npm run lint
+
+      # Проверка типов (ловит ошибки до сборки)
+      - name: Typecheck
+        run: npx tsc --noEmit
+
+      # Юнит-тесты (Vitest)
+      - name: Unit tests
+        run: npm run test:unit
+
+      # Сборка (гоняет generate:blank-previews через tsx + @napi-rs/canvas)
       - name: Build
         run: npm run build
 
+      # Сверка количества шаблонов (раньше падала без tsx)
       - name: Check template counts
         run: npx tsx scripts/check-template-sync.mts

@@ -26,7 +26,7 @@ function isNoise(t) {
     t.includes("favicon") ||
     t.includes("net::ERR") ||
     t.includes("401") ||
-    t.includes("Failed to load resource") && /googletagmanager|mc\.yandex|jivosite|chat\/widget|tildacdn/i.test(t)
+    t.includes("Failed to load resource") && /googletagmanager|mc\.yandex|chat\/widget|tildacdn/i.test(t)
   );
 }
 

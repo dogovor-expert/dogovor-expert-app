@@ -43,6 +43,8 @@ export const limiters = {
   chat: mk("rl:chat", 30, "60 s"),
   /** DADATA suggest/find — 40 запросов/мин на IP. */
   dadata: mk("rl:dadata", 40, "60 s"),
+  /** Реальное списание (auto-renew) — 5 запросов/мин на IP (защита от CSRF-шторма). */
+  billing: mk("rl:billing", 5, "60 s"),
 };
 
 export function clientIp(req: Request): string {

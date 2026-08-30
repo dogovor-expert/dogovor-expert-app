@@ -7,6 +7,9 @@ Disallow: /documents$
 Disallow: /documents/$
 Disallow: /settings
 Disallow: /trash
+Disallow: /admin
+Disallow: /debug
+Disallow: /approve
 Disallow: /api/
 
 Sitemap: https://dogovor.expert/sitemap.xml
