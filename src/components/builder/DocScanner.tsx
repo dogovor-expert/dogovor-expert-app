@@ -12,6 +12,7 @@ import {
   ScanLine,
   BadgeCheck,
   ShieldCheck,
+  Image as ImageIcon,
 } from "lucide-react";
 import type { LegalTemplate } from "@/data/types";
 import {
@@ -290,38 +291,56 @@ export default function DocScanner({
     const isScanning = scanningSlot === slot.id;
 
     const uploadBtn = (
-      <label
-        className={`shrink-0 inline-flex items-center justify-center font-semibold text-[11px] rounded-xl gap-1.5 px-3 py-2 border cursor-pointer transition-all ${
-          isScanning
-            ? "bg-slate-100 text-slate-600 border-slate-200 cursor-wait"
-            : "bg-brand-600 text-white hover:bg-brand-700 border-brand-700 shadow-sm"
-        }`}
-      >
-        {isScanning ? (
-          <Loader2 className="w-3.5 h-3.5 animate-spin" />
-        ) : (
-          <Camera className="w-3.5 h-3.5" />
-        )}
-        {isScanning
-          ? "Распознаём…"
-          : slotPhotos.length > 0
-          ? "Переснять"
-          : "Загрузить"}
-        <input
-          ref={(el) => {
-            fileInputsRef.current[slot.id] = el;
-          }}
-          type="file"
-          accept="image/*"
-          capture="environment"
-          disabled={isScanning}
-          onChange={(e) => {
-            const file = e.target.files?.[0];
-            if (file) void handleFile(slot, file);
-          }}
-          className="hidden"
-        />
-      </label>
+      <div className="shrink-0 flex items-center gap-1.5">
+        <label
+          className={`inline-flex items-center justify-center font-semibold text-[11px] rounded-xl gap-1.5 px-3 py-2 border cursor-pointer transition-all ${
+            isScanning
+              ? "bg-slate-100 text-slate-600 border-slate-200 cursor-wait"
+              : "bg-brand-600 text-white hover:bg-brand-700 border-brand-700 shadow-sm"
+          }`}
+        >
+          {isScanning ? (
+            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+          ) : (
+            <Camera className="w-3.5 h-3.5" />
+          )}
+          {isScanning ? "Распознаём…" : slotPhotos.length > 0 ? "Переснять" : "Фото"}
+          <input
+            ref={(el) => {
+              fileInputsRef.current[slot.id] = el;
+            }}
+            type="file"
+            accept="image/*"
+            capture="environment"
+            disabled={isScanning}
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) void handleFile(slot, file);
+            }}
+            className="hidden"
+          />
+        </label>
+        <label
+          className={`inline-flex items-center justify-center font-semibold text-[11px] rounded-xl gap-1.5 px-3 py-2 border cursor-pointer transition-all ${
+            isScanning
+              ? "bg-slate-100 text-slate-600 border-slate-200 cursor-wait"
+              : "bg-white text-brand-700 hover:bg-brand-50 border-brand-200"
+          }`}
+        >
+          <ImageIcon className="w-3.5 h-3.5" />
+          Файл
+          <input
+            type="file"
+            accept="image/*"
+            disabled={isScanning}
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) void handleFile(slot, file);
+            }}
+            className="hidden"
+          />
+        </label>
+      </div>
     );
 
     let body: React.ReactNode = null;
@@ -461,7 +480,7 @@ export default function DocScanner({
         key={slot.id}
         className={`rounded-2xl border p-2.5 transition-colors ${tileClass}`}
       >
-        <div className="flex items-start justify-between gap-2">
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
           <div className="flex items-start gap-2 min-w-0">
             <div
               className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${
@@ -491,7 +510,7 @@ export default function DocScanner({
 
   return (
     <div className="bg-white rounded-2xl border border-slate-200/70 shadow-soft overflow-hidden">
-      <div className="relative bg-gradient-to-br from-brand-500 to-brand-700 px-4 py-4 text-white">
+      <div className="sticky top-0 z-10 relative bg-gradient-to-br from-brand-500 to-brand-700 px-4 py-4 text-white">
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-3 min-w-0">
             <div className="w-11 h-11 rounded-2xl bg-white/15 backdrop-blur flex items-center justify-center shrink-0">

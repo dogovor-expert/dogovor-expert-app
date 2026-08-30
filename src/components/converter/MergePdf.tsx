@@ -12,9 +12,23 @@ export default function MergePdf() {
 
   const addFiles = (list: FileList | null) => {
     if (!list) return;
+    const MAX_FILE_SIZE_MB = 50; // PDF-файлы обычно крупнее фото, лимит выше чем в OCR
     const pdfs = Array.from(list).filter(
       (f) => f.type === "application/pdf" || f.name.toLowerCase().endsWith(".pdf")
     );
+    for (const f of pdfs) {
+      if (f.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
+        setError(`Файл «${f.name}» слишком большой (${(f.size / 1024 / 1024).toFixed(1)} МБ). Максимальный размер — ${MAX_FILE_SIZE_MB} МБ.`);
+        setDone(false);
+        return;
+      }
+    }
+    const nextTotal = files.reduce((s, f) => s + f.size, 0) + pdfs.reduce((s, f) => s + f.size, 0);
+    if (nextTotal > MAX_FILE_SIZE_MB * 1024 * 1024) {
+      setError(`Суммарный размер файлов превышает ${MAX_FILE_SIZE_MB} МБ. Объедините PDF меньшими партиями.`);
+      setDone(false);
+      return;
+    }
     setFiles((prev) => [...prev, ...pdfs]);
     setError(null);
     setDone(false);

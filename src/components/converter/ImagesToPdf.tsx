@@ -16,7 +16,21 @@ export default function ImagesToPdf() {
 
   const addFiles = (list: FileList | null) => {
     if (!list) return;
+    const MAX_FILE_SIZE_MB = 50; // PDF-файлы обычно крупнее фото, лимит выше чем в OCR
     const imgs = Array.from(list).filter((f) => f.type.startsWith("image/"));
+    for (const f of imgs) {
+      if (f.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
+        setError(`Файл «${f.name}» слишком большой (${(f.size / 1024 / 1024).toFixed(1)} МБ). Максимальный размер — ${MAX_FILE_SIZE_MB} МБ.`);
+        setDone(false);
+        return;
+      }
+    }
+    const nextTotal = files.reduce((s, f) => s + f.size, 0) + imgs.reduce((s, f) => s + f.size, 0);
+    if (nextTotal > MAX_FILE_SIZE_MB * 1024 * 1024) {
+      setError(`Суммарный размер изображений превышает ${MAX_FILE_SIZE_MB} МБ. Добавьте изображения меньшими партиями.`);
+      setDone(false);
+      return;
+    }
     setFiles((prev) => [...prev, ...imgs]);
     setError(null);
     setDone(false);

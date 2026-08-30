@@ -657,9 +657,16 @@ function LoginForm() {
 export default function LoginPage() {
   return (
     <div className="min-h-[75vh] flex items-center justify-center p-4">
-      <Suspense fallback={null}>
-        <LoginForm />
-      </Suspense>
+<Suspense
+          fallback={
+            <div className="flex flex-col items-center gap-3 text-gray-500">
+              <Loader2 className="w-8 h-8 animate-spin text-brand-600" />
+              <p className="text-sm">Загрузка…</p>
+            </div>
+          }
+        >
+          <LoginForm />
+        </Suspense>
     </div>
   );
 }
