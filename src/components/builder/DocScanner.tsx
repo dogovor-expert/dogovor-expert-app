@@ -39,10 +39,21 @@ interface ScanResult {
   ok: boolean;
   filled: number;
   missing: { id: string; label: string }[];
-  filledFields: { label: string; value: string }[];
+  filledFields: { id: string; label: string; value: string }[];
   error?: boolean;
+  errorText?: string;
   slotId: string;
 }
+
+/** Стадии tesseract.js → понятные подписи для пользователя. */
+const STAGE_LABELS: Record<string, string> = {
+  "loading tesseract core": "Загружаем движок распознавания…",
+  "initializing tesseract": "Запускаем движок…",
+  "loading language traineddata":
+    "Первый запуск: загружаем русскую модель (~8 МБ)…",
+  "initializing api": "Готовим распознавание…",
+  "recognizing text": "Распознаём текст…",
+};
 
 const compressImage = (file: File): Promise<string> =>
   new Promise((resolve, reject) => {
@@ -90,16 +101,45 @@ export default function DocScanner({
     ];
   }, [template]);
   const [scanningSlot, setScanningSlot] = useState<string | null>(null);
+  const [progress, setProgress] = useState<
+    Record<string, { status: string; progress: number } | null>
+  >({});
   const [results, setResults] = useState<Record<string, ScanResult | null>>({});
   const [showDetails, setShowDetails] = useState<Record<string, boolean>>({});
   const [collapsed, setCollapsed] = useState(false);
+  const [dragOver, setDragOver] = useState<string | null>(null);
   const fileInputsRef = useRef<Record<string, HTMLInputElement | null>>({});
+  const lastFilesRef = useRef<Record<string, File | null>>({});
 
   const loadedCount = slots.filter(
     (s) => (photos[s.id] || []).length > 0
   ).length;
 
-  const runOcr = async (slot: DocSlot, file: File): Promise<string> => {
+  /** Скроллит форму к первому заполненному полю и подсвечивает все. */
+  const focusFilledFields = (ids: string[]) => {
+    if (ids.length === 0) return;
+    window.setTimeout(() => {
+      const first = document.querySelector<HTMLElement>(
+        `[data-field="${CSS.escape(ids[0])}"]`
+      );
+      first?.scrollIntoView({ behavior: "smooth", block: "center" });
+      window.setTimeout(() => {
+        for (const id of ids) {
+          const el = document.querySelector<HTMLElement>(
+            `[data-field="${CSS.escape(id)}"]`
+          );
+          if (!el) continue;
+          el.classList.add("ocr-field-flash");
+          window.setTimeout(
+            () => el.classList.remove("ocr-field-flash"),
+            3000
+          );
+        }
+      }, 450);
+    }, 250);
+  };
+
+  const runOcr = (slot: DocSlot, file: File): Promise<string> => {
     // Используем Web Worker — tesseract.js не попадает в основной бандл.
     // Относительный путь обязателен: webpack корректно собирает worker-чанк
     // только для статически разрешимого (не алиасного) URL.
@@ -108,11 +148,12 @@ export default function DocScanner({
       { type: "module" }
     );
 
+    // 3 минуты: первый запуск скачивает wasm-ядро + языковую модель (~11 МБ).
     return new Promise((resolve, reject) => {
       const timeout = setTimeout(() => {
         worker.terminate();
-        reject(new Error("OCR timeout"));
-      }, 60000);
+        reject(new Error("Превышено время ожидания распознавания"));
+      }, 180000);
 
       worker.onmessage = (e: MessageEvent) => {
         const msg = e.data;
@@ -123,15 +164,26 @@ export default function DocScanner({
         } else if (msg.type === "error") {
           clearTimeout(timeout);
           worker.terminate();
-          reject(new Error(msg.message));
+          reject(new Error(msg.message || "Ошибка распознавания"));
+        } else if (msg.type === "progress") {
+          setProgress((p) => ({
+            ...p,
+            [slot.id]: { status: msg.status, progress: msg.progress },
+          }));
         }
-        // progress игнорируем — UI обновляется через scanningSlot
       };
 
       worker.onerror = (err) => {
         clearTimeout(timeout);
         worker.terminate();
-        reject(new Error(`Worker error: ${err.message}`));
+        reject(
+          new Error(
+            err.message?.includes("NetworkError") ||
+              err.message?.includes("Importing")
+              ? "Не удалось загрузить модуль распознавания"
+              : `Ошибка воркера: ${err.message}`
+          )
+        );
       };
 
       worker.postMessage({ type: "recognize", file });
@@ -171,7 +223,13 @@ export default function DocScanner({
         break;
       }
       default:
-        return { ok: false, filled: 0, missing: [], filledFields: [], slotId: slot.id };
+        return {
+          ok: false,
+          filled: 0,
+          missing: [],
+          filledFields: [],
+          slotId: slot.id,
+        };
     }
 
     const fieldLabel = (id: string) =>
@@ -187,6 +245,7 @@ export default function DocScanner({
       (e) => !values[e.id] || !String(values[e.id]).trim()
     );
     const filledFields = entries.map(([id, value]) => ({
+      id,
       label: fieldLabel(id),
       value,
     }));
@@ -202,6 +261,7 @@ export default function DocScanner({
 
   const handleFile = async (slot: DocSlot, file: File) => {
     const MAX_FILE_SIZE_MB = 15;
+    lastFilesRef.current[slot.id] = file;
     if (file.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
       setResults((r) => ({
         ...r,
@@ -211,6 +271,7 @@ export default function DocScanner({
           missing: [],
           filledFields: [],
           error: true,
+          errorText: `Файл больше ${MAX_FILE_SIZE_MB} МБ — уменьшите фото и попробуйте снова`,
           slotId: slot.id,
         },
       }));
@@ -218,6 +279,10 @@ export default function DocScanner({
     }
     setScanningSlot(slot.id);
     setResults((r) => ({ ...r, [slot.id]: null }));
+    setProgress((p) => ({
+      ...p,
+      [slot.id]: { status: "loading tesseract core", progress: 0 },
+    }));
     try {
       const dataUrl = await compressImage(file);
       const existing = photos[slot.id] || [];
@@ -232,6 +297,9 @@ export default function DocScanner({
         const res = applyOcr(slot, text);
         setResults((r) => ({ ...r, [slot.id]: res }));
         setShowDetails((s) => ({ ...s, [slot.id]: false }));
+        if (res.ok && res.filledFields.length > 0) {
+          focusFilledFields(res.filledFields.map((f) => f.id));
+        }
       } else {
         setResults((r) => ({
           ...r,
@@ -244,7 +312,7 @@ export default function DocScanner({
           },
         }));
       }
-    } catch {
+    } catch (e) {
       setResults((r) => ({
         ...r,
         [slot.id]: {
@@ -253,14 +321,25 @@ export default function DocScanner({
           missing: [],
           filledFields: [],
           error: true,
+          errorText:
+            e instanceof Error && e.message
+              ? e.message
+              : "Не удалось распознать текст",
           slotId: slot.id,
         },
       }));
     }
     setScanningSlot(null);
+    setProgress((p) => ({ ...p, [slot.id]: null }));
     if (fileInputsRef.current[slot.id]) {
       fileInputsRef.current[slot.id]!.value = "";
     }
+  };
+
+  const retrySlot = (slot: DocSlot) => {
+    const file = lastFilesRef.current[slot.id];
+    if (file) void handleFile(slot, file);
+    else fileInputsRef.current[slot.id]?.click();
   };
 
   const removePhoto = (slotId: string, index: number) => {
@@ -289,6 +368,14 @@ export default function DocScanner({
     const res = results[slot.id] ?? null;
     const showDet = showDetails[slot.id] ?? false;
     const isScanning = scanningSlot === slot.id;
+    const prog = progress[slot.id] ?? null;
+    const pct =
+      prog && prog.status === "recognizing text"
+        ? Math.max(5, Math.round(prog.progress * 100))
+        : null;
+    const stageLabel = prog
+      ? (STAGE_LABELS[prog.status] ?? "Распознаём документ…")
+      : "Распознаём документ…";
 
     const uploadBtn = (
       <div className="shrink-0 flex items-center gap-1.5">
@@ -304,7 +391,7 @@ export default function DocScanner({
           ) : (
             <Camera className="w-3.5 h-3.5" />
           )}
-          {isScanning ? "Распознаём…" : slotPhotos.length > 0 ? "Переснять" : "Фото"}
+          {isScanning ? "Работаем…" : slotPhotos.length > 0 ? "Переснять" : "Фото"}
           <input
             ref={(el) => {
               fileInputsRef.current[slot.id] = el;
@@ -346,9 +433,25 @@ export default function DocScanner({
     let body: React.ReactNode = null;
     if (isScanning) {
       body = (
-        <div className="mt-2 flex items-center gap-2 text-[11px] font-medium text-brand-700 bg-brand-50 rounded-xl px-3 py-2.5">
-          <Loader2 className="w-4 h-4 animate-spin" />
-          Распознаём документ…
+        <div
+          role="status"
+          className="mt-2 rounded-xl border border-brand-100 bg-brand-50 px-3 py-2.5"
+        >
+          <div className="flex items-center gap-2 text-[11px] font-medium text-brand-700">
+            <Loader2 className="w-4 h-4 animate-spin shrink-0" />
+            <span className="truncate">{stageLabel}</span>
+            {pct !== null && (
+              <span className="ml-auto tabular-nums font-semibold">{pct}%</span>
+            )}
+          </div>
+          {pct !== null && (
+            <div className="mt-1.5 h-1 rounded-full bg-brand-100 overflow-hidden">
+              <div
+                className="h-full bg-brand-500 rounded-full transition-all duration-300"
+                style={{ width: `${pct}%` }}
+              />
+            </div>
+          )}
         </div>
       );
     } else if (res) {
@@ -357,8 +460,11 @@ export default function DocScanner({
           <div className="mt-2 rounded-xl border border-emerald-200 bg-emerald-50 p-2.5">
             <div className="flex items-center gap-1.5 text-[11px] font-semibold text-emerald-700">
               <Check className="w-3.5 h-3.5 shrink-0" />
-              Заполнено: {res.filled}{" "}
-              {res.filled === 1 ? "поле" : "поля"}
+              {res.filled > 0
+                ? `Заполнено: ${res.filled} ${
+                    res.filled === 1 ? "поле" : res.filled < 5 ? "поля" : "полей"
+                  }`
+                : "Фото добавлено"}
             </div>
             {res.filledFields.length > 0 && (
               <>
@@ -400,14 +506,30 @@ export default function DocScanner({
           <div className="mt-2 rounded-xl border border-amber-200 bg-amber-50 p-2.5">
             <div className="flex items-center gap-1.5 text-[11px] font-semibold text-amber-800">
               <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
-              {res.error
-                ? "Не удалось распознать текст"
-                : "Поля не распознаны"}
+              {res.error ? "Не удалось распознать текст" : "Поля не распознаны"}
             </div>
             {res.error ? (
-              <p className="mt-1 text-[10.5px] text-amber-700">
-                Попробуйте другое фото. Данные можно ввести вручную.
-              </p>
+              <>
+                {res.errorText && (
+                  <p className="mt-1 text-[10.5px] text-amber-700">
+                    {res.errorText}
+                  </p>
+                )}
+                <div className="mt-2 flex flex-wrap gap-2">
+                  <button
+                    onClick={() => retrySlot(slot)}
+                    className="inline-flex items-center gap-1 rounded-lg bg-amber-500 px-2.5 py-1.5 text-[11px] font-semibold text-white hover:bg-amber-600"
+                  >
+                    <RotateCcw className="w-3 h-3" /> Повторить
+                  </button>
+                  <button
+                    onClick={() => dismissResult(slot.id)}
+                    className="inline-flex items-center gap-1 rounded-lg bg-white border border-amber-200 px-2.5 py-1.5 text-[11px] font-semibold text-amber-700 hover:bg-amber-100"
+                  >
+                    Заполнить вручную
+                  </button>
+                </div>
+              </>
             ) : (
               <>
                 {res.missing.length > 0 && (
@@ -421,22 +543,22 @@ export default function DocScanner({
                   <li>• Держите документ прямо, заполните кадр</li>
                   <li>• Убедитесь, что текст в фокусе</li>
                 </ul>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  <button
+                    onClick={() => fileInputsRef.current[slot.id]?.click()}
+                    className="inline-flex items-center gap-1 rounded-lg bg-amber-500 px-2.5 py-1.5 text-[11px] font-semibold text-white hover:bg-amber-600"
+                  >
+                    <RotateCcw className="w-3 h-3" /> Переснять
+                  </button>
+                  <button
+                    onClick={() => dismissResult(slot.id)}
+                    className="inline-flex items-center gap-1 rounded-lg bg-white border border-amber-200 px-2.5 py-1.5 text-[11px] font-semibold text-amber-700 hover:bg-amber-100"
+                  >
+                    Заполнить вручную
+                  </button>
+                </div>
               </>
             )}
-            <div className="mt-2 flex gap-2">
-              <button
-                onClick={() => fileInputsRef.current[slot.id]?.click()}
-                className="inline-flex items-center gap-1 rounded-lg bg-amber-500 px-2.5 py-1.5 text-[11px] font-semibold text-white hover:bg-amber-600"
-              >
-                <RotateCcw className="w-3 h-3" /> Переснять
-              </button>
-              <button
-                onClick={() => dismissResult(slot.id)}
-                className="inline-flex items-center gap-1 rounded-lg bg-white border border-amber-200 px-2.5 py-1.5 text-[11px] font-semibold text-amber-700 hover:bg-amber-100"
-              >
-                Заполнить вручную
-              </button>
-            </div>
           </div>
         );
       }
@@ -450,6 +572,7 @@ export default function DocScanner({
               key={i}
               className="relative w-14 h-14 rounded-lg overflow-hidden border border-slate-200 bg-white"
             >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={src}
                 alt={slot.label}
@@ -468,20 +591,36 @@ export default function DocScanner({
       ) : null;
 
     const tileClass = isScanning
-      ? "border-brand-200 bg-brand-50/40"
+      ? "border-brand-300 bg-brand-50/40"
       : res && res.ok
       ? "border-emerald-200 bg-white"
       : res
       ? "border-amber-200 bg-white"
+      : dragOver === slot.id
+      ? "border-brand-500 bg-brand-50 border-solid"
       : "border-dashed border-slate-300 bg-slate-50/50 hover:border-brand-300 hover:bg-brand-50/40";
 
     return (
       <div
         key={slot.id}
         className={`rounded-2xl border p-2.5 transition-colors ${tileClass}`}
+        onDragOver={(e) => {
+          e.preventDefault();
+          if (!isScanning) setDragOver(slot.id);
+        }}
+        onDragLeave={() => setDragOver(null)}
+        onDrop={(e) => {
+          e.preventDefault();
+          setDragOver(null);
+          if (isScanning) return;
+          const file = Array.from(e.dataTransfer.files).find((f) =>
+            f.type.startsWith("image/")
+          );
+          if (file) void handleFile(slot, file);
+        }}
       >
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
-          <div className="flex items-start gap-2 min-w-0">
+          <div className="flex items-start gap-2 min-w-0 flex-1">
             <div
               className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${
                 res && res.ok
@@ -492,7 +631,7 @@ export default function DocScanner({
               <Camera className="w-4 h-4" />
             </div>
             <div className="min-w-0">
-              <p className="text-xs font-semibold text-slate-800 leading-snug">
+              <p className="text-xs font-semibold text-slate-800 leading-snug break-words">
                 {slot.label}
               </p>
               <p className="text-[10px] text-slate-600 mt-0.5 leading-snug line-clamp-2 break-words">
@@ -582,7 +721,9 @@ export default function DocScanner({
                 <Check className="w-3.5 h-3.5 text-emerald-500" />
               )}
             </div>
-            <span className="text-[10px] text-slate-600">Платная подписка</span>
+            <span className="text-[10px] text-slate-600">
+              Можно перетащить файл в слот
+            </span>
           </div>
 
           <div className="px-4 pb-4 grid grid-cols-1 sm:grid-cols-2 gap-2.5">

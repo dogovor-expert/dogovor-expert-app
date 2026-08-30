@@ -35,6 +35,10 @@ yarn-error.log*
 .env*.production
 vercel.env
 *.env
+# H9: явные паттерны для нестандартных имён (иначе .env.development / .env.test
+# не попадают под *.env и могут уйти в репозиторий вместе с секретами).
+.env.development
+.env.test
 
 # vercel
 .vercel

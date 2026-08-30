@@ -74,20 +74,21 @@ function sanitizeFio(data: any): Record<string, unknown> {
 }
 
 export async function POST(req: NextRequest) {
-  let body: { op?: string; query?: string; count?: number; apiKey?: string };
+  let body: { op?: string; query?: string; count?: number };
   try {
     body = await req.json();
   } catch {
     return NextResponse.json({ error: "bad body" }, { status: 400 });
   }
 
-  const { op, query, count = 10, apiKey } = body;
+  const { op, query, count = 10 } = body;
   if (!op || typeof query !== "string" || !query.trim()) {
     return NextResponse.json({ error: "bad params" }, { status: 400 });
   }
 
-  // Пользователь может подставить собственный PRO-ключ DADATA (он проксируется к DADATA).
-  const effectiveKey = apiKey?.trim() || process.env.DADATA_API_KEY;
+  // H4: только серверный ключ. Клиентский apiKey запрещён — это был открытый
+  // прокси чужого ключа (утечка лимитов/оплаты DADATA + потенциальный SSRF).
+  const effectiveKey = process.env.DADATA_API_KEY;
   if (!effectiveKey) {
     return NextResponse.json(
       { error: "DADATA_API_KEY not configured", fallback: true },
@@ -95,9 +96,8 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // Подписка требуется только при использовании общего серверного ключа.
-  // Свой ключ — пользователь сам отвечает за лимиты/оплату DADATA.
-  if (!apiKey?.trim() && !(await hasActiveSubscription())) {
+  // Подписка обязательна при использовании общего серверного ключа.
+  if (!(await hasActiveSubscription())) {
     return NextResponse.json(
       { error: "subscription required", fallback: true },
       { status: 503 }

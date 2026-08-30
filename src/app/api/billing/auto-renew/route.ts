@@ -3,8 +3,16 @@ import { randomUUID } from "crypto";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { currentProPrice } from "@/lib/pricing";
+import { isSameOrigin } from "@/lib/admin-auth";
+import { limiters, clientIp, checkRateLimit, rateLimitResponse } from "@/lib/ratelimit";
 
 export async function POST(req: Request) {
+  // CSRF: реальное списание с сохранённой карты допустимо только с same-origin.
+  if (!isSameOrigin(req)) return NextResponse.json({ error: "forbidden" }, { status: 403 });
+
+  const rl = await checkRateLimit(limiters.billing, clientIp(req));
+  if (!rl.ok) return rateLimitResponse(rl.retryAfter);
+
   const supabase = await createClient();
   const {
     data: { user },

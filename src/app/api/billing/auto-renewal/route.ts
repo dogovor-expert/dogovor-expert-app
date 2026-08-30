@@ -1,12 +1,20 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 export async function POST(req: Request) {
+  // 1) Аутентификация пользователя (user-клиент по cookie).
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+
+  // 2) Запись — через service-role: миграция 009 отзывает UPDATE у authenticated,
+  //    иначе переключатель падает в проде. Скоуп строго по user_id (active.id
+  //    взят из выборки только этого пользователя), так что ЭЦП/подписку
+  //    чужого юзера изменить нельзя.
+  const admin = createAdminClient();
 
   const body = await req.json().catch(() => null);
   if (!body || typeof body.enabled !== "boolean") {
@@ -36,7 +44,7 @@ export async function POST(req: Request) {
     );
   }
 
-  const { error } = await supabase
+  const { error } = await admin
     .from("subscriptions")
     .update({ auto_renewal: body.enabled })
     .eq("id", active.id);

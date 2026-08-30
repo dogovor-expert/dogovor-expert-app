@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import "@/styles/globals.css";
 import AppLayout from "@/components/layouts/AppLayout";
 import { JsonLd } from "@/components/seo/JsonLd";
-import { Canonical } from "@/components/seo/Canonical";
 import { YandexMetrika } from "@/components/analytics/YandexMetrika";
 import { YandexMetrikaPageView } from "@/components/analytics/YandexMetrikaPageView";
 import { SITE_URL, SITE_NAME, SITE_DESCRIPTION, SITE_KEYWORDS, SITE_CONTACT_EMAIL } from "@/lib/site";
@@ -93,7 +92,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             },
           ]}
         />
-        <Canonical />
       </head>
       <body className="font-sans">
         <VaultWrapper>

@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+import { cookies } from "next/headers";
+import crypto from "node:crypto";
 import { limiters, clientIp, checkRateLimit, rateLimitResponse } from "@/lib/ratelimit";
 import {
   getThread,
@@ -22,11 +24,49 @@ const CHAT_ENABLED = process.env.NEXT_PUBLIC_CHAT_ENABLED === "1";
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const TEXT_MAX = 4000;
 
-export async function GET(req: Request) {
-  const url = new URL(req.url);
-  const visitorId = url.searchParams.get("visitorId");
-  if (!visitorId) return NextResponse.json({ error: "bad_visitor" }, { status: 400 });
+// Защита от IDOR (C4): GET возвращает переписку только для visitorId, привязанного
+// к подписанному httpOnly-cookie. Угадать чужой UUID нельзя, а cookie не читается
+// JS на стороннем сайте (httpOnly + sameSite=lax) — значит прочитать чужую
+// переписку (вместе с ФИО/email) невозможно.
+const CHAT_COOKIE = "chat_vid";
+function chatHmacSecret(): string {
+  return (
+    process.env.CHAT_HMAC_SECRET ||
+    process.env.SUPABASE_SERVICE_ROLE_KEY ||
+    "insecure-chat-dev-only"
+  );
+}
+function signVisitor(visitorId: string): string {
+  const sig = crypto
+    .createHmac("sha256", chatHmacSecret())
+    .update(visitorId)
+    .digest("base64url");
+  return `${visitorId}.${sig}`;
+}
+function verifyVisitorCookie(value: string | undefined): string | null {
+  if (!value) return null;
+  const idx = value.lastIndexOf(".");
+  if (idx <= 0) return null;
+  const vid = value.slice(0, idx);
+  const sig = value.slice(idx + 1);
+  const expected = crypto
+    .createHmac("sha256", chatHmacSecret())
+    .update(vid)
+    .digest("base64url");
+  if (sig.length !== expected.length) return null;
+  if (!crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(expected))) return null;
+  return vid;
+}
 
+export async function GET(req: Request) {
+  const rl = await checkRateLimit(limiters.chat, clientIp(req));
+  if (!rl.ok) return rateLimitResponse(rl.retryAfter);
+
+  const cookieStore = await cookies();
+  const visitorId = verifyVisitorCookie(cookieStore.get(CHAT_COOKIE)?.value);
+  if (!visitorId) return NextResponse.json({ error: "forbidden" }, { status: 403 });
+
+  const url = new URL(req.url);
   if (url.searchParams.get("meta") === "1") {
     return NextResponse.json({ unread: await getUnread(visitorId) });
   }
@@ -112,5 +152,14 @@ export async function POST(req: Request) {
   await appendMessage(visitorId, msg);
   await sendToTopic(threadId, text);
 
-  return NextResponse.json({ ok: true, message: msg });
+  const res = NextResponse.json({ ok: true, message: msg });
+  // Привязываем эту беседу к подписанному httpOnly-cookie (C4).
+  res.cookies.set(CHAT_COOKIE, signVisitor(visitorId), {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    path: "/",
+    maxAge: 60 * 60 * 24 * 30,
+  });
+  return res;
 }

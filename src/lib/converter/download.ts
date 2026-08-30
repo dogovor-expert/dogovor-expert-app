@@ -7,7 +7,8 @@ export function downloadBytes(bytes: Uint8Array, fileName: string) {
   document.body.appendChild(a);
   a.click();
   a.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 5000);
+  // M14: НЕ отзываем URL вручную (прежде был setTimeout 5с — мог оборвать
+  // большую загрузку). Браузер сам освобождает blob-URL после скачивания.
 }
 
 export function downloadBlob(blob: Blob, fileName: string) {
@@ -18,7 +19,7 @@ export function downloadBlob(blob: Blob, fileName: string) {
   document.body.appendChild(a);
   a.click();
   a.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 5000);
+  // M14: см. выше — ручной revokeObjectURL убран, чтобы не обрывать большие файлы.
 }
 
 export function formatBytes(bytes: number): string {

@@ -1,3 +1,4 @@
+import { memo, useMemo } from "react";
 import { ArrowRight, Eye, FileText } from "lucide-react";
 import type { LegalTemplate } from "@/data/types";
 import DocPreview from "@/components/DocPreview";
@@ -9,12 +10,15 @@ interface LivePreviewPanelProps {
   onPagesChange: (count: number) => void;
 }
 
-export default function LivePreviewPanel({
+function LivePreviewPanel({
   template,
   renderPreview,
   onOpenFullPreview,
   onPagesChange,
 }: LivePreviewPanelProps) {
+  // M3: не пересобираем тяжёлый HTML предпросмотра на каждый ре-рендер
+  // (он вызывается из конструктора при каждом наборе символов).
+  const html = useMemo(() => renderPreview(), [renderPreview, template]);
   return (
     <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
       <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between gap-2">
@@ -38,7 +42,7 @@ export default function LivePreviewPanel({
       </div>
       <div className="max-h-[70vh] overflow-y-auto bg-gray-100">
         <DocPreview
-          html={renderPreview()}
+          html={html}
           showPageNumbers={false}
           onPagesChange={onPagesChange}
         />
@@ -46,3 +50,5 @@ export default function LivePreviewPanel({
     </div>
   );
 }
+
+export default memo(LivePreviewPanel);

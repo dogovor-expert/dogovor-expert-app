@@ -87,7 +87,7 @@ export default function SupportLauncher() {
 
   return (
     <>
-      {/* Плавающая кнопка (внизу справа, на месте бывшего Jivo) */}
+      {/* Плавающая кнопка поддержки (внизу справа) */}
       {!open && (
         <button
           type="button"
