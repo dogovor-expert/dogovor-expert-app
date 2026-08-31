@@ -8,8 +8,9 @@ import { Card } from "@/components/ui/Card";
 import { CheckCircle2, Loader2, Mail, ShieldCheck, Smartphone, Flame } from "lucide-react";
 import Link from "next/link";
 import type { Provider } from "@supabase/supabase-js";
-import TurnstileCaptcha from "@/components/auth/TurnstileCaptcha";
-import CountdownTimer from "@/components/billing/CountdownTimer";
+import dynamic from "next/dynamic";
+const TurnstileCaptcha = dynamic(() => import("@/components/auth/TurnstileCaptcha"), { ssr: false });
+const CountdownTimer = dynamic(() => import("@/components/billing/CountdownTimer"), { ssr: false });
 import { currentProPrice, PRO_PRICE_OLD, PROMO_LABEL, isPromoActive, promoCountdownTarget, formatRub } from "@/lib/pricing";
 
 function RegisterPromo() {
