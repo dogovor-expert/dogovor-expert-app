@@ -3,6 +3,8 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isValidInn } from "@/lib/inn";
 import { isSameOrigin } from "@/lib/admin-auth";
+import { updateProfileSchema, validateBody } from "@/lib/validations/api";
+import { withCsrf } from "@/lib/csrf";
 
 const FIELDS = ["full_name", "phone", "company", "inn", "avatar_url", "signature"];
 
@@ -25,7 +27,7 @@ export async function GET() {
   return NextResponse.json({ data: { ...profile, email: user.email } });
 }
 
-export async function PATCH(req: Request) {
+export const PATCH = withCsrf(async (req: Request) => {
   if (!isSameOrigin(req)) return NextResponse.json({ error: "forbidden" }, { status: 403 });
   const supabase = await createClient();
   const {
@@ -35,33 +37,40 @@ export async function PATCH(req: Request) {
 
   const body = await req.json().catch(() => null);
   if (!body || typeof body !== "object") {
-    return NextResponse.json({ error: "bad body" }, { status: 400 });
+    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
   }
+
+  // Zod-валидация (основная структура)
+  const validation = validateBody(updateProfileSchema, body);
+  if (!validation.success) {
+    return validation.error;
+  }
+  const validatedData = validation.data;
 
   const update: Record<string, string | boolean> = {};
   for (const key of FIELDS) {
-    const value = body[key];
+    const value = validatedData[key as keyof typeof validatedData];
     if (value === undefined || value === null) continue;
     if (typeof value !== "string") {
       return NextResponse.json({ error: `invalid value for ${key}` }, { status: 400 });
     }
     const trimmed = value.trim();
-    if (key === "inn" && !isValidInn(trimmed)) {
+    if (key === "inn" && trimmed && !isValidInn(trimmed)) {
       return NextResponse.json(
         { error: "ИНН должен содержать 10 или 12 цифр и быть корректным" },
         { status: 400 }
       );
     }
-    if (key === "avatar_url" && trimmed !== "" && !trimmed.startsWith(process.env.NEXT_PUBLIC_SUPABASE_URL + "/storage/v1/object/public/avatars/")) {
+    if (key === "avatar_url" && trimmed && !trimmed.startsWith(process.env.NEXT_PUBLIC_SUPABASE_URL + "/storage/v1/object/public/avatars/")) {
       return NextResponse.json({ error: "invalid avatar_url" }, { status: 400 });
     }
-    if (key === "signature" && trimmed !== "" && !SIGNATURE_RE.test(trimmed)) {
+    if (key === "signature" && trimmed && !SIGNATURE_RE.test(trimmed)) {
       return NextResponse.json({ error: "invalid signature format" }, { status: 400 });
     }
     update[key] = trimmed.slice(0, 500);
   }
-  if (typeof body.notify_email === "boolean") {
-    update.notify_email = body.notify_email;
+  if (typeof validatedData.notify_email === "boolean") {
+    update.notify_email = validatedData.notify_email;
   }
   if (Object.keys(update).length === 0) {
     return NextResponse.json({ data: null });
@@ -84,9 +93,9 @@ export async function PATCH(req: Request) {
   }
 
   return NextResponse.json({ data });
-}
+});
 
-export async function DELETE(req: Request) {
+export const DELETE = withCsrf(async (req: Request) => {
   if (!isSameOrigin(req)) return NextResponse.json({ error: "forbidden" }, { status: 403 });
   const supabase = await createClient();
   const {
@@ -113,4 +122,4 @@ export async function DELETE(req: Request) {
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
   return NextResponse.json({ data: { ok: true } });
-}
+});

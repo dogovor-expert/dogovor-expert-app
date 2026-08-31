@@ -12,6 +12,7 @@ import dynamic from "next/dynamic";
 const TurnstileCaptcha = dynamic(() => import("@/components/auth/TurnstileCaptcha"), { ssr: false });
 const CountdownTimer = dynamic(() => import("@/components/billing/CountdownTimer"), { ssr: false });
 import { currentProPrice, PRO_PRICE_OLD, PROMO_LABEL, isPromoActive, promoCountdownTarget, formatRub } from "@/lib/pricing";
+import { LoginForm as LoginFormComponent } from "@/components/auth/LoginForm";
 
 function RegisterPromo() {
   if (!isPromoActive()) return null;
@@ -511,37 +512,15 @@ function LoginForm() {
                   )}
                 </Button>
               </>
-            ) : (
+) : (
               <>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Пароль
-                </label>
-                <Input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  autoComplete="current-password"
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") void signInWithPassword();
+                <LoginFormComponent
+                  initialEmail={email}
+                  onSuccess={() => {
+                    router.push(next);
+                    router.refresh();
                   }}
                 />
-                {error && <p className="text-sm text-red-600 mt-2">{error}</p>}
-                <div className="text-right mt-2">
-                  <Link
-                    href="/login/forgot"
-                    className="text-sm text-brand-600 hover:underline"
-                  >
-                    Забыли пароль?
-                  </Link>
-                </div>
-                <Button
-                  className="w-full mt-4"
-                  onClick={signInWithPassword}
-                  disabled={loading}
-                >
-                  {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Войти"}
-                </Button>
               </>
             )}
           </>

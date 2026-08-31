@@ -7,6 +7,7 @@ import { isSameOrigin } from "@/lib/admin-auth";
 import { logAdminAction } from "@/lib/audit";
 import { SUPPORT_EMAIL } from "@/lib/site";
 import { sendTelegram } from "@/lib/mail";
+import { feedbackSchema, validateBody } from "@/lib/validations/api";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const TYPES = ["doc_error", "site_bug", "feature_request", "other"] as const;
@@ -91,37 +92,23 @@ export async function POST(req: Request) {
   const rl = await checkRateLimit(limiters.feedbackForm, clientIp(req));
   if (!rl.ok) return rateLimitResponse(rl.retryAfter);
 
-  const body = await req.json().catch(() => null);
-  if (!body || typeof body !== "object") {
-    return NextResponse.json({ error: "bad body" }, { status: 400 });
+  const rawBody = await req.json().catch(() => null);
+  if (!rawBody) {
+    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
   }
 
-  const type = body.type;
-  if (!TYPES.includes(type)) {
-    return NextResponse.json({ error: "invalid_type" }, { status: 400 });
+  // Zod-валидация
+  const validation = validateBody(feedbackSchema, rawBody);
+  if (!validation.success) {
+    return validation.error;
   }
+  const body = validation.data;
 
-  const message = typeof body.message === "string" ? body.message.trim() : "";
-  if (message.length < 5 || message.length > 5000) {
-    return NextResponse.json({ error: "invalid_message" }, { status: 400 });
-  }
-
-  const email = typeof body.email === "string" ? body.email.trim() : "";
-  if (!EMAIL_RE.test(email) || email.length > 254) {
-    return NextResponse.json({ error: "invalid_email" }, { status: 400 });
-  }
-
-  if (body.consent !== true) {
-    return NextResponse.json({ error: "consent_required" }, { status: 400 });
-  }
-
-  const docSlug = typeof body.docSlug === "string" ? body.docSlug.slice(0, 200) : null;
-  const docName = typeof body.docName === "string" ? body.docName.slice(0, 200) : null;
+  // Дополнительная бизнес-логика, которую нельзя выразить в Zod
+  const { type, docSlug, tool } = body;
   if (type === "doc_error" && !docSlug) {
     return NextResponse.json({ error: "doc_required" }, { status: 400 });
   }
-
-  const tool = typeof body.tool === "string" ? body.tool.slice(0, 100) : null;
   if (type === "site_bug" && (!tool || !TOOLS.includes(tool))) {
     return NextResponse.json({ error: "tool_required" }, { status: 400 });
   }
@@ -132,16 +119,15 @@ export async function POST(req: Request) {
 
   // Скриншоты -> Storage (C5: бакет приватный, храним путь, отдаём через signed URL)
   const screenshotPaths: string[] = [];
-  const shots = Array.isArray(body.screenshots) ? body.screenshots.slice(0, 3) : [];
+  const shots = body.screenshots ?? [];
   for (const s of shots) {
-    if (!s || typeof s.dataUrl !== "string" || !s.dataUrl.startsWith("data:")) continue;
+    if (!s.dataUrl.startsWith("data:")) continue;
     const m = s.dataUrl.match(/^data:(.*?);base64,(.*)$/);
     if (!m) continue;
     const mime = m[1];
     if (!["image/png", "image/jpeg", "image/webp"].includes(mime)) continue;
-    // Check base64 length before decoding (prevent memory DoS)
     const base64Data = m[2];
-    if (base64Data.length > 7_000_000) continue; // ~5MB decoded
+    if (base64Data.length > 7_000_000) continue;
     const buf = Buffer.from(base64Data, "base64");
     if (buf.length > 5 * 1024 * 1024) continue;
     const ext = mime === "image/png" ? "png" : mime === "image/webp" ? "webp" : "jpg";
@@ -153,17 +139,17 @@ export async function POST(req: Request) {
     screenshotPaths.push(path);
   }
 
-  const tech = body.tech && typeof body.tech === "object" ? body.tech : null;
+  const tech = body.tech ?? null;
 
   const { error } = await supabase.from("feedback").insert({
     id,
     ticket_no: ticketNo,
     type,
-    doc_slug: docSlug,
-    doc_name: docName,
-    tool,
-    message,
-    email,
+    doc_slug: docSlug ?? null,
+    doc_name: body.docName ?? null,
+    tool: tool ?? null,
+    message: body.message,
+    email: body.email,
     screenshots: screenshotPaths.length ? screenshotPaths : null,
     tech,
     consent: true,
@@ -171,7 +157,7 @@ export async function POST(req: Request) {
   });
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  await sendNotification({ ticketNo, type, docName, tool, message, email, tech, screenshotPaths });
+  await sendNotification({ ticketNo, type, docName: body.docName ?? null, tool: tool ?? null, message: body.message, email: body.email, tech, screenshotPaths });
 
   return NextResponse.json({ ok: true, ticket_no: ticketNo });
 }

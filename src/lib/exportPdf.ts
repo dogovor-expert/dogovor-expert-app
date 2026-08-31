@@ -2,13 +2,19 @@ import { saveAs } from "file-saver";
 import {
   getDesign,
   pageMetrics,
-  sizeFromClass,
-  lineHeightFromClass,
   hexToRgb01,
   type DesignId,
   type DesignTokens,
   type PageMetrics,
 } from "@/lib/docDesign";
+import {
+  hasClass,
+  nodeRuns,
+  INLINE_TAGS,
+  hasBlockDescendant,
+  sizeFromClass,
+  lineHeightFromClass,
+} from "@/lib/html-parser";
 import type { PDFImage, PDFFont, PDFPage, RGB, PDFDocument } from "pdf-lib";
 
 const A4 = { w: 595.28, h: 841.89 };
@@ -903,45 +909,6 @@ color: this.rgb(r, g, b),
     });
   }
 }
-
-function nodeRuns(node: Node): Run[] {
-  const out: Run[] = [];
-  const walk = (n: Node, bold: boolean, italic: boolean) => {
-    if (n.nodeType === Node.TEXT_NODE) {
-      const t = (n.textContent || "").replace(/\u00A0/g, " ");
-      if (t.trim()) out.push({ text: t, bold, italic });
-      return;
-    }
-    if (n.nodeType !== Node.ELEMENT_NODE) return;
-    const el = n as HTMLElement;
-    const tag = el.tagName.toLowerCase();
-    if (tag === "br") return;
-    if (hasClass(el, "blank-field")) {
-      const style = el.getAttribute("style") || "";
-      const m = style.match(/min-width:\s*(\d+)ch/i);
-      const n = m ? Number(m[1]) : 0;
-      if (n > 0) out.push({ text: "", bold, italic, blank: n });
-      return;
-    }
-    const nb = bold || tag === "strong" || tag === "b";
-    const ni = italic || tag === "em" || tag === "i";
-    el.childNodes.forEach((c) => walk(c, nb, ni));
-  };
-  node.childNodes.forEach((c) => walk(c, false, false));
-  return out;
-}
-
-function hasClass(el: HTMLElement, token: string): boolean {
-  const cls = el.className || "";
-  return cls.split(/\s+/).filter(Boolean).includes(token);
-}
-
-// Инлайновые теги: их НЕЛЬЗЯ вырезать из абзаца, иначе <span class="blank-field">
-// (линия для ручного заполнения) теряется. Для таких элементов весь блок
-// обрабатывается через nodeRuns() целиком.
-const INLINE_TAGS = new Set([
-  "strong", "b", "em", "i", "span", "u", "a", "br", "small", "sub", "sup", "mark", "code", "label", "abbr",
-]);
 
 function marginFrom(el: HTMLElement, fallback: number): number {
   const cls = el.className || "";

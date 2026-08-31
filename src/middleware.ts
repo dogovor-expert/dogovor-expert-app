@@ -41,6 +41,44 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   let response = NextResponse.next({ request });
 
+  // ====== CSP с nonce ======
+  // Генерируем уникальный nonce для каждого запроса
+  const nonce = Buffer.from(crypto.randomUUID()).toString('base64');
+  const isDev = process.env.NODE_ENV === 'development';
+
+  // Строим CSP-заголовок с nonce и strict-dynamic
+  const csp = [
+    `default-src 'self'`,
+    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic' ${isDev ? "'unsafe-eval'" : ''} https://inzuro.polis.online https://*.inzuro.ru https://polis.online https://api.polis.online https://cdn.jsdelivr.net https://unpkg.com https://challenges.cloudflare.com https://mc.yandex.ru https://mc.yandex.md https://www.cryptopro.ru https://download.rutoken.ru`,
+    `worker-src 'self' blob: https://cdn.jsdelivr.net https://unpkg.com`,
+    `style-src 'self' 'nonce-${nonce}' https://fonts.googleapis.com`,
+    `img-src 'self' data: blob: https://*.inzuro.ru https://polis.online https://api.polis.online https://dkbm-web.autoins.ru https://xkakhztknlpzqarklewq.supabase.co https://lh3.googleusercontent.com https://avatars.yandex.net https://avatars.mds.yandex.net https://mc.yandex.ru https://mc.yandex.md https://mc.yandex.com`,
+    `font-src 'self' data: https://fonts.gstatic.com`,
+    `connect-src 'self' https://inzuro.polis.online https://*.inzuro.ru https://polis.online https://api.polis.online https://dkbm-web.autoins.ru https://xkakhztknlpzqarklewq.supabase.co https://cdn.jsdelivr.net https://unpkg.com https://tessdata.projectnaptha.com https://challenges.cloudflare.com https://mc.yandex.ru https://mc.yandex.md https://mc.yandex.com https://yandex.ru https://huggingface.co https://*.huggingface.co wss://mc.yandex.ru`,
+    `frame-src 'self' blob: https://widget.inzuro.ru https://*.inzuro.ru https://polis.online https://api.polis.online https://dkbm-web.autoins.ru https://mc.yandex.ru https://challenges.cloudflare.com`,
+    `media-src 'self'`,
+    `object-src 'none'`,
+    `base-uri 'self'`,
+    `form-action 'self'`,
+    `frame-ancestors 'self'`,
+  ].join('; ');
+
+  // Передаём nonce в Server Components через заголовок
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set('x-nonce', nonce);
+
+  // Устанавливаем CSP-заголовок в ответ
+  response.headers.set('Content-Security-Policy', csp);
+  // Дополнительные security-заголовки
+  response.headers.set('X-Content-Type-Options', 'nosniff');
+  response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+  response.headers.set('X-Frame-Options', 'SAMEORIGIN');
+  if (!isDev) {
+    response.headers.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
+  }
+
+  // ====== Остальная логика аутентификации ======
+
   // Публичные маршруты — ранний возврат без обращения к Supabase (экономия 50-200мс TTFB)
   const isPublicRoute = 
     pathname === "/" ||
@@ -71,6 +109,7 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith("/apple-icon");
 
   if (isPublicRoute) {
+    // Для публичных маршрутов тоже возвращаем response с CSP-заголовками
     return response;
   }
 
@@ -168,16 +207,8 @@ export async function middleware(request: NextRequest) {
   return response;
 }
 
+// Middleware теперь применяется ко всем маршрутам, чтобы CSP с nonce действовал везде.
+// Публичные маршруты обрабатываются внутри middleware через ранний return.
 export const config = {
-  matcher: [
-    "/login/:path*",
-    "/dashboard/:path*",
-    "/documents/:path*",
-    "/settings/:path*",
-    "/trash/:path*",
-    "/billing/:path*",
-    "/security/:path*",
-    "/admin/:path*",
-    "/debug/:path*",
-  ],
+  matcher: ['/(.*)'],
 };

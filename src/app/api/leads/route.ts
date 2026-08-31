@@ -4,6 +4,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { isSameOrigin } from "@/lib/admin-auth";
 import { limiters, clientIp, checkRateLimit, rateLimitResponse } from "@/lib/ratelimit";
 import { sendEmail, sendTelegram, SUPPORT_EMAIL } from "@/lib/mail";
+import { leadSchema, validateBody } from "@/lib/validations/api";
 
 const SERVICES = ["docs", "full", "kasko"] as const;
 const STATUSES = ["new", "paid", "docs", "filed", "done", "canceled"] as const;
@@ -12,32 +13,24 @@ export async function POST(req: Request) {
   const rl = await checkRateLimit(limiters.publicForm, clientIp(req));
   if (!rl.ok) return rateLimitResponse(rl.retryAfter);
 
-  const body = await req.json().catch(() => null);
-  if (!body || typeof body !== "object") {
-    return NextResponse.json({ error: "bad body" }, { status: 400 });
+  const rawBody = await req.json().catch(() => null);
+  if (!rawBody) {
+    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
   }
 
-  const service = body.service;
-  if (!SERVICES.includes(service)) {
-    return NextResponse.json({ error: "invalid service" }, { status: 400 });
+  // Zod-валидация
+  const validation = validateBody(leadSchema, rawBody);
+  if (!validation.success) {
+    return validation.error;
   }
+  const body = validation.data;
 
-  const brand = String(body.brand ?? "").trim().slice(0, 200);
-  if (!brand) {
-    return NextResponse.json({ error: "brand is required" }, { status: 400 });
-  }
-
-  const phone = String(body.phone ?? "").replace(/\D/g, "").slice(0, 15);
-  if (phone.length < 10) {
-    return NextResponse.json({ error: "phone is required" }, { status: 400 });
-  }
-
-  const vin = String(body.vin ?? "").trim().toUpperCase().slice(0, 17);
+  const { service, brand, phone, vin } = body;
 
   const supabase = createAdminClient();
   const { data, error } = await supabase
     .from("leads")
-    .insert({ service, brand, phone, vin, status: "new" })
+    .insert({ service, brand, phone, vin: vin ?? "", status: "new" })
     .select()
     .single();
 
