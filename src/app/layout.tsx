@@ -10,9 +10,14 @@ import VaultWrapper from "@/components/VaultWrapper";
 
 // Самохостинг шрифтов через next/font: Google Fonts скачиваются при сборке и
 // отдаются с нашего домена (без внешнего раунд-трипа в fonts.googleapis.com).
+// Inter — основной шрифт сайта (font-sans): прелоадится на каждой странице.
+// Playfair_Display и JetBrains_Mono используются только в превью документов
+// (A4-листы), поэтому их НЕ прелоадим на страницах логина/дашборда — они
+// загрузятся с display:swap, когда реально понадобятся. Это снимает ~2 шрифта
+// (≈80KB) с критического пути LCP.
 const inter = Inter({ subsets: ["latin", "cyrillic"], variable: "--font-inter", display: "swap" });
-const playfair = Playfair_Display({ subsets: ["latin", "cyrillic"], variable: "--font-playfair", display: "swap" });
-const jetbrains = JetBrains_Mono({ subsets: ["latin", "cyrillic"], variable: "--font-jetbrains", display: "swap" });
+const playfair = Playfair_Display({ subsets: ["latin", "cyrillic"], variable: "--font-playfair", display: "swap", preload: false });
+const jetbrains = JetBrains_Mono({ subsets: ["latin", "cyrillic"], variable: "--font-jetbrains", display: "swap", preload: false });
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
