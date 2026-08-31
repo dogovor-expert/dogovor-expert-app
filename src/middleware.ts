@@ -1,7 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-const AUTH_PAGES = new Set(["/login"]);
 const PROTECTED_PREFIXES = ["/dashboard", "/settings", "/trash", "/billing", "/security"];
 
 function decodeB64url(input: string): string {
@@ -43,7 +42,7 @@ export async function middleware(request: NextRequest) {
 
   // ====== CSP с nonce ======
   // Генерируем уникальный nonce для каждого запроса
-  const nonce = Buffer.from(crypto.randomUUID()).toString('base64');
+  const nonce = Buffer.from(globalThis.crypto.randomUUID()).toString('base64');
   const isDev = process.env.NODE_ENV === 'development';
 
   // Строим CSP-заголовок с nonce и strict-dynamic
