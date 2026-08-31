@@ -64,6 +64,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="ru" className={`${inter.variable} ${playfair.variable} ${jetbrains.variable}`}>
       <head>
+        <link rel="preconnect" href="https://challenges.cloudflare.com" crossOrigin="anonymous" />
+        <link rel="preconnect" href="https://mc.yandex.ru" crossOrigin="anonymous" />
         <JsonLd
           data={[
             {
