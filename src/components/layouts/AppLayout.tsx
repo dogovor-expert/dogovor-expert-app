@@ -13,6 +13,7 @@ import {
 import HeaderSearch from "@/components/search/HeaderSearch";
 import PromoPill from "@/components/billing/PromoPill";
 import SupportLauncher from "@/components/support/SupportLauncher";
+import { CartBadge } from "@/components/ui/CartBadge";
 
 interface NavItem {
   icon: ReactNode;
@@ -284,6 +285,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
             <PromoPill />
           </div>
           <div className="flex items-center gap-2">
+            <CartBadge />
             {user ? (
               <>
                 <button className="relative p-2 hover:bg-gray-100 rounded-xl text-gray-600 transition-colors">

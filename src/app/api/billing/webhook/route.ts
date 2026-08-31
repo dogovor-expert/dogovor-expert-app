@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { collectReport } from "@/lib/tronk";
 import { limiters, checkRateLimit, rateLimitResponse } from "@/lib/ratelimit";
+import { yookassaWebhookSchema, validateBody } from "@/lib/validations/api";
 
 // Увеличенный таймаут для этого роута — collectReport может выполняться
 // до ~45 секунд. Полноценный фикс — вынос в фоновую очередь (TODO).
@@ -108,9 +109,20 @@ export async function POST(req: Request) {
   const rl = await checkRateLimit(limiters.webhook, clientIp(req) ?? "webhook");
   if (!rl.ok) return rateLimitResponse(rl.retryAfter);
 
-  const body = await req.json().catch(() => null);
-  const event = body?.event;
-  const payment = body?.object;
+  const rawBody = await req.json().catch(() => null);
+  if (!rawBody) {
+    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+  }
+
+  // Zod-валидация минимальной структуры
+  const validation = validateBody(yookassaWebhookSchema, rawBody);
+  if (!validation.success) {
+    return validation.error;
+  }
+
+  const body = validation.data;
+  const event = body.event;
+  const payment = body.object;
   if (!payment?.id) return NextResponse.json({ ok: true });
 
   const admin = createAdminClient();

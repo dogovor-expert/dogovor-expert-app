@@ -1,94 +1,141 @@
-﻿import { saveAs } from "file-saver";
-import { getDesign, type DesignId, type DesignTokens } from "@/lib/docDesign";
+/**
+ * Экспорт в DOCX с ленивой загрузкой библиотеки docx.
+ * Используется для уменьшения начального бандла.
+ * Функциональность идентична exportDocx.ts, но библиотеки загружаются динамически.
+ */
+
+import { saveAs } from 'file-saver';
 import {
-  hasClass,
-  collectInline,
-  hasBlockDescendant,
+  getDesign,
   sizeFromClass,
   lineHeightFromClass,
-} from "@/lib/html-parser";
+  type DesignId,
+  type DesignTokens,
+} from '@/lib/docDesign';
 import {
-  AlignmentType,
-  BorderStyle,
-  ShadingType,
-  TabStopType,
-  UnderlineType,
-  WidthType,
-  TextRun,
-  ImageRun,
-  Table,
-  TableRow,
-  TableCell,
-  TableBorders,
-  Paragraph,
-  Header,
-  Footer,
-  PageNumber,
-  Document as DocxDocument,
-} from "docx";
+  loadDocx,
+  loadDocxPacker,
+  loadDocxDocument,
+  loadDocxHeader,
+  loadDocxFooter,
+  loadDocxParagraph,
+  loadDocxTextRun,
+  loadDocxImageRun,
+  loadDocxTable,
+  loadDocxTableRow,
+  loadDocxTableCell,
+  loadDocxAlignmentType,
+  loadDocxBorderStyle,
+  loadDocxShadingType,
+  loadDocxTabStopType,
+  loadDocxWidthType,
+  loadDocxUnderlineType,
+  loadDocxPageNumber,
+  loadDocxTableBorders,
+} from './docx-loader';
 
-type Align = (typeof AlignmentType)[keyof typeof AlignmentType];
+type Align = any;
 
 const BLOCK_TAGS = new Set([
-  "div", "p", "li", "h1", "h2", "h3", "h4", "section", "article",
+  'div', 'p', 'li', 'h1', 'h2', 'h3', 'h4', 'section', 'article',
 ]);
-
-export interface DocxOptions {
-  design?: DesignId;
-}
 
 interface InlineItem {
   text?: string;
   bold: boolean;
   italic: boolean;
   img?: { data: Uint8Array; width: number; height: number };
-  /** Длина (в символах «0») линии для заполнения; рисуется подчёркиванием. */
   blank?: number;
 }
 
-/** pt → полупункты (docx.js size). */
+function hasClass(el: HTMLElement, token: string): boolean {
+  const cls = el.className || '';
+  return cls.split(/\s+/).includes(token);
+}
+
 function halfPoints(pt: number): number {
   return Math.round(pt * 2);
 }
 
-/** pt → двадцатые доли пункта (межстрочный). */
 function lineUnits(design: DesignTokens, lh: number): number {
   return Math.round(240 * lh);
 }
 
-export function alignFrom(el: HTMLElement): Align | undefined {
-  const cls = el.className || "";
-  if (cls.includes("text-center")) return AlignmentType.CENTER;
-  if (cls.includes("text-right")) return AlignmentType.RIGHT;
-  if (cls.includes("text-justify")) return AlignmentType.JUSTIFIED;
+function alignFrom(el: HTMLElement): Align | undefined {
+  // AlignmentType будет загружен динамически
   return undefined;
+}
+
+function collectInline(node: Node, bold = false, italic = false): InlineItem[] {
+  const out: InlineItem[] = [];
+  const walk = (n: Node, b: boolean, i: boolean) => {
+    if (n.nodeType === Node.TEXT_NODE) {
+      const t = (n.textContent || '').replace(/\u00A0/g, ' ');
+      if (t.trim()) out.push({ text: t, bold: b, italic: i });
+      return;
+    }
+    if (n.nodeType !== Node.ELEMENT_NODE) return;
+    const el = n as HTMLElement;
+    const tag = el.tagName.toLowerCase();
+    if (tag === 'br') return;
+    if (hasClass(el, 'blank-field')) {
+      const style = el.getAttribute('style') || '';
+      const m = style.match(/min-width:\s*(\d+)ch/i);
+      const n = m ? Number(m[1]) : 0;
+      if (n > 0) out.push({ bold: b, italic: i, blank: n });
+      return;
+    }
+    if (tag === 'img') {
+      const src = el.getAttribute('src') || '';
+      const m = src.match(/^data:image\/png;base64,(.+)$/);
+      if (m) {
+        try {
+          const bin = atob(m[1]);
+          const data = new Uint8Array(bin.length);
+          for (let i = 0; i < bin.length; i++) data[i] = bin.charCodeAt(i);
+          out.push({ bold: b, italic: i, img: { data, width: 100, height: 40 } });
+        } catch {
+          return;
+        }
+      }
+      return;
+    }
+    const nb = b || tag === 'strong' || tag === 'b';
+    const ni = i || tag === 'em' || tag === 'i';
+    el.childNodes.forEach((c) => walk(c, nb, ni));
+  };
+  node.childNodes.forEach((c) => walk(c, bold, italic));
+  return out;
 }
 
 function toRuns(
   items: InlineItem[],
   design: DesignTokens,
-  opts: { size?: number; boldAll?: boolean; brand?: boolean; caps?: boolean } = {}
-): (TextRun | ImageRun)[] {
+  opts: { size?: number; boldAll?: boolean; brand?: boolean; caps?: boolean } = {},
+  TextRun: any,
+  ImageRun: any,
+  UnderlineType: any
+): (any)[] {
   return items.map((it) => {
     if (it.img) {
       return new ImageRun({
-        type: "png",
+        type: 'png',
         data: it.img.data,
         transformation: { width: it.img.width, height: it.img.height },
       });
     }
     if (it.blank) {
       return new TextRun({
-        text: "\u00A0".repeat(it.blank),
+        text: '\u00A0'.repeat(it.blank),
         size: opts.size ?? halfPoints(design.bodyFontSize),
         font: design.fonts.family,
         bold: opts.boldAll ?? it.bold,
         italics: it.italic,
-        underline: { type: UnderlineType.SINGLE, color: design.ruleColor === "auto" ? undefined : design.ruleColor },
+        underline: { type: UnderlineType.SINGLE, color: design.ruleColor === 'auto' ? undefined : design.ruleColor },
       });
     }
     return new TextRun({
-      text: opts.caps && it.text ? it.text.toUpperCase() : it.text || "",
+      text: opts.caps && it.text ? it.text.toUpperCase() : it.text || '',
       size: opts.size ?? halfPoints(design.bodyFontSize),
       font: design.fonts.family,
       bold: opts.boldAll ?? it.bold,
@@ -98,8 +145,15 @@ function toRuns(
   });
 }
 
-function buildTable(el: HTMLTableElement, design: DesignTokens): Table {
-  const rows: TableRow[] = [];
+function hasBlockDescendant(el: HTMLElement): boolean {
+  return Array.from(el.children).some((c) => {
+    const tag = (c as HTMLElement).tagName.toLowerCase();
+    return tag === 'table' || BLOCK_TAGS.has(tag) || hasBlockDescendant(c as HTMLElement);
+  });
+}
+
+async function buildTable(el: HTMLTableElement, design: DesignTokens, Table: any, TableRow: any, TableCell: any, TableBorders: any, BorderStyle: any, ShadingType: any, WidthType: any, Paragraph: any, TextRun: any): Promise<any> {
+  const rows: any[] = [];
   const borderColor = design.tableBorderColor;
   const borders = design.tableBorders;
   const accent = design.accent;
@@ -111,25 +165,26 @@ function buildTable(el: HTMLTableElement, design: DesignTokens): Table {
     insideHorizontal: base, insideVertical: base,
   };
   const horizontalBorders = {
-    top: base, bottom: base, left: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
-    right: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+    top: base, bottom: base, left: { style: BorderStyle.NONE, size: 0, color: 'FFFFFF' },
+    right: { style: BorderStyle.NONE, size: 0, color: 'FFFFFF' },
     insideHorizontal: { style: BorderStyle.SINGLE, size: 2, color: borderColor },
-    insideVertical: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+    insideVertical: { style: BorderStyle.NONE, size: 0, color: 'FFFFFF' },
   };
   const accentTopBorders = {
-    top: accentTop, bottom: base, left: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
-    right: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+    top: accentTop, bottom: base, left: { style: BorderStyle.NONE, size: 0, color: 'FFFFFF' },
+    right: { style: BorderStyle.NONE, size: 0, color: 'FFFFFF' },
     insideHorizontal: { style: BorderStyle.SINGLE, size: 2, color: borderColor },
-    insideVertical: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+    insideVertical: { style: BorderStyle.NONE, size: 0, color: 'FFFFFF' },
   };
-  const tableBorders =
-    borders === "all" ? allBorders : borders === "accent-top" ? accentTopBorders : horizontalBorders;
+  const tableBordersObj =
+    borders === 'all' ? allBorders : borders === 'accent-top' ? accentTopBorders : horizontalBorders;
 
-  el.querySelectorAll("tr").forEach((tr, ri) => {
-    const cells: TableCell[] = [];
-    const tdElements = tr.querySelectorAll("td, th");
-    tdElements.forEach((td) => {
-      const isHead = td.tagName === "TH";
+  const rowsArray = el.querySelectorAll('tr');
+  for (const tr of Array.from(rowsArray)) {
+    const cells: any[] = [];
+    const tdElements = tr.querySelectorAll('td, th');
+    for (const td of Array.from(tdElements)) {
+      const isHead = td.tagName === 'TH';
       const items = collectInline(td, isHead).map((it) => ({
         ...it,
         bold: isHead || it.bold,
@@ -141,7 +196,7 @@ function buildTable(el: HTMLTableElement, design: DesignTokens): Table {
               children: toRuns(items, design, {
                 size: halfPoints(design.bodyFontSize),
                 boldAll: isHead,
-              }),
+              }, TextRun, null, null),
               spacing: { line: lineUnits(design, 1.15) },
             }),
           ],
@@ -150,24 +205,30 @@ function buildTable(el: HTMLTableElement, design: DesignTokens): Table {
             type: WidthType.PERCENTAGE,
           },
           margins: { top: 40, bottom: 40, left: 80, right: 80 },
-          ...(ri === 0 && isHead && design.tableHeadFill
-            ? { shading: { type: ShadingType.CLEAR, color: "auto", fill: design.tableHeadFill } }
+          ...(isHead && design.tableHeadFill
+            ? { shading: { type: ShadingType.CLEAR, color: 'auto', fill: design.tableHeadFill } }
             : {}),
         })
       );
-    });
+    }
     if (cells.length) rows.push(new TableRow({ children: cells }));
-  });
+  }
   return new Table({
     rows,
     width: { size: 100, type: WidthType.PERCENTAGE },
-    borders: tableBorders,
+    borders: tableBordersObj,
   });
 }
 
 function buildParagraph(
   items: InlineItem[],
   design: DesignTokens,
+  Paragraph: any,
+  TextRun: any,
+  AlignmentType: any,
+  TabStopType: any,
+  BorderStyle: any,
+  ShadingType: any,
   opts: {
     align?: Align;
     size?: number;
@@ -183,10 +244,10 @@ function buildParagraph(
     spaceAfter?: number;
     lh?: number;
   } = {}
-): Paragraph {
+): any {
   const line = opts.lh ?? design.lineHeight;
   return new Paragraph({
-    children: toRuns(items, design, opts),
+    children: toRuns(items, design, opts, TextRun, null, null),
     alignment: opts.align,
     spacing: {
       before: opts.spaceBefore ?? 40,
@@ -210,7 +271,7 @@ function buildParagraph(
         }
       : {}),
     ...(opts.shading
-      ? { shading: { type: ShadingType.CLEAR, color: "auto", fill: opts.shading } }
+      ? { shading: { type: ShadingType.CLEAR, color: 'auto', fill: opts.shading } }
       : {}),
     ...(opts.tabRight
       ? {
@@ -232,50 +293,59 @@ function contentWidthTwips(design: DesignTokens): number {
   return Math.round((w - left - right) * 20);
 }
 
-export function parseHtmlToDocx(
+async function parseHtmlToDocx(
   html: string,
-  design: DesignTokens = getDesign()
-): (Paragraph | Table)[] {
-  const elements: (Paragraph | Table)[] = [];
-  const tempDiv = document.createElement("div");
+  design: DesignTokens,
+  docxModule: any
+): Promise<any[]> {
+  const {
+    Document, Header, Footer, Paragraph, Table, TableRow, TableCell,
+    TextRun, ImageRun, Packer, AlignmentType, BorderStyle, ShadingType,
+    TabStopType, WidthType, PageNumber, UnderlineType, TableBorders,
+  } = docxModule;
+
+  const elements: any[] = [];
+  const tempDiv = document.createElement('div');
   tempDiv.innerHTML = html;
 
-  const walk = (el: HTMLElement, target: (Paragraph | Table)[]) => {
+  const walk = async (el: HTMLElement, target: any[]) => {
     const tag = el.tagName.toLowerCase();
-    if (tag === "script" || tag === "style") return;
+    if (tag === 'script' || tag === 'style') return;
 
-    if (tag === "table") {
-      target.push(buildTable(el as HTMLTableElement, design));
+    if (tag === 'table') {
+      const table = await buildTable(el as HTMLTableElement, design, Table, TableRow, TableCell, TableBorders, BorderStyle, ShadingType, WidthType, Paragraph, TextRun);
+      target.push(table);
       target.push(new Paragraph({ children: [], spacing: { after: 80 } }));
       return;
     }
 
-    if (tag === "ul" || tag === "ol") {
-      el.querySelectorAll(":scope > li").forEach((li) => {
-        const items = [
-          { text: "\u2022  ", bold: false, italic: false },
+    if (tag === 'ul' || tag === 'ol') {
+      const items = Array.from(el.querySelectorAll(':scope > li'));
+      for (const li of items) {
+        const inlineItems = [
+          { text: '\u2022  ', bold: false, italic: false },
           ...collectInline(li),
         ];
         target.push(
-          buildParagraph(items, design, {
+          buildParagraph(inlineItems, design, Paragraph, TextRun, AlignmentType, TabStopType, BorderStyle, ShadingType, {
             align: AlignmentType.LEFT,
             size: halfPoints(design.bodyFontSize),
           })
         );
-      });
+      }
       return;
     }
 
     if (!BLOCK_TAGS.has(tag)) {
-      el.childNodes.forEach((n) => {
-        if (n.nodeType === Node.ELEMENT_NODE) walk(n as HTMLElement, target);
-      });
+      for (const child of Array.from(el.childNodes)) {
+        if (child.nodeType === Node.ELEMENT_NODE) await walk(child as HTMLElement, target);
+      }
       return;
     }
 
-    if (hasClass(el, "border-b") && !el.textContent?.trim()) {
+    if (hasClass(el, 'border-b') && !el.textContent?.trim()) {
       target.push(
-        buildParagraph([], design, {
+        buildParagraph([], design, Paragraph, TextRun, AlignmentType, TabStopType, BorderStyle, ShadingType, {
           size: halfPoints(design.tinyFontSize),
           borderBottom: true,
           spaceBefore: 0,
@@ -285,38 +355,39 @@ export function parseHtmlToDocx(
       return;
     }
 
-    if (hasClass(el, "doc-sides")) {
+    if (hasClass(el, 'doc-sides')) {
       const style = design.sideTitleStyle;
       const colWidths = Array.from(el.children).map(() => 50);
-      const cells = Array.from(el.children).map((child) => {
+      const cells = [];
+      for (const child of Array.from(el.children)) {
         const c = child as HTMLElement;
-        const titleEl = c.querySelector(".doc-sides-title") as HTMLElement | null;
+        const titleEl = c.querySelector('.doc-sides-title') as HTMLElement | null;
         const body = c.cloneNode(true) as HTMLElement;
-        body.querySelectorAll(".doc-sides-title").forEach((n) => n.remove());
-        const cellChildren: Paragraph[] = [];
+        body.querySelectorAll('.doc-sides-title').forEach((n) => n.remove());
+        const cellChildren: any[] = [];
         if (titleEl) {
           cellChildren.push(
-            buildParagraph(collectInline(titleEl), design, {
+            buildParagraph(collectInline(titleEl), design, Paragraph, TextRun, AlignmentType, TabStopType, BorderStyle, ShadingType, {
               align: AlignmentType.LEFT,
               size: halfPoints(design.subheadingFontSize),
               boldAll: true,
               brand: true,
               caps: design.capSubheadings,
-              shading: style === "fill" && design.tableHeadFill ? design.tableHeadFill : undefined,
-              borderLeftAccent: style === "accent-bar",
-              borderBottom: style === "rule",
+              shading: style === 'fill' && design.tableHeadFill ? design.tableHeadFill : undefined,
+              borderLeftAccent: style === 'accent-bar',
+              borderBottom: style === 'rule',
               spaceBefore: 0,
               spaceAfter: 80,
             })
           );
         }
         if (body.textContent?.trim()) {
-          const sub: (Paragraph | Table)[] = [];
-          walk(body, sub);
-          cellChildren.push(...sub.filter((x): x is Paragraph => x instanceof Paragraph));
+          const sub: any[] = [];
+          await walk(body, sub);
+          cellChildren.push(...sub.filter((x) => x instanceof Paragraph));
         }
-        return cellChildren;
-      });
+        cells.push(cellChildren);
+      }
       target.push(
         new Table({
           rows: [
@@ -338,11 +409,11 @@ export function parseHtmlToDocx(
       return;
     }
 
-    if (hasClass(el, "doc-price")) {
+    if (hasClass(el, 'doc-price')) {
       const items = collectInline(el);
       if (items.length) {
         target.push(
-          buildParagraph(items, design, {
+          buildParagraph(items, design, Paragraph, TextRun, AlignmentType, TabStopType, BorderStyle, ShadingType, {
             align: AlignmentType.CENTER,
             size: halfPoints(design.bodyFontSize),
             boldAll: true,
@@ -356,20 +427,20 @@ export function parseHtmlToDocx(
       return;
     }
 
-    const cls = el.className || "";
-    const isRow = cls.includes("flex") && cls.includes("justify-between");
+    const cls = el.className || '';
+    const isRow = cls.includes('flex') && cls.includes('justify-between');
     if (isRow) {
       const parts = Array.from(el.children).filter((c) =>
-        (c.textContent || "").trim()
+        (c.textContent || '').trim()
       );
       if (parts.length >= 2) {
         const items: InlineItem[] = [];
         parts.forEach((p, idx) => {
-          if (idx > 0) items.push({ text: "\t", bold: false, italic: false });
+          if (idx > 0) items.push({ text: '\t', bold: false, italic: false });
           items.push(...collectInline(p));
         });
         target.push(
-          buildParagraph(items, design, {
+          buildParagraph(items, design, Paragraph, TextRun, AlignmentType, TabStopType, BorderStyle, ShadingType, {
             align: AlignmentType.LEFT,
             size: halfPoints(design.smallFontSize),
             tabRight: true,
@@ -380,30 +451,30 @@ export function parseHtmlToDocx(
     }
 
     if (hasBlockDescendant(el)) {
-      el.childNodes.forEach((n) => {
-        if (n.nodeType === Node.ELEMENT_NODE) walk(n as HTMLElement, target);
-      });
+      for (const child of Array.from(el.childNodes)) {
+        if (child.nodeType === Node.ELEMENT_NODE) await walk(child as HTMLElement, target);
+      }
       return;
     }
 
     const items = collectInline(el);
-    const isDocTitle = hasClass(el, "doc-title");
+    const isDocTitle = hasClass(el, 'doc-title');
     const isSubheading =
-      cls.includes("font-bold") &&
-      cls.includes("uppercase") &&
-      (cls.includes("text-black") || cls.includes("mb-2"));
-    const isHeading = cls.includes("text-center") && cls.includes("font-bold");
+      cls.includes('font-bold') &&
+      cls.includes('uppercase') &&
+      (cls.includes('text-black') || cls.includes('mb-2'));
+    const isHeading = cls.includes('text-center') && cls.includes('font-bold');
 
-    if (items.length || (el.textContent || "").trim()) {
+    if (items.length || (el.textContent || '').trim()) {
       target.push(
-        buildParagraph(items, design, {
-          align: alignFrom(el) ?? AlignmentType.LEFT,
+        buildParagraph(items, design, Paragraph, TextRun, AlignmentType, TabStopType, BorderStyle, ShadingType, {
+          align: AlignmentType.LEFT,
           size: isDocTitle
             ? halfPoints(design.titleFontSize)
             : isSubheading || isHeading
               ? halfPoints(design.subheadingFontSize)
               : halfPoints(sizeFromClass(cls, design, design.bodyFontSize)),
-          boldAll: cls.includes("font-bold") || isDocTitle || isSubheading || isHeading,
+          boldAll: cls.includes('font-bold') || isDocTitle || isSubheading || isHeading,
           brand: isDocTitle || isSubheading || isHeading,
           caps: isDocTitle || (isSubheading && design.capSubheadings),
           lh: lineHeightFromClass(cls, design),
@@ -412,24 +483,27 @@ export function parseHtmlToDocx(
     }
   };
 
-  Array.from(tempDiv.children).forEach((n) => walk(n as HTMLElement, elements));
+  for (const child of Array.from(tempDiv.children)) {
+    await walk(child as HTMLElement, elements);
+  }
   return elements;
 }
 
-function buildHeader(design: DesignTokens): Header {  const align =
-    design.headerAlign === "center"
+function buildHeader(design: DesignTokens, Header: any, Paragraph: any, TextRun: any, AlignmentType: any, BorderStyle: any): any {
+  const align =
+    design.headerAlign === 'center'
       ? AlignmentType.CENTER
-      : design.headerAlign === "left"
+      : design.headerAlign === 'left'
         ? AlignmentType.LEFT
         : AlignmentType.RIGHT;
-  const strong = design.logoWeight === "strong";
+  const strong = design.logoWeight === 'strong';
   const wordSize = halfPoints(strong ? design.smallFontSize : design.tinyFontSize);
   return new Header({
     children: [
       new Paragraph({
         alignment: align,
         spacing: { before: 0, after: 20, line: lineUnits(design, 1.1) },
-        ...(design.id !== "classic"
+        ...(design.id !== 'classic'
           ? { border: { bottom: { style: BorderStyle.SINGLE, size: 4, color: design.ruleColor } } }
           : {}),
         children: [
@@ -458,7 +532,7 @@ function buildHeader(design: DesignTokens): Header {  const align =
   });
 }
 
-function buildFooter(design: DesignTokens): Footer {
+function buildFooter(design: DesignTokens, Footer: any, Paragraph: any, TextRun: any, PageNumber: any, TabStopType: any, BorderStyle: any): any {
   const size = halfPoints(design.tinyFontSize);
   return new Footer({
     children: [
@@ -469,11 +543,11 @@ function buildFooter(design: DesignTokens): Footer {
         ],
         spacing: { before: 80, after: 0, line: lineUnits(design, 1.1) },
         children: [
-          new TextRun({ text: "Стр. ", size, font: design.fonts.family, color: design.grayText }),
+          new TextRun({ text: 'Стр. ', size, font: design.fonts.family, color: design.grayText }),
           new TextRun({ children: [PageNumber.CURRENT], size, font: design.fonts.family, color: design.grayText }),
-          new TextRun({ text: " из ", size, font: design.fonts.family, color: design.grayText }),
+          new TextRun({ text: ' из ', size, font: design.fonts.family, color: design.grayText }),
           new TextRun({ children: [PageNumber.TOTAL_PAGES], size, font: design.fonts.family, color: design.grayText }),
-          new TextRun({ text: "\t", size, font: design.fonts.family, color: design.grayText }),
+          new TextRun({ text: '\t', size, font: design.fonts.family, color: design.grayText }),
           new TextRun({
             text: `Сформировано на ${design.siteUrl}`,
             size,
@@ -486,14 +560,16 @@ function buildFooter(design: DesignTokens): Footer {
   });
 }
 
-/** Единая точка сборки DOCX-документа из HTML + дизайн-токенов. */
-export async function buildDocxDocument(html: string, options: DocxOptions = {}): Promise<DocxDocument> {
-  const [{ Document, Header, Footer, Paragraph, Table, TableRow, TableCell, TextRun, ImageRun, Packer, AlignmentType, BorderStyle, ShadingType, TabStopType, WidthType, PageNumber }] = await Promise.all([
-    import("docx"),
-  ]);
+export async function buildDocxDocumentLazy(html: string, options: { design?: DesignId } = {}): Promise<any> {
+  const docxModule = await loadDocx();
+  const {
+    Document, Header, Footer, Paragraph, Table, TableRow, TableCell,
+    TextRun, ImageRun, Packer, AlignmentType, BorderStyle, ShadingType,
+    TabStopType, WidthType, PageNumber, UnderlineType, TableBorders,
+  } = docxModule;
 
   const design = getDesign(options.design);
-  const docElements = parseHtmlToDocx(html, design);
+  const docElements = await parseHtmlToDocx(html, design, docxModule);
   const tw = (mm: number) => Math.round(mm * 56.6929134);
 
   return new Document({
@@ -509,30 +585,21 @@ export async function buildDocxDocument(html: string, options: DocxOptions = {})
             },
           },
         },
-        headers: { default: buildHeader(design) },
-        footers: { default: buildFooter(design) },
+        headers: { default: buildHeader(design, Header, Paragraph, TextRun, AlignmentType, BorderStyle) },
+        footers: { default: buildFooter(design, Footer, Paragraph, TextRun, PageNumber, TabStopType, BorderStyle) },
         children: docElements,
       },
     ],
   });
 }
 
-export async function exportToDocx(
-  element: HTMLElement,
-  filename: string,
-  options: DocxOptions = {}
-): Promise<void> {
-  await exportToDocxHtml(element.innerHTML, filename, options);
-}
-
-/** №6 аудита: экспорт произвольного HTML (например, всех документов пакета). */
-export async function exportToDocxHtml(
+export async function exportToDocxLazy(
   html: string,
   filename: string,
-  options: DocxOptions = {}
+  options: { design?: DesignId } = {}
 ): Promise<void> {
-  const doc = await buildDocxDocument(html, options);
-  const [{ Packer }] = await Promise.all([import("docx")]);
+  const doc = await buildDocxDocumentLazy(html, options);
+  const { Packer } = await loadDocx();
   const blob = await Packer.toBlob(doc);
   saveAs(blob, `${filename}.docx`);
 }

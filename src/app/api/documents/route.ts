@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { createDocumentSchema, validateBody } from "@/lib/validations/api";
 
 export async function GET() {
   const supabase = await createClient();
@@ -27,19 +28,26 @@ export async function POST(req: Request) {
   if (!user) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
 
   const body = await req.json().catch(() => null);
-  if (!body?.template_id) {
-    return NextResponse.json({ error: "template_id is required" }, { status: 400 });
+  if (!body) {
+    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
   }
+
+  // Zod-валидация
+  const validation = validateBody(createDocumentSchema, body);
+  if (!validation.success) {
+    return validation.error;
+  }
+  const { template_id, title, fields, checklist, versions } = validation.data;
 
   const { data, error } = await supabase
     .from("documents")
     .insert({
       user_id: user.id,
-      template_id: body.template_id,
-      title: body.title ?? "",
-      fields: body.fields ?? {},
-      checklist: body.checklist ?? {},
-      versions: body.versions ?? [],
+      template_id,
+      title: title ?? "",
+      fields: fields ?? {},
+      checklist: checklist ?? {},
+      versions: versions ?? [],
       status: "draft",
     })
     .select()
