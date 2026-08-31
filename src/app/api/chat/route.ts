@@ -63,13 +63,18 @@ export async function GET(req: Request) {
   if (!rl.ok) return rateLimitResponse(rl.retryAfter);
 
   const cookieStore = await cookies();
-  const visitorId = verifyVisitorCookie(cookieStore.get(CHAT_COOKIE)?.value);
-  if (!visitorId) return NextResponse.json({ error: "forbidden" }, { status: 403 });
-
   const url = new URL(req.url);
   if (url.searchParams.get("meta") === "1") {
-    return NextResponse.json({ unread: await getUnread(visitorId) });
+    // Публичный поллинг (SupportLauncher) — возвращает 200 даже без cookie,
+    // чтобы не засорять консоль 403. Реальные данные (unread) отдаются
+    // только когда visitorId верифицирован через подписанную cookie.
+    const vid = verifyVisitorCookie(cookieStore.get(CHAT_COOKIE)?.value);
+    const unread = vid ? await getUnread(vid) : 0;
+    return NextResponse.json({ unread });
   }
+
+  const visitorId = verifyVisitorCookie(cookieStore.get(CHAT_COOKIE)?.value);
+  if (!visitorId) return NextResponse.json({ error: "forbidden" }, { status: 403 });
 
   const since = Number(url.searchParams.get("since") || "0") || 0;
   const messages = await getMessages(visitorId, since);

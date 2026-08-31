@@ -225,7 +225,7 @@ function HomeContent() {
 
 
   const [dadataKey, setDadataKey] = useState<string>("");
-  const [subscriptionActive, setSubscriptionActive] = useState(true);
+  const [subscriptionActive, setSubscriptionActive] = useState(false);
   const [paywallOpen, setPaywallOpen] = useState(false);
   const [paywallTitle, setPaywallTitle] = useState<string | undefined>(undefined);
   const requirePro = (title?: string) => {
@@ -240,10 +240,6 @@ function HomeContent() {
     text: string;
   } | null>(null);
   useEffect(() => {
-    if (process.env.NODE_ENV !== "production") {
-      setSubscriptionActive(true); // TMP-TEST: убрать после проверки сканера
-      return;
-    }
     fetch("/api/subscription-status")
       .then((r) => r.json())
       .then((j) => setSubscriptionActive(!!j.subscription_active))
