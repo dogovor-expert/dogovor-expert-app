@@ -1,5 +1,12 @@
 import type { LegalTemplate } from "@/data/types";
 import type { DocSlot } from "@/lib/docRequirements";
+import {
+  toDigits,
+  normalizeDate,
+  normalizeVin,
+  normalizePlate,
+  latinToCyrillic as latinToCyr,
+} from "@/lib/ocrPostprocess";
 
 export interface PassportData {
   fio?: string;
@@ -41,17 +48,40 @@ const clean = (s: string) => s.replace(/\s+/g, " ").trim();
 // Нормализация латиница→кириллица для омоглифов (ИBAHOB → ИВАНОВ и т.п.).
 // Применяется только в extractPassportData: паспорт — чисто кириллический
 // документ, а VIN/ГРЗ в extractVehicleData остаются латиницей (не трогаем).
-const LATIN_TO_CYR: Record<string, string> = {
-  A: "А", B: "В", C: "С", E: "Е", H: "Н", K: "К", M: "М",
-  O: "О", P: "Р", T: "Т", U: "У", X: "Х", Y: "У",
-  a: "а", b: "в", c: "с", e: "е", h: "н", k: "к", m: "м",
-  o: "о", p: "р", t: "т", u: "у", x: "х", y: "у",
-};
-const latinToCyrillic = (s: string): string =>
-  s.split("").map((ch) => LATIN_TO_CYR[ch] ?? ch).join("");
+const latinToCyrillic = latinToCyr;
 
-export function extractPassportData(text: string): PassportData {
-  const data: PassportData = {};
+/**
+ * Достаёт адрес регистрации из построчного текста: OCR часто разрывает
+ * «Зарегистрирован по адресу:» и сам адрес на разные строки.
+ */
+function extractAddressLine(text: string): string | undefined {
+  const lines = text
+    .split("\n")
+    .map((l) => l.trim())
+    .filter(Boolean);
+  const idx = lines.findIndex((l) =>
+    /зарегистрирован|место жительства|по адресу|адресу/i.test(l)
+  );
+  if (idx < 0) return undefined;
+  const cur = lines[idx];
+  // Вариант 1: адрес в той же строке после маркера.
+  const inline = cur.match(/(?:по адресу|адресу)[:\s]*(.{5,})/i);
+  if (inline && inline[1].replace(/[^А-ЯЁа-яё0-9]/g, "").length >= 5) {
+    return clean(inline[1]).replace(/^по адресу:?\s*/i, "");
+  }
+  // Вариант 2: адрес на следующей непустой строке.
+  const next = lines[idx + 1];
+  if (
+    next &&
+    next.replace(/[^А-ЯЁа-яё0-9]/g, "").length >= 5 &&
+    !/^(паспорт|выдан|серия|код|дата)/i.test(next)
+  ) {
+    return next;
+  }
+  return undefined;
+}
+
+export function extractPassportData(text: string): PassportData {  const data: PassportData = {};
   text = latinToCyrillic(text);
 
   // ФИО: паспорта печатают ФИО ЗАГЛАВНЫМИ («ИВАНОВ ИВАН ИВАНОВИЧ»), поэтому
@@ -73,8 +103,8 @@ export function extractPassportData(text: string): PassportData {
   const after = issuedIdx >= 0 ? text.slice(issuedIdx) : text;
   const before = issuedIdx >= 0 ? text.slice(0, issuedIdx) : text;
 
-  const birthdayMatch = before.match(/(\d{2}\.\d{2}\.\d{4})/);
-  if (birthdayMatch) data.birthday = birthdayMatch[1];
+  const birthdayMatch = before.match(/(\d{2}[\.\-/]\d{2}[\.\-/]\d{4})/);
+  if (birthdayMatch) data.birthday = normalizeDate(birthdayMatch[1]) || undefined;
 
   const birthPlaceMatch = before.match(
     /(?:место рождения|родил[а-яё]*)[:\s]*([А-ЯЁа-яё0-9.,\- ]{5,60})/
@@ -88,8 +118,12 @@ export function extractPassportData(text: string): PassportData {
     data.series = `${seriesMatch[1]}${seriesMatch[2]}`;
     if (seriesMatch[3]) data.number = seriesMatch[3];
   }
-  const numberMatch = text.match(/(?:номер|№|n)[^0-9]{0,8}?(\d{6})/i);
+  // № (U+2116) и латинское "No" — одно и то же в документах; OCR выдаёт оба варианта.
+  const numberMatch = text.match(/(?:номер|№|No|N[oо0]|n)[^0-9]{0,8}?(\d{6})/i);
   if (numberMatch && !data.number) data.number = numberMatch[1];
+  // Char-confusion: в серии/номере бывают кириллические омоглифы цифр.
+  if (data.series) data.series = toDigits(data.series).slice(0, 4);
+  if (data.number) data.number = toDigits(data.number).slice(0, 6);
 
   const issuedByMatch = after.match(
     /(?:кем выдан|выдан)[:\s]*([А-ЯЁа-яё0-9.,\- ]{5,120}?)(?=\d{2}\.\d{2}\.\d{4}|\d{3}\s*[-–—]\s*\d{3}|$)/i
@@ -105,19 +139,19 @@ export function extractPassportData(text: string): PassportData {
   const codeMatch = text.match(/(\d{3}\s*[-–—]\s*\d{3})/);
   if (codeMatch) data.code = codeMatch[1].replace(/\s+/g, "");
 
-  const issuedDateMatch = after.match(/(\d{2}\.\d{2}\.\d{4})/);
-  if (issuedDateMatch) data.issuedDate = issuedDateMatch[1];
+  const issuedDateMatch = after.match(/(\d{2}[\.\-/]\d{2}[\.\-/]\d{4})/);
+  if (issuedDateMatch) data.issuedDate = normalizeDate(issuedDateMatch[1]) || undefined;
 
   const addressMatch = text.match(
     /(?:зарегистрирован[а-яё]*|место жительства)[^]*?(?:по адресу:?\s*|:?\s*)([^\n]{5,180})/i
   );
-  if (addressMatch) {
-    data.address = clean(addressMatch[1]).replace(/^по адресу:?\s*/i, "");
+  const addressFromMatch = addressMatch ? extractAddressLine(text) : undefined;
+  if (addressFromMatch) {
+    data.address = addressFromMatch;
   }
 
   const innMatch = text.match(/\b(\d{12})\b/);
   if (innMatch) data.inn = innMatch[1];
-
   const snilsMatch = text.match(/\b(\d{3}-\d{3}-\d{3} \d{2})\b/);
   if (snilsMatch) data.snils = snilsMatch[1];
 
@@ -129,12 +163,12 @@ export function extractVehicleData(text: string): VehicleData {
   const lower = text.toLowerCase();
 
   const vinMatch = text.match(/\b([A-HJ-NPR-Z0-9]{17})\b/);
-  if (vinMatch) data.vin = vinMatch[1].toUpperCase();
+  if (vinMatch) data.vin = normalizeVin(vinMatch[1]) ?? vinMatch[1].toUpperCase();
 
   const plateMatch = text.match(
     /([А-ЯЁA-Z]\d{3}[А-ЯЁA-Z]{2}\d{2,3})/
   );
-  if (plateMatch) data.plate = plateMatch[1].toUpperCase();
+  if (plateMatch) data.plate = normalizePlate(plateMatch[1]) ?? plateMatch[1].toUpperCase();
 
   const brandMatch = text.match(
     /(?:марка,\s*модель|марка|модель)[:\s]*([^\n]{3,50})/i
@@ -206,8 +240,8 @@ export function extractVehicleData(text: string): VehicleData {
   );
   if (issuedByMatch) data.ptsIssuedBy = clean(issuedByMatch[1]);
 
-  const dateMatch = text.match(/(\d{2}\.\d{2}\.\d{4})/g);
-  if (dateMatch) data.ptsDate = dateMatch[dateMatch.length - 1];
+  const dateMatch = text.match(/(\d{2}[\.\-/]\d{2}[\.\-/]\d{4})/g);
+  if (dateMatch) data.ptsDate = normalizeDate(dateMatch[dateMatch.length - 1]) || undefined;
 
   return data;
 }

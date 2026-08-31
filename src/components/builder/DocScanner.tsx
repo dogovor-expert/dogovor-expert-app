@@ -1,18 +1,20 @@
-"use client";
-import { useRef, useState, useMemo } from "react";
+﻿"use client";
+import { useRef, useState, useMemo, useEffect } from "react";
 import {
   Camera,
   Check,
   ChevronDown,
   Loader2,
   RotateCcw,
-  Trash2,
   X,
   AlertTriangle,
   ScanLine,
   BadgeCheck,
   ShieldCheck,
   Image as ImageIcon,
+  Moon,
+  Sun,
+  Zap,
 } from "lucide-react";
 import type { LegalTemplate } from "@/data/types";
 import {
@@ -27,12 +29,24 @@ import {
   applyVucToRole,
   expectedFields,
 } from "@/lib/docOcr";
+import { prepareDocumentImage, type ImageQuality } from "@/lib/docImage";
+import { paddleRecognize, paddleWarmup } from "@/lib/paddleOcr";
+import { tryParseMrz, applyMrzToRole, type MrzParseSuccess } from "@/lib/docMrz";
+
+/** Порог уверенности Tesseract, ниже которого включается PaddleOCR. */
+const PADDLE_FALLBACK_THRESHOLD = 60;
 
 interface DocScannerProps {
   template: LegalTemplate;
   photos: Record<string, string[]>;
   onPhotosChange: (slotId: string, photos: string[]) => void;
   onFieldChange: (fieldId: string, value: string) => void;
+}
+
+interface OcrWord {
+  text: string;
+  confidence: number;
+  bbox: { x0: number; y0: number; x1: number; y1: number };
 }
 
 interface ScanResult {
@@ -42,6 +56,11 @@ interface ScanResult {
   filledFields: { id: string; label: string; value: string }[];
   error?: boolean;
   errorText?: string;
+  confidence?: number;
+  words?: OcrWord[];
+  ocrWidth?: number;
+  ocrHeight?: number;
+  quality?: ImageQuality;
   slotId: string;
 }
 
@@ -55,28 +74,16 @@ const STAGE_LABELS: Record<string, string> = {
   "recognizing text": "Распознаём текст…",
 };
 
-const compressImage = (file: File): Promise<string> =>
-  new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      const img = new Image();
-      img.onload = () => {
-        const MAX = 900;
-        const scale = Math.min(1, MAX / Math.max(img.width, img.height));
-        const canvas = document.createElement("canvas");
-        canvas.width = Math.round(img.width * scale);
-        canvas.height = Math.round(img.height * scale);
-        const ctx = canvas.getContext("2d");
-        if (!ctx) return reject(new Error("canvas"));
-        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-        resolve(canvas.toDataURL("image/jpeg", 0.72));
-      };
-      img.onerror = () => reject(new Error("image"));
-      img.src = reader.result as string;
-    };
-    reader.onerror = () => reject(new Error("read"));
-    reader.readAsDataURL(file);
-  });
+/** Подсказки по качеству кадра (quality gates — эталон Scanbot). */
+function qualityWarnings(
+  q: ImageQuality
+): { icon: "dark" | "blur" | "glare"; text: string }[] {
+  const out: { icon: "dark" | "blur" | "glare"; text: string }[] = [];
+  if (q.dark) out.push({ icon: "dark", text: "Кадр темноват — снимите при лучшем освещении" });
+  if (q.blurry) out.push({ icon: "blur", text: "Кадр смазан — держите камеру неподвижно" });
+  if (q.glare) out.push({ icon: "glare", text: "В кадре блики — измените угол съёмки" });
+  return out;
+}
 
 export default function DocScanner({
   template,
@@ -108,12 +115,38 @@ export default function DocScanner({
   const [showDetails, setShowDetails] = useState<Record<string, boolean>>({});
   const [collapsed, setCollapsed] = useState(false);
   const [dragOver, setDragOver] = useState<string | null>(null);
+  const [lightbox, setLightbox] = useState<{ slotId: string; index: number } | null>(null);
   const fileInputsRef = useRef<Record<string, HTMLInputElement | null>>({});
   const lastFilesRef = useRef<Record<string, File | null>>({});
 
   const loadedCount = slots.filter(
     (s) => (photos[s.id] || []).length > 0
   ).length;
+
+  // Прогрев: начинаем грузить wasm-ядро и модель сразу при открытии
+  // сканера, чтобы первый скан не ждал 5-15 секунд.
+  const warmedRef = useRef(false);
+  useEffect(() => {
+    if (collapsed || warmedRef.current) return;
+    warmedRef.current = true;
+    try {
+      const w = new Worker(
+        new URL("../../lib/workers/ocr-worker.js", import.meta.url),
+        { type: "module" }
+      );
+      w.postMessage({ type: "warmup" });
+      w.onmessage = (e: MessageEvent) => {
+        if (e.data?.type === "ready-warm" || e.data?.type === "error") {
+          w.terminate();
+        }
+      };
+      // Резервный движок грузим в фоне тихо — он нужен только при
+      // низком confidence основного.
+      void paddleWarmup();
+    } catch {
+      // Прогрев опционален — при скане модель загрузится штатно.
+    }
+  }, [collapsed]);
 
   /** Скроллит форму к первому заполненному полю и подсвечивает все. */
   const focusFilledFields = (ids: string[]) => {
@@ -139,7 +172,11 @@ export default function DocScanner({
     }, 250);
   };
 
-  const runOcr = (slot: DocSlot, file: File): Promise<string> => {
+  const runOcr = (
+    slot: DocSlot,
+    raw: string,
+    binary: string
+  ): Promise<{ text: string; confidence: number; words: OcrWord[] }> => {
     // Используем Web Worker — tesseract.js не попадает в основной бандл.
     // Относительный путь обязателен: webpack корректно собирает worker-чанк
     // только для статически разрешимого (не алиасного) URL.
@@ -148,19 +185,23 @@ export default function DocScanner({
       { type: "module" }
     );
 
-    // 3 минуты: первый запуск скачивает wasm-ядро + языковую модель (~11 МБ).
+    // 4 минуты: multi-pass (2 прохода) + первый запуск качает модель (~11 МБ).
     return new Promise((resolve, reject) => {
       const timeout = setTimeout(() => {
         worker.terminate();
         reject(new Error("Превышено время ожидания распознавания"));
-      }, 180000);
+      }, 240000);
 
       worker.onmessage = (e: MessageEvent) => {
         const msg = e.data;
         if (msg.type === "result") {
           clearTimeout(timeout);
           worker.terminate();
-          resolve(msg.text);
+          resolve({
+            text: msg.text,
+            confidence: msg.confidence ?? 0,
+            words: (msg.words ?? []) as OcrWord[],
+          });
         } else if (msg.type === "error") {
           clearTimeout(timeout);
           worker.terminate();
@@ -186,15 +227,36 @@ export default function DocScanner({
         );
       };
 
-      worker.postMessage({ type: "recognize", file });
+      worker.postMessage({
+        type: "recognize",
+        file: raw,
+        binary,
+        wantWords: true,
+        vinRetry:
+          slot.ocrKind === "pts" || slot.ocrKind === "sts" || slot.ocrKind === "epts",
+      });
     });
   };
 
-  const applyOcr = (slot: DocSlot, text: string): ScanResult => {
+  const applyOcr = (
+    slot: DocSlot,
+    text: string
+  ): Omit<
+    ScanResult,
+    "confidence" | "words" | "quality" | "ocrWidth" | "ocrHeight"
+  > => {
     const values: Record<string, string> = {};
+    let mrz: MrzParseSuccess | null = null;
     switch (slot.ocrKind) {
       case "passport":
       case "passportReg": {
+        // 1) Пробуем MRZ (загранпаспорта): чек-суммы дают 100% точность
+        //    номера и дат — приоритет над регэкспами по сыром тексту.
+        mrz = tryParseMrz(text);
+        if (mrz && slot.rolePrefix) {
+          Object.assign(values, applyMrzToRole(template, slot.rolePrefix, mrz));
+        }
+        // 2) Регулярный парсинг РФ-паспорта (у него MRZ нет).
         const data = extractPassportData(text);
         if (slot.rolePrefix) {
           Object.assign(
@@ -284,18 +346,47 @@ export default function DocScanner({
       [slot.id]: { status: "loading tesseract core", progress: 0 },
     }));
     try {
-      const dataUrl = await compressImage(file);
+      // 1) Подготовка: превью + OCR-версии (2000px, grayscale+contrast,
+      //    adaptive threshold) + оценка качества кадра.
+      const prepared = await prepareDocumentImage(file);
       const existing = photos[slot.id] || [];
       const next =
         existing.length >= slot.maxPhotos
-          ? [...existing.slice(1), dataUrl]
-          : [...existing, dataUrl];
+          ? [...existing.slice(1), prepared.preview]
+          : [...existing, prepared.preview];
       onPhotosChange(slot.id, next);
 
       if (slot.ocrKind) {
-        const text = await runOcr(slot, file);
-        const res = applyOcr(slot, text);
-        setResults((r) => ({ ...r, [slot.id]: res }));
+        // 2) Multi-pass OCR: raw + binary, выбор по confidence.
+        let ocr = await runOcr(slot, prepared.ocrRaw, prepared.ocrBinary);
+
+        // 3) Fallback: при низком уверенности пробуем PP-OCRv5 (точнее
+        //    на реальных фото). Берём движок с большим confidence.
+        if (ocr.confidence < PADDLE_FALLBACK_THRESHOLD) {
+          try {
+            const paddle = await paddleRecognize(prepared.ocrRaw);
+            if (paddle.confidence > ocr.confidence) {
+              ocr = {
+                text: paddle.text,
+                confidence: paddle.confidence,
+                words: ocr.words, // боксы остаются от tesseract (приблизительная подсветка)
+              };
+            }
+          } catch {
+            // Paddle недоступен (сеть/CDN) — остаётся результат Tesseract.
+          }
+        }
+
+        const res = applyOcr(slot, ocr.text);
+        const full: ScanResult = {
+          ...res,
+          confidence: Math.round(ocr.confidence),
+          words: ocr.words,
+          ocrWidth: prepared.width,
+          ocrHeight: prepared.height,
+          quality: prepared.quality,
+        };
+        setResults((r) => ({ ...r, [slot.id]: full }));
         setShowDetails((s) => ({ ...s, [slot.id]: false }));
         if (res.ok && res.filledFields.length > 0) {
           focusFilledFields(res.filledFields.map((f) => f.id));
@@ -308,6 +399,7 @@ export default function DocScanner({
             filled: 0,
             missing: [],
             filledFields: [],
+            quality: prepared.quality,
             slotId: slot.id,
           },
         }));
@@ -378,9 +470,9 @@ export default function DocScanner({
       : "Распознаём документ…";
 
     const uploadBtn = (
-      <div className="shrink-0 flex items-center gap-1.5">
+      <div className="shrink-0 flex flex-wrap items-center justify-end gap-1.5">
         <label
-          className={`inline-flex items-center justify-center font-semibold text-[11px] rounded-xl gap-1.5 px-3 py-2 border cursor-pointer transition-all ${
+          className={`inline-flex items-center justify-center whitespace-nowrap font-semibold text-[11px] rounded-xl gap-1.5 px-3 py-2 border cursor-pointer transition-all ${
             isScanning
               ? "bg-slate-100 text-slate-600 border-slate-200 cursor-wait"
               : "bg-brand-600 text-white hover:bg-brand-700 border-brand-700 shadow-sm"
@@ -391,7 +483,11 @@ export default function DocScanner({
           ) : (
             <Camera className="w-3.5 h-3.5" />
           )}
-          {isScanning ? "Работаем…" : slotPhotos.length > 0 ? "Переснять" : "Фото"}
+          {isScanning
+            ? "Работаем…"
+            : slotPhotos.length > 0
+            ? "Переснять"
+            : "Фото"}
           <input
             ref={(el) => {
               fileInputsRef.current[slot.id] = el;
@@ -408,7 +504,7 @@ export default function DocScanner({
           />
         </label>
         <label
-          className={`inline-flex items-center justify-center font-semibold text-[11px] rounded-xl gap-1.5 px-3 py-2 border cursor-pointer transition-all ${
+          className={`inline-flex items-center justify-center whitespace-nowrap font-semibold text-[11px] rounded-xl gap-1.5 px-3 py-2 border cursor-pointer transition-all ${
             isScanning
               ? "bg-slate-100 text-slate-600 border-slate-200 cursor-wait"
               : "bg-white text-brand-700 hover:bg-brand-50 border-brand-200"
@@ -455,6 +551,7 @@ export default function DocScanner({
         </div>
       );
     } else if (res) {
+      const qWarns = res.quality ? qualityWarnings(res.quality) : [];
       if (res.ok) {
         body = (
           <div className="mt-2 rounded-xl border border-emerald-200 bg-emerald-50 p-2.5">
@@ -462,10 +559,47 @@ export default function DocScanner({
               <Check className="w-3.5 h-3.5 shrink-0" />
               {res.filled > 0
                 ? `Заполнено: ${res.filled} ${
-                    res.filled === 1 ? "поле" : res.filled < 5 ? "поля" : "полей"
+                    res.filled === 1
+                      ? "поле"
+                      : res.filled < 5
+                      ? "поля"
+                      : "полей"
                   }`
                 : "Фото добавлено"}
+              {typeof res.confidence === "number" && res.filled > 0 && (
+                <span
+                  className={`ml-auto tabular-nums font-semibold ${
+                    res.confidence >= 80
+                      ? "text-emerald-700"
+                      : res.confidence >= 60
+                      ? "text-amber-600"
+                      : "text-red-500"
+                  }`}
+                  title="Уверенность распознавания"
+                >
+                  {res.confidence}%
+                </span>
+              )}
             </div>
+            {qWarns.length > 0 && (
+              <div className="mt-1.5 space-y-1">
+                {qWarns.map((w, i) => (
+                  <div
+                    key={i}
+                    className="flex items-center gap-1.5 text-[10px] font-medium text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-1.5 py-1"
+                  >
+                    {w.icon === "dark" ? (
+                      <Moon className="w-3 h-3 shrink-0" />
+                    ) : w.icon === "blur" ? (
+                      <Zap className="w-3 h-3 shrink-0" />
+                    ) : (
+                      <Sun className="w-3 h-3 shrink-0" />
+                    )}
+                    {w.text}
+                  </div>
+                ))}
+              </div>
+            )}
             {res.filledFields.length > 0 && (
               <>
                 <button
@@ -491,13 +625,26 @@ export default function DocScanner({
                 )}
               </>
             )}
-            <div className="mt-1.5">
+            <div className="mt-1.5 flex items-center gap-3">
               <button
                 onClick={() => fileInputsRef.current[slot.id]?.click()}
                 className="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-700 hover:text-emerald-900"
               >
                 <RotateCcw className="w-3 h-3" /> Переснять
               </button>
+              {slotPhotos.length > 0 && (
+                <button
+                  onClick={() =>
+                    setLightbox({
+                      slotId: slot.id,
+                      index: slotPhotos.length - 1,
+                    })
+                  }
+                  className="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-700 hover:text-emerald-900"
+                >
+                  <ImageIcon className="w-3 h-3" /> Проверить по фото
+                </button>
+              )}
             </div>
           </div>
         );
@@ -576,7 +723,8 @@ export default function DocScanner({
               <img
                 src={src}
                 alt={slot.label}
-                className="w-full h-full object-cover"
+                className="w-full h-full object-cover cursor-zoom-in"
+                onClick={() => setLightbox({ slotId: slot.id, index: i })}
               />
               <button
                 onClick={() => removePhoto(slot.id, i)}
@@ -619,8 +767,8 @@ export default function DocScanner({
           if (file) void handleFile(slot, file);
         }}
       >
-        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
-          <div className="flex items-start gap-2 min-w-0 flex-1">
+        <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-start sm:justify-between gap-2">
+          <div className="flex items-start gap-2 min-w-[150px] flex-1">
             <div
               className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${
                 res && res.ok
@@ -731,6 +879,80 @@ export default function DocScanner({
           </div>
         </>
       )}
+
+      {lightbox &&
+        (() => {
+          const slot = slots.find((s) => s.id === lightbox.slotId);
+          const src = (photos[lightbox.slotId] || [])[lightbox.index];
+          const res = results[lightbox.slotId];
+          if (!slot || !src) return null;
+          const ow = res?.ocrWidth || 0;
+          const oh = res?.ocrHeight || 0;
+          const words = res?.words ?? [];
+          return (
+            <div
+              className="fixed inset-0 z-50 bg-black/85 flex items-center justify-center p-4"
+              onClick={() => setLightbox(null)}
+              role="dialog"
+              aria-modal="true"
+              aria-label="Просмотр фото документа"
+            >
+              <div
+                className="relative max-w-full max-h-full"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={src}
+                  alt={slot.label}
+                  className="max-w-full max-h-[85vh] rounded-lg shadow-2xl"
+                />
+                {words.length > 0 && ow > 0 && (
+                  <div className="absolute inset-0">
+                    {words.map((w, i) => {
+                      const left = (w.bbox.x0 / ow) * 100;
+                      const top = (w.bbox.y0 / oh) * 100;
+                      const width = ((w.bbox.x1 - w.bbox.x0) / ow) * 100;
+                      const height = ((w.bbox.y1 - w.bbox.y0) / oh) * 100;
+                      const color =
+                        w.confidence >= 80
+                          ? "border-emerald-400 bg-emerald-400/10"
+                          : w.confidence >= 60
+                          ? "border-amber-400 bg-amber-400/10"
+                          : "border-red-400 bg-red-400/10";
+                      return (
+                        <div
+                          key={i}
+                          className={`absolute border rounded-sm ${color}`}
+                          style={{
+                            left: `${left}%`,
+                            top: `${top}%`,
+                            width: `${width}%`,
+                            height: `${height}%`,
+                          }}
+                          title={`${w.text} (${Math.round(w.confidence)}%)`}
+                        />
+                      );
+                    })}
+                  </div>
+                )}
+                <button
+                  onClick={() => setLightbox(null)}
+                  className="absolute -top-2 -right-2 w-8 h-8 rounded-full bg-white text-slate-700 shadow-lg flex items-center justify-center hover:bg-slate-100"
+                  aria-label="Закрыть"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+                {words.length > 0 && (
+                  <p className="mt-2 text-center text-[11px] text-white/70">
+                    Рамки — распознанные слова: зелёные надёжные,
+                    жёлтые/красные — проверьте вручную
+                  </p>
+                )}
+              </div>
+            </div>
+          );
+        })()}
     </div>
   );
 }
