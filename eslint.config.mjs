@@ -22,6 +22,7 @@ export default [
       'public/**',
       '.storybook/**',
       'storybook-static/**',
+      'src/lib/workers/**',
     ],
     languageOptions: {
       parser: tsParser,
