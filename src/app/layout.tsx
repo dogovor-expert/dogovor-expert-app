@@ -74,8 +74,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     <html lang="ru" className={`${inter.variable} ${playfair.variable} ${jetbrains.variable}`}>
       <head>
         <meta name="csp-nonce" content={nonce} />
-        <link rel="preconnect" href="https://challenges.cloudflare.com" crossOrigin="anonymous" />
-        <link rel="preconnect" href="https://mc.yandex.ru" crossOrigin="anonymous" />
+
         <JsonLd
           data={[
             {
