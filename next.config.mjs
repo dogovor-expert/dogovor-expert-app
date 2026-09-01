@@ -11,6 +11,7 @@ const nextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
   eslint: { ignoreDuringBuilds: true },
+  
   async redirects() {
     return [
       { source: '/:path*', has: [{ type: 'host', value: 'www.dogovor.expert' }], destination: 'https://dogovor.expert/:path*', permanent: true },
@@ -19,7 +20,14 @@ const nextConfig = {
     ]
   },
   webpack: (config, { isServer }) => {
+    // linkedom опционально резолвит 'canvas' (commonjs/canvas.cjs делает
+    // require('canvas') в try/catch). Для DOMPurify-санитизации canvas не
+    // нужен — заглушка вместо модуля, чтобы webpack не падал на резолве.
+    config.resolve.alias = { ...config.resolve.alias, canvas: false };
     if (!isServer) {
+      // Клиентская санитизация идёт через нативный window (см. src/lib/dompurify.ts),
+      // linkedom нужен только на сервере — исключаем из клиентских бандлов.
+      config.resolve.alias = { ...config.resolve.alias, linkedom: false };
       // Emscripten-сборки (onnxruntime-web, opencv-js) статически ссылаются
       // на Node-модули (fs/path) только в небраузерных ветках. Webpack
       // анализирует их и падает «Can't resolve 'fs'». Отключаем фолбэки —
@@ -81,14 +89,14 @@ const nextConfig = {
           lucide: {
             test: /[\\/]node_modules[\\/]lucide-react[\\/]/,
             name: 'lucide',
-            chunks: 'all',
+            chunks: 'async',
             priority: 20,
             enforce: true,
           },
           dateFns: {
             test: /[\\/]node_modules[\\/]date-fns[\\/]/,
             name: 'date-fns',
-            chunks: 'all',
+            chunks: 'async',
             priority: 20,
             enforce: true,
           },

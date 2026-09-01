@@ -1,5 +1,5 @@
 import Mustache from "mustache";
-import DOMPurify from "isomorphic-dompurify";
+import DOMPurify from "@/lib/dompurify";
 import type { LegalTemplate, TemplateField } from "@/data/types";
 import { rublesToWords } from "@/lib/words";
 import { declineFullName, looksLikeFullName } from "@/lib/names";
