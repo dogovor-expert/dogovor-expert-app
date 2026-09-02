@@ -1,4 +1,4 @@
-import { LegalTemplate, TemplateField } from "@/data/types";
+import type { LegalTemplate, TemplateField } from "@/data/types";
 import { rublesToWords } from "@/lib/words";
 
 export interface AuditResult {

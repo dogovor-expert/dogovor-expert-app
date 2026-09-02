@@ -44,7 +44,7 @@ export default function TransportTax() {
         </div>
         <div className="space-y-1">
           <label className="text-[10px] font-mono text-gray-600">Регион</label>
-          <select value={region} onChange={(e) => setRegion(e.target.value as keyof typeof TRANSPORT_REGIONS)}
+          <select value={region} onChange={(e) => setRegion(e.target.value)}
             className="w-full bg-gray-50 border border-gray-200 text-xs py-2.5 px-3 rounded-lg text-gray-900 outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500">
             {Object.entries(TRANSPORT_REGIONS).map(([k, v]) => (
               <option key={k} value={k}>{v.name}</option>

@@ -46,7 +46,7 @@ function extractTaskId(createResp: Json | null): string | null {
     createResp.Id ??
     createResp.Task?.id ??
     createResp.Task?.ID;
-  return id == null ? null : String(id);
+  return id === null || id === undefined ? null : String(id);
 }
 
 function servicesReady(task: Json): boolean {
@@ -110,7 +110,7 @@ export async function collectReport(
   if (create.__error) {
     return { vin, sources: { error: true, error_msg: create.__msg ?? "Нет доступа" } };
   }
-  const id = extractTaskId(create as Json);
+  const id = extractTaskId(create);
   if (!id) {
     return { vin, sources: { error: true, error_msg: "Не получен ID задачи отчёта" } };
   }

@@ -1,4 +1,4 @@
-import { beforeAll, afterAll, afterEach } from 'vitest';
+import {} from 'vitest';
 import { createClient } from '@supabase/supabase-js';
 
 // Глобальная настройка для интеграционных тестов

@@ -71,8 +71,8 @@ export default function SupportLauncher() {
         /* ignore */
       }
     };
-    tick();
-    const iv = setInterval(tick, 12000);
+    void tick();
+    const iv = setInterval(() => { void tick(); }, 12000);
     return () => {
       active = false;
       clearInterval(iv);

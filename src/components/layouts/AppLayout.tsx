@@ -1,5 +1,5 @@
 "use client";
-import { ReactNode, useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, type ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { getAllDrafts } from "@/lib/autosave";
@@ -98,11 +98,11 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    loadProfile();
+    void loadProfile();
   }, [pathname, loadProfile]);
 
   useEffect(() => {
-    const onProfileUpdate = () => loadProfile();
+    const onProfileUpdate = () => void loadProfile();
     window.addEventListener("dogovor:profile", onProfileUpdate);
     return () => window.removeEventListener("dogovor:profile", onProfileUpdate);
   }, [loadProfile]);
@@ -193,7 +193,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
             </div>
             <span className="font-semibold text-gray-900 group-hover:text-brand-600 transition-colors">Dogovor.expert</span>
           </Link>
-          <button onClick={() => setOpen(false)} className="lg:hidden p-1 hover:bg-gray-100 rounded-lg" aria-label="Закрыть меню навигации">
+          <button onClick={() => setOpen(false)} className="lg:hidden p-2.5 hover:bg-gray-100 rounded-lg" aria-label="Закрыть меню навигации">
             <X className="w-5 h-5 text-gray-600" />
           </button>
         </div>
@@ -278,7 +278,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
       <div className="flex-1 flex flex-col min-w-0 max-w-full">
         <header className="h-16 bg-white border-b border-gray-100 flex items-center justify-between px-6 gap-4 flex-shrink-0 max-w-full">
           <div className="flex items-center gap-3">
-            <button onClick={() => setOpen(true)} className="lg:hidden p-1.5 hover:bg-gray-100 rounded-lg" aria-label="Открыть меню навигации">
+            <button onClick={() => setOpen(true)} className="lg:hidden p-2.5 hover:bg-gray-100 rounded-lg" aria-label="Открыть меню навигации">
               <Menu className="w-5 h-5 text-gray-600" />
             </button>
             <HeaderSearch />
@@ -311,7 +311,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
                       Мои документы
                     </Link>
                     <button
-                      onClick={handleSignOut}
+                      onClick={() => void handleSignOut()}
                       className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
                     >
                       Выйти

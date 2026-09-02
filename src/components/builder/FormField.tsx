@@ -325,7 +325,31 @@ export default function FormField({
           {field.label}
         </label>
         <div className="border border-gray-200 rounded-lg overflow-hidden">
-          <table className="w-full text-xs">
+          {/* Мобильные карточки */}
+          <div className="block sm:hidden divide-y divide-gray-100">
+            {items.map((item, idx) => (
+              <div key={idx} className="p-3 space-y-2">
+                {field.repeatingFields!.map((rf) => (
+                  <div key={rf.id} className="flex items-center gap-2">
+                    <span className="text-xs text-gray-600 w-1/3">{rf.label}</span>
+                    <input
+                      type={rf.type === "number" ? "number" : "text"}
+                      value={item[rf.id] || ""}
+                      onChange={(e) => updateItem(idx, rf.id, e.target.value)}
+                      className="flex-1 px-2 py-1 text-xs bg-white border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-brand-500"
+                    />
+                  </div>
+                ))}
+                <div className="flex justify-end">
+                  <button onClick={() => removeItem(idx)} className="p-1 hover:bg-red-50 rounded text-gray-600 hover:text-red-500">
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+          {/* Десктопная таблица */}
+          <table className="w-full text-xs hidden sm:table">
             <thead>
               <tr className="bg-gray-50">
                 {field.repeatingFields.map((rf) => (

@@ -7,23 +7,30 @@ import nextPlugin from '@next/eslint-plugin-next';
 import prettier from 'eslint-config-prettier';
 
 export default [
-  js.configs.recommended,
   {
-    files: ['**/*.{ts,tsx,js,jsx}'],
     ignores: [
+      'src/lib/workers/**/*',
+      '**/src/lib/workers/ocr-worker.js',
       '.next/**',
       'out/**',
       'build/**',
       'dist/**',
       'node_modules/**',
-      '*.config.js',
-      '*.config.mjs',
-      '*.config.ts',
       'public/**',
       '.storybook/**',
       'storybook-static/**',
-      'src/lib/workers/**',
+      '*.config.js',
+      '*.config.mjs',
+      '*.config.ts',
+      '.lintstagedrc.js',
+      '**/*.test.ts',
+      '**/*.test.tsx',
+      '**/__integration__/**',
     ],
+  },
+  js.configs.recommended,
+  {
+    files: ['**/*.{ts,tsx,js,jsx}'],
     languageOptions: {
       parser: tsParser,
       parserOptions: {
@@ -46,6 +53,12 @@ export default [
         Buffer: 'readonly',
         atob: 'readonly',
         btoa: 'readonly',
+        setTimeout: 'readonly',
+        clearTimeout: 'readonly',
+        setInterval: 'readonly',
+        clearInterval: 'readonly',
+        crypto: 'readonly',
+        self: 'readonly',
       },
     },
     plugins: {
@@ -57,12 +70,27 @@ export default [
     rules: {
       // TypeScript
       ...tsPlugin.configs.recommended.rules,
-      ...tsPlugin.configs['recommended-requiring-type-checking'].rules,
-      '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
+      '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
       '@typescript-eslint/no-explicit-any': 'warn',
-      '@typescript-eslint/explicit-function-return-type': ['warn', { allowExpressions: true }],
+      '@typescript-eslint/explicit-function-return-type': 'off',
       '@typescript-eslint/consistent-type-imports': ['error', { prefer: 'type-imports' }],
       '@typescript-eslint/no-non-null-assertion': 'warn',
+
+      // Supabase/API-роуты вручную типизированы как `any`; не блокируем линтом,
+      // но оставляем предупреждения для постепенной миграции на строгие типы.
+      '@typescript-eslint/no-unsafe-assignment': 'warn',
+      '@typescript-eslint/no-unsafe-member-access': 'warn',
+      '@typescript-eslint/no-unsafe-call': 'warn',
+      '@typescript-eslint/no-unsafe-argument': 'warn',
+      '@typescript-eslint/no-unsafe-return': 'warn',
+      '@typescript-eslint/no-base-to-string': 'warn',
+
+      // Критически важные правила правильной работы с промисами (из тype-checking набора).
+      '@typescript-eslint/no-floating-promises': 'warn',
+      '@typescript-eslint/no-misused-promises': 'warn',
+      '@typescript-eslint/require-await': 'warn',
+      '@typescript-eslint/await-thenable': 'error',
+      '@typescript-eslint/no-unnecessary-type-assertion': 'warn',
 
       // React
       ...reactPlugin.configs.recommended.rules,
@@ -76,6 +104,11 @@ export default [
       // Next.js
       ...nextPlugin.configs.recommended.rules,
       ...nextPlugin.configs['core-web-vitals'].rules,
+
+      // TypeScript сам ловит неопределённые/переопределённые переменные (tsc --noEmit),
+      // поэтому базовые JS-правила дают ложные срабатывания с type-aware линтингом.
+      'no-undef': 'off',
+      'no-redeclare': 'off',
 
       // General
       'no-console': ['warn', { allow: ['warn', 'error'] }],

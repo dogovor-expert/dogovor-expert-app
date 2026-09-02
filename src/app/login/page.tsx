@@ -320,7 +320,7 @@ function LoginForm() {
     setError(null);
     setOauthBusy(provider);
     const { error } = await supabase.auth.signInWithOAuth({
-      provider: provider as Provider,
+      provider: provider,
       options: {
         redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`,
       },

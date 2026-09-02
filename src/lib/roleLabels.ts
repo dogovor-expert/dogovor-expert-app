@@ -443,7 +443,7 @@ export function getRoleMetaFor(
   const override = ROLE_OVERRIDES[`${templateId}:${prefix}`];
   const base = ROLE_REGISTRY[prefix];
   if (!base && !override) return undefined;
-  return { ...base, ...override } as RoleMeta;
+  return { ...base, ...override };
 }
 
 /** «ФИО Доверителя» и т.п. Возвращает null, если поле — не ролевое ядро. */

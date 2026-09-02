@@ -220,7 +220,7 @@ export class GoogleDriveProvider implements CloudProvider {
   async listFolders(tokens: CloudTokens, folderPath: string = "/"): Promise<CloudFolder[]> {
     const folderName = folderPath.split("/").pop() || "Dogovor.expert";
     const folders = await this.searchFile(tokens, folderName);
-    let folderId = folders[0]?.id;
+    const folderId = folders[0]?.id;
     if (!folderId) return [];
 
     const q = encodeURIComponent(

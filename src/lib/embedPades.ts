@@ -36,7 +36,7 @@ function latin1Decode(bytes: Uint8Array): string {
   for (let i = 0; i < bytes.length; i += chunk) {
     str += String.fromCharCode.apply(
       null,
-      Array.from(bytes.subarray(i, i + chunk)) as unknown as number[]
+      Array.from(bytes.subarray(i, i + chunk))
     );
   }
   return str;

@@ -179,7 +179,7 @@ export default async function BlankPage({ params }: { params: Promise<{ slug: st
           {previewImages.length > 0 ? (
             <div className="flex flex-col gap-6 p-3 sm:p-4">
               {previewImages.map((src, i) => (
-                // eslint-disable-next-line @next/next/no-img-element
+                 
                 <div
                   key={i}
                   className="bg-white shadow-lg ring-1 ring-gray-200 rounded-lg overflow-hidden"

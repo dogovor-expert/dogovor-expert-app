@@ -82,8 +82,8 @@ export default function ChatPanel({ visitorId }: { visitorId: string }) {
       }
     };
 
-    tick();
-    const iv = setInterval(tick, POLL_MS);
+    void tick();
+    const iv = setInterval(() => { void tick(); }, POLL_MS);
     return () => {
       active = false;
       clearInterval(iv);
@@ -238,7 +238,7 @@ export default function ChatPanel({ visitorId }: { visitorId: string }) {
             onKeyDown={(e) => {
               if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault();
-                send();
+                void send();
               }
             }}
             rows={1}

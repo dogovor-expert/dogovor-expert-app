@@ -392,28 +392,45 @@ export default function BillingPage() {
         <section className="mt-14">
           <h2 className="text-2xl font-bold text-center mb-6 text-gray-900">Сравнение возможностей</h2>
           <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-            <Table variant="default">
-              <TableHead>
-                <TableRow>
-                  <TableHeader>Возможность</TableHeader>
-                  <TableHeader className="text-center">Бесплатный</TableHeader>
-                  <TableHeader className="text-center text-brand-600">PRO</TableHeader>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {COMPARISON.map((row) => (
-                  <TableRow key={row.label}>
-                    <TableCell>{row.label}</TableCell>
-                    <TableCell className={`text-center ${row.free === "✓" ? "text-emerald-500" : row.free === "—" ? "text-slate-300" : "text-xs text-slate-500"}`}>
-                      {row.free}
-                    </TableCell>
-                    <TableCell className={`text-center ${row.pro === "✓" ? "text-emerald-500" : row.pro === "—" ? "text-slate-300" : "text-slate-700 font-medium"}`}>
-                      {row.pro}
-                    </TableCell>
+            <div className="hidden sm:block">
+              <Table variant="default">
+                <TableHead>
+                  <TableRow>
+                    <TableHeader>Возможность</TableHeader>
+                    <TableHeader className="text-center">Бесплатный</TableHeader>
+                    <TableHeader className="text-center text-brand-600">PRO</TableHeader>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHead>
+                <TableBody>
+                  {COMPARISON.map((row) => (
+                    <TableRow key={row.label}>
+                      <TableCell>{row.label}</TableCell>
+                      <TableCell className={`text-center ${row.free === "✓" ? "text-emerald-500" : row.free === "—" ? "text-slate-300" : "text-xs text-slate-500"}`}>
+                        {row.free}
+                      </TableCell>
+                      <TableCell className={`text-center ${row.pro === "✓" ? "text-emerald-500" : row.pro === "—" ? "text-slate-300" : "text-slate-700 font-medium"}`}>
+                        {row.pro}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+            <div className="sm:hidden divide-y divide-gray-100">
+              {COMPARISON.map((row) => (
+                <div key={row.label} className="px-4 py-3 space-y-1">
+                  <p className="text-sm font-medium text-gray-900">{row.label}</p>
+                  <div className="flex justify-between text-xs">
+                    <span className="text-gray-600">Бесплатный</span>
+                    <span className={row.free === "✓" ? "text-emerald-500" : row.free === "—" ? "text-slate-300" : "text-slate-500"}>{row.free}</span>
+                  </div>
+                  <div className="flex justify-between text-xs">
+                    <span className="text-brand-600 font-medium">PRO</span>
+                    <span className={row.pro === "✓" ? "text-emerald-500" : row.pro === "—" ? "text-slate-300" : "text-slate-700 font-medium"}>{row.pro}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </section>
 
@@ -453,35 +470,64 @@ export default function BillingPage() {
             {payments.length === 0 ? (
               <p className="text-sm text-gray-600 py-8 text-center">Платежей пока нет — офорmite PRO, и история появится здесь</p>
             ) : (
-              <Table variant="default">
-                <TableHead>
-                  <TableRow>
-                    <TableHeader>Дата</TableHeader>
-                    <TableHeader>План</TableHeader>
-                    <TableHeader>Сумма</TableHeader>
-                    <TableHeader>Статус</TableHeader>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
+              <>
+                <div className="hidden sm:block">
+                  <Table variant="default">
+                    <TableHead>
+                      <TableRow>
+                        <TableHeader>Дата</TableHeader>
+                        <TableHeader>План</TableHeader>
+                        <TableHeader>Сумма</TableHeader>
+                        <TableHeader>Статус</TableHeader>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {payments.map((p) => {
+                        const status = statusConfig[p.status] ?? statusConfig.failed;
+                        const StatusIcon = status.icon;
+                        return (
+                          <TableRow key={p.id}>
+                            <TableCell className="text-gray-600">{new Date(p.created_at).toLocaleDateString("ru-RU")}</TableCell>
+                            <TableCell className="font-medium text-gray-900 capitalize">{p.meta?.plan ?? "PRO"}</TableCell>
+                            <TableCell className="font-medium text-gray-900">{p.amount.toLocaleString("ru-RU")} ₽</TableCell>
+                            <TableCell>
+                              <Badge variant={status.variant} size="sm" dot>
+                                <StatusIcon className="w-3 h-3" />
+                                {status.label}
+                              </Badge>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </div>
+                <div className="sm:hidden divide-y divide-gray-100">
                   {payments.map((p) => {
                     const status = statusConfig[p.status] ?? statusConfig.failed;
                     const StatusIcon = status.icon;
                     return (
-                      <TableRow key={p.id}>
-                        <TableCell className="text-gray-600">{new Date(p.created_at).toLocaleDateString("ru-RU")}</TableCell>
-                        <TableCell className="font-medium text-gray-900 capitalize">{p.meta?.plan ?? "PRO"}</TableCell>
-                        <TableCell className="font-medium text-gray-900">{p.amount.toLocaleString("ru-RU")} ₽</TableCell>
-                        <TableCell>
+                      <div key={p.id} className="px-4 py-3 space-y-1">
+                        <div className="flex justify-between">
+                          <span className="text-sm font-medium text-gray-900">{new Date(p.created_at).toLocaleDateString("ru-RU")}</span>
                           <Badge variant={status.variant} size="sm" dot>
                             <StatusIcon className="w-3 h-3" />
                             {status.label}
                           </Badge>
-                        </TableCell>
-                      </TableRow>
+                        </div>
+                        <div className="flex justify-between text-xs">
+                          <span className="text-gray-600">План</span>
+                          <span className="font-medium text-gray-900 capitalize">{p.meta?.plan ?? "PRO"}</span>
+                        </div>
+                        <div className="flex justify-between text-xs">
+                          <span className="text-gray-600">Сумма</span>
+                          <span className="font-medium text-gray-900">{p.amount.toLocaleString("ru-RU")} ₽</span>
+                        </div>
+                      </div>
                     );
                   })}
-                </TableBody>
-              </Table>
+                </div>
+              </>
             )}
           </Card>
         )}

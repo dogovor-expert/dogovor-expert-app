@@ -187,7 +187,8 @@ export async function validateCertificate(
     // Валидация цепочки доверия
     let chainValid = false;
     let chainDetails: ChainCertInfo[] = [];
-    if (true /* options.checkChain */) {
+    const checkChain = true;
+    if (checkChain) {
       const chainResult = await validateCertificateChain(cert, cadesplugin);
       chainValid = chainResult.valid;
       chainDetails = chainResult.chain;
@@ -198,7 +199,8 @@ export async function validateCertificate(
 
     // Проверка отзыва (CRL/OCSP)
     let revocationStatus: 'valid' | 'revoked' | 'unknown' | 'offline' = 'unknown';
-    if (true /* options.checkRevocation */) {
+    const shouldCheckRevocation = true;
+    if (shouldCheckRevocation) {
       revocationStatus = await checkRevocation(cert, cadesplugin);
       if (revocationStatus === 'revoked') {
         errors.push('Сертификат отозван (проверка CRL/OCSP)');
@@ -280,7 +282,9 @@ async function getKeyUsage(cert: any, cadesplugin: any): Promise<string[]> {
         if (bits & 0x01) usage.push('decipherOnly');
       }
     }
-  } catch {}
+  } catch {
+    // Игнорируем нечитаемые расширенные атрибуты ключа
+  }
   return usage;
 }
 
@@ -302,7 +306,9 @@ async function getExtendedKeyUsage(cert: any, cadesplugin: any): Promise<string[
         }
       }
     }
-  } catch {}
+  } catch {
+    // Игнорируем нечитаемые OID-атрибуты
+  }
   return usage;
 }
 
@@ -323,7 +329,9 @@ async function hasQualifiedEKU(cert: any, cadesplugin: any): Promise<boolean> {
         }
       }
     }
-  } catch {}
+  } catch {
+    // Игнорируем нечитаемые OID при проверке QС
+  }
   return false;
 }
 
@@ -342,7 +350,7 @@ function formatOID(oid: string): string {
 async function validateCertificateChain(cert: any, cadesplugin: any): Promise<{ valid: boolean; chain: ChainCertInfo[] }> {
   const chain: ChainCertInfo[] = [];
   let currentCert = cert;
-  let currentIssuer = await currentCert.IssuerName;
+  const currentIssuer = await currentCert.IssuerName;
   let isRoot = false;
   let depth = 0;
 
@@ -385,7 +393,9 @@ async function validateCertificateChain(cert: any, cadesplugin: any): Promise<{ 
           }
         }
         await rootStore.Close();
-      } catch {}
+      } catch {
+        // Игнорируем недоступное хранилище доверенных корней
+      }
 
       // Проверяем по имени доверенных УЦ
       const trustedByName = TRUSTED_ROOT_CAS.some(name => issuerName.includes(name));
@@ -458,7 +468,9 @@ async function validateCertificateChain(cert: any, cadesplugin: any): Promise<{ 
     const trusted = lastCert.isTrustedRoot || lastCert.isRoot;
     return { valid: trusted, chain };
   } finally {
-    try { await store.Close(); } catch {}
+    try { await store.Close(); } catch {
+      // Игнорируем ошибку закрытия хранилища
+    }
   }
 }
 
@@ -467,7 +479,7 @@ async function checkRevocation(cert: any, cadesplugin: any): Promise<'valid' | '
     // Пытаемся получить CRL Distribution Points
     const extensions = await cert.Extensions;
     const count = await extensions.Count;
-    let crlUrls: string[] = [];
+    const crlUrls: string[] = [];
 
     for (let i = 1; i <= count; i++) {
       const ext = await extensions.Item(i);
@@ -539,7 +551,9 @@ export async function signPdfWithCryptoPro(
       // Внимание: для полноценного TSA нужно получить токен от TSA сервера
       // Здесь упрощаем — в реальности нужно сделать HTTP запрос к TSA
       console.warn('TSA timestamp требует отдельного HTTP запроса к TSA серверу');
-    } catch {}
+    } catch {
+      // Игнорируем недоступность TSA-атрибута
+    }
   }
 
   const signedData = await cadesplugin.CreateObjectAsync('CAdESCOM.CadesSignedData');
@@ -586,7 +600,7 @@ function uint8ToBase64(bytes: Uint8Array): string {
   for (let i = 0; i < bytes.length; i += chunk) {
     binary += String.fromCharCode.apply(
       null,
-      Array.from(bytes.subarray(i, i + chunk)) as unknown as number[]
+      Array.from(bytes.subarray(i, i + chunk))
     );
   }
   return btoa(binary);

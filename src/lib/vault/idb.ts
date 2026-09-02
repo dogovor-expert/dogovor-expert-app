@@ -21,7 +21,7 @@ export function openVaultDB(): Promise<IDBDatabase> {
       reject(new Error("IndexedDB недоступен в этом окружении"));
       return;
     }
-    const req = indexedDB.open(DB_NAME, DB_VERSION);
+    const req = globalThis.indexedDB.open(DB_NAME, DB_VERSION);
     req.onupgradeneeded = () => {
       const db = req.result;
       if (!db.objectStoreNames.contains(STORE.meta)) {
@@ -35,7 +35,7 @@ export function openVaultDB(): Promise<IDBDatabase> {
       }
     };
     req.onsuccess = () => resolve(req.result);
-    req.onerror = () => reject(req.error);
+    req.onerror = () => reject(new Error(req.error?.message || 'IDB open error'));
   });
   return dbPromise;
 }
@@ -56,16 +56,16 @@ export async function idbGet<T>(
   return new Promise((resolve, reject) => {
     const req = tx(db, store, "readonly").get(key);
     req.onsuccess = () => resolve(req.result as T | undefined);
-    req.onerror = () => reject(req.error);
+    req.onerror = () => reject(new Error(req.error?.message || 'IDB get error'));
   });
 }
 
 export async function idbPut(store: string, value: unknown): Promise<void> {
   const db = await openVaultDB();
   return new Promise((resolve, reject) => {
-    const req = tx(db, store, "readwrite").put(value as any);
+    const req = tx(db, store, "readwrite").put(value);
     req.onsuccess = () => resolve();
-    req.onerror = () => reject(req.error);
+    req.onerror = () => reject(new Error(req.error?.message || 'IDB put error'));
   });
 }
 
@@ -77,7 +77,7 @@ export async function idbDelete(
   return new Promise((resolve, reject) => {
     const req = tx(db, store, "readwrite").delete(key);
     req.onsuccess = () => resolve();
-    req.onerror = () => reject(req.error);
+    req.onerror = () => reject(new Error(req.error?.message || 'IDB delete error'));
   });
 }
 
@@ -86,7 +86,7 @@ export async function idbGetAll<T>(store: string): Promise<T[]> {
   return new Promise((resolve, reject) => {
     const req = tx(db, store, "readonly").getAll();
     req.onsuccess = () => resolve((req.result as T[]) || []);
-    req.onerror = () => reject(req.error);
+    req.onerror = () => reject(new Error(req.error?.message || 'IDB getAll error'));
   });
 }
 
@@ -95,7 +95,7 @@ export async function idbClear(store: string): Promise<void> {
   return new Promise((resolve, reject) => {
     const req = tx(db, store, "readwrite").clear();
     req.onsuccess = () => resolve();
-    req.onerror = () => reject(req.error);
+    req.onerror = () => reject(new Error(req.error?.message || 'IDB clear error'));
   });
 }
 

@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useRef, FormEvent } from "react";
+import { type FormEvent, useState, useEffect, useRef } from "react";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";

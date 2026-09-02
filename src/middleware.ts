@@ -36,7 +36,7 @@ function sessionAal(request: NextRequest): "aal1" | "aal2" | null {
   }
 }
 
-export async function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest): Promise<NextResponse> {
   const { pathname } = request.nextUrl;
   let response = NextResponse.next({ request });
 
@@ -113,8 +113,8 @@ export async function middleware(request: NextRequest) {
   }
 
   const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    process.env.NEXT_PUBLIC_SUPABASE_URL || '',
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '',
     {
       cookies: {
         getAll() {
@@ -148,8 +148,8 @@ export async function middleware(request: NextRequest) {
     let isAdmin = user.app_metadata?.is_admin === true;
     if (!isAdmin) {
       const supabase = createServerClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        process.env.NEXT_PUBLIC_SUPABASE_URL || '',
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '',
         { cookies: { getAll: () => request.cookies.getAll(), setAll: () => {} } }
       );
       const { data: profile } = await supabase

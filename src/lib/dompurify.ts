@@ -3,7 +3,7 @@ import createDOMPurify, { type WindowLike } from "dompurify";
 
 function createLinkedomDOMPurify() {
   const { window } = parseHTML("<!doctype html><html><body></body></html>");
-  return createDOMPurify(window as unknown as WindowLike);
+  return createDOMPurify(window);
 }
 
 /**
@@ -20,7 +20,7 @@ function createLinkedomDOMPurify() {
  */
 const DOMPurify =
   typeof window !== "undefined"
-    ? createDOMPurify(window as unknown as WindowLike)
+    ? createDOMPurify(window)
     : createLinkedomDOMPurify();
 
 export default DOMPurify;

@@ -133,7 +133,7 @@ async function sendViaZohoSmtp(o: SmtpOpts): Promise<boolean> {
     });
     sock.on("close", () => resolve(false));
 
-    (async () => {
+    void (async () => {
       const g = await wait(); // 220 greeting
       if (g.code !== 220) return resolve(false);
       const eh = await cmd(`EHLO ${helo}\r\n`);
@@ -168,8 +168,15 @@ async function sendViaZohoSmtp(o: SmtpOpts): Promise<boolean> {
   });
 }
 
+function isAscii(s: string): boolean {
+  for (let i = 0; i < s.length; i++) {
+    if (s.charCodeAt(i) > 0x7f) return false;
+  }
+  return true;
+}
+
 function mimeEncode(s: string): string {
-  if (/^[\x00-\x7F]*$/.test(s)) return s;
+  if (isAscii(s)) return s;
   return "=?UTF-8?B?" + Buffer.from(s, "utf8").toString("base64") + "?=";
 }
 

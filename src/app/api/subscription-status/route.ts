@@ -42,7 +42,7 @@ export async function GET() {
       .eq("user_id", user.id)
       .order("period_start", { ascending: false, nullsFirst: false })
       .limit(10);
-    subs = (data as SubsRow[] | null) ?? null;
+    subs = (data) ?? null;
     subsCache.set(user.id, { ts: Date.now(), subs });
   }
 

@@ -29,8 +29,7 @@ import {
   listCloudFiles,
   importVaultFromCloud,
 } from "@/lib/cloud/manager";
-import { exportVaultBackup } from "@/lib/vault/keyManager";
-import { initVault, isUnlocked } from "@/lib/vault/keyManager";
+import { exportVaultBackup, initVault, isUnlocked } from "@/lib/vault/keyManager";
 import type { CloudProviderId } from "@/lib/cloud/types";
 import FolderPicker from "@/components/FolderPicker";
 import { usePaywall } from "@/hooks/usePaywall";
@@ -504,8 +503,8 @@ export default function ConnectionsPage() {
           >
             <FolderPicker
               providerId={folderPicker.providerId}
-              onSelect={async (path) => {
-                await folderPicker.onConfirm(path);
+              onSelect={(path) => {
+                folderPicker.onConfirm(path);
                 setFolderPicker(null);
               }}
               onCancel={() => setFolderPicker(null)}

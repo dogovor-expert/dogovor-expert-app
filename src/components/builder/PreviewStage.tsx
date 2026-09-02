@@ -13,8 +13,7 @@ import {
 } from "lucide-react";
 import type { LegalTemplate } from "@/data/types";
 import PdfPreview from "@/components/PdfPreview";
-import type { RefObject } from "react";
-import { useState, useRef, useEffect } from "react";
+import { type RefObject, useState, useRef, useEffect } from "react";
 
 interface PreviewStageProps {
   template: LegalTemplate;
