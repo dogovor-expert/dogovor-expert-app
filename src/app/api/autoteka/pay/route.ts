@@ -1,14 +1,23 @@
 import { NextResponse } from "next/server";
 import { randomUUID } from "crypto";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { withCsrf } from "@/lib/csrf";
+import { isSameOrigin } from "@/lib/admin-auth";
+import { limiters, checkRateLimit, rateLimitResponse } from "@/lib/ratelimit";
 
 const STD_PRICE = 199;
 const PREM_PRICE = 299;
 const VIN_RE = /^[A-HJ-NPR-Z0-9]{17}$/;
 const PRO_MONTHLY_FREE = 5;
 
-async function isProUser(admin: any, userId: string): Promise<boolean> {
+interface SubscriptionRow {
+  status?: unknown;
+  period_end?: unknown;
+}
+
+async function isProUser(admin: SupabaseClient, userId: string): Promise<boolean> {
   const { data: subs } = await admin
     .from("subscriptions")
     .select("status, period_end")
@@ -17,19 +26,26 @@ async function isProUser(admin: any, userId: string): Promise<boolean> {
     .limit(5);
   const now = new Date();
   return (subs ?? []).some(
-    (s: any) =>
+    (s: SubscriptionRow) =>
       s.status === "active" &&
       s.period_end &&
       new Date(String(s.period_end)) >= now
   );
 }
 
-export async function POST(req: Request) {
+async function postHandler(req: Request) {
+  if (!isSameOrigin(req)) {
+    return NextResponse.json({ error: "forbidden" }, { status: 403 });
+  }
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+
+  // Rate-limit: создание платежа — 5/мин на user.id
+  const rl = await checkRateLimit(limiters.authAction, user.id);
+  if (!rl.ok) return rateLimitResponse(rl.retryAfter);
 
   const body = await req.json().catch(() => null);
   const vin = String(body?.vin ?? "").toUpperCase().trim();
@@ -77,7 +93,7 @@ export async function POST(req: Request) {
       if (used < PRO_MONTHLY_FREE) {
         const { collectReport } = await import("@/lib/tronk");
         const bundle = await collectReport(vin, premium);
-        const ready = Boolean((bundle.sources as any)?.reportjson);
+        const ready = Boolean(bundle.sources?.reportjson);
         const reportRow = await admin
           .from("reports")
           .insert({
@@ -140,7 +156,7 @@ export async function POST(req: Request) {
     const detail = await res.text().catch(() => "");
     console.error("[autoteka/pay] YooKassa create payment failed", res.status, detail);
     let providerDetail = "";
-    try { const j = JSON.parse(detail); providerDetail = j.description || j.code || detail; } catch { providerDetail = detail; }
+    try { const j: unknown = JSON.parse(detail); const desc = (j as { description?: unknown }).description; const code = (j as { code?: unknown }).code; providerDetail = (typeof desc === "string" && desc) || (typeof code === "string" && code) || detail; } catch { providerDetail = detail; }
     return NextResponse.json({ error: "provider_error", yookassa_status: res.status, detail: providerDetail }, { status: 502 });
   }
   const payment = await res.json();
@@ -184,3 +200,5 @@ export async function POST(req: Request) {
     report_id: reportRow.id,
   });
 }
+
+export const POST = withCsrf(postHandler);

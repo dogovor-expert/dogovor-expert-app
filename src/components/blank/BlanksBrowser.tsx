@@ -46,7 +46,7 @@ export default function BlanksBrowser({
     }
     return categories
       .filter((c) => map.has(c.id))
-      .map((c) => ({ ...c, items: map.get(c.id)! }));
+      .map((c) => ({ ...c, items: map.get(c.id) ?? [] }));
   }, [filtered, categories]);
 
   const showGrouped = activeCat === "all" && !q;

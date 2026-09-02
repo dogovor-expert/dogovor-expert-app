@@ -3,13 +3,23 @@ import { randomUUID } from "crypto";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { currentProPrice } from "@/lib/pricing";
+import { withCsrf } from "@/lib/csrf";
+import { isSameOrigin } from "@/lib/admin-auth";
+import { limiters, checkRateLimit, rateLimitResponse } from "@/lib/ratelimit";
 
-export async function POST(req: Request) {
+async function postHandler(req: Request) {
+  if (!isSameOrigin(req)) {
+    return NextResponse.json({ error: "forbidden" }, { status: 403 });
+  }
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+
+  // Rate-limit: создание платежа — 5/мин на user.id (защита от спама YooKassa)
+  const rl = await checkRateLimit(limiters.authAction, user.id);
+  if (!rl.ok) return rateLimitResponse(rl.retryAfter);
 
   const shopId = (process.env.YOOKASSA_SHOP_ID ?? "").trim();
   const secretKey = (process.env.YOOKASSA_SECRET_KEY ?? "").trim();
@@ -78,3 +88,5 @@ export async function POST(req: Request) {
     payment_id: data.id,
   });
 }
+
+export const POST = withCsrf(postHandler);

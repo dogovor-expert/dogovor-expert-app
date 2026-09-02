@@ -5,8 +5,9 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { currentProPrice } from "@/lib/pricing";
 import { isSameOrigin } from "@/lib/admin-auth";
 import { limiters, clientIp, checkRateLimit, rateLimitResponse } from "@/lib/ratelimit";
+import { withCsrf } from "@/lib/csrf";
 
-export async function POST(req: Request) {
+async function postHandler(req: Request) {
   // CSRF: реальное списание с сохранённой карты допустимо только с same-origin.
   if (!isSameOrigin(req)) return NextResponse.json({ error: "forbidden" }, { status: 403 });
 
@@ -86,3 +87,5 @@ export async function POST(req: Request) {
     return_url: `${proto}://${host}/billing?renewed=1`,
   });
 }
+
+export const POST = withCsrf(postHandler);

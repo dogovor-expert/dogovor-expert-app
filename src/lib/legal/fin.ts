@@ -53,7 +53,10 @@ export function ndflTax(annualIncome: number, children: number): { tax: number; 
     }
     taxable = Math.max(0, annualIncome - deductions * 12);
   }
-  const bracket = NDFL_BRACKETS.find((b) => taxable <= b.upTo)!;
+  const bracket = NDFL_BRACKETS.find((b) => taxable <= b.upTo);
+  if (!bracket) {
+    throw new Error(`No NDFL bracket for taxable=${taxable}`);
+  }
   return { tax: Math.max(0, taxable * bracket.rate / 100 - bracket.subtract), deductions };
 }
 
@@ -74,8 +77,6 @@ export function usnTax(income: number, expenses: number, mode: "income" | "incom
   usnLost: boolean;
 } {
   const rate = mode === "income" ? 6 : 15;
-  const tax = mode === "income" ? income * 0.06 : Math.max(income * 0.15 - expenses * 0, income * 0.15 - 0);
-  const incomeMinusTax = Math.max(0, income * 0.15);
   const taxBase = mode === "income" ? income * 0.06 : (income - expenses) * 0.15;
   const minTax = mode === "incomeMinus" ? income * 0.01 : 0;
   let vatStatus: "no" | "rate5" | "rate7" = "no";
@@ -179,7 +180,10 @@ export function transportTax(power: number, region: keyof typeof TRANSPORT_REGIO
   luxury: number;
 } {
   const rates = TRANSPORT_REGIONS[region]?.rates ?? TRANSPORT_FEDERAL_RATES;
-  const bracket = rates.find((r) => power <= r.upTo)!;
+  const bracket = rates.find((r) => power <= r.upTo);
+  if (!bracket) {
+    throw new Error(`No transport tax bracket for power=${power}`);
+  }
   const tax = Math.round(power * bracket.rate * months / 12 * luxuryCoef * 100) / 100;
   return { rate: bracket.rate, tax, luxury: luxuryCoef };
 }

@@ -12,6 +12,16 @@ import ExportButton from "@/components/admin/ExportButton";
 const fmt = (s?: string | null) =>
   s ? new Date(s).toLocaleString("ru-RU", { day: "2-digit", month: "2-digit", year: "2-digit" }) : "—";
 
+type SubscriptionRow = {
+  id: string;
+  user_id: string;
+  plan: string;
+  status: string;
+  period_start: string | null;
+  period_end: string | null;
+  auto_renewal: boolean;
+};
+
 export const dynamic = "force-dynamic";
 
 export default async function AdminSubscriptionsPage({
@@ -33,7 +43,7 @@ export default async function AdminSubscriptionsPage({
     .limit(300);
 
   const filtered = (subs ?? []).filter(
-    (s: any) =>
+    (s: SubscriptionRow) =>
       (!status || s.status === status) &&
       (!q || (emailById.get(s.user_id) ?? "").toLowerCase().includes(q))
   );
@@ -80,7 +90,7 @@ export default async function AdminSubscriptionsPage({
             </TableRow>
           </TableHead>
           <TableBody>
-            {filtered.map((s: any) => (
+            {filtered.map((s: SubscriptionRow) => (
               <TableRow key={s.id}>
                 <TableCell className="font-medium text-gray-900">{emailById.get(s.user_id) || s.user_id}</TableCell>
                 <TableCell>{s.plan}</TableCell>

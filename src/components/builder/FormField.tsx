@@ -284,6 +284,7 @@ export default function FormField({
   }
 
   if (field.type === "repeating" && field.repeatingFields) {
+    const repeatingFields = field.repeatingFields;
     let items: Record<string, string>[] = [];
     try {
       items = JSON.parse(value || "[]");
@@ -293,7 +294,7 @@ export default function FormField({
 
     const addItem = () => {
       const newItem: Record<string, string> = {};
-      field.repeatingFields!.forEach((rf) => {
+      repeatingFields.forEach((rf) => {
         newItem[rf.id] = rf.defaultValue || "";
       });
       const newItems = [...items, newItem];
@@ -329,7 +330,7 @@ export default function FormField({
           <div className="block sm:hidden divide-y divide-gray-100">
             {items.map((item, idx) => (
               <div key={idx} className="p-3 space-y-2">
-                {field.repeatingFields!.map((rf) => (
+                {repeatingFields.map((rf) => (
                   <div key={rf.id} className="flex items-center gap-2">
                     <span className="text-xs text-gray-600 w-1/3">{rf.label}</span>
                     <input
@@ -367,7 +368,7 @@ export default function FormField({
             <tbody>
               {items.map((item, idx) => (
                 <tr key={idx} className="hover:bg-gray-50">
-                  {field.repeatingFields!.map((rf) => (
+                  {repeatingFields.map((rf) => (
                     <td key={rf.id} className="px-1 py-1 border-b">
                       <input
                         type={rf.type === "number" ? "number" : "text"}

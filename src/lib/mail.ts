@@ -110,12 +110,14 @@ async function sendViaZohoSmtp(o: SmtpOpts): Promise<boolean> {
       if (pending && responses.length) {
         const p = pending;
         pending = null;
-        p(responses.shift()!);
+        const next = responses.shift();
+        if (next) p(next);
       }
     };
     const wait = () =>
       new Promise<{ code: number; text: string }>((res) => {
-        if (responses.length) res(responses.shift()!);
+        const next = responses.shift();
+        if (next) res(next);
         else pending = res;
       });
     const cmd = (c: string) =>

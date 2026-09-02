@@ -53,7 +53,7 @@ function claimSign(): string {
 </div>`;
 }
 
-function claimCommon(sumWords: boolean): string {
+function claimCommon(_sumWords: boolean): string {
   return `
   <p class="mb-4 text-justify">
     В связи с изложенным, руководствуясь ст. 309, 310 ГК РФ, требую: исполнить обязательство и уплатить денежные средства в размере

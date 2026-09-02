@@ -3,14 +3,12 @@ import { randomUUID } from "crypto";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { limiters, clientIp, checkRateLimit, rateLimitResponse } from "@/lib/ratelimit";
 import { getAdminUser, isSameOrigin } from "@/lib/admin-auth";
+import { withCsrf } from "@/lib/csrf";
 import { logAdminAction } from "@/lib/audit";
 import { SUPPORT_EMAIL } from "@/lib/site";
 import { sendTelegram } from "@/lib/mail";
 import { feedbackSchema, validateBody } from "@/lib/validations/api";
 
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const TYPES = ["doc_error", "site_bug", "feature_request", "other"] as const;
-const TOOLS = ["Автотека", "ОСАГО", "Конвертер", "Калькуляторы", "Сканер документов", "Личный кабинет", "Другое"];
 const TYPE_LABELS: Record<string, string> = {
   doc_error: "Ошибка в документе",
   site_bug: "Не работает функция сайта",
@@ -19,7 +17,10 @@ const TYPE_LABELS: Record<string, string> = {
 };
 
 const esc = (s: unknown) =>
-  String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c] as string));
+  String(typeof s === "object" && s !== null ? JSON.stringify(s) : (s ?? "")).replace(
+    /[&<>"]/g,
+    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c] as string)
+  );
 
 async function sendNotification(p: {
   ticketNo: string; type: string; docName: string | null; tool: string | null;
@@ -87,7 +88,10 @@ async function sendNotification(p: {
   }
 }
 
-export async function POST(req: Request) {
+async function postHandler(req: Request) {
+  if (!isSameOrigin(req)) {
+    return NextResponse.json({ error: "forbidden" }, { status: 403 });
+  }
   const rl = await checkRateLimit(limiters.feedbackForm, clientIp(req));
   if (!rl.ok) return rateLimitResponse(rl.retryAfter);
 
@@ -108,40 +112,44 @@ export async function POST(req: Request) {
   if (type === "doc_error" && !docSlug) {
     return NextResponse.json({ error: "doc_required" }, { status: 400 });
   }
-  if (type === "site_bug" && (!tool || !TOOLS.includes(tool))) {
+
+  if (type === "site_bug" && !tool) {
     return NextResponse.json({ error: "tool_required" }, { status: 400 });
   }
 
-  const supabase = createAdminClient();
-  const id = randomUUID();
-  const ticketNo = "FB-" + id.replace(/-/g, "").slice(0, 6).toUpperCase();
+  // ticket_no: случайный короткий, удобочитаемый
+  const ticketNo = "F-" + randomUUID().split("-")[0].toUpperCase();
 
-  // Скриншоты -> Storage (C5: бакет приватный, храним путь, отдаём через signed URL)
+  // Скриншоты: читаем как base64 (data-URL). Лимит 5 файлов, 5 МБ каждый.
+  const files = Array.isArray(rawBody.screenshots) ? rawBody.screenshots : [];
+  const supabase = createAdminClient();
   const screenshotPaths: string[] = [];
-  const shots = body.screenshots ?? [];
-  for (const s of shots) {
-    if (!s.dataUrl.startsWith("data:")) continue;
-    const m = s.dataUrl.match(/^data:(.*?);base64,(.*)$/);
+  for (let i = 0; i < files.length && i < 5; i++) {
+    const f = files[i];
+    if (!f || typeof f !== "object" || typeof f.dataUrl !== "string" || typeof f.name !== "string") continue;
+    const m = /^data:([a-z0-9+/.-]+);base64,(.+)$/i.exec(f.dataUrl);
     if (!m) continue;
     const mime = m[1];
     if (!["image/png", "image/jpeg", "image/webp"].includes(mime)) continue;
-    const base64Data = m[2];
-    if (base64Data.length > 7_000_000) continue;
-    const buf = Buffer.from(base64Data, "base64");
+    const b64 = m[2];
+    const buf = Buffer.from(b64, "base64");
     if (buf.length > 5 * 1024 * 1024) continue;
-    const ext = mime === "image/png" ? "png" : mime === "image/webp" ? "webp" : "jpg";
-    const path = `${id}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
-    const { error: upErr } = await supabase.storage
-      .from("feedback")
-      .upload(path, buf, { contentType: mime, upsert: false });
-    if (upErr) continue;
-    screenshotPaths.push(path);
+    const ext = mime === "image/png" ? "png" : mime === "image/jpeg" ? "jpg" : "webp";
+    const path = `${ticketNo}/${Date.now()}-${i}.${ext}`;
+    const { error: upErr } = await supabase.storage.from("feedback").upload(path, buf, {
+      contentType: mime,
+      upsert: false,
+    });
+    if (!upErr) screenshotPaths.push(path);
   }
 
-  const tech = body.tech ?? null;
+  const tech = {
+    url: typeof rawBody.url === "string" ? rawBody.url.slice(0, 500) : null,
+    ua: typeof rawBody.ua === "string" ? rawBody.ua.slice(0, 500) : null,
+    screen: rawBody.screen && typeof rawBody.screen === "object" ? rawBody.screen : null,
+  };
 
   const { error } = await supabase.from("feedback").insert({
-    id,
     ticket_no: ticketNo,
     type,
     doc_slug: docSlug ?? null,
@@ -149,7 +157,8 @@ export async function POST(req: Request) {
     tool: tool ?? null,
     message: body.message,
     email: body.email,
-    screenshots: screenshotPaths.length ? screenshotPaths : null,
+    user_id: null, // обезличено
+    screenshots: screenshotPaths,
     tech,
     consent: true,
     status: "new",
@@ -160,6 +169,8 @@ export async function POST(req: Request) {
 
   return NextResponse.json({ ok: true, ticket_no: ticketNo });
 }
+
+export const POST = withCsrf(postHandler);
 
 // ===== Админ: список заявок с фильтрами =====
 export async function GET(req: Request) {
@@ -200,7 +211,7 @@ export async function GET(req: Request) {
 }
 
 // ===== Админ: смена статуса заявки =====
-export async function PATCH(req: Request) {
+async function patchHandler(req: Request) {
   if (!isSameOrigin(req)) return NextResponse.json({ error: "forbidden" }, { status: 403 });
 
   const rl = await checkRateLimit(limiters.adminAction, clientIp(req));
@@ -229,3 +240,5 @@ export async function PATCH(req: Request) {
   });
   return NextResponse.json({ ok: true });
 }
+
+export const PATCH = withCsrf(patchHandler);

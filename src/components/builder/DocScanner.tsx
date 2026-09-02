@@ -423,9 +423,8 @@ export default function DocScanner({
     }
     setScanningSlot(null);
     setProgress((p) => ({ ...p, [slot.id]: null }));
-    if (fileInputsRef.current[slot.id]) {
-      fileInputsRef.current[slot.id]!.value = "";
-    }
+    const input = fileInputsRef.current[slot.id];
+    if (input) input.value = "";
   };
 
   const retrySlot = (slot: DocSlot) => {

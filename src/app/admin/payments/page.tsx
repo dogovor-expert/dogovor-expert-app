@@ -17,6 +17,17 @@ const money = (amount: number, currency: string) =>
     ? `${(amount / 100).toLocaleString("ru-RU")} ₽`
     : `${(amount / 100).toLocaleString("ru-RU")} ${currency}`;
 
+type PaymentRow = {
+  id: string;
+  user_id: string;
+  amount: number;
+  currency: string;
+  provider: string;
+  provider_id: string | null;
+  status: string;
+  created_at: string;
+};
+
 export const dynamic = "force-dynamic";
 
 export default async function AdminPaymentsPage({
@@ -38,7 +49,7 @@ export default async function AdminPaymentsPage({
     .limit(300);
 
   const filtered = (pays ?? []).filter(
-    (p: any) =>
+    (p: PaymentRow) =>
       (!status || p.status === status) &&
       (!q || (emailById.get(p.user_id) ?? "").toLowerCase().includes(q))
   );
@@ -79,7 +90,7 @@ export default async function AdminPaymentsPage({
             </TableRow>
           </TableHead>
           <TableBody>
-            {filtered.map((p: any) => (
+            {filtered.map((p: PaymentRow) => (
               <TableRow key={p.id}>
                 <TableCell className="font-medium text-gray-900">{emailById.get(p.user_id) || p.user_id}</TableCell>
                 <TableCell className="font-semibold">{money(p.amount, p.currency)}</TableCell>

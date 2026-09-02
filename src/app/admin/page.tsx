@@ -9,6 +9,10 @@ import { Users, ShieldCheck, Banknote, Package, MessageSquare, Inbox } from "luc
 const fmt = (s?: string | null) =>
   s ? new Date(s).toLocaleString("ru-RU", { day: "2-digit", month: "2-digit", year: "2-digit", hour: "2-digit", minute: "2-digit" }) : "—";
 
+type PaymentRow = { id: string; user_id: string; amount: number; status: string; created_at: string };
+type FeedbackRow = { id: string; ticket_no: string | null; email: string; status: string };
+type LeadRow = { id: string; brand: string; status: string; created_at: string };
+
 export const dynamic = "force-dynamic";
 
 export default async function AdminOverviewPage() {
@@ -16,7 +20,7 @@ export default async function AdminOverviewPage() {
   const admin = createAdminClient();
   const { users, emailById } = await getDirectory();
 
-  const [subsRes, paysRes, leadsRes, fbRes, subsActive, paysPaid, leadsTotal, fbNew] = await Promise.all([
+  const [_subsRes, paysRes, leadsRes, fbRes, subsActive, paysPaid, leadsTotal, fbNew] = await Promise.all([
     admin.from("subscriptions").select("id, user_id, plan, status, period_end").order("created_at", { ascending: false }).limit(5),
     admin.from("payments").select("id, user_id, amount, currency, provider, status, created_at").order("created_at", { ascending: false }).limit(5),
     admin.from("leads").select("id, brand, status, created_at").order("created_at", { ascending: false }).limit(5),
@@ -86,7 +90,7 @@ export default async function AdminOverviewPage() {
             <Banknote className="w-4 h-4 text-brand-500" /> Последние платежи
           </h2>
           <div className="divide-y divide-gray-100">
-            {(paysRes.data ?? []).map((p: any) => (
+            {(paysRes.data ?? []).map((p: PaymentRow) => (
               <div key={p.id} className="py-2.5 flex items-center justify-between">
                 <div className="min-w-0">
                   <p className="text-sm font-medium text-gray-900 truncate">{emailById.get(p.user_id) || p.user_id}</p>
@@ -107,7 +111,7 @@ export default async function AdminOverviewPage() {
             <MessageSquare className="w-4 h-4 text-brand-500" /> Обратная связь
           </h2>
           <div className="divide-y divide-gray-100">
-            {(fbRes.data ?? []).map((f: any) => (
+            {(fbRes.data ?? []).map((f: FeedbackRow) => (
               <div key={f.id} className="py-2.5 flex items-center justify-between">
                 <div className="min-w-0">
                   <p className="text-sm font-medium text-gray-900 truncate">{f.ticket_no}</p>
@@ -125,7 +129,7 @@ export default async function AdminOverviewPage() {
             <Inbox className="w-4 h-4 text-brand-500" /> Лиды (растаможка)
           </h2>
           <div className="divide-y divide-gray-100">
-            {(leadsRes.data ?? []).map((l: any) => (
+            {(leadsRes.data ?? []).map((l: LeadRow) => (
               <div key={l.id} className="py-2.5 flex items-center justify-between">
                 <div className="min-w-0">
                   <p className="text-sm font-medium text-gray-900 truncate">{l.brand}</p>

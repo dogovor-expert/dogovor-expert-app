@@ -6,14 +6,13 @@ import { Card } from "@/components/ui/Card";
 import {
   FolderOpen,
   ChevronRight,
-  ChevronLeft,
   Plus,
   Check,
   X,
   Loader2,
   ArrowUp,
 } from "lucide-react";
-import type { CloudProvider, CloudTokens, CloudFolder } from "@/lib/cloud/types";
+import type { CloudFolder } from "@/lib/cloud/types";
 import { getProvider, loadCloudTokens, isTokenValid } from "@/lib/cloud/manager";
 
 interface FolderPickerProps {
@@ -58,7 +57,7 @@ export default function FolderPicker({ providerId, onSelect, onCancel, initialPa
   }, [providerId, currentPath]);
 
   useEffect(() => {
-    loadFolders();
+    void loadFolders();
   }, [loadFolders]);
 
   const handleFolderClick = (folder: CloudFolder) => {
@@ -151,10 +150,12 @@ export default function FolderPicker({ providerId, onSelect, onCancel, initialPa
             value={newFolderName}
             onChange={(e) => setNewFolderName(e.target.value)}
             placeholder="Имя папки"
-            onKeyDown={(e) => e.key === "Enter" && handleCreateFolder()}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") void handleCreateFolder();
+            }}
             autoFocus
           />
-          <Button size="sm" onClick={handleCreateFolder} disabled={creating || !newFolderName.trim()}>
+          <Button size="sm" onClick={() => void handleCreateFolder()} disabled={creating || !newFolderName.trim()}>
             {creating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
           </Button>
           <Button variant="ghost" size="sm" onClick={() => setCreating(false)}>

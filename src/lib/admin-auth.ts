@@ -14,9 +14,16 @@ export interface AdminUser {
  */
 export async function getAdminUser(): Promise<AdminUser | null> {
   const cookieStore = await cookies();
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!url || !anonKey) {
+    throw new Error(
+      "Missing environment variables: NEXT_PUBLIC_SUPABASE_URL / NEXT_PUBLIC_SUPABASE_ANON_KEY"
+    );
+  }
   const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    url,
+    anonKey,
     {
       cookies: {
         getAll: () => cookieStore.getAll(),
@@ -65,7 +72,12 @@ export async function requireAdminApi(): Promise<ReturnType<typeof createAdminCl
 /** Базовая CSRF-защита: разрешаем только same-origin запросы. */
 export function isSameOrigin(req: Request): boolean {
   const origin = req.headers.get("origin");
-  if (!origin) return true; // same-origin навигация/чтение может не слать Origin
+  // Раньше: if (!origin) return true. Это был гэп: атакующий через
+  // fetch с credentials:'omit' мог не слать Origin и пройти.
+  // Теперь: без Origin — отказ для мутирующих контекстов.
+  // Чтение/GET без Origin допустимо (браузер не шлёт Origin на GET same-origin),
+  // но конкретные API-роуты дополнительно используют withCsrf.
+  if (!origin) return false;
   try {
     const site = process.env.NEXT_PUBLIC_SITE_URL || "https://dogovor.expert";
     return new URL(origin).origin === new URL(site).origin;

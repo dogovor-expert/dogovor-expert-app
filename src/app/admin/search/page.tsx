@@ -9,6 +9,11 @@ const fmt = (s?: string | null) =>
 
 export const dynamic = "force-dynamic";
 
+type SearchUser = { id: string; full_name: string | null; company: string | null; inn: string | null };
+type SearchFeedback = { id: string; ticket_no: string | null; type: string; email: string; message: string | null; status: string; created_at: string };
+type SearchLead = { id: string; service: string; brand: string; vin: string | null; phone: string | null; status: string; created_at: string };
+type SearchPayment = { id: string; user_id: string; amount: number; currency: string; provider: string; status: string; created_at: string };
+
 export default async function AdminSearchPage({
   searchParams,
 }: {
@@ -20,10 +25,10 @@ export default async function AdminSearchPage({
   const safe = q.replace(/[^a-zA-Zа-яА-ЯёЁ0-9@.\s-]/g, "");
   const sb = createAdminClient();
 
-  let users: any[] = [];
-  let feedback: any[] = [];
-  let leads: any[] = [];
-  let payments: any[] = [];
+  let users: SearchUser[] = [];
+  let feedback: SearchFeedback[] = [];
+  let leads: SearchLead[] = [];
+  let payments: SearchPayment[] = [];
 
   if (q.length >= 2) {
     const like = `%${safe}%`;

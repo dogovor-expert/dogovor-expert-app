@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import crypto from "node:crypto";
 import { limiters, clientIp, checkRateLimit, rateLimitResponse } from "@/lib/ratelimit";
+import { withCsrf } from "@/lib/csrf";
+import { isSameOrigin } from "@/lib/admin-auth";
 import {
   getThread,
   setThread,
@@ -82,7 +84,10 @@ export async function GET(req: Request) {
   return NextResponse.json({ messages });
 }
 
-export async function POST(req: Request) {
+async function postHandler(req: Request) {
+  if (!isSameOrigin(req)) {
+    return NextResponse.json({ error: "forbidden" }, { status: 403 });
+  }
   const rl = await checkRateLimit(limiters.chat, clientIp(req));
   if (!rl.ok) return rateLimitResponse(rl.retryAfter);
 
@@ -168,3 +173,5 @@ export async function POST(req: Request) {
   });
   return res;
 }
+
+export const POST = withCsrf(postHandler);

@@ -3,10 +3,10 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isSameOrigin } from "@/lib/admin-auth";
 import { limiters, clientIp, checkRateLimit, rateLimitResponse } from "@/lib/ratelimit";
+import { withCsrf } from "@/lib/csrf";
 import { sendEmail, sendTelegram, SUPPORT_EMAIL } from "@/lib/mail";
 import { leadSchema, validateBody } from "@/lib/validations/api";
 
-const SERVICES = ["docs", "full", "kasko"] as const;
 const STATUSES = ["new", "paid", "docs", "filed", "done", "canceled"] as const;
 
 export async function POST(req: Request) {
@@ -75,7 +75,7 @@ export async function GET() {
   return NextResponse.json({ data });
 }
 
-export async function PATCH(req: Request) {
+async function patchHandler(req: Request) {
   // CSRF: смена статуса лида — только same-origin.
   if (!isSameOrigin(req)) return NextResponse.json({ error: "forbidden" }, { status: 403 });
 
@@ -97,3 +97,5 @@ export async function PATCH(req: Request) {
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ data });
 }
+
+export const PATCH = withCsrf(patchHandler);

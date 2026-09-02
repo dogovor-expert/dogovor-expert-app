@@ -1,7 +1,6 @@
 import type { LegalTemplate } from "../types";
 import {
   sideFields,
-  sideBlock,
   rentIntro,
   commonClauses,
   rentSign,

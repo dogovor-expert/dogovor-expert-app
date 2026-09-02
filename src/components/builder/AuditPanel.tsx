@@ -73,19 +73,6 @@ function getAuditIcon(type: string) {
   }
 }
 
-function getAuditBg(type: string) {
-  switch (type) {
-    case "error":
-      return "bg-red-50 border-red-200";
-    case "warning":
-      return "bg-amber-50 border-amber-200";
-    case "success":
-      return "bg-emerald-50 border-emerald-200";
-    default:
-      return "bg-gray-50 border-gray-200";
-  }
-}
-
 export default function AuditPanel({
   results,
   onResultClick,

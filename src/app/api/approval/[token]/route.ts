@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { limiters, clientIp, checkRateLimit, rateLimitResponse } from "@/lib/ratelimit";
+import { isSameOrigin } from "@/lib/admin-auth";
+import { withCsrf } from "@/lib/csrf";
 
 export async function GET(
   req: Request,
@@ -45,10 +47,13 @@ export async function GET(
   });
 }
 
-export async function PUT(
+async function putHandler(
   req: Request,
   { params }: { params: Promise<{ token: string }> }
 ) {
+  if (!isSameOrigin(req)) {
+    return NextResponse.json({ error: "forbidden" }, { status: 403 });
+  }
   const { token } = await params;
   const rl = await checkRateLimit(limiters.publicForm, clientIp(req) + ":" + token);
   if (!rl.ok) return rateLimitResponse(rl.retryAfter);
@@ -88,11 +93,16 @@ export async function PUT(
   return NextResponse.json({ ok: true });
 }
 
+export const PUT = withCsrf(putHandler);
+
 /** Владелец применил правки контрагента — сбрасываем флаг changed. */
-export async function PATCH(
+async function patchHandler(
   req: Request,
   { params }: { params: Promise<{ token: string }> }
 ) {
+  if (!isSameOrigin(req)) {
+    return NextResponse.json({ error: "forbidden" }, { status: 403 });
+  }
   const { token } = await params;
   const supabase = await createClient();
   const {
@@ -120,3 +130,5 @@ export async function PATCH(
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ ok: true });
 }
+
+export const PATCH = withCsrf(patchHandler);

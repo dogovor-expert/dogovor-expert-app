@@ -9,12 +9,31 @@ export interface SuggestOption {
 
 type SuggestOp = "suggest-fms-unit" | "suggest-address" | "suggest-fio" | "find-fio" | "suggest-passport";
 
+interface DadataData {
+  surname?: string;
+  name?: string;
+  patronymic?: string;
+  gender?: string;
+  birthdate?: string;
+  passport_series?: string;
+  passport_number?: string;
+  passport_issue_date?: string;
+  passport_issued_by?: string;
+  passport_code?: string;
+  snils?: string;
+  inn?: string;
+  city_with_type?: string;
+  settlement_with_type?: string;
+  region_with_type?: string;
+  postal_code?: string;
+}
+
 interface DadataSuggestion {
   value?: string;
   unrestricted_value?: string;
   code?: string;
   name?: string;
-  data?: Record<string, unknown>;
+  data?: DadataData;
 }
 
 const DADATA_HOST = "https://suggestions.dadata.ru/suggestions/api/4_1/rs";

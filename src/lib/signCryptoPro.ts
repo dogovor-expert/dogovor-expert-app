@@ -1,8 +1,89 @@
 'use client';
 
+// Minimal interfaces for CryptoPro cadesplugin COM objects
+export interface CadesPlugin {
+  CreateObjectAsync(progId: string): Promise<CadesObject>;
+  CAPICOM_CURRENT_USER_STORE: number;
+  CAPICOM_MY_STORE: number;
+  CAPICOM_CA_STORE: number;
+  CAPICOM_ROOT_STORE: number;
+  CAPICOM_STORE_OPEN_MAXIMUM_ALLOWED: number;
+  CAPICOM_CERTIFICATE_INCLUDE_WHOLE_CHAIN: number;
+  CAPICOM_AUTHENTICATED_ATTRIBUTE_SIGNING_TIME: number;
+  CAPICOM_AUTHENTICATED_ATTRIBUTE_SIGNATURE_TIMESTAMP_TOKEN: number;
+  CADESCOM_BASE64_TO_BINARY: number;
+  CADESCOM_ENCODE_BASE64: number;
+  CADESCOM_ENCODE_BINARY: number;
+  CADESCOM_CADES_X_LONG_TYPE_1: number;
+  CADESCOM_CADES_BES: number;
+}
+
+interface CadesObject {
+  // Store
+  Open(storeLocation: number, storeName: number, openMode: number): Promise<void>;
+  Close(): Promise<void>;
+  Certificates: Promise<CertificatesCollection>;
+  // Certificate
+  SubjectName: Promise<string>;
+  IssuerName: Promise<string>;
+  ValidFromDate: Promise<string>;
+  ValidToDate: Promise<string>;
+  Thumbprint: Promise<string>;
+  HasPrivateKey(): Promise<boolean>;
+  Extensions: Promise<ExtensionsCollection>;
+  // Extension
+  OID: Promise<string>;
+  Value: Promise<CadesObject | number>;
+  // SignedData
+  propset_ContentEncoding(encoding: number): Promise<void>;
+  propset_Content(content: string): Promise<void>;
+  SignCades(signer: CadesObject, cadesType: number, detached?: boolean, encodingType?: number): Promise<string>;
+  VerifyCades(signedMessage: string, cadesType: number, detached: boolean): Promise<void>;
+  // Signer
+  propset_Certificate(thumbprint: string): Promise<void>;
+  propset_Options(options: number): Promise<void>;
+  AuthenticatedAttributes2: Promise<AttributesCollection>;
+  // Attribute
+  propset_Name(name: number): Promise<void>;
+  propset_Value(value: unknown): Promise<void>;
+  Name: Promise<string>;
+  // CPSigner
+  propset_TSAAddress(url: string): Promise<void>;
+  // CadesSignedData
+  Signers: Promise<CadesObject>;
+  // Collections
+  Count: Promise<number>;
+  Item(index: number): Promise<CadesObject>;
+  // For AttributesCollection
+  Add(attr: CadesObject): Promise<void>;
+  // CRL/Revocation
+  Certificate: Promise<CadesObject>;
+  // ... other methods as needed
+}
+
+// Реализация — в нейтральном модуле (без 'use client'), чтобы её можно было
+// использовать и на сервере.
+import { uint8ToBase64 } from '@/lib/bytes';
+
+interface CertificatesCollection {
+  Count: Promise<number>;
+  Item(index: number): Promise<CadesObject>;
+}
+
+interface ExtensionsCollection {
+  Count: Promise<number>;
+  Item(index: number): Promise<CadesObject>;
+}
+
+interface AttributesCollection {
+  Add(attr: CadesObject): Promise<void>;
+  Count: Promise<number>;
+  Item(index: number): Promise<CadesObject>;
+}
+
 declare global {
   interface Window {
-    cadesplugin?: Promise<any>;
+    cadesplugin?: Promise<CadesPlugin>;
   }
 }
 
@@ -91,7 +172,7 @@ const TRUSTED_ROOT_CAS = [
  */
 export async function validateCertificate(
   thumbprint: string,
-  options: { checkRevocation?: boolean; checkChain?: boolean } = {}
+  _options: { checkRevocation?: boolean; checkChain?: boolean } = {}
 ): Promise<CertValidationResult> {
   if (!window.cadesplugin) {
     return {
@@ -120,7 +201,7 @@ export async function validateCertificate(
     const certs = await store.Certificates;
     const count = await certs.Count;
 
-    let cert: any = null;
+    let cert: CadesObject | null = null;
     for (let i = 1; i <= count; i++) {
       const c = await certs.Item(i);
       const tp = await c.Thumbprint;
@@ -142,11 +223,11 @@ export async function validateCertificate(
     }
 
     // Базовые данные
-    const subjectName = await cert.SubjectName;
-    const issuerName = await cert.IssuerName;
+    const _subjectName = await cert.SubjectName;
+    const _issuerName = await cert.IssuerName;
     const validFrom = await cert.ValidFromDate;
     const validTo = await cert.ValidToDate;
-    const tp = await cert.Thumbprint;
+    const _tp = await cert.Thumbprint;
     const hasPrivateKey = await cert.HasPrivateKey();
 
     // Key Usage
@@ -233,11 +314,11 @@ export async function validateCertificate(
         revocationStatus,
       },
     };
-  } catch (e: any) {
+  } catch (e: unknown) {
     return {
       isValid: false,
       isQualified: false,
-      errors: ['Ошибка валидации: ' + (e.message || String(e))],
+      errors: ['Ошибка валидации: ' + (e instanceof Error ? e.message : String(e))],
       warnings: [],
       details: getEmptyDetails(),
     };
@@ -260,7 +341,7 @@ function getEmptyDetails() {
   };
 }
 
-async function getKeyUsage(cert: any, cadesplugin: any): Promise<string[]> {
+async function getKeyUsage(cert: CadesObject, _cadesplugin: CadesPlugin): Promise<string[]> {
   const usage: string[] = [];
   try {
     const extensions = await cert.Extensions;
@@ -269,9 +350,8 @@ async function getKeyUsage(cert: any, cadesplugin: any): Promise<string[]> {
       const ext = await extensions.Item(i);
       const oid = await ext.OID;
       if (oid === OID.KEY_USAGE) {
-        const value = await ext.Value;
         // Value — это битовая маска
-        const bits = await value;
+        const bits = (await ext.Value) as number;
         if (bits & 0x80) usage.push('digitalSignature');
         if (bits & 0x40) usage.push('nonRepudiation');
         if (bits & 0x20) usage.push('keyEncipherment');
@@ -288,7 +368,7 @@ async function getKeyUsage(cert: any, cadesplugin: any): Promise<string[]> {
   return usage;
 }
 
-async function getExtendedKeyUsage(cert: any, cadesplugin: any): Promise<string[]> {
+async function getExtendedKeyUsage(cert: CadesObject, _cadesplugin: CadesPlugin): Promise<string[]> {
   const usage: string[] = [];
   try {
     const extensions = await cert.Extensions;
@@ -298,9 +378,9 @@ async function getExtendedKeyUsage(cert: any, cadesplugin: any): Promise<string[
       const oid = await ext.OID;
       if (oid === OID.EXTENDED_KEY_USAGE) {
         const value = await ext.Value;
-        const count2 = await value.Count;
+        const count2 = await (value as CadesObject).Count;
         for (let j = 1; j <= count2; j++) {
-          const oidItem = await value.Item(j);
+          const oidItem = await (value as CadesObject).Item(j);
           const oid = await oidItem.OID;
           usage.push(oid);
         }
@@ -312,7 +392,7 @@ async function getExtendedKeyUsage(cert: any, cadesplugin: any): Promise<string[
   return usage;
 }
 
-async function hasQualifiedEKU(cert: any, cadesplugin: any): Promise<boolean> {
+async function hasQualifiedEKU(cert: CadesObject, _cadesplugin: CadesPlugin): Promise<boolean> {
   try {
     const extensions = await cert.Extensions;
     const count = await extensions.Count;
@@ -321,9 +401,9 @@ async function hasQualifiedEKU(cert: any, cadesplugin: any): Promise<boolean> {
       const oid = await ext.OID;
       if (oid === OID.EXTENDED_KEY_USAGE) {
         const value = await ext.Value;
-        const count2 = await value.Count;
+        const count2 = await (value as CadesObject).Count;
         for (let j = 1; j <= count2; j++) {
-          const oidItem = await value.Item(j);
+          const oidItem = await (value as CadesObject).Item(j);
           const oid = await oidItem.OID;
           if (oid === '1.2.643.7.1.1.1.1') return true; // id-kp-qcSign
         }
@@ -347,7 +427,7 @@ function formatOID(oid: string): string {
   return names[oid] || oid;
 }
 
-async function validateCertificateChain(cert: any, cadesplugin: any): Promise<{ valid: boolean; chain: ChainCertInfo[] }> {
+async function validateCertificateChain(cert: CadesObject, cadesplugin: CadesPlugin): Promise<{ valid: boolean; chain: ChainCertInfo[] }> {
   const chain: ChainCertInfo[] = [];
   let currentCert = cert;
   const currentIssuer = await currentCert.IssuerName;
@@ -474,7 +554,7 @@ async function validateCertificateChain(cert: any, cadesplugin: any): Promise<{ 
   }
 }
 
-async function checkRevocation(cert: any, cadesplugin: any): Promise<'valid' | 'revoked' | 'unknown' | 'offline'> {
+async function checkRevocation(cert: CadesObject, cadesplugin: CadesPlugin): Promise<'valid' | 'revoked' | 'unknown' | 'offline'> {
   try {
     // Пытаемся получить CRL Distribution Points
     const extensions = await cert.Extensions;
@@ -593,18 +673,8 @@ export async function signPdfWithCryptoPro(
   return signature;
 }
 
-/** Преобразует Uint8Array в base64 без spread (безопасно для больших файлов). */
-function uint8ToBase64(bytes: Uint8Array): string {
-  let binary = '';
-  const chunk = 0x8000;
-  for (let i = 0; i < bytes.length; i += chunk) {
-    binary += String.fromCharCode.apply(
-      null,
-      Array.from(bytes.subarray(i, i + chunk))
-    );
-  }
-  return btoa(binary);
-}
+// Реэкспорт — чтобы внешние модули могли продолжать брать отсюда.
+export { uint8ToBase64 };
 
 export async function signDataWithCryptoPro(
   data: Uint8Array,
@@ -672,9 +742,9 @@ export async function verifyCadesSignature(
       for (let i = 1; i <= attrCount; i++) {
         const attr = await attrs.Item(i);
         const name = await attr.Name;
-        if (name === cadesplugin.CAPICOM_AUTHENTICATED_ATTRIBUTE_SIGNING_TIME) {
+        if (String(name) === String(cadesplugin.CAPICOM_AUTHENTICATED_ATTRIBUTE_SIGNING_TIME)) {
           const value = await attr.Value;
-          signingTime = new Date(value);
+          signingTime = new Date(value as number | string);
           break;
         }
       }
@@ -693,8 +763,8 @@ export async function verifyCadesSignature(
       },
       signingTime,
     };
-  } catch (e: any) {
-    return { valid: false, error: e.message || String(e) };
+  } catch (e: unknown) {
+    return { valid: false, error: e instanceof Error ? e.message : String(e) };
   }
 }
 

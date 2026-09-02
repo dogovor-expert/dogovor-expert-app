@@ -17,7 +17,7 @@ interface Feedback {
   message: string;
   email: string;
   screenshots: string[] | null;
-  tech: any;
+  tech: unknown;
   status: string;
   created_at: string;
 }
@@ -68,7 +68,7 @@ export default function FeedbackAdminTable() {
   }, [type, status]);
 
   useEffect(() => {
-    load();
+    void load();
   }, [load]);
 
   const toggle = (id: string) =>
@@ -123,7 +123,7 @@ export default function FeedbackAdminTable() {
           ]}
           className="w-48"
         />
-        <button onClick={load} className="text-sm text-brand-600 hover:underline mb-1">
+        <button onClick={() => void load()} className="text-sm text-brand-600 hover:underline mb-1">
           Обновить
         </button>
       </div>
@@ -195,7 +195,7 @@ export default function FeedbackAdminTable() {
                   <select
                     value={f.status}
                     disabled={busy}
-                    onChange={(e) => changeStatus(f.id, e.target.value)}
+                    onChange={(e) => { void changeStatus(f.id, e.target.value); }}
                     className="text-xs bg-gray-50 border border-gray-200 rounded-lg px-2 py-1.5 text-gray-700 outline-none focus:ring-2 focus:ring-brand-500/20"
                   >
                     <option value="new">Новая</option>
@@ -293,7 +293,7 @@ export default function FeedbackAdminTable() {
                 <select
                   value={selectedRow.status}
                   disabled={busy}
-                  onChange={(e) => changeStatus(selectedRow.id, e.target.value)}
+                  onChange={(e) => { void changeStatus(selectedRow.id, e.target.value); }}
                   className="text-sm bg-gray-50 border border-gray-200 rounded-lg px-3 py-1.5 text-gray-700 outline-none focus:ring-2 focus:ring-brand-500/20"
                 >
                   <option value="new">Новая</option>

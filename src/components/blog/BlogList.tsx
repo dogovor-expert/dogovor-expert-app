@@ -12,7 +12,7 @@ const ICONS: Record<string, typeof Home> = {
 
 const MONTHS = ["янв", "фев", "мар", "апр", "мая", "июн", "июл", "авг", "сен", "окт", "ноя", "дек"];
 const fmt = (d: string) => {
-  const [y, m, day] = d.split("-");
+  const [, m, day] = d.split("-");
   return `${+day} ${MONTHS[+m - 1]}`;
 };
 const read = (d: string) => Math.max(3, Math.round(d.length / 150) + 3) + " мин";
@@ -34,7 +34,7 @@ export default function BlogList({
   currentPosts,
   currentPage,
   totalPages,
-  postsPerPage,
+  postsPerPage: _postsPerPage,
   currentCategory,
   labels,
   prevUrl,

@@ -11,9 +11,7 @@ import {
   hasClass,
   nodeRuns,
   INLINE_TAGS,
-  hasBlockDescendant,
   sizeFromClass,
-  lineHeightFromClass,
 } from "@/lib/html-parser";
 import type { PDFImage, PDFFont, PDFPage, RGB, PDFDocument } from "pdf-lib";
 
@@ -899,7 +897,7 @@ color: this.rgb(r, g, b),
     lines.forEach((line) => this.drawLineOfWords(line, fontSize, x, y, "left", true, this.availWidth, color));
   }
 
-  finalize(watermark?: string, pageNumbers = true) {
+  finalize(watermark?: string, _pageNumbers = true) {
     this.pageCount = this.pages.length;
     this.lastPageUsed =
       (A4.h - this.pm.marginTop - this.pm.headerHeight - this.y) /

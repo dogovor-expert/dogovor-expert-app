@@ -1,10 +1,10 @@
 'use client';
 import { useState, useEffect, useCallback } from 'react';
-import type { CertValidationResult } from '@/lib/signCryptoPro';
+import type { CertValidationResult, CadesPlugin } from '@/lib/signCryptoPro';
 
 declare global {
   interface Window {
-    cadesplugin?: Promise<any>;
+    cadesplugin?: Promise<CadesPlugin>;
     cadespluginLoaded?: boolean;
   }
 }
