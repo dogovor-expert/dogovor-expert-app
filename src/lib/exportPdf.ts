@@ -74,7 +74,7 @@ interface FontSet {
   bolditalic: PDFFont;
 }
 
-let fontBytesCache: Record<string, DesignFontBytes> = {};
+const fontBytesCache: Record<string, DesignFontBytes> = {};
 
 async function fetchFontBytes(url: string): Promise<ArrayBuffer> {
   const res = await fetch(url);
@@ -485,7 +485,7 @@ class Renderer {
   ) {
     const spaceWidth = this.measure(" ", fontSize, false, false);
     const spaces = line.words.length - 1;
-    let lineWidth = line.totalWidth;
+    const lineWidth = line.totalWidth;
     let extraSpace = 0;
     if (align === "justify" && !isLastLine && spaces > 0) {
       const free = maxWidth - lineWidth;
@@ -1009,7 +1009,7 @@ function collectBlocks(
               if (!title) title = c.textContent || "";
               continue;
             }
-            const t = c.querySelector?.(".doc-sides-title") as HTMLElement | null;
+            const t = c.querySelector?.(".doc-sides-title");
             if (t && !title) title = t.textContent || "";
             const clone = c.cloneNode(true) as HTMLElement;
             clone.querySelectorAll(".doc-sides-title").forEach((n) => n.remove());

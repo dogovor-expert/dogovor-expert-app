@@ -1,3 +1,4 @@
+/* eslint-env worker */
 /**
  * OCR-воркер: tesseract.js в изолированном Web Worker.
  *

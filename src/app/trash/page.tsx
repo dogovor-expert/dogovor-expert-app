@@ -88,7 +88,8 @@ export default function TrashPage() {
 
   const toggleSelect = (id: string) => {
     const next = new Set(selected);
-    next.has(id) ? next.delete(id) : next.add(id);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
     setSelected(next);
   };
 
@@ -254,42 +255,46 @@ export default function TrashPage() {
               const { text: expText, isExpired, isExpiringSoon } = formatExpiry(doc.deleted_at);
               const typeVariant = typeColor[type] || "gray";
               return (
-                <div key={doc.id} className={`flex items-center gap-3 px-5 py-4 transition-colors hover:bg-gray-50/50 ${selected.has(doc.id) ? "bg-brand-50/50" : ""}`}>
-                  <input type="checkbox" checked={selected.has(doc.id)} onChange={() => toggleSelect(doc.id)} className="rounded border-gray-300" />
-                  <div className="flex-1 flex items-center gap-3 min-w-0">
-                    <div className="w-9 h-9 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0">
-                      <FileText className="w-4 h-4 text-gray-600" />
-                    </div>
-                    <div className="min-w-0">
-                      <p className="text-sm font-medium text-gray-900 truncate">{name}</p>
-                      <p className="text-xs text-gray-600">Удалён: {formatDate(doc.deleted_at)}</p>
+                <div key={doc.id} className={`flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3 px-4 sm:px-5 py-3 sm:py-4 transition-colors hover:bg-gray-50/50 ${selected.has(doc.id) ? "bg-brand-50/50" : ""}`}>
+                  <div className="flex items-center gap-2 w-full sm:w-auto">
+                    <input type="checkbox" checked={selected.has(doc.id)} onChange={() => toggleSelect(doc.id)} className="rounded border-gray-300 flex-shrink-0" />
+                    <div className="flex-1 flex items-center gap-3 min-w-0">
+                      <div className="w-9 h-9 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0">
+                        <FileText className="w-4 h-4 text-gray-600" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-gray-900 truncate">{name}</p>
+                        <p className="text-xs text-gray-600 sm:hidden">Удалён: {formatDate(doc.deleted_at)}</p>
+                      </div>
                     </div>
                   </div>
-                  <Badge variant={typeVariant} size="sm" className="hidden sm:inline-flex">{type}</Badge>
-                  <span className="text-xs text-gray-600 w-28 text-center hidden md:block">{formatDate(doc.deleted_at)}</span>
-                  <span className={`text-xs w-24 text-center flex items-center justify-center gap-1 hidden sm:flex ${isExpired ? "text-red-600 font-medium" : isExpiringSoon ? "text-amber-700 font-medium" : "text-gray-600"}`}>
-                    {expText}
-                  </span>
-                  <span className="text-xs text-gray-600 w-14 text-center">—</span>
-                  <div className="flex items-center gap-1 w-24 justify-center">
-                    <button
-                      onClick={() => {
-                        setSelected(new Set([doc.id]));
-                        handleRestore();
-                      }}
-                      className="p-1.5 hover:bg-emerald-50 rounded-lg text-emerald-600 transition-colors" title="Восстановить"
-                    >
-                      <RotateCcw className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={() => {
-                        setSelected(new Set([doc.id]));
-                        setConfirmDelete(true);
-                      }}
-                      className="p-1.5 hover:bg-red-50 rounded-lg text-red-500 transition-colors" title="Удалить навсегда"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                  <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto sm:flex-nowrap">
+                    <Badge variant={typeVariant} size="sm" className="hidden sm:inline-flex">{type}</Badge>
+                    <span className="text-xs text-gray-600 w-28 text-center hidden md:block">{formatDate(doc.deleted_at)}</span>
+                    <span className={`text-xs w-24 text-center flex items-center justify-center gap-1 hidden sm:flex ${isExpired ? "text-red-600 font-medium" : isExpiringSoon ? "text-amber-700 font-medium" : "text-gray-600"}`}>
+                      {expText}
+                    </span>
+                    <span className="text-xs text-gray-600 w-14 text-center hidden sm:block">—</span>
+                    <div className="flex items-center gap-1 w-24 justify-center">
+                      <button
+                        onClick={() => {
+                          setSelected(new Set([doc.id]));
+                          handleRestore();
+                        }}
+                        className="p-1.5 hover:bg-emerald-50 rounded-lg text-emerald-600 transition-colors" title="Восстановить"
+                      >
+                        <RotateCcw className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => {
+                          setSelected(new Set([doc.id]));
+                          setConfirmDelete(true);
+                        }}
+                        className="p-1.5 hover:bg-red-50 rounded-lg text-red-500 transition-colors" title="Удалить навсегда"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
                   </div>
                 </div>
               );

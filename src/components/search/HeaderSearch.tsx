@@ -97,7 +97,7 @@ export default function HeaderSearch() {
   const showList = open && items.length > 0;
 
   return (
-    <div ref={rootRef} className="relative max-w-md hidden sm:block">
+    <div ref={rootRef} className="relative w-full sm:max-w-md">
       <form
         onSubmit={(e) => {
           e.preventDefault();

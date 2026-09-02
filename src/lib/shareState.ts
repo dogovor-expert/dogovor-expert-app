@@ -60,7 +60,7 @@ export function decodeShareState(encoded: string | null): SharePayload | null {
 
 /* ----------------------------- Zero-Knowledge share ----------------------------- */
 
-export interface EncryptedShareLink extends EncryptedShare {}
+export type EncryptedShareLink = EncryptedShare;
 
 /**
  * Шифрует состояние документа (values + подписи) случайным ключом AES-256-GCM.

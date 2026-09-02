@@ -1,8 +1,7 @@
 "use client";
 
-import { Suspense } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
 import { YANDEX_METRIKA_ID } from "@/lib/site";
 
 declare global {

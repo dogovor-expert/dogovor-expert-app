@@ -263,17 +263,17 @@ export async function prepareDocumentImage(file: File): Promise<PreparedImage> {
   const bmp = await decode(file);
   try {
     // 0) Автообрезка документа (опционально, с безопасным фолбэком).
-    let source: CanvasImageSource = bmp as unknown as CanvasImageSource;
+    let source: CanvasImageSource = bmp;
     let cropped = false;
     try {
       const { scanDocument } = await import("scanic");
       // Scanic принимает только DOM-элементы — рисуем ImageBitmap в canvas.
       const srcCanvas = document.createElement("canvas");
-      srcCanvas.width = (bmp as ImageBitmap).width;
-      srcCanvas.height = (bmp as ImageBitmap).height;
+      srcCanvas.width = (bmp).width;
+      srcCanvas.height = (bmp).height;
       const srcCtx = srcCanvas.getContext("2d");
       if (!srcCtx) throw new Error("canvas");
-      srcCtx.drawImage(bmp as unknown as CanvasImageSource, 0, 0);
+      srcCtx.drawImage(bmp, 0, 0);
       const detect = await scanDocument(srcCanvas, {
         mode: "extract",
         output: "canvas",

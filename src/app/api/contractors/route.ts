@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
 const FIELDS = ["name", "inn", "kpp", "ogrn", "address", "email", "phone", "note"];

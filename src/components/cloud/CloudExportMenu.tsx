@@ -109,7 +109,7 @@ export default function CloudExportMenu({
     if (!btn) return;
     const r = btn.getBoundingClientRect();
     const hEstimate = 300; // приблизительно; достаточно для решения о перевороте
-    let left = Math.min(Math.max(8, r.right - MENU_W), window.innerWidth - MENU_W - 8);
+    const left = Math.min(Math.max(8, r.right - MENU_W), window.innerWidth - MENU_W - 8);
     let top = r.bottom + 8;
     if (top + hEstimate > window.innerHeight - 8 && r.top - hEstimate - 8 > 8) {
       top = r.top - hEstimate - 8;

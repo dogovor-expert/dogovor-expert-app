@@ -64,12 +64,12 @@ function buf(input: ArrayBuffer | Uint8Array): Uint8Array<ArrayBuffer> {
   const bytes = input instanceof Uint8Array ? input : new Uint8Array(input);
   const a = new Uint8Array(bytes.byteLength);
   a.set(bytes);
-  return a as Uint8Array<ArrayBuffer>;
+  return a;
 }
 
 function randomBytes(n: number): Uint8Array<ArrayBuffer> {
   const a = crypto.getRandomValues(new Uint8Array(n));
-  return a as Uint8Array<ArrayBuffer>;
+  return a;
 }
 
 function assertUnlocked(): CryptoKey {
@@ -170,10 +170,11 @@ export async function initVault(): Promise<void> {
 
   if (!wrapped) {
     // Первый запуск (или предыдущая версия не смогла инициализироваться).
-    await adoptMaster(randomBytes(32));
-    const w = await aesEncrypt(deviceAes, masterBytes!);
+    const freshBytes = randomBytes(32);
+    await adoptMaster(freshBytes);
+    const w = await aesEncrypt(deviceAes, freshBytes);
     await metaPut("masterKeyWrapped", w);
-    startAutoLockTimer();
+    void startAutoLockTimer();
     return;
   }
 
@@ -183,10 +184,11 @@ export async function initVault(): Promise<void> {
     console.warn("[vault] обнаружен несовместимый legacy-формат ключей — пересоздаём");
     await metaDelete("masterKeyWrapped");
     await metaDelete("masterKeyPass");
-    await adoptMaster(randomBytes(32));
-    const w = await aesEncrypt(deviceAes, masterBytes!);
+    const freshBytes = randomBytes(32);
+    await adoptMaster(freshBytes);
+    const w = await aesEncrypt(deviceAes, freshBytes);
     await metaPut("masterKeyWrapped", w);
-    startAutoLockTimer();
+    void startAutoLockTimer();
     return;
   }
 
@@ -198,7 +200,7 @@ export async function initVault(): Promise<void> {
     needsPassphrase = true;
     return;
   }
-  startAutoLockTimer();
+  void startAutoLockTimer();
 }
 
 export function lockVault(): void {
@@ -305,10 +307,10 @@ export async function unlockWithPassphrase(passphrase: string): Promise<void> {
   const local = await metaGet<SecretWrap>("masterKeyWrapped");
   if ((local as { v?: number } | undefined)?.v !== 2) {
     const { aes } = await getDeviceSecretAndKey();
-    const w = await aesEncrypt(aes, masterBytes!);
+    const w = await aesEncrypt(aes, masterBytes as Uint8Array<ArrayBuffer>);
     await metaPut("masterKeyWrapped", w);
   }
-  startAutoLockTimer();
+  void startAutoLockTimer();
 }
 
 /* -------------------------- Backup / Restore -------------------------- */
@@ -339,7 +341,7 @@ export async function exportVaultBackup(): Promise<VaultBackup> {
     masterForDevice,
     masterForPass,
     documents: docs.map((d) => ({
-      meta: { ...d, enc: undefined } as Record<string, unknown>,
+      meta: { ...d, enc: undefined },
       enc: d.enc,
     })),
     tokens: tokens.map((t) => ({ providerId: t.providerId, enc: t.enc })),
@@ -398,5 +400,5 @@ export async function importVaultBackup(
     await idbPut(STORE.tokens, { providerId: t.providerId, enc: t.enc });
   }
 
-  startAutoLockTimer();
+  void startAutoLockTimer();
 }

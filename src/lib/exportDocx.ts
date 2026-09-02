@@ -8,6 +8,7 @@ import {
   lineHeightFromClass,
 } from "@/lib/html-parser";
 import {
+  type Document as DocxDocument,
   AlignmentType,
   BorderStyle,
   ShadingType,
@@ -24,7 +25,6 @@ import {
   Header,
   Footer,
   PageNumber,
-  Document as DocxDocument,
 } from "docx";
 
 type Align = (typeof AlignmentType)[keyof typeof AlignmentType];
@@ -290,7 +290,7 @@ export function parseHtmlToDocx(
       const colWidths = Array.from(el.children).map(() => 50);
       const cells = Array.from(el.children).map((child) => {
         const c = child as HTMLElement;
-        const titleEl = c.querySelector(".doc-sides-title") as HTMLElement | null;
+        const titleEl = c.querySelector(".doc-sides-title");
         const body = c.cloneNode(true) as HTMLElement;
         body.querySelectorAll(".doc-sides-title").forEach((n) => n.remove());
         const cellChildren: Paragraph[] = [];

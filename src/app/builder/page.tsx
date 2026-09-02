@@ -19,7 +19,6 @@ import { LEGAL_TEMPLATES } from "@/data/legalTemplates";
 import type { LegalTemplate, TemplateField } from "@/data/types";
 import {
   runLegalAudit,
-  isFieldVisible,
   requiredProgress,
   type AuditResult,
 } from "@/lib/validation";
@@ -81,7 +80,7 @@ function HomeContent() {
       const pid = p ? preferBrief(p) : p;
       if (pid && LEGAL_TEMPLATES.find((t) => t.id === pid)) {
         setSelectedTemplateId(pid);
-        try { localStorage.setItem("dogovor_last_template", pid); } catch {}
+        try { localStorage.setItem("dogovor_last_template", pid); } catch { /* localStorage недоступен */ }
         setWizardStep("form");
         return true;
       }
@@ -136,7 +135,7 @@ function HomeContent() {
     let cancelled = false;
     const ids = Array.from(
       new Set([selectedTemplateId, ...packTemplateIds].filter(Boolean))
-    ) as string[];
+    );
     import("@/data/templatePreviews")
       .then(async (mod) => {
         const entries = await Promise.all(
@@ -163,7 +162,7 @@ function HomeContent() {
     const supabase = createClient();
     supabase.auth.getUser().then(({ data }) => {
       setUserFlag(Boolean(data.user));
-    });
+    }).catch(() => {});
   }, []);
 
   // Загрузка шаблона из localStorage на клиенте (после гидратации)
@@ -186,7 +185,7 @@ function HomeContent() {
       // Вычисляем tabs из полей шаблона
       const tabsList = Array.from(
         new Set(template.fields.map((f) => f.category))
-      ) as TemplateField["category"][];
+      );
       
       // Пытаемся загрузить черновик
       const draft = loadDraft(selectedTemplateId);
@@ -199,9 +198,9 @@ function HomeContent() {
         const draftTab = draft.activeTab as TemplateField["category"];
         const tabsList = Array.from(
           new Set(template.fields.map((f) => f.category))
-        ) as TemplateField["category"][];
+        );
         setActiveTab(
-          (tabsList.includes(draftTab) ? draftTab : tabsList[0]) as TemplateField["category"]
+          (tabsList.includes(draftTab) ? draftTab : tabsList[0])
         );
       } else {
         setFormValues(buildTemplateDefaults(template));
@@ -249,13 +248,13 @@ function HomeContent() {
     try {
       const saved = localStorage.getItem("dadata_key");
       if (saved) setDadataKey(saved);
-    } catch {}
+    } catch { /* localStorage недоступен */ }
   }, []);
   useEffect(() => {
     try {
       if (dadataKey) localStorage.setItem("dadata_key", dadataKey);
       else localStorage.removeItem("dadata_key");
-    } catch {}
+    } catch { /* localStorage недоступен */ }
   }, [dadataKey]);
   const [dadataLoading, setDadataLoading] = useState(false);
   const [dadataMsg, setDadataMsg] = useState<{ text: string; ok: boolean } | null>(
@@ -584,7 +583,7 @@ function HomeContent() {
         method: "DELETE",
       });
       await loadContractors();
-    } catch {}
+    } catch { /* ошибка удаления игнорируется */ }
   };
 
   const [meFio, setMeFio] = useState<string | null>(null);
@@ -672,7 +671,7 @@ function HomeContent() {
         method: "DELETE",
       });
       await loadPersons();
-    } catch {}
+    } catch { /* ошибка удаления игнорируется */ }
   };
 
   /** SHA-256 содержимого; null, если Web Crypto недоступен (№3 аудита:
@@ -730,7 +729,7 @@ function HomeContent() {
     () =>
       Array.from(
         new Set(template.fields.map((f) => f.category))
-      ) as TemplateField["category"][],
+      ),
     [template]
   );
 
@@ -786,7 +785,7 @@ function HomeContent() {
         setScanPhotos(draft.photos || {});
         const draftTab = draft.activeTab as TemplateField["category"];
         setActiveTab(
-          (tabs.includes(draftTab) ? draftTab : tabs[0]) as TemplateField["category"]
+          (tabs.includes(draftTab) ? draftTab : tabs[0])
         );
       } else {
         setFormValues(buildTemplateDefaults(template));
@@ -870,7 +869,7 @@ function HomeContent() {
     });
     pendingMergeRef.current = merged;
     setSelectedTemplateId(templateId);
-    try { localStorage.setItem("dogovor_last_template", templateId); } catch {}
+    try { localStorage.setItem("dogovor_last_template", templateId); } catch { /* localStorage недоступен */ }
   };
 
   const openDraft = (d: DraftData) => {
@@ -883,7 +882,7 @@ function HomeContent() {
       setDraftInfos(getAllDrafts());
     } else {
       setSelectedTemplateId(d.templateId);
-      try { localStorage.setItem("dogovor_last_template", d.templateId); } catch {}
+      try { localStorage.setItem("dogovor_last_template", d.templateId); } catch { /* localStorage недоступен */ }
     }
   };
 
@@ -940,7 +939,7 @@ function HomeContent() {
     const focusable = el.querySelector(
       "input, select, textarea"
     ) as HTMLElement | null;
-    focusable?.focus({ preventScroll: true });
+    if (focusable) focusable.focus({ preventScroll: true });
   };
 
   const handlePhotosChange = (slotId: string, photos: string[]) => {
@@ -1157,7 +1156,7 @@ function HomeContent() {
       return;
     }
     let cancelled = false;
-    (async () => {
+    void (async () => {
       try {
         const [cover, sign] = await Promise.all([
           buildCoverHtml(),
@@ -1543,7 +1542,7 @@ function HomeContent() {
             onToggleFavorite={toggleFavorite}
             onSelectTemplate={(id) => {
               setSelectedTemplateId(preferBrief(id));
-              try { localStorage.setItem("dogovor_last_template", preferBrief(id)); } catch {}
+              try { localStorage.setItem("dogovor_last_template", preferBrief(id)); } catch { /* localStorage недоступен */ }
               setWizardStep("form");
             }}
           />

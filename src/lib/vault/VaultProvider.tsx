@@ -6,7 +6,7 @@ import {
   useState,
   useCallback,
   useRef,
-  ReactNode,
+  type ReactNode,
 } from "react";
 import {
   initVault,
@@ -58,14 +58,14 @@ const emptyContext: VaultContextValue = {
   autoLockMs: 15 * 60 * 1000,
   unlock: async () => {},
   lock: () => {},
-  requireUnlock: async () => false,
-  setPassphrase: async () => {},
-  changePassphrase: async () => {},
-  removePassphrase: async () => {},
-  exportBackup: async () => ({} as VaultBackup),
-  importBackup: async () => {},
-  setAutoLock: async () => {},
-  refresh: async () => {},
+  requireUnlock: () => Promise.resolve(false),
+  setPassphrase: () => Promise.resolve(),
+  changePassphrase: () => Promise.resolve(),
+  removePassphrase: () => Promise.resolve(),
+  exportBackup: () => Promise.resolve({} as VaultBackup),
+  importBackup: () => Promise.resolve(),
+  setAutoLock: () => Promise.resolve(),
+  refresh: () => Promise.resolve(),
 };
 
 export function VaultProvider({ children }: { children: ReactNode }) {
@@ -96,7 +96,9 @@ export function VaultProvider({ children }: { children: ReactNode }) {
       await refresh();
       setLoading(false);
     }
-    init();
+    void init().catch((err) => {
+      console.error("Vault init failed:", err);
+    });
 
     function onLocked() {
       // Автолок очищает только сессию — на своём устройстве тихая

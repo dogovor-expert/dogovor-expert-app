@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { Shield, ExternalLink } from "lucide-react";
 
 declare module "react" {
+  // eslint-disable-next-line @typescript-eslint/no-namespace
   namespace JSX {
     interface IntrinsicElements {
       "polis-online-widget-osago": {

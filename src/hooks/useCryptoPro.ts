@@ -72,10 +72,10 @@ export function useCryptoPro() {
     if (typeof window === 'undefined') return;
 
     if (document.readyState === 'complete') {
-      initialize();
+      void initialize();
     } else {
-      window.addEventListener('load', initialize);
-      return () => window.removeEventListener('load', initialize);
+      window.addEventListener('load', () => void initialize());
+      return () => window.removeEventListener('load', () => void initialize());
     }
   }, [initialize]);
 

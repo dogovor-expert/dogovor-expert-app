@@ -84,7 +84,7 @@ export default function FormSection({
   );
   const tabs = Array.from(
     new Set(template.fields.map((f) => f.category))
-  ) as TemplateField["category"][];
+  );
 
   const progress = visibleFields.filter(
     (f) => f.validation?.required && formValues[f.id]?.trim()

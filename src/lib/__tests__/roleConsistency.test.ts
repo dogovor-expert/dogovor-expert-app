@@ -16,7 +16,7 @@ import { personToFields, roleToPerson } from "@/lib/personMapping";
 import type { LegalTemplate, TemplateField } from "@/data/types";
 
 const mkField = (id: string, label = id): TemplateField =>
-  ({ id, label, type: "text", category: "owner", defaultValue: "" }) as TemplateField;
+  ({ id, label, type: "text", category: "owner", defaultValue: "" });
 
 // Регрессионные тесты на единство ролей сторон сделки между каналами:
 // форма (label поля) / сканер (docRequirements) / «Сохранённые лица»
@@ -59,9 +59,7 @@ describe("реестр ролей — единый источник правды
 });
 
 describe("power-of-attorney-auto (конкретный баг-репорт)", () => {
-  const t = LEGAL_TEMPLATES.find((x) => x.id === "power-of-attorney-auto") as
-    | LegalTemplate
-    | undefined;
+  const t = LEGAL_TEMPLATES.find((x) => x.id === "power-of-attorney-auto");
 
   it("шаблон существует", () => {
     expect(t).toBeDefined();

@@ -96,6 +96,12 @@
   body {
     min-height: 100vh;
   }
+  /* Увеличиваем минимальный размер шрифта на мобильных для полей ввода, чтобы избежать зума */
+  @media (max-width: 640px) {
+    input, select, textarea {
+      font-size: 16px;
+    }
+  }
 }
 
 @layer components {

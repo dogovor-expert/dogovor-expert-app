@@ -1,6 +1,6 @@
 "use client";
 
-import { ReactNode, useState } from "react";
+import { type ReactNode, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
@@ -66,7 +66,7 @@ export default function AdminShell({
             </div>
             <span className="font-semibold text-white">Админ-панель</span>
           </Link>
-          <button onClick={() => setOpen(false)} className="lg:hidden p-1 hover:bg-slate-800 rounded-lg">
+          <button onClick={() => setOpen(false)} className="lg:hidden p-2.5 hover:bg-slate-800 rounded-lg">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -109,7 +109,7 @@ export default function AdminShell({
       <div className="flex-1 flex flex-col min-w-0">
         <header className="h-16 bg-white border-b border-gray-100 flex items-center justify-between px-6 flex-shrink-0">
           <div className="flex items-center gap-3">
-            <button onClick={() => setOpen(true)} className="lg:hidden p-1.5 hover:bg-gray-100 rounded-lg">
+            <button onClick={() => setOpen(true)} className="lg:hidden p-2.5 hover:bg-gray-100 rounded-lg">
               <Menu className="w-5 h-5 text-gray-600" />
             </button>
             <form

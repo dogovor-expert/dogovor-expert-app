@@ -43,8 +43,8 @@ export async function POST(req: Request) {
   }
 
   // Отчёт в генерации (async reportjson): доводим до конца и сохраняем.
-  if (report && report.status === "pending" && (report.payload as any)?.tronk_task_id) {
-    const taskId = String((report.payload as any).tronk_task_id);
+  if (report && report.status === "pending" && (report.payload)?.tronk_task_id) {
+    const taskId = String((report.payload).tronk_task_id);
     try {
       const peek = await peekReportTask(taskId);
       if (peek.status === "ready" && peek.report) {

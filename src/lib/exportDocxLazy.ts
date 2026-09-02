@@ -361,7 +361,7 @@ async function parseHtmlToDocx(
       const cells = [];
       for (const child of Array.from(el.children)) {
         const c = child as HTMLElement;
-        const titleEl = c.querySelector('.doc-sides-title') as HTMLElement | null;
+        const titleEl = c.querySelector('.doc-sides-title');
         const body = c.cloneNode(true) as HTMLElement;
         body.querySelectorAll('.doc-sides-title').forEach((n) => n.remove());
         const cellChildren: any[] = [];

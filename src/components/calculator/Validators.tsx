@@ -1,8 +1,7 @@
 "use client";
 import { useState } from "react";
 import { Check, X, Fingerprint } from "lucide-react";
-import { isSnils, isOgrn, isOgrnip, isKpp, isBik, isBankAccount, luhn, isInn } from "@/lib/legal/validators";
-import type { ValidateResult } from "@/lib/legal/validators";
+import { isSnils, isOgrn, isOgrnip, isKpp, isBik, isBankAccount, luhn, isInn, type ValidateResult } from "@/lib/legal/validators";
 
 type Tool = "snils" | "ogrn" | "inn" | "kpp" | "bik" | "account" | "card";
 

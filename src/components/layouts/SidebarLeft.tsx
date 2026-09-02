@@ -1,6 +1,6 @@
 "use client";
 import { cn } from "@/lib/utils";
-import { ReactNode, useState } from "react";
+import { useState, type ReactNode } from "react";
 import { Menu, X, Bell, Search, ChevronDown } from "lucide-react";
 
 interface NavItem {
@@ -34,7 +34,7 @@ export function SidebarLeft({ children, navItems, accentColor = "brand", user }:
             </div>
             <span className="font-semibold text-gray-900">Dogovor.expert</span>
           </div>
-          <button onClick={() => setOpen(false)} className="lg:hidden p-1 hover:bg-gray-100 rounded-lg">
+          <button onClick={() => setOpen(false)} className="lg:hidden p-2.5 hover:bg-gray-100 rounded-lg">
             <X className="w-5 h-5 text-gray-600" />
           </button>
         </div>
@@ -77,7 +77,7 @@ export function SidebarLeft({ children, navItems, accentColor = "brand", user }:
       <div className="flex-1 flex flex-col min-w-0">
         <header className="h-16 bg-white border-b border-gray-100 flex items-center justify-between px-6 gap-4">
           <div className="flex items-center gap-3">
-            <button onClick={() => setOpen(true)} className="lg:hidden p-1.5 hover:bg-gray-100 rounded-lg">
+            <button onClick={() => setOpen(true)} className="lg:hidden p-2.5 hover:bg-gray-100 rounded-lg">
               <Menu className="w-5 h-5 text-gray-600" />
             </button>
             <div className="relative max-w-md hidden sm:block">

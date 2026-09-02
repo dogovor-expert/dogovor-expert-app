@@ -99,7 +99,7 @@ test.describe("E1: ДКП → предпросмотр → скачать PDF", 
     expect(download.suggestedFilename().toLowerCase()).toMatch(/\.pdf$/);
     const filePath = await download.path();
     expect(filePath).toBeTruthy();
-    expect(fs.statSync(filePath!).size).toBeGreaterThan(0);
+    expect(fs.statSync(filePath).size).toBeGreaterThan(0);
 
     await page.waitForTimeout(3_500);
     await page.getByRole("button", { name: "Вернуться к форме" }).first().click();

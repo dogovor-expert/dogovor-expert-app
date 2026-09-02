@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import { HTMLAttributes, TdHTMLAttributes, ThHTMLAttributes } from "react";
+import type { HTMLAttributes, TdHTMLAttributes, ThHTMLAttributes } from "react";
 
 interface TableProps extends HTMLAttributes<HTMLTableElement> {
   variant?: "default" | "striped" | "bordered" | "minimal";

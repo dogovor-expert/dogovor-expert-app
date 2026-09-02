@@ -103,7 +103,7 @@ export function extractPassportData(text: string): PassportData {  const data: P
   const after = issuedIdx >= 0 ? text.slice(issuedIdx) : text;
   const before = issuedIdx >= 0 ? text.slice(0, issuedIdx) : text;
 
-  const birthdayMatch = before.match(/(\d{2}[\.\-/]\d{2}[\.\-/]\d{4})/);
+  const birthdayMatch = before.match(/(\d{2}[.\-/]\d{2}[.\-/]\d{4})/);
   if (birthdayMatch) data.birthday = normalizeDate(birthdayMatch[1]) || undefined;
 
   const birthPlaceMatch = before.match(
@@ -139,7 +139,7 @@ export function extractPassportData(text: string): PassportData {  const data: P
   const codeMatch = text.match(/(\d{3}\s*[-–—]\s*\d{3})/);
   if (codeMatch) data.code = codeMatch[1].replace(/\s+/g, "");
 
-  const issuedDateMatch = after.match(/(\d{2}[\.\-/]\d{2}[\.\-/]\d{4})/);
+  const issuedDateMatch = after.match(/(\d{2}[.\-/]\d{2}[.\-/]\d{4})/);
   if (issuedDateMatch) data.issuedDate = normalizeDate(issuedDateMatch[1]) || undefined;
 
   const addressMatch = text.match(
@@ -196,7 +196,7 @@ export function extractVehicleData(text: string): VehicleData {
   if (bodyMatch) data.body = bodyMatch[1].toUpperCase();
 
   const colorMatch = text.match(
-    /(?:цвет)[:\s]*([а-яёА-ЯЁa-zA-Z \-]{3,20})/i
+    /(?:цвет)[:\s]*([а-яёА-ЯЁa-zA-Z -]{3,20})/i
   );
   if (colorMatch) data.color = clean(colorMatch[1]);
 
@@ -240,7 +240,7 @@ export function extractVehicleData(text: string): VehicleData {
   );
   if (issuedByMatch) data.ptsIssuedBy = clean(issuedByMatch[1]);
 
-  const dateMatch = text.match(/(\d{2}[\.\-/]\d{2}[\.\-/]\d{4})/g);
+  const dateMatch = text.match(/(\d{2}[.\-/]\d{2}[.\-/]\d{4})/g);
   if (dateMatch) data.ptsDate = normalizeDate(dateMatch[dateMatch.length - 1]) || undefined;
 
   return data;

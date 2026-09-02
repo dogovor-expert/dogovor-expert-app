@@ -74,6 +74,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     <html lang="ru" className={`${inter.variable} ${playfair.variable} ${jetbrains.variable}`}>
       <head>
         <meta name="csp-nonce" content={nonce} />
+        <link rel="preconnect" href="https://o4512010222108672.ingest.us.sentry.io" />
 
         <JsonLd
           data={[
