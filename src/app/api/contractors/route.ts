@@ -1,5 +1,8 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { withCsrf } from "@/lib/csrf";
+import { isSameOrigin } from "@/lib/admin-auth";
+import { limiters, checkRateLimit, rateLimitResponse } from "@/lib/ratelimit";
 
 const FIELDS = ["name", "inn", "kpp", "ogrn", "address", "email", "phone", "note"];
 
@@ -21,12 +24,18 @@ export async function GET() {
   return NextResponse.json({ data: data ?? [] });
 }
 
-export async function POST(req: NextRequest) {
+async function postHandler(req: NextRequest) {
+  if (!isSameOrigin(req)) {
+    return NextResponse.json({ error: "forbidden" }, { status: 403 });
+  }
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+
+  const rl = await checkRateLimit(limiters.crudMutation, user.id);
+  if (!rl.ok) return rateLimitResponse(rl.retryAfter);
 
   const body = await req.json().catch(() => null);
   if (!body || typeof body !== "object") {
@@ -52,12 +61,18 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({ data }, { status: 201 });
 }
 
-export async function DELETE(req: NextRequest) {
+async function deleteHandler(req: NextRequest) {
+  if (!isSameOrigin(req)) {
+    return NextResponse.json({ error: "forbidden" }, { status: 403 });
+  }
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+
+  const rl = await checkRateLimit(limiters.crudMutation, user.id);
+  if (!rl.ok) return rateLimitResponse(rl.retryAfter);
 
   const id = req.nextUrl.searchParams.get("id");
   if (!id) return NextResponse.json({ error: "id required" }, { status: 400 });
@@ -71,3 +86,6 @@ export async function DELETE(req: NextRequest) {
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ data: null });
 }
+
+export const POST = withCsrf(postHandler);
+export const DELETE = withCsrf(deleteHandler);

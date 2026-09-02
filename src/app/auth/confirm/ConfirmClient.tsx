@@ -10,7 +10,7 @@ export default function ConfirmClient({ next }: { next: string }) {
 
   useEffect(() => {
     let cancelled = false;
-    (async () => {
+    void (async () => {
       const supabase = createClient();
       const { data } = await supabase.auth.getSession();
       if (cancelled) return;

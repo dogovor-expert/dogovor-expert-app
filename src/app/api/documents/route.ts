@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createDocumentSchema, validateBody } from "@/lib/validations/api";
+import { withCsrf } from "@/lib/csrf";
+import { isSameOrigin } from "@/lib/admin-auth";
+import { limiters, checkRateLimit, rateLimitResponse } from "@/lib/ratelimit";
 
 export async function GET() {
   const supabase = await createClient();
@@ -20,12 +23,20 @@ export async function GET() {
   return NextResponse.json({ data });
 }
 
-export async function POST(req: Request) {
+async function postHandler(req: Request) {
+  if (!isSameOrigin(req)) {
+    return NextResponse.json({ error: "forbidden" }, { status: 403 });
+  }
+
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+
+  // Rate-limit: создание документа — 30/мин на user.id (защита от спама черновиками)
+  const rl = await checkRateLimit(limiters.documentCreate, user.id);
+  if (!rl.ok) return rateLimitResponse(rl.retryAfter);
 
   const body = await req.json().catch(() => null);
   if (!body) {
@@ -56,3 +67,5 @@ export async function POST(req: Request) {
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ data }, { status: 201 });
 }
+
+export const POST = withCsrf(postHandler);

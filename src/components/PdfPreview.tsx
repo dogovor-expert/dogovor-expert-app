@@ -2,9 +2,13 @@
 import { useEffect, useRef, useState } from "react";
 import { getDesign, type DesignId } from "@/lib/docDesign";
 import { Loader2 } from "lucide-react";
+import type { PDFDocumentProxy } from "pdfjs-dist";
+
+// eslint-disable-next-line @typescript-eslint/consistent-type-imports
+type PdfJsLib = typeof import("pdfjs-dist");
 
 let pdfjsReady = false;
-async function getPdfjs(): Promise<any> {
+async function getPdfjs(): Promise<PdfJsLib> {
   const pdfjs = await import("pdfjs-dist");
   if (!pdfjsReady) {
     pdfjs.GlobalWorkerOptions.workerSrc = "/workers/pdf.worker.min.mjs";
@@ -40,7 +44,7 @@ export default function PdfPreview({ docs, design, watermark, onPagesChange, roo
     const id = ++reqId.current;
     let cancelled = false;
     setLoading(true);
-    (async () => {
+    void (async () => {
       try {
         const { buildPdf } = await import("@/lib/exportPdf");
         const { blob } = await buildPdf(docs, {

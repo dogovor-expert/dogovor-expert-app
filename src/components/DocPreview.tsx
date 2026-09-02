@@ -1,9 +1,8 @@
 "use client";
 
-import { useLayoutEffect, useRef, useState } from "react";
+import { useLayoutEffect, useState } from "react";
 import { getDesign, type DesignId } from "@/lib/docDesign";
 
-const A4_W = 794;
 const A4_H = 1123;
 const MM_TO_PX = 3.7795;
 
@@ -41,7 +40,6 @@ export default function DocPreview({
   /** Внешний ref на корень печати (#print-root) для react-to-print. */
   printRef,
 }: DocPreviewProps) {
-  const measureRef = useRef<HTMLDivElement | null>(null);
   const [pages, setPages] = useState<DocPage[]>([]);
 
   const designTokens = getDesign(design);
@@ -157,11 +155,13 @@ export default function DocPreview({
           // Висячий заголовок: не оставляем его последним на странице,
           // уносим на следующую вместе с идущим за ним блоком.
           if (isHeadingBlock(prevEl) && overflow && !tooBig && !isLast && prevEl) {
-            const hdr = group.pop()!;
-            used -= blockHeight(prevEl);
-            collected.push({ rootClass: root.className, html: group.join("") });
-            group = [hdr];
-            used = blockHeight(prevEl);
+            const hdr = group.pop();
+            if (hdr !== undefined) {
+              used -= blockHeight(prevEl);
+              collected.push({ rootClass: root.className, html: group.join("") });
+              group = [hdr];
+              used = blockHeight(prevEl);
+            }
           } else {
             collected.push({ rootClass: root.className, html: group.join("") });
             group = [];

@@ -12,6 +12,10 @@ const fmt = (s?: string | null) =>
 const money = (amount: number, currency: string) =>
   currency === "RUB" ? `${(amount / 100).toLocaleString("ru-RU")} ₽` : `${(amount / 100).toLocaleString("ru-RU")} ${currency}`;
 
+type PaymentRow = { id: string; amount: number; currency: string; provider: string; status: string; created_at: string };
+type LeadRow = { id: string; service: string; brand: string | null; vin: string | null; status: string; created_at: string };
+type FeedbackRow = { id: string; ticket_no: string | null; type: string; message: string | null; status: string; created_at: string };
+
 export const dynamic = "force-dynamic";
 
 export default async function AdminUserDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -139,7 +143,7 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
             </TableRow>
           </TableHead>
           <TableBody>
-            {(pays ?? []).map((p: any) => (
+            {(pays ?? []).map((p: PaymentRow) => (
               <TableRow key={p.id}>
                 <TableCell className="font-medium text-gray-900">{money(p.amount, p.currency)}</TableCell>
                 <TableCell className="text-gray-600">{p.provider}</TableCell>
@@ -164,7 +168,7 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
             </TableRow>
           </TableHead>
           <TableBody>
-            {(leads ?? []).map((l: any) => (
+            {(leads ?? []).map((l: LeadRow) => (
               <TableRow key={l.id}>
                 <TableCell className="text-gray-700">{l.service}</TableCell>
                 <TableCell className="text-gray-600">{l.brand || l.vin || "—"}</TableCell>
@@ -190,7 +194,7 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
             </TableRow>
           </TableHead>
           <TableBody>
-            {(feedback ?? []).map((f: any) => (
+            {(feedback ?? []).map((f: FeedbackRow) => (
               <TableRow key={f.id}>
                 <TableCell className="font-medium text-gray-900">{f.ticket_no}</TableCell>
                 <TableCell className="text-gray-600">{f.type}</TableCell>

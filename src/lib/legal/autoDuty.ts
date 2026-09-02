@@ -64,7 +64,10 @@ export function dutyForFizNew(valueEur: number, volumeCm3: number): { duty: numb
     { upTo: 169000, pct: 0.48, minEurCm3: 15 },
     { upTo: Infinity, pct: 0.48, minEurCm3: 20 },
   ];
-  const t = tiers.find((x) => valueEur <= x.upTo)!;
+  const t = tiers.find((x) => valueEur <= x.upTo);
+  if (!t) {
+    throw new Error(`No duty tier for valueEur=${valueEur}`);
+  }
   const byPct = valueEur * t.pct;
   const byMin = volumeCm3 / 1000 * t.minEurCm3;
   const duty = Math.max(byPct, byMin);
@@ -80,7 +83,10 @@ export function dutyForFizOld(ageYears: number, volumeCm3: number): { duty: numb
     { from: 2301, to: 3000, eur3_5: 3, eur5: 5 },
     { from: 3001, to: Infinity, eur3_5: 3.6, eur5: 5.7 },
   ];
-  const r = rows.find((x) => volumeCm3 >= x.from && volumeCm3 <= x.to)!;
+  const r = rows.find((x) => volumeCm3 >= x.from && volumeCm3 <= x.to);
+  if (!r) {
+    throw new Error(`No duty row for volumeCm3=${volumeCm3}`);
+  }
   const rate = ageYears < 5 ? r.eur3_5 : r.eur5;
   const duty = volumeCm3 / 1000 * rate;
   return { duty, rate: `${rate} €/см³` };

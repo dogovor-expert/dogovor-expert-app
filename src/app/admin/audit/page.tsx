@@ -19,6 +19,18 @@ const ACTION_VARIANT: Record<string, "blue" | "purple" | "green"> = {
   profile_update: "green",
 };
 
+type AuditRow = {
+  id: string;
+  admin_id: string;
+  action: string;
+  resource: string;
+  resource_id: string | null;
+  created_at: string;
+  meta: unknown;
+};
+
+type ProfileLite = { id: string; email: string | null; full_name: string | null };
+
 export const dynamic = "force-dynamic";
 
 export default async function AdminAuditPage() {
@@ -31,13 +43,15 @@ export default async function AdminAuditPage() {
     .order("created_at", { ascending: false })
     .limit(300);
 
-  const ids = Array.from(new Set((rows ?? []).map((r: any) => r.admin_id)));
+  const ids = Array.from(new Set((rows ?? []).map((r: AuditRow) => r.admin_id)));
   const { data: profiles } = await sb
     .from("profiles")
     .select("id, email, full_name")
     .in("id", ids.length ? ids : ["__none__"]);
 
-  const adminById = new Map((profiles ?? []).map((p: any) => [p.id, p.full_name || p.email]));
+  const adminById = new Map(
+    (profiles ?? []).map((p: ProfileLite) => [p.id, p.full_name || p.email] as const),
+  );
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto">
@@ -58,7 +72,7 @@ export default async function AdminAuditPage() {
             </TableRow>
           </TableHead>
           <TableBody>
-            {(rows ?? []).map((r: any) => (
+            {(rows ?? []).map((r: AuditRow) => (
               <TableRow key={r.id}>
                 <TableCell className="text-gray-600 whitespace-nowrap">{fmt(r.created_at)}</TableCell>
                 <TableCell className="text-gray-700">{adminById.get(r.admin_id) || r.admin_id}</TableCell>

@@ -114,7 +114,7 @@ export default function BlankDownloadButtons({ templateId }: { templateId: strin
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <button
           type="button"
-          onClick={() => handleDownload("pdf")}
+          onClick={() => void handleDownload("pdf")}
           disabled={busy !== null}
           className="inline-flex items-center justify-center gap-2 px-5 py-3.5 bg-indigo-600 text-white rounded-xl font-semibold text-sm hover:bg-indigo-700 disabled:opacity-60 transition"
         >
@@ -127,7 +127,7 @@ export default function BlankDownloadButtons({ templateId }: { templateId: strin
         </button>
         <button
           type="button"
-          onClick={() => handleDownload("docx")}
+          onClick={() => void handleDownload("docx")}
           disabled={busy !== null}
           className="inline-flex items-center justify-center gap-2 px-5 py-3.5 bg-white border border-indigo-200 text-indigo-700 rounded-xl font-semibold text-sm hover:bg-indigo-50 disabled:opacity-60 transition"
         >
@@ -141,7 +141,7 @@ export default function BlankDownloadButtons({ templateId }: { templateId: strin
       </div>
       <button
         type="button"
-        onClick={handlePrint}
+        onClick={() => void handlePrint()}
         disabled={busy !== null}
         className="inline-flex items-center justify-center gap-2 px-5 py-3 w-full bg-white border border-gray-300 text-gray-700 rounded-xl font-semibold text-sm hover:bg-gray-50 disabled:opacity-60 transition"
       >

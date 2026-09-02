@@ -1,6 +1,8 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { limiters, checkRateLimit, rateLimitResponse, clientIp } from "@/lib/ratelimit";
+import { withCsrf } from "@/lib/csrf";
+import { isSameOrigin } from "@/lib/admin-auth";
 
 const DADATA_HOST = "https://suggestions.dadata.ru/suggestions/api/4_1/rs";
 
@@ -28,7 +30,38 @@ async function hasActiveSubscription(): Promise<boolean> {
   );
 }
 
-function sanitizeParty(data: any): Record<string, unknown> {
+interface DadataSuggestion {
+  value?: unknown;
+  data?: {
+    // Party fields
+    inn?: unknown;
+    kpp?: unknown;
+    ogrn?: unknown;
+    type?: unknown;
+    okved?: unknown;
+    state?: { status?: unknown };
+    name?: { short_with_opf?: unknown; full_with_opf?: unknown } | string;
+    address?: { value?: unknown; unrestricted_value?: unknown };
+    management?: { name?: unknown; post?: unknown };
+    code?: unknown;
+    region_code?: unknown;
+    // FIO fields
+    surname?: unknown;
+    patronymic?: unknown;
+    gender?: unknown;
+    birthdate?: unknown;
+    passport_series?: unknown;
+    passport_number?: unknown;
+    passport_issue_date?: unknown;
+    passport_issued_by?: unknown;
+    passport_code?: unknown;
+    snils?: unknown;
+  };
+}
+
+function sanitizeParty(data: DadataSuggestion): Record<string, unknown> {
+  const nameObj = data.data?.name;
+  const isNameObj = typeof nameObj === "object" && nameObj !== null;
   return {
     value: String(data.value ?? ""),
     inn: String(data.data?.inn ?? ""),
@@ -36,8 +69,8 @@ function sanitizeParty(data: any): Record<string, unknown> {
     ogrn: String(data.data?.ogrn ?? ""),
     type: String(data.data?.type ?? ""),
     status: String(data.data?.state?.status ?? ""),
-    name_short_with_opf: String(data.data?.name?.short_with_opf ?? ""),
-    name_full_with_opf: String(data.data?.name?.full_with_opf ?? ""),
+    name_short_with_opf: String((isNameObj ? nameObj.short_with_opf : undefined) ?? ""),
+    name_full_with_opf: String((isNameObj ? nameObj.full_with_opf : undefined) ?? ""),
     address_value: String(data.data?.address?.value ?? ""),
     address_unrestricted: String(data.data?.address?.unrestricted_value ?? ""),
     management_name: String(data.data?.management?.name ?? ""),
@@ -46,7 +79,7 @@ function sanitizeParty(data: any): Record<string, unknown> {
   };
 }
 
-function sanitizeFmsUnit(data: any): Record<string, unknown> {
+function sanitizeFmsUnit(data: DadataSuggestion): Record<string, unknown> {
   return {
     value: String(data.value ?? ""),
     code: String(data.data?.code ?? ""),
@@ -55,7 +88,7 @@ function sanitizeFmsUnit(data: any): Record<string, unknown> {
   };
 }
 
-function sanitizeFio(data: any): Record<string, unknown> {
+function sanitizeFio(data: DadataSuggestion): Record<string, unknown> {
   return {
     value: String(data.value ?? ""),
     surname: String(data.data?.surname ?? ""),
@@ -73,7 +106,10 @@ function sanitizeFio(data: any): Record<string, unknown> {
   };
 }
 
-export async function POST(req: NextRequest) {
+async function postHandler(req: NextRequest) {
+  if (!isSameOrigin(req)) {
+    return NextResponse.json({ error: "forbidden" }, { status: 403 });
+  }
   let body: { op?: string; query?: string; count?: number };
   try {
     body = await req.json();
@@ -168,10 +204,10 @@ export async function POST(req: NextRequest) {
       op === "suggest-address"
         ? s
         : op === "suggest-fms-unit"
-          ? sanitizeFmsUnit(s as Record<string, unknown>)
+          ? sanitizeFmsUnit(s as DadataSuggestion)
           : op === "suggest-fio" || op === "find-fio" || op === "suggest-passport"
-            ? sanitizeFio(s as Record<string, unknown>)
-            : sanitizeParty(s as Record<string, unknown>)
+            ? sanitizeFio(s as DadataSuggestion)
+            : sanitizeParty(s as DadataSuggestion)
     );
     const result = { suggestions };
 
@@ -183,3 +219,5 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "upstream unreachable" }, { status: 502 });
   }
 }
+
+export const POST = withCsrf(postHandler);

@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { limiters, clientIp, checkRateLimit, rateLimitResponse } from "@/lib/ratelimit";
+import { withCsrf } from "@/lib/csrf";
+import { isSameOrigin } from "@/lib/admin-auth";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const PDF_MAGIC = "%PDF-";
@@ -12,7 +14,10 @@ const BODY_HTML = (safeFilename: string) => `<div style="font-family:Arial,sans-
   <p style="margin:0;color:#6b7280;font-size:12px;">Письмо отправлено автоматически. Отвечать на него не нужно.</p>
 </div>`;
 
-export async function POST(req: Request) {
+async function postHandler(req: Request) {
+  if (!isSameOrigin(req)) {
+    return NextResponse.json({ error: "forbidden" }, { status: 403 });
+  }
   const rl = await checkRateLimit(limiters.emailSend, clientIp(req));
   if (!rl.ok) return rateLimitResponse(rl.retryAfter);
 
@@ -118,3 +123,5 @@ export async function POST(req: Request) {
     data: { id: data?.id || (data?.message_id ?? null) },
   });
 }
+
+export const POST = withCsrf(postHandler);

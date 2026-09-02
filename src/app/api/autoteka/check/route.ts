@@ -2,15 +2,25 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { peekReportTask } from "@/lib/tronk";
+import { withCsrf } from "@/lib/csrf";
+import { isSameOrigin } from "@/lib/admin-auth";
+import { limiters, checkRateLimit, rateLimitResponse } from "@/lib/ratelimit";
 
 const VIN_RE = /^[A-HJ-NPR-Z0-9]{17}$/;
 
-export async function POST(req: Request) {
+async function postHandler(req: Request) {
+  if (!isSameOrigin(req)) {
+    return NextResponse.json({ error: "forbidden" }, { status: 403 });
+  }
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+
+  // Polling — высокий риск шторма. Строгий лимит.
+  const rl = await checkRateLimit(limiters.authAction, `autoteka:check:${user.id}`);
+  if (!rl.ok) return rateLimitResponse(rl.retryAfter);
 
   const body = await req.json().catch(() => null);
   const vin = String(body?.vin ?? "").toUpperCase().trim();
@@ -83,3 +93,5 @@ export async function POST(req: Request) {
 
   return NextResponse.json({ status: "unpaid", vin });
 }
+
+export const POST = withCsrf(postHandler);

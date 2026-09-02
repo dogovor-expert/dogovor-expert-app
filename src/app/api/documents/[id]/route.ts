@@ -1,9 +1,14 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { withCsrf } from "@/lib/csrf";
+import { isSameOrigin } from "@/lib/admin-auth";
 
 type Params = { params: Promise<{ id: string }> };
 
-export async function PATCH(req: Request, { params }: Params) {
+async function patchHandler(req: Request, { params }: Params) {
+  if (!isSameOrigin(req)) {
+    return NextResponse.json({ error: "forbidden" }, { status: 403 });
+  }
   const { id } = await params;
   const supabase = await createClient();
   const {
@@ -14,18 +19,16 @@ export async function PATCH(req: Request, { params }: Params) {
   const body = await req.json().catch(() => null);
   if (!body) return NextResponse.json({ error: "bad body" }, { status: 400 });
 
-  // Whitelist allowed fields to prevent mass-assignment (changing user_id, status, etc.)
+  // Whitelist: только контентные поля. status/template_id/deleted_at управляются
+  // через DELETE (корзина) и специальные роуты (/api/trash), чтобы клиент не
+  // мог обойти логику корзины или подменить шаблон/дату удаления.
   const allowedFields = [
     "title",
     "fields",
     "checklist",
     "versions",
-    "status",
-    "template_id",
     "is_favorite",
-    "deleted_at",
   ] as const;
-  type AllowedField = (typeof allowedFields)[number];
   const updates: Record<string, unknown> = {};
   for (const key of allowedFields) {
     if (key in body) updates[key] = body[key];
@@ -50,7 +53,10 @@ export async function PATCH(req: Request, { params }: Params) {
   return NextResponse.json({ data });
 }
 
-export async function DELETE(_req: Request, { params }: Params) {
+async function deleteHandler(_req: Request, { params }: Params) {
+  if (!isSameOrigin(_req)) {
+    return NextResponse.json({ error: "forbidden" }, { status: 403 });
+  }
   const { id } = await params;
   const supabase = await createClient();
   const {
@@ -75,3 +81,8 @@ export async function DELETE(_req: Request, { params }: Params) {
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ ok: true });
 }
+
+export const DELETE = withCsrf(deleteHandler);
+
+// PATCH: isSameOrigin уже есть, добавляем withCsrf для единообразия.
+export const PATCH = withCsrf(patchHandler);

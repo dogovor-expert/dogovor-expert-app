@@ -18,7 +18,7 @@ function LivePreviewPanel({
 }: LivePreviewPanelProps) {
   // M3: не пересобираем тяжёлый HTML предпросмотра на каждый ре-рендер
   // (он вызывается из конструктора при каждом наборе символов).
-  const html = useMemo(() => renderPreview(), [renderPreview, template]);
+  const html = useMemo(() => renderPreview(), [renderPreview]);
   return (
     <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
       <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between gap-2">

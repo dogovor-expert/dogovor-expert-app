@@ -5,17 +5,22 @@ import { getAdminUser } from "@/lib/admin-auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { logAdminAction } from "@/lib/audit";
 
+const formStr = (fd: FormData, key: string): string => {
+  const v = fd.get(key);
+  return typeof v === "string" ? v : "";
+};
+
 export async function updateProfile(formData: FormData) {
   const admin = await getAdminUser();
   if (!admin) throw new Error("unauthorized");
 
-  const id = String(formData.get("id") || "");
+  const id = formStr(formData, "id");
   if (!id) throw new Error("missing id");
 
-  const full_name = String(formData.get("full_name") || "").trim();
-  const company = String(formData.get("company") || "").trim();
-  const inn = String(formData.get("inn") || "").trim();
-  const phone = String(formData.get("phone") || "").trim();
+  const full_name = formStr(formData, "full_name").trim();
+  const company = formStr(formData, "company").trim();
+  const inn = formStr(formData, "inn").trim();
+  const phone = formStr(formData, "phone").trim();
 
   const sb = createAdminClient();
   const { error } = await sb
@@ -40,7 +45,7 @@ export async function toggleAdminUser(formData: FormData) {
   const admin = await getAdminUser();
   if (!admin) throw new Error("unauthorized");
 
-  const id = String(formData.get("id") || "");
+  const id = formStr(formData, "id");
   const makeAdmin = formData.get("make_admin") === "true";
   if (!id) throw new Error("missing id");
   if (id === admin.id) throw new Error("нельзя менять свою роль");
@@ -65,11 +70,11 @@ export async function updateSubscription(formData: FormData) {
   const admin = await getAdminUser();
   if (!admin) throw new Error("unauthorized");
 
-  const userId = String(formData.get("user_id") || "");
-  const plan = String(formData.get("plan") || "").trim();
-  const status = String(formData.get("status") || "").trim();
+  const userId = formStr(formData, "user_id");
+  const plan = formStr(formData, "plan").trim();
+  const status = formStr(formData, "status").trim();
   const autoRenewal = formData.get("auto_renewal") === "true";
-  const periodEnd = String(formData.get("period_end") || "").trim();
+  const periodEnd = formStr(formData, "period_end").trim();
 
   if (!userId) throw new Error("missing user_id");
 

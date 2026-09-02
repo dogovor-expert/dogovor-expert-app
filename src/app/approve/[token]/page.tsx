@@ -40,7 +40,7 @@ export default function ApprovePage() {
       .then((tpl) => setTemplate(tpl))
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
-  }, [params.token]);
+  }, [token]);
 
   if (loading) {
     return (
@@ -197,7 +197,9 @@ export default function ApprovePage() {
           </div>
 
           <button
-            onClick={save}
+            onClick={() => {
+              void save();
+            }}
             disabled={saving}
             className="mt-6 w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-brand-500 text-white text-sm font-medium hover:bg-brand-600 disabled:opacity-60 transition-colors"
           >

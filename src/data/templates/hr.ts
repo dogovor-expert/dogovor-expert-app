@@ -2,7 +2,6 @@ import type { LegalTemplate } from "../types";
 import {
   sideFields,
   sideBlock,
-  pairIntro,
   pairSign,
   commonClauses,
   pageShell,

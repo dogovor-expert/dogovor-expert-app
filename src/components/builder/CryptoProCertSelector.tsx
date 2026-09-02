@@ -78,7 +78,7 @@ export function CryptoProCertSelector({ onSelect, onBack }: CryptoProCertSelecto
 
         <div className="flex flex-wrap gap-3">
           <button
-            onClick={handleInstallClick}
+            onClick={() => void handleInstallClick()}
             disabled={installing}
             className="inline-flex items-center gap-2 px-4 py-2.5 bg-brand-600 text-white rounded-xl hover:bg-brand-700 font-medium text-sm transition disabled:opacity-50"
           >
@@ -164,7 +164,7 @@ export function CryptoProCertSelector({ onSelect, onBack }: CryptoProCertSelecto
       </div>
 
       <button
-        onClick={loadCertificates}
+        onClick={() => void loadCertificates()}
         disabled={loading}
         className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-brand-500 text-white rounded-xl hover:bg-brand-600 font-medium text-sm transition disabled:opacity-50"
       >
@@ -338,7 +338,7 @@ export function CryptoProCertSelector({ onSelect, onBack }: CryptoProCertSelecto
 
                     <button
                       type="button"
-                      onClick={() => validateCert(cert.thumbprint)}
+                      onClick={() => { void validateCert(cert.thumbprint); }}
                       disabled={isChecking}
                       title="Проверить снова"
                       className="flex-shrink-0 px-3 border-l border-gray-100 text-gray-400 hover:text-brand-600 hover:bg-blue-50 transition-colors disabled:opacity-50"

@@ -9,12 +9,17 @@ import { sendEmail } from "@/lib/mail";
 const esc = (s: string) =>
   s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c] as string));
 
+const formStr = (fd: FormData, key: string): string => {
+  const v = fd.get(key);
+  return typeof v === "string" ? v : "";
+};
+
 export async function bulkFeedbackStatus(formData: FormData) {
   const admin = await getAdminUser();
   if (!admin) throw new Error("unauthorized");
 
-  const idsRaw = String(formData.get("ids") || "");
-  const status = String(formData.get("status") || "");
+  const idsRaw = formStr(formData, "ids");
+  const status = formStr(formData, "status");
   if (!["new", "done", "spam"].includes(status)) throw new Error("bad status");
 
   const ids = idsRaw.split(",").map((s) => s.trim()).filter(Boolean);
@@ -39,8 +44,8 @@ export async function replyFeedback(formData: FormData) {
   const admin = await getAdminUser();
   if (!admin) throw new Error("unauthorized");
 
-  const id = String(formData.get("id") || "");
-  const message = String(formData.get("message") || "").trim();
+  const id = formStr(formData, "id");
+  const message = formStr(formData, "message").trim();
   if (!id || message.length < 2) throw new Error("bad input");
 
   const sb = createAdminClient();

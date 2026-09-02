@@ -43,14 +43,14 @@ export default async function AdminUsersPage({
   const page = Math.max(1, parseInt(sp.page ?? "1", 10) || 1);
   const perPage = 20;
 
-  const { users, emailById } = await getDirectory();
+  const { users, emailById: _emailById } = await getDirectory();
   const admin = createAdminClient();
   const { data: subs } = await admin
     .from("subscriptions")
     .select("user_id, plan, status, period_end")
     .order("created_at", { ascending: false });
 
-  const subMap = new Map<string, any>();
+  const subMap = new Map<string, { user_id: string; plan: string; status: string; period_end: string | null }>();
   for (const s of subs ?? []) {
     if (!subMap.has(s.user_id)) subMap.set(s.user_id, s);
   }

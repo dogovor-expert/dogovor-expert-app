@@ -1,4 +1,4 @@
-import { Check, Clock, Trash2 } from "lucide-react";
+import { Check, Trash2 } from "lucide-react";
 import { TEMPLATE_META } from "@/data/templatesMeta";
 import type { DraftData } from "@/lib/autosave";
 

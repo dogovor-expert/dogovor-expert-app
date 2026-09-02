@@ -21,7 +21,6 @@ export function LoginForm({ onSuccess, initialEmail }: LoginFormProps) {
     handleSubmit,
     formState: { errors },
     setValue,
-    watch,
   } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
@@ -59,7 +58,7 @@ export function LoginForm({ onSuccess, initialEmail }: LoginFormProps) {
       } else {
         window.location.href = '/dashboard';
       }
-    } catch (err) {
+    } catch {
       setServerError('Не удалось подключиться к серверу');
     } finally {
       setIsLoading(false);
@@ -67,14 +66,19 @@ export function LoginForm({ onSuccess, initialEmail }: LoginFormProps) {
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+    <form onSubmit={(e) => { void handleSubmit(onSubmit)(e); }} className="space-y-4" noValidate>
       <div>
         <Input
+          id="login-email"
           type="email"
-          placeholder="Email"
+          label="Email"
+          autoComplete="email"
+          inputMode="email"
+          placeholder="you@example.com"
+          aria-describedby={errors.email?.message ? 'login-email-err' : undefined}
+          aria-invalid={!!errors.email}
           {...register('email')}
           error={errors.email?.message}
-          aria-invalid={!!errors.email}
           readOnly={!!initialEmail}
           className={initialEmail ? 'bg-gray-50 cursor-not-allowed' : ''}
         />
@@ -85,21 +89,33 @@ export function LoginForm({ onSuccess, initialEmail }: LoginFormProps) {
 
       <div>
         <Input
+          id="login-password"
           type="password"
-          placeholder="Пароль"
+          label="Пароль"
+          autoComplete="current-password"
+          aria-describedby={errors.password?.message ? 'login-password-err' : undefined}
+          aria-invalid={!!errors.password}
           {...register('password')}
           error={errors.password?.message}
-          aria-invalid={!!errors.password}
         />
       </div>
 
       {serverError && (
-        <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg p-3">
+        <div
+          role="alert"
+          aria-live="assertive"
+          className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg p-3"
+        >
           {serverError}
         </div>
       )}
 
-      <Button type="submit" disabled={isLoading} className="w-full">
+      <Button
+        type="submit"
+        disabled={isLoading}
+        aria-busy={isLoading}
+        className="w-full"
+      >
         {isLoading ? 'Вход...' : 'Войти'}
       </Button>
     </form>

@@ -33,8 +33,38 @@ import {
   loadDocxPageNumber,
   loadDocxTableBorders,
 } from './docx-loader';
+import type {
+  AlignmentType,
+  BorderStyle,
+  Document,
+  Footer,
+  Header,
+  ImageRun,
+  Packer,
+  PageNumber,
+  Paragraph,
+  ShadingType,
+  Table,
+  TableBorders,
+  TableCell,
+  TableRow,
+  TabStopType,
+  TextRun,
+  UnderlineType,
+  WidthType,
+} from 'docx';
 
-type Align = any;
+// Type aliases for constructor functions to avoid naming conflicts
+type HeaderClass = typeof Header;
+type FooterClass = typeof Footer;
+type ParagraphClass = typeof Paragraph;
+type TextRunClass = typeof TextRun;
+type AlignmentTypeClass = typeof AlignmentType;
+type BorderStyleClass = typeof BorderStyle;
+type PageNumberClass = typeof PageNumber;
+type TabStopTypeClass = typeof TabStopType;
+
+type Align = AlignmentTypeClass | undefined;
 
 const BLOCK_TAGS = new Set([
   'div', 'p', 'li', 'h1', 'h2', 'h3', 'h4', 'section', 'article',
@@ -364,7 +394,7 @@ async function parseHtmlToDocx(
         const titleEl = c.querySelector('.doc-sides-title');
         const body = c.cloneNode(true) as HTMLElement;
         body.querySelectorAll('.doc-sides-title').forEach((n) => n.remove());
-        const cellChildren: any[] = [];
+        const cellChildren: Paragraph[] = [];
         if (titleEl) {
           cellChildren.push(
             buildParagraph(collectInline(titleEl), design, Paragraph, TextRun, AlignmentType, TabStopType, BorderStyle, ShadingType, {
@@ -382,7 +412,7 @@ async function parseHtmlToDocx(
           );
         }
         if (body.textContent?.trim()) {
-          const sub: any[] = [];
+          const sub: Paragraph[] = [];
           await walk(body, sub);
           cellChildren.push(...sub.filter((x) => x instanceof Paragraph));
         }
@@ -489,7 +519,14 @@ async function parseHtmlToDocx(
   return elements;
 }
 
-function buildHeader(design: DesignTokens, Header: any, Paragraph: any, TextRun: any, AlignmentType: any, BorderStyle: any): any {
+function buildHeader(
+  design: DesignTokens,
+  Header: HeaderClass,
+  Paragraph: ParagraphClass,
+  TextRun: TextRunClass,
+  AlignmentType: AlignmentTypeClass,
+  BorderStyle: BorderStyleClass
+): InstanceType<HeaderClass> {
   const align =
     design.headerAlign === 'center'
       ? AlignmentType.CENTER
@@ -532,7 +569,15 @@ function buildHeader(design: DesignTokens, Header: any, Paragraph: any, TextRun:
   });
 }
 
-function buildFooter(design: DesignTokens, Footer: any, Paragraph: any, TextRun: any, PageNumber: any, TabStopType: any, BorderStyle: any): any {
+function buildFooter(
+  design: DesignTokens,
+  Footer: FooterClass,
+  Paragraph: ParagraphClass,
+  TextRun: TextRunClass,
+  PageNumber: PageNumberClass,
+  TabStopType: TabStopTypeClass,
+  BorderStyle: BorderStyleClass
+): InstanceType<FooterClass> {
   const size = halfPoints(design.tinyFontSize);
   return new Footer({
     children: [
@@ -560,12 +605,11 @@ function buildFooter(design: DesignTokens, Footer: any, Paragraph: any, TextRun:
   });
 }
 
-export async function buildDocxDocumentLazy(html: string, options: { design?: DesignId } = {}): Promise<any> {
+export async function buildDocxDocumentLazy(html: string, options: { design?: DesignId } = {}): Promise<Document> {
   const docxModule = await loadDocx();
   const {
-    Document, Header, Footer, Paragraph, Table, TableRow, TableCell,
-    TextRun, ImageRun, Packer, AlignmentType, BorderStyle, ShadingType,
-    TabStopType, WidthType, PageNumber, UnderlineType, TableBorders,
+    Document, Header, Footer, Paragraph, TextRun,
+    AlignmentType, BorderStyle, TabStopType, PageNumber,
   } = docxModule;
 
   const design = getDesign(options.design);

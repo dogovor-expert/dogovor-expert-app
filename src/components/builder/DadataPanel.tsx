@@ -1,8 +1,13 @@
 import { Loader2, Search, Star } from "lucide-react";
 
+interface PartyData {
+  inn?: string;
+  kpp?: string;
+}
+
 interface PartyResult {
   value: string;
-  data: any;
+  data: PartyData;
   prefix: string;
 }
 

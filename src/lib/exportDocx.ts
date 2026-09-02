@@ -488,7 +488,7 @@ function buildFooter(design: DesignTokens): Footer {
 
 /** Единая точка сборки DOCX-документа из HTML + дизайн-токенов. */
 export async function buildDocxDocument(html: string, options: DocxOptions = {}): Promise<DocxDocument> {
-  const [{ Document, Header, Footer, Paragraph, Table, TableRow, TableCell, TextRun, ImageRun, Packer, AlignmentType, BorderStyle, ShadingType, TabStopType, WidthType, PageNumber }] = await Promise.all([
+  const [{ Document }] = await Promise.all([
     import("docx"),
   ]);
 

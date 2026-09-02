@@ -110,8 +110,6 @@ const PACK_FIELD_ALIASES: Record<string, string[]> = {
   sum: ["contract_price", "amount"],
 };
 
-const PASSPORT_SUFFIXES = ["_series", "_number"];
-
 export function buildPackValues(
   template: LegalTemplate,
   formValues: Record<string, string>
@@ -219,7 +217,15 @@ export function renderTemplateDocument(
         items = items.map((item) => {
           const safe: Record<string, string> = {};
           Object.entries(item).forEach(([k, v]) => {
-            safe[k] = String(v ?? "");
+            if (v === null || v === undefined) {
+              safe[k] = "";
+            } else if (typeof v === "string") {
+              safe[k] = v;
+            } else if (typeof v === "object") {
+              safe[k] = JSON.stringify(v);
+            } else {
+              safe[k] = String(v);
+            }
           });
           return safe;
         });

@@ -192,9 +192,13 @@ export default function FeedbackForm({ defaultDocSlug, onSuccess, compact }: Pro
 
   if (status === "success") {
     return (
-      <div className="text-center py-8">
+      <div
+        role="status"
+        aria-live="polite"
+        className="text-center py-8"
+      >
         <div className="mx-auto w-14 h-14 rounded-full bg-green-50 flex items-center justify-center mb-4">
-          <CheckCircle2 className="w-7 h-7 text-green-600" />
+          <CheckCircle2 className="w-7 h-7 text-green-600" aria-hidden="true" />
         </div>
         <h3 className="text-lg font-bold text-slate-900">Спасибо, обращение принято</h3>
         <p className="mt-2 text-sm text-slate-600">
@@ -218,18 +222,33 @@ export default function FeedbackForm({ defaultDocSlug, onSuccess, compact }: Pro
         </div>
       )}
 
-      {/* Тип обращения — радио-карточки */}
+      {/* Тип обращения — радио-карточки (правильный ARIA radiogroup pattern) */}
       <fieldset>
         <legend className="text-sm font-semibold text-slate-700 mb-2">Тип обращения</legend>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+        <div
+          role="radiogroup"
+          aria-label="Тип обращения"
+          aria-required="true"
+          aria-invalid={!!errors.type}
+          className="grid grid-cols-1 sm:grid-cols-2 gap-2"
+        >
           {TYPE_OPTIONS.map((o) => {
             const active = type === o.value;
             return (
-              <button
+              <div
                 key={o.value}
-                type="button"
+                role="radio"
+                tabIndex={active || (!type && o === TYPE_OPTIONS[0]) ? 0 : -1}
+                aria-checked={active}
+                aria-label={o.label}
                 onClick={() => setType(o.value)}
-                className={`text-left rounded-xl border px-3.5 py-3 transition ${
+                onKeyDown={(e) => {
+                  if (e.key === " " || e.key === "Enter") {
+                    e.preventDefault();
+                    setType(o.value);
+                  }
+                }}
+                className={`text-left rounded-xl border px-3.5 py-3 transition cursor-pointer focus:outline-none focus:ring-2 focus:ring-brand-500/40 ${
                   active
                     ? "border-brand-500 bg-brand-50 ring-1 ring-brand-200"
                     : "border-slate-200 bg-white hover:border-slate-300"
@@ -240,25 +259,34 @@ export default function FeedbackForm({ defaultDocSlug, onSuccess, compact }: Pro
                   {o.label}
                 </span>
                 <span className="block text-xs text-slate-600 mt-1">{o.hint}</span>
-              </button>
+              </div>
             );
           })}
         </div>
-        {errors.type && <p className="text-xs text-red-600 mt-1">{errors.type}</p>}
+        {errors.type && (
+          <p id="fb-type-err" role="alert" className="text-xs text-red-600 mt-1">
+            {errors.type}
+          </p>
+        )}
       </fieldset>
 
       {/* Документ (doc_error) */}
       {type === "doc_error" && (
         <div className="mt-4 relative">
-          <label className="text-sm font-semibold text-slate-700 block mb-1.5">Какой документ</label>
+          <label htmlFor="fb-doc" className="text-sm font-semibold text-slate-700 block mb-1.5">
+            Какой документ
+          </label>
           <input
+            id="fb-doc"
             value={docQuery}
             onChange={(e) => { setDocQuery(e.target.value); setDocSlug(""); setDocName(""); }}
             placeholder="Начните вводить название шаблона…"
+            aria-describedby={docSlug ? "fb-doc-selected" : errors.doc ? "fb-doc-err" : undefined}
+            aria-invalid={!!errors.doc}
             className="w-full px-3.5 py-2.5 text-sm bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500"
           />
           {docSlug && (
-            <p className="text-xs text-brand-700 mt-1.5 flex items-center gap-1">
+            <p id="fb-doc-selected" className="text-xs text-brand-700 mt-1.5 flex items-center gap-1">
               <CheckCircle2 className="w-3.5 h-3.5" /> Выбран: {docName}
             </p>
           )}
@@ -278,45 +306,76 @@ export default function FeedbackForm({ defaultDocSlug, onSuccess, compact }: Pro
               ))}
             </ul>
           )}
-          {errors.doc && <p className="text-xs text-red-600 mt-1">{errors.doc}</p>}
+          {errors.doc && (
+            <p id="fb-doc-err" role="alert" className="text-xs text-red-600 mt-1">
+              {errors.doc}
+            </p>
+          )}
         </div>
       )}
 
       {/* Инструмент (site_bug) */}
       {type === "site_bug" && (
         <div className="mt-4">
-          <label className="text-sm font-semibold text-slate-700 block mb-1.5">Какой инструмент/страница</label>
-          <div className="flex flex-wrap gap-2">
-            {TOOLS.map((t) => (
-              <button
-                key={t}
-                type="button"
-                onClick={() => setTool(t)}
-                className={`text-sm px-3 py-1.5 rounded-full border transition ${
-                  tool === t
-                    ? "bg-brand-50 border-brand-300 text-brand-700"
-                    : "bg-white border-slate-200 text-slate-600 hover:border-slate-300"
-                }`}
-              >
-                {t}
-              </button>
-            ))}
+          <span id="fb-tool-label" className="text-sm font-semibold text-slate-700 block mb-1.5">
+            Какой инструмент/страница
+          </span>
+          <div role="radiogroup" aria-labelledby="fb-tool-label" aria-required="true" className="flex flex-wrap gap-2">
+            {TOOLS.map((t) => {
+              const active = tool === t;
+              return (
+                <div
+                  key={t}
+                  role="radio"
+                  tabIndex={active || (!tool && t === TOOLS[0]) ? 0 : -1}
+                  aria-checked={active}
+                  aria-label={t}
+                  onClick={() => setTool(t)}
+                  onKeyDown={(e) => {
+                    if (e.key === " " || e.key === "Enter") {
+                      e.preventDefault();
+                      setTool(t);
+                    }
+                  }}
+                  className={`text-sm px-3 py-1.5 rounded-full border cursor-pointer transition focus:outline-none focus:ring-2 focus:ring-brand-500/40 ${
+                    active
+                      ? "bg-brand-50 border-brand-300 text-brand-700"
+                      : "bg-white border-slate-200 text-slate-600 hover:border-slate-300"
+                  }`}
+                >
+                  {t}
+                </div>
+              );
+            })}
           </div>
-          {errors.tool && <p className="text-xs text-red-600 mt-1">{errors.tool}</p>}
+          {errors.tool && (
+            <p id="fb-tool-err" role="alert" className="text-xs text-red-600 mt-1">
+              {errors.tool}
+            </p>
+          )}
         </div>
       )}
 
       {/* Сообщение */}
       <div className="mt-4">
-        <label className="text-sm font-semibold text-slate-700 block mb-1.5">Опишите подробнее</label>
+        <label htmlFor="fb-message" className="text-sm font-semibold text-slate-700 block mb-1.5">
+          Опишите подробнее
+        </label>
         <textarea
+          id="fb-message"
           value={message}
           onChange={(e) => setMessage(e.target.value)}
           rows={4}
           placeholder={type ? PLACEHOLDERS[type] : "В чём суть обращения?"}
+          aria-describedby={errors.message ? "fb-message-err" : undefined}
+          aria-invalid={!!errors.message}
           className="w-full px-3.5 py-2.5 text-sm bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 resize-y"
         />
-        {errors.message && <p className="text-xs text-red-600 mt-1">{errors.message}</p>}
+        {errors.message && (
+          <p id="fb-message-err" role="alert" className="text-xs text-red-600 mt-1">
+            {errors.message}
+          </p>
+        )}
       </div>
 
       {/* Раскрывашка: скриншоты + техданные */}
@@ -377,34 +436,61 @@ export default function FeedbackForm({ defaultDocSlug, onSuccess, compact }: Pro
 
       {/* Email */}
       <div className="mt-4">
-        <label className="text-sm font-semibold text-slate-700 block mb-1.5">Email для ответа</label>
+        <label htmlFor="fb-email" className="text-sm font-semibold text-slate-700 block mb-1.5">
+          Email для ответа
+        </label>
         <input
+          id="fb-email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           type="email"
+          autoComplete="email"
+          inputMode="email"
           placeholder="you@example.com"
+          aria-describedby={errors.email ? "fb-email-err" : undefined}
+          aria-invalid={!!errors.email}
           className="w-full px-3.5 py-2.5 text-sm bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500"
         />
-        {errors.email && <p className="text-xs text-red-600 mt-1">{errors.email}</p>}
+        {errors.email && (
+          <p id="fb-email-err" role="alert" className="text-xs text-red-600 mt-1">
+            {errors.email}
+          </p>
+        )}
       </div>
 
       {/* Согласие */}
-      <label className="mt-3 flex items-start gap-2 text-xs text-slate-600">
-        <input
-          type="checkbox"
-          checked={consent}
-          onChange={(e) => setConsent(e.target.checked)}
-          className="mt-0.5 rounded border-slate-300 text-brand-600 focus:ring-brand-500"
-        />
-        <span>
-          Я согласен(а) на обработку персональных данных (email и текста обращения) по&nbsp;
-          <a href="/privacy" className="text-brand-600 hover:underline" target="_blank" rel="noreferrer">политике конфиденциальности</a>.
-        </span>
-      </label>
-      {errors.consent && <p className="text-xs text-red-600 mt-1">{errors.consent}</p>}
+      <div className="mt-3">
+        <label htmlFor="fb-consent" className="flex items-start gap-2 text-xs text-slate-600 cursor-pointer">
+          <input
+            id="fb-consent"
+            type="checkbox"
+            checked={consent}
+            onChange={(e) => setConsent(e.target.checked)}
+            aria-describedby={errors.consent ? "fb-consent-err" : undefined}
+            aria-invalid={!!errors.consent}
+            className="mt-0.5 rounded border-slate-300 text-brand-600 focus:ring-brand-500"
+          />
+          <span>
+            Я согласен(а) на обработку персональных данных (email и текста обращения) по&nbsp;
+            <a href="/privacy" className="text-brand-600 hover:underline" target="_blank" rel="noreferrer">
+              политике конфиденциальности
+              <span className="sr-only"> (откроется в новой вкладке)</span>
+            </a>.
+          </span>
+        </label>
+        {errors.consent && (
+          <p id="fb-consent-err" role="alert" className="text-xs text-red-600 mt-1">
+            {errors.consent}
+          </p>
+        )}
+      </div>
 
       {status === "error" && (
-        <div className="mt-4 flex items-center gap-2 rounded-xl bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
+        <div
+          role="alert"
+          aria-live="assertive"
+          className="mt-4 flex items-center gap-2 rounded-xl bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700"
+        >
           <AlertCircle className="w-4 h-4 flex-shrink-0" />
           <span className="flex-1">{submitError}</span>
           <button onClick={submit} className="font-semibold underline">Повторить</button>
@@ -415,11 +501,13 @@ export default function FeedbackForm({ defaultDocSlug, onSuccess, compact }: Pro
         type="button"
         onClick={submit}
         disabled={status === "submitting"}
+        aria-busy={status === "submitting"}
+        aria-disabled={status === "submitting"}
         className="mt-5 w-full inline-flex items-center justify-center gap-2 px-5 py-3 bg-brand-600 text-white rounded-xl font-semibold text-sm hover:bg-brand-700 disabled:opacity-60 transition"
       >
         {status === "submitting" ? (
           <>
-            <Loader2 className="w-4 h-4 animate-spin" /> Отправляем…
+            <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" /> Отправляем…
           </>
         ) : (
           <>Отправить обращение</>

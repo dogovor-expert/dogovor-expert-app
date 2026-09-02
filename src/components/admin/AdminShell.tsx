@@ -132,7 +132,7 @@ export default function AdminShell({
           <div className="flex items-center gap-3">
             <span className="text-sm text-gray-600 hidden sm:inline">{userEmail}</span>
             <button
-              onClick={handleLogout}
+              onClick={() => void handleLogout()}
               className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 rounded-xl transition-colors"
             >
               <LogOut className="w-4 h-4" />

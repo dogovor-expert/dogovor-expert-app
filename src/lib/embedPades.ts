@@ -48,7 +48,6 @@ function latin1Encode(str: string): Uint8Array {
   return bytes;
 }
 
-const BYTE_RANGE_TOKEN = '/**********'; // 11 символов: '/' + 10 '*'
 const padByteRangeValue = (n: number) => ' ' + String(n).padStart(10, '0'); // 11 символов
 
 /**
@@ -77,7 +76,7 @@ export async function preparePAdESPlaceholder(
   const pages = pdfDoc.getPages();
   const pageIndex = appearance.pageIndex ?? pages.length - 1;
   const page = pages[pageIndex];
-  const { width: pageWidth, height: pageHeight } = page.getSize();
+  const { width: pageWidth } = page.getSize();
   const rect = appearance.rect ?? [pageWidth - 220, 20, pageWidth - 20, 100];
 
   const placeholderHex = '0'.repeat(Math.max(2, cmsHexLen));

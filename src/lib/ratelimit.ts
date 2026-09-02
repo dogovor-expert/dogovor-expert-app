@@ -31,6 +31,10 @@ const mk = (prefix: string, limit: number, windowMs: `${number} s` | `${number} 
 export const limiters = {
   /** Публичные формы (лиды) — 10 запросов/мин на IP. */
   publicForm: mk("rl:public-form", 10, "60 s"),
+  /** Создание документа пользователем — 30/мин на user.id. */
+  documentCreate: mk("rl:document-create", 30, "60 s"),
+  /** CRUD по contractors/persons/approval — 60/мин на user.id. */
+  crudMutation: mk("rl:crud-mutation", 60, "60 s"),
   /** Вебхук платежей — 30 запросов/мин на IP. */
   webhook: mk("rl:webhook", 30, "60 s"),
   /** Отправка на email — 10 запросов/мин на IP. */
@@ -39,12 +43,24 @@ export const limiters = {
   feedbackForm: mk("rl:feedback-form", 10, "60 s"),
   /** Админ-мутации (смена статусов, прав) — 30/мин на IP. */
   adminAction: mk("rl:admin-action", 30, "60 s"),
+  /** Админ-экспорт чувствительных данных (CSV) — 5/мин на admin.id. */
+  adminExport: mk("rl:admin-export", 5, "60 s"),
+  /** Auth-чувствительные операции (refresh-token, login) — 5/мин на user.id. */
+  authAction: mk("rl:auth-action", 5, "60 s"),
   /** Чат с поддержкой — 30 сообщений/мин на IP (защита от спама). */
   chat: mk("rl:chat", 30, "60 s"),
   /** DADATA suggest/find — 40 запросов/мин на IP. */
   dadata: mk("rl:dadata", 40, "60 s"),
   /** Реальное списание (auto-renew) — 5 запросов/мин на IP (защита от CSRF-шторма). */
   billing: mk("rl:billing", 5, "60 s"),
+  /** Подготовка PDF к подписанию — 20 запросов/мин на user.id. */
+  signPrepare: mk("rl:sign-prepare", 20, "60 s"),
+  /** Приём подписанного PDF — 20 запросов/мин на user.id. */
+  signAccept: mk("rl:sign-accept", 20, "60 s"),
+  /** Скачивание подписанного PDF — 30 запросов/мин на user.id. */
+  signDownload: mk("rl:sign-download", 30, "60 s"),
+  /** Верификация подписи — 30 запросов/мин на user.id. */
+  signVerify: mk("rl:sign-verify", 30, "60 s"),
 };
 
 export function clientIp(req: Request): string {
