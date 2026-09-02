@@ -38,12 +38,15 @@ function sessionAal(request: NextRequest): "aal1" | "aal2" | null {
 
 export async function middleware(request: NextRequest): Promise<NextResponse> {
   const { pathname } = request.nextUrl;
-  let response = NextResponse.next({ request });
 
   // ====== CSP с nonce ======
-  // Генерируем уникальный nonce для каждого запроса
+  // Генерируем уникальный nonce для каждого запроса (до создания response)
   const nonce = Buffer.from(globalThis.crypto.randomUUID()).toString('base64');
   const isDev = process.env.NODE_ENV === 'development';
+
+  // Передаём nonce в Server Components через заголовок запроса
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set('x-nonce', nonce);
 
   // Строим CSP-заголовок с nonce и strict-dynamic
   const csp = [
@@ -62,9 +65,8 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
     `frame-ancestors 'self'`,
   ].join('; ');
 
-  // Передаём nonce в Server Components через заголовок
-  const requestHeaders = new Headers(request.headers);
-  requestHeaders.set('x-nonce', nonce);
+  // Создаём response с заголовками, содержащими nonce для Server Components
+  let response = NextResponse.next({ request: { headers: requestHeaders } });
 
   // Устанавливаем CSP-заголовок в ответ
   response.headers.set('Content-Security-Policy', csp);
@@ -122,7 +124,7 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
         },
         setAll(cookiesToSet) {
           cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
-          response = NextResponse.next({ request });
+          response = NextResponse.next({ request: { headers: requestHeaders } });
           cookiesToSet.forEach(({ name, value, options }) =>
             response.cookies.set(name, value, options)
           );
