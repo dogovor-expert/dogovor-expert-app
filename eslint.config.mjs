@@ -9,8 +9,15 @@ import prettier from 'eslint-config-prettier';
 export default [
   {
     ignores: [
-      'src/lib/workers/**/*',
-      '**/src/lib/workers/ocr-worker.js',
+      'src/lib/workers/**',
+      'src/lib/workers/ocr-worker.js',
+      'scripts/**',
+      'coverage/**',
+      'audit/**',
+      'e2e/**',
+      '.opencode/**',
+      'next-env.d.ts',
+      'fix-escape.js',
       '.next/**',
       'out/**',
       'build/**',
@@ -27,6 +34,37 @@ export default [
       '**/*.test.tsx',
       '**/__integration__/**',
     ],
+  },
+  // ===== Web Workers (Tesseract/OCR) — Node + Web Worker глобалы, без parserOptions.project =====
+  {
+    files: ['src/lib/workers/**/*'],
+    languageOptions: {
+      parser: tsParser,
+      parserOptions: {
+        ecmaVersion: 'latest',
+        sourceType: 'module',
+        ecmaFeatures: { jsx: false },
+      },
+      globals: {
+        // Web Worker
+        self: 'readonly',
+        // Node-style (для node-polyfill в tesseract.js)
+        process: 'readonly',
+        Buffer: 'readonly',
+        console: 'readonly',
+        fetch: 'readonly',
+        URL: 'readonly',
+        TextEncoder: 'readonly',
+        TextDecoder: 'readonly',
+        crypto: 'readonly',
+      },
+    },
+    rules: {
+      'no-empty': 'off',
+      'no-undef': 'off', // глобалы заданы выше, но worker-API варьируется
+      '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
+      'no-console': 'off',
+    },
   },
   js.configs.recommended,
   {
@@ -59,6 +97,7 @@ export default [
         clearInterval: 'readonly',
         crypto: 'readonly',
         self: 'readonly',
+        indexedDB: 'readonly',
       },
     },
     plugins: {
@@ -85,7 +124,7 @@ export default [
       '@typescript-eslint/no-unsafe-return': 'warn',
       '@typescript-eslint/no-base-to-string': 'warn',
 
-      // Критически важные правила правильной работы с промисами (из тype-checking набора).
+      // Критически важные правила правильной работы с промисами (из type-checking набора).
       '@typescript-eslint/no-floating-promises': 'warn',
       '@typescript-eslint/no-misused-promises': 'warn',
       '@typescript-eslint/require-await': 'warn',
