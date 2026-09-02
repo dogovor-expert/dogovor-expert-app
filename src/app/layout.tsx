@@ -38,9 +38,13 @@ export const metadata: Metadata = {
       "max-snippet": -1,
     },
   },
+  alternates: {
+    canonical: "/",
+  },
   openGraph: {
     type: "website",
     locale: "ru_RU",
+    url: SITE_URL,
     siteName: "Dogovor.expert",
     title: SITE_NAME,
     description: SITE_DESCRIPTION,
