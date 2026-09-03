@@ -54,3 +54,6 @@ prompt-для-нейросети.md
 на-потом.md
 
 .vercel
+
+# local playwright browsers cache path (per-machine)
+.npmrc
