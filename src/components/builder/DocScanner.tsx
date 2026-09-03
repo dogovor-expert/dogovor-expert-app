@@ -36,6 +36,19 @@ import { tryParseMrz, applyMrzToRole, type MrzParseSuccess } from "@/lib/docMrz"
 /** Порог уверенности Tesseract, ниже которого включается PaddleOCR. */
 const PADDLE_FALLBACK_THRESHOLD = 60;
 
+/**
+ * Минимальная длина распознанного текста, при которой Tesseract считается
+ * «уверенным» независимо от confidence. Если Tesseract вернул одно-два слова
+ * с высоким confidence, но без маркеров («рождения:», «выдан», «дата») — это
+ * почти всегда фрагмент после агрессивного кропа Scanic, а не валидный
+ * разворот паспорта. PaddleOCR пересканирует весь кадр целиком и ловит
+ * остальной текст, который Tesseract «не увидел».
+ *
+ * Эмпирика: реальный паспорт РФ (разворот) даёт ~150–400 символов. 80 — это
+ * уверенный запас для СТС/ПТС, но отсекает случаи «одно слово 96% conf».
+ */
+const PADDLE_FALLBACK_MIN_TEXT_LENGTH = 80;
+
 interface DocScannerProps {
   template: LegalTemplate;
   photos: Record<string, string[]>;
@@ -360,9 +373,15 @@ export default function DocScanner({
         // 2) Multi-pass OCR: raw + binary, выбор по confidence.
         let ocr = await runOcr(slot, prepared.ocrRaw, prepared.ocrBinary);
 
-        // 3) Fallback: при низком уверенности пробуем PP-OCRv5 (точнее
-        //    на реальных фото). Берём движок с большим confidence.
-        if (ocr.confidence < PADDLE_FALLBACK_THRESHOLD) {
+        // 3) Fallback: пробуем PP-OCRv5 (точнее на реальных фото), если
+        //    Tesseract либо не уверен, либо вернул слишком короткий текст
+        //    (типичный артефакт агрессивного кропа Scanic — Tesseract
+        //    «видит» одно слово с conf 96%, а форму заполнить нечем).
+        //    Берём движок с большим confidence.
+        if (
+          ocr.confidence < PADDLE_FALLBACK_THRESHOLD ||
+          ocr.text.trim().length < PADDLE_FALLBACK_MIN_TEXT_LENGTH
+        ) {
           try {
             const paddle = await paddleRecognize(prepared.ocrRaw);
             if (paddle.confidence > ocr.confidence) {
