@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { limiters, clientIp, checkRateLimit, rateLimitResponse } from "@/lib/ratelimit";
 import { withCsrf } from "@/lib/csrf";
 import { isSameOrigin } from "@/lib/admin-auth";
+import { sendEmail, isMailConfigured } from "@/lib/mail";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const PDF_MAGIC = "%PDF-";
@@ -21,20 +22,20 @@ async function postHandler(req: Request) {
   const rl = await checkRateLimit(limiters.emailSend, clientIp(req));
   if (!rl.ok) return rateLimitResponse(rl.retryAfter);
 
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-
-  const zeptoToken = process.env.ZEPTOMAIL_TOKEN;
-  const resendKey = process.env.RESEND_API_KEY;
-  if (!zeptoToken && !resendKey) {
+  // Проверяем конфигурацию ДО аутентификации: сначала дешёвый early-return,
+  // чтобы не тратить Supabase round-trip при сломанном окружении.
+  if (!isMailConfigured()) {
     return NextResponse.json(
       { error: "email_not_configured" },
       { status: 501 }
     );
   }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
 
   const body = await req.json().catch(() => null);
   if (!body || typeof body !== "object") {
@@ -69,59 +70,32 @@ async function postHandler(req: Request) {
 
   const safeFilename =
     filename.replace(/[^а-яА-Яa-zA-Z0-9 _-]/g, "").slice(0, 120) + ".pdf";
-  const fromRaw =
-    process.env.EMAIL_FROM || "no-reply@dogovor.expert";
-  const fromName = process.env.EMAIL_FROM_NAME || "Dogovor.expert";
 
-  let res: Response;
-  if (zeptoToken) {
-    res = await fetch("https://api.zeptomail.com/v1.1/email/single", {
-      method: "POST",
-      headers: {
-        Authorization: `Zoho-enczapikey ${zeptoToken}`,
-        "Content-Type": "application/json",
+  // Делегируем отправку в lib/mail.ts: единый fallback-порядок
+  // ZeptoMail → Resend → Zoho SMTP. Это устраняет расхождение, при котором
+  // роут раньше игнорировал Zoho SMTP и возвращал 501 даже при настроенном
+  // Zoho-окружении.
+  const ok = await sendEmail({
+    to: email,
+    subject: "Ваш документ с Dogovor.expert",
+    html: BODY_HTML(safeFilename),
+    attachments: [
+      {
+        filename: safeFilename,
+        mimeType: "application/pdf",
+        contentBase64: pdfBase64,
       },
-      body: JSON.stringify({
-        from: { address: fromRaw, name: fromName },
-        to: [{ email_address: { address: email } }],
-        subject: "Ваш документ с Dogovor.expert",
-        htmlbody: BODY_HTML(safeFilename),
-        attachments: [
-          {
-            base64: pdfBase64,
-            filename: safeFilename,
-            mime_type: "application/pdf",
-          },
-        ],
-      }),
-    });
-  } else {
-    res = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${resendKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        from: `${fromName} <${fromRaw}>`,
-        to: [email],
-        subject: "Ваш документ с Dogovor.expert",
-        html: BODY_HTML(safeFilename),
-        attachments: [{ filename: safeFilename, content: pdfBase64 }],
-      }),
-    });
-  }
+    ],
+  });
 
-  const data = await res.json().catch(() => null);
-  if (!res.ok) {
+  if (!ok) {
     return NextResponse.json(
-      { error: data?.message || "send_failed" },
+      { error: "send_failed" },
       { status: 502 }
     );
   }
-  return NextResponse.json({
-    data: { id: data?.id || (data?.message_id ?? null) },
-  });
+
+  return NextResponse.json({ data: { ok: true } });
 }
 
 export const POST = withCsrf(postHandler);

@@ -84,6 +84,21 @@ function getEnvClientId(provider: CloudProviderId): string | undefined {
   }
 }
 
+/**
+ * Проверяет, настроен ли указанный облачный провайдер через env-переменные.
+ * Используется в UI, чтобы не показывать пользователю пункт меню
+ * «Подключить [провайдер]», если на сервере не задан NEXT_PUBLIC_*_CLIENT_ID
+ * — иначе клик уходит в OAuth, который возвращает ошибку на стороне
+ * провайдера, что воспринимается как баг сайта.
+ *
+ * Учитывает только env (не localStorage), потому что вопрос «задан ли
+ * client_id на сервере» — это серверная конфигурация, которую юзер не может
+ * «переопределить».
+ */
+export function isProviderConfigured(provider: CloudProviderId): boolean {
+  return Boolean(getEnvClientId(provider));
+}
+
 function loadStoredConfig(): StoredConfig {
   if (typeof window === "undefined") return {};
   try {

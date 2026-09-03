@@ -28,6 +28,7 @@ import {
   exportDocument,
   listCloudFiles,
   importVaultFromCloud,
+  isProviderConfigured,
 } from "@/lib/cloud/manager";
 import { exportVaultBackup, initVault, isUnlocked } from "@/lib/vault/keyManager";
 import type { CloudProviderId } from "@/lib/cloud/types";
@@ -74,18 +75,23 @@ export default function ConnectionsPage() {
     const providers = getAllProviders();
     const connected = await getConnectedProviders();
     const connectedMap = new Map(connected.map((c) => [c.id, c]));
-    const newStatuses: ProviderStatus[] = providers.map((p) => {
-      const cfg = getConfig(p.id);
-      const conn = connectedMap.get(p.id);
-      return {
-        id: p.id,
-        name: p.name,
-        description: p.description,
-        connected: !!conn,
-        userInfo: conn?.userInfo,
-        clientId: cfg.clientId,
-      };
-    });
+    const newStatuses: ProviderStatus[] = providers
+      // Скрываем провайдеров без NEXT_PUBLIC_*_CLIENT_ID: они не смогут
+      // пройти OAuth и оставят пользователя с ошибкой «app not configured»
+      // от провайдера, что выглядит как баг сайта.
+      .filter((p) => isProviderConfigured(p.id) || connectedMap.has(p.id))
+      .map((p) => {
+        const cfg = getConfig(p.id);
+        const conn = connectedMap.get(p.id);
+        return {
+          id: p.id,
+          name: p.name,
+          description: p.description,
+          connected: !!conn,
+          userInfo: conn?.userInfo,
+          clientId: cfg.clientId,
+        };
+      });
     setStatuses(newStatuses);
     setLoading(false);
   };
