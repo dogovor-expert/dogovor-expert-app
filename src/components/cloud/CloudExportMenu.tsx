@@ -11,9 +11,11 @@
  * прежний вариант со stopPropagation пропускал mousedown и закрывал
  * меню до срабатывания кнопки).
  */
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Cloud, Upload, FileDown, Settings2, ChevronUp } from "lucide-react";
+import { isProviderConfigured } from "@/lib/cloud/manager";
+import type { CloudProviderId } from "@/lib/cloud/types";
 
 /* ------------------------- Брендовые иконки ------------------------- */
 
@@ -68,7 +70,7 @@ export function ProviderIcon({ id, className }: { id: string; className?: string
 /* --------------------------- Поповер --------------------------- */
 
 export interface CloudExportProvider {
-  id: string;
+  id: CloudProviderId | string;
   name: string;
 }
 
@@ -99,6 +101,17 @@ export default function CloudExportMenu({
   subscriptionActive = false,
   onUpgrade,
 }: CloudExportMenuProps) {
+  // Провайдеры, которые реально можно экспортировать: только если client_id
+  // задан на сервере (env). Без client_id кнопка OAuth вернёт ошибку, а
+  // пользователь решит, что это баг сайта.
+  const visibleProviders = useMemo(
+    () =>
+      providers.filter((p) =>
+        isProviderConfigured(p.id as CloudProviderId)
+      ),
+    [providers]
+  );
+
   const [open, setOpen] = useState(false);
   const [pos, setPos] = useState<{ left: number; top: number } | null>(null);
   const btnRef = useRef<HTMLButtonElement>(null);
@@ -188,7 +201,7 @@ export default function CloudExportMenu({
               </button>
             </div>
 
-            {providers.length === 0 ? (
+            {visibleProviders.length === 0 ? (
               <button
                 onClick={() => {
                   setOpen(false);
@@ -210,7 +223,7 @@ export default function CloudExportMenu({
               </button>
             ) : (
               <ul className="space-y-1">
-                {providers.map((p) => (
+                {visibleProviders.map((p) => (
                   <li
                     key={p.id}
                     className="flex items-center gap-2 px-2 py-1.5 rounded-xl hover:bg-gray-50 transition-colors"
