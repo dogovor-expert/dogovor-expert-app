@@ -4,7 +4,9 @@ import { z } from 'zod';
 
 // Схема для создания документа
 export const createDocumentSchema = z.object({
-  template_id: z.string().uuid('Некорректный ID шаблона'),
+  // template_id — это slug шаблона (например "dkp-auto-short"),
+  // а не UUID. БД хранит text, и клиент всегда шлёт slug.
+  template_id: z.string().min(1).max(100),
   title: z.string().min(1, 'Название обязательно').max(200).optional(),
   fields: z.record(z.string()).optional(),
   checklist: z.record(z.any()).optional(),
