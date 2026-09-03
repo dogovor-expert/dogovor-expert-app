@@ -280,8 +280,18 @@ export async function prepareDocumentImage(file: File): Promise<PreparedImage> {
         maxProcessingDimension: 1200,
       });
       if (detect.success && detect.output) {
-        source = detect.output as HTMLCanvasElement;
-        cropped = true;
+        const out = detect.output as HTMLCanvasElement;
+        // Sanity check: Scanic иногда возвращает success:true, но
+        // координаты corners указаны неверно (документ на контрастном
+        // фоне, блики, и т.п.) и output обрезан в 0 или в крошечную
+        // область. Если после кропа осталось <20% исходной площади
+        // — отбрасываем и работаем с полным кадром.
+        const srcArea = (bmp).width * (bmp).height;
+        const outArea = (out.width || 0) * (out.height || 0);
+        if (srcArea > 0 && outArea >= srcArea * 0.2) {
+          source = out;
+          cropped = true;
+        }
       }
     } catch {
       // Scanic недоступен/не нашёл документ — идём с полным кадром.
