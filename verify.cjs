@@ -1,0 +1,21 @@
+const { chromium } = require('playwright');
+(async () => {
+  const b = await chromium.launch();
+  const ctx = await b.newContext();
+  await ctx.addInitScript(() => { try { localStorage.clear(); } catch {} });
+  const p = await ctx.newPage();
+  const errs = [];
+  p.on('pageerror', (e) => errs.push('PE:' + e.message.substring(0, 150)));
+  p.on('console', (m) => { if (m.type() === 'error') errs.push('CE:' + m.text().substring(0, 150)); });
+  await p.goto('https://dogovor.expert', { waitUntil: 'networkidle' });
+  await p.waitForTimeout(3000);
+  console.log('errs:', errs.length);
+  errs.slice(0, 5).forEach((e) => console.log('  ', e));
+  console.log('banner:', await p.evaluate(() => document.querySelectorAll('[role="dialog"]').length));
+  console.log('storage:', await p.evaluate(() => localStorage.getItem('dogovor_cookie_consent')));
+  await p.locator('button:has-text("Принять")').click().catch((e) => console.log('click err:', e.message.substring(0, 100)));
+  await p.waitForTimeout(2000);
+  console.log('after click storage:', await p.evaluate(() => localStorage.getItem('dogovor_cookie_consent')));
+  console.log('after click banner:', await p.evaluate(() => document.querySelectorAll('[role="dialog"]').length));
+  await b.close();
+})();
