@@ -1,8 +1,7 @@
 import type { MetadataRoute } from "next";
 import { LEGAL_TEMPLATES } from "@/data/templates";
 import { BLOG_POSTS } from "@/data/blog/posts";
-
-const SITE_URL = "https://dogovor.expert";
+import { SITE_URL } from "@/lib/site";
 const MONTHS: Record<string, number> = {
   января: 1, февраля: 2, марта: 3, апреля: 4, мая: 5, июня: 6,
   июля: 7, августа: 8, сентября: 9, октября: 10, ноября: 11, декабря: 12,
