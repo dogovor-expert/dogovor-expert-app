@@ -352,19 +352,19 @@ export default function AppLayout({ children }: { children: ReactNode }) {
               <div className="flex gap-2 mt-3">
                 <button
                   onClick={() => acceptCookies("accepted")}
-                  className="px-4 py-1.5 text-xs font-medium text-white bg-brand-500 hover:bg-brand-600 rounded-lg transition-colors"
+                  className="px-4 py-3 text-sm font-medium text-white bg-brand-500 hover:bg-brand-600 rounded-lg transition-colors"
                 >
                   Принять
                 </button>
                 <button
                   onClick={() => acceptCookies("declined")}
-                  className="px-4 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                  className="px-4 py-3 text-sm font-medium text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
                 >
                   Отклонить
                 </button>
               </div>
             </div>
-            <button onClick={() => acceptCookies("declined")} className="p-1 hover:bg-gray-100 rounded-lg flex-shrink-0" aria-label="Закрыть">
+            <button onClick={() => acceptCookies("declined")} className="p-2 hover:bg-gray-100 rounded-lg flex-shrink-0" aria-label="Закрыть">
               <X className="w-4 h-4 text-gray-600" />
             </button>
           </div>

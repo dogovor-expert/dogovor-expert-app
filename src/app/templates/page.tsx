@@ -243,7 +243,7 @@ function TemplatesContent() {
               <button
                 key={cat.id}
                 onClick={() => setActiveCategory(cat.id)}
-                className={`px-5 py-2.5 rounded-full text-sm font-semibold whitespace-nowrap transition-all flex items-center gap-2 shrink-0 ${
+                className={`px-5 py-3 rounded-full text-sm font-semibold whitespace-nowrap transition-all flex items-center gap-2 shrink-0 ${
                   activeCategory === cat.id
                     ? "bg-brand-500 text-white shadow-md"
                     : "bg-white text-gray-600 border border-gray-200 hover:border-brand-300"
