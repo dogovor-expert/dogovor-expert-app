@@ -10,7 +10,7 @@
  */
 
 import type { LegalTemplate } from "@/data/types";
-import { allRolePrefixes, DOC_PROFILES, detectProfile } from "@/lib/docProfiles";
+import { allRolePrefixes, DOC_PROFILES, detectProfile, detectAllProfiles } from "@/lib/docProfiles";
 import { normalizeVin, isValidInn } from "@/lib/ocrPostprocess";
 
 export interface PlannedValue {
@@ -59,19 +59,23 @@ function roleFields(template: LegalTemplate, role: string): string[] {
  */
 export function planFromScan(
   template: LegalTemplate,
-  text: string
+  text: string,
+  opts: { activeRole?: string; filledFields?: Set<string> } = {}
 ): PlanResult {
-  const profile = detectProfile(text);
+  const profiles = detectAllProfiles(text);
   const values: PlannedValue[] = [];
   const valueMap = new Map<string, string>();
   const roles = allRolePrefixes(template);
+  const filled = opts.filledFields ?? new Set<string>();
 
-  if (profile) {
+  for (const profile of profiles) {
     for (const role of roles) {
+      if (opts.activeRole && role !== opts.activeRole) continue;
       if (!profile.applicable(template, role)) continue;
       const extracted = profile.extract(text, role);
       for (const ex of extracted) {
         const target = ex.fieldId;
+        if (filled.has(target)) continue;
         const exists = template.fields.some((f) => f.id === target);
         if (!exists) continue;
         valueMap.set(target, ex.value);
@@ -93,16 +97,16 @@ export function planFromScan(
   }
 
   // missing: поля ролей, которые не были заполнены (до 6 шт. для подсветки).
-  const filled = new Set(valueMap.keys());
+  const allFilled = new Set([...filled, ...valueMap.keys()]);
   const missing: string[] = [];
   for (const role of roles) {
     for (const f of roleFields(template, role)) {
-      if (!filled.has(f)) missing.push(f);
+      if (!allFilled.has(f)) missing.push(f);
     }
   }
 
   return {
-    profile,
+    profile: profiles[0] ?? null,
     values,
     missing: missing.slice(0, 6),
   };

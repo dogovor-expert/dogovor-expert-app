@@ -1,5 +1,13 @@
 import type { LegalTemplate } from "@/data/types";
 import type { DocSlot } from "@/lib/docRequirements";
+import type {
+  PassportData,
+  VehicleData,
+  PersonEntity,
+  VehicleEntity,
+  CompanyEntity,
+  LicenseEntity,
+} from "@/lib/entities";
 import {
   toDigits,
   normalizeDate,
@@ -7,41 +15,9 @@ import {
   normalizePlate,
   latinToCyrillic as latinToCyr,
 } from "@/lib/ocrPostprocess";
+import { mapEntityToFields } from "@/lib/fieldMap";
 
-export interface PassportData {
-  fio?: string;
-  birthday?: string;
-  birthPlace?: string;
-  series?: string;
-  number?: string;
-  issuedBy?: string;
-  issuedDate?: string;
-  code?: string;
-  address?: string;
-  inn?: string;
-  snils?: string;
-}
-
-export interface VehicleData {
-  vin?: string;
-  plate?: string;
-  brand?: string;
-  year?: string;
-  engine?: string;
-  chassis?: string;
-  body?: string;
-  color?: string;
-  powerKw?: string;
-  powerHp?: string;
-  ptsSeries?: string;
-  ptsNumber?: string;
-  ptsDate?: string;
-  ptsIssuedBy?: string;
-  stsSeries?: string;
-  stsNumber?: string;
-  eptsNumber?: string;
-  ownerFio?: string;
-}
+export type { PassportData, VehicleData, PersonEntity, VehicleEntity, CompanyEntity, LicenseEntity } from "@/lib/entities";
 
 const clean = (s: string) => s.replace(/\s+/g, " ").trim();
 
