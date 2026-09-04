@@ -134,8 +134,7 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
     pathname.startsWith("/og-image") ||
     pathname.startsWith("/apple-icon") ||
     pathname === "/builder" ||
-    pathname.startsWith("/builder/") ||
-    pathname === "/connections";
+    pathname.startsWith("/builder/");
 
   if (isPublicRoute) {
     return response;
