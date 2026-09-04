@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { withSeo } from "@/lib/seo/withSeo";
 
 export const revalidate = 3600;
+export const dynamic = "force-static"; // P0: явно включаем SSG, иначе Next 15 обходит ISR (см. INVARIANTS.md).
 
 export const metadata: Metadata = withSeo({
   path: "/utils",

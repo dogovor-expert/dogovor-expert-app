@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { unstable_cache } from "next/cache";
 import { BLOG_POSTS } from "@/data/blog/posts";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { breadcrumbJsonLd } from "@/lib/seo/faq";
@@ -7,6 +8,15 @@ import BlogList from "@/components/blog/BlogList";
 import { SITE_URL } from "@/lib/site";
 
 export const revalidate = 3600; // ISR: пересборка каждый час.
+
+// P0: кешируем результат фильтрации, чтобы searchParams (который делает страницу dynamic)
+// не вызывал повторную фильтрацию постов на каждом запросе. force-static тут невозможен из-за searchParams.
+const getFilteredPosts = unstable_cache(
+  async (cat: string | undefined) =>
+    cat ? BLOG_POSTS.filter((p) => p.category === cat) : BLOG_POSTS,
+  ["blog-posts-filtered"],
+  { revalidate: 3600, tags: ["blog-posts"] }
+);
 
 const YEAR = new Date().getFullYear();
 const POSTS_PER_PAGE = 10;
@@ -36,7 +46,7 @@ export async function generateMetadata({ searchParams }: BlogPageProps): Promise
 
 export default async function BlogPage({ searchParams }: BlogPageProps) {
   const { cat } = await searchParams;
-  const filtered = cat ? BLOG_POSTS.filter((p) => p.category === cat) : BLOG_POSTS;
+  const filtered = await getFilteredPosts(cat);
   const totalPages = Math.ceil(filtered.length / POSTS_PER_PAGE);
   const currentPosts = filtered.slice(0, POSTS_PER_PAGE);
   const categoryLabel = cat ? CATEGORY_LABELS[cat] || cat : "Все материалы";

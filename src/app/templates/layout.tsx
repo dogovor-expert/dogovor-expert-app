@@ -4,6 +4,7 @@ import { SITE_URL } from "@/lib/site";
 import { JsonLd } from "@/components/seo/JsonLd";
 
 export const revalidate = 3600; // ISR: пересборка каждый час, без headers() — безопасно с Supabase-сессией.
+export const dynamic = "force-static"; // P0: явно включаем SSG, иначе Next 15 обходит ISR (см. INVARIANTS.md).
 
 export const metadata: Metadata = {
   title: "Каталог шаблонов договоров",
