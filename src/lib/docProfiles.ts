@@ -13,6 +13,7 @@
  */
 
 import type { LegalTemplate } from "@/data/types";
+import { extractPassportData } from "@/lib/docOcr";
 
 export type DocProfileId =
   | "passport"
@@ -87,12 +88,31 @@ export const DOC_PROFILES: DocProfile[] = [
       /MVD|ОРГАН/i,
     ],
     extract: (text, role) => {
+      const data = extractPassportData(text);
       const out: ExtractedField[] = [];
-      const surname = text.match(/фамилия\s*[:：]?\s*([А-ЯЁ][а-яё-]+)/);
-      if (surname) {
-        out.push({ fieldId: `${role}_lastname`, value: surname[1] });
-        out.push({ fieldId: `${role}_surname`, value: surname[1] });
+      const push = (id: string, value?: string) => {
+        if (value && value.trim()) {
+          out.push({ fieldId: id, value: value.trim() });
+        }
+      };
+      push(`${role}_fio`, data.fio);
+      push(`${role}_lastname`, data.fio?.split(/\s+/)[0]);
+      // составное поле паспорта: серия + номер
+      if (data.series && data.number) {
+        push(`${role}_passport`, `${data.series} ${data.number}`);
+      } else {
+        push(`${role}_passport`, data.series || data.number);
       }
+      push(`${role}_passport_series`, data.series);
+      push(`${role}_passport_number`, data.number);
+      push(`${role}_birthday`, data.birthday);
+      push(`${role}_birth_place`, data.birthPlace);
+      push(`${role}_passport_issued_by`, data.issuedBy);
+      push(`${role}_passport_date`, data.issuedDate);
+      push(`${role}_passport_code`, data.code);
+      push(`${role}_address`, data.address);
+      push(`${role}_inn`, data.inn);
+      push(`${role}_snils`, data.snils);
       return out;
     },
     applicable: () => true,
@@ -453,7 +473,13 @@ export const DOC_PROFILES: DocProfile[] = [
  * Возвращает первый профиль, у которого есть жёсткий маркер (и доп. проверки).
  */
 export function detectProfile(text: string): DocProfile | null {
+  const all = detectAllProfiles(text);
+  return all.length > 0 ? all[0] : null;
+}
+
+export function detectAllProfiles(text: string): DocProfile[] {
   const t = text.toLowerCase();
+  const result: DocProfile[] = [];
   for (const p of DOC_PROFILES) {
     const strongHit = p.strongMarkers.some((r) => r.test(t));
     if (!strongHit) continue;
@@ -461,7 +487,7 @@ export function detectProfile(text: string): DocProfile | null {
     if (p.strongMarkers.some((r) => /\bИНН\b/i.test(String(r.source))) && /паспорт/i.test(t)) {
       continue;
     }
-    return p;
+    result.push(p);
   }
-  return null;
+  return result;
 }
