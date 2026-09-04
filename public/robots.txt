@@ -1,4 +1,28 @@
-User-Agent: *
+User-agent: Yandex
+Allow: /
+Disallow: /login
+Disallow: /billing
+Disallow: /dashboard
+Disallow: /settings
+Disallow: /trash
+Disallow: /admin
+Disallow: /debug
+Disallow: /approve
+Disallow: /api/
+Disallow: /auth/
+Disallow: /builder
+Disallow: /documents$
+# Clean-param: динамические фильтры/сортировки не меняют состав документов —
+# Яндекс склеит все варианты в основной URL.
+# ВАЖНО: параметр `page` НЕ включаем — он меняет состав (пагинация),
+# иначе Яндекс посчитает /blog?page=2 дублем /blog и пропустит контент.
+Clean-param: cat&q&view&order&category /templates
+Clean-param: cat&q&view&order&category /blanks
+Clean-param: q /
+
+Sitemap: https://dogovor.expert/sitemap.xml
+
+User-agent: *
 Allow: /
 Disallow: /login
 Disallow: /billing

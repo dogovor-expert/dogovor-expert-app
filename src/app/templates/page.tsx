@@ -468,11 +468,11 @@ function TemplatesContent() {
         )}
 
       {filtered.length === 0 && (
-        <div className="text-center py-14 bg-white rounded-2xl border border-gray-200 mb-12 px-6">
+        <section className="text-center py-14 bg-white rounded-2xl border border-gray-200 mb-12 px-6">
           <Search className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-gray-900 mb-1">
+          <h2 className="text-lg font-semibold text-gray-900 mb-1">
             {hasActiveSearch ? `Ничего не найдено по запросу «${search.trim()}»` : "Нет шаблонов в категории"}
-          </h3>
+          </h2>
           <p className="text-sm text-gray-600 mb-6">
             {hasActiveSearch
               ? "Попробуйте другие слова или сбросьте фильтры"
@@ -500,7 +500,7 @@ function TemplatesContent() {
               </button>
             </>
           )}
-        </div>
+        </section>
       )}
     </div>
   );
