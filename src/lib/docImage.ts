@@ -201,6 +201,50 @@ function contrastStretch(data: Uint8ClampedArray): void {
 }
 
 /**
+ * Unsharp mask (лёгкое повышение резкости) для grayscale-данных на месте.
+ *
+ * Читает канал яркости из RGBA, считает box-blur 3x3 как «нерезкую» версию
+ * и делает: out = clamp(g + amount * (g - blur)). Усиливает края штрихов без
+ * введения сильных ореолов — полезно после CLAHE для мелкого текста (СТС/ПТС).
+ */
+function unsharpMask(data: Uint8ClampedArray, w: number, h: number): void {
+  const amount = 0.6;
+  const n = w * h;
+  const gray = new Float32Array(n);
+  for (let p = 0, i = 0; p < n; p++, i += 4) {
+    gray[p] = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
+  }
+  const blur = new Float32Array(n);
+  for (let y = 0; y < h; y++) {
+    const row = y * w;
+    const y0 = y > 0 ? y - 1 : y;
+    const y1 = y < h - 1 ? y + 1 : y;
+    for (let x = 0; x < w; x++) {
+      const x0 = x > 0 ? x - 1 : x;
+      const x1 = x < w - 1 ? x + 1 : x;
+      const acc =
+        gray[y0 * w + x0] +
+        gray[y0 * w + x] +
+        gray[y0 * w + x1] +
+        gray[y * w + x0] +
+        gray[y * w + x] +
+        gray[y * w + x1] +
+        gray[y1 * w + x0] +
+        gray[y1 * w + x] +
+        gray[y1 * w + x1];
+      blur[row + x] = acc / 9;
+    }
+  }
+  for (let p = 0, i = 0; p < n; p++, i += 4) {
+    const v = gray[p] + amount * (gray[p] - blur[p]);
+    const c = v < 0 ? 0 : v > 255 ? 255 : v | 0;
+    data[i] = c;
+    data[i + 1] = c;
+    data[i + 2] = c;
+  }
+}
+
+/**
  * Adaptive threshold (вариант Sauvola через интегральное изображение):
  * порог = mean * (1 + k * ((std / R) - 1)), k=0.2, R=128, окно ~ 1/40 кадра.
  * Текст остаётся чёрным, тени и фон — белыми.
@@ -353,6 +397,8 @@ export async function prepareDocumentImage(file: File): Promise<PreparedImage> {
     writeGrayBackToRgba(bigData.data, cl);
     // Лёгкий глобальный контраст-стретч поверх CLAHE (довесок).
     contrastStretch(bigData.data);
+    // Unsharp mask: усиление краёв штрихов после CLAHE (мелкий текст).
+    unsharpMask(bigData.data, big.w, big.h);
     big.ctx.putImageData(bigData, 0, 0);
     const ocrRaw = canvasToDataUrl(big.canvas, "image/png");
 

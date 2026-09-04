@@ -19,10 +19,81 @@ export interface OcularStatus {
 
 const DEFAULT_TIMEOUT_MS = 4_000;
 
+/**
+ * Простой circuit breaker для occular-сервера.
+ *
+ * Защищает от «каскадных» таймаутов: если occular (домашний ПК через Tailscale)
+ * упал или стал недоступен, после N подряд идущих сбоев breaker открывается и
+ * UI сразу отдаёт «Базовый режим» — без реальных HTTP-запросов в течение
+ * `cooldownMs`. Через cooldown переходит в half-open и пробует один раз.
+ */
+export class OcularCircuitBreaker {
+  private failures = 0;
+  private openedAt = 0;
+  private state: 'closed' | 'open' | 'half-open' = 'closed';
+
+  constructor(
+    private readonly threshold = 3,
+    private readonly cooldownMs = 60_000
+  ) {}
+
+  /** Текущее состояние. */
+  isOpen(): boolean {
+    // Если таймаут прошёл — переходим в half-open (разрешаем одну пробу).
+    if (this.state === 'open' && Date.now() - this.openedAt >= this.cooldownMs) {
+      this.state = 'half-open';
+    }
+    return this.state === 'open';
+  }
+
+  /** Начало запроса: вернёт false, если breaker считает, что запрос НЕ нужно делать. */
+  canProceed(): boolean {
+    return !this.isOpen();
+  }
+
+  /** Успешный ответ — закрываем breaker. */
+  onSuccess(): void {
+    this.failures = 0;
+    this.state = 'closed';
+  }
+
+  /** Сбой — увеличиваем счётчик и, при пороге, открываем breaker. */
+  onFailure(): void {
+    if (this.state === 'half-open') {
+      this.failures = 1;
+      this.state = 'closed';
+    } else {
+      this.failures += 1;
+    }
+    if (this.failures >= this.threshold) {
+      this.state = 'open';
+      this.openedAt = Date.now();
+    }
+  }
+
+  /** Сброс (например, при повторном монтировании). */
+  reset(): void {
+    this.failures = 0;
+    this.state = 'closed';
+  }
+}
+
+/** Общий breaker для проверки доступности + проксирования (модульный синглтон). */
+const occularBreaker = new OcularCircuitBreaker();
+
+export function resetOcularBreaker(): void {
+  occularBreaker.reset();
+}
+
 export async function fetchOcularStatus(
   signal?: AbortSignal,
   timeoutMs: number = DEFAULT_TIMEOUT_MS
 ): Promise<OcularStatus> {
+  // Circuit breaker: если сервер «открыт» — не дёргаем /api.
+  if (!occularBreaker.canProceed()) {
+    return { available: false, reason: 'circuit_open' };
+  }
+
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), timeoutMs);
   const onOuterAbort = () => controller.abort();
@@ -38,12 +109,16 @@ export async function fetchOcularStatus(
       signal: controller.signal,
     });
     if (!res.ok) {
+      occularBreaker.onFailure();
       return { available: false, reason: `http_${res.status}` };
     }
     const data = (await res.json()) as OcularStatus;
+    if (data.available) occularBreaker.onSuccess();
+    else occularBreaker.onFailure();
     return data;
   } catch (err) {
     const isAbort = err instanceof Error && err.name === 'AbortError';
+    occularBreaker.onFailure();
     return {
       available: false,
       reason: isAbort ? 'client_timeout' : 'network_error',
@@ -77,6 +152,17 @@ export async function postOcrRequest(
   filename: string,
   signal?: AbortSignal
 ): Promise<OcularProxyResult> {
+  // Circuit breaker: если сервер в «открытом» состоянии — сразу к клиентскому fallback.
+  if (!occularBreaker.canProceed()) {
+    return {
+      ok: false,
+      source: 'client-fallback',
+      reason: 'circuit_open',
+      lines: [],
+      elapsed_ms: 0,
+    };
+  }
+
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), PROXY_TIMEOUT_MS);
   const onOuterAbort = () => controller.abort();
@@ -94,6 +180,7 @@ export async function postOcrRequest(
       signal: controller.signal,
     });
     if (!res.ok) {
+      occularBreaker.onFailure();
       return {
         ok: false,
         source: 'client-fallback',
@@ -103,9 +190,12 @@ export async function postOcrRequest(
       };
     }
     const data = (await res.json()) as OcularProxyResult;
+    if (data.source === 'server') occularBreaker.onSuccess();
+    else occularBreaker.onFailure();
     return data;
   } catch (err) {
     const isAbort = err instanceof Error && err.name === 'AbortError';
+    occularBreaker.onFailure();
     return {
       ok: false,
       source: 'client-fallback',
