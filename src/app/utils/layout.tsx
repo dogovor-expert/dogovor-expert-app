@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { withSeo } from "@/lib/seo/withSeo";
 
+export const revalidate = 3600;
+
 export const metadata: Metadata = withSeo({
   path: "/utils",
   title: "Калькуляторы: госпошлина, 395 ГК, неустойка",

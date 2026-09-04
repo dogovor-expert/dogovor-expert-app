@@ -6,6 +6,8 @@ import { withSeo } from "@/lib/seo/withSeo";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { SITE_URL } from "@/lib/site";
 
+export const revalidate = 3600;
+
 export const metadata: Metadata = withSeo({
   path: "/blanks",
   title: "Скачать пустые бланки договоров — PDF и Word",
