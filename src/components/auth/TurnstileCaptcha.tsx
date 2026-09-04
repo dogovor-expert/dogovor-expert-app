@@ -47,9 +47,18 @@ export default function TurnstileCaptcha({
     if (!loaded || !SITE_KEY || !containerRef.current) return;
     const widgetId = window.turnstile?.render(containerRef.current, {
       sitekey: SITE_KEY,
-      callback: (token) => onToken(token),
-      "expired-callback": () => onToken(null),
-      "error-callback": () => onToken(null),
+      callback: (token) => {
+        if (widgetId) widgetIdRef.current = widgetId;
+        onToken(token);
+      },
+      "expired-callback": () => {
+        onToken(null);
+        if (widgetIdRef.current) window.turnstile?.reset(widgetIdRef.current);
+      },
+      "error-callback": () => {
+        onToken(null);
+        if (widgetIdRef.current) window.turnstile?.reset(widgetIdRef.current);
+      },
     });
     widgetIdRef.current = widgetId ?? null;
   }, [loaded, onToken]);
