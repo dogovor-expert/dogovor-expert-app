@@ -91,6 +91,13 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               logo: `${SITE_URL}/apple-icon.png`,
               email: SITE_CONTACT_EMAIL,
               description: SITE_DESCRIPTION,
+              // P1 (brand protection): sameAs связывает Organization с официальными соцсетями.
+              // Google использует sameAs для подтверждения брендовой принадлежности и вытеснения мимикрирующих доменов.
+              // Владелец: заполните реальные URL ниже, раскомментировав строки. Пустой массив не передаётся.
+              // sameAs: [
+              //   "https://t.me/dogovor_expert",
+              //   "https://vk.com/dogovor_expert",
+              // ],
             },
             {
               "@context": "https://schema.org",

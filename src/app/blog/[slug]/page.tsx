@@ -12,6 +12,7 @@ import { SITE_URL } from "@/lib/site";
 
 export const revalidate = 3600;
 export const dynamicParams = false;
+export const dynamic = "force-static"; // P0: явно включаем SSG, иначе Next 15 обходит ISR (см. INVARIANTS.md).
 
 export function generateStaticParams() {
   return BLOG_POSTS.map((p) => ({ slug: p.slug }));
