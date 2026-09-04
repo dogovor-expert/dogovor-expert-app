@@ -4,6 +4,7 @@ import crypto from "node:crypto";
 import { limiters, clientIp, checkRateLimit, rateLimitResponse } from "@/lib/ratelimit";
 import { withCsrf } from "@/lib/csrf";
 import { isSameOrigin } from "@/lib/admin-auth";
+import { chatSchema, validateBody } from "@/lib/validations/api";
 import {
   getThread,
   setThread,
@@ -23,8 +24,7 @@ import {
 
 const CHAT_ENABLED = process.env.NEXT_PUBLIC_CHAT_ENABLED === "1";
 
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const TEXT_MAX = 4000;
+
 
 // Защита от IDOR (C4): GET возвращает переписку только для visitorId, привязанного
 // к подписанному httpOnly-cookie. Угадать чужой UUID нельзя, а cookie не читается
@@ -98,33 +98,19 @@ async function postHandler(req: Request) {
     );
   }
 
-  const body = await req.json().catch(() => null);
-  if (!body || typeof body !== "object") {
-    return NextResponse.json({ error: "bad_body" }, { status: 400 });
-  }
+  // P1: Zod-валидация (best practice 2026: safeParse + structured error)
+  const parsed = await req.json().catch(() => null);
+  const validated = validateBody(chatSchema, parsed);
+  if (!validated.success) return validated.error;
+  const { visitorId, text: rawText, name, email, page, ctx: rawCtx } = validated.data;
+  const text = rawText.trim();
+  const safeVisitorId = visitorId.slice(0, 64);
+  const ctx = rawCtx ?? {};
 
-  const visitorId = typeof body.visitorId === "string" ? body.visitorId.slice(0, 64) : "";
-  if (!visitorId) return NextResponse.json({ error: "bad_visitor" }, { status: 400 });
-
-  const text = typeof body.text === "string" ? body.text.trim() : "";
-  if (text.length < 1 || text.length > TEXT_MAX) {
-    return NextResponse.json({ error: "invalid_text" }, { status: 400 });
-  }
-
-  if (body.consent !== true) {
-    return NextResponse.json({ error: "consent_required" }, { status: 400 });
-  }
-
-  const name = typeof body.name === "string" ? body.name.trim().slice(0, 80) : "";
-  const email = typeof body.email === "string" ? body.email.trim() : "";
-  if (!name || !EMAIL_RE.test(email) || email.length > 254) {
-    return NextResponse.json({ error: "invalid_profile" }, { status: 400 });
-  }
-
-  await saveProfile(visitorId, { name, email });
+  await saveProfile(safeVisitorId, { name, email });
 
   // Получаем или создаём тему (forum topic) в Telegram-супергруппе.
-  let threadId = await getThread(visitorId);  const shortId = visitorId.slice(0, 6);
+  let threadId = await getThread(safeVisitorId);  const shortId = safeVisitorId.slice(0, 6);
   if (!threadId) {
     const topicName = `${name} · #${shortId}`;
     threadId = await createForumTopic(topicName);
@@ -136,7 +122,6 @@ async function postHandler(req: Request) {
     }
     await setThread(visitorId, threadId);
 
-    const ctx = body.ctx && typeof body.ctx === "object" ? body.ctx : {};
     const contextText = [
       `👤 <b>Новый посетитель</b> #${escapeHtml(shortId)}`,
       `📄 Имя: ${escapeHtml(name)}`,

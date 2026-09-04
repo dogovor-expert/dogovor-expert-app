@@ -3,10 +3,10 @@ import { createClient } from "@/lib/supabase/server";
 import { withCsrf } from "@/lib/csrf";
 import { isSameOrigin } from "@/lib/admin-auth";
 import { limiters, checkRateLimit, rateLimitResponse } from "@/lib/ratelimit";
+import { importSchema, validateBody } from "@/lib/validations/api";
 
 export const maxDuration = 60;
 
-const MAX_IMPORT = 50;
 // Whitelist пока hardcoded: 14 шаблонов. В будущем — динамическая проверка по
 // таблице legal_templates (см. master fix plan).
 const ALLOWED_TEMPLATE_IDS = [
@@ -29,15 +29,13 @@ async function postHandler(req: Request) {
   const rl = await checkRateLimit(limiters.authAction, user.id);
   if (!rl.ok) return rateLimitResponse(rl.retryAfter);
 
-  const body = await req.json().catch(() => null);
-  const drafts = Array.isArray(body?.drafts) ? body.drafts : [];
-  const force = body?.force === true;
+  // P1: Zod-валидация (best practice 2026: safeParse + structured error)
+  const parsed = await req.json().catch(() => null);
+  const validated = validateBody(importSchema, parsed);
+  if (!validated.success) return validated.error;
+  const { drafts, force } = validated.data;
 
-  if (drafts.length === 0 || drafts.length > MAX_IMPORT) {
-    return NextResponse.json({ error: "invalid drafts count" }, { status: 400 });
-  }
-
-  // Строим строки с валидацией; невалидный template_id — 400 (а не 500, как раньше)
+  // Строим строки с валидацией; невалидный templateId — 400 (а не 500, как раньше)
   const rows: Array<{
     user_id: string;
     template_id: string;
@@ -49,20 +47,16 @@ async function postHandler(req: Request) {
   }> = [];
   for (const d of drafts) {
     try {
-      if (!d || typeof d !== "object") {
-        return NextResponse.json({ error: "draft is not an object" }, { status: 400 });
-      }
-      const templateId = String(d.templateId ?? "");
-      if (!ALLOWED_TEMPLATE_IDS.includes(templateId)) {
+      if (!ALLOWED_TEMPLATE_IDS.includes(d.templateId)) {
         return NextResponse.json(
-          { error: `invalid template_id: ${templateId}` },
+          { error: `invalid template_id: ${d.templateId}` },
           { status: 400 }
         );
       }
       rows.push({
         user_id: user.id,
-        template_id: templateId,
-        title: String(d.title ?? "").slice(0, 200),
+        template_id: d.templateId,
+        title: (d.title ?? "").slice(0, 200),
         fields: d.values ?? {},
         checklist: d.checklist ?? {},
         versions: Array.isArray(d.versions) ? d.versions : [],

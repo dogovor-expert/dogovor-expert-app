@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { limiters, checkRateLimit, rateLimitResponse, clientIp } from "@/lib/ratelimit";
 import { withCsrf } from "@/lib/csrf";
 import { isSameOrigin } from "@/lib/admin-auth";
+import { dadataSchema, validateBody } from "@/lib/validations/api";
 
 const DADATA_HOST = "https://suggestions.dadata.ru/suggestions/api/4_1/rs";
 
@@ -110,17 +111,13 @@ async function postHandler(req: NextRequest) {
   if (!isSameOrigin(req)) {
     return NextResponse.json({ error: "forbidden" }, { status: 403 });
   }
-  let body: { op?: string; query?: string; count?: number };
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: "bad body" }, { status: 400 });
-  }
 
-  const { op, query, count = 10 } = body;
-  if (!op || typeof query !== "string" || !query.trim()) {
-    return NextResponse.json({ error: "bad params" }, { status: 400 });
-  }
+  // P1: Zod-валидация входящего body (best practice 2026: safeParse + structured error)
+  const parsed = await req.json().catch(() => null);
+  const validated = validateBody(dadataSchema, parsed);
+  if (!validated.success) return validated.error;
+  const { op, query, count } = validated.data;
+  const safeCount = count;
 
   // H4: только серверный ключ. Клиентский apiKey запрещён — это был открытый
   // прокси чужого ключа (утечка лимитов/оплаты DADATA + потенциальный SSRF).
@@ -147,11 +144,6 @@ async function postHandler(req: NextRequest) {
 
   const rl = await checkRateLimit(limiters.dadata, clientIp(req));
   if (!rl.ok) return rateLimitResponse(rl.retryAfter);
-
-  if (query.length > 200) {
-    return NextResponse.json({ error: "query too long" }, { status: 400 });
-  }
-  const safeCount = Math.min(Math.max(Number(count) || 10, 1), 10);
 
   let endpoint = "";
   let cacheable = false;
