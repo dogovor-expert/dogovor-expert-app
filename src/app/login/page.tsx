@@ -129,26 +129,28 @@ function LoginForm() {
       return;
     }
     setLoading(true);
-    const { data: challenge, error: challengeError } = await supabase.auth.mfa.challenge({
-      factorId: mfaFactor,
-    });
-    if (challengeError) {
+    try {
+      const { data: challenge, error: challengeError } = await supabase.auth.mfa.challenge({
+        factorId: mfaFactor,
+      });
+      if (challengeError) {
+        setError(translateAuthError(challengeError.message));
+        return;
+      }
+      const { error } = await supabase.auth.mfa.verify({
+        factorId: mfaFactor,
+        challengeId: challenge.id,
+        code: code.trim(),
+      });
+      if (error) {
+        setError(translateAuthError(error.message));
+        return;
+      }
+      router.push(next);
+      router.refresh();
+    } finally {
       setLoading(false);
-      setError(translateAuthError(challengeError.message));
-      return;
     }
-    const { error } = await supabase.auth.mfa.verify({
-      factorId: mfaFactor,
-      challengeId: challenge.id,
-      code: code.trim(),
-    });
-    setLoading(false);
-    if (error) {
-      setError(translateAuthError(error.message));
-      return;
-    }
-    router.push(next);
-    router.refresh();
   };
 
   const validateEmail = (email: string): boolean => {
@@ -300,20 +302,23 @@ function LoginForm() {
       return;
     }
     setLoading(true);
-    const { error } = await supabase.auth.verifyOtp({
-      email,
-      token: code.trim(),
-      type: "email",
-    });
-    setLoading(false);
-    if (error) {
-      setError(translateAuthError(error.message));
-      return;
+    try {
+      const { error } = await supabase.auth.verifyOtp({
+        email,
+        token: code.trim(),
+        type: "email",
+      });
+      if (error) {
+        setError(translateAuthError(error.message));
+        return;
+      }
+      const needsMfa = await promptMfaIfNeeded();
+      if (needsMfa) return;
+      router.push(next);
+      router.refresh();
+    } finally {
+      setLoading(false);
     }
-    const needsMfa = await promptMfaIfNeeded();
-    if (needsMfa) return;
-    router.push(next);
-    router.refresh();
   };
 
   const signInWithOAuth = async (provider: "google" | "custom:yandex") => {

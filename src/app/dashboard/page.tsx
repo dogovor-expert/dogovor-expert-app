@@ -30,30 +30,36 @@ export default function DashboardPage() {
   const price = currentProPrice();
 
   const load = useCallback(async () => {
-    const supabase = createClient();
-    const { data } = await supabase.auth.getUser();
-    if (!data.user) {
-      router.replace("/login");
-      return;
+    try {
+      const supabase = createClient();
+      const { data } = await supabase.auth.getUser();
+      if (!data.user) {
+        router.replace("/login");
+        return;
+      }
+      setEmail(data.user.email ?? "");
+      const pRes = await fetch("/api/profile").catch(() => null);
+      if (pRes?.ok) {
+        const { data: p } = await pRes.json();
+        setProfile(p);
+      }
+      const dRes = await fetch("/api/documents").catch(() => null);
+      if (dRes?.ok) {
+        const { data } = await dRes.json();
+        setServerDocs(Array.isArray(data) ? data : []);
+      }
+      setLocalCount(getAllDrafts().length);
+      const sRes = await fetch("/api/subscription-status").catch(() => null);
+      if (sRes?.ok) {
+        const s = await sRes.json();
+        setSub({ subscription_active: !!s.subscription_active, plan: s.plan ?? "free" });
+      }
+    } catch {
+      // Ошибка сети/хранилища (приватный режим, расширения, блокировка
+      // cookies) не должна оставлять кабинет в вечной «Загрузке кабинета…».
+    } finally {
+      setLoading(false);
     }
-    setEmail(data.user.email ?? "");
-    const pRes = await fetch("/api/profile").catch(() => null);
-    if (pRes?.ok) {
-      const { data: p } = await pRes.json();
-      setProfile(p);
-    }
-    const dRes = await fetch("/api/documents").catch(() => null);
-    if (dRes?.ok) {
-      const { data } = await dRes.json();
-      setServerDocs(Array.isArray(data) ? data : []);
-    }
-    setLocalCount(getAllDrafts().length);
-    const sRes = await fetch("/api/subscription-status").catch(() => null);
-    if (sRes?.ok) {
-      const s = await sRes.json();
-      setSub({ subscription_active: !!s.subscription_active, plan: s.plan ?? "free" });
-    }
-    setLoading(false);
   }, [router]);
 
   useEffect(() => {

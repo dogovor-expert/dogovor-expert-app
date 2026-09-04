@@ -61,7 +61,7 @@ type Block =
   | { kind: "columns"; cols: Block[][]; fontSize: number; marginBottom: number }
   | { kind: "table"; rows: { cells: { runs: Run[]; bold: boolean }[] }[]; fontSize: number; marginBottom: number }
   | { kind: "image"; img: PDFImage; width: number; height: number; marginBottom: number }
-  | { kind: "line"; label: string; fontSize: number; marginBottom: number }
+  | { kind: "line"; label: string; fontSize: number; marginBottom: number; width?: number }
   | { kind: "sides"; leftTitle: string; leftBlocks: Block[]; rightTitle: string; rightBlocks: Block[]; fontSize: number; marginBottom: number }
   | { kind: "pricebox"; runs: Run[]; fontSize: number; marginBottom: number };
 
@@ -646,7 +646,8 @@ class Renderer {
       const fontSize = this.sz(block.fontSize);
       const lineHeight = fontSize * this.lh();
       const ly = this.y - lineHeight - 8;
-      this.page.drawLine({ start: { x, y: ly }, end: { x: x + Math.min(width, 120), y: ly }, thickness: 0.7, color: this.ruleRgb() });
+      const desired = Math.max(block.width ?? 170, 150);
+      this.page.drawLine({ start: { x, y: ly }, end: { x: x + Math.min(width, desired), y: ly }, thickness: 0.7, color: this.ruleRgb() });
       this.drawLabel(block.label, x, this.y - fontSize, fontSize, this.grayRgb());
       this.y -= lineHeight + block.marginBottom + 12;
     } else if (block.kind === "row") {
@@ -877,7 +878,8 @@ color: this.rgb(r, g, b),
         const lineHeight = fontSize * this.lh();
         this.ensureSpace(lineHeight + 12);
         const ly = this.y - lineHeight - 8;
-        this.page.drawLine({ start: { x: this.pm.marginLeft, y: ly }, end: { x: this.pm.marginLeft + Math.min(this.availWidth, 120), y: ly }, thickness: 0.7, color: this.ruleRgb() });
+        const desired = Math.max(block.width ?? 170, 150);
+        this.page.drawLine({ start: { x: this.pm.marginLeft, y: ly }, end: { x: this.pm.marginLeft + Math.min(this.availWidth, desired), y: ly }, thickness: 0.7, color: this.ruleRgb() });
         this.drawLabel(block.label, this.pm.marginLeft, this.y - fontSize, fontSize, this.grayRgb());
         this.y -= lineHeight + block.marginBottom + 12;
         break;
@@ -923,6 +925,16 @@ function marginFrom(el: HTMLElement, fallback: number): number {
   if (cls.includes("mt-2")) return 6;
   if (cls.includes("mt-1")) return 3;
   return fallback;
+}
+
+/**
+ * Ширина линии подписи из Tailwind-класса w-NN (NN * 0.25rem = NN * 4 px,
+ * 1px = 0.75pt). Возвращает pt или undefined, если класс не задан.
+ */
+function widthFrom(cls: string): number | undefined {
+  const m = cls.match(/(?:^|\s)w-(\d{1,3})(?:\s|$)/);
+  if (!m) return undefined;
+  return Number(m[1]) * 4 * 0.75;
 }
 
 function collectBlocks(
@@ -1076,14 +1088,14 @@ function collectBlocks(
               if (sc.tagName === "IMG") {
                 pushImg(sc.getAttribute("src") || "");
               } else if (hasClass(sc, "border-b")) {
-                b.push({ kind: "line", label: (sc.textContent || "").trim(), fontSize: sizeFromClass(sc.className || "", design, design.tinyFontSize), marginBottom: 6 });
+                b.push({ kind: "line", label: (sc.textContent || "").trim(), fontSize: sizeFromClass(sc.className || "", design, design.tinyFontSize), marginBottom: 6, width: widthFrom(sc.className || "") });
               } else {
                 const runs = nodeRuns(sc);
                 if (runs.length) b.push({ kind: "paragraph", runs, align: "left", indent: 0, bullet: false, fontSize: sizeFromClass(sc.className || "", design, design.smallFontSize), marginBottom: marginFrom(sc, 4) });
               }
             });
           } else if (hasClass(c, "border-b")) {
-            b.push({ kind: "line", label: (c.textContent || "").trim(), fontSize: sizeFromClass(c.className || "", design, design.tinyFontSize), marginBottom: 6 });
+            b.push({ kind: "line", label: (c.textContent || "").trim(), fontSize: sizeFromClass(c.className || "", design, design.tinyFontSize), marginBottom: 6, width: widthFrom(c.className || "") });
           } else {
             const runs = nodeRuns(c);
             if (runs.length) b.push({ kind: "paragraph", runs, align: "left", indent: 0, bullet: false, fontSize: sizeFromClass(c.className || "", design, design.smallFontSize), marginBottom: 2 });
@@ -1109,6 +1121,7 @@ function collectBlocks(
           label: (el.textContent || "").trim(),
           fontSize: sizeFromClass(cls, design, design.tinyFontSize),
           marginBottom: marginFrom(el, 6),
+          width: widthFrom(cls),
         });
         return;
       }

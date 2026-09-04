@@ -10,7 +10,7 @@
  */
 
 import type { LegalTemplate } from "@/data/types";
-import { allRolePrefixes, DOC_PROFILES, detectProfile, detectAllProfiles } from "@/lib/docProfiles";
+import { allRolePrefixes, DOC_PROFILES, detectAllProfiles, type detectProfile } from "@/lib/docProfiles";
 import { normalizeVin, isValidInn } from "@/lib/ocrPostprocess";
 
 export interface PlannedValue {

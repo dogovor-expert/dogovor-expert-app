@@ -132,8 +132,13 @@ async function postHandler(req: NextRequest) {
     );
   }
 
-  // Подписка обязательна при использовании общего серверного ключа.
-  if (!(await hasActiveSubscription())) {
+  // Подписка обязательна только для «дорогих» ops (ФИО, паспорта, компании).
+  // Адреса и коды подразделений ФМС — открыты всем: это самое частое действие
+  // при заполнении договора, а бесплатный лимит Dadata покрывает адреса.
+  // Раньше здесь стоял общий gate — не-подписчики молча получали пустые
+  // подсказки (жалоба: «адреса не подгружаются»).
+  const FREE_OPS = new Set(["suggest-address", "suggest-fms-unit"]);
+  if (!FREE_OPS.has(op) && !(await hasActiveSubscription())) {
     return NextResponse.json(
       { error: "subscription required", fallback: true },
       { status: 503 }

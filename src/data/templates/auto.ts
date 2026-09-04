@@ -1666,6 +1666,10 @@ export const TEMPLATES_AUTO: LegalTemplate[] = [
         category: "owner",
       },
       {
+        id: "owner_passport_issued", label: "Кем выдан паспорт доверителя", type: "text",
+        defaultValue: "", category: "owner",
+      },
+      {
         id: "owner_address", label: "Адрес доверителя", type: "text",
         defaultValue: "", category: "owner",
       },
@@ -1677,6 +1681,10 @@ export const TEMPLATES_AUTO: LegalTemplate[] = [
         id: "agent_passport", label: "Паспорт представителя", type: "text",
         defaultValue: "",
         category: "agent",
+      },
+      {
+        id: "agent_passport_issued", label: "Кем выдан паспорт представителя", type: "text",
+        defaultValue: "", category: "agent",
       },
       {
         id: "agent_address", label: "Адрес представителя", type: "text",

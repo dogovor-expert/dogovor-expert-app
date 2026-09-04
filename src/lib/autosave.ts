@@ -61,16 +61,21 @@ export function clearDraft(templateId: string): void {
 
 export function getAllDrafts(): DraftData[] {
   const drafts: DraftData[] = [];
-  for (let i = 0; i < localStorage.length; i++) {
-    try {
-      const key = localStorage.key(i);
-      if (key?.startsWith(STORAGE_PREFIX)) {
-        const raw = localStorage.getItem(key);
-        if (raw) drafts.push(JSON.parse(raw) as DraftData);
+  try {
+    for (let i = 0; i < localStorage.length; i++) {
+      try {
+        const key = localStorage.key(i);
+        if (key?.startsWith(STORAGE_PREFIX)) {
+          const raw = localStorage.getItem(key);
+          if (raw) drafts.push(JSON.parse(raw) as DraftData);
+        }
+      } catch {
+        // Битая запись одного черновика не должна ронять весь список.
       }
-    } catch {
-      // Битая запись одного черновика не должна ронять весь список.
     }
+  } catch {
+    // localStorage недоступен (приватный режим / блокировка хранилища
+    // браузером или расширением) — считаем черновиков нет.
   }
   return drafts;
 }
