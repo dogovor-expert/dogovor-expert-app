@@ -21,10 +21,14 @@ import { useCookieConsent } from "@/hooks/useCookieConsent";
 export function CookieBanner() {
   const { consent, accept, decline } = useCookieConsent();
 
-  // SSR и первый клиентский рендер — null, чтобы не было hydration mismatch
-  // (на сервере consent всегда null, но если у юзера уже "accepted",
-  // то после гидратации баннер сразу скроется без моргания).
-  // После гидратации useSyncExternalStore возвращает реальное значение.
+  // Debug: trace on every render
+  if (typeof window !== "undefined") {
+    (window as unknown as { __cookieTrace?: object[] }).__cookieTrace = [
+      ...((window as unknown as { __cookieTrace?: object[] }).__cookieTrace || []),
+      { ts: Date.now(), consent, mounted: true },
+    ].slice(-10);
+  }
+
   if (consent === null) {
     return (
       <div
