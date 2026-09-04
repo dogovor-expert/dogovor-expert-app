@@ -22,6 +22,7 @@ export default function HeaderSearch() {
   const router = useRouter();
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
   const [active, setActive] = useState(-1);
   const inputRef = useRef<HTMLInputElement>(null);
   const rootRef = useRef<HTMLDivElement>(null);
@@ -55,13 +56,25 @@ export default function HeaderSearch() {
   }, [query]);
 
   useEffect(() => {
+    if (mobileOpen) {
+      setTimeout(() => inputRef.current?.focus(), 100);
+    }
+  }, [mobileOpen]);
+
+  useEffect(() => {
     const onDocClick = (e: MouseEvent) => {
       if (rootRef.current && !rootRef.current.contains(e.target as Node)) {
         setOpen(false);
+        setMobileOpen(false);
       }
     };
     document.addEventListener("mousedown", onDocClick);
     return () => document.removeEventListener("mousedown", onDocClick);
+  }, []);
+
+  const closeAll = useCallback(() => {
+    setOpen(false);
+    setMobileOpen(false);
   }, []);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -77,7 +90,7 @@ export default function HeaderSearch() {
       if (open && active >= 0 && items[active]) {
         e.preventDefault();
         router.push(`/builder?template=${items[active].t.id}`);
-        setOpen(false);
+        closeAll();
         setQuery("");
         inputRef.current?.blur();
       } else {
@@ -86,18 +99,72 @@ export default function HeaderSearch() {
         if (q) goSearch(q);
       }
     } else if (e.key === "Escape") {
-      setOpen(false);
+      closeAll();
       inputRef.current?.blur();
     } else if (e.key === "Tab") {
-      setOpen(false);
+      closeAll();
     }
   };
 
   const items = suggestions();
   const showList = open && items.length > 0;
 
+  const SuggestionsList = ({ className }: { className?: string }) => (
+    <div
+      id="header-search-listbox"
+      role="listbox"
+      className={className}
+    >
+      <div className="px-3 py-1.5 text-[10px] uppercase tracking-wide text-gray-600 font-medium">
+        Шаблоны
+      </div>
+      {items.map(({ t }, i) => (
+        <button
+          key={t.id}
+          id={`header-search-opt-${i}`}
+          role="option"
+          aria-selected={active === i}
+          onMouseEnter={() => setActive(i)}
+          onClick={() => {
+            router.push(`/builder?template=${t.id}`);
+            closeAll();
+            setQuery("");
+          }}
+          className={`w-full flex items-center gap-3 px-3 py-2 text-left transition-colors ${
+            active === i ? "bg-brand-50" : "bg-white"
+          }`}
+        >
+          <span className="text-base flex-shrink-0">{CATEGORY_ICONS[t.category] || "📄"}</span>
+          <span className="min-w-0">
+            <span className="block text-sm text-gray-900 truncate">
+              <Highlight text={t.name} query={query} />
+            </span>
+            <span className="block text-xs text-gray-600 truncate">
+              <Highlight text={t.description} query={query} />
+            </span>
+          </span>
+        </button>
+      ))}
+      <button
+        onClick={() => {
+          goSearch(query.trim());
+          closeAll();
+        }}
+        className={`w-full flex items-center gap-3 px-3 py-2 text-left transition-colors border-t border-gray-50 ${
+          active >= items.length ? "bg-brand-50" : "bg-white"
+        }`}
+      >
+        <Search className="w-4 h-4 text-gray-600 flex-shrink-0" />
+        <span className="text-sm text-brand-600 truncate">
+          Показать все результаты по запросу «{query.trim()}»
+        </span>
+      </button>
+    </div>
+  );
+
   return (
-    <div ref={rootRef} className="relative w-full sm:max-w-md">
+    <div ref={rootRef} className="relative sm:flex-1 sm:min-w-0 sm:max-w-md">
+      {/* Desktop (sm+): inline search form */}
       <form
         onSubmit={(e) => {
           e.preventDefault();
@@ -106,6 +173,7 @@ export default function HeaderSearch() {
           setOpen(false);
         }}
         role="search"
+        className="hidden sm:block"
       >
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-600 pointer-events-none" />
         <input
@@ -121,59 +189,108 @@ export default function HeaderSearch() {
           onChange={(e) => setQuery(e.target.value)}
           onKeyDown={handleKeyDown}
           onFocus={() => setOpen(query.trim().length >= 2)}
-          className="w-80 pl-10 pr-4 py-2 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all"
+          className="w-full pl-10 pr-4 py-2 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all"
         />
       </form>
-      {showList && (
-        <div
-          id="header-search-listbox"
-          role="listbox"
-          className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-100 rounded-xl shadow-elevated z-50 py-1.5 overflow-hidden"
-        >
-          <div className="px-3 py-1.5 text-[10px] uppercase tracking-wide text-gray-600 font-medium">
-            Шаблоны
-          </div>
-          {items.map(({ t }, i) => (
-            <button
-              key={t.id}
-              id={`header-search-opt-${i}`}
-              role="option"
-              aria-selected={active === i}
-              onMouseEnter={() => setActive(i)}
-              onClick={() => {
-                router.push(`/builder?template=${t.id}`);
-                setOpen(false);
-                setQuery("");
-              }}
-              className={`w-full flex items-center gap-3 px-3 py-2 text-left transition-colors ${
-                active === i ? "bg-brand-50" : "bg-white"
-              }`}
-            >
-              <span className="text-base flex-shrink-0">{CATEGORY_ICONS[t.category] || "📄"}</span>
-              <span className="min-w-0">
-                <span className="block text-sm text-gray-900 truncate">
-                  <Highlight text={t.name} query={query} />
-                </span>
-                <span className="block text-xs text-gray-600 truncate">
-                  <Highlight text={t.description} query={query} />
-                </span>
-              </span>
-            </button>
-          ))}
-          <button
-            onClick={() => {
-              goSearch(query.trim());
-              setOpen(false);
+      {showList && <SuggestionsList className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-100 rounded-xl shadow-elevated z-50 py-1.5 overflow-hidden hidden sm:block" />}
+
+      {/* Mobile (<sm): icon button + full-width overlay */}
+      <button
+        onClick={() => setMobileOpen((prev) => !prev)}
+        className="sm:hidden p-3 hover:bg-gray-100 rounded-lg"
+        aria-label="Поиск"
+      >
+        <Search className="w-5 h-5 text-gray-600" />
+      </button>
+      {mobileOpen && (
+        <div className="fixed inset-x-0 top-16 z-50 bg-white border-b border-gray-100 shadow-lg p-4 sm:hidden">
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              const q = query.trim();
+              if (q) goSearch(q);
+              closeAll();
             }}
-            className={`w-full flex items-center gap-3 px-3 py-2 text-left transition-colors border-t border-gray-50 ${
-              active >= items.length ? "bg-brand-50" : "bg-white"
-            }`}
+            role="search"
+            className="relative"
           >
-            <Search className="w-4 h-4 text-gray-600 flex-shrink-0" />
-            <span className="text-sm text-brand-600 truncate">
-              Показать все результаты по запросу «{query.trim()}»
-            </span>
-          </button>
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-600 pointer-events-none" />
+            <input
+              ref={inputRef}
+              type="text"
+              role="combobox"
+              aria-expanded={showList}
+              aria-controls="header-search-listbox-mobile"
+              aria-activedescendant={active >= 0 ? `header-search-opt-m-${active}` : undefined}
+              aria-autocomplete="list"
+              placeholder="Поиск документов, шаблонов..."
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              onKeyDown={handleKeyDown}
+              onFocus={() => setOpen(query.trim().length >= 2)}
+              className="w-full pl-10 pr-10 py-2.5 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all"
+            />
+            {query && (
+              <button
+                type="button"
+                onClick={() => { setQuery(""); inputRef.current?.focus(); }}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                aria-label="Очистить"
+              >
+                ×
+              </button>
+            )}
+          </form>
+          {showList && (
+            <div
+              id="header-search-listbox-mobile"
+              role="listbox"
+              className="mt-2 bg-white border border-gray-100 rounded-xl shadow-elevated py-1.5 overflow-hidden max-h-[60vh] overflow-y-auto"
+            >
+              <div className="px-3 py-1.5 text-[10px] uppercase tracking-wide text-gray-600 font-medium">
+                Шаблоны
+              </div>
+              {items.map(({ t }, i) => (
+                <button
+                  key={t.id}
+                  id={`header-search-opt-m-${i}`}
+                  role="option"
+                  aria-selected={active === i}
+                  onMouseEnter={() => setActive(i)}
+                  onClick={() => {
+                    router.push(`/builder?template=${t.id}`);
+                    closeAll();
+                    setQuery("");
+                  }}
+                  className={`w-full flex items-center gap-3 px-3 py-2.5 text-left transition-colors ${
+                    active === i ? "bg-brand-50" : "bg-white"
+                  }`}
+                >
+                  <span className="text-base flex-shrink-0">{CATEGORY_ICONS[t.category] || "📄"}</span>
+                  <span className="min-w-0">
+                    <span className="block text-sm text-gray-900 truncate">
+                      <Highlight text={t.name} query={query} />
+                    </span>
+                    <span className="block text-xs text-gray-600 truncate">
+                      <Highlight text={t.description} query={query} />
+                    </span>
+                  </span>
+                </button>
+              ))}
+              <button
+                onClick={() => {
+                  goSearch(query.trim());
+                  closeAll();
+                }}
+                className="w-full flex items-center gap-3 px-3 py-2.5 text-left transition-colors border-t border-gray-50 bg-white"
+              >
+                <Search className="w-4 h-4 text-gray-600 flex-shrink-0" />
+                <span className="text-sm text-brand-600 truncate">
+                  Показать все результаты по запросу «{query.trim()}»
+                </span>
+              </button>
+            </div>
+          )}
         </div>
       )}
     </div>
