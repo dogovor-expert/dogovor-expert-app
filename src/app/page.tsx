@@ -8,6 +8,9 @@ import {
 import HomeTemplateGrid from "@/components/HomeTemplateGridWrapper";
 import { TEMPLATE_META_LITE } from "@/data/templatesMetaLite";
 
+export const revalidate = 3600;
+export const dynamic = "force-static"; // P0: явно включаем SSG, иначе Next 15 обходит ISR (см. INVARIANTS.md).
+
 export const metadata: Metadata = {
   alternates: { canonical: "/" },
 };

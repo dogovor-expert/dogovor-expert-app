@@ -3,6 +3,9 @@ import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { SITE_NAME } from "@/lib/site";
 
+export const revalidate = 3600;
+export const dynamic = "force-static"; // P0: явно включаем SSG, иначе Next 15 обходит ISR (см. INVARIANTS.md).
+
 export const metadata: Metadata = {
   title: "О сервисе",
   description: `${SITE_NAME} — конструктор договоров в браузере: как устроен сервис, принципы приватности, планы развития.`,

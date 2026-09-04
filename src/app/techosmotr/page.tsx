@@ -2,6 +2,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Card } from "@/components/ui/Card";
 
+export const revalidate = 3600;
+export const dynamic = "force-static"; // P0: явно включаем SSG (см. INVARIANTS.md).
+
 export const metadata: Metadata = {
   title: "Техосмотр 2026: диагностическая карта, ЕАИСТО, штрафы | Конструктор документов",
   description:
