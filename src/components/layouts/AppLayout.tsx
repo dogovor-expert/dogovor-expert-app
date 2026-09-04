@@ -7,10 +7,12 @@ import { createClient } from "@/lib/supabase/client";
 import {
   FileText, Activity, Calculator,
   FolderOpen, Files, Trash2, CreditCard,
-  Settings, HelpCircle, Menu, X, Bell, ChevronDown, Shield, Home, LogIn, Cookie, Shuffle, Newspaper,
+  Settings, HelpCircle, Menu, X, Bell, ChevronDown, Shield, Home, LogIn, Shuffle, Newspaper,
   HardDrive, Download
 } from "lucide-react";
 import HeaderSearch from "@/components/search/HeaderSearch";
+import { CookieBanner } from "@/components/cookie/CookieBanner";
+import { useCookieConsent } from "@/hooks/useCookieConsent";
 import PromoPill from "@/components/billing/PromoPill";
 import SupportLauncher from "@/components/support/SupportLauncher";
 import { CartBadge } from "@/components/ui/CartBadge";
@@ -49,25 +51,11 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   const [draftCount, setDraftCount] = useState(0);
   const [profile, setProfile] = useState({ name: "Гость", initial: "Г", avatar: null as string | null });
   const [user, setUser] = useState<any>(null);
-  const [cookieConsent, setCookieConsent] = useState<string | null>(null);
   const pathname = usePathname();
-
-  useEffect(() => {
-    try {
-      setCookieConsent(localStorage.getItem("dogovor_cookie_consent"));
-    } catch {
-      setCookieConsent(null);
-    }
-  }, []);
-
-  const acceptCookies = (value: string) => {
-    try {
-      localStorage.setItem("dogovor_cookie_consent", value);
-    } catch {
-      /* noop */
-    }
-    setCookieConsent(value);
-  };
+  // Cookies-баннер вынесен в <CookieBanner/>: использует useSyncExternalStore,
+  // не зависит от pathname, не пересоздаётся при навигации, не дёргает setState
+  // в AppLayout. Это устраняет FOUC и race с loadProfile().
+  const { isReady: cookieReady } = useCookieConsent();
 
   const loadProfile = useCallback(async () => {
     const supabase = createClient();
@@ -339,41 +327,11 @@ export default function AppLayout({ children }: { children: ReactNode }) {
 </main>
       </div>
 
-      {cookieConsent !== null && <SupportLauncher />}
-
-      {cookieConsent === null && (
-        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 w-[calc(100%-2rem)] max-w-xl bg-white border border-gray-200 rounded-2xl shadow-xl p-4">
-          <div className="flex items-start gap-3">
-            <div className="w-9 h-9 rounded-xl bg-brand-50 flex items-center justify-center flex-shrink-0">
-              <Cookie className="w-4.5 h-4.5 text-brand-600" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-gray-900">Мы используем cookies</p>
-              <p className="text-xs text-gray-600 mt-0.5 leading-relaxed">
-                Обезличенные данные для анализа посещаемости и улучшения сервиса. Подробнее в{" "}
-                <Link href="/privacy" className="text-brand-600 hover:underline">Политике конфиденциальности</Link>.
-              </p>
-              <div className="flex gap-2 mt-3">
-                <button
-                  onClick={() => acceptCookies("accepted")}
-                  className="px-4 py-3 text-sm font-medium text-white bg-brand-500 hover:bg-brand-600 rounded-lg transition-colors"
-                >
-                  Принять
-                </button>
-                <button
-                  onClick={() => acceptCookies("declined")}
-                  className="px-4 py-3 text-sm font-medium text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-                >
-                  Отклонить
-                </button>
-              </div>
-            </div>
-            <button onClick={() => acceptCookies("declined")} className="p-2 hover:bg-gray-100 rounded-lg flex-shrink-0" aria-label="Закрыть">
-              <X className="w-4 h-4 text-gray-600" />
-            </button>
-          </div>
-        </div>
-      )}
+      {/* SupportLauncher появляется только когда юзер сделал выбор
+          (cookieReady === true). CookieBanner сам управляет видимостью
+          и не зависит от состояния AppLayout. */}
+      {cookieReady && <SupportLauncher />}
+      <CookieBanner />
     </div>
   );
 }
