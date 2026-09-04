@@ -5,7 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { loginSchema, type LoginFormData } from '@/lib/validations/document';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 interface LoginFormProps {
   onSuccess?: () => void;
@@ -30,10 +30,13 @@ export function LoginForm({ onSuccess, initialEmail }: LoginFormProps) {
     mode: 'onBlur',
   });
 
-  // Если email передан извне — делаем поле readonly и не валидируем отдельно
-  if (initialEmail) {
-    setValue('email', initialEmail, { shouldValidate: false });
-  }
+  // Если email передан извне — делаем поле readonly и не валидируем отдельно.
+  // useEffect: заполняем только при изменении initialEmail, а не на каждом рендере.
+  useEffect(() => {
+    if (initialEmail) {
+      setValue('email', initialEmail, { shouldValidate: false });
+    }
+  }, [initialEmail, setValue]);
 
   const onSubmit = async (data: LoginFormData) => {
     setServerError(null);

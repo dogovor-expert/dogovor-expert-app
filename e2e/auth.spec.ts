@@ -13,9 +13,24 @@ test.describe("Auth pages: восстановление пароля и OAuth-к
       page.getByRole("button", { name: /Яндекс/ })
     ).toBeVisible();
 
-    await page.getByRole("button", { name: /У меня есть пароль/ }).click();
-    await page.getByRole("link", { name: "Забыли пароль?" }).click();
+    // Переключаемся на вход по паролю
+    await page.getByRole("button", { name: /У меня уже есть аккаунт/ }).click();
+    // Вводим email и переходим к шагу пароля
+    await page.locator('input[type="email"]').fill("test@example.com");
+    await page.getByRole("button", { name: /Продолжить/ }).click();
+    // На шаге пароля доступна ссылка восстановления
+    await page.getByRole("link", { name: /Забыли пароль\?/ }).click();
     await expect(page).toHaveURL(/\/login\/forgot/);
+  });
+
+  test("login: при неудачном OAuth показывается ошибка через ?error=oauth", async ({
+    page,
+  }) => {
+    await page.goto("/login?error=oauth&next=%2Fdashboard");
+
+    await expect(
+      page.getByText(/Не удалось войти через выбранный сервис/)
+    ).toBeVisible();
   });
 
   test("login/forgot: форма отправки ссылки для сброса", async ({ page }) => {

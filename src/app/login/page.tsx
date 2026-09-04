@@ -76,12 +76,20 @@ function LoginForm() {
   const next = isSafeRedirect(rawNext) ? rawNext : "/dashboard";
   const supabase = createClient();
 
+  // ?error=oauth — редирект с /auth/callback при неудачном обмене кода OAuth.
+  // Показываем понятное сообщение вместо молчаливого отказа входа.
+  const oauthError = searchParams.get("error")
+    ? searchParams.get("error") === "no_code"
+      ? "Не удалось завершить вход. Попробуйте ещё раз."
+      : "Не удалось войти через выбранный сервис. Попробуйте ещё раз или войдите по email."
+    : null;
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [passwordConfirm, setPasswordConfirm] = useState("");
   const [code, setCode] = useState("");
   const [mode, setMode] = useState<"register" | "login">("register");
-  const [step, setStep] = useState<"email" | "password" | "confirm" | "code" | "mfa">("email");
+  const [step, setStep] = useState<"email" | "password" | "confirm" | "mfa">("email");
   const [mfaFactor, setMfaFactor] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
@@ -108,15 +116,6 @@ function LoginForm() {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams, step]);
-
-  const promptMfaIfNeeded = async (): Promise<boolean> => {
-    const { data } = await supabase.auth.mfa.listFactors();
-    const verified = data?.totp.find((f) => f.status === "verified");
-    if (!verified) return false;
-    setMfaFactor(verified.id);
-    setStep("mfa");
-    return true;
-  };
 
   const verifyMfa = async () => {
     setError(null);
@@ -252,75 +251,6 @@ function LoginForm() {
     }
   };
 
-  const signInWithPassword = async () => {
-    setError(null);
-    setInfo(null);
-    
-    // Валидация email
-    if (!email) {
-      setError("Введите email");
-      return;
-    }
-    if (!validateEmail(email)) {
-      setError("Введите корректный email");
-      return;
-    }
-    
-    // Валидация пароля
-    if (!password) {
-      setError("Введите пароль");
-      return;
-    }
-    
-    setLoading(true);
-    
-    try {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
-      
-      if (error) {
-        setError(translateAuthError(error.message));
-        return;
-      }
-      
-      const needsMfa = await promptMfaIfNeeded();
-      if (needsMfa) return;
-      
-      router.push(next);
-      router.refresh();
-    } catch (err) {
-      setError("Произошла ошибка при входе. Попробуйте позже.");
-      console.error("Login error:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const verifyCode = async () => {
-    setError(null);
-    if (code.trim().length < 6) {
-      setError("Введите код из письма");
-      return;
-    }
-    setLoading(true);
-    try {
-      const { error } = await supabase.auth.verifyOtp({
-        email,
-        token: code.trim(),
-        type: "email",
-      });
-      if (error) {
-        setError(translateAuthError(error.message));
-        return;
-      }
-      const needsMfa = await promptMfaIfNeeded();
-      if (needsMfa) return;
-      router.push(next);
-      router.refresh();
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const signInWithOAuth = async (provider: "google" | "custom:yandex") => {
     setError(null);
     setOauthBusy(provider);
@@ -353,13 +283,11 @@ function LoginForm() {
                 ? mode === "register"
                   ? "Создание аккаунта"
                   : "Вход по паролю"
-                : step === "code"
-                  ? "Подтверждение кода"
-                  : step === "mfa"
-                    ? "Подтвердите вход"
-                    : mode === "register"
-                      ? "Регистрация в личном кабинете"
-                      : "Вход в личный кабинет"}
+                : step === "mfa"
+                  ? "Подтвердите вход"
+                  : mode === "register"
+                    ? "Регистрация в личном кабинете"
+                    : "Вход в личный кабинет"}
           </h1>
           <p className="text-sm text-gray-600 mt-2">
             {step === "confirm"
@@ -368,15 +296,35 @@ function LoginForm() {
                 ? mode === "register"
                   ? "Придумайте пароль — он понадобится для входа"
                   : "Введите email и пароль"
-                : step === "code"
-                  ? "Введите 6 цифр из письма"
-                  : step === "mfa"
-                    ? "Введите код из приложения-аутентификатора"
-                    : mode === "register"
-                      ? "Создайте аккаунт для сохранения документов и доступа к Pro-тарифу"
-                      : "Войдите в аккаунт для доступа к документам и Pro-тарифу"}
+                : step === "mfa"
+                  ? "Введите код из приложения-аутентификатора"
+                  : mode === "register"
+                    ? "Создайте аккаунт для сохранения документов и доступа к Pro-тарифу"
+                    : "Войдите в аккаунт для доступа к документам и Pro-тарифу"}
           </p>
         </div>
+
+        {oauthError && (
+          <div
+            role="alert"
+            aria-live="assertive"
+            className="flex items-start gap-2 px-3 py-3 rounded-xl bg-red-50 border border-red-200 mb-6"
+          >
+            <svg
+              className="w-4 h-4 text-red-600 mt-0.5 shrink-0"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              aria-hidden="true"
+            >
+              <circle cx="12" cy="12" r="10" />
+              <line x1="12" y1="8" x2="12" y2="12" />
+              <line x1="12" y1="16" x2="12.01" y2="16" />
+            </svg>
+            <p className="text-sm text-red-700">{oauthError}</p>
+          </div>
+        )}
 
         {step === "email" && (
           <>
@@ -526,6 +474,14 @@ function LoginForm() {
                     router.refresh();
                   }}
                 />
+                <div className="mt-3 text-center">
+                  <Link
+                    href="/login/forgot"
+                    className="text-sm text-brand-600 hover:underline"
+                  >
+                    Забыли пароль?
+                  </Link>
+                </div>
               </>
             )}
           </>
@@ -561,37 +517,7 @@ function LoginForm() {
               Код генерируется в приложении при каждом входе и действителен ~30 секунд
             </p>
           </>
-        ) : (
-          <>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Код из письма
-            </label>
-            <Input
-              value={code}
-              onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
-              placeholder="••••••"
-              inputMode="numeric"
-            />
-            {info && (
-              <p className="text-sm text-emerald-600 mt-2 flex items-center gap-1">
-                <CheckCircle2 className="w-4 h-4" /> {info}
-              </p>
-            )}
-            {error && <p className="text-sm text-red-600 mt-2">{error}</p>}
-            <Button className="w-full mt-4" onClick={verifyCode} disabled={loading}>
-              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Войти"}
-            </Button>
-            <button
-              className="w-full text-center text-sm text-brand-600 hover:underline mt-3"
-              onClick={() => {
-                setStep("email");
-                setAgreed(false);
-              }}
-            >
-              ← Изменить email
-            </button>
-          </>
-        )}
+        ) : null}
 
         {step === "confirm" && (
           <div className="flex items-center gap-3 bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-4">
