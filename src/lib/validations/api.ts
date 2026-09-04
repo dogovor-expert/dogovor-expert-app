@@ -71,6 +71,63 @@ export const yookassaWebhookSchema = z.object({
 
 export type YookassaWebhookInput = z.infer<typeof yookassaWebhookSchema>;
 
+// Схема для DaData-прокси (/api/dadata)
+// Поддерживает 7 операций: find-party, suggest-party, suggest-fio, find-fio,
+// suggest-passport, suggest-address, suggest-fms-unit.
+// query: 1-200 символов, count: 1-10.
+export const dadataSchema = z.object({
+  op: z.enum([
+    'find-party',
+    'suggest-party',
+    'suggest-fio',
+    'find-fio',
+    'suggest-passport',
+    'suggest-address',
+    'suggest-fms-unit',
+  ]),
+  query: z.string().min(1, 'Запрос не может быть пустым').max(200, 'Максимум 200 символов'),
+  count: z.number().int().min(1).max(10).optional().default(10),
+}).strict();
+
+export type DadataInput = z.infer<typeof dadataSchema>;
+
+// Схема для чат-виджета (/api/chat)
+// Анонимный пользователь может отправить сообщение; visitorId — анонимный ID из cookie,
+// text — сообщение (до 4000 символов), consent — обязательное согласие, name/email — контактные данные.
+// ctx — опциональный контекст браузера (для отладки и помощи пользователю).
+export const chatSchema = z.object({
+  visitorId: z.string().min(1, 'visitorId обязателен').max(64),
+  text: z.string().min(1, 'Сообщение не может быть пустым').max(4000, 'Слишком длинное сообщение'),
+  consent: z.literal(true, { errorMap: () => ({ message: 'Необходимо согласие на обработку данных' }) }),
+  name: z.string().min(1, 'Имя обязательно').max(80),
+  email: z.string().email('Некорректный email').max(254),
+  page: z.string().url().max(500).optional(),
+  ctx: z.object({
+    url: z.string().url().max(500).optional(),
+    referrer: z.string().max(500).optional(),
+    ua: z.string().max(500).optional(),
+    lang: z.string().max(20).optional(),
+  }).strict().optional(),
+}).strict();
+
+export type ChatInput = z.infer<typeof chatSchema>;
+
+// Схема для импорта черновиков (/api/import)
+// body — JSON-сериализованный массив черновиков. Защита от переполнения: 1-50 черновиков.
+// NB: реальный клиент шлёт camelCase (templateId, values), это сохраняем для совместимости.
+export const importSchema = z.object({
+  drafts: z.array(z.object({
+    templateId: z.string().min(1, 'templateId обязателен').max(100),
+    title: z.string().max(200).optional(),
+    values: z.record(z.string(), z.unknown()).optional(),
+    checklist: z.record(z.string(), z.unknown()).optional(),
+    versions: z.array(z.unknown()).optional(),
+  })).min(1, 'Должен быть хотя бы один черновик').max(50, 'Максимум 50 черновиков за один импорт'),
+  force: z.boolean().optional().default(false),
+}).strict();
+
+export type ImportInput = z.infer<typeof importSchema>;
+
 // Схема для создания договора (пакет документов)
 export const createContractSchema = z.object({
   template_id: z.string().uuid(),
