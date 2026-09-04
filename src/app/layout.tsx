@@ -86,11 +86,13 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             {
               "@context": "https://schema.org",
               "@type": "Organization",
-              name: "Dogovor.expert",
+              name: "Dogovor-Эксперт™",
+              alternateName: ["Dogovor.expert", "Договор-Эксперт", "Dogovor-Expert"],
               url: SITE_URL,
               logo: `${SITE_URL}/apple-icon.png`,
               email: SITE_CONTACT_EMAIL,
               description: SITE_DESCRIPTION,
+              foundingDate: "2024",
               // P1 (brand protection): sameAs связывает Organization с официальными соцсетями.
               // Google использует sameAs для подтверждения брендовой принадлежности и вытеснения мимикрирующих доменов.
               // Владелец: заполните реальные URL ниже, раскомментировав строки. Пустой массив не передаётся.

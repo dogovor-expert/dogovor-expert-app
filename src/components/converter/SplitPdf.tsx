@@ -2,6 +2,7 @@
 import { useRef, useState } from "react";
 import { Scissors, Loader2, Download, Check, X } from "lucide-react";
 import { downloadBytes, formatBytes } from "@/lib/converter/download";
+import { usePdfWorker } from "@/lib/hooks/usePdfWorker";
 
 export default function SplitPdf() {
   const [file, setFile] = useState<File | null>(null);
@@ -12,6 +13,7 @@ export default function SplitPdf() {
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const { run: runPdf, progress, supported: workerSupported } = usePdfWorker();
 
   const onFile = async (list: FileList | null) => {
     const f = list?.[0];
@@ -56,19 +58,44 @@ export default function SplitPdf() {
     setError(null);
     setDone(false);
     try {
-      const { PDFDocument } = await import("pdf-lib");
-      const src = await PDFDocument.load(new Uint8Array(await file.arrayBuffer()), { ignoreEncryption: true });
-      const total = src.getPageCount();
-      const indices = mode === "all" ? Array.from({ length: total }, (_, i) => i + 1) : parseRange(range, total);
+      const indices = mode === "all"
+        ? Array.from({ length: pageCount }, (_, i) => i + 1)
+        : parseRange(range, pageCount);
       if (!indices) {
         setError("Укажите страницы в формате: 1-3, 5, 8-10");
         return;
       }
+      const base = file.name.replace(/\.pdf$/i, "");
+      const ranges = indices.length > 0
+        ? [{ from: indices[0], to: indices[indices.length - 1], suffix: `${base}-pages-${indices[0]}-${indices[indices.length - 1]}` }]
+        : [];
+      if (ranges.length === 0) {
+        setError("Не выбрано ни одной страницы");
+        return;
+      }
+
+      // Основной путь — Web Worker.
+      if (workerSupported) {
+        const result = await runPdf<"split">({
+          type: "split",
+          bytes: await file.arrayBuffer(),
+          ranges,
+        });
+        if (result.kind === "multi") {
+          for (const o of result.outputs) {
+            downloadBytes(new Uint8Array(o.bytes), o.name);
+          }
+          setDone(true);
+          return;
+        }
+      }
+      // Fallback: main-thread.
+      const { PDFDocument } = await import("pdf-lib");
+      const src = await PDFDocument.load(new Uint8Array(await file.arrayBuffer()), { ignoreEncryption: true });
       const out = await PDFDocument.create();
       const pages = await out.copyPages(src, indices.map((i) => i - 1));
       pages.forEach((p) => out.addPage(p));
       const saved = await out.save({ useObjectStreams: true });
-      const base = file.name.replace(/\.pdf$/i, "");
       const suffix = mode === "all" ? `-pages-${indices[0]}-${indices[indices.length - 1]}` : "-selected";
       downloadBytes(saved, `${base}${suffix}.pdf`);
       setDone(true);
@@ -85,11 +112,32 @@ export default function SplitPdf() {
     setError(null);
     setDone(false);
     try {
+      const base = file.name.replace(/\.pdf$/i, "");
+      const ranges = Array.from({ length: pageCount }, (_, i) => ({
+        from: i + 1,
+        to: i + 1,
+        suffix: `${base}-стр-${i + 1}`,
+      }));
+
+      // Основной путь — Web Worker.
+      if (workerSupported) {
+        const result = await runPdf<"split">({
+          type: "split",
+          bytes: await file.arrayBuffer(),
+          ranges,
+        });
+        if (result.kind === "multi") {
+          for (const o of result.outputs) {
+            downloadBytes(new Uint8Array(o.bytes), o.name);
+          }
+          setDone(true);
+          return;
+        }
+      }
+      // Fallback: main-thread.
       const { PDFDocument } = await import("pdf-lib");
       const src = await PDFDocument.load(new Uint8Array(await file.arrayBuffer()), { ignoreEncryption: true });
-      const base = file.name.replace(/\.pdf$/i, "");
-      const total = src.getPageCount();
-      for (let i = 0; i < total; i++) {
+      for (let i = 0; i < pageCount; i++) {
         const out = await PDFDocument.create();
         const [page] = await out.copyPages(src, [i]);
         out.addPage(page);
@@ -169,14 +217,34 @@ export default function SplitPdf() {
             <button onClick={split} disabled={busy}
               className="w-full py-2.5 bg-brand-500 text-white rounded-xl hover:bg-brand-600 font-bold text-sm transition disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer">
               {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
-              {busy ? "Разделение..." : "Скачать выделенные страницы"}
+              {busy
+                ? progress && progress.total > 0
+                  ? `Разделение ${progress.current}/${progress.total}...`
+                  : "Разделение..."
+                : "Скачать выделенные страницы"}
             </button>
           ) : (
             <button onClick={splitAll} disabled={busy}
               className="w-full py-2.5 bg-brand-500 text-white rounded-xl hover:bg-brand-600 font-bold text-sm transition disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer">
               {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
-              {busy ? "Разделение..." : `Скачать ${pageCount} файл(ов) по странице`}
+              {busy
+                ? progress && progress.total > 0
+                  ? `Разделение ${progress.current}/${progress.total}...`
+                  : "Разделение..."
+                : `Скачать ${pageCount} файл(ов) по странице`}
             </button>
+          )}
+          {busy && progress && progress.total > 0 && (
+            <div className="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
+              <div
+                className="h-full bg-brand-500 transition-all duration-200"
+                style={{ width: `${Math.round((progress.current / progress.total) * 100)}%` }}
+                role="progressbar"
+                aria-valuenow={progress.current}
+                aria-valuemin={0}
+                aria-valuemax={progress.total}
+              />
+            </div>
           )}
         </div>
       )}

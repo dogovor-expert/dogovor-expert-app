@@ -2,6 +2,7 @@
 import { useRef, useState } from "react";
 import { Files, Loader2, X, Download, Check } from "lucide-react";
 import { downloadBytes, formatBytes, baseName } from "@/lib/converter/download";
+import { usePdfWorker } from "@/lib/hooks/usePdfWorker";
 
 export default function MergePdf() {
   const [files, setFiles] = useState<File[]>([]);
@@ -9,6 +10,7 @@ export default function MergePdf() {
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const { run: runPdf, progress, supported: workerSupported } = usePdfWorker();
 
   const addFiles = (list: FileList | null) => {
     if (!list) return;
@@ -56,6 +58,21 @@ export default function MergePdf() {
     setError(null);
     setDone(false);
     try {
+      // Основной путь — Web Worker (не блокирует UI на 5-15 секунд для больших PDF).
+      if (workerSupported) {
+        const result = await runPdf<"merge">({
+          type: "merge",
+          files: await Promise.all(
+            files.map(async (f) => ({ name: f.name, bytes: await f.arrayBuffer() }))
+          ),
+        });
+        if (result.kind === "single") {
+          downloadBytes(new Uint8Array(result.payload), `merged-${baseName(files[0].name)}.pdf`);
+          setDone(true);
+          return;
+        }
+      }
+      // Fallback: main-thread (если Worker недоступен — старые браузеры / SSR).
       const { PDFDocument } = await import("pdf-lib");
       const out = await PDFDocument.create();
       for (const file of files) {
@@ -125,9 +142,25 @@ export default function MergePdf() {
             <button onClick={merge} disabled={busy || files.length < 2}
               className="flex-1 py-2.5 bg-brand-500 text-white rounded-xl hover:bg-brand-600 font-bold text-sm transition disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer">
               {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
-              {busy ? "Объединение..." : `Объединить (${files.length} файл.)`}
+              {busy
+                ? progress && progress.total > 0
+                  ? `${progress.phase === "save" ? "Сохранение" : "Объединение"} ${progress.current}/${progress.total}...`
+                  : "Объединение..."
+                : `Объединить (${files.length} файл.)`}
             </button>
           </div>
+          {busy && progress && progress.total > 0 && (
+            <div className="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
+              <div
+                className="h-full bg-brand-500 transition-all duration-200"
+                style={{ width: `${Math.round((progress.current / progress.total) * 100)}%` }}
+                role="progressbar"
+                aria-valuenow={progress.current}
+                aria-valuemin={0}
+                aria-valuemax={progress.total}
+              />
+            </div>
+          )}
         </div>
       )}
 

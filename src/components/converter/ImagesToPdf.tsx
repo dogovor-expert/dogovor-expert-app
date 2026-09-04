@@ -2,6 +2,7 @@
 import { useRef, useState } from "react";
 import { Image as ImageIcon, Loader2, Download, Check, X } from "lucide-react";
 import { downloadBytes, formatBytes } from "@/lib/converter/download";
+import { usePdfWorker } from "@/lib/hooks/usePdfWorker";
 
 const A4 = { width: 595.28, height: 841.89 };
 
@@ -13,6 +14,7 @@ export default function ImagesToPdf() {
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const { run: runPdf, progress, supported: workerSupported } = usePdfWorker();
 
   const addFiles = (list: FileList | null) => {
     if (!list) return;
@@ -47,11 +49,38 @@ export default function ImagesToPdf() {
     setError(null);
     setDone(false);
     try {
-      const { PDFDocument, degrees } = await import("pdf-lib");
+      // Worker умеет только PNG/JPEG; если есть WebP/BMP — fallback в main thread.
+      const onlyPngJpg = files.every((f) => f.type === "image/png" || f.type === "image/jpeg" || f.type === "image/jpg");
+      if (workerSupported && onlyPngJpg) {
+        const result = await runPdf<"imagesToPdf">({
+          type: "imagesToPdf",
+          images: await Promise.all(
+            files.map(async (f) => ({ name: f.name, bytes: await f.arrayBuffer(), mime: f.type }))
+          ),
+          orientation,
+          marginMm: margin,
+        });
+        if (result.kind === "single") {
+          downloadBytes(new Uint8Array(result.payload), result.name ?? "images.pdf");
+          setDone(true);
+          return;
+        }
+      }
+      // Fallback: main-thread (WebP/BMP или нет Worker).
+      const { PDFDocument } = await import("pdf-lib");
       const doc = await PDFDocument.create();
       for (const file of files) {
         const bytes = new Uint8Array(await file.arrayBuffer());
-        const img = file.type === "image/png" ? await doc.embedPng(bytes) : await doc.embedJpg(bytes);
+        let img;
+        if (file.type === "image/png") {
+          img = await doc.embedPng(bytes);
+        } else if (file.type === "image/jpeg" || file.type === "image/jpg") {
+          img = await doc.embedJpg(bytes);
+        } else {
+          // WebP/BMP: конвертируем через Canvas → PNG
+          const pngBytes = await imageToPngBytes(file);
+          img = await doc.embedPng(pngBytes);
+        }
         const { width, height } = img.scale(1);
         const isLandscape = width > height;
         const useLandscape = orientation === "landscape" || (orientation === "auto" && isLandscape);
@@ -77,6 +106,34 @@ export default function ImagesToPdf() {
       setBusy(false);
     }
   };
+
+  /**
+   * Конвертация WebP/BMP → PNG через Canvas (для fallback, когда worker не подходит).
+   * PNG поддерживается pdf-lib embedPng нативно без потерь.
+   */
+  async function imageToPngBytes(file: File): Promise<Uint8Array> {
+    const blobUrl = URL.createObjectURL(file);
+    try {
+      const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+        const el = new window.Image();
+        el.onload = () => resolve(el);
+        el.onerror = () => reject(new Error("image_load_failed"));
+        el.src = blobUrl;
+      });
+      const canvas = document.createElement("canvas");
+      canvas.width = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+      const ctx2d = canvas.getContext("2d");
+      if (!ctx2d) throw new Error("canvas_unavailable");
+      ctx2d.drawImage(img, 0, 0);
+      const blob = await new Promise<Blob>((resolve, reject) => {
+        canvas.toBlob((b) => (b ? resolve(b) : reject(new Error("toBlob_failed"))), "image/png");
+      });
+      return new Uint8Array(await blob.arrayBuffer());
+    } finally {
+      URL.revokeObjectURL(blobUrl);
+    }
+  }
 
   return (
     <div className="space-y-4">
@@ -140,9 +197,25 @@ export default function ImagesToPdf() {
             <button onClick={convert} disabled={busy}
               className="flex-1 py-2.5 bg-brand-500 text-white rounded-xl hover:bg-brand-600 font-bold text-sm transition disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer">
               {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
-              {busy ? "Создание PDF..." : "Создать PDF"}
+              {busy
+                ? progress && progress.total > 0
+                  ? `${progress.phase === "save" ? "Сохранение" : "Создание"} ${progress.current}/${progress.total}...`
+                  : "Создание PDF..."
+                : "Создать PDF"}
             </button>
           </div>
+          {busy && progress && progress.total > 0 && (
+            <div className="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
+              <div
+                className="h-full bg-brand-500 transition-all duration-200"
+                style={{ width: `${Math.round((progress.current / progress.total) * 100)}%` }}
+                role="progressbar"
+                aria-valuenow={progress.current}
+                aria-valuemin={0}
+                aria-valuemax={progress.total}
+              />
+            </div>
+          )}
         </div>
       )}
 
