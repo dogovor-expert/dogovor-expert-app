@@ -32,6 +32,7 @@ import { getSigning, canShowSignSheet } from "@/data/signingMeta";
 import { type DesignId } from "@/lib/docDesign";
 import { buildTemplateDefaults, getGreeting, normalizeTypography, todayStr } from "@/lib/format";
 import { downloadBytes } from "@/lib/converter/download";
+import { uint8ToBase64 } from "@/lib/bytes";
 import dynamic from "next/dynamic";
 import ProgressSteps from "@/components/builder/ProgressSteps";
 import TemplateSelector from "@/components/builder/TemplateSelector";
@@ -1257,13 +1258,7 @@ function HomeContent() {
         watermark: undefined,
       });
       const buf = await blob.arrayBuffer();
-      let bin = "";
-      const bytes = new Uint8Array(buf);
-      const CHUNK = 0x8000;
-      for (let i = 0; i < bytes.length; i += CHUNK) {
-        bin += String.fromCharCode.apply(null, Array.from(bytes.subarray(i, i + CHUNK)));
-      }
-      const pdfBase64 = btoa(bin);
+      const pdfBase64 = uint8ToBase64(new Uint8Array(buf));
 
       const res = await fetch("/api/export/email", {
         method: "POST",
