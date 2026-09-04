@@ -173,7 +173,7 @@ export function extractVehicleData(text: string): VehicleData {
   const brandMatch = text.match(
     /(?:марка,\s*модель|марка|модель)[:\s]*([^\n]{3,50})/i
   );
-  if (brandMatch) data.brand = clean(latinToCyrillic(brandMatch[1]));
+  if (brandMatch) data.brand = clean(brandMatch[1]);
 
   const yearMatch = text.match(
     /(?:год выпуска|выпуска|год изготовления|изготовления)[:\s]*(\d{4})/i
