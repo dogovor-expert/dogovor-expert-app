@@ -32,6 +32,11 @@ import {
 import { prepareDocumentImage, type ImageQuality } from "@/lib/docImage";
 import { paddleRecognize, paddleWarmup } from "@/lib/paddleOcr";
 import { tryParseMrz, applyMrzToRole, type MrzParseSuccess } from "@/lib/docMrz";
+import {
+  fetchOcularStatus,
+  postOcrRequest,
+  type OcularStatus,
+} from "@/lib/ocrStatus";
 
 /** Порог уверенности Tesseract, ниже которого включается PaddleOCR. */
 const PADDLE_FALLBACK_THRESHOLD = 60;
@@ -129,6 +134,7 @@ export default function DocScanner({
   const [collapsed, setCollapsed] = useState(false);
   const [dragOver, setDragOver] = useState<string | null>(null);
   const [lightbox, setLightbox] = useState<{ slotId: string; index: number } | null>(null);
+  const [ocularStatus, setOcularStatus] = useState<OcularStatus | null>(null);
   const fileInputsRef = useRef<Record<string, HTMLInputElement | null>>({});
   const lastFilesRef = useRef<Record<string, File | null>>({});
 
@@ -161,6 +167,19 @@ export default function DocScanner({
     }
   }, [collapsed]);
 
+  // Проверка доступности occular-сервера (для UI-индикатора). Делаем
+  // один раз после монтирования — на 8-10 секундный кеш сервера.
+  useEffect(() => {
+    const ctrl = new AbortController();
+    const id = window.setTimeout(() => {
+      void fetchOcularStatus(ctrl.signal).then(setOcularStatus);
+    }, 2000);
+    return () => {
+      ctrl.abort();
+      window.clearTimeout(id);
+    };
+  }, []);
+
   /** Скроллит форму к первому заполненному полю и подсвечивает все. */
   const focusFilledFields = (ids: string[]) => {
     if (ids.length === 0) return;
@@ -188,7 +207,8 @@ export default function DocScanner({
   const runOcr = (
     slot: DocSlot,
     raw: string,
-    binary: string
+    binary: string,
+    params?: Record<string, string>
   ): Promise<{ text: string; confidence: number; words: OcrWord[] }> => {
     // Используем Web Worker — tesseract.js не попадает в основной бандл.
     // Относительный путь обязателен: webpack корректно собирает worker-чанк
@@ -245,6 +265,7 @@ export default function DocScanner({
         file: raw,
         binary,
         wantWords: true,
+        params: params ?? {},
         vinRetry:
           slot.ocrKind === "pts" || slot.ocrKind === "sts" || slot.ocrKind === "epts",
       });
@@ -371,7 +392,61 @@ export default function DocScanner({
 
       if (slot.ocrKind) {
         // 2) Multi-pass OCR: raw + binary, выбор по confidence.
-        let ocr = await runOcr(slot, prepared.ocrRaw, prepared.ocrBinary);
+        // PSM 6 (несколько блоков) — оптимально для документов с мелким шрифтом
+        // (СТС/ПТС/ЭПТС). Остальные типы — PSM 3 (AUTO) по умолчанию.
+        const isVehicle =
+          slot.ocrKind === "pts" || slot.ocrKind === "sts" || slot.ocrKind === "epts";
+        const tesseractParams = isVehicle
+          ? { tessedit_pageseg_mode: "6" }
+          : undefined;
+        let ocr = await runOcr(slot, prepared.ocrRaw, prepared.ocrBinary, tesseractParams);
+
+        // 2a) Серверный occular-OCR (домашний/VDS) — точный распознаватель
+        //     для русских документов. Используется, если доступен И его
+        //     средняя confidence по строкам выше, чем у Tesseract. Любая
+        //     ошибка (offline, таймаут, недоступность) — бесшовный fallback
+        //     на локальный движок, без уведомления пользователя.
+        if (ocularStatus?.available) {
+          try {
+            setProgress((p) => ({
+              ...p,
+              [slot.id]: { status: "Точный серверный OCR…", progress: 0.05 },
+            }));
+            const ocularBlob = await (await fetch(prepared.ocrRaw)).blob();
+            const ocularResult = await postOcrRequest(
+              ocularBlob,
+              `${slot.id}-${Date.now()}.jpg`
+            );
+            if (
+              ocularResult.source === "server" &&
+              ocularResult.lines.length > 0
+            ) {
+              const avgConf =
+                ocularResult.lines.reduce(
+                  (s, l) => s + (Number.isFinite(l.confidence) ? l.confidence : 0),
+                  0
+                ) / ocularResult.lines.length;
+              const ocularText = ocularResult.lines
+                .map((l) => l.text)
+                .join("\n");
+              if (
+                ocularText.trim().length >= 20 &&
+                avgConf >= 0.7 &&
+                avgConf > ocr.confidence / 100
+              ) {
+                // Серверный OCR лучше — берём его текст, боксы оставляем
+                // от Tesseract (приблизительная подсветка сохранится).
+                ocr = {
+                  text: ocularText,
+                  confidence: Math.round(avgConf * 100),
+                  words: ocr.words,
+                };
+              }
+            }
+          } catch {
+            // Серверный OCR недоступен — остаётся результат Tesseract/PP-OCRv5.
+          }
+        }
 
         // 3) Fallback: пробуем PP-OCRv5 (точнее на реальных фото), если
         //    Tesseract либо не уверен, либо вернул слишком короткий текст
@@ -833,6 +908,44 @@ export default function DocScanner({
               <p className="text-[11px] text-white/80 leading-tight mt-0.5">
                 Фото → заполнение полей за секунды
               </p>
+              {ocularStatus === null ? (
+                <p
+                  className="text-[10px] text-white/60 leading-tight mt-1 flex items-center gap-1"
+                  title="Проверяем доступность улучшенного серверного OCR"
+                >
+                  <span
+                    className="inline-block w-1.5 h-1.5 rounded-full bg-white/40"
+                    aria-hidden
+                  />
+                  Проверяем точный режим…
+                </p>
+              ) : ocularStatus.available ? (
+                <p
+                  className="text-[10px] text-emerald-100 leading-tight mt-1 flex items-center gap-1"
+                  title={`Серверный OCR (${ocularStatus.languages ?? "ru"}, ${ocularStatus.threads ?? "?"} потоков) — повышенная точность на русских документах`}
+                >
+                  <span
+                    className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-300 animate-pulse"
+                    aria-hidden
+                  />
+                  Точный режим включён
+                </p>
+              ) : (
+                <p
+                  className="text-[10px] text-white/60 leading-tight mt-1 flex items-center gap-1"
+                  title={
+                    ocularStatus.reason === "unconfigured"
+                      ? "OCCULAR_BASE_URL не задан в env — будет использован встроенный OCR"
+                      : `Серверный OCR недоступен (${ocularStatus.reason}) — будет использован встроенный OCR`
+                  }
+                >
+                  <span
+                    className="inline-block w-1.5 h-1.5 rounded-full bg-white/40"
+                    aria-hidden
+                  />
+                  Базовый режим
+                </p>
+              )}
             </div>
           </div>
           <div className="flex items-center gap-2 shrink-0">

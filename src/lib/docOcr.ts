@@ -173,7 +173,7 @@ export function extractVehicleData(text: string): VehicleData {
   const brandMatch = text.match(
     /(?:марка,\s*модель|марка|модель)[:\s]*([^\n]{3,50})/i
   );
-  if (brandMatch) data.brand = clean(brandMatch[1]);
+  if (brandMatch) data.brand = clean(latinToCyrillic(brandMatch[1]));
 
   const yearMatch = text.match(
     /(?:год выпуска|выпуска|год изготовления|изготовления)[:\s]*(\d{4})/i
@@ -198,7 +198,7 @@ export function extractVehicleData(text: string): VehicleData {
   const colorMatch = text.match(
     /(?:цвет)[:\s]*([а-яёА-ЯЁa-zA-Z -]{3,20})/i
   );
-  if (colorMatch) data.color = clean(colorMatch[1]);
+  if (colorMatch) data.color = clean(latinToCyrillic(colorMatch[1]));
 
   const powerKwMatch = text.match(/(\d{2,4}(?:\.\d+)?)\s*(квт|кВт|kw)/);
   if (powerKwMatch) data.powerKw = powerKwMatch[1];
@@ -226,9 +226,28 @@ export function extractVehicleData(text: string): VehicleData {
   if (eptsMatch) data.eptsNumber = eptsMatch[1];
 
   const stsNumberMatch = text.match(
-    /(?:свидетельство|СТС)[^\n]{0,30}?(\d{6})/i
+    /(?:свидетельство|СТС)[\s\S]{0,30}?(\d{6})/i
   );
   if (stsNumberMatch) data.stsNumber = stsNumberMatch[1];
+
+  // Серия СТС — 2 буквы (код региона), обычно перед номером или отдельной строкой.
+  const stsSeriesMatch = text.match(
+    /(?:серия)\s*(?:СТС|свидетельства)?\s*([А-ЯЁ]{2})/i
+  );
+  if (stsSeriesMatch) {
+    data.stsSeries = stsSeriesMatch[1].toUpperCase();
+  } else {
+    // Fallback: 2 кириллические буквы перед 6-значным номером в контексте СТС
+    const ss = text.match(/([А-ЯЁ]{2})\s*(\d{6})/);
+    if (
+      ss &&
+      /(?:СТС|СВИДЕТЕЛЬСТВО|РЕГИСТРАЦИ|ТРАНСПОРТН)/i.test(
+        text.slice(0, (ss.index ?? 0) + 2)
+      )
+    ) {
+      data.stsSeries = ss[1].toUpperCase();
+    }
+  }
 
   const ownerFioMatch = text.match(
     /(?:владелец|собственник)[:\s]*([А-ЯЁ][а-яё]+\s+[А-ЯЁ][а-яё]+(?:\s+[А-ЯЁ][а-яё]+)?)/i
