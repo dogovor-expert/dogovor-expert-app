@@ -4,10 +4,10 @@ import { JsonLd } from "@/components/seo/JsonLd";
 import { breadcrumbJsonLd } from "@/lib/seo/faq";
 import { withSeo } from "@/lib/seo/withSeo";
 import BlogList from "@/components/blog/BlogList";
+import { SITE_URL } from "@/lib/site";
 
 export const revalidate = 3600; // ISR: пересборка каждый час.
 
-const SITE_URL = "https://dogovor.expert";
 const YEAR = new Date().getFullYear();
 const POSTS_PER_PAGE = 10;
 

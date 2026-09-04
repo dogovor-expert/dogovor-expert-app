@@ -4,8 +4,8 @@ import { BLOG_POSTS } from "@/data/blog/posts";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { breadcrumbJsonLd } from "@/lib/seo/faq";
 import BlogList from "@/components/blog/BlogList";
+import { SITE_URL } from "@/lib/site";
 
-const SITE_URL = "https://dogovor.expert";
 const YEAR = new Date().getFullYear();
 const POSTS_PER_PAGE = 10;
 
