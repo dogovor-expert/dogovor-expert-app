@@ -1,10 +1,13 @@
 import type { Metadata } from "next";
-import dynamic from "next/dynamic";
+import nextDynamic from "next/dynamic";
 import { Card } from "@/components/ui/Card";
 import { SUPPORT_EMAIL, PARTNERS_EMAIL, PRESS_EMAIL, SITE_NAME, SITE_LEGAL_INN } from "@/lib/site";
 
 // Форма (с зависимостями) — отдельным чанком, вне основного бандла страницы.
-const FeedbackForm = dynamic(() => import("@/components/feedback/FeedbackForm"));
+const FeedbackForm = nextDynamic(() => import("@/components/feedback/FeedbackForm"));
+
+export const revalidate = 3600;
+export const dynamic = "force-static"; // P0: явно включаем SSG, иначе Next 15 обходит ISR (см. INVARIANTS.md).
 
 export const metadata: Metadata = {
   title: "Контакты",

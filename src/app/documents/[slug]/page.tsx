@@ -13,6 +13,8 @@ import { SITE_URL } from "@/lib/site";
 const YEAR = new Date().getFullYear();
 
 export const dynamicParams = false;
+export const revalidate = 3600;
+export const dynamic = "force-static"; // P0: явно включаем SSG (см. INVARIANTS.md).
 
 export function generateStaticParams() {
   return LEGAL_TEMPLATES.map((t) => ({ slug: t.id }));
