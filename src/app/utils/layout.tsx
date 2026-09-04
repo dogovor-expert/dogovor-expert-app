@@ -2,13 +2,15 @@ import type { Metadata } from "next";
 import { withSeo } from "@/lib/seo/withSeo";
 
 export const revalidate = 3600;
-export const dynamic = "force-static"; // P0: явно включаем SSG, иначе Next 15 обходит ISR (см. INVARIANTS.md).
+// P0: принудительный SSG вместо динамической генерации. Next 15+ использует ISR
+// по умолчанию, force-static даёт предсказуемое поведение и статический HTML-кэш.
+export const dynamic = "force-static";
 
 export const metadata: Metadata = withSeo({
   path: "/utils",
-  title: "Калькуляторы: госпошлина, 395 ГК, неустойка",
+  title: "Калькуляторы: госпошлина, 395 ГК, неустойка, НДС",
   description:
-    "Бесплатные юридические калькуляторы: госпошлина в суд, проценты по ст. 395 ГК РФ, неустойка, алименты, индексация. Актуальные ставки ЦБ РФ.",
+    "Бесплатные юридические и финансовые калькуляторы онлайн: расчёт госпошлины по ст. 333.19 НК РФ, процентов по ст. 395 ГК РФ, неустойки по ДДУ, НДС 22%, НДФЛ, алиментов. Актуальные ставки 2026 года, МРОТ, ключевая ставка ЦБ РФ.",
 });
 
 export default function Layout({ children }: { children: React.ReactNode }) {

@@ -266,8 +266,12 @@ export default function AppLayout({ children }: { children: ReactNode }) {
             <Link href="/privacy" className="text-[11px] leading-6 text-gray-600 hover:text-brand-600 transition-colors underline underline-offset-2 hover:no-underline">Политика</Link>
             <Link href="/terms" className="text-[11px] leading-6 text-gray-600 hover:text-brand-600 transition-colors underline underline-offset-2 hover:no-underline">Соглашение</Link>
             <Link href="/about" className="text-[11px] leading-6 text-gray-600 hover:text-brand-600 transition-colors underline underline-offset-2 hover:no-underline">О сервисе</Link>
+            <Link href="/legal/trademark" className="text-[11px] leading-6 text-gray-600 hover:text-brand-600 transition-colors underline underline-offset-2 hover:no-underline">Товарный знак</Link>
             <Link href="/contacts" className="text-[11px] leading-6 text-gray-600 hover:text-brand-600 transition-colors underline underline-offset-2 hover:no-underline">Контакты</Link>
           </div>
+          <p className="mt-2 px-1 text-[10px] leading-4 text-gray-500">
+            © 2024–{new Date().getFullYear()} Dogovor-Эксперт™. Все права защищены.
+          </p>
         </div>
       </aside>
 

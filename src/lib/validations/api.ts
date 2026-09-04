@@ -112,6 +112,22 @@ export const chatSchema = z.object({
 
 export type ChatInput = z.infer<typeof chatSchema>;
 
+// Схема для автотеки (/api/autoteka/check)
+// vin — обязательный 17-символьный (стандарт ISO 3779).
+// plate — опциональный госномер РФ (1 буква + 3 цифры + 2 буквы + 2-3 цифры региона).
+// Например: "А123БВ777" или "М999ОК77".
+const GOSNOMER_RE = /^[АВЕКМНОРСТУХ]\d{3}[АВЕКМНОРСТУХ]{2}\d{2,3}$/;
+
+export const autotekaCheckSchema = z.object({
+  vin: z.string().regex(/^[A-HJ-NPR-Z0-9]{17}$/i, 'VIN должен содержать ровно 17 символов (без I, O, Q)')
+    .transform((v) => v.toUpperCase()),
+  plate: z.string().regex(GOSNOMER_RE, 'Госномер в формате А123БВ77 или А123БВ777')
+    .transform((v) => v.toUpperCase())
+    .optional(),
+}).strict();
+
+export type AutotekaCheckInput = z.infer<typeof autotekaCheckSchema>;
+
 // Схема для импорта черновиков (/api/import)
 // body — JSON-сериализованный массив черновиков. Защита от переполнения: 1-50 черновиков.
 // NB: реальный клиент шлёт camelCase (templateId, values), это сохраняем для совместимости.

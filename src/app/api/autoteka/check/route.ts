@@ -5,8 +5,7 @@ import { peekReportTask } from "@/lib/tronk";
 import { withCsrf } from "@/lib/csrf";
 import { isSameOrigin } from "@/lib/admin-auth";
 import { limiters, checkRateLimit, rateLimitResponse } from "@/lib/ratelimit";
-
-const VIN_RE = /^[A-HJ-NPR-Z0-9]{17}$/;
+import { autotekaCheckSchema, validateBody } from "@/lib/validations/api";
 
 async function postHandler(req: Request) {
   if (!isSameOrigin(req)) {
@@ -22,11 +21,11 @@ async function postHandler(req: Request) {
   const rl = await checkRateLimit(limiters.authAction, `autoteka:check:${user.id}`);
   if (!rl.ok) return rateLimitResponse(rl.retryAfter);
 
-  const body = await req.json().catch(() => null);
-  const vin = String(body?.vin ?? "").toUpperCase().trim();
-  if (!VIN_RE.test(vin)) {
-    return NextResponse.json({ error: "invalid_vin" }, { status: 400 });
-  }
+  // P1: Zod-валидация (vin обязательный, plate опциональный госномер РФ)
+  const parsed = await req.json().catch(() => null);
+  const validated = validateBody(autotekaCheckSchema, parsed);
+  if (!validated.success) return validated.error;
+  const { vin, plate } = validated.data;
 
   const admin = createAdminClient();
   const { data: rows } = await admin
