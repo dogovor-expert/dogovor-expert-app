@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { rateLimiters, withRateLimit } from '@/lib/rate-limit';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60; // секунд (Vercel Pro до 60; Hobby до 10 — но occular-кеш делает 33ms, а 1-й запрос 7-8с)
@@ -26,10 +27,6 @@ function getOcularApiKey(): string | null {
   return process.env.OCCULAR_API_KEY?.trim() || null;
 }
 
-function isAuthedUser(user: unknown): boolean {
-  return Boolean(user);
-}
-
 /**
  * POST /api/ocr-proxy
  *
@@ -54,8 +51,18 @@ export async function POST(req: NextRequest) {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!isAuthedUser(user)) {
+  if (!user) {
     return NextResponse.json({ ok: false, error: 'unauthorized' }, { status: 401 });
+  }
+
+  // 1b) Rate limit: heavy-лимит (10/min). Ограничиваем строго, т.к. каждый
+  //     вызов проксирует на домашний сервер (Tailscale/домашний ПК).
+  const rl = await withRateLimit(req, rateLimiters.heavy, user.id);
+  if (!rl.success) {
+    return NextResponse.json(
+      { ok: false, error: 'rate_limited', message: 'Слишком много запросов. Подождите.' },
+      { status: 429, headers: rl.headers }
+    );
   }
 
   // 2) Получаем файл

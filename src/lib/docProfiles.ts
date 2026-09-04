@@ -23,6 +23,11 @@ export type DocProfileId =
   | "egrul_extract"
   | "egrip_extract"
   | "bank_account"
+  | "vuc_new"
+  | "osago"
+  | "egrn_extract"
+  | "marriage_cert"
+  | "power_of_attorney"
   | null;
 
 export interface ExtractedField {
@@ -83,7 +88,7 @@ export const DOC_PROFILES: DocProfile[] = [
     ],
     extract: (text, role) => {
       const out: ExtractedField[] = [];
-      const surname = text.match(/фамилия\s*[:：]?\s*([А-ЯЁ][а-яё\-]+)/);
+      const surname = text.match(/фамилия\s*[:：]?\s*([А-ЯЁ][а-яё-]+)/);
       if (surname) {
         out.push({ fieldId: `${role}_lastname`, value: surname[1] });
         out.push({ fieldId: `${role}_surname`, value: surname[1] });
@@ -227,6 +232,218 @@ export const DOC_PROFILES: DocProfile[] = [
         (f) =>
           f.id === `${role}_bank_account` ||
           f.id.startsWith(`${role}_bank`)
+      ),
+  },
+  {
+    // ВУ нового образца (пластик 2025+): 2 строки по 4 цифры.
+    // 1) паспортные данные владельца, 2) категории/дата, 3) номер удостоверения.
+    id: "vuc_new",
+    label: "Водительское удостоверение (новое)",
+    hint: "Пластиковое ВУ 2025+: серия/номер, ФИО, дата рождения",
+    strongMarkers: [
+      /водительск(?:ое)?\s+удостоверени[ея]/i,
+      /\bкатегори[яи]\s*[A-DM]/i,
+      /\bM\s+1\s+\b/i,
+    ],
+    softMarkers: [/водител[ья]/i, /удостоверени/i],
+    extract: (text, role) => {
+      const out: ExtractedField[] = [];
+      // Стандартный формат: XX XX NNNNNN (2-2-6, новые — 2-2-6, либо сплошные 10 цифр).
+      const m =
+        /\b(\d{2})\s*(\d{2})\s*(\d{6})\b/.exec(text) ||
+        /\b(\d{10})\b/.exec(text);
+      if (m) {
+        const num = m[3]
+          ? `${m[1]} ${m[2]} ${m[3]}`
+          : `${(m[1] as string).slice(0, 2)} ${(m[1] as string).slice(2, 4)} ${(m[1] as string).slice(4, 10)}`;
+        out.push({ fieldId: `${role}_vuc_number`, value: num });
+      }
+      const fio = text.match(
+        /([А-ЯЁ][а-яё-]+)\s+([А-ЯЁ][а-яё-]+)\s+([А-ЯЁ][а-яё-]+)/
+      );
+      if (fio) {
+        out.push({ fieldId: `${role}_lastname`, value: fio[1] });
+        out.push({ fieldId: `${role}_firstname`, value: fio[2] });
+        out.push({ fieldId: `${role}_middlename`, value: fio[3] });
+      }
+      const dob = /\bдата\s+рождения[^\d]*(\d{2}[.\-/]\d{2}[.\-/]\d{4})/i.exec(text);
+      if (dob) out.push({ fieldId: `${role}_birthdate`, value: dob[1] });
+      return out;
+    },
+    applicable: (template, role) =>
+      template.fields.some(
+        (f) => f.id === `${role}_vuc_number` || f.id === `${role}_vuc`
+      ),
+  },
+  {
+    // Полис ОСАГО: серия XXX (буквы) + номер 10 цифр, владелец, VIN, гос. номер.
+    id: "osago",
+    label: "Полис ОСАГО",
+    hint: "Страховой полис: серия/номер, владелец, VIN, гос. номер",
+    strongMarkers: [
+      /страхов(?:ой|ая)\s+полис/i,
+      /ОСАГО/i,
+      /\bОСАГО\b/i,
+    ],
+    softMarkers: [/страхов[а-я]+/i, /полис[а-я]+/i],
+    extract: (text, role) => {
+      const out: ExtractedField[] = [];
+      // Серия XXX + номер 10 цифр (или наоборот — современный полис 9 цифр).
+      const m =
+        /\b([А-ЯЁ]{3})\s*(\d{9,10})\b/.exec(text) ||
+        /\b(\d{9,10})\b/.exec(text);
+      if (m) {
+        const series = m[1] && /[А-ЯЁ]/.test(m[1]) ? m[1] : "";
+        const number = m[1] && /[А-ЯЁ]/.test(m[1]) ? m[2] : m[1];
+        if (series) out.push({ fieldId: `${role}_osago_series`, value: series });
+        if (number) out.push({ fieldId: `${role}_osago_number`, value: number });
+      }
+      const vin = /\bVIN[:\s]*([A-HJ-NPR-Z0-9]{17})\b/i.exec(text);
+      if (vin) out.push({ fieldId: `${role}_vin`, value: vin[1] });
+      const grz = /\b([А-ЯЁ]\d{3}[А-ЯЁ]{2}\d{2,3})\b/.exec(text);
+      if (grz) out.push({ fieldId: `${role}_grz`, value: grz[1] });
+      return out;
+    },
+    applicable: (template, role) =>
+      template.fields.some(
+        (f) =>
+          f.id === `${role}_osago_number` ||
+          f.id === `${role}_osago_series` ||
+          f.id === `${role}_vin`
+      ),
+  },
+  {
+    // Выписка ЕГРН (на недвижимость): кадастровый номер, адрес, площадь, правообладатель.
+    id: "egrn_extract",
+    label: "Выписка ЕГРН",
+    hint: "Кадастровый номер, адрес объекта, правообладатель",
+    strongMarkers: [
+      /ЕГРН/i,
+      /единый\s+гос(?:ударственный)?\s+реестр\s+недвижимост/i,
+    ],
+    softMarkers: [/выписк[а-я]*\s+из\s+ЕГРН/i, /кадастров/i],
+    extract: (text, role) => {
+      const out: ExtractedField[] = [];
+      // Кадастровый номер: 2 блока по : + 6 блоков по : (всего 8).
+      const cad =
+        /\b(\d{2}:\d{2}:\d{6,7}:\d{1,7})\b/.exec(text) ||
+        /\b(\d{2}:\d{2}:\d{6,7})\b/.exec(text);
+      if (cad) out.push({ fieldId: `${role}_cadastral`, value: cad[1] });
+      // Площадь: "площад[ью]?\s*:?\s*<число>,?\d*\s*кв\.?\s*м"
+      const area = /площад[ьи]?\s*:?\s*(\d+(?:[.,]\d+)?)\s*(?:кв\.?\s*м|м²)/i.exec(
+        text
+      );
+      if (area) {
+        const v = area[1].replace(",", ".");
+        out.push({ fieldId: `${role}_area`, value: v });
+      }
+      // Правообладатель: "правообладател[ья]?\s*:?\s*ФИО/название"
+      const owner = /правообладател[ья]?\s*:?\s*([А-ЯЁ][А-ЯЁа-яё0-9\s\-"«».,]+)/.exec(
+        text
+      );
+      if (owner) {
+        const v = owner[1].trim().split(/\s{2,}|(?=\s+(?:ИНН|ОГРН|Дата))/i)[0];
+        if (v.length > 0 && v.length < 200) {
+          out.push({ fieldId: `${role}_owner`, value: v });
+        }
+      }
+      return out;
+    },
+    applicable: (template, role) =>
+      template.fields.some(
+        (f) =>
+          f.id === `${role}_cadastral` ||
+          f.id === `${role}_area` ||
+          f.id === `${role}_owner`
+      ),
+  },
+  {
+    // Свидетельство о браке: ФИО мужа/жены, дата, номер актовой записи.
+    id: "marriage_cert",
+    label: "Свидетельство о браке",
+    hint: "ФИО мужа/жены, дата регистрации, номер актовой записи",
+    strongMarkers: [
+      /свидетельство\s+о\s+(?:заключении\s+)?брак[аеу]/i,
+      /актовая\s+запис[ьи]/i,
+    ],
+    softMarkers: [/заключен[еяия]+\s+брак/i, /муж[ае]?\s*:|жен[аы]?\s*:/i],
+    extract: (text, role) => {
+      const out: ExtractedField[] = [];
+      // "муж: ФИО" / "жена: ФИО"
+      const husband = /(?:^|\n)\s*(?:он|муж)\s*:?\s*([А-ЯЁ][а-яё-]+\s+[А-ЯЁ][а-яё-]+\s+[А-ЯЁ][а-яё-]+)/m.exec(
+        text
+      );
+      const wife = /(?:^|\n)\s*(?:она|жена)\s*:?\s*([А-ЯЁ][а-яё-]+\s+[А-ЯЁ][а-яё-]+\s+[А-ЯЁ][а-яё-]+)/m.exec(
+        text
+      );
+      if (husband) {
+        const [last, first, mid] = husband[1].split(/\s+/);
+        out.push({ fieldId: `${role}_husband_lastname`, value: last });
+        out.push({ fieldId: `${role}_husband_firstname`, value: first });
+        out.push({ fieldId: `${role}_husband_middlename`, value: mid });
+      }
+      if (wife) {
+        const [last, first, mid] = wife[1].split(/\s+/);
+        out.push({ fieldId: `${role}_wife_lastname`, value: last });
+        out.push({ fieldId: `${role}_wife_firstname`, value: first });
+        out.push({ fieldId: `${role}_wife_middlename`, value: mid });
+      }
+      // Номер актовой записи: "№" + цифры
+      const akt = /№\s*(\d+)/.exec(text);
+      if (akt) out.push({ fieldId: `${role}_akt_number`, value: akt[1] });
+      return out;
+    },
+    applicable: (template, role) =>
+      template.fields.some(
+        (f) =>
+          f.id === `${role}_husband_lastname` ||
+          f.id === `${role}_wife_lastname` ||
+          f.id === `${role}_akt_number`
+      ),
+  },
+  {
+    // Доверенность (генеральная/специальная): ФИО доверителя/поверенного, дата, номер.
+    id: "power_of_attorney",
+    label: "Доверенность",
+    hint: "ФИО доверителя/поверенного, дата выдачи, номер",
+    strongMarkers: [
+      /доверенност[ьи]\b/i,
+      /настоящ[аяей]+\s+доверенност/i,
+    ],
+    softMarkers: [/доверител[ья]?\s*:|поверенн[а-яё]*\s*:/i],
+    extract: (text, role) => {
+      const out: ExtractedField[] = [];
+      const tr = /доверител[ья]?\s*:?\s*([А-ЯЁ][а-яё-]+\s+[А-ЯЁ][а-яё-]+\s+[А-ЯЁ][а-яё-]+)/.exec(
+        text
+      );
+      if (tr) {
+        const [last, first, mid] = tr[1].split(/\s+/);
+        out.push({ fieldId: `${role}_grantor_lastname`, value: last });
+        out.push({ fieldId: `${role}_grantor_firstname`, value: first });
+        out.push({ fieldId: `${role}_grantor_middlename`, value: mid });
+      }
+      const at = /поверенн[а-яё]+\s*:?\s*([А-ЯЁ][а-яё-]+\s+[А-ЯЁ][а-яё-]+\s+[А-ЯЁ][а-яё-]+)/.exec(
+        text
+      );
+      if (at) {
+        const [last, first, mid] = at[1].split(/\s+/);
+        out.push({ fieldId: `${role}_attorney_lastname`, value: last });
+        out.push({ fieldId: `${role}_attorney_firstname`, value: first });
+        out.push({ fieldId: `${role}_attorney_middlename`, value: mid });
+      }
+      // Дата выдачи: "выдана\s*<дата>" или "<DD.MM.YYYY>"
+      const dt =
+        /выдана[^\d]*(\d{2}[.\-/]\d{2}[.\-/]\d{4})/i.exec(text) ||
+        /\b(\d{2}[.\-/]\d{2}[.\-/]\d{4})\b/.exec(text);
+      if (dt) out.push({ fieldId: `${role}_poa_date`, value: dt[1] });
+      return out;
+    },
+    applicable: (template, role) =>
+      template.fields.some(
+        (f) =>
+          f.id === `${role}_grantor_lastname` ||
+          f.id === `${role}_attorney_lastname` ||
+          f.id === `${role}_poa_date`
       ),
   },
 ];

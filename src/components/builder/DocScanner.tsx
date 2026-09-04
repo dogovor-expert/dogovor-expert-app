@@ -29,6 +29,7 @@ import {
   applyVucToRole,
   expectedFields,
 } from "@/lib/docOcr";
+import { planFromScan } from "@/lib/docPlanner";
 import { prepareDocumentImage, type ImageQuality } from "@/lib/docImage";
 import { paddleRecognize, paddleWarmup } from "@/lib/paddleOcr";
 import { tryParseMrz, applyMrzToRole, type MrzParseSuccess } from "@/lib/docMrz";
@@ -318,14 +319,25 @@ export default function DocScanner({
         }
         break;
       }
-      default:
-        return {
-          ok: false,
-          filled: 0,
-          missing: [],
-          filledFields: [],
-          slotId: slot.id,
-        };
+      default: {
+        // Фаза 5: универсальный планировщик для слотов ИП/юрлиц и любых
+        // расширенных профилей (ИНН, ОГРН, СНИЛС, ВУ-новое, ОСАГО, ЕГРН,
+        // свидетельство о браке, доверенность и т.п.). Раньше эти слоты
+        // просто возвращали ok:false и не заполняли поля.
+        const plan = planFromScan(template, text);
+        if (plan.values.length > 0) {
+          for (const v of plan.values) values[v.fieldId] = v.value;
+        } else {
+          return {
+            ok: false,
+            filled: 0,
+            missing: [],
+            filledFields: [],
+            slotId: slot.id,
+          };
+        }
+        break;
+      }
     }
 
     const fieldLabel = (id: string) =>
@@ -453,9 +465,16 @@ export default function DocScanner({
         //    (типичный артефакт агрессивного кропа Scanic — Tesseract
         //    «видит» одно слово с conf 96%, а форму заполнить нечем).
         //    Берём движок с большим confidence.
+        //    LAZY: если и Tesseract, и (возможно) серверный occular дали
+        //    уверенный+длинный результат — Paddle даже не скачивается/не
+        //    запускается (экономия ~2 сек на хорошо распознанных сканах).
+        const alreadyGood =
+          ocr.confidence >= 85 &&
+          ocr.text.trim().length >= PADDLE_FALLBACK_MIN_TEXT_LENGTH * 1.25;
         if (
-          ocr.confidence < PADDLE_FALLBACK_THRESHOLD ||
-          ocr.text.trim().length < PADDLE_FALLBACK_MIN_TEXT_LENGTH
+          !alreadyGood &&
+          (ocr.confidence < PADDLE_FALLBACK_THRESHOLD ||
+            ocr.text.trim().length < PADDLE_FALLBACK_MIN_TEXT_LENGTH)
         ) {
           try {
             const paddle = await paddleRecognize(prepared.ocrRaw);
