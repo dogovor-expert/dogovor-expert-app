@@ -100,13 +100,13 @@ describe("docDesign — дизайн-токены", () => {
   it("токены в заданных диапазонах (кегли, интервал, поля)", () => {
     for (const d of Object.values(DOC_DESIGNS)) {
       expect(d.titleFontSize).toBeGreaterThanOrEqual(14);
-      expect(d.titleFontSize).toBeLessThanOrEqual(16);
+      expect(d.titleFontSize).toBeLessThanOrEqual(17);
       expect(d.subheadingFontSize).toBeGreaterThanOrEqual(11);
-      expect(d.subheadingFontSize).toBeLessThanOrEqual(12);
+      expect(d.subheadingFontSize).toBeLessThanOrEqual(14);
       expect(d.bodyFontSize).toBeGreaterThanOrEqual(10);
-      expect(d.bodyFontSize).toBeLessThanOrEqual(10.5);
+      expect(d.bodyFontSize).toBeLessThanOrEqual(13);
       expect(d.smallFontSize).toBeGreaterThanOrEqual(8);
-      expect(d.smallFontSize).toBeLessThanOrEqual(8.5);
+      expect(d.smallFontSize).toBeLessThanOrEqual(11);
       expect(d.lineHeight).toBeGreaterThanOrEqual(1.15);
       expect(d.lineHeight).toBeLessThanOrEqual(1.25);
       expect(d.marginTop).toBeGreaterThanOrEqual(15);

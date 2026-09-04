@@ -100,18 +100,22 @@ export default function FormField({
       const prefix = field.id.replace(/_fio$/, "");
       extra = {
         ...extra,
-        [`${prefix}birthday`]: extra.birthdate || "",
-        [`${prefix}snils`]: extra.snils || "",
-        [`${prefix}inn`]: extra.inn || "",
+        [`${prefix}_birthday`]: extra.birthdate || "",
+        [`${prefix}_birth_date`]: extra.birthdate || "",
+        [`${prefix}_snils`]: extra.snils || "",
+        [`${prefix}_inn`]: extra.inn || "",
       };
     }
     if (suggestOp === "suggest-passport") {
       const prefix = field.id.replace(/(passport_series|passport_number)$/, "");
+      const issuedBy = extra.issued_by || extra.passport_issued_by || "";
       extra = {
         ...extra,
-        [`${prefix}passport_issued_by`]: extra.issued_by || extra.passport_issued_by || "",
-        [`${prefix}passport_by`]: extra.issued_by || extra.passport_issued_by || "",
-        [`${prefix}passport_issued`]: extra.issue_date || extra.passport_issue_date || "",
+        [`${prefix}passport_issued_by`]: issuedBy,
+        [`${prefix}passport_by`]: issuedBy,
+        // В части шаблонов поле называется «passport_issued» и означает
+        // «Кем выдан» (см. dkp-auto-short), а НЕ дату выдачи.
+        [`${prefix}passport_issued`]: issuedBy,
         [`${prefix}passport_code`]: extra.code || extra.passport_code || "",
       };
     }
@@ -126,19 +130,19 @@ export default function FormField({
 
   const fieldMessage =
     (errorMsg && (
-      <p className="flex items-center gap-1 mt-1 text-[11px] text-red-600">
+      <p className="flex items-center gap-1 mt-1 text-xs text-red-600">
         <AlertCircle className="w-3 h-3 flex-shrink-0" />
         {errorMsg}
       </p>
     )) ||
     (warnMsg && (
-      <p className="flex items-center gap-1 mt-1 text-[11px] text-amber-700">
+      <p className="flex items-center gap-1 mt-1 text-xs text-amber-700">
         <AlertTriangle className="w-3 h-3 flex-shrink-0" />
         {warnMsg}
       </p>
     )) ||
     (successMsg && (
-      <p className="flex items-center gap-1 mt-1 text-[11px] text-emerald-600">
+      <p className="flex items-center gap-1 mt-1 text-xs text-emerald-600">
         <CheckCircle className="w-3 h-3 flex-shrink-0" />
         {successMsg}
       </p>
@@ -149,12 +153,12 @@ export default function FormField({
     value === "" &&
     field.defaultValue !== "" &&
     (field.type === "text" || field.type === "number" || field.type === "textarea") ? (
-      <p className="text-[10px] text-gray-600 mt-0.5">
+      <p className="text-xs text-gray-600 mt-0.5">
         Пример: {field.defaultValue}
       </p>
     ) : null;
 
-  const baseInputClass = `w-full px-3 py-2 text-sm bg-gray-50 border rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all ${
+  const baseInputClass = `w-full px-3.5 py-2.5 text-base bg-gray-50 border rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all ${
     hasError
       ? "border-red-400"
       : hasWarn
@@ -170,7 +174,7 @@ export default function FormField({
     const opts = normalizeOptions(field.options);
     return (
       <div data-field={field.id} className="col-span-2">
-        <label className="block text-xs font-medium text-gray-700 mb-2">
+        <label className="block text-sm font-medium text-gray-700 mb-2">
           {field.label}
           {requiredMark}
         </label>
@@ -219,7 +223,7 @@ export default function FormField({
   if (field.type === "select" && field.options) {
     const opts = normalizeOptions(field.options);
     return (
-      <div data-field={field.id}>\n        <label className="block text-xs font-medium text-gray-700 mb-1">
+      <div data-field={field.id}>\n        <label className="block text-sm font-medium text-gray-700 mb-1">
           {field.label}
           {requiredMark}
         </label>
@@ -237,7 +241,7 @@ export default function FormField({
           ))}
         </select>
         {field.obsoleteValues?.includes(value) && (
-          <p className="flex items-start gap-1.5 mt-1 text-[11px] text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-2.5 py-1.5">
+          <p className="flex items-start gap-1.5 mt-1 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-2.5 py-1.5">
             <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0 mt-px" />
             <span>
               Устаревшая версия бланка. Проверьте, что ваш документ примут к
@@ -246,7 +250,7 @@ export default function FormField({
           </p>
         )}
         {field.validation?.helpText && (
-          <p className="text-[10px] text-gray-600 mt-0.5">
+          <p className="text-xs text-gray-600 mt-0.5">
             {field.validation.helpText}
           </p>
         )}
@@ -259,7 +263,7 @@ export default function FormField({
   if (field.type === "textarea") {
     return (
       <div data-field={field.id} className="col-span-2">
-        <label className="block text-xs font-medium text-gray-700 mb-1">
+        <label className="block text-sm font-medium text-gray-700 mb-1">
           {field.label}
           {requiredMark}
         </label>
@@ -273,7 +277,7 @@ export default function FormField({
           className={`${baseInputClass} resize-none`}
         />
         {field.validation?.helpText && (
-          <p className="text-[10px] text-gray-600 mt-0.5">
+          <p className="text-xs text-gray-600 mt-0.5">
             {field.validation.helpText}
           </p>
         )}
@@ -322,7 +326,7 @@ export default function FormField({
 
     return (
       <div data-field={field.id} className="col-span-2">
-        <label className="block text-xs font-medium text-gray-700 mb-2">
+        <label className="block text-sm font-medium text-gray-700 mb-2">
           {field.label}
         </label>
         <div className="border border-gray-200 rounded-lg overflow-hidden">
@@ -406,7 +410,7 @@ export default function FormField({
           </span>
         </div>
         {field.hint && (
-          <p className="flex items-start gap-1.5 mt-1 text-[10px] text-brand-700 bg-brand-50 border border-brand-100 rounded-lg px-2.5 py-1.5">
+          <p className="flex items-start gap-1.5 mt-1 text-xs text-brand-700 bg-brand-50 border border-brand-100 rounded-lg px-2.5 py-1.5">
             <AlertCircle className="w-3.5 h-3.5 flex-shrink-0 mt-px" />
             <span>{field.hint}</span>
           </p>
@@ -420,7 +424,7 @@ export default function FormField({
 
   return (
     <div data-field={field.id}>
-      <label htmlFor={field.id} className="block text-xs font-medium text-gray-700 mb-1">
+      <label htmlFor={field.id} className="block text-sm font-medium text-gray-700 mb-1">
         {field.label}
         {requiredMark}
       </label>
@@ -481,7 +485,7 @@ export default function FormField({
                   >
                     <span className="block">{s.value}</span>
                     {s.sub && s.sub !== s.value && (
-                      <span className="block text-[11px] text-gray-600">{s.sub}</span>
+                      <span className="block text-xs text-gray-600">{s.sub}</span>
                     )}
                   </button>
                 </li>
@@ -490,7 +494,7 @@ export default function FormField({
           </div>
         )}
         {loading && (
-          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-gray-600">
+          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-600">
             ищем…
           </span>
         )}
@@ -503,12 +507,12 @@ export default function FormField({
         </datalist>
       )}
       {field.validation?.helpText && (
-        <p className="text-[10px] text-gray-600 mt-0.5">
+        <p className="text-xs text-gray-600 mt-0.5">
           {field.validation.helpText}
         </p>
       )}
       {field.hint && (
-        <p className="flex items-start gap-1.5 mt-1 text-[10px] text-brand-700 bg-brand-50 border border-brand-100 rounded-lg px-2.5 py-1.5">
+        <p className="flex items-start gap-1.5 mt-1 text-xs text-brand-700 bg-brand-50 border border-brand-100 rounded-lg px-2.5 py-1.5">
           <AlertCircle className="w-3.5 h-3.5 flex-shrink-0 mt-px" />
           <span>{field.hint}</span>
         </p>
@@ -527,7 +531,7 @@ export default function FormField({
           href="https://egrul.nalog.ru"
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center gap-1 mt-1 text-[10px] text-gray-600 hover:text-brand-600 transition-colors"
+          className="inline-flex items-center gap-1 mt-1 text-xs text-gray-600 hover:text-brand-600 transition-colors"
         >
           <Search className="w-3 h-3" />
           Свериться с ЕГРЮЛ на egrul.nalog.ru

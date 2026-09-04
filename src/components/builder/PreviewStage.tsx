@@ -9,9 +9,10 @@ import {
   FileText,
   Loader2,
   Mail,
+  Pencil,
   Printer,
 } from "lucide-react";
-import type { LegalTemplate } from "@/data/types";
+import type { LegalTemplate, TemplateField } from "@/data/types";
 import PdfPreview from "@/components/PdfPreview";
 import { type RefObject, useState, useRef, useEffect } from "react";
 
@@ -39,6 +40,10 @@ interface PreviewStageProps {
   coverHtml?: string | null;
   /** HTML листа подписей/соглашения на ПЭП */
   signHtml?: string | null;
+  /** Быстрое редактирование: список заполненных полей + правка без выхода из превью. */
+  quickEditFields?: TemplateField[];
+  quickEditValues?: Record<string, string>;
+  onQuickEditChange?: (fieldId: string, value: string) => void;
 }
 
 export default function PreviewStage({
@@ -61,9 +66,28 @@ export default function PreviewStage({
   onPagesChange,
   coverHtml,
   signHtml,
+  quickEditFields,
+  quickEditValues,
+  onQuickEditChange,
 }: PreviewStageProps) {
   const [exportMenuOpen, setExportMenuOpen] = useState(false);
+  const [quickEditOpen, setQuickEditOpen] = useState(false);
+  const [copied, setCopied] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const copiedTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (copiedTimer.current) clearTimeout(copiedTimer.current);
+    };
+  }, []);
+
+  const handleCopyJson = () => {
+    onCopyJson();
+    setCopied(true);
+    if (copiedTimer.current) clearTimeout(copiedTimer.current);
+    copiedTimer.current = setTimeout(() => setCopied(false), 2000);
+  };
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -117,12 +141,35 @@ export default function PreviewStage({
               <Printer className="w-4 h-4" />
             </button>
             <button
-              onClick={onCopyJson}
-              className="p-2 hover:bg-gray-100 rounded-lg text-gray-600 transition-colors"
-              title="Копировать JSON"
+              onClick={handleCopyJson}
+              className="p-2 hover:bg-gray-100 rounded-lg text-gray-600 transition-colors relative"
+              title="Экспорт данных формы (JSON)"
             >
-              <Copy className="w-4 h-4" />
+              {copied ? (
+                <Check className="w-4 h-4 text-emerald-600" />
+              ) : (
+                <Copy className="w-4 h-4" />
+              )}
+              {copied && (
+                <span className="absolute top-full right-0 mt-1 whitespace-nowrap text-xs bg-gray-900 text-white px-2 py-1 rounded-md shadow-lg z-10">
+                  Скопировано
+                </span>
+              )}
             </button>
+            {quickEditFields && quickEditFields.length > 0 && onQuickEditChange && (
+              <button
+                onClick={() => setQuickEditOpen(!quickEditOpen)}
+                className={`p-2 rounded-lg transition-colors ${
+                  quickEditOpen
+                    ? "bg-brand-50 text-brand-600"
+                    : "hover:bg-gray-100 text-gray-600"
+                }`}
+                title="Быстрое редактирование полей"
+                aria-expanded={quickEditOpen}
+              >
+                <Pencil className="w-4 h-4" />
+              </button>
+            )}
             <div className="relative" ref={dropdownRef}>
               <button
                 onClick={() => setExportMenuOpen(!exportMenuOpen)}
@@ -191,6 +238,28 @@ export default function PreviewStage({
             </div>
           </div>
         </div>
+        {quickEditOpen && quickEditFields && quickEditFields.length > 0 && onQuickEditChange && (
+          <div className="px-5 py-3 bg-brand-50/50 border-b border-brand-100">
+            <p className="text-xs font-medium text-gray-700 mb-2">
+              Быстрое редактирование — изменения сразу видны в документе
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 max-h-56 overflow-y-auto pr-1">
+              {quickEditFields.map((f) => (
+                <label key={f.id} className="block">
+                  <span className="block text-[11px] text-gray-600 truncate">
+                    {f.label}
+                  </span>
+                  <input
+                    type="text"
+                    value={quickEditValues?.[f.id] ?? ""}
+                    onChange={(e) => onQuickEditChange(f.id, e.target.value)}
+                    className="w-full px-2.5 py-1.5 text-sm bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-brand-400 focus:border-brand-400 outline-none"
+                  />
+                </label>
+              ))}
+            </div>
+          </div>
+        )}
         {template.printInstruction && (
           <div className="px-5 py-2 bg-amber-50 border-b border-amber-100">
             <p className="text-[11px] text-amber-700">

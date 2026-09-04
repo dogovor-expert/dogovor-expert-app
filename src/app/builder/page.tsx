@@ -114,6 +114,22 @@ function HomeContent() {
   const [templateSearch, setTemplateSearch] = useState("");
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
   const [viewMode, setViewMode] = useState<"form" | "preview">("form");
+  // Масштаб формы (этап 1 аудита): пользователь регулирует размер полей/текста.
+  const [formScale, setFormScale] = useState<number>(100);
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("dogovor_form_scale");
+      if (raw) {
+        const v = Number(raw);
+        if (Number.isFinite(v) && v >= 90 && v <= 140) setFormScale(v);
+      }
+    } catch { /* localStorage недоступен */ }
+  }, []);
+  const applyFormScale = (v: number) => {
+    const clamped = Math.min(140, Math.max(90, Math.round(v)));
+    setFormScale(clamped);
+    try { localStorage.setItem("dogovor_form_scale", String(clamped)); } catch { /* localStorage недоступен */ }
+  };
   const [sidebarTab, setSidebarTab] = useState<"preview" | "tools">("tools");
   const [previewBlocked, setPreviewBlocked] =
     useState<AuditResult[] | null>(null);
@@ -1515,8 +1531,32 @@ function HomeContent() {
           <div className="mb-6 max-w-4xl">
             <div className="flex items-center justify-between text-xs text-gray-600 mb-1">
               <span>Заполнено обязательных полей</span>
-              <span className={pct === 100 ? "text-emerald-600 font-medium" : ""}>
-                {filled} из {total} ({pct}%)
+              <span className="flex items-center gap-3">
+                <span className={pct === 100 ? "text-emerald-600 font-medium" : ""}>
+                  {filled} из {total} ({pct}%)
+                </span>
+                <span
+                  className="flex items-center gap-1"
+                  title="Размер формы (поля и текст)"
+                >
+                  <button
+                    type="button"
+                    onClick={() => applyFormScale(formScale - 10)}
+                    className="w-6 h-6 rounded border border-gray-200 bg-white hover:bg-gray-50 text-gray-700 text-sm leading-none font-semibold"
+                    aria-label="Уменьшить размер формы"
+                  >
+                    −
+                  </button>
+                  <span className="w-9 text-center tabular-nums">{formScale}%</span>
+                  <button
+                    type="button"
+                    onClick={() => applyFormScale(formScale + 10)}
+                    className="w-6 h-6 rounded border border-gray-200 bg-white hover:bg-gray-50 text-gray-700 text-sm leading-none font-semibold"
+                    aria-label="Увеличить размер формы"
+                  >
+                    +
+                  </button>
+                </span>
               </span>
             </div>
             <div className="h-1.5 rounded-full bg-gray-100 overflow-hidden">
@@ -1570,7 +1610,10 @@ function HomeContent() {
           }`}
         >
           {/* Left: Form */}
-          <div className="xl:col-span-3 space-y-4">
+          <div
+            className="xl:col-span-3 space-y-4"
+            style={formScale !== 100 ? { zoom: formScale / 100 } : undefined}
+          >
             {viewMode === "form" && (<>
               {previewBlocked && (
                 <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-start gap-3">
@@ -1690,6 +1733,9 @@ function HomeContent() {
                   onPagesChange={setExportPages}
                   coverHtml={coverHtml}
                   signHtml={signHtml}
+                  quickEditFields={template.fields}
+                  quickEditValues={formValues}
+                  onQuickEditChange={handleFieldChange}
                 />
               </div>
             )}

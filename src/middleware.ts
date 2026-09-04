@@ -12,13 +12,21 @@ function decodeB64url(input: string): string {
 // Декодирует aal-claim из access token в куке сессии ("aal1"/"aal2").
 // aal2 означает, что 2FA (если включена) уже подтверждена кодом.
 function sessionAal(request: NextRequest): "aal1" | "aal2" | null {
-  const cookie = request.cookies.getAll().find((c) => c.name.endsWith("-auth-token"));
-  if (!cookie) return null;
+  const cookies = request.cookies.getAll();
+  // @supabase/ssr чанкает большие сессии: кука -auth-token.0, .1, ...
+  // Склеиваем чанки по индексу; если чанков нет — берём базовую куку.
+  const chunks = cookies
+    .filter((c) => /-auth-token\.\d+$/.test(c.name))
+    .sort(
+      (a, b) =>
+        Number(a.name.split(".").pop()) - Number(b.name.split(".").pop())
+    );
+  const base = cookies.find((c) => c.name.endsWith("-auth-token"));
+  const raw = chunks.length > 0 ? chunks.map((c) => c.value).join("") : base?.value;
+  if (!raw) return null;
   try {
     // @supabase/ssr хранит сессию в формате "base64-<base64url(JSON)>".
-    const value = cookie.value.startsWith("base64-")
-      ? cookie.value.slice("base64-".length)
-      : cookie.value;
+    const value = raw.startsWith("base64-") ? raw.slice("base64-".length) : raw;
     let json: string;
     try {
       json = decodeB64url(value);
