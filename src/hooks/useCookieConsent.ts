@@ -100,10 +100,6 @@ export function useCookieConsent(): {
   const consent = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 
   const accept = useCallback(() => {
-    if (typeof window !== "undefined") {
-      (window as unknown as { __acceptCalled?: number }).__acceptCalled =
-        ((window as unknown as { __acceptCalled?: number }).__acceptCalled || 0) + 1;
-    }
     if (writeCookieConsent("accepted")) {
       currentValue = "accepted";
       emit("accepted");
