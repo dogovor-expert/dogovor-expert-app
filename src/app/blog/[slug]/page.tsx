@@ -7,9 +7,10 @@ import { LEGAL_TEMPLATES } from "@/data/templates";
 import type { LegalTemplate } from "@/data/types";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { breadcrumbJsonLd } from "@/lib/seo/faq";
+import { withSeo } from "@/lib/seo/withSeo";
+import { SITE_URL } from "@/lib/site";
 
-const SITE_URL = "https://dogovor.expert";
-
+export const revalidate = 3600;
 export const dynamicParams = false;
 
 export function generateStaticParams() {
@@ -20,20 +21,14 @@ export function generateMetadata({ params }: { params: Promise<{ slug: string }>
   return params.then(async ({ slug }) => {
     const post = getBlogPost(slug);
     if (!post) return {};
-    const url = `/blog/${post.slug}`;
-    return {
+    return withSeo({
       title: post.metaTitle,
       description: (post.description || post.metaTitle || "Статьи о договорах и законе").slice(0, 155),
-      alternates: { canonical: url },
-      openGraph: {
-        title: post.metaTitle,
-        description: (post.description || post.metaTitle || "Статьи о договорах и законе").slice(0, 155),
-        url,
-        type: "article",
-        publishedTime: post.date,
-        modifiedTime: post.updatedAt,
-      },
-    };
+      path: `/blog/${post.slug}`,
+      ogType: "article",
+      publishedTime: post.date,
+      modifiedTime: post.updatedAt,
+    });
   });
 }
 

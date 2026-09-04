@@ -1,4 +1,12 @@
+import type { Metadata } from "next";
 import Link from "next/link";
+
+export const metadata: Metadata = {
+  title: "Страница не найдена — 404",
+  robots: { index: false, follow: false, googleBot: { index: false, follow: false } },
+  // alternates.canonical намеренно НЕ задан — иначе 404 покажет canonical на root,
+  // и Googlebot прочитает это как "soft 404" (404 + canonical=/ + noindex).
+};
 
 export default function NotFound() {
   return (

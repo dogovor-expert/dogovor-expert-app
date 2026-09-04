@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import {
   Shield, FileText, Camera, Car,
   ArrowRight, Sparkles, FileCheck,
@@ -6,6 +7,10 @@ import {
 } from "lucide-react";
 import HomeTemplateGrid from "@/components/HomeTemplateGridWrapper";
 import { TEMPLATE_META_LITE } from "@/data/templatesMetaLite";
+
+export const metadata: Metadata = {
+  alternates: { canonical: "/" },
+};
 
 export default function HomePage() {
   return (

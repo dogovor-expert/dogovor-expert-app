@@ -38,9 +38,10 @@ export const metadata: Metadata = {
       "max-snippet": -1,
     },
   },
-  alternates: {
-    canonical: "/",
-  },
+  // alternates.canonical намеренно НЕ задан на уровне root layout —
+  // иначе 404-страницы (not-found.tsx) наследуют canonical=/ и Googlebot видит
+  // "soft-404" (404 + canonical=/ + noindex). Главная страница задаёт canonical
+  // явно в src/app/page.tsx, остальные — в page/layout metadata.
   openGraph: {
     type: "website",
     locale: "ru_RU",

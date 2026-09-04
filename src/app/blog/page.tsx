@@ -2,7 +2,10 @@ import type { Metadata } from "next";
 import { BLOG_POSTS } from "@/data/blog/posts";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { breadcrumbJsonLd } from "@/lib/seo/faq";
+import { withSeo } from "@/lib/seo/withSeo";
 import BlogList from "@/components/blog/BlogList";
+
+export const revalidate = 3600; // ISR: пересборка каждый час.
 
 const SITE_URL = "https://dogovor.expert";
 const YEAR = new Date().getFullYear();
@@ -23,21 +26,12 @@ interface BlogPageProps {
 export async function generateMetadata({ searchParams }: BlogPageProps): Promise<Metadata> {
   const { cat } = await searchParams;
   const categoryLabel = cat ? CATEGORY_LABELS[cat] || cat : "Все материалы";
-  return {
+  return withSeo({
     title: `Блог о договорах: ${categoryLabel} — ${YEAR}`,
     description:
       "Статьи юристов о договорах: аренда, ГПХ и самозанятость, расписки, доверенности, ДКП авто. Разбор с нормами ГК РФ, ТК РФ и НК РФ.",
-    alternates: {
-      canonical: cat ? `/blog?cat=${cat}` : `/blog`,
-    },
-    openGraph: {
-      title: `Блог о договорах — ${categoryLabel} | ${YEAR}`,
-      description:
-        "Инструкции по договорам: аренда, ГПХ, расписки, доверенности. Простым языком, с нормами закона.",
-      url: cat ? `/blog?cat=${cat}` : `/blog`,
-      type: "website",
-    },
-  };
+    path: cat ? `/blog?cat=${cat}` : `/blog`,
+  });
 }
 
 export default async function BlogPage({ searchParams }: BlogPageProps) {
