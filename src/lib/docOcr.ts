@@ -27,6 +27,22 @@ const clean = (s: string) => s.replace(/\s+/g, " ").trim();
 const latinToCyrillic = latinToCyr;
 
 /**
+ * Проверяет, что перед совпадением regex в пределах `window` символов
+ * встречается хотя бы одно из ключевых слов (по регулярному выражению).
+ * Предотвращает ложные срабатывания «голых» числовых паттернов.
+ */
+function hasContextBefore(
+  text: string,
+  matchIndex: number,
+  keywords: RegExp,
+  window = 60
+): boolean {
+  const start = Math.max(0, matchIndex - window);
+  const before = text.slice(start, matchIndex);
+  return keywords.test(before);
+}
+
+/**
  * Достаёт адрес регистрации из построчного текста: OCR часто разрывает
  * «Зарегистрирован по адресу:» и сам адрес на разные строки.
  */
@@ -89,7 +105,11 @@ export function extractPassportData(text: string): PassportData {  const data: P
 
   const seriesMatch =
     text.match(/(?:серия)[^0-9]{0,12}?(\d{2})\s?(\d{2})/i) ||
-    text.match(/(\d{2})\s?(\d{2})\s?(\d{6})/);
+    (() => {
+      const m = text.match(/(\d{2})\s?(\d{2})\s?(\d{6})/);
+      if (!m || !hasContextBefore(text, m.index ?? 0, /паспорт|серия|№/i)) return null;
+      return m;
+    })();
   if (seriesMatch) {
     data.series = `${seriesMatch[1]}${seriesMatch[2]}`;
     if (seriesMatch[3]) data.number = seriesMatch[3];
@@ -112,7 +132,11 @@ export function extractPassportData(text: string): PassportData {  const data: P
     if (fb) data.issuedBy = clean(fb[0]);
   }
 
-  const codeMatch = text.match(/(\d{3}\s*[-–—]\s*\d{3})/);
+  const codeMatch = (() => {
+    const m = text.match(/(\d{3}\s*[-–—]\s*\d{3})/);
+    if (!m || !hasContextBefore(text, m.index ?? 0, /подразделени/i, 50)) return null;
+    return m;
+  })();
   if (codeMatch) data.code = codeMatch[1].replace(/\s+/g, "");
 
   const issuedDateMatch = after.match(/(\d{2}[.\-/]\d{2}[.\-/]\d{4})/);
@@ -126,7 +150,14 @@ export function extractPassportData(text: string): PassportData {  const data: P
     data.address = addressFromMatch;
   }
 
-  const innMatch = text.match(/\b(\d{12})\b/);
+  const innMatch = text.match(/(?:инн)[:\s]{0,5}(\d{12})/i)
+    || (() => {
+      // Fallback: если в тексте ровно одна 12-значная последовательность
+      // и нет явного маркера «ИНН», считаем её ИНН.
+      const all12 = [...text.matchAll(/\b(\d{12})\b/g)];
+      if (all12.length === 1) return all12[0];
+      return null;
+    })();
   if (innMatch) data.inn = innMatch[1];
   const snilsMatch = text.match(/\b(\d{3}-\d{3}-\d{3} \d{2})\b/);
   if (snilsMatch) data.snils = snilsMatch[1];
@@ -187,7 +218,11 @@ export function extractVehicleData(text: string): VehicleData {
   const ptsMatch =
     text.match(/(\d{2})\s*([А-ЯЁ]{2})\s*(\d{6})/i) ||
     text.match(/(?:серия)[^0-9]{0,12}?(\d{2})\s?(\d{2})\s?(\d{6})/i) ||
-    text.match(/(\d{2})\s?(\d{2})\s?(\d{6})/);
+    (() => {
+      const m = text.match(/(\d{2})\s?(\d{2})\s?(\d{6})/);
+      if (!m || !hasContextBefore(text, m.index ?? 0, /птс|птр|серия|свидетельство|регистрац/i, 60)) return null;
+      return m;
+    })();
   if (ptsMatch) {
     if (ptsMatch[3] && /[А-ЯЁ]/i.test(ptsMatch[2] || "")) {
       data.ptsSeries = `${ptsMatch[1]}${ptsMatch[2]}`;
@@ -198,7 +233,13 @@ export function extractVehicleData(text: string): VehicleData {
     }
   }
 
-  const eptsMatch = text.match(/\b(\d{15})\b/);
+  const eptsMatch = text.match(/(?:эптс|номер эптс)[:\s]*(\d{15})/i)
+    || (() => {
+      // Fallback: единственная 15-значная последовательность в тексте.
+      const all15 = [...text.matchAll(/\b(\d{15})\b/g)];
+      if (all15.length === 1) return all15[0];
+      return null;
+    })();
   if (eptsMatch) data.eptsNumber = eptsMatch[1];
 
   const stsNumberMatch = text.match(
@@ -352,7 +393,11 @@ export function applyVucToRole(
   text: string
 ): Record<string, string> {
   const out: Record<string, string> = {};
-  const seriesNumber = text.match(/(\d{2})\s?(\d{2})\s?(\d{6})/);
+  const seriesNumber = (() => {
+    const m = text.match(/(\d{2})\s?(\d{2})\s?(\d{6})/);
+    if (!m || !hasContextBefore(text, m.index ?? 0, /водительское|удостоверение|ву|в\/у|лицензи/i, 150)) return null;
+    return m;
+  })();
   if (!seriesNumber) return out;
   const value = `${seriesNumber[1]}${seriesNumber[2]} ${seriesNumber[3]}`;
   setValue(

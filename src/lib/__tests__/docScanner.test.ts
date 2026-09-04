@@ -116,6 +116,35 @@ describe("extractPassportData", () => {
     expect(d.series).toBeUndefined();
     expect(d.number).toBeUndefined();
   });
+
+  it("не подставляет случайное 12-значное как ИНН без маркера", () => {
+    const d = extractPassportData(
+      "Паспорт 4510 123456\nДата 01.01.2026\n123456789012 123456789013"
+    );
+    expect(d.inn).toBeUndefined();
+  });
+
+  it("подхватывает ИНН если маркер присутствует", () => {
+    const d = extractPassportData(
+      "Паспорт 4510 123456\nИНН 770123456789\nКод подразделения 770-001"
+    );
+    expect(d.inn).toBe("770123456789");
+  });
+
+  it("не подставляет серию 2+2+6 без контекста паспорта", () => {
+    const d = extractPassportData(
+      "Квитанция оплаты 1234 567890 от 01.01.2026\nСумма: 5000 руб."
+    );
+    expect(d.series).toBeUndefined();
+    expect(d.number).toBeUndefined();
+  });
+
+  it("не подставляет код подразделения без маркера", () => {
+    const d = extractPassportData(
+      "Паспорт 4510 123456\nТелефон +7 903 123-456\nДата выдачи 01.01.2026"
+    );
+    expect(d.code).toBeUndefined();
+  });
 });
 
 describe("extractVehicleData", () => {
@@ -160,6 +189,28 @@ VIN XTA219010L1234567
     expect(d.plate).toBe("А123ВС777");
     expect(d.ownerFio).toContain("Петров");
     expect(d.stsNumber).toBe("345678");
+  });
+
+  it("не подставляет ПТС-серии без контекста ПТС", () => {
+    const d = extractVehicleData(
+      "Квитанция 1234 567890 от 01.01.2026 VIN XTA219010L1234567"
+    );
+    expect(d.ptsSeries).toBeUndefined();
+    expect(d.ptsNumber).toBeUndefined();
+  });
+
+  it("не подставляет ЭПТС без маркера при нескольких 15-значных", () => {
+    const d = extractVehicleData(
+      "Телефон 123456789012345Fax123456789012346 VIN XTA219010L1234567"
+    );
+    expect(d.eptsNumber).toBeUndefined();
+  });
+
+  it("подхватывает ЭПТС по маркеру даже среди чисел", () => {
+    const d = extractVehicleData(
+      "Телефон 123456789012345 ЭПТС 987654321098765 VIN XTA219010L1234567"
+    );
+    expect(d.eptsNumber).toBe("987654321098765");
   });
 });
 
