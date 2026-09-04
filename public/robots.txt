@@ -3,13 +3,13 @@ Allow: /
 Disallow: /login
 Disallow: /billing
 Disallow: /dashboard
-Disallow: /documents$
-Disallow: /documents/$
 Disallow: /settings
 Disallow: /trash
 Disallow: /admin
 Disallow: /debug
 Disallow: /approve
 Disallow: /api/
+Disallow: /auth/
+Disallow: /builder
 
 Sitemap: https://dogovor.expert/sitemap.xml

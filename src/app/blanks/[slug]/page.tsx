@@ -11,9 +11,10 @@ import { faqForTemplate, faqJsonLd, breadcrumbJsonLd } from "@/lib/seo/faq";
 import { buildIntro, fieldsSummary } from "@/lib/seo/intro";
 import { renderTemplateDocument } from "@/lib/renderDocument";
 import BlankDownloadButtons from "@/components/blank/BlankDownloadButtons";
+import { withSeo } from "@/lib/seo/withSeo";
+import { SITE_URL } from "@/lib/site";
 
 const YEAR = new Date().getFullYear();
-const SITE_URL = "https://dogovor.expert";
 
 export const dynamicParams = false;
 
@@ -53,11 +54,14 @@ export function generateMetadata({ params }: { params: Promise<{ slug: string }>
   return params.then(async ({ slug }) => {
     const t = slugToTemplate(slug);
     if (!t) return {};
-    const desc = `Скачайте пустой бланк «${t.name}» бесплатно в PDF и Word. Готовая форма для ручного заполнения с адресом сайта dogovor.expert. ${t.description}`;
     const url = `/blanks/${t.id}`;
-    return {
-      title: `Скачать пустой бланк «${t.name}» — PDF и Word бесплатно`,
-      description: truncateWord(desc, 200),
+    const baseTitle = `Скачать бланк «${t.name}» — PDF и Word`;
+    const baseDesc = `Пустой бланк «${t.name}» для ручного заполнения. Скачайте бесплатно в PDF и Word с dogovor.expert, без регистрации.`;
+    return withSeo({
+      path: url,
+      title: truncateWord(baseTitle, 60),
+      description: truncateWord(baseDesc, 160),
+      ogType: "article",
       keywords: [
         `скачать бланк ${t.name}`,
         `пустой бланк ${t.name}`,
@@ -69,14 +73,7 @@ export function generateMetadata({ params }: { params: Promise<{ slug: string }>
         follow: true,
         googleBot: { index: true, follow: true, "max-image-preview": "large", "max-snippet": -1 },
       },
-      alternates: { canonical: url },
-      openGraph: {
-        title: `Скачать пустой бланк «${t.name}» — PDF и Word`,
-        description: truncateWord(desc, 200),
-        url,
-        type: "website",
-      },
-    };
+    });
   });
 }
 
