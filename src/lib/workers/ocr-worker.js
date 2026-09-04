@@ -132,13 +132,13 @@ self.onmessage = async (e) => {
 
       // Проход 1: обычное фото (грейскейл делаем здесь силами tesseract
       // через параметр — входной dataURL уже подготовлен вызывающей стороной).
-      const pass1 = await recognizePass(w, msg.file, {}, wantWords);
+      const pass1 = await recognizePass(w, msg.file, msg.params || {}, wantWords);
 
       // Проход 2: бинаризованная версия (готовится на главном потоке и
       // передаётся вторым полем). Может отсутствовать (старый вызов).
       let best = pass1;
       if (msg.binary) {
-        const pass2 = await recognizePass(w, msg.binary, {}, false);
+        const pass2 = await recognizePass(w, msg.binary, msg.params || {}, false);
         // Бинаризация обычно выигрывает на фото с тенями; на чистых
         // сканах может проигрывать — выбираем по confidence.
         if (pass2.confidence > pass1.confidence) best = pass2;
