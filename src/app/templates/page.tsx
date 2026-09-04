@@ -103,6 +103,18 @@ function TemplatesContent() {
     setFavorites(loadFavorites());
     // №10 аудита: состояние каталога восстанавливается из URL (q/cat/view).
     const params = new URLSearchParams(window.location.search);
+    // Алиас ?category= → ?cat= (SEO: Google мог проиндексировать ?category=)
+    const categoryAlias = params.get("category");
+    if (categoryAlias) {
+      params.delete("category");
+      params.set("cat", categoryAlias);
+      const qs = params.toString();
+      window.history.replaceState(
+        null,
+        "",
+        qs ? `?${qs}` : window.location.pathname,
+      );
+    }
     const q = params.get("q");
     if (q) setSearch(q);
     const cat = params.get("cat");

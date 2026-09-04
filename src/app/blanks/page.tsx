@@ -2,11 +2,15 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { LEGAL_TEMPLATES } from "@/data/templates";
 import BlanksBrowser, { type BlankCategory, type BlankItem } from "@/components/blank/BlanksBrowser";
+import { withSeo } from "@/lib/seo/withSeo";
+import { JsonLd } from "@/components/seo/JsonLd";
+import { SITE_URL } from "@/lib/site";
 
-export const metadata: Metadata = {
-  title: "Скачать пустые бланки договоров — бесплатно PDF и Word",
+export const metadata: Metadata = withSeo({
+  path: "/blanks",
+  title: "Скачать пустые бланки договоров — PDF и Word",
   description:
-    "Бесплатные пустые бланки договоров для ручного заполнения: ДКП автомобиля, договор аренды, подряда, расписка, счёт и ещё 360+ шаблонов. Скачайте в PDF или Word с dogovor.expert — без регистрации.",
+    "Бесплатные пустые бланки договоров для ручного заполнения: ДКП авто, аренда, подряд, расписка, счёт. 360+ шаблонов, PDF и Word, без регистрации.",
   keywords: [
     "скачать бланк договора",
     "пустой бланк договора",
@@ -15,16 +19,9 @@ export const metadata: Metadata = {
     "пустые бланки документов",
     "образец бланка",
   ],
-  alternates: { canonical: "/blanks" },
-  openGraph: {
-    title: "Скачать пустые бланки договоров — бесплатно PDF и Word",
-    description:
-      "Бесплатные пустые бланки договоров для ручного заполнения. PDF и Word, без регистрации.",
-    url: "/blanks",
-    type: "website",
-  },
   robots: { index: true, follow: true },
-};
+  openGraph: { url: "/blanks" },
+});
 
 const CATEGORY_ORDER = [
   "realty",
@@ -66,6 +63,28 @@ export default function BlanksIndexPage() {
 
   return (
     <div className="p-6 max-w-5xl mx-auto space-y-10">
+      <JsonLd
+        data={{
+          "@context": "https://schema.org",
+          "@type": "CollectionPage",
+          name: "Пустые бланки договоров",
+          description:
+            "Бесплатные пустые бланки договоров: ДКП авто, аренда, подряд, расписка, счёт. 360+ шаблонов, PDF и Word, без регистрации.",
+          url: `${SITE_URL}/blanks`,
+          inLanguage: "ru",
+          isPartOf: { "@type": "WebSite", name: "Dogovor.expert", url: SITE_URL },
+          mainEntity: {
+            "@type": "ItemList",
+            numberOfItems: items.length,
+            itemListElement: items.slice(0, 25).map((t, i) => ({
+              "@type": "ListItem",
+              position: i + 1,
+              url: `${SITE_URL}/blanks/${t.id}`,
+              name: t.name,
+            })),
+          },
+        }}
+      />
       <nav className="text-xs text-gray-600 flex items-center gap-1.5 flex-wrap">
         <Link href="/" className="hover:text-brand-600">
           Главная
