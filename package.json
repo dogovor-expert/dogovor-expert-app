@@ -24,6 +24,7 @@
     "test:e2e": "playwright test",
     "test:prod": "playwright test --config=playwright.prod.config.ts",
     "analyze": "ANALYZE=true next build",
+    "lighthouse": "lhci autorun",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
     "prepare": "husky"
@@ -64,8 +65,9 @@
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.13.0",
+    "@lhci/cli": "^0.15.1",
     "@napi-rs/canvas": "^0.1.65",
-    "@next/bundle-analyzer": "^16.3.2",
+    "@next/bundle-analyzer": "^15.5.25",
     "@playwright/test": "^1.62.1",
     "@storybook/addon-a11y": "^10.5.10",
     "@storybook/nextjs": "^10.5.10",

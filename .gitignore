@@ -26,6 +26,7 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 *.log
+fix-escape.js
 
 # local env files
 .env

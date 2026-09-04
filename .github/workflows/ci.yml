@@ -40,6 +40,32 @@ jobs:
       - name: Build
         run: npm run build
 
+  lighthouse:
+    runs-on: ubuntu-latest
+    needs: lint-and-test
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Lighthouse
+        # Запускает `next start` (startServerCommand в .lighthouserc.json) и
+        # меряет реальные страницы. Локальный baseline приблизителен; пороги
+        # калибруются в .lighthouserc.json. Для точных метрик (LCP/CLS/TBT)
+        # желателен прогон против продакшн-окружения.
+        run: npx lhci autorun
+
   integration-tests:
     runs-on: ubuntu-latest
     needs: lint-and-test

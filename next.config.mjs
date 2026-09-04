@@ -10,7 +10,15 @@ const withBundleAnalyzer =
 const nextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
-  eslint: { ignoreDuringBuilds: true },
+  images: {
+    formats: ['image/avif', 'image/webp'],
+    remotePatterns: [
+      { protocol: 'https', hostname: 'xkakhztknlpzqarklewq.supabase.co' },
+      { protocol: 'https', hostname: 'lh3.googleusercontent.com' },
+      { protocol: 'https', hostname: 'avatars.yandex.net' },
+      { protocol: 'https', hostname: 'avatars.mds.yandex.net' },
+    ],
+  },
   
   async redirects() {
     return [
