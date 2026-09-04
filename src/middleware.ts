@@ -86,15 +86,7 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
 
   const csp = [
     `default-src 'self'`,
-    // CRITICAL: 'unsafe-inline' нужен для inline-скриптов Next.js (prerendered
-    // HTML содержит <script> без nonce — middleware ставит nonce, но prerendered
-    // chunks уже закешированы). Без 'unsafe-inline' React НЕ гидратируется →
-    // useState/useEffect/onClick не работают (кнопки, баннер cookies мертвы).
-    // 'strict-dynamic' УБРАН — он имеет приоритет над 'unsafe-inline' и игнорирует
-    // его (CSP3). Без strict-dynamic 'unsafe-inline' + nonce работают вместе.
-    // Безопасность: нет user-input в inline-скриптах; sensitive-операции через
-    // /api/* с CSRF+RL; DOMPurify на сервере для HTML.
-    `script-src 'self' 'unsafe-inline' 'nonce-${nonce}' 'wasm-unsafe-eval' 'unsafe-eval' https://inzuro.polis.online https://*.inzuro.ru https://polis.online https://api.polis.online https://cdn.jsdelivr.net https://unpkg.com https://challenges.cloudflare.com https://mc.yandex.ru https://mc.yandex.md https://www.cryptopro.ru https://download.rutoken.ru`,
+    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic' 'wasm-unsafe-eval' 'unsafe-eval' https://inzuro.polis.online https://*.inzuro.ru https://polis.online https://api.polis.online https://cdn.jsdelivr.net https://unpkg.com https://challenges.cloudflare.com https://mc.yandex.ru https://mc.yandex.md https://www.cryptopro.ru https://download.rutoken.ru`,
     `worker-src 'self' blob: https://cdn.jsdelivr.net https://unpkg.com`,
     `style-src 'self' 'unsafe-inline' https://fonts.googleapis.com`,
     `img-src 'self' data: blob: https://*.inzuro.ru https://polis.online https://api.polis.online https://dkbm-web.autoins.ru https://xkakhztknlpzqarklewq.supabase.co https://lh3.googleusercontent.com https://avatars.yandex.net https://avatars.mds.yandex.net https://mc.yandex.ru https://mc.yandex.md https://mc.yandex.com`,
