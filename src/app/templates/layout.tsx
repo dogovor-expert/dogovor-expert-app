@@ -3,6 +3,8 @@ import { TEMPLATE_META } from "@/data/templatesMeta";
 import { SITE_URL } from "@/lib/site";
 import { JsonLd } from "@/components/seo/JsonLd";
 
+export const revalidate = 3600; // ISR: пересборка каждый час, без headers() — безопасно с Supabase-сессией.
+
 export const metadata: Metadata = {
   title: "Каталог шаблонов договоров",
   description: `Готовые шаблоны договоров: ДКП авто и квартиры, аренда, подряд, расписка, счёт. Заполнение онлайн, автопроверка, экспорт в PDF и DOCX.`,
