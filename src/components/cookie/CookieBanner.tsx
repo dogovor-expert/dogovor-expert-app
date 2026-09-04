@@ -21,14 +21,6 @@ import { useCookieConsent } from "@/hooks/useCookieConsent";
 export function CookieBanner() {
   const { consent, accept, decline } = useCookieConsent();
 
-  // Debug: trace on every render
-  if (typeof window !== "undefined") {
-    (window as unknown as { __cookieTrace?: object[] }).__cookieTrace = [
-      ...((window as unknown as { __cookieTrace?: object[] }).__cookieTrace || []),
-      { ts: Date.now(), consent, mounted: true },
-    ].slice(-10);
-  }
-
   if (consent === null) {
     return (
       <div
