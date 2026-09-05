@@ -61,10 +61,10 @@ export default function BlanksBrowser({
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Поиск бланка: договор аренды, расписка, счёт…"
             aria-label="Поиск пустого бланка"
-            className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 bg-white text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400"
+            className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 bg-white text-sm text-gray-900 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400"
           />
           <svg
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-600"
             width="18"
             height="18"
             viewBox="0 0 24 24"
@@ -117,7 +117,7 @@ export default function BlanksBrowser({
           <section key={group.id}>
             <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
               {group.label}
-              <span className="text-sm font-normal text-gray-400">
+              <span className="text-sm font-normal text-gray-600">
                 ({group.items.length})
               </span>
             </h2>

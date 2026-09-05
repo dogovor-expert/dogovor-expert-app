@@ -1,5 +1,5 @@
 "use client";
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useId, useState, useRef, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Search } from "lucide-react";
 import { TEMPLATE_META } from "@/data/templatesMeta";
@@ -20,6 +20,11 @@ const CATEGORY_ICONS: Record<string, string> = {
 
 export default function HeaderSearch() {
   const router = useRouter();
+  const uid = useId();
+  const listboxId = `${uid}-listbox`;
+  const listboxMobileId = `${uid}-listbox-m`;
+  const optId = (i: number) => `${uid}-opt-${i}`;
+  const optMobileId = (i: number) => `${uid}-opt-m-${i}`;
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -109,9 +114,9 @@ export default function HeaderSearch() {
   const items = suggestions();
   const showList = open && items.length > 0;
 
-  const SuggestionsList = ({ className }: { className?: string }) => (
+  const SuggestionsList = ({ id, optIdFn, className }: { id: string; optIdFn: (i: number) => string; className?: string }) => (
     <div
-      id="header-search-listbox"
+      id={id}
       role="listbox"
       className={className}
     >
@@ -121,7 +126,7 @@ export default function HeaderSearch() {
       {items.map(({ t }, i) => (
         <button
           key={t.id}
-          id={`header-search-opt-${i}`}
+          id={optIdFn(i)}
           role="option"
           aria-selected={active === i}
           onMouseEnter={() => setActive(i)}
@@ -181,8 +186,8 @@ export default function HeaderSearch() {
           type="text"
           role="combobox"
           aria-expanded={showList}
-          aria-controls="header-search-listbox"
-          aria-activedescendant={active >= 0 ? `header-search-opt-${active}` : undefined}
+          aria-controls={listboxId}
+          aria-activedescendant={active >= 0 ? optId(active) : undefined}
           aria-autocomplete="list"
           placeholder="Поиск документов, шаблонов..."
           value={query}
@@ -192,7 +197,7 @@ export default function HeaderSearch() {
           className="w-full pl-10 pr-4 py-2 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all"
         />
       </form>
-      {showList && <SuggestionsList className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-100 rounded-xl shadow-elevated z-50 py-1.5 overflow-hidden hidden sm:block" />}
+      {showList && <SuggestionsList id={listboxId} optIdFn={optId} className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-100 rounded-xl shadow-elevated z-50 py-1.5 overflow-hidden hidden sm:block" />}
 
       {/* Mobile (<sm): icon button + full-width overlay */}
       <button
@@ -220,8 +225,8 @@ export default function HeaderSearch() {
               type="text"
               role="combobox"
               aria-expanded={showList}
-              aria-controls="header-search-listbox-mobile"
-              aria-activedescendant={active >= 0 ? `header-search-opt-m-${active}` : undefined}
+              aria-controls={listboxMobileId}
+              aria-activedescendant={active >= 0 ? optMobileId(active) : undefined}
               aria-autocomplete="list"
               placeholder="Поиск документов, шаблонов..."
               value={query}
@@ -234,7 +239,7 @@ export default function HeaderSearch() {
               <button
                 type="button"
                 onClick={() => { setQuery(""); inputRef.current?.focus(); }}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-600 hover:text-gray-900"
                 aria-label="Очистить"
               >
                 ×
@@ -243,7 +248,7 @@ export default function HeaderSearch() {
           </form>
           {showList && (
             <div
-              id="header-search-listbox-mobile"
+              id={listboxMobileId}
               role="listbox"
               className="mt-2 bg-white border border-gray-100 rounded-xl shadow-elevated py-1.5 overflow-hidden max-h-[60vh] overflow-y-auto"
             >
@@ -253,7 +258,7 @@ export default function HeaderSearch() {
               {items.map(({ t }, i) => (
                 <button
                   key={t.id}
-                  id={`header-search-opt-m-${i}`}
+                  id={optMobileId(i)}
                   role="option"
                   aria-selected={active === i}
                   onMouseEnter={() => setActive(i)}

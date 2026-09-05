@@ -7,7 +7,15 @@ import { ShieldCheck, FileSearch, Clock } from "lucide-react";
 const AutotekaClient = dynamic(() => import("./AutotekaClient"), {
   loading: () => (
     <div className="max-w-3xl mx-auto p-6">
-      <div className="h-64 rounded-2xl bg-gray-50 animate-pulse" />
+      {/* Точечный скелетон первого экрана (форма ввода VIN): резерв высоты
+          только под видимую часть, чтобы избежать обратного CLS после гидратации.
+          contain:layout изолирует сдвиги внутри острова. */}
+      <div
+        className="bg-white border border-gray-200 rounded-2xl shadow-soft p-6 min-h-[380px] flex items-center justify-center"
+        style={{ contain: "layout" }}
+      >
+        <div className="h-12 w-2/3 rounded-xl bg-gray-100 animate-pulse" />
+      </div>
     </div>
   ),
 });
@@ -33,7 +41,11 @@ const PERKS = [
 export default function AutotekaPage() {
   return (
     <div>
-      <AutotekaClient />
+      {/* Резерв высоты под клиентский остров, чтобы предотвратить CLS секции ниже
+          (per Lighthouse prod: было 0.358). contain:layout изолирует сдвиги внутри острова. */}
+      <div style={{ minHeight: "520px", contain: "layout" }}>
+        <AutotekaClient />
+      </div>
 
       <section className="max-w-3xl mx-auto px-6 pb-10 space-y-6 text-gray-700 leading-relaxed">
         <h2 className="text-xl font-bold text-gray-900 sr-only">Проверка автомобиля по VIN</h2>

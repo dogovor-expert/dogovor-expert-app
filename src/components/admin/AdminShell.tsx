@@ -124,6 +124,7 @@ export default function AdminShell({
               <input
                 name="q"
                 placeholder="Глобальный поиск…"
+                aria-label="Глобальный поиск"
                 className="w-64 rounded-lg border border-gray-200 bg-gray-50 pl-9 pr-3 py-2 text-sm text-gray-800 outline-none focus:ring-2 focus:ring-brand-500/20"
               />
             </form>
