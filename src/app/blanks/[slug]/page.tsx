@@ -170,7 +170,7 @@ export default async function BlankPage({ params }: { params: Promise<{ slug: st
           <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide">
             Предпросмотр бланка
           </h2>
-          <span className="text-xs text-gray-400">формат А4</span>
+          <span className="text-xs text-gray-600">формат А4</span>
         </div>
         <div className="mx-auto w-full max-w-[794px] bg-white shadow-xl rounded-lg overflow-hidden ring-1 ring-gray-100">
           {previewImages.length > 0 ? (
