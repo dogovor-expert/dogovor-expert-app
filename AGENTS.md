@@ -279,7 +279,7 @@ px vitest related — для первого staged .ts/.tsx файла
 - БД: Supabase (PostgreSQL)
 - Деплой: Vercel
 - Шаблонов: 369, PRO-подписка через YooKassa
-- Аналитика: Яндекс.Метрика (consent-gated), PostHog (consent-gated), Sentry
+- Аналитика: Яндекс.Метрика (consent-gated), Sentry
 
 ## Setup commands
 - Install: 
