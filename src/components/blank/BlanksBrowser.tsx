@@ -16,6 +16,8 @@ export interface BlankCategory {
   count: number;
 }
 
+const PAGE_SIZE = 20;
+
 export default function BlanksBrowser({
   items,
   categories,
@@ -25,6 +27,7 @@ export default function BlanksBrowser({
 }) {
   const [query, setQuery] = useState("");
   const [activeCat, setActiveCat] = useState<string>("all");
+  const [page, setPage] = useState(1);
 
   const q = query.trim().toLowerCase();
 
@@ -50,6 +53,21 @@ export default function BlanksBrowser({
   }, [filtered, categories]);
 
   const showGrouped = activeCat === "all" && !q;
+  const totalFlatPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const safePage = Math.min(page, totalFlatPages);
+  const flatStart = (safePage - 1) * PAGE_SIZE;
+  const flatPaged = filtered.slice(flatStart, flatStart + PAGE_SIZE);
+
+  const reset = () => {
+    setQuery("");
+    setActiveCat("all");
+    setPage(1);
+  };
+
+  const changeCat = (c: string) => {
+    setActiveCat(c);
+    setPage(1);
+  };
 
   return (
     <div className="space-y-6">
@@ -58,7 +76,10 @@ export default function BlanksBrowser({
           <input
             type="search"
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            onChange={(e) => {
+              setQuery(e.target.value);
+              setPage(1);
+            }}
             placeholder="Поиск бланка: договор аренды, расписка, счёт…"
             aria-label="Поиск пустого бланка"
             className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 bg-white text-sm text-gray-900 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400"
@@ -82,7 +103,7 @@ export default function BlanksBrowser({
       <div className="flex flex-wrap gap-2">
         <FilterPill
           active={activeCat === "all"}
-          onClick={() => setActiveCat("all")}
+          onClick={() => changeCat("all")}
           label="Все"
           count={items.length}
         />
@@ -90,7 +111,7 @@ export default function BlanksBrowser({
           <FilterPill
             key={c.id}
             active={activeCat === c.id}
-            onClick={() => setActiveCat(c.id)}
+            onClick={() => changeCat(c.id)}
             label={c.label}
             count={c.count}
           />
@@ -102,10 +123,7 @@ export default function BlanksBrowser({
           По запросу «{query}» ничего не найдено. Попробуйте другое слово или{" "}
           <button
             type="button"
-            onClick={() => {
-              setQuery("");
-              setActiveCat("all");
-            }}
+            onClick={reset}
             className="text-indigo-600 underline"
           >
             сбросьте фильтр
@@ -129,11 +147,37 @@ export default function BlanksBrowser({
           </section>
         ))
       ) : (
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
-          {filtered.map((t) => (
-            <BlankCard key={t.id} item={t} />
-          ))}
-        </div>
+        <>
+          <div
+            className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3 min-h-[640px]"
+            aria-live="polite"
+            aria-atomic="false"
+          >
+            {flatPaged.map((t) => (
+              <BlankCard key={t.id} item={t} />
+            ))}
+          </div>
+          {totalFlatPages > 1 && (
+            <nav
+              className="flex items-center justify-center gap-2 pt-4"
+              aria-label="Пагинация бланков"
+            >
+              <PageBtn
+                disabled={safePage === 1}
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                label="Назад"
+              />
+              <span className="text-sm text-gray-600 px-3">
+                {safePage} / {totalFlatPages}
+              </span>
+              <PageBtn
+                disabled={safePage === totalFlatPages}
+                onClick={() => setPage((p) => Math.min(totalFlatPages, p + 1))}
+                label="Вперёд"
+              />
+            </nav>
+          )}
+        </>
       )}
     </div>
   );
@@ -154,8 +198,9 @@ function FilterPill({
     <button
       type="button"
       onClick={onClick}
+      aria-pressed={active}
       className={
-        "px-3.5 py-2 rounded-full text-sm font-medium transition border " +
+        "px-3.5 py-2 rounded-full text-sm font-medium transition border cursor-pointer " +
         (active
           ? "bg-indigo-600 text-white border-indigo-600"
           : "bg-white text-gray-700 border-gray-200 hover:border-indigo-300 hover:text-indigo-600")
@@ -163,6 +208,27 @@ function FilterPill({
     >
       {label}
       <span className={active ? "text-indigo-100" : "text-gray-400"}> {count}</span>
+    </button>
+  );
+}
+
+function PageBtn({
+  disabled,
+  onClick,
+  label,
+}: {
+  disabled: boolean;
+  onClick: () => void;
+  label: string;
+}) {
+  return (
+    <button
+      type="button"
+      disabled={disabled}
+      onClick={onClick}
+      className="px-4 py-2 text-sm font-medium text-indigo-600 bg-indigo-50 border border-indigo-200 rounded-xl hover:bg-indigo-100 transition cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+    >
+      {label}
     </button>
   );
 }

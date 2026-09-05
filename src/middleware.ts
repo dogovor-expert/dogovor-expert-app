@@ -9,12 +9,12 @@ function decodeB64url(input: string): string {
   return atob(padded);
 }
 
-// Декодирует aal-claim из access token в куке сессии ("aal1"/"aal2").
-// aal2 означает, что 2FA (если включена) уже подтверждена кодом.
+// Р”РµРєРѕРґРёСЂСѓРµС‚ aal-claim РёР· access token РІ РєСѓРєРµ СЃРµСЃСЃРёРё ("aal1"/"aal2").
+// aal2 РѕР·РЅР°С‡Р°РµС‚, С‡С‚Рѕ 2FA (РµСЃР»Рё РІРєР»СЋС‡РµРЅР°) СѓР¶Рµ РїРѕРґС‚РІРµСЂР¶РґРµРЅР° РєРѕРґРѕРј.
 function sessionAal(request: NextRequest): "aal1" | "aal2" | null {
   const cookies = request.cookies.getAll();
-  // @supabase/ssr чанкает большие сессии: кука -auth-token.0, .1, ...
-  // Склеиваем чанки по индексу; если чанков нет — берём базовую куку.
+  // @supabase/ssr С‡Р°РЅРєР°РµС‚ Р±РѕР»СЊС€РёРµ СЃРµСЃСЃРёРё: РєСѓРєР° -auth-token.0, .1, ...
+  // РЎРєР»РµРёРІР°РµРј С‡Р°РЅРєРё РїРѕ РёРЅРґРµРєСЃСѓ; РµСЃР»Рё С‡Р°РЅРєРѕРІ РЅРµС‚ вЂ” Р±РµСЂС‘Рј Р±Р°Р·РѕРІСѓСЋ РєСѓРєСѓ.
   const chunks = cookies
     .filter((c) => /-auth-token\.\d+$/.test(c.name))
     .sort(
@@ -25,7 +25,7 @@ function sessionAal(request: NextRequest): "aal1" | "aal2" | null {
   const raw = chunks.length > 0 ? chunks.map((c) => c.value).join("") : base?.value;
   if (!raw) return null;
   try {
-    // @supabase/ssr хранит сессию в формате "base64-<base64url(JSON)>".
+    // @supabase/ssr С…СЂР°РЅРёС‚ СЃРµСЃСЃРёСЋ РІ С„РѕСЂРјР°С‚Рµ "base64-<base64url(JSON)>".
     const value = raw.startsWith("base64-") ? raw.slice("base64-".length) : raw;
     let json: string;
     try {
@@ -45,10 +45,10 @@ function sessionAal(request: NextRequest): "aal1" | "aal2" | null {
 }
 
 /**
- * N2 (independent audit): единая функция установки security-заголовков.
- * Применяется ко ВСЕМ response — включая `NextResponse.redirect()`.
- * Без этого редиректы теряли CSP/HSTS/X-Frame — то есть сама страница
- * логина приходила без защиты.
+ * N2 (independent audit): РµРґРёРЅР°СЏ С„СѓРЅРєС†РёСЏ СѓСЃС‚Р°РЅРѕРІРєРё security-Р·Р°РіРѕР»РѕРІРєРѕРІ.
+ * РџСЂРёРјРµРЅСЏРµС‚СЃСЏ РєРѕ Р’РЎР•Рњ response вЂ” РІРєР»СЋС‡Р°СЏ `NextResponse.redirect()`.
+ * Р‘РµР· СЌС‚РѕРіРѕ СЂРµРґРёСЂРµРєС‚С‹ С‚РµСЂСЏР»Рё CSP/HSTS/X-Frame вЂ” С‚Рѕ РµСЃС‚СЊ СЃР°РјР° СЃС‚СЂР°РЅРёС†Р°
+ * Р»РѕРіРёРЅР° РїСЂРёС…РѕРґРёР»Р° Р±РµР· Р·Р°С‰РёС‚С‹.
  */
 function withSecurityHeaders(
   res: NextResponse,
@@ -59,13 +59,13 @@ function withSecurityHeaders(
   res.headers.set("X-Content-Type-Options", "nosniff");
   res.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
   res.headers.set("X-Frame-Options", "SAMEORIGIN");
-  // COOP: same-origin-allow-popups изолирует окно от cross-origin opener'ов
-  // (удовлетворяет Lighthouse Best Practices), но сохраняет канал связи с
-  // OAuth-попапами (Google GIS, Яндекс), которые закрываются сами по себе —
-  // строгий same-origin разрывал бы communication с accounts.google.com.
+  // COOP: same-origin-allow-popups РёР·РѕР»РёСЂСѓРµС‚ РѕРєРЅРѕ РѕС‚ cross-origin opener'РѕРІ
+  // (СѓРґРѕРІР»РµС‚РІРѕСЂСЏРµС‚ Lighthouse Best Practices), РЅРѕ СЃРѕС…СЂР°РЅСЏРµС‚ РєР°РЅР°Р» СЃРІСЏР·Рё СЃ
+  // OAuth-РїРѕРїР°РїР°РјРё (Google GIS, РЇРЅРґРµРєСЃ), РєРѕС‚РѕСЂС‹Рµ Р·Р°РєСЂС‹РІР°СЋС‚СЃСЏ СЃР°РјРё РїРѕ СЃРµР±Рµ вЂ”
+  // СЃС‚СЂРѕРіРёР№ same-origin СЂР°Р·СЂС‹РІР°Р» Р±С‹ communication СЃ accounts.google.com.
   res.headers.set("Cross-Origin-Opener-Policy", "same-origin-allow-popups");
-  // N8: Permissions-Policy — запрещаем доступ к камере/микрофону/геолокации
-  // для всего сайта, если это явно не разрешено через iframe-allow.
+  // N8: Permissions-Policy вЂ” Р·Р°РїСЂРµС‰Р°РµРј РґРѕСЃС‚СѓРї Рє РєР°РјРµСЂРµ/РјРёРєСЂРѕС„РѕРЅСѓ/РіРµРѕР»РѕРєР°С†РёРё
+  // РґР»СЏ РІСЃРµРіРѕ СЃР°Р№С‚Р°, РµСЃР»Рё СЌС‚Рѕ СЏРІРЅРѕ РЅРµ СЂР°Р·СЂРµС€РµРЅРѕ С‡РµСЂРµР· iframe-allow.
   res.headers.set(
     "Permissions-Policy",
     "camera=(), microphone=(), geolocation=(), interest-cohort=()"
@@ -79,17 +79,32 @@ function withSecurityHeaders(
   return res;
 }
 
+function withVaryAccept(res: NextResponse): NextResponse {
+  // N12: AI-Р°РіРµРЅС‚Р°Рј (GPTBot, ClaudeBot, PerplexityBot) РґР»СЏ content
+  // negotiation РЅСѓР¶РµРЅ Vary: Accept. Р”Р»СЏ HTML-СЃС‚СЂР°РЅРёС† С‚РµРєСѓС‰РёР№ РѕС‚РІРµС‚ РІСЃРµРіРґР°
+  // text/html вЂ” Vary РЅРµ Р»РѕРјР°РµС‚ РєСЌС€, РЅРѕ РїРѕР·РІРѕР»СЏРµС‚ Р±СѓРґСѓС‰РёРј РјР°СЂС€СЂСѓС‚Р°Рј
+  // РІРѕР·РІСЂР°С‰Р°С‚СЊ text/markdown РїСЂРё Accept: text/markdown Р±РµР· СЂРёСЃРєР°
+  // СЃРјРµС€РµРЅРёСЏ РєСЌС€РёСЂРѕРІР°РЅРЅС‹С… РѕС‚РІРµС‚РѕРІ.
+  const existing = res.headers.get("Vary");
+  if (!existing) {
+    res.headers.set("Vary", "Accept");
+  } else if (!existing.toLowerCase().split(",").map((s) => s.trim()).includes("accept")) {
+    res.headers.set("Vary", `${existing}, Accept`);
+  }
+  return res;
+}
+
 export async function middleware(request: NextRequest): Promise<NextResponse> {
   const { pathname } = request.nextUrl;
 
   // ====== CSP (source-based) ======
-  // Динамический nonce + 'strict-dynamic' НЕСОВМЕСТИМЫ со статическим
-  // prerender (SSG/ISR): static-страницы собираются без middleware и их
-  // скрипты не получают nonce → браузер блокирует весь JS (см. в Audit записи
-  // "Executing inline script violates CSP" на проде). Поэтому для публичного
-  // контентного сайта применяется политика по источникам: 'self' покрывает
-  // все бандлы /_next/static, 'unsafe-inline' — инлайн-скрипты гидратации
-  // Next.js и Яндекс.Метрики. no-cache на HTML не ставим — SSG остаётся.
+  // Р”РёРЅР°РјРёС‡РµСЃРєРёР№ nonce + 'strict-dynamic' РќР•РЎРћР’РњР•РЎРўРРњР« СЃРѕ СЃС‚Р°С‚РёС‡РµСЃРєРёРј
+  // prerender (SSG/ISR): static-СЃС‚СЂР°РЅРёС†С‹ СЃРѕР±РёСЂР°СЋС‚СЃСЏ Р±РµР· middleware Рё РёС…
+  // СЃРєСЂРёРїС‚С‹ РЅРµ РїРѕР»СѓС‡Р°СЋС‚ nonce в†’ Р±СЂР°СѓР·РµСЂ Р±Р»РѕРєРёСЂСѓРµС‚ РІРµСЃСЊ JS (СЃРј. РІ Audit Р·Р°РїРёСЃРё
+  // "Executing inline script violates CSP" РЅР° РїСЂРѕРґРµ). РџРѕСЌС‚РѕРјСѓ РґР»СЏ РїСѓР±Р»РёС‡РЅРѕРіРѕ
+  // РєРѕРЅС‚РµРЅС‚РЅРѕРіРѕ СЃР°Р№С‚Р° РїСЂРёРјРµРЅСЏРµС‚СЃСЏ РїРѕР»РёС‚РёРєР° РїРѕ РёСЃС‚РѕС‡РЅРёРєР°Рј: 'self' РїРѕРєСЂС‹РІР°РµС‚
+  // РІСЃРµ Р±Р°РЅРґР»С‹ /_next/static, 'unsafe-inline' вЂ” РёРЅР»Р°Р№РЅ-СЃРєСЂРёРїС‚С‹ РіРёРґСЂР°С‚Р°С†РёРё
+  // Next.js Рё РЇРЅРґРµРєСЃ.РњРµС‚СЂРёРєРё. no-cache РЅР° HTML РЅРµ СЃС‚Р°РІРёРј вЂ” SSG РѕСЃС‚Р°С‘С‚СЃСЏ.
   const isDev = process.env.NODE_ENV === 'development';
 
   const csp = [
@@ -110,10 +125,11 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
 
   let response = NextResponse.next();
   response = withSecurityHeaders(response, csp, isDev);
+  response = withVaryAccept(response);
 
-  // ====== Публичные маршруты (N9 + N10) ======
-  // /builder, /connections делают client-side guard, поэтому middleware
-  // не делает для них getUser() — экономия 50-200 мс TTFB.
+  // ====== РџСѓР±Р»РёС‡РЅС‹Рµ РјР°СЂС€СЂСѓС‚С‹ (N9 + N10) ======
+  // /builder, /connections РґРµР»Р°СЋС‚ client-side guard, РїРѕСЌС‚РѕРјСѓ middleware
+  // РЅРµ РґРµР»Р°РµС‚ РґР»СЏ РЅРёС… getUser() вЂ” СЌРєРѕРЅРѕРјРёСЏ 50-200 РјСЃ TTFB.
   const isPublicRoute =
     pathname === "/" ||
     pathname.startsWith("/templates") ||
@@ -184,7 +200,7 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
   const isDebugPage = pathname.startsWith("/debug");
 
   if (isAdminPage || isDebugPage) {
-    if (!user) return withSecurityHeaders(NextResponse.redirect(new URL("/login", request.url)), csp, isDev);
+    if (!user) return withVaryAccept(withSecurityHeaders(NextResponse.redirect(new URL("/login", request.url)), csp, isDev));
     let isAdmin = user.app_metadata?.is_admin === true;
     if (!isAdmin) {
       const supabase = createServerClient(
@@ -200,7 +216,7 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
       isAdmin = profile?.is_admin === true;
     }
     if (!isAdmin) {
-      return withSecurityHeaders(NextResponse.redirect(new URL("/dashboard", request.url)), csp, isDev);
+      return withVaryAccept(withSecurityHeaders(NextResponse.redirect(new URL("/dashboard", request.url)), csp, isDev));
     }
     const mfaEnabled = user.user_metadata?.mfa_enabled === true;
     const force2fa = process.env.ADMIN_REQUIRE_2FA === "true";
@@ -209,11 +225,11 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
         const url = new URL("/login", request.url);
         url.searchParams.set("mfa", "1");
         url.searchParams.set("next", pathname);
-        return withSecurityHeaders(NextResponse.redirect(url), csp, isDev);
+        return withVaryAccept(withSecurityHeaders(NextResponse.redirect(url), csp, isDev));
       }
       const url = new URL("/settings/security", request.url);
       url.searchParams.set("enforce_2fa", "1");
-      return withSecurityHeaders(NextResponse.redirect(url), csp, isDev);
+      return withVaryAccept(withSecurityHeaders(NextResponse.redirect(url), csp, isDev));
     }
     return response;
   }
@@ -221,37 +237,37 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
   if (isProtected && !user) {
     const url = new URL("/login", request.url);
     url.searchParams.set("next", pathname);
-    return withSecurityHeaders(NextResponse.redirect(url), csp, isDev);
+    return withVaryAccept(withSecurityHeaders(NextResponse.redirect(url), csp, isDev));
   }
 
   if (isProtected && user && user.user_metadata?.mfa_enabled === true && sessionAal(request) !== "aal2") {
     const url = new URL("/login", request.url);
     url.searchParams.set("mfa", "1");
     url.searchParams.set("next", pathname);
-    return withSecurityHeaders(NextResponse.redirect(url), csp, isDev);
+    return withVaryAccept(withSecurityHeaders(NextResponse.redirect(url), csp, isDev));
   }
 
   if (user && pathname === "/login") {
     const mfaEnabled = user.user_metadata?.mfa_enabled === true;
     if (!mfaEnabled || sessionAal(request) === "aal2") {
-      return withSecurityHeaders(NextResponse.redirect(new URL("/dashboard", request.url)), csp, isDev);
+      return withVaryAccept(withSecurityHeaders(NextResponse.redirect(new URL("/dashboard", request.url)), csp, isDev));
     }
   }
 
   return response;
 }
 
-// N9: сужаем matcher, чтобы middleware не запускался на статике.
-// Это снижает invocation count и TTFB (экономит 1-3 мс на запрос).
+// N9: СЃСѓР¶Р°РµРј matcher, С‡С‚РѕР±С‹ middleware РЅРµ Р·Р°РїСѓСЃРєР°Р»СЃСЏ РЅР° СЃС‚Р°С‚РёРєРµ.
+// Р­С‚Рѕ СЃРЅРёР¶Р°РµС‚ invocation count Рё TTFB (СЌРєРѕРЅРѕРјРёС‚ 1-3 РјСЃ РЅР° Р·Р°РїСЂРѕСЃ).
 export const config = {
   matcher: [
     /*
      * Match all request paths except for:
-     * - _next/static (статические файлы Next.js)
+     * - _next/static (СЃС‚Р°С‚РёС‡РµСЃРєРёРµ С„Р°Р№Р»С‹ Next.js)
      * - _next/image (image optimization)
      * - favicon.ico, icon, manifest, robots, sitemap, og-image, apple-icon
-     * - public/* (картинки, шрифты и т.д.)
-     * - файлы с расширениями (jpg, png, css, js, woff, woff2, и т.д.)
+     * - public/* (РєР°СЂС‚РёРЅРєРё, С€СЂРёС„С‚С‹ Рё С‚.Рґ.)
+     * - С„Р°Р№Р»С‹ СЃ СЂР°СЃС€РёСЂРµРЅРёСЏРјРё (jpg, png, css, js, woff, woff2, Рё С‚.Рґ.)
      */
     "/((?!_next/static|_next/image|favicon.ico|icon|manifest|robots|sitemap|og-image|apple-icon|.*\\.).*)",
   ],
