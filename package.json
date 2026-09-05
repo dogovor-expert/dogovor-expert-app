@@ -41,7 +41,10 @@
     "verify": "npm run typecheck && npm run lint && npm run test:unit",
     "prepare": "husky",
     "psi": "node scripts/psi.mjs",
-    "audit:squirrel": "squirrel audit https://dogovor.expert --format llm"
+    "audit:squirrel": "squirrel audit https://dogovor.expert --format llm",
+    "audit:full": "node scripts/run-full-audit.mjs",
+    "audit:quick": "node scripts/run-full-audit.mjs --quick",
+    "audit:site": "node scripts/run-full-audit.mjs --site-only"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.9.1",

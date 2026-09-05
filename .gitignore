@@ -82,3 +82,4 @@ supabase/.temp/
 # Audit tool artifacts
 .lighthouseci/
 .squirrel*
+/reports/audit-*.md
