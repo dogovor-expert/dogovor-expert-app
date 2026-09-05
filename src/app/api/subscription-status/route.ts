@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { initiateRecurringRenewal } from "@/lib/billing/recurring";
+import { boundedCacheSet } from "@/lib/bounded-cache";
 
 const DAY_MS = 86400000;
 // Ленивое автопродление: списываем, когда до/после истечения не более окна.
@@ -43,7 +44,7 @@ export async function GET() {
       .order("period_start", { ascending: false, nullsFirst: false })
       .limit(10);
     subs = (data) ?? null;
-    subsCache.set(user.id, { ts: Date.now(), subs });
+    boundedCacheSet(subsCache, user.id, { ts: Date.now(), subs }, SUBS_TTL_MS);
   }
 
   const now = new Date();
