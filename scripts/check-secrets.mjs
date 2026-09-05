@@ -47,7 +47,7 @@ const args = [
   "--no-banner",
   "--redact",
   ...(existsSync(resolve(ROOT, ".gitleaksignore"))
-    ? ["--additional-args", "--ignore-path=" + resolve(ROOT, ".gitleaksignore")]
+    ? ["--gitleaks-ignore-path", resolve(ROOT, ".gitleaksignore")]
     : []),
 ].filter(Boolean);
 

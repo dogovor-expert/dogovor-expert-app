@@ -1,7 +1,2 @@
-// Gitleaks: игнорируем известные false positives
-// Формат: file:line:rule_id, или glob:rule_id
-// Генерируется автоматически через `gitleaks detect --report`
-
-# Примеры (раскомментируйте если будут false positives):
-# src/lib/__tests__/fixtures/test-tokens.ts:42:generic-api-key
-# docs/examples/oauth-flow.md:15:stripe-access-token
+# Известные false positives — формат file:line:rule_id или glob:rule_id
+# Заполняется автоматически через `gitleaks detect --report`
