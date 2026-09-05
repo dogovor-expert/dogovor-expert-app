@@ -1,0 +1,15 @@
+# Windsurf IDE — специфика
+
+Прочитай `AGENTS.md` для общих правил. Windsurf читает только `.windsurfrules`.
+
+## Quick rules
+- TypeScript strict, no `any`
+- Tailwind + lucide-react
+- Server Components first
+- API: Zod + CSRF + rate limit
+- Verify: `npm run verify` перед коммитом
+- Deploy: `npx vercel deploy --prod -y --scope alikmmmm`
+- Blast Radius: `node scripts/check-blast-radius.mjs <file>`
+
+## Стек
+Next.js 15.5 · React 19 · TS strict · Supabase · Vercel · Sentry

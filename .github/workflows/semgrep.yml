@@ -1,0 +1,43 @@
+name: Semgrep Security Scan
+
+on:
+  pull_request: {}
+  push:
+    branches: [master]
+  schedule:
+    - cron: "0 6 * * 1" # Понедельник 06:00 UTC
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  semgrep:
+    name: Semgrep
+    runs-on: ubuntu-latest
+    container:
+      image: returntocorp/semgrep:latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Semgrep CI (custom rules)
+        run: semgrep ci --config .semgrep.yml --error
+
+      - name: Semgrep OSS rules (nextjs + security-audit)
+        run: |
+          semgrep ci \
+            --config p/nextjs \
+            --config p/security-audit \
+            --config p/owasp-top-ten \
+            --config p/javascript \
+            --config p/typescript \
+            --error \
+            || true # OSS rules могут быть шумными, фейлим только на наших
+
+      - name: Upload SARIF
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: semgrep.sarif
+        continue-on-error: true

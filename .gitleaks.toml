@@ -1,0 +1,54 @@
+# Gitleaks configuration
+# https://github.com/gitleaks/gitleaks
+
+title = "Dogovor-Эксперт Secret Detection"
+
+# Built-in rules (расширенная база)
+[extend]
+useDefault = true
+
+# Дополнительные правила для нашего стека
+[[rules]]
+id = "yookassa-shop-id"
+description = "YooKassa Shop ID (live)"
+regex = '''(?i)(yookassa|yoomoney|yoo_money).{0,30}(shop[_-]?id|store[_-]?id)[\"'\s:=]+([0-9]{6,12})'''
+keywords = ["yookassa", "yoomoney", "shop_id", "shopid"]
+tags = ["secret", "payment"]
+
+[[rules]]
+id = "supabase-service-role-key"
+description = "Supabase service_role key (никогда не должен попасть в репо)"
+regex = '''eyJhbGciOi[A-Za-z0-9_-]{50,}\.eyJpc3MiOiJzdXBhYmFzZS[A-Za-z0-9_-]{50,}\.[A-Za-z0-9_-]{50,}'''
+keywords = ["eyJhbGciOi", "supabase"]
+tags = ["secret", "database"]
+
+[[rules]]
+id = "vercel-deploy-token"
+description = "Vercel deploy token"
+regex = '''(?i)vercel[_-]?token[\"'\s:=]+([a-zA-Z0-9]{24,})'''
+keywords = ["vercel_token", "vercel-token"]
+tags = ["secret", "deploy"]
+
+[[rules]]
+id = "yandex-metrika-counter-token"
+description = "Yandex.Metrika API token (не counter ID)"
+regex = '''(?i)ym[_-]?api[_-]?token[\"'\s:=]+([a-zA-Z0-9_:-]{30,})'''
+keywords = ["ym_api", "metrika"]
+tags = ["secret", "analytics"]
+
+# Allowlist: тестовые fixtures, документация, lockfile
+[allowlist]
+description = "Global allowlist"
+paths = [
+  '''(?i)(package-lock\.json|yarn\.lock|pnpm-lock\.yaml)''',
+  '''(?i)\.next/''',
+  '''(?i)node_modules/''',
+  '''(?i)test-results/''',
+  '''(?i)playwright-report/''',
+  '''(?i)coverage/''',
+  '''(?i)public/workers/.*\.wasm\.js''',
+  # Тестовые fixtures с фейковыми токенами
+  '''.*/__tests__/fixtures/.*''',
+  # Документация с примерами (НЕ реальные ключи)
+  '''.*\.md:.*example''',
+]

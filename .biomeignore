@@ -1,0 +1,15 @@
+node_modules
+.next
+out
+build
+dist
+coverage
+playwright-report
+test-results
+.vercel
+.opencode
+*.min.js
+*.bundle.js
+src/lib/workers/pdf.worker.ts
+supabase/.branches
+public/sw.js

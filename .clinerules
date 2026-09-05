@@ -1,0 +1,22 @@
+# Cline (VS Code AI) — специфика
+
+Прочитай `AGENTS.md` (корневой) для общих правил.
+
+## Workflow
+1. Перед edit: `node scripts/check-blast-radius.mjs <path>` 
+2. После edit: `npm run verify`
+3. Перед deploy: `npm run check:smoke:prod`
+
+## Стек
+- Next.js 15.5 App Router + React 19 + TypeScript strict
+- Supabase (PostgreSQL + RLS)
+- Vercel deployment
+- Sentry для мониторинга
+- Яндекс.Метрика (consent-gated)
+
+## Conventions
+- Conventional Commits: `feat:`, `fix:`, `chore:`
+- API routes: Zod schema + CSRF + rate limit
+- Components: PascalCase, `"use client"` только где нужно
+- Imports: `@/...` (alias)
+- Icons: lucide-react (one-by-one)

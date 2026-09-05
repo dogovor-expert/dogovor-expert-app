@@ -1,0 +1,5 @@
+#!/usr/bin/env sh
+# commit-msg: валидация conventional commits через commitlint.
+# Блокирует коммиты, не соответствующие Conventional Commits.
+
+npx --no-install commitlint --edit "$1"

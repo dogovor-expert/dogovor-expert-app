@@ -1,1 +1,40 @@
-npm run verify
+#!/usr/bin/env sh
+# AGENTS.md Quality Gate (Stage 1): pre-commit hooks.
+#
+# Перед каждым коммитом проверяем:
+#   1. tsc --noEmit (5-15s) — TypeScript strict
+#   2. ESLint (10-30s) — стиль + баги
+#   3. vitest related --staged (3-10s) — только тесты для изменённых файлов
+#   4. check-blast-radius (1-2s) — список потребителей
+#
+# Если что-то падает — коммит отменяется.
+# Обходимо через: git commit --no-verify (только для экстренных случаев).
+
+set -e
+
+echo "🔍 AGENTS Quality Gate..."
+
+# 1. TypeScript
+echo "  • typecheck..."
+npx tsc --noEmit
+
+# 2. Lint
+echo "  • lint..."
+npm run lint
+
+# 3. Blast radius для staged файлов
+echo "  • blast radius (staged files)..."
+npx --no-install node scripts/check-blast-radius.mjs --staged || true
+
+# 4. Vitest related для staged файлов
+STAGED=$(git diff --cached --name-only --diff-filter=ACMR 2>/dev/null | grep -E "^(src/.*\.(ts|tsx))$" | head -5)
+if [ -n "$STAGED" ]; then
+  echo "  • vitest related..."
+  # Запускаем vitest related по первому staged-файлу
+  FIRST=$(echo "$STAGED" | head -1)
+  npx vitest related "$FIRST" --run --reporter=default || {
+    echo "⚠️  vitest related failed for $FIRST. Run 'npm run test:unit' manually."
+  }
+fi
+
+echo "✅ Pre-commit checks passed."

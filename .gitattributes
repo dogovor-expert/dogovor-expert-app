@@ -1,0 +1,41 @@
+# .gitattributes
+# Документация: https://git-scm.com/docs/gitattributes
+
+# Auto-detect text files
+* text=auto eol=lf
+
+# Source code всегда LF (Unix)
+*.ts text eol=lf
+*.tsx text eol=lf
+*.js text eol=lf
+*.jsx text eol=lf
+*.mjs text eol=lf
+*.cjs text eol=lf
+*.json text eol=lf
+*.css text eol=lf
+*.scss text eol=lf
+*.md text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+
+# Скрипты
+*.sh text eol=lf
+*.mjs text eol=lf
+*.mts text eol=lf
+
+# Бинарные файлы
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.webp binary
+*.avif binary
+*.woff2 binary
+*.wasm binary
+*.pdf binary
+
+# Lockfile не merge'ить конфликты (всегда берём наш)
+package-lock.json -merge
+pnpm-lock.yaml -merge
+yarn.lock -merge
