@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { headers } from "next/headers";
 import "@/styles/globals.css";
 import AppLayout from "@/components/layouts/AppLayout";
 import { JsonLd } from "@/components/seo/JsonLd";
@@ -9,6 +8,10 @@ import { SITE_URL, SITE_NAME, SITE_DESCRIPTION, SITE_KEYWORDS, SITE_CONTACT_EMAI
 import { Inter, Playfair_Display, JetBrains_Mono } from "next/font/google";
 import VaultWrapper from "@/components/VaultWrapper";
 
+// Source-based CSP в middleware (без nonce/'strict-dynamic'): политика по
+// источникам совместима со статическим prerender (SSG/ISR), который собирается
+// без middleware. force-dynamic не используется — публичные страницы остаются
+// в CDN-кэше (см. docs/adr/0001-use-supabase).
 // Самохостинг шрифтов через next/font: Google Fonts скачиваются при сборке и
 // отдаются с нашего домена (без внешнего раунд-трипа в fonts.googleapis.com).
 // Inter — основной шрифт сайта (font-sans): прелоадится на каждой странице.
@@ -72,15 +75,9 @@ export const metadata: Metadata = {
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const headersList = await headers();
-  const nonce = headersList.get('x-nonce') ?? '';
-
   return (
     <html lang="ru" className={`${inter.variable} ${playfair.variable} ${jetbrains.variable}`}>
       <head>
-        <meta name="csp-nonce" content={nonce} />
-        <link rel="preconnect" href="https://o4512010222108672.ingest.us.sentry.io" />
-
         <JsonLd
           data={[
             {

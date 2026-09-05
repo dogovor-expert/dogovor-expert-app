@@ -59,6 +59,9 @@ function withSecurityHeaders(
   res.headers.set("X-Content-Type-Options", "nosniff");
   res.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
   res.headers.set("X-Frame-Options", "SAMEORIGIN");
+  // COOP same-origin: изолирует окно от cross-origin opener'ов (Lighthouse Best Practices).
+  // Безопасно для oauth-попапа: после редиректа popup возвращается на наш origin.
+  res.headers.set("Cross-Origin-Opener-Policy", "same-origin");
   // N8: Permissions-Policy — запрещаем доступ к камере/микрофону/геолокации
   // для всего сайта, если это явно не разрешено через iframe-allow.
   res.headers.set(
@@ -77,16 +80,19 @@ function withSecurityHeaders(
 export async function middleware(request: NextRequest): Promise<NextResponse> {
   const { pathname } = request.nextUrl;
 
-  // ====== CSP с nonce ======
-  const nonce = Buffer.from(globalThis.crypto.randomUUID()).toString('base64');
+  // ====== CSP (source-based) ======
+  // Динамический nonce + 'strict-dynamic' НЕСОВМЕСТИМЫ со статическим
+  // prerender (SSG/ISR): static-страницы собираются без middleware и их
+  // скрипты не получают nonce → браузер блокирует весь JS (см. в Audit записи
+  // "Executing inline script violates CSP" на проде). Поэтому для публичного
+  // контентного сайта применяется политика по источникам: 'self' покрывает
+  // все бандлы /_next/static, 'unsafe-inline' — инлайн-скрипты гидратации
+  // Next.js и Яндекс.Метрики. no-cache на HTML не ставим — SSG остаётся.
   const isDev = process.env.NODE_ENV === 'development';
-
-  const requestHeaders = new Headers(request.headers);
-  requestHeaders.set('x-nonce', nonce);
 
   const csp = [
     `default-src 'self'`,
-    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic' 'wasm-unsafe-eval' 'unsafe-eval' https://inzuro.polis.online https://*.inzuro.ru https://polis.online https://api.polis.online https://cdn.jsdelivr.net https://unpkg.com https://challenges.cloudflare.com https://mc.yandex.ru https://mc.yandex.md https://www.cryptopro.ru https://download.rutoken.ru`,
+    `script-src 'self' 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval' https://inzuro.polis.online https://*.inzuro.ru https://polis.online https://api.polis.online https://cdn.jsdelivr.net https://unpkg.com https://challenges.cloudflare.com https://mc.yandex.ru https://mc.yandex.md https://www.cryptopro.ru https://download.rutoken.ru`,
     `worker-src 'self' blob: https://cdn.jsdelivr.net https://unpkg.com`,
     `style-src 'self' 'unsafe-inline' https://fonts.googleapis.com`,
     `img-src 'self' data: blob: https://*.inzuro.ru https://polis.online https://api.polis.online https://dkbm-web.autoins.ru https://xkakhztknlpzqarklewq.supabase.co https://lh3.googleusercontent.com https://avatars.yandex.net https://avatars.mds.yandex.net https://mc.yandex.ru https://mc.yandex.md https://mc.yandex.com`,
@@ -100,7 +106,7 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
     `frame-ancestors 'self'`,
   ].join('; ');
 
-  let response = NextResponse.next({ request: { headers: requestHeaders } });
+  let response = NextResponse.next();
   response = withSecurityHeaders(response, csp, isDev);
 
   // ====== Публичные маршруты (N9 + N10) ======
@@ -150,7 +156,7 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
         },
         setAll(cookiesToSet) {
           cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
-          const newResponse = NextResponse.next({ request: { headers: requestHeaders } });
+          const newResponse = NextResponse.next();
           for (const [key, value] of response.headers) {
             if (key.toLowerCase() === "set-cookie") continue;
             newResponse.headers.set(key, value);
