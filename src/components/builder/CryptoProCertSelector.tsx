@@ -341,7 +341,7 @@ export function CryptoProCertSelector({ onSelect, onBack }: CryptoProCertSelecto
                       onClick={() => { void validateCert(cert.thumbprint); }}
                       disabled={isChecking}
                       title="Проверить снова"
-                      className="flex-shrink-0 px-3 border-l border-gray-100 text-gray-400 hover:text-brand-600 hover:bg-blue-50 transition-colors disabled:opacity-50"
+                      className="flex-shrink-0 px-3 border-l border-gray-100 text-gray-600 hover:text-brand-600 hover:bg-blue-50 transition-colors disabled:opacity-50"
                     >
                       <RefreshCw className={`w-4 h-4 ${isChecking ? 'animate-spin' : ''}`} />
                     </button>

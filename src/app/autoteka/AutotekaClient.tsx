@@ -1,5 +1,5 @@
 "use client";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 import Link from "next/link";
 import {
   Search, AlertTriangle, Check, Loader2, Car, FileText, Shield, CreditCard, RefreshCw,
@@ -82,6 +82,7 @@ function statusLabel(s: string): string {
 }
 
 export default function AutotekaClient() {
+  const vinId = useId();
   const [vin, setVin] = useState("");
   const [checking, setChecking] = useState(false);
   const [paying, setPaying] = useState(false);
@@ -284,9 +285,10 @@ export default function AutotekaClient() {
         )}
 
         <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-soft mt-6 ring-1 ring-brand-100">
-          <label className="text-xs font-bold text-gray-700 uppercase tracking-wide">Введите VIN номер</label>
+          <label htmlFor={vinId} className="text-xs font-bold text-gray-700 uppercase tracking-wide">Введите VIN номер</label>
           <div className="flex gap-3 mt-3">
             <input
+              id={vinId}
               type="text" placeholder="17 символов VIN" value={vin}
               onChange={(e) => setVin(e.target.value.toUpperCase())}
               maxLength={17}
