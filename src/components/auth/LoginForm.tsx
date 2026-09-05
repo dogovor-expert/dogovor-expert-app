@@ -6,6 +6,16 @@ import { loginSchema, type LoginFormData } from '@/lib/validations/document';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { useEffect, useState } from 'react';
+import dynamic from 'next/dynamic';
+
+// S5 (аудит): сервер /api/auth/login требует Turnstile-токен, когда настроен
+// TURNSTILE_SECRET_KEY. Виджет рендерится, только если есть site key;
+// при ошибке сервера ремоунтим виджет — токен одноразовый.
+const CAPTCHA_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
+const TurnstileCaptcha = dynamic(() => import('@/components/auth/TurnstileCaptcha'), {
+  ssr: false,
+  loading: () => null,
+});
 
 interface LoginFormProps {
   onSuccess?: () => void;
@@ -15,6 +25,9 @@ interface LoginFormProps {
 export function LoginForm({ onSuccess, initialEmail }: LoginFormProps) {
   const [serverError, setServerError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const [captchaNonce, setCaptchaNonce] = useState(0);
+  const captchaRequired = Boolean(CAPTCHA_SITE_KEY);
 
   const {
     register,
@@ -46,13 +59,18 @@ export function LoginForm({ onSuccess, initialEmail }: LoginFormProps) {
       const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
+        body: JSON.stringify({ ...data, captchaToken }),
       });
 
       const result = await response.json();
 
       if (!response.ok) {
         setServerError(result.error || 'Ошибка входа');
+        // Токен Turnstile одноразовый: после отказа сервера нужен свежий.
+        if (captchaRequired) {
+          setCaptchaToken(null);
+          setCaptchaNonce((n) => n + 1);
+        }
         return;
       }
 
@@ -113,13 +131,17 @@ export function LoginForm({ onSuccess, initialEmail }: LoginFormProps) {
         </div>
       )}
 
+      {captchaRequired && (
+        <TurnstileCaptcha key={captchaNonce} onToken={setCaptchaToken} />
+      )}
+
       <Button
         type="submit"
-        disabled={isLoading}
+        disabled={isLoading || (captchaRequired && !captchaToken)}
         aria-busy={isLoading}
         className="w-full"
       >
-        {isLoading ? 'Вход...' : 'Войти'}
+        {isLoading ? 'Вход...' : captchaRequired && !captchaToken ? 'Подтвердите капчу' : 'Войти'}
       </Button>
     </form>
   );

@@ -68,7 +68,7 @@ async function rasterizeFirstPages(pdfBytes: Uint8Array): Promise<Buffer[]> {
     ctx.fillStyle = "#ffffff";
     ctx.fillRect(0, 0, cc.canvas.width, cc.canvas.height);
     await page.render({ canvasContext: ctx, viewport, canvas: cc.canvas }).promise;
-    out.push((cc.canvas as any).toBuffer("image/jpeg", { quality: 0.88 }));
+    out.push((cc.canvas as any).toBuffer("image/webp", { quality: 0.8 }));
     page.cleanup();
   }
   // Явная очистка транспорта/воркера, т.к. doc.destroy() в v6 убран,
@@ -102,7 +102,7 @@ async function main() {
     const bytes = new Uint8Array(await blob.arrayBuffer());
     const pages = await rasterizeFirstPages(bytes);
     for (let i = 0; i < pages.length; i++) {
-      await writeFile(resolve(OUT_DIR, `${t.id}-${i + 1}.jpg`), pages[i]);
+      await writeFile(resolve(OUT_DIR, `${t.id}-${i + 1}.webp`), pages[i]);
     }
     manifest[t.id] = pages.length;
     done++;

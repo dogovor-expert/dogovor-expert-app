@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { limiters, checkRateLimit, rateLimitResponse } from "@/lib/ratelimit";
 
 export async function GET() {
   const supabase = await createClient();
@@ -8,6 +9,10 @@ export async function GET() {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+
+  // S4 (аудит): service-role запрос к reports — закрываем лимитом.
+  const rl = await checkRateLimit(limiters.autotekaHistory, user.id);
+  if (!rl.ok) return rateLimitResponse(rl.retryAfter);
 
   const admin = createAdminClient();
   const { data, error } = await admin

@@ -11,6 +11,7 @@ Disallow: /approve
 Disallow: /api/
 Disallow: /auth/
 Disallow: /builder
+Disallow: /connections
 Disallow: /documents$
 # Clean-param: динамические фильтры/сортировки не меняют состав документов —
 # Яндекс склеит все варианты в основной URL.
@@ -35,5 +36,6 @@ Disallow: /approve
 Disallow: /api/
 Disallow: /auth/
 Disallow: /builder
+Disallow: /connections
 
 Sitemap: https://dogovor.expert/sitemap.xml

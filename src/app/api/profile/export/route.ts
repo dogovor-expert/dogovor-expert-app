@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { limiters, checkRateLimit, rateLimitResponse } from "@/lib/ratelimit";
 
 export async function GET() {
   const supabase = await createClient();
@@ -7,6 +8,10 @@ export async function GET() {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+
+  // S4 (аудит): полный дамп персональных данных — тяжёлая выборка из 4 таблиц.
+  const rl = await checkRateLimit(limiters.exportData, user.id);
+  if (!rl.ok) return rateLimitResponse(rl.retryAfter);
 
   const [profile, documents, subscriptions, payments] = await Promise.all([
     supabase

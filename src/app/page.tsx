@@ -5,7 +5,7 @@ import {
   ArrowRight, Sparkles, FileCheck,
   FileLock, ShieldCheck, Download
 } from "lucide-react";
-import HomeTemplateGrid from "@/components/HomeTemplateGridWrapper";
+import HomeTemplateGrid from "@/components/HomeTemplateGrid";
 import { TEMPLATE_META_LITE } from "@/data/templatesMetaLite";
 
 export const revalidate = 3600;

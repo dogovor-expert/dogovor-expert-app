@@ -41,7 +41,7 @@ function getBlankPreviewImages(slug: string): string[] {
     if (!n) return [];
     const imgs: string[] = [];
     for (let i = 1; i <= n; i++) {
-      const rel = `/blank-previews/${slug}-${i}.jpg`;
+      const rel = `/blank-previews/${slug}-${i}.webp`;
       if (existsSync(join(process.cwd(), "public", rel))) imgs.push(rel);
     }
     return imgs;
@@ -186,6 +186,8 @@ export default async function BlankPage({ params }: { params: Promise<{ slug: st
                     alt={`Пустой бланк «${t.name}», страница ${i + 1}`}
                     loading="lazy"
                     className="w-full h-auto"
+                    width={794}
+                    height={1123}
                   />
                 </div>
               ))}
