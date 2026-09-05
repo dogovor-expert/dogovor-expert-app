@@ -75,3 +75,6 @@ storybook-static/
 visual-report/
 audit-shots/
 
+
+# Supabase CLI local state
+supabase/.temp/

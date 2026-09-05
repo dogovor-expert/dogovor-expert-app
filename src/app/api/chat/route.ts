@@ -32,11 +32,13 @@ const CHAT_ENABLED = process.env.NEXT_PUBLIC_CHAT_ENABLED === "1";
 // переписку (вместе с ФИО/email) невозможно.
 const CHAT_COOKIE = "chat_vid";
 function chatHmacSecret(): string {
-  return (
-    process.env.CHAT_HMAC_SECRET ||
-    process.env.SUPABASE_SERVICE_ROLE_KEY ||
-    "insecure-chat-dev-only"
-  );
+  // Fail-closed (аудит S2): без явного секрета подпись visitor-cookie
+  // предсказуема (фолбэки на SERVICE_ROLE / "insecure-chat-dev-only"
+  // позволяли подделать чужой visitorId). Роут просто отдаёт 500,
+  // пока CHAT_HMAC_SECRET не настроен.
+  const secret = process.env.CHAT_HMAC_SECRET;
+  if (!secret) throw new Error("CHAT_HMAC_SECRET is not configured");
+  return secret;
 }
 function signVisitor(visitorId: string): string {
   const sig = crypto

@@ -91,13 +91,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               email: SITE_CONTACT_EMAIL,
               description: SITE_DESCRIPTION,
               foundingDate: "2024",
-              // P1 (brand protection): sameAs связывает Organization с официальными соцсетями.
-              // Google использует sameAs для подтверждения брендовой принадлежности и вытеснения мимикрирующих доменов.
-              // Владелец: заполните реальные URL ниже, раскомментировав строки. Пустой массив не передаётся.
-              // sameAs: [
-              //   "https://t.me/dogovor_expert",
-              //   "https://vk.com/dogovor_expert",
-              // ],
+              // E1 (brand protection): sameAs связывает Organization с официальными соцсетями.
+              // Проверено живьём: t.me/dogovor_expert существует, vk.com/dogovor_expert — нет.
+              sameAs: ["https://t.me/dogovor_expert"],
             },
             {
               "@context": "https://schema.org",
@@ -112,6 +108,23 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                   urlTemplate: `${SITE_URL}/templates?q={search_term_string}`,
                 },
                 "query-input": "required name=search_term_string",
+              },
+            },
+            {
+              // E1 (rich results): SoftwareApplication — продукт в Google-вёрткалке
+              // и расширенных сниппетах бизнес-инструментов.
+              "@context": "https://schema.org",
+              "@type": "SoftwareApplication",
+              name: "Dogovor-Эксперт™",
+              url: SITE_URL,
+              applicationCategory: "BusinessApplication",
+              operatingSystem: "Web",
+              inLanguage: "ru",
+              description: SITE_DESCRIPTION,
+              offers: {
+                "@type": "Offer",
+                price: "0",
+                priceCurrency: "RUB",
               },
             },
           ]}

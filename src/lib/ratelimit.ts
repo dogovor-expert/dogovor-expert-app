@@ -61,6 +61,12 @@ export const limiters = {
   signDownload: mk("rl:sign-download", 30, "60 s"),
   /** Верификация подписи — 30 запросов/мин на user.id. */
   signVerify: mk("rl:sign-verify", 30, "60 s"),
+  /** Экспорт персональных данных (S4) — 5/мин на user.id (тяжёлый полный дамп). */
+  exportData: mk("rl:export-data", 5, "60 s"),
+  /** Опрос статуса OCR-задачи (S4) — 60/мин на user.id (внешний прокси). */
+  ocrStatus: mk("rl:ocr-status", 60, "60 s"),
+  /** История Autoteka-отчётов (S4) — 30/мин на user.id. */
+  autotekaHistory: mk("rl:autoteka-history", 30, "60 s"),
 };
 
 export function clientIp(req: Request): string {

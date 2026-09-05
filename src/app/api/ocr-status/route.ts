@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { limiters, checkRateLimit, rateLimitResponse } from '@/lib/ratelimit';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 10;
@@ -27,6 +28,10 @@ export async function GET(_req: NextRequest) {
   if (!user) {
     return NextResponse.json({ ok: false, error: 'unauthorized' }, { status: 401 });
   }
+
+  // S4 (аудит): upstream /health — внешний ресурс; опрос без лимита = вектор DoS.
+  const rl = await checkRateLimit(limiters.ocrStatus, user.id);
+  if (!rl.ok) return rateLimitResponse(rl.retryAfter);
 
   const baseUrl = process.env.OCCULAR_BASE_URL?.trim().replace(/\/+$/, '');
   if (!baseUrl) {

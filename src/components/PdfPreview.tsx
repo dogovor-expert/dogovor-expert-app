@@ -109,7 +109,7 @@ export default function PdfPreview({ docs, design, watermark, onPagesChange, roo
     <div id={rootId} className={`flex flex-col items-center gap-6 py-4 ${className || ""}`}>
       {pages.map((src, i) => (
         // eslint-disable-next-line @next/next/no-img-element
-        <img key={i} src={src} alt={"Страница " + (i + 1)} className="a4-sheet-img" />
+        <img key={i} src={src} alt={"Страница " + (i + 1)} className="a4-sheet-img" width={794} height={1123} />
       ))}
     </div>
   );
