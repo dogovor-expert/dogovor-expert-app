@@ -1,0 +1,38 @@
+{
+  "ci": {
+    "collect": {
+      "url": [
+        "https://dogovor.expert/",
+        "https://dogovor.expert/templates",
+        "https://dogovor.expert/dkp",
+        "https://dogovor.expert/osago",
+        "https://dogovor.expert/autoteka"
+      ],
+      "numberOfRuns": 1,
+      "settings": {
+        "preset": "desktop"
+      }
+    },
+    "assert": {
+      "assertions": {
+        "categories": "warn",
+        "unused-css-rules": "off",
+        "unused-javascript": "off",
+        "valid-source-maps": "off",
+        "uses-rel-preconnect": "off",
+        "legacy-javascript": "off",
+        "legacy-javascript-insight": "off",
+        "network-dependency-tree-insight": "off",
+        "render-blocking-insight": "off",
+        "dom-size-insight": "off",
+        "largest-contentful-paint": "warn",
+        "cumulative-layout-shift": "warn",
+        "total-blocking-time": "warn"
+      }
+    },
+    "upload": {
+      "target": "filesystem",
+      "outputDir": ".lighthouseci"
+    }
+  }
+}
