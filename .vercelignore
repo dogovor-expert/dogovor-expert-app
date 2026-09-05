@@ -22,3 +22,42 @@ coverage
 samples
 playwright.config.ts
 playwright.prod.config.ts
+
+# Инструменты разработки (не нужны в production bundle)
+biome.json
+.knipignore
+knip.json
+.lintstagedrc.js
+.lintstagedrc-test.json
+.lighthouserc.json
+.commitlintrc*
+commitlint.config.*
+release-please-config.json
+.gitleaks.toml
+.gitleaksignore
+.semgrep.yml
+.semgrepignore
+.windsurfrules
+.cursorrules
+.clinerules
+.continuerules.json
+.claude/
+.biocopilot-instructions.md
+
+# Документация разработки
+docs/
+audit/
+audit-shots/
+visual-report/
+stories/
+
+# Инструменты (кроме задеплоенных)
+.opencode/
+.storybook/
+.vercel/
+
+# Storybook
+storybook-static/
+
+# Lockfile резервные копии
+*.lock.bak

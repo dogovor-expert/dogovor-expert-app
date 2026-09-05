@@ -1,0 +1,25 @@
+# Cursor IDE — специфика для AI-агента
+
+Прочитай `AGENTS.md` (корневой) и `src/*/AGENTS.md` (ближайший к редактируемому файлу).
+
+## Правила
+- TypeScript strict — никаких `any`, `@ts-ignore` без reason
+- Tailwind utility, lucide-react иконки
+- Server Components по умолчанию
+- A11y: `aria-*` на интерактивных элементах
+- API: Zod + CSRF + rate limit
+- Conventional Commits
+
+## Перед коммитом
+1. `node scripts/check-blast-radius.mjs <файл>` (Blast Radius)
+2. `npm run typecheck` (0 errors)
+3. `npm run lint` (0 errors)
+4. `npm run test:unit` (296 tests)
+5. `npm run build` (production OK)
+
+## Запрещено
+- Изменять `src/middleware.ts` без Blast Radius (сломает CSP)
+- `useState(null)+useEffect(setMounted)` — используй `useSyncExternalStore`
+- inline `style={{}}` — Tailwind
+- `dangerouslySetInnerHTML` без DOMPurify
+- Хардкод строк UI на русском — выноси в `messages/`

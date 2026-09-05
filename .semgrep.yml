@@ -1,0 +1,138 @@
+rules:
+  # Next.js / React безопасность
+  - id: nextjs-no-dangerously-set-inner-html
+    pattern: dangerouslySetInnerHTML={...}
+    message: |
+      XSS risk. dangerouslySetInnerHTML должен быть обёрнут в DOMPurify
+      (см. src/lib/dompurify.ts) или заменён на безопасный API.
+    languages: [typescript, tsx]
+    severity: ERROR
+
+  - id: nextjs-no-window-open
+    pattern: window.open($X)
+    message: |
+      window.open() без `noopener,noreferrer` — утечка window.opener.
+      Используйте `window.open(url, '_blank', 'noopener,noreferrer')`.
+    languages: [typescript, tsx]
+    severity: WARNING
+
+  - id: react-use-client-with-server-only
+    patterns:
+      - pattern: |
+          import { cookies } from "next/headers"
+          ...
+          "use client"
+      - pattern: |
+          "use client"
+          ...
+          import { cookies } from "next/headers"
+    message: |
+      cookies() доступен ТОЛЬКО в server components/actions.
+      "use client" директива запрещает server-only импорты.
+    languages: [typescript, tsx]
+    severity: ERROR
+
+  - id: react-no-direct-fetch-in-component
+    patterns:
+      - pattern: |
+          useEffect(() => {
+            ...
+            fetch($URL)
+            ...
+          })
+    message: |
+      Рассмотрите React Query / SWR / Server Component вместо прямого fetch.
+      Для простых случаев OK, но для production лучше useSWR/useQuery.
+    languages: [typescript, tsx]
+    severity: INFO
+
+  - id: nextjs-no-process-env-in-client
+    patterns:
+      - pattern: |
+          "use client"
+          ...
+          process.env.$VAR
+      - pattern: |
+          process.env.$VAR
+          ...
+          "use client"
+    message: |
+      process.env доступен в client только для NEXT_PUBLIC_* переменных.
+      Для server-side секретов — используйте server actions.
+    languages: [typescript, tsx]
+    severity: WARNING
+
+  - id: supabase-missing-rls
+    pattern: |
+      create table $T ($$$);
+    message: |
+      Каждая новая таблица должна иметь:
+        ALTER TABLE $T ENABLE ROW LEVEL SECURITY;
+      + политики для SELECT/INSERT/UPDATE/DELETE.
+    languages: [sql]
+    severity: ERROR
+    paths:
+      exclude:
+        - "supabase/.branches/**"
+
+  - id: console-log-in-production
+    pattern: console.log(...)
+    message: |
+      console.log в production коде. Используйте:
+      - Sentry.captureMessage() для алертов
+      - console.warn / console.error допустимы
+      - для dev: console.log + process.env.NODE_ENV check
+    languages: [typescript, tsx]
+    severity: WARNING
+    paths:
+      exclude:
+        - "**/*.test.ts"
+        - - "src/lib/validations/**"
+
+  - id: any-type-cast
+    pattern: "as any"
+    message: |
+      `as any` отключает type safety. Используйте:
+      - `as unknown as Type` (явное приведение)
+      - исправьте тип
+      - `// @ts-expect-error` (с обоснованием)
+    languages: [typescript, tsx]
+    severity: WARNING
+
+  - id: hardcoded-secret
+    patterns:
+      - pattern-regex: '(?i)(api[_-]?key|secret|password|token)\s*[:=]\s*["'']([a-zA-Z0-9_-]{20,})["'']'
+    message: |
+      Hardcoded secret. Перенесите в env (process.env.* или .env.local).
+      Если это пример — добавьте в .gitleaksignore.
+    languages: [typescript, tsx, javascript]
+    severity: ERROR
+
+  - id: zod-any-or-unknown
+    patterns:
+      - pattern: z.any()
+      - pattern: z.unknown()
+    message: |
+      z.any() / z.unknown() отключают валидацию. Используйте:
+      - z.string() с transform/parse
+      - z.object({ ... }).passthrough() если нужна гибкость
+    languages: [typescript, tsx]
+    severity: WARNING
+
+  - id: missing-csrf-protection
+    patterns:
+      - pattern: |
+          export async function POST(req: Request) {
+            ...
+            if (req.method === "POST") { $$$ }
+          }
+      - pattern: |
+          export const POST = $HANDLER;
+    message: |
+      POST/PUT/DELETE без withCsrf() — уязвимость CSRF.
+      Оберните в withCsrf(handler) из src/lib/csrf.ts.
+    languages: [typescript, tsx]
+    severity: ERROR
+    paths:
+      include:
+        - "src/app/api/**"

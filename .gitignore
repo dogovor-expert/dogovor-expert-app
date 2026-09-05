@@ -58,3 +58,20 @@ prompt-для-нейросети.md
 
 # local playwright browsers cache path (per-machine)
 .npmrc
+
+# Dev-инструменты — IDE-специфичные файлы (можно коммитить, но .opencode локальный)
+.opencode/
+.storybook/
+.vercel/
+
+# Lockfile backups
+*.lock.bak
+package-lock.json.bak
+
+# Storybook
+storybook-static/
+
+# Visual regression
+visual-report/
+audit-shots/
+
