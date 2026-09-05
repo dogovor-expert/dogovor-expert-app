@@ -4,6 +4,7 @@ import { limiters, checkRateLimit, rateLimitResponse, clientIp } from "@/lib/rat
 import { withCsrf } from "@/lib/csrf";
 import { isSameOrigin } from "@/lib/admin-auth";
 import { dadataSchema, validateBody } from "@/lib/validations/api";
+import { boundedCacheSet } from "@/lib/bounded-cache";
 
 const DADATA_HOST = "https://suggestions.dadata.ru/suggestions/api/4_1/rs";
 
@@ -209,7 +210,7 @@ async function postHandler(req: NextRequest) {
     const result = { suggestions };
 
     if (cacheable) {
-      partyCache.set(query.trim(), { ts: Date.now(), body: result });
+      boundedCacheSet(partyCache, query.trim(), { ts: Date.now(), body: result }, CACHE_TTL_MS);
     }
     return NextResponse.json(result);
   } catch {
