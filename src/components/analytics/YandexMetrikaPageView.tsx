@@ -1,8 +1,14 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
+/**
+ * Яндекс.Метрика: отправляет page-view при смене pathname/search.
+ * Использует useCookieConsent — корректно реагирует на accept/decline
+ * без перезагрузки (Аудит Фаза 1: T1/AN1).
+ */
+import { Suspense, useEffect } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { YANDEX_METRIKA_ID } from "@/lib/site";
+import { useCookieConsent } from "@/hooks/useCookieConsent";
 
 declare global {
   interface Window {
@@ -23,20 +29,17 @@ export function YandexMetrikaPageView() {
 function YandexMetrikaPageViewInner() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const [consent, setConsent] = useState<string | null>(null);
+  const { isReady, categories } = useCookieConsent();
 
   useEffect(() => {
-    try {
-      setConsent(localStorage.getItem("dogovor_cookie_consent"));
-    } catch {
-      setConsent(null);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (!ENABLED || consent !== "accepted" || typeof window === "undefined" || typeof window.ym !== "function") return;
-    window.ym(Number(YANDEX_METRIKA_ID), "hit", window.location.pathname + window.location.search);
-  }, [pathname, searchParams, consent]);
+    if (!ENABLED || !isReady || !categories.analytics) return;
+    if (typeof window === "undefined" || typeof window.ym !== "function") return;
+    window.ym(
+      Number(YANDEX_METRIKA_ID),
+      "hit",
+      window.location.pathname + window.location.search
+    );
+  }, [pathname, searchParams, isReady, categories.analytics]);
 
   return null;
 }
