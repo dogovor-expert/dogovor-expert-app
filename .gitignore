@@ -78,3 +78,7 @@ audit-shots/
 
 # Supabase CLI local state
 supabase/.temp/
+
+# Audit tool artifacts
+.lighthouseci/
+.squirrel*

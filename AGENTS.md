@@ -333,3 +333,21 @@ pm run check:smoke:prod (5 сценариев)
 - Scope: eat(auth):, ix(cookies):, chore(deps):
 - Breaking: eat(api)!: или footer BREAKING CHANGE:
 - release-please автоматически бампит версию + CHANGELOG.md
+## Site audit tools (added 05.09.2026)
+
+### What they do
+- PSI (scripts/psi.mjs): Google PageSpeed Insights API = pagespeed.web.dev engine. Lab Lighthouse (perf/seo/bp/a11y, FCP/LCP/TBT/CLS/SI) + field CrUX metrics. Quota without a key is tiny - PSI_API_KEY env (Google Cloud, pagespeedonline API) raises it.
+- Lighthouse CI (lighthouserc.json): 5 key pages on production, desktop preset, reports to .lighthouseci/. Assertions set to warn (audit mode, not a gate).
+- squirrelscan (squirrel.toml): 150-page crawl + 260 rules (SEO/a11y/perf/security/agents), LLM-friendly report.
+
+### Commands
+- npm run psi [url] [mobile|desktop] - PSI scores + Core Web Vitals + CrUX
+- npm run lighthouse - LHCI over 5 prod pages (results: .lighthouseci/)
+- npm run audit:squirrel - full crawl audit, llm output
+- npx squirrel report - re-view last audit (console)
+- npx squirrel report --format llm - same for an agent
+
+### Notes
+- squirrel free tier: local crawl only (no cloud rendering). Login (squirrel auth) unlocks JS-rendered audit.
+- PSI 429 = daily quota without key; pass PSI_API_KEY or run less often.
+- Do NOT wire these into pre-commit/CI gates - they audit the production site, are slow, and flaky by nature.
