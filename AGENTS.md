@@ -231,6 +231,7 @@ pm run lint — ESLint
 ode scripts/check-blast-radius.mjs --staged — blast radius
 4. 
 px vitest related — для первого staged .ts/.tsx файла
+5. `node scripts/check-secrets.mjs` — gitleaks: секреты в staged-файлах (warning-пропуск, если gitleaks не установлен)
 
 Если что-то падает — коммит отменяется. Обход только через git commit --no-verify (для экстренных случаев, см. CHANGELOG).
 ---
@@ -278,7 +279,7 @@ px vitest related — для первого staged .ts/.tsx файла
 - БД: Supabase (PostgreSQL)
 - Деплой: Vercel
 - Шаблонов: 369, PRO-подписка через YooKassa
-- Аналитика: Яндекс.Метрика (consent-gated), Sentry
+- Аналитика: Яндекс.Метрика (consent-gated), PostHog (consent-gated), Sentry
 
 ## Setup commands
 - Install: 
@@ -314,7 +315,7 @@ pm run check:smoke:prod (5 сценариев)
 - Все env vars — через Zod-валидацию (src/lib/env.ts — TODO)
 - Supabase: server client в server actions, browser client в client components
 - API routes: Zod-схема + CSRF (@/lib/csrf) + rate limit (@/lib/ratelimit)
-- CSP через middleware (nonce-based, см. src/middleware.ts)
+- CSP через middleware (source-based: 'self' + 'unsafe-inline', см. src/middleware.ts; НЕ nonce/strict-dynamic — несовместимо с SSG prerender)
 - Sentry для мониторинга (НЕ отключать)
 - НЕ логировать токены, ключи, персональные данные
 

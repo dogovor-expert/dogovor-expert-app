@@ -6,6 +6,7 @@
 #   2. ESLint (10-30s) — стиль + баги
 #   3. vitest related --staged (3-10s) — только тесты для изменённых файлов
 #   4. check-blast-radius (1-2s) — список потребителей
+#   5. check-secrets (gitleaks, 1-3s) — секреты в staged-файлах (если gitleaks установлен)
 #
 # Если что-то падает — коммит отменяется.
 # Обходимо через: git commit --no-verify (только для экстренных случаев).
@@ -35,6 +36,17 @@ if [ -n "$STAGED" ]; then
   npx vitest related "$FIRST" --run --reporter=default || {
     echo "⚠️  vitest related failed for $FIRST. Run 'npm run test:unit' manually."
   }
+fi
+
+# 5. Gitleaks — секреты в staged-файлах (если установлен)
+if command -v gitleaks >/dev/null 2>&1; then
+  echo "  • gitleaks (staged secrets)..."
+  node scripts/check-secrets.mjs || {
+    echo "❌ SECRETS DETECTED — коммит заблокирован."
+    exit 1
+  }
+else
+  echo "  ⚠️  gitleaks не установлен — проверка секретов пропущена"
 fi
 
 echo "✅ Pre-commit checks passed."
