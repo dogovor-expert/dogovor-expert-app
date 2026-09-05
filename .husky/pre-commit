@@ -24,7 +24,7 @@ npm run lint
 
 # 3. Blast radius для staged файлов
 echo "  • blast radius (staged files)..."
-npx --no-install node scripts/check-blast-radius.mjs --staged || true
+node scripts/check-blast-radius.mjs --staged || true
 
 # 4. Vitest related для staged файлов
 STAGED=$(git diff --cached --name-only --diff-filter=ACMR 2>/dev/null | grep -E "^(src/.*\.(ts|tsx))$" | head -5)
