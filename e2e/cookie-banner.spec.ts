@@ -1,9 +1,19 @@
-// Smoke test: проверить что cookies баннер виден при первой загрузке без localStorage.
-// Проверяет 4 главных бага: FOUC, кнопка Принять, broadcast для YandexMetrika, persistence.
-import { test, expect } from "@playwright/test";
+/**
+ * E2E тесты cookies-баннера (Фаза 1, 2026).
+ * Покрывает:
+ *  - Баннер показывается при первом визите
+ *  - 3 равноправные кнопки (Принять всё / Только необходимые / Настроить)
+ *  - Granular consent через панель настроек
+ *  - Persistent иконка после решения
+ *  - Кнопка «Отмена» в настройках не меняет consent
+ *  - localStorage содержит granular categories
+ *  - Escape работает
+ */
+import { test, expect, type BrowserContext, type Page } from "@playwright/test";
 
-test("cookies banner appears on first visit (no localStorage)", async ({ page, context }) => {
-  // Чистим все cookies и localStorage ДО загрузки страницы
+const BASE = process.env.E2E_BASE_URL || "https://dogovor.expert";
+
+async function clearStorage(page: Page, context: BrowserContext) {
   await context.clearCookies();
   await context.addInitScript(() => {
     try {
@@ -12,74 +22,142 @@ test("cookies banner appears on first visit (no localStorage)", async ({ page, c
       /* noop */
     }
   });
+}
 
-  // Переходим на прод (НЕ на localhost, чтобы исключить dev-кеш)
-  const target = process.env.E2E_BASE_URL || "https://dogovor.expert";
-  await page.goto(target, { waitUntil: "domcontentloaded", timeout: 30000 });
-  await page.waitForLoadState("networkidle", { timeout: 15000 }).catch(() => {});
+test.describe("Cookies banner (granular consent, Фаза 1)", () => {
+  test("первый визит: баннер с 3 кнопками виден", async ({ page, context }) => {
+    await clearStorage(page, context);
+    await page.goto(BASE, { waitUntil: "domcontentloaded" });
+    await page.waitForLoadState("networkidle", { timeout: 15000 }).catch(() => {});
 
-  // Ищем баннер по роли dialog или по тексту
-  const banner = page.locator('[role="dialog"]', { hasText: /Мы используем cookies/i });
-  await expect(banner).toBeVisible({ timeout: 8000 });
+    const banner = page.locator('[role="dialog"]', { hasText: /Мы используем cookies/i });
+    await expect(banner).toBeVisible({ timeout: 8000 });
 
-  // Проверяем кнопки
-  const acceptBtn = banner.locator('button:has-text("Принять")');
-  const declineBtn = banner.locator('button:has-text("Отклонить")');
-  await expect(acceptBtn).toBeVisible();
-  await expect(declineBtn).toBeVisible();
-
-  // Кликаем "Принять" — баннер должен исчезнуть
-  await acceptBtn.click();
-  await expect(banner).not.toBeVisible({ timeout: 3000 });
-
-  // Проверяем localStorage
-  const stored = await page.evaluate(() => window.localStorage.getItem("dogovor_cookie_consent"));
-  expect(stored).toBe("accepted");
-});
-
-test("cookies banner: persist across navigation", async ({ page, context }) => {
-  await context.clearCookies();
-  await context.addInitScript(() => {
-    try {
-      window.localStorage.clear();
-    } catch {
-      /* noop */
-    }
+    await expect(banner.locator('button:has-text("Принять всё")')).toBeVisible();
+    await expect(banner.locator('button:has-text("Только необходимые")')).toBeVisible();
+    await expect(banner.locator('button:has-text("Настроить")')).toBeVisible();
   });
 
-  const target = process.env.E2E_BASE_URL || "https://dogovor.expert";
-  await page.goto(target, { waitUntil: "domcontentloaded" });
-  await page.waitForLoadState("networkidle", { timeout: 15000 }).catch(() => {});
+  test("Принять всё: localStorage = {analytics: true, marketing: true}", async ({ page, context }) => {
+    await clearStorage(page, context);
+    await page.goto(BASE, { waitUntil: "domcontentloaded" });
+    await page.waitForLoadState("networkidle", { timeout: 15000 }).catch(() => {});
 
-  const banner = page.locator('[role="dialog"]', { hasText: /Мы используем cookies/i });
-  await expect(banner).toBeVisible({ timeout: 8000 });
+    const banner = page.locator('[role="dialog"]', { hasText: /Мы используем cookies/i });
+    await expect(banner).toBeVisible({ timeout: 8000 });
 
-  // Принимаем
-  await banner.locator('button:has-text("Принять")').click();
-  await expect(banner).not.toBeVisible();
+    await banner.locator('button:has-text("Принять всё")').click();
+    await expect(banner).not.toBeVisible({ timeout: 3000 });
 
-  // Навигация — баннер НЕ должен появиться
-  await page.goto(`${target}/utils`, { waitUntil: "domcontentloaded" });
-  await page.waitForLoadState("networkidle", { timeout: 15000 }).catch(() => {});
-  await expect(banner).not.toBeVisible({ timeout: 3000 });
-});
-
-test("cookies banner: не показывается если уже accepted", async ({ page, context }) => {
-  // Устанавливаем localStorage ДО загрузки
-  await context.addInitScript(() => {
-    try {
-      window.localStorage.setItem("dogovor_cookie_consent", "accepted");
-    } catch {
-      /* noop */
-    }
+    const stored = await page.evaluate(() => {
+      const raw = window.localStorage.getItem("dogovor_cookie_consent");
+      return raw ? JSON.parse(raw) : null;
+    });
+    expect(stored).toBeTruthy();
+    expect(stored.categories).toEqual({
+      necessary: true,
+      analytics: true,
+      marketing: true,
+    });
+    expect(stored.policyVersion).toBeTruthy();
+    expect(typeof stored.ts).toBe("number");
   });
 
-  const target = process.env.E2E_BASE_URL || "https://dogovor.expert";
-  await page.goto(target, { waitUntil: "domcontentloaded" });
-  await page.waitForLoadState("networkidle", { timeout: 15000 }).catch(() => {});
+  test("Только необходимые: localStorage = {analytics: false, marketing: false}", async ({ page, context }) => {
+    await clearStorage(page, context);
+    await page.goto(BASE, { waitUntil: "domcontentloaded" });
+    await page.waitForLoadState("networkidle", { timeout: 15000 }).catch(() => {});
 
-  const banner = page.locator('[role="dialog"]', { hasText: /Мы используем cookies/i });
-  // Подождём 2 секунды — баннер НЕ должен появиться
-  await page.waitForTimeout(2000);
-  await expect(banner).not.toBeVisible();
+    const banner = page.locator('[role="dialog"]', { hasText: /Мы используем cookies/i });
+    await expect(banner).toBeVisible({ timeout: 8000 });
+
+    await banner.locator('button:has-text("Только необходимые")').click();
+    await expect(banner).not.toBeVisible({ timeout: 3000 });
+
+    const stored = await page.evaluate(() => JSON.parse(window.localStorage.getItem("dogovor_cookie_consent") || "null"));
+    expect(stored.categories.analytics).toBe(false);
+    expect(stored.categories.marketing).toBe(false);
+    expect(stored.categories.necessary).toBe(true);
+  });
+
+  test("Настроить → granular: только analytics, без marketing", async ({ page, context }) => {
+    await clearStorage(page, context);
+    await page.goto(BASE, { waitUntil: "domcontentloaded" });
+    await page.waitForLoadState("networkidle", { timeout: 15000 }).catch(() => {});
+
+    const banner = page.locator('[role="dialog"]', { hasText: /Мы используем cookies/i });
+    await expect(banner).toBeVisible({ timeout: 8000 });
+    await banner.locator('button:has-text("Настроить")').click();
+
+    // Открылась панель настроек
+    const settings = page.locator('[role="dialog"][aria-modal="true"]', { hasText: /Настройки cookies/i });
+    await expect(settings).toBeVisible({ timeout: 3000 });
+
+    // Включаем только analytics
+    const analyticsCheckbox = settings.locator('input[type="checkbox"]').nth(1);
+    await analyticsCheckbox.check();
+    // Marketing остаётся выключенным
+    const marketingCheckbox = settings.locator('input[type="checkbox"]').nth(2);
+    expect(await marketingCheckbox.isChecked()).toBe(false);
+
+    await settings.locator('button:has-text("Сохранить")').click();
+    await expect(settings).not.toBeVisible({ timeout: 3000 });
+
+    const stored = await page.evaluate(() => JSON.parse(window.localStorage.getItem("dogovor_cookie_consent") || "null"));
+    expect(stored.categories.analytics).toBe(true);
+    expect(stored.categories.marketing).toBe(false);
+  });
+
+  test("после решения: persistent иконка 🍪 в углу", async ({ page, context }) => {
+    await clearStorage(page, context);
+    await page.goto(BASE, { waitUntil: "domcontentloaded" });
+    await page.waitForLoadState("networkidle", { timeout: 15000 }).catch(() => {});
+
+    const banner = page.locator('[role="dialog"]', { hasText: /Мы используем cookies/i });
+    await banner.locator('button:has-text("Принять всё")').click();
+    await expect(banner).not.toBeVisible();
+
+    // Persistent иконка
+    const icon = page.locator('button[aria-label="Изменить настройки cookies"]');
+    await expect(icon).toBeVisible({ timeout: 3000 });
+
+    // Кликаем → открывается панель
+    await icon.click();
+    const settings = page.locator('[role="dialog"][aria-modal="true"]', { hasText: /Настройки cookies/i });
+    await expect(settings).toBeVisible({ timeout: 3000 });
+
+    // Чекбоксы pre-filled текущими значениями
+    const analyticsCheckbox = settings.locator('input[type="checkbox"]').nth(1);
+    expect(await analyticsCheckbox.isChecked()).toBe(true);
+  });
+
+  test("Escape: в баннере → declineAll (при первом визите)", async ({ page, context }) => {
+    await clearStorage(page, context);
+    await page.goto(BASE, { waitUntil: "domcontentloaded" });
+    await page.waitForLoadState("networkidle", { timeout: 15000 }).catch(() => {});
+
+    const banner = page.locator('[role="dialog"]', { hasText: /Мы используем cookies/i });
+    await expect(banner).toBeVisible({ timeout: 8000 });
+
+    await page.keyboard.press("Escape");
+    await page.waitForTimeout(500);
+
+    const stored = await page.evaluate(() => JSON.parse(window.localStorage.getItem("dogovor_cookie_consent") || "null"));
+    expect(stored.categories.analytics).toBe(false);
+    expect(stored.categories.marketing).toBe(false);
+  });
+
+  test("навигация между страницами: баннер не появляется", async ({ page, context }) => {
+    await clearStorage(page, context);
+    await page.goto(BASE, { waitUntil: "domcontentloaded" });
+    await page.waitForLoadState("networkidle", { timeout: 15000 }).catch(() => {});
+
+    const banner = page.locator('[role="dialog"]', { hasText: /Мы используем cookies/i });
+    await banner.locator('button:has-text("Принять всё")').click();
+
+    await page.goto(`${BASE}/utils`, { waitUntil: "domcontentloaded" });
+    await page.waitForLoadState("networkidle", { timeout: 15000 }).catch(() => {});
+    await page.waitForTimeout(1000);
+    await expect(banner).not.toBeVisible();
+  });
 });

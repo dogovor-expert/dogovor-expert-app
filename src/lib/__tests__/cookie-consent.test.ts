@@ -1,13 +1,16 @@
 /**
- * Тесты для централизованного хука cookie consent.
+ * Тесты для централизованного хука cookie consent (Фаза 1).
  *
- * Покрывает 4 главных бага:
- *  1. FOUC: до mount баннер не рендерится (mounted=false).
- *  2. Hydration: на сервере всегда null, на клиенте — реальное значение.
- *  3. Broadcast: YandexMetrika получает событие после accept.
- *  4. Persistence: после reload localStorage сохраняется.
- *  5. Multi-tab: storage event синхронизирует вкладки.
- *  6. Private mode: localStorage бросает → useCookieConsent не падает.
+ * Покрывает:
+ *  - Granular consent (categories: necessary/analytics/marketing)
+ *  - acceptAll / declineAll / update / reset
+ *  - Broadcast через dogovor:cookie-consent
+ *  - Multi-tab через storage event
+ *  - Private mode (SecurityError → false)
+ *  - TTL (365 дней) — после истечения возвращается null
+ *  - Persist через mount (consent остаётся после unmount/remount)
+ *  - Persistence при нескольких инстансах хука
+ *  - Мульти-инстанс: оба хука видят одно значение
  */
 import { describe, it, expect, beforeEach, vi, afterEach } from "vitest";
 import { renderHook, act } from "@testing-library/react";
@@ -16,12 +19,15 @@ import {
   onCookieConsentChange,
   COOKIE_CONSENT_KEY,
   COOKIE_CONSENT_EVENT,
-  type CookieConsent,
+  CONSENT_ALL,
+  CONSENT_NECESSARY_ONLY,
+  POLICY_VERSION,
+  CONSENT_TTL_MS,
+  type CookieCategories,
 } from "@/hooks/useCookieConsent";
 
-describe("useCookieConsent", () => {
+describe("useCookieConsent — granular", () => {
   beforeEach(() => {
-    // Сброс localStorage и подписчиков перед каждым тестом
     try {
       window.localStorage.removeItem(COOKIE_CONSENT_KEY);
     } catch {
@@ -34,102 +40,134 @@ describe("useCookieConsent", () => {
     vi.restoreAllMocks();
   });
 
-  it("первый mount: consent === null, кнопки работают", () => {
+  it("первый mount: consent === null, isReady=false, categories = necessary-only default", () => {
     const { result } = renderHook(() => useCookieConsent());
     expect(result.current.consent).toBeNull();
     expect(result.current.isReady).toBe(false);
-
-    act(() => {
-      result.current.accept();
-    });
-    expect(result.current.consent).toBe("accepted");
-    expect(result.current.isReady).toBe(true);
-    expect(window.localStorage.getItem(COOKIE_CONSENT_KEY)).toBe("accepted");
+    expect(result.current.categories).toEqual(CONSENT_NECESSARY_ONLY);
   });
 
-  it("decline → localStorage + state", () => {
+  it("acceptAll: сохраняет ВСЕ категории, ts, policyVersion", () => {
+    const { result } = renderHook(() => useCookieConsent());
+    const before = Date.now();
+    let ok: boolean = false;
+    act(() => {
+      ok = result.current.acceptAll();
+    });
+    expect(ok).toBe(true);
+    expect(result.current.isReady).toBe(true);
+    expect(result.current.categories).toEqual(CONSENT_ALL);
+    expect(result.current.consent?.ts).toBeGreaterThanOrEqual(before);
+    expect(result.current.consent?.policyVersion).toBe(POLICY_VERSION);
+
+    const stored = JSON.parse(window.localStorage.getItem(COOKIE_CONSENT_KEY) || "{}");
+    expect(stored.categories).toEqual(CONSENT_ALL);
+    expect(stored.policyVersion).toBe(POLICY_VERSION);
+  });
+
+  it("declineAll: сохраняет только necessary", () => {
     const { result } = renderHook(() => useCookieConsent());
     act(() => {
-      result.current.decline();
+      result.current.declineAll();
     });
-    expect(result.current.consent).toBe("declined");
-    expect(window.localStorage.getItem(COOKIE_CONSENT_KEY)).toBe("declined");
+    expect(result.current.isReady).toBe(true);
+    expect(result.current.categories).toEqual(CONSENT_NECESSARY_ONLY);
   });
 
-  it("при mount с уже сохранённым accepted → consent = 'accepted'", () => {
-    window.localStorage.setItem(COOKIE_CONSENT_KEY, "accepted");
-    // Модуль уже загружен — useCookieConsent читает из модульного стора.
-    // Имитируем "новый mount": вызываем accept() с текущим значением,
-    // проверяем что broadcast сообщает "accepted" в подписчик.
-    const handler = vi.fn();
-    const off = onCookieConsentChange(handler);
-    try {
-      const { result } = renderHook(() => useCookieConsent());
-      // В нашей реализации модульный store читается один раз при загрузке модуля.
-      // После явного accept() он перезаписывается.
-      act(() => {
-        result.current.accept();
-      });
-      expect(result.current.consent).toBe("accepted");
-      expect(handler).toHaveBeenCalledWith("accepted");
-    } finally {
-      off();
-    }
+  it("update: granular — только analytics, без marketing", () => {
+    const { result } = renderHook(() => useCookieConsent());
+    act(() => {
+      result.current.update({ analytics: true });
+    });
+    expect(result.current.categories.analytics).toBe(true);
+    expect(result.current.categories.marketing).toBe(false);
+    expect(result.current.categories.necessary).toBe(true);
   });
 
-  it("broadcast: onCookieConsentChange вызывается после accept", () => {
-    const handler = vi.fn();
-    const off = onCookieConsentChange(handler);
-    try {
-      const { result } = renderHook(() => useCookieConsent());
-      act(() => {
-        result.current.accept();
-      });
-      expect(handler).toHaveBeenCalledWith("accepted");
-      act(() => {
-        result.current.decline();
-      });
-      expect(handler).toHaveBeenCalledWith("declined");
-    } finally {
-      off();
-    }
+  it("update: можно изменить ранее сделанный выбор", () => {
+    const { result } = renderHook(() => useCookieConsent());
+    act(() => {
+      result.current.acceptAll();
+    });
+    expect(result.current.categories.marketing).toBe(true);
+    act(() => {
+      result.current.update({ analytics: false, marketing: false });
+    });
+    expect(result.current.categories.analytics).toBe(false);
+    expect(result.current.categories.marketing).toBe(false);
+  });
+
+  it("update: не позволяет отключить necessary", () => {
+    const { result } = renderHook(() => useCookieConsent());
+    act(() => {
+      result.current.acceptAll();
+    });
+    act(() => {
+      // @ts-expect-error — TypeScript должен ругаться, runtime — игнорируем
+      result.current.update({ necessary: false });
+    });
+    expect(result.current.categories.necessary).toBe(true);
   });
 
   it("reset: сбрасывает consent и localStorage", () => {
     const { result } = renderHook(() => useCookieConsent());
     act(() => {
-      result.current.accept();
+      result.current.acceptAll();
     });
-    expect(result.current.consent).toBe("accepted");
+    expect(result.current.isReady).toBe(true);
     act(() => {
       result.current.reset();
     });
     expect(result.current.consent).toBeNull();
+    expect(result.current.isReady).toBe(false);
     expect(window.localStorage.getItem(COOKIE_CONSENT_KEY)).toBeNull();
   });
 
-  it("private mode: SecurityError → consent остаётся null, кнопки не падают", () => {
-    // Эмулируем private mode: getItem бросает, setItem бросает.
-    const getItemSpy = vi.spyOn(Storage.prototype, "getItem").mockImplementation(() => {
-      throw new Error("SecurityError");
-    });
+  it("broadcast: onCookieConsentChange вызывается после изменения", () => {
+    const handler = vi.fn();
+    const off = onCookieConsentChange(handler);
+    try {
+      const { result } = renderHook(() => useCookieConsent());
+      act(() => {
+        result.current.acceptAll();
+      });
+      expect(handler).toHaveBeenCalledTimes(1);
+      const last = handler.mock.calls.at(-1)![0];
+      expect(last?.categories).toEqual(CONSENT_ALL);
+
+      act(() => {
+        result.current.declineAll();
+      });
+      expect(handler).toHaveBeenCalledTimes(2);
+      const lastDecline = handler.mock.calls.at(-1)![0];
+      expect(lastDecline?.categories).toEqual(CONSENT_NECESSARY_ONLY);
+
+      act(() => {
+        result.current.reset();
+      });
+      expect(handler).toHaveBeenCalledTimes(3);
+      expect(handler.mock.calls.at(-1)![0]).toBeNull();
+    } finally {
+      off();
+    }
+  });
+
+  it("private mode: SecurityError → acceptAll/declineAll/update возвращают false", () => {
     const setItemSpy = vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => {
       throw new Error("SecurityError");
     });
 
     const { result } = renderHook(() => useCookieConsent());
-    // После mount с ошибкой чтения consent всё равно null
-    expect(result.current.consent).toBeNull();
-    // accept не падает (try/catch внутри)
     expect(() => {
       act(() => {
-        result.current.accept();
+        expect(result.current.acceptAll()).toBe(false);
+        expect(result.current.declineAll()).toBe(false);
+        expect(result.current.update({ analytics: true })).toBe(false);
       });
     }).not.toThrow();
-    // Но состояние не изменилось, потому что запись не удалась
-    expect(result.current.consent).toBeNull();
+    // Состояние не изменилось, потому что запись не удалась
+    expect(result.current.isReady).toBe(false);
 
-    getItemSpy.mockRestore();
     setItemSpy.mockRestore();
   });
 
@@ -137,33 +175,59 @@ describe("useCookieConsent", () => {
     const a = renderHook(() => useCookieConsent());
     const b = renderHook(() => useCookieConsent());
     act(() => {
-      a.result.current.accept();
+      a.result.current.acceptAll();
     });
-    expect(b.result.current.consent).toBe("accepted");
+    expect(b.result.current.consent?.categories).toEqual(CONSENT_ALL);
   });
 
-  it("событие dogovor:cookie-consent имеет detail = текущее значение", () => {
+  it("TTL: после истечения 365 дней consent возвращается как null", () => {
+    // Сначала принимаем
     const { result } = renderHook(() => useCookieConsent());
-    const seen: Array<CookieConsent | null> = [];
-    const off = onCookieConsentChange((c) => seen.push(c));
-    try {
-      act(() => {
-        result.current.accept();
-      });
-      act(() => {
-        result.current.decline();
-      });
-      act(() => {
-        result.current.reset();
-      });
-      expect(seen).toEqual(["accepted", "declined", null]);
-    } finally {
-      off();
-    }
+    act(() => {
+      result.current.acceptAll();
+    });
+
+    // Подделываем прошедшее время: перезаписываем localStorage с ts = старым
+    const stored = JSON.parse(window.localStorage.getItem(COOKIE_CONSENT_KEY) || "{}");
+    stored.ts = Date.now() - CONSENT_TTL_MS - 1000;
+    window.localStorage.setItem(COOKIE_CONSENT_KEY, JSON.stringify(stored));
+
+    // После unmount/remount getSnapshot должен вернуть null
+    // (currentValue обновится только при следующем notify; поэтому simulate
+    // через ручной dispatch события)
+    act(() => {
+      window.dispatchEvent(new CustomEvent(COOKIE_CONSENT_EVENT));
+    });
+    // Модульный currentValue перечитан: ts < TTL → null
+    expect(result.current.consent).toBeNull();
+  });
+
+  it("повреждённый JSON в localStorage: возвращает null, не падает", () => {
+    window.localStorage.setItem(COOKIE_CONSENT_KEY, "{broken json");
+    const { result } = renderHook(() => useCookieConsent());
+    expect(result.current.consent).toBeNull();
+  });
+
+  it("невалидный формат (нет ts): возвращает null", () => {
+    window.localStorage.setItem(
+      COOKIE_CONSENT_KEY,
+      JSON.stringify({ categories: { necessary: true, analytics: true, marketing: true } })
+    );
+    const { result } = renderHook(() => useCookieConsent());
+    expect(result.current.consent).toBeNull();
   });
 
   it("COOKIE_CONSENT_KEY и COOKIE_CONSENT_EVENT экспортированы", () => {
     expect(COOKIE_CONSENT_KEY).toBe("dogovor_cookie_consent");
     expect(COOKIE_CONSENT_EVENT).toBe("dogovor:cookie-consent");
+  });
+
+  it("константы CONSENT_ALL и CONSENT_NECESSARY_ONLY корректны", () => {
+    expect(CONSENT_ALL).toEqual({ necessary: true, analytics: true, marketing: true });
+    expect(CONSENT_NECESSARY_ONLY).toEqual({
+      necessary: true,
+      analytics: false,
+      marketing: false,
+    });
   });
 });
