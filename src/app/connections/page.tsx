@@ -7,16 +7,11 @@ import {
   Cloud,
   CheckCircle,
   XCircle,
-  Settings,
   HardDrive,
   Download,
   Upload,
-  ExternalLink,
-  AlertTriangle,
-  Info,
   Loader2,
   X,
-  FolderOpen,
 } from "lucide-react";
 import {
   getAllProviders,
@@ -33,6 +28,7 @@ import {
 import { exportVaultBackup, initVault, isUnlocked } from "@/lib/vault/keyManager";
 import type { CloudProviderId } from "@/lib/cloud/types";
 import FolderPicker from "@/components/FolderPicker";
+import SetupGuide from "@/components/cloud/SetupGuide";
 import { usePaywall } from "@/hooks/usePaywall";
 
 interface ProviderStatus {
@@ -59,7 +55,6 @@ export default function ConnectionsPage() {
   const [importError, setImportError] = useState<string | null>(null);
   const [importSuccess, setImportSuccess] = useState<string | null>(null);
   const [folderPicker, setFolderPicker] = useState<{ providerId: CloudProviderId; onConfirm: (path: string) => void } | null>(null);
-  const [copiedRedirect, setCopiedRedirect] = useState<string | null>(null);
 
   useEffect(() => {
     async function init() {
@@ -229,119 +224,34 @@ export default function ConnectionsPage() {
           <div className="p-4 space-y-4">
             {!st.connected ? (
               <>
-                <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">
-                    Client ID приложения
-                  </label>
-                  <div className="flex gap-2">
-                    <Input
-                      type="text"
-                      placeholder="Введите Client ID из консоли провайдера"
-                      value={st.clientId}
-                      onChange={(e) => handleClientIdChange(st.id, e.target.value)}
-                      className="flex-1"
-                    />
-                    {st.clientId && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleClientIdChange(st.id, "")}
-                        title="Очистить"
-                      >
-                        <X className="w-4 h-4" />
-                      </Button>
-                    )}
-                  </div>
-                  <p className="text-xs text-gray-500">
-                    Redirect URI для регистрации:
-                    <code className="bg-gray-100 px-1 rounded ml-1">
-                      {window.location.origin}/connections
-                    </code>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        navigator.clipboard?.writeText(`${window.location.origin}/connections`);
-                        setCopiedRedirect(st.id);
-                        setTimeout(() => setCopiedRedirect(null), 1500);
-                      }}
-                      className="ml-1.5 text-brand-600 hover:underline"
-                    >
-                      {copiedRedirect === st.id ? "скопировано ✓" : "копировать"}
-                    </button>
-                  </p>
-
-                  <details className="text-xs text-gray-600 rounded-lg border border-gray-200 bg-gray-50/60">
-                    <summary className="cursor-pointer select-none px-3 py-2 font-medium text-gray-700">
-                      Как получить Client ID — пошагово (5 минут)
-                    </summary>
-                    <div className="px-3 pb-3 pt-1 space-y-2 leading-relaxed">
-                      {st.id === "yandex" && (
-                        <ol className="list-decimal list-inside space-y-1">
-                          <li>
-                            Открой{" "}
-                            <a href="https://oauth.yandex.ru/client/new" target="_blank" rel="noreferrer" className="text-brand-600 underline">
-                              oauth.yandex.ru/client/new
-                            </a>{" "}
-                            и войди в Яндекс-аккаунт.
-                          </li>
-                          <li>Название: любое, например «Dogovor.expert».</li>
-                          <li>Платформа: выбери <b>«Веб-сервисы»</b>.</li>
-                          <li>
-                            Callback URL (Redirect URI): вставь{" "}
-                            <code className="bg-gray-100 px-1 rounded">{window.location.origin}/connections</code>
-                          </li>
-                          <li>Доступы: найди и отметь <b>«Яндекс.Диск REST API»</b>: запись в любом месте, чтение всего Диска, информация о Диске.</li>
-                          <li>Нажми «Создать приложение» → скопируй <b>ID</b> (ClientID) → вставь в поле выше → «Подключить».</li>
-                        </ol>
-                      )}
-                      {st.id === "google" && (
-                        <ol className="list-decimal list-inside space-y-1">
-                          <li>
-                            Открой{" "}
-                            <a href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noreferrer" className="text-brand-600 underline">
-                              console.cloud.google.com/apis/credentials
-                            </a>{" "}
-                            (нужен любой проект Google Cloud).
-                          </li>
-                          <li>«Создать учётные данные» → <b>OAuth client ID</b> → тип <b>Web application</b>.</li>
-                          <li>
-                            Authorized JavaScript Origins: добавь{" "}
-                            <code className="bg-gray-100 px-1 rounded">{window.location.origin}</code>{" "}
-                            (именно origin, без /connections).
-                          </li>
-                          <li>Скоуп запрашиваем сами (<code>drive.file</code>) — настраивать не нужно.</li>
-                          <li>Создай → скопируй <b>Client ID</b> (заканчивается на .apps.googleusercontent.com) → вставь выше.</li>
-                        </ol>
-                      )}
-                      {st.id === "dropbox" && (
-                        <ol className="list-decimal list-inside space-y-1">
-                          <li>
-                            Открой{" "}
-                            <a href="https://www.dropbox.com/developers/apps/create" target="_blank" rel="noreferrer" className="text-brand-600 underline">
-                              dropbox.com/developers/apps/create
-                            </a>
-                          </li>
-                          <li>API: <b>Scoped access</b>; тип доступа: <b>App folder</b> или Full Dropbox — на твой выбор.</li>
-                          <li>Вкладка Permissions: включи <b>files.content.read/write</b>, <b>files.metadata.read/write</b>, <b>account_info.read</b>, затем Submit.</li>
-                          <li>
-                            Вкладка Settings → Redirect URIs: добавь{" "}
-                            <code className="bg-gray-100 px-1 rounded">{window.location.origin}/connections</code>
-                          </li>
-                          <li>Скопируй <b>App key</b> → вставь в поле выше.</li>
-                        </ol>
+<div className="space-y-2">
+                    <label className="block text-sm font-medium text-gray-700">
+                      Client ID приложения
+                    </label>
+                    <div className="flex gap-2">
+                      <Input
+                        type="text"
+                        placeholder="Введите Client ID из консоли провайдера"
+                        value={st.clientId}
+                        onChange={(e) => handleClientIdChange(st.id, e.target.value)}
+                        className="flex-1"
+                      />
+                      {st.clientId && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleClientIdChange(st.id, "")}
+                          title="Очистить"
+                        >
+                          <X className="w-4 h-4" />
+                        </Button>
                       )}
                     </div>
-                  </details>
-                </div>
-
-                {st.error && (
-                  <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm flex items-center gap-2">
-                    <AlertTriangle className="w-4 h-4 flex-shrink-0" />
-                    {st.error}
                   </div>
-                )}
 
-                <Button
+                  <SetupGuide providerId={st.id} clientIdFilled={!!st.clientId} error={st.error} />
+
+                  <Button
                   onClick={() => handleConnect(st.id)}
                   disabled={!st.clientId || st.connecting}
                   className="w-full"
