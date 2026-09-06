@@ -57,6 +57,13 @@ export async function GET() {
     headers: {
       "Content-Type": "application/json; charset=utf-8",
       "Content-Disposition": `attachment; filename="dogovor-export-${user.id.slice(0, 8)}.json"`,
+      // Полный дамп ПД (profile + documents + subscriptions + payments).
+      // Запрещаем любое кэширование: браузером, прокси, CDN — иначе
+      // выгрузка может остаться на shared-кешах после logout.
+      "Cache-Control": "no-store, no-cache, must-revalidate, private",
+      "Pragma": "no-cache",
+      "X-Content-Type-Options": "nosniff",
+      "X-Frame-Options": "DENY",
     },
   });
 }
