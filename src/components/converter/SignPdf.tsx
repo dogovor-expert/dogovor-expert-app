@@ -39,9 +39,9 @@ export default function SignPdf() {
       <div className="flex items-center gap-3 p-4 bg-blue-50 border border-blue-200 rounded-xl">
         <Shield className="w-6 h-6 text-blue-600" />
         <div>
-          <p className="font-semibold text-blue-800">Квалифицированная электронная подпись (УКЭП)</p>
+          <p className="font-semibold text-blue-800">Подписание вашей УКЭП (КриптоПро)</p>
           <p className="text-sm text-blue-600 mt-0.5">
-            Документ подписывается вашей УКЭП через КриптоПро. Сервис не имеет доступа к закрытому ключу.
+            Сервис не выдаёт электронные подписи: вы подписываете PDF своим сертификатом через установленный КриптоПро. Закрытый ключ остаётся на вашем устройстве.
           </p>
         </div>
       </div>
@@ -88,7 +88,7 @@ export default function SignPdf() {
               pdfBytes={pdfBytes}
               fileName={file.name}
               subscriptionActive={subscriptionActive}
-              onUpgrade={openPaywall}
+              onUpgrade={() => openPaywall("Подписание вашей УКЭП через КриптоПро — доступно в подписке PRO")}
               onBack={() => {
                 setFile(null);
                 setPdfBytes(null);

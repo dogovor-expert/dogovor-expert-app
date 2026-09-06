@@ -17,7 +17,6 @@ function ExportPdfInner() {
   const [template, setTemplate] = useState<LegalTemplate | null>(null);
   const [packTemplates, setPackTemplates] = useState<LegalTemplate[]>([]);
   const [design, setDesign] = useState<string>("classic");
-  const [subscriptionActive, setSubscriptionActive] = useState(false);
   useEffect(() => {
     async function init() {
       try {
@@ -46,16 +45,6 @@ function ExportPdfInner() {
           const ids = packParam.split(",");
           const pack = ids.map((id) => LEGAL_TEMPLATES.find((x) => x.id === id)).filter(Boolean) as LegalTemplate[];
           if (pack.length > 0) setPackTemplates(pack);
-        }
-
-        // Водяной знак для free-пользователей (PRO — без пометки).
-        try {
-          const r = await fetch("/api/subscription-status");
-          const j = await r.json().catch(() => null);
-          setSubscriptionActive(!!j?.subscription_active);
-        } catch {
-          // Ошибка сети — считаем free (безопасно для монетизации).
-          setSubscriptionActive(false);
         }
 
         setLoading(false);
@@ -96,7 +85,6 @@ function ExportPdfInner() {
       const { buildPdf } = await import("@/lib/exportPdf");
       const { blob } = await buildPdf(docs, {
         design: design as "brand" | "classic" | "minimal",
-        watermark: subscriptionActive ? undefined : "DogovorExpert.ru",
         pageNumbers: true,
       });
 

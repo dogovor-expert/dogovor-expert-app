@@ -11,6 +11,7 @@ import PaywallModal from "@/components/builder/PaywallModal";
 export function usePaywall() {
   const [subscriptionActive, setSubscriptionActive] = useState(false);
   const [paywallOpen, setPaywallOpen] = useState(false);
+  const [paywallTitle, setPaywallTitle] = useState<string | undefined>(undefined);
 
   useEffect(() => {
     let alive = true;
@@ -25,7 +26,10 @@ export function usePaywall() {
     };
   }, []);
 
-  const openPaywall = useCallback(() => setPaywallOpen(true), []);
+  const openPaywall = useCallback((title?: string) => {
+    setPaywallTitle(title);
+    setPaywallOpen(true);
+  }, []);
 
   /** Возвращает true, если действие разрешено (PRO), иначе открывает шлюз и возвращает false. */
   const guard = useCallback((): boolean => {
@@ -35,7 +39,11 @@ export function usePaywall() {
   }, [subscriptionActive]);
 
   const modal = (
-    <PaywallModal isOpen={paywallOpen} onClose={() => setPaywallOpen(false)} />
+    <PaywallModal
+      isOpen={paywallOpen}
+      onClose={() => setPaywallOpen(false)}
+      title={paywallTitle}
+    />
   );
 
   return { subscriptionActive, guard, openPaywall, modal };
