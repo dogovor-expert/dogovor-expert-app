@@ -5,6 +5,7 @@ import {
   Search, AlertTriangle, Check, Loader2, Car, FileText, Shield, CreditCard, RefreshCw,
   Banknote, ShieldCheck, History, Zap, Link2, X, ChevronLeft, ChevronRight,
 } from "lucide-react";
+import { track, goals } from "@/lib/analytics";
 const STD_PRICE = 199;
 const PREM_PRICE = 299;
 
@@ -196,6 +197,7 @@ export default function AutotekaClient() {
         }
         return;
       }
+      track(goals.autotekaOrderStart, { tariff });
       if (json.free) {
         setStatus("pending");
         check(vin);

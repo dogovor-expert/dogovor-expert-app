@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { rateLimiters, withRateLimit } from '@/lib/rate-limit';
+import { limiters, checkRateLimit, rateLimitResponse } from '@/lib/ratelimit';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60; // секунд (Vercel Pro до 60; Hobby до 10 — но occular-кеш делает 33ms, а 1-й запрос 7-8с)
@@ -55,14 +55,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: false, error: 'unauthorized' }, { status: 401 });
   }
 
-  // 1b) Rate limit: heavy-лимит (10/min). Ограничиваем строго, т.к. каждый
+  // 1b) Rate limit: тяжёлая загрузка (10/min на user.id). Ограничиваем строго, т.к. каждый
   //     вызов проксирует на домашний сервер (Tailscale/домашний ПК).
-  const rl = await withRateLimit(req, rateLimiters.heavy, user.id);
-  if (!rl.success) {
-    return NextResponse.json(
-      { ok: false, error: 'rate_limited', message: 'Слишком много запросов. Подождите.' },
-      { status: 429, headers: rl.headers }
-    );
+  const rl = await checkRateLimit(limiters.ocrUpload, user.id);
+  if (!rl.ok) {
+    return rateLimitResponse(rl.retryAfter);
   }
 
   // 2) Получаем файл

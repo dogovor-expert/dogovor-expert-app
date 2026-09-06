@@ -3,11 +3,14 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { withCsrf } from "@/lib/csrf";
 import { isSameOrigin } from "@/lib/admin-auth";
+import { limiters, clientIp, checkRateLimit, rateLimitResponse } from "@/lib/ratelimit";
 
 async function postHandler(req: Request) {
   if (!isSameOrigin(req)) {
     return NextResponse.json({ error: "forbidden" }, { status: 403 });
   }
+  const rl = await checkRateLimit(limiters.billingSettings, clientIp(req));
+  if (!rl.ok) return rateLimitResponse(rl.retryAfter);
   // 1) Аутентификация пользователя (user-клиент по cookie).
   const supabase = await createClient();
   const {

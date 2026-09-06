@@ -33,6 +33,7 @@ import { type DesignId } from "@/lib/docDesign";
 import { buildTemplateDefaults, getGreeting, normalizeTypography, todayStr } from "@/lib/format";
 import { downloadBytes } from "@/lib/converter/download";
 import { uint8ToBase64 } from "@/lib/bytes";
+import { track, goals } from "@/lib/analytics";
 import dynamic from "next/dynamic";
 import ProgressSteps from "@/components/builder/ProgressSteps";
 import TemplateSelector from "@/components/builder/TemplateSelector";
@@ -83,6 +84,7 @@ function HomeContent() {
         setSelectedTemplateId(pid);
         try { localStorage.setItem("dogovor_last_template", pid); } catch { /* localStorage недоступен */ }
         setWizardStep("form");
+        track(goals.builderStart, { template: pid, source: "url" });
         return true;
       }
       return false;
@@ -247,6 +249,7 @@ function HomeContent() {
   const requirePro = (title?: string) => {
     setPaywallTitle(title);
     setPaywallOpen(true);
+    track(goals.paywallShown, { reason: title ?? "docx_export" });
   };
   const [emailModalOpen, setEmailModalOpen] = useState(false);
   const [emailAddress, setEmailAddress] = useState("");
@@ -1015,10 +1018,11 @@ function HomeContent() {
       const { blob } = await buildPdf(docs, {
         title: isPack ? "Паспорт сделки" : template.name,
         design: designId,
-        watermark: undefined,
+        watermark: subscriptionActive ? undefined : "DogovorExpert.ru",
       });
       const buf = await blob.arrayBuffer();
       downloadBytes(new Uint8Array(buf), fileName + ".pdf");
+      track(goals.exportPdf, { template: template.id, pack: isPack });
     } catch (e) {
       console.error("PDF export error:", e);
       showToast("Не удалось сформировать PDF. Попробуйте ещё раз.");
@@ -1223,6 +1227,7 @@ function HomeContent() {
       showToast(
         "DOCX сохранён. Часть оформления (таблицы, рамки, шрифты) может отличаться от PDF — для печати надёжнее использовать PDF."
       );
+      track(goals.exportDocx, { template: template.id, pack: packTemplates.length > 1 });
     } catch (err) {
       console.error("DOCX export error:", err);
       showToast(
@@ -1255,7 +1260,7 @@ function HomeContent() {
       const { blob } = await buildPdf(docs, {
         title: packTemplates.length > 1 ? "Паспорт сделки" : template.name,
         design: designId,
-        watermark: undefined,
+        watermark: subscriptionActive ? undefined : "DogovorExpert.ru",
       });
       const buf = await blob.arrayBuffer();
       const pdfBase64 = uint8ToBase64(new Uint8Array(buf));
@@ -1277,6 +1282,7 @@ function HomeContent() {
         return;
       }
       setEmailStatus({ kind: "ok", text: "Документ отправлен на указанную почту" });
+      track(goals.exportEmail, { template: template.id });
     } catch (err) {
       console.error("Email export error:", err);
       setEmailStatus({ kind: "error", text: "Не удалось отправить письмо" });
@@ -1576,9 +1582,11 @@ function HomeContent() {
             favorites={favorites}
             onToggleFavorite={toggleFavorite}
             onSelectTemplate={(id) => {
-              setSelectedTemplateId(preferBrief(id));
-              try { localStorage.setItem("dogovor_last_template", preferBrief(id)); } catch { /* localStorage недоступен */ }
+              const briefId = preferBrief(id);
+              setSelectedTemplateId(briefId);
+              try { localStorage.setItem("dogovor_last_template", briefId); } catch { /* localStorage недоступен */ }
               setWizardStep("form");
+              track(goals.builderStart, { template: briefId, source: "catalog" });
             }}
           />
           {/* Main Content placeholder */}
@@ -1716,6 +1724,7 @@ function HomeContent() {
                   printRef={printRef}
                   flatRef={flatRef}
                   renderPreview={renderPreview}
+                  watermark={subscriptionActive ? undefined : "DogovorExpert.ru"}
                   onPrint={handlePrint}
                   onCopyJson={handleCopyJson}
                   onExportPdf={() => handleExportPdf("pack")}
@@ -1724,7 +1733,6 @@ function HomeContent() {
                   onOpenEmailModal={handleExportEmail}
                   emailSending={emailSending}
                   onBackToForm={backToForm}
-                  watermark={undefined}
                   onPagesChange={setExportPages}
                   coverHtml={coverHtml}
                   signHtml={signHtml}
@@ -2004,7 +2012,12 @@ function HomeContent() {
       )}
 
       {paywallOpen && (
-        <PaywallModal isOpen={true} onClose={() => setPaywallOpen(false)} title={paywallTitle} />
+        <PaywallModal
+          isOpen={true}
+          onClose={() => setPaywallOpen(false)}
+          title={paywallTitle}
+          onDownloadFreePdf={() => handleExportPdf("current")}
+        />
       )}
 
       <Modal
@@ -2076,7 +2089,7 @@ function HomeContent() {
         className="print-src"
         docs={[printDoc]}
         design="classic"
-        watermark={undefined}
+        watermark={subscriptionActive ? undefined : "DogovorExpert.ru"}
       />
     </div>
   );
