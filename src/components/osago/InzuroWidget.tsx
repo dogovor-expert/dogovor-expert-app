@@ -59,7 +59,7 @@ export default function InzuroWidget() {
         <div>
           <polis-online-widget-osago
             name="polis-online-widget-osago"
-            data-api-key="Z4iX8clg06"
+            data-api-key={process.env.NEXT_PUBLIC_INZURO_API_KEY ?? "Z4iX8clg06"}
             data-widget-id={168742}
           />
         </div>

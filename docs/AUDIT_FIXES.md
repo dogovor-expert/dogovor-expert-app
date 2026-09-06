@@ -25,10 +25,10 @@
 
 ## Rate limit (`src/lib/ratelimit.ts`)
 
-- Upstash sliding window; `clientIp()` здесь — единственный источник.
-- В вебхуке — локальная копия (не импортировать, конфликт имён).
-- Без `UPSTASH_REDIS_REST_URL`/`UPSTASH_REDIS_REST_TOKEN` лимитеры no-op.
-- Ключи Upstash для прода — ОТКРЫТАЯ ЗАДАЧА (спросить владельца).
+- Upstash sliding window; `clientIp()` — приоритет заголовков: `x-vercel-forwarded-for` → `x-forwarded-for` → `x-real-ip`.
+- В разработке — опциональный режим (`RATELIMIT_DISABLED=1`).
+- Без `UPSTASH_REDIS_REST_URL`/`UPSTASH_REDIS_REST_TOKEN` лимитеры `null` и `checkRateLimit()` **FAIL-CLOSED** (429 на всех защищённых роутах) — env обязателен в проде (проверено: ключи в Vercel установлены).
+- Транзиентная ошибка Upstash в `limiter.limit()` перехватывается: 429 + `Retry-After: 30` вместо каскадного 500 по всему сайту (аудит 06.09.2026).
 
 ## Next 15 API
 

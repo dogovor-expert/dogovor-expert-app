@@ -87,6 +87,33 @@ export async function POST(req: NextRequest) {
       { status: 413 }
     );
   }
+  // MIME-allowlist: прокси пересылает файл во внутреннюю сеть (Tailscale) —
+  // пропускаем только изображения и PDF. Если клиент не прислал MIME
+  // (blob без type) — проверяем magic bytes (JPEG/PNG/WEBP/PDF).
+  const mime = (blob.type || '').toLowerCase();
+  const isAllowedMime = mime.startsWith('image/') || mime === 'application/pdf';
+  const isOpaqueMime = mime === '' || mime === 'application/octet-stream';
+  if (!isAllowedMime) {
+    if (!isOpaqueMime) {
+      return NextResponse.json(
+        { ok: false, error: 'unsupported_file_type', mime },
+        { status: 415 }
+      );
+    }
+    const head = new Uint8Array(await blob.slice(0, 12).arrayBuffer());
+    const startsWith = (sig: number[]) => sig.every((b, i) => head[i] === b);
+    const looksLikeOcrInput =
+      startsWith([0xff, 0xd8, 0xff]) ||            // JPEG
+      startsWith([0x89, 0x50, 0x4e, 0x47]) ||      // PNG
+      startsWith([0x52, 0x49, 0x46, 0x46]) ||      // WEBP (RIFF)
+      startsWith([0x25, 0x50, 0x44, 0x46]);        // PDF (%PDF)
+    if (!looksLikeOcrInput) {
+      return NextResponse.json(
+        { ok: false, error: 'unsupported_file_type', mime: mime || 'unknown' },
+        { status: 415 }
+      );
+    }
+  }
 
   // 3) Адрес и ключ occular-сервера
   const ocularBaseUrl = getOcularBaseUrl();

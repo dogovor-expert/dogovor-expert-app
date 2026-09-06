@@ -15,7 +15,7 @@ const redis =
     : null;
 
 if (!redis && !isDev && !rateLimitDisabled) {
-  console.warn("[ratelimit] UPSTASH_REDIS_* not configured — rate limiting DISABLED (fail-open). Set UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN for production.");
+  console.warn("[ratelimit] UPSTASH_REDIS_* not configured — limiters are null and checkRateLimit() will FAIL-CLOSED (429) for every protected route. Set UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN for production.");
 }
 
 const mk = (prefix: string, limit: number, windowMs: `${number} s` | `${number} m` | `${number} h`) =>
@@ -92,9 +92,17 @@ export async function checkRateLimit(
     }
     return { ok: false, retryAfter: 60 };
   }
-  const { success, reset } = await limiter.limit(identifier);
-  if (success) return { ok: true, retryAfter: 0 };
-  return { ok: false, retryAfter: Math.max(1, Math.ceil((reset - Date.now()) / 1000)) };
+  try {
+    const { success, reset } = await limiter.limit(identifier);
+    if (success) return { ok: true, retryAfter: 0 };
+    return { ok: false, retryAfter: Math.max(1, Math.ceil((reset - Date.now()) / 1000)) };
+  } catch (e) {
+    // Транзитный сбой Upstash (сеть/таймаут) не должен каскадно валить
+    // все защищённые роуты 500-й ошибкой: считаем лимит исчерпанным
+    // (fail-closed, но с предсказуемым 429 + Retry-After) и логируем.
+    console.error("[ratelimit] limiter.limit() failed — denying request (fail-closed):", e instanceof Error ? e.message : e);
+    return { ok: false, retryAfter: 30 };
+  }
 }
 
 export function rateLimitResponse(retryAfter: number) {

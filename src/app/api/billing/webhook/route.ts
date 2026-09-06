@@ -344,29 +344,19 @@ export async function POST(req: Request) {
     );
 
     if (activeSub) {
-      if (activeSub.auto_renewal) {
-        // Продлеваем автопродление
-        const base = new Date(String(activeSub.period_end));
-        const extended = new Date(base.getTime() + 30 * DAY_MS);
-        await admin
-          .from("subscriptions")
-          .update({
-            period_end: extended.toISOString(),
-            yookassa_payment_method_id: paymentMethodId ?? activeSub.yookassa_payment_method_id,
-          })
-          .eq("id", activeSub.id);
-      } else {
-        // Есть активная подписка без автопродления — просто продлеваем её
-        const base = new Date(String(activeSub.period_end));
-        const extended = new Date(base.getTime() + 30 * DAY_MS);
-        await admin
-          .from("subscriptions")
-          .update({
-            period_end: extended.toISOString(),
-            yookassa_payment_method_id: paymentMethodId ?? activeSub.yookassa_payment_method_id,
-          })
-          .eq("id", activeSub.id);
-      }
+      // Активная подписка есть — продлеваем её период на 30 дней.
+      // Поведение одинаково и с auto_renewal, и без: платёж уже произошёл
+      // (успешный вебхук), поэтому обе ветки раньше делали одно и то же —
+      // объединены в одну для честности кода.
+      const base = new Date(String(activeSub.period_end));
+      const extended = new Date(base.getTime() + 30 * DAY_MS);
+      await admin
+        .from("subscriptions")
+        .update({
+          period_end: extended.toISOString(),
+          yookassa_payment_method_id: paymentMethodId ?? activeSub.yookassa_payment_method_id,
+        })
+        .eq("id", activeSub.id);
     } else {
       // Нет активных подписок — создаём новую
       const end = new Date(now.getTime() + 30 * DAY_MS);
