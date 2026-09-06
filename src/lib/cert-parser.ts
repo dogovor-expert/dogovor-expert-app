@@ -1,4 +1,9 @@
-import type { Certificate } from "pkijs";
+import type { Certificate, RelativeDistinguishedNames } from "pkijs";
+
+/** Узкий type guard: значение — объект (для доступа к вложенным полям asn1js/pkijs). */
+function isRecord(v: unknown): v is Record<string, unknown> {
+  return typeof v === "object" && v !== null;
+}
 
 export interface ParsedSubject {
   cn?: string;
@@ -45,7 +50,7 @@ export function parseIssuer(cert: Certificate): ParsedSubject {
   return parseName(cert.issuer);
 }
 
-function parseName(name: any): ParsedSubject {
+function parseName(name: RelativeDistinguishedNames | undefined): ParsedSubject {
   const result: ParsedSubject = {
     rawDN: "",
     unparsed: [],
@@ -58,13 +63,14 @@ function parseName(name: any): ParsedSubject {
 
   for (const tv of name.typesAndValues) {
     const oid = tv.type;
-    const value = tv.value?.valueBlock?.value ?? "";
+    const rawValue: unknown = tv.value?.valueBlock?.value ?? "";
+    const value = String(rawValue);
     parts.push(`${oid}=${value}`);
     result.unparsed.push({ oid, value });
 
     const key = OID_MAP[oid];
-    if (key) {
-      (result as any)[key] = value;
+    if (key && typeof value === "string") {
+      (result as Record<keyof ParsedSubject, unknown>)[key] = value;
     }
   }
 
@@ -114,10 +120,11 @@ export function getExtensions(cert: Certificate): CertificateExtensions {
     const oid = ext.extnID;
     const value = ext.parsedValue;
 
-    if (oid === "2.5.29.15" && value) {
-      const bits = (value as any).valueBlock?.valueHexView;
-      if (bits) {
-        const view = new Uint8Array(bits);
+    if (oid === "2.5.29.15" && isRecord(value)) {
+      const valueBlock = value.valueBlock;
+      const bits = isRecord(valueBlock) ? valueBlock.valueHexView : undefined;
+      if (bits instanceof Uint8Array) {
+        const view = bits;
         if (view[0] & 0x80) keyUsage.push("digitalSignature");
         if (view[0] & 0x40) keyUsage.push("nonRepudiation");
         if (view[0] & 0x20) keyUsage.push("keyEncipherment");
@@ -128,39 +135,50 @@ export function getExtensions(cert: Certificate): CertificateExtensions {
       }
     }
 
-    if (oid === "2.5.29.37" && value) {
-      for (const k of (value as any).array || []) {
-        extKeyUsage.push(k.valueBlock.toString());
+    if (oid === "2.5.29.37" && isRecord(value) && Array.isArray(value.array)) {
+      for (const k of value.array) {
+        if (isRecord(k) && isRecord(k.valueBlock)) {
+          extKeyUsage.push(k.valueBlock.toString());
+        }
       }
     }
 
-    if (oid === "2.5.29.35" && value) {
-      authorityKeyId = Buffer.from((value as any).keyIdentifier?.valueBlock?.valueHex || []).toString("hex");
+    if (oid === "2.5.29.35" && isRecord(value)) {
+      const keyIdentifier = value.keyIdentifier;
+      const valueHex = isRecord(keyIdentifier) && isRecord(keyIdentifier.valueBlock)
+        ? keyIdentifier.valueBlock.valueHex
+        : undefined;
+      authorityKeyId = valueHex ? Buffer.from(valueHex as ArrayBufferLike).toString("hex") : "";
     }
 
-    if (oid === "2.5.29.14" && value) {
-      subjectKeyId = Buffer.from((value as any).valueBlock?.valueHex || []).toString("hex");
+    if (oid === "2.5.29.14" && isRecord(value)) {
+      const valueHex = isRecord(value.valueBlock) ? value.valueBlock.valueHex : undefined;
+      subjectKeyId = valueHex ? Buffer.from(valueHex as ArrayBufferLike).toString("hex") : "";
     }
 
-    if (oid === "2.5.29.31" && value) {
-      for (const dp of (value as any).array || []) {
-        for (const name of dp.distributionPoint?.array || []) {
-          if (name.type === 0) {
-            for (const gn of name.value.array) {
-              if (gn.type === 6) crlDistributionPoints.push(gn.value);
+    if (oid === "2.5.29.31" && isRecord(value) && Array.isArray(value.array)) {
+      for (const dp of value.array) {
+        if (!isRecord(dp) || !isRecord(dp.distributionPoint) || !Array.isArray(dp.distributionPoint.array)) continue;
+        for (const name of dp.distributionPoint.array) {
+          if (!isRecord(name) || name.type !== 0 || !isRecord(name.value) || !Array.isArray(name.value.array)) continue;
+          for (const gn of name.value.array) {
+            if (isRecord(gn) && gn.type === 6 && typeof gn.value === "string") {
+              crlDistributionPoints.push(gn.value);
             }
           }
         }
       }
     }
 
-    if (oid === "1.3.6.1.5.5.7.1.1" && value) {
-      for (const ad of (value as any).array || []) {
-        if (ad.accessMethod === "1.3.6.1.5.5.7.48.1") {
-          ocspUrls.push(ad.accessLocation?.value || "");
+    if (oid === "1.3.6.1.5.5.7.1.1" && isRecord(value) && Array.isArray(value.array)) {
+      for (const ad of value.array) {
+        if (!isRecord(ad)) continue;
+        const locationValue = isRecord(ad.accessLocation) ? ad.accessLocation.value : undefined;
+        if (ad.accessMethod === "1.3.6.1.5.5.7.48.1" && typeof locationValue === "string") {
+          ocspUrls.push(locationValue);
         }
-        if (ad.accessMethod === "1.3.6.1.5.5.7.48.2") {
-          caIssuersUrls.push(ad.accessLocation?.value || "");
+        if (ad.accessMethod === "1.3.6.1.5.5.7.48.2" && typeof locationValue === "string") {
+          caIssuersUrls.push(locationValue);
         }
       }
     }

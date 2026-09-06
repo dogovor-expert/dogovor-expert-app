@@ -47,7 +47,14 @@ export interface TimestampInfo {
 
 export interface IntegrityInfo {
   hashMatch: boolean;
-  algorithm: "GOST R 34.11-2012-256" | "GOST R 34.11-2012-512" | "GOST R 34.11-94" | "unknown";
+  algorithm:
+    | "GOST R 34.11-2012-256"
+    | "GOST R 34.11-2012-512"
+    | "GOST R 34.11-94"
+    | "SHA-256"
+    | "SHA-384"
+    | "SHA-512"
+    | "unknown";
   messageDigestHex: string;
   computedDigestHex: string;
 }
@@ -58,7 +65,7 @@ export interface PAdESVerificationResult {
   chainValid: boolean;
   errors: string[];
   warnings: string[];
-  signer: SignerInfo;
+  signer: SignerInfo | null;
   chain: ChainCert[];
   revocation: RevocationInfo;
   timestamp: TimestampInfo;
@@ -83,7 +90,7 @@ function fail(msg: string, errors: string[]): PAdESVerificationResult {
     chainValid: false,
     errors,
     warnings: [],
-    signer: null as any,
+    signer: null,
     chain: [],
     revocation: { status: "unknown", checkedAt: new Date(), method: "none" },
     timestamp: { present: false },
@@ -99,7 +106,9 @@ export async function computeHash(algorithm: string, data: Uint8Array): Promise<
   return Buffer.from(hashBuf).toString("hex");
 }
 
-export function mapHashOidToAlgorithm(oid: string): { algorithm: string; isGost: boolean } {
+export type KnownHashAlgorithm = NonNullable<IntegrityInfo["algorithm"]>;
+
+export function mapHashOidToAlgorithm(oid: string): { algorithm: KnownHashAlgorithm; isGost: boolean } {
   if (oid === "1.2.643.7.1.1.2.2") return { algorithm: "GOST R 34.11-2012-256", isGost: true };
   if (oid === "1.2.643.7.1.1.2.3") return { algorithm: "GOST R 34.11-2012-512", isGost: true };
   if (oid === "1.2.643.2.2.19") return { algorithm: "GOST R 34.11-94", isGost: true };
@@ -447,7 +456,7 @@ export async function verifyPAdESCrypto(
     timestamp,
     integrity: {
       hashMatch,
-      algorithm: hashAlgorithm as any,
+      algorithm: hashAlgorithm,
       messageDigestHex,
       computedDigestHex,
     },
@@ -455,7 +464,7 @@ export async function verifyPAdESCrypto(
 }
 
 export async function extractSignedContentFromPDF(pdfBytes: Uint8Array): Promise<{ signedContent: Uint8Array; cmsHex: string; byteRange: number[] } | null> {
-  const { PDFDocument, PDFName, PDFArray, PDFDict, PDFHexString, asPDFName } = await import("pdf-lib");
+  const { PDFDocument, PDFName, PDFArray, PDFDict, PDFHexString, PDFNumber, asPDFName } = await import("pdf-lib");
 
   try {
     const pdfDoc = await PDFDocument.load(pdfBytes, { ignoreEncryption: true });
@@ -466,26 +475,29 @@ export async function extractSignedContentFromPDF(pdfBytes: Uint8Array): Promise
     const fields = acroForm.lookupMaybe(asPDFName("Fields"), PDFArray);
     if (!fields) return null;
 
-    let sigDict: any = null;
-    const fieldsArray = (fields as any).array || [];
-    for (const fieldRef of fieldsArray) {
-      const field = pdfDoc.context.lookup(fieldRef, PDFDict);
-      const ft = field?.lookupMaybe(asPDFName("FT"), PDFName);
-      // PDFName.asString() возвращает значение СО слешем ("/Sig")
-      if (ft && ft.asString() === "/Sig") {
-        sigDict = field;
-        break;
+    // PDFArray.array — private в pdf-lib; идём через size()/get()/context.lookup.
+    // PDFDict имеет protected-конструктор, поэтому тип выводится из lookup.
+    const sigDict = (() => {
+      for (let i = 0; i < fields.size(); i++) {
+        const field = pdfDoc.context.lookup(fields.get(i), PDFDict);
+        const ft = field?.lookupMaybe(asPDFName("FT"), PDFName);
+        // PDFName.asString() возвращает значение СО слешем ("/Sig")
+        if (ft && ft.asString() === "/Sig") {
+          return field;
+        }
       }
-    }
+      return undefined;
+    })();
     if (!sigDict) return null;
 
     const byteRangeArr = sigDict.lookupMaybe(asPDFName("ByteRange"), PDFArray);
     if (!byteRangeArr) return null;
 
     const nums: number[] = [];
-    const byteRangeArray = (byteRangeArr as any).array || [];
-    for (const n of byteRangeArray) {
-      nums.push((n as any).asNumber());
+    for (let i = 0; i < byteRangeArr.size(); i++) {
+      const n = byteRangeArr.lookupMaybe(i, PDFNumber);
+      if (!n) return null;
+      nums.push(n.asNumber());
     }
     if (nums.length !== 4) return null;
 
@@ -507,8 +519,8 @@ export async function extractSignedContentFromPDF(pdfBytes: Uint8Array): Promise
     // lookupMaybe БЕЗ указания типа всегда бросает UnexpectedObjectTypeError (pdf-lib 1.17.1) —
     // обязательно передаём тип PDFHexString
     const contents = sigDict.lookupMaybe(asPDFName("Contents"), PDFHexString);
-    // PDFHexString.value — hex-строка без скобок
-    const cmsHex = contents?.value || "";
+    // asString() у PDFHexString возвращает hex-строку без скобок
+    const cmsHex = contents?.asString() || "";
     if (!/^[0-9A-Fa-f]+$/.test(cmsHex) || cmsHex.length < 100) return null;
 
     return { signedContent, cmsHex, byteRange: nums };

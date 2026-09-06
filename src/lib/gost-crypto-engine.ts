@@ -17,8 +17,18 @@ function mapGostAlgorithm(oid: string): string {
   return GOST_OIDS[oid] || oid;
 }
 
-function getAlgorithmOid(algorithm: AlgorithmIdentifier | any): string {
-  return (algorithm as any).algorithmId || algorithm.name || "";
+/**
+ * Алгоритм в произвольном виде: pkijs AlgorithmIdentifier (algorithmId),
+ * WebCrypto Algorithm (name) или их объединение (например, объект SPKI-алгоритма
+ * из node-gost-crypto, содержащий оба поля).
+ */
+export type AlgorithmLike = AlgorithmIdentifier | { name?: string; algorithmId?: string };
+
+function getAlgorithmOid(algorithm: AlgorithmLike): string {
+  if ("algorithmId" in algorithm && typeof algorithm.algorithmId === "string" && algorithm.algorithmId) {
+    return algorithm.algorithmId;
+  }
+  return "name" in algorithm && typeof algorithm.name === "string" ? algorithm.name : "";
 }
 
 export function isGostOid(oid: string): boolean {
@@ -29,7 +39,7 @@ export function mapGostOidToAlgorithm(oid: string): string {
   return mapGostAlgorithm(oid);
 }
 
-export function getGostAlgorithmName(algorithm: AlgorithmIdentifier | any): string {
+export function getGostAlgorithmName(algorithm: AlgorithmLike): string {
   const oid = getAlgorithmOid(algorithm);
   if (isGostAlgorithm(oid)) {
     return mapGostAlgorithm(oid);

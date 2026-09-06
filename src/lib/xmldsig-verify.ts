@@ -179,7 +179,10 @@ export async function verifyTslXmlSignature(xmlContent: string): Promise<XmlDsig
     const cert = parseCertificate(certB64);
     publicKey = await importGostPublicKey(cert);
     signerSubject = cert.subject?.typesAndValues
-      .map((t: any) => t.value?.valueBlock?.value)
+      .map((t) => {
+        const raw: unknown = t.value?.valueBlock?.value;
+        return typeof raw === "string" ? raw : String(raw ?? "");
+      })
       .filter(Boolean)
       .join(", ")
       .slice(0, 200);

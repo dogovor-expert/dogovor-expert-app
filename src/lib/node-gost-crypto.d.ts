@@ -32,5 +32,4 @@ declare module "node-gost-crypto" {
     };
   }
   export const gostCrypto: GostCrypto;
-  export const gostEngine: any;
 }
