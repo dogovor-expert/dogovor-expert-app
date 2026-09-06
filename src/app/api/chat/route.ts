@@ -111,21 +111,9 @@ async function postHandler(req: Request) {
 
   await saveProfile(safeVisitorId, { name, email });
 
-  // Получаем или создаём тему (forum topic) в Telegram-супергруппе.
-  let threadId = await getThread(safeVisitorId);  const shortId = safeVisitorId.slice(0, 6);
-  if (!threadId) {
-    const topicName = `${name} · #${shortId}`;
-    threadId = await createForumTopic(topicName);
-    if (!threadId) {
-      return NextResponse.json(
-        { error: "topic_failed", message: "Не удалось инициализировать чат. Попробуйте позже." },
-        { status: 502 }
-      );
-    }
-    await setThread(visitorId, threadId);
-
-    const contextText = [
-      `👤 <b>Новый посетитель</b> #${escapeHtml(shortId)}`,
+  const buildContextText = () =>
+    [
+      `👤 <b>Новый посетитель</b> #${escapeHtml(safeVisitorId.slice(0, 6))}`,
       `📄 Имя: ${escapeHtml(name)}`,
       `✉️ Email: ${escapeHtml(email)}`,
       ctx.url ? `🌐 Страница: ${escapeHtml(String(ctx.url))}` : null,
@@ -136,7 +124,27 @@ async function postHandler(req: Request) {
     ]
       .filter(Boolean)
       .join("\n");
-    await sendToTopic(threadId, contextText);
+
+  // Получаем или создаём тему (forum topic) в Telegram-супергруппе.
+  let threadId = await getThread(safeVisitorId);
+  const shortId = safeVisitorId.slice(0, 6);
+  const ensureTopic = async (): Promise<number | null> => {
+    if (!threadId) {
+      const topicName = `${name} · #${shortId}`;
+      const created = await createForumTopic(topicName);
+      if (!created) return null;
+      threadId = created;
+      await setThread(safeVisitorId, threadId);
+      await sendToTopic(threadId, buildContextText());
+    }
+    return threadId;
+  };
+  const topic = await ensureTopic();
+  if (!topic) {
+    return NextResponse.json(
+      { error: "topic_failed", message: "Не удалось инициализировать чат. Попробуйте позже." },
+      { status: 502 }
+    );
   }
 
   const msg: ChatMessage = {
@@ -147,7 +155,14 @@ async function postHandler(req: Request) {
     name,
   };
   await appendMessage(visitorId, msg);
-  await sendToTopic(threadId, text);
+  const delivered = await sendToTopic(topic, text);
+  if (!delivered) {
+    // Тема могла быть удалена в Telegram («message thread not found»):
+    // пересоздаём тему и переотправляем контекст + сообщение.
+    threadId = null;
+    const recreated = await ensureTopic();
+    if (recreated) await sendToTopic(recreated, text);
+  }
 
   const res = NextResponse.json({ ok: true, message: msg });
   // Привязываем эту беседу к подписанному httpOnly-cookie (C4).
