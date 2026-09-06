@@ -198,6 +198,10 @@ async function postHandler(req: Request) {
     });
     return NextResponse.json({ error: "Cryptographic verification failed", details: cryptoResult.errors }, { status: 400 });
   }
+  if (!cryptoResult.signer) {
+    // Теоретически недостижимо: valid=true гарантирует наличие signer.
+    return NextResponse.json({ error: "Signer info missing" }, { status: 500 });
+  }
 
   // Проверка соответствия метаданных (сервер не верит клиенту!)
   // Thumbprint сверяем — это уникальный идентификатор сертификата

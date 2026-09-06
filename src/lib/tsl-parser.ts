@@ -180,8 +180,8 @@ export async function parseTslXml(
                       certDer.byteOffset + certDer.byteLength
                     ) as ArrayBuffer;
                     const parsedCert = pkijs.Certificate.fromBER(certArrayBuffer);
-                    const notBefore = new Date((parsedCert.notBefore as any).value);
-                    const notAfter = new Date((parsedCert.notAfter as any).value);
+                    const notBefore = new Date(parsedCert.notBefore.value);
+                    const notAfter = new Date(parsedCert.notAfter.value);
 
                     certificates.push({
                       thumbprint: parsed2.thumbprint,
