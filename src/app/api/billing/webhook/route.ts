@@ -1,3 +1,4 @@
+import crypto from "node:crypto";
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { collectReport } from "@/lib/tronk";
@@ -9,6 +10,21 @@ import { yookassaWebhookSchema, validateBody } from "@/lib/validations/api";
 export const maxDuration = 60;
 
 const DAY_MS = 86400000;
+
+// Заголовок, в котором ЮKassa передаёт HMAC-SHA256 подпись (hex) для
+// входящего уведомления. Формат подписи согласовывается при подключении
+// магазина в личном кабинете ЮKassa (раздел "Интеграция" → "HTTP-уведомления"
+// → "Подпись уведомлений"). На момент внедрения публичной
+// кросс-версионной спецификации формата у ЮKassa нет, поэтому реализован
+// гибкий парсер: если в значении заголовка есть префикс "sha256=" —
+// снимаем его, оставшееся трактуем как hex-digest HMAC от raw body.
+//
+// Если формат подписи в ЮKassa изменится — поменяйте ТОЛЬКО тело
+// verifyYooKassaSignature (одна функция). Контракт вызова и порядок
+// проверок в POST остаются прежними.
+const SIGNATURE_HEADER = "x-yookassa-signature";
+const SIGNATURE_HEADER_ALT = "yookassa-signature";
+const SIGNATURE_HEX_PREFIX = "sha256=";
 
 // Официальный список IP-адресов ЮKassa для входящих уведомлений:
 // https://yookassa.ru/developers/using-api/webhooks
@@ -22,6 +38,64 @@ const YOOKASSA_NETS: string[] = [
   "77.75.156.35",
   "2a02:5180::/32",
 ];
+
+/**
+ * Проверяет HMAC-подпись webhook ЮKassa.
+ *
+ * Контракт:
+ * - secret читается из env `YOOKASSA_NOTIFICATION_SECRET` (владелец
+ *   задаёт в Vercel, получив ключ в ЛК ЮKassa).
+ * - payload — это raw body HTTP-запроса в кодировке UTF-8 (важно:
+ *   подпись считается ДО JSON.parse, иначе форматирование может
+ *   измениться и подпись не сойдётся).
+ * - возвращаемый signature — hex (или base64 — оба варианта принимаем).
+ *
+ * Возвращает false, если:
+ * - secret не задан в окружении (fail-closed: всякие подписи отвергаются);
+ * - заголовок подписи отсутствует;
+ * - подпись не совпадает (сравнение в constant-time);
+ * - длина не совпадает (также constant-time).
+ */
+function verifyYooKassaSignature(
+  rawBody: string,
+  signatureHeader: string | null,
+): boolean {
+  const secret = process.env.YOOKASSA_NOTIFICATION_SECRET;
+  if (!secret) return false;
+  if (!signatureHeader) return false;
+
+  // Поддерживаем оба формата, которые исторически встречались в ЛК:
+  //   "abc123..." (hex)
+  //   "sha256=abc123..." (с префиксом алгоритма)
+  let provided = signatureHeader.trim();
+  if (provided.toLowerCase().startsWith(SIGNATURE_HEX_PREFIX)) {
+    provided = provided.slice(SIGNATURE_HEX_PREFIX.length);
+  }
+
+  // Считаем HMAC-SHA256 от raw body. Сравниваем только в hex-формате —
+  // это самый распространённый вариант, и hex однозначно детерминирован
+  // по длине (64 символа для SHA-256).
+  const expected = crypto
+    .createHmac("sha256", secret)
+    .update(rawBody, "utf8")
+    .digest("hex");
+
+  if (expected.length !== provided.length) {
+    // Возвращаем false, но всё равно выполняем timingSafeEqual на буферах
+    // одинаковой длины, чтобы не давать различимый тайминг по длине
+    // (для атакующего это не критично, но гигиена важна).
+    crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(expected));
+    return false;
+  }
+  try {
+    return crypto.timingSafeEqual(
+      Buffer.from(expected, "utf8"),
+      Buffer.from(provided, "utf8"),
+    );
+  } catch {
+    return false;
+  }
+}
 
 function ipv4ToInt(ip: string): number | null {
   const parts = ip.split(".");
@@ -97,25 +171,54 @@ async function verifyPayment(
 }
 
 export async function POST(req: Request) {
+  // Fail-closed: если ЮKassa не настроена, вебхук полностью отключён.
   if (!process.env.YOOKASSA_SECRET_KEY) {
     return NextResponse.json({ error: "disabled" }, { status: 401 });
   }
+  // Fail-closed: подпись обязательна. Без YOOKASSA_NOTIFICATION_SECRET
+  // эндпоинт не принимает ни одного уведомления — владелец должен
+  // либо включить «Подпись уведомлений» в ЛК ЮKassa и положить
+  // секрет в env, либо отключить webhook, чтобы избежать ложных
+  // срабатываний.
+  if (!process.env.YOOKASSA_NOTIFICATION_SECRET) {
+    return NextResponse.json({ error: "disabled" }, { status: 401 });
+  }
 
-  // 1. Источник уведомления — только IP ЮKassa.
-  if (!isYooKassaIp(clientIp(req))) {
+  // 1. HMAC-проверка подписи (ПЕРВЫЙ фактор). Читаем raw body и заголовок
+  // ДО любых преобразований — подпись считается от точных байт,
+  // которые прислал ЮKassa. До JSON.parse.
+  const rawBody = await req.text();
+  if (!rawBody) {
+    return NextResponse.json({ error: "Invalid body" }, { status: 400 });
+  }
+  const sig =
+    req.headers.get(SIGNATURE_HEADER) ?? req.headers.get(SIGNATURE_HEADER_ALT);
+  if (!verifyYooKassaSignature(rawBody, sig)) {
+    // 401 (не 200 и не 403), чтобы ЮKassa повторила доставку —
+    // но владелец должен увидеть 401 в логах и проверить секрет.
+    return NextResponse.json({ error: "invalid_signature" }, { status: 401 });
+  }
+
+  // 2. Источник уведомления — только IP ЮKassa (второй фактор).
+  // Если IP не из списка, но подпись валидна — это атака через
+  // компрометацию сети ЮKassa, и мы блокируем обработку.
+  const ip = clientIp(req);
+  if (!isYooKassaIp(ip)) {
     return NextResponse.json({ error: "forbidden" }, { status: 403 });
   }
 
-  const rl = await checkRateLimit(limiters.webhook, clientIp(req) ?? "webhook");
+  const rl = await checkRateLimit(limiters.webhook, ip ?? "webhook");
   if (!rl.ok) return rateLimitResponse(rl.retryAfter);
 
-  const rawBody = await req.json().catch(() => null);
-  if (!rawBody) {
+  // 3. Только теперь парсим JSON и валидируем структуру.
+  let rawJson: unknown;
+  try {
+    rawJson = JSON.parse(rawBody);
+  } catch {
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
   }
 
-  // Zod-валидация минимальной структуры
-  const validation = validateBody(yookassaWebhookSchema, rawBody);
+  const validation = validateBody(yookassaWebhookSchema, rawJson);
   if (!validation.success) {
     return validation.error;
   }

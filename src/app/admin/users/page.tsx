@@ -4,6 +4,7 @@ import ExportButton from "@/components/admin/ExportButton";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { logAdminAction } from "@/lib/audit";
 import { revalidatePath } from "next/cache";
+import { assertSameOrigin, checkAdminRateLimit } from "@/lib/secure-action";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -17,8 +18,13 @@ export const dynamic = "force-dynamic";
 
 async function toggleAdmin(userId: string, makeAdmin: boolean) {
   "use server";
+  // Server Actions, мутирующие admin-флаги, требуют тех же трёх
+  // проверок, что и API-роуты: same-origin, auth, rate-limit.
+  // Без них компрометация сессии админа = эскалация привилегий.
+  await assertSameOrigin();
   const admin = await getAdminUser();
   if (!admin) return;
+  await checkAdminRateLimit(admin.id);
   const supabase = createAdminClient();
   const { error } = await supabase.from("profiles").update({ is_admin: makeAdmin }).eq("id", userId);
   if (!error) {
