@@ -15,7 +15,6 @@ import { CookieBanner } from "@/components/cookie/CookieBanner";
 import { useCookieConsent } from "@/hooks/useCookieConsent";
 import PromoPill from "@/components/billing/PromoPill";
 import SupportLauncher from "@/components/support/SupportLauncher";
-import { CartBadge } from "@/components/ui/CartBadge";
 import NotificationBell from "@/components/layout/NotificationBell";
 
 interface NavItem {
@@ -278,7 +277,6 @@ export default function AppLayout({ children }: { children: ReactNode }) {
             <PromoPill />
           </div>
           <div className="flex items-center gap-2">
-            <CartBadge />
             {user ? (
               <>
                 <NotificationBell />
