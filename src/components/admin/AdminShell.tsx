@@ -17,6 +17,7 @@ import {
   Shield,
   ScrollText,
   Search,
+  Headphones,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -27,6 +28,7 @@ const NAV = [
   { href: "/admin/payments", label: "Платежи", icon: Receipt },
   { href: "/admin/leads", label: "Лиды (растаможка)", icon: Package },
   { href: "/admin/feedback", label: "Обратная связь", icon: MessageSquare },
+  { href: "/admin/chat", label: "Чат поддержки", icon: Headphones },
   { href: "/admin/audit", label: "Журнал действий", icon: ScrollText },
 ];
 

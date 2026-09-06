@@ -13,6 +13,8 @@ import {
   clearUnread,
   getUnread,
   saveProfile,
+  touchActiveThread,
+  touchPresence,
   type ChatMessage,
 } from "@/lib/chat-store";
 import {
@@ -74,6 +76,7 @@ export async function GET(req: Request) {
     // только когда visitorId верифицирован через подписанную cookie.
     const vid = verifyVisitorCookie(cookieStore.get(CHAT_COOKIE)?.value);
     const unread = vid ? await getUnread(vid) : 0;
+    if (vid) await touchPresence(vid);
     return NextResponse.json({ unread });
   }
 
@@ -155,6 +158,7 @@ async function postHandler(req: Request) {
     name,
   };
   await appendMessage(visitorId, msg);
+  await touchActiveThread(visitorId, msg.ts);
   const delivered = await sendToTopic(topic, text);
   if (!delivered) {
     // Тема могла быть удалена в Telegram («message thread not found»):

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import { X, MessageCircle, Bug, Headphones } from "lucide-react";
 import ChatPanel from "./ChatPanel";
+import { createClient } from "@/lib/supabase/client";
 
 const FeedbackForm = dynamic(() => import("@/components/feedback/FeedbackForm"), {
   ssr: false,
@@ -26,6 +27,21 @@ function getVisitorId(): string {
   }
 }
 
+/**
+ * Для залогиненного пользователя visitorId = user.id (Supabase auth UUID):
+ * переписка не теряется при смене устройства/очистке cookie, а админ может
+ * открыть чат напрямую из карточки /admin/users/[id]. Гости — анонимный ID.
+ */
+async function resolveVisitorId(): Promise<string> {
+  try {
+    const { data } = await createClient().auth.getUser();
+    if (data.user?.id) return data.user.id;
+  } catch {
+    // не залогинен / supabase недоступен — анонимный ID
+  }
+  return getVisitorId();
+}
+
 type Tab = "chat" | "problem";
 
 /** Программно открыть чат (используется в help/page.tsx и др.). */
@@ -41,7 +57,7 @@ export default function SupportLauncher() {
   const [unread, setUnread] = useState(0);
 
   useEffect(() => {
-    setVisitorId(getVisitorId());
+    resolveVisitorId().then(setVisitorId);
   }, []);
 
   // Слушаем программное открытие (openChat()).

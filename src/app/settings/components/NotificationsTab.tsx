@@ -36,6 +36,10 @@ export default function NotificationsTab() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [notifyEmail, setNotifyEmail] = useState(true);
+  const [pdConsent, setPdConsent] = useState(false);
+  const [adConsent, setAdConsent] = useState(false);
+  const [consentSaving, setConsentSaving] = useState(false);
+  const [consentMsg, setConsentMsg] = useState<string | null>(null);
 
   useEffect(() => {
     fetch("/api/profile")
@@ -44,6 +48,15 @@ export default function NotificationsTab() {
         if (data) setNotifyEmail(data.notify_email);
       })
       .finally(() => setLoading(false));
+    fetch("/api/marketing-consent", { cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((j) => {
+        if (j) {
+          setPdConsent(!!j.pd_consent);
+          setAdConsent(!!j.ad_consent);
+        }
+      })
+      .catch(() => null);
   }, []);
 
   const handleToggle = async (value: boolean) => {
@@ -58,6 +71,34 @@ export default function NotificationsTab() {
       if (!res.ok) setNotifyEmail(!value);
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleConsent = async (kind: "pd" | "ad", value: boolean) => {
+    setConsentSaving(true);
+    setConsentMsg(null);
+    const prev = kind === "pd" ? pdConsent : adConsent;
+    if (kind === "pd") setPdConsent(value);
+    else setAdConsent(value);
+    try {
+      const res = await fetch("/api/marketing-consent", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ kind, value }),
+      });
+      if (!res.ok) {
+        if (kind === "pd") setPdConsent(prev);
+        else setAdConsent(prev);
+        setConsentMsg("Не удалось сохранить. Попробуйте позже.");
+      } else {
+        setConsentMsg(
+          value
+            ? "Согласие сохранено. Подтверждение придёт на email (double opt-in)."
+            : "Согласие отозвано — вы исключены из рассылки."
+        );
+      }
+    } finally {
+      setConsentSaving(false);
     }
   };
 
@@ -86,6 +127,40 @@ export default function NotificationsTab() {
                 {saving && <Loader2 className="w-4 h-4 animate-spin text-gray-600" />}
                 <Toggle checked={notifyEmail} onChange={handleToggle} />
               </div>
+            </div>
+
+            {/* Маркетинговая рассылка: два РАЗДЕЛЬНЫХ согласия
+                (152-ФЗ — обработка ПДн; 38-ФЗ ст.18 — реклама).
+                По умолчанию оба выключены — требование закона. */}
+            <div className="border-t border-gray-100 pt-5 space-y-4">
+              <h4 className="text-sm font-semibold text-gray-900">Email-рассылка</h4>
+              <label className="flex items-start gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={pdConsent}
+                  disabled={consentSaving}
+                  onChange={(e) => handleConsent("pd", e.target.checked)}
+                  className="mt-0.5 w-4 h-4 accent-brand-600"
+                />
+                <span className="text-xs text-gray-600 leading-relaxed">
+                  Даю согласие на обработку моих персональных данных (email) в целях
+                  получения информационной рассылки (152-ФЗ).
+                </span>
+              </label>
+              <label className="flex items-start gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={adConsent}
+                  disabled={consentSaving}
+                  onChange={(e) => handleConsent("ad", e.target.checked)}
+                  className="mt-0.5 w-4 h-4 accent-brand-600"
+                />
+                <span className="text-xs text-gray-600 leading-relaxed">
+                  Хочу получать новости, акции и рекламные предложения по email
+                  (38-ФЗ, ст. 18). Отписаться можно в любой момент одной ссылкой.
+                </span>
+              </label>
+              {consentMsg && <p className="text-xs text-brand-600">{consentMsg}</p>}
             </div>
 
             <div className="border-t border-gray-100 pt-5 space-y-5">
