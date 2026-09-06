@@ -1018,7 +1018,6 @@ function HomeContent() {
       const { blob } = await buildPdf(docs, {
         title: isPack ? "Паспорт сделки" : template.name,
         design: designId,
-        watermark: subscriptionActive ? undefined : "DogovorExpert.ru",
       });
       const buf = await blob.arrayBuffer();
       downloadBytes(new Uint8Array(buf), fileName + ".pdf");
@@ -1200,6 +1199,7 @@ function HomeContent() {
 
   const handleExportDocx = async () => {
     if (!subscriptionActive) {
+      setPaywallTitle("Экспорт в Word (DOCX) — доступно в подписке PRO");
       setPaywallOpen(true);
       return;
     }
@@ -1260,7 +1260,6 @@ function HomeContent() {
       const { blob } = await buildPdf(docs, {
         title: packTemplates.length > 1 ? "Паспорт сделки" : template.name,
         design: designId,
-        watermark: subscriptionActive ? undefined : "DogovorExpert.ru",
       });
       const buf = await blob.arrayBuffer();
       const pdfBase64 = uint8ToBase64(new Uint8Array(buf));
@@ -1724,7 +1723,6 @@ function HomeContent() {
                   printRef={printRef}
                   flatRef={flatRef}
                   renderPreview={renderPreview}
-                  watermark={subscriptionActive ? undefined : "DogovorExpert.ru"}
                   onPrint={handlePrint}
                   onCopyJson={handleCopyJson}
                   onExportPdf={() => handleExportPdf("pack")}
@@ -2089,7 +2087,6 @@ function HomeContent() {
         className="print-src"
         docs={[printDoc]}
         design="classic"
-        watermark={subscriptionActive ? undefined : "DogovorExpert.ru"}
       />
     </div>
   );

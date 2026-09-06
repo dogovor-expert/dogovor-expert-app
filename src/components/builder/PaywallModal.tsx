@@ -9,11 +9,11 @@ interface PaywallModalProps {
   isOpen: boolean;
   onClose: () => void;
   title?: string;
-  /** Result-first: даёт free-пользователю сразу скачать PDF с пометкой сервиса. */
+  /** Result-first: даёт пользователю сразу скачать PDF бесплатно. */
   onDownloadFreePdf?: () => void;
 }
 
-export default function PaywallModal({ isOpen, onClose, title = "Экспорт в DOCX — функция PRO", onDownloadFreePdf }: PaywallModalProps) {
+export default function PaywallModal({ isOpen, onClose, title = "Эта возможность входит в подписку PRO", onDownloadFreePdf }: PaywallModalProps) {
   const promo = isPromoActive();
   const price = currentProPrice();
 
@@ -28,9 +28,9 @@ export default function PaywallModal({ isOpen, onClose, title = "Экспорт 
       closeOnEscape
     >
       <p className="text-xs text-gray-600 mt-1.5 leading-relaxed">
-        Бесплатный тариф скачивает документ в PDF с пометкой сервиса. Подписка
-        PRO снимает пометку и открывает экспорт в Word (DOCX), подсказки
-        адресов и другие возможности.
+        Экспорт в PDF доступен всем бесплатно и без ограничений. Скачивание в
+        формате Word (DOCX) — возможность подписки PRO. Это не ошибка и не
+        сбой: функция просто входит в платный тариф.
       </p>
       {promo ? (
         <div className="mt-3 p-3 rounded-xl bg-gradient-to-br from-brand-500 to-brand-600 text-white">
@@ -78,7 +78,7 @@ export default function PaywallModal({ isOpen, onClose, title = "Экспорт 
           className="mt-2.5 w-full flex items-center justify-center gap-1.5 px-4 py-2.5 text-brand-700 bg-brand-50 hover:bg-brand-100 rounded-xl text-xs font-semibold transition border border-brand-100"
         >
           <Download className="w-3.5 h-3.5" />
-          Скачать PDF с пометкой (бесплатно)
+          Скачать в PDF (бесплатно)
         </button>
       )}
     </Modal>
