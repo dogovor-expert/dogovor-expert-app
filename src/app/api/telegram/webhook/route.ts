@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getVisitorByThread, appendMessage, incUnread, type ChatMessage } from "@/lib/chat-store";
+import { getVisitorByThread, appendMessage, incUnread, touchActiveThread, type ChatMessage } from "@/lib/chat-store";
 
 const SECRET = process.env.TELEGRAM_WEBHOOK_SECRET;
 const SUPPORT_GROUP_ID = process.env.TELEGRAM_SUPPORT_GROUP_ID;
@@ -56,6 +56,7 @@ export async function POST(req: Request) {
   };
   await appendMessage(visitorId, out);
   await incUnread(visitorId);
+  await touchActiveThread(visitorId, out.ts);
 
   return NextResponse.json({ ok: true });
 }

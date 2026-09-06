@@ -16,6 +16,7 @@ import { useCookieConsent } from "@/hooks/useCookieConsent";
 import PromoPill from "@/components/billing/PromoPill";
 import SupportLauncher from "@/components/support/SupportLauncher";
 import { CartBadge } from "@/components/ui/CartBadge";
+import NotificationBell from "@/components/layout/NotificationBell";
 
 interface NavItem {
   icon: ReactNode;
@@ -280,9 +281,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
             <CartBadge />
             {user ? (
               <>
-                <button className="relative p-2 hover:bg-gray-100 rounded-xl text-gray-600 transition-colors">
-                  <Bell className="w-5 h-5" />
-                </button>
+                <NotificationBell />
                 <div className="relative group">
                   <Link href="/settings" className="flex items-center gap-2 p-2 hover:bg-gray-100 rounded-xl transition-colors" title={profile.name}>
                     <div className="w-7 h-7 rounded-full overflow-hidden bg-gradient-to-br from-brand-400 to-purple-500 flex items-center justify-center text-xs font-medium text-white">

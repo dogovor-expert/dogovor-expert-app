@@ -35,8 +35,7 @@ export function isMailConfigured(): boolean {
   );
 }
 
-export async function sendEmail(input: SendEmailInput): Promise<boolean> {
-  const { to, subject, html, attachments = [] } = input;
+export async function sendEmail(input: SendEmailInput): Promise<boolean> {  const { to, subject, html, attachments = [] } = input;
   const zeptoToken = process.env.ZEPTOMAIL_TOKEN;
   const resendKey = process.env.RESEND_API_KEY;
   const zohoUser = process.env.ZOHO_SMTP_USER;
@@ -302,3 +301,29 @@ export async function sendTelegram(text: string): Promise<boolean> {
 }
 
 export { SUPPORT_EMAIL };
+
+/**
+ * Сервисное письмо о подарочном продлении подписки (транзакционное:
+ * касается конкретного действия с аккаунтом пользователя, согласие
+ * на рекламу не требуется).
+ */
+export async function sendSubscriptionGiftEmail(
+  to: string,
+  name: string,
+  months: number,
+  newEnd: Date,
+  reason: string
+): Promise<boolean> {
+  return sendEmail({
+    to,
+    subject: `Дарим ${months} мес. PRO в подарок — Dogovor.expert`,
+    html: `
+      <div style="font-family:Arial,sans-serif;max-width:520px;margin:0 auto;padding:24px;">
+        <h2 style="color:#4f46e5;margin:0 0 12px;">🎁 ${months} мес. PRO в подарок</h2>
+        <p style="color:#333;font-size:14px;line-height:1.6;">${name ? `${name}, ` : ""}мы продлили вашу подписку PRO в подарок.</p>
+        <p style="color:#333;font-size:14px;line-height:1.6;"><b>Причина:</b> ${reason}</p>
+        <p style="color:#333;font-size:14px;line-height:1.6;"><b>Подписка активна до:</b> ${newEnd.toLocaleDateString("ru-RU")}</p>
+        <p style="margin-top:24px;"><a href="https://dogovor.expert/billing" style="background:#4f46e5;color:#fff;padding:10px 20px;border-radius:8px;text-decoration:none;font-size:14px;">Открыть биллинг</a></p>
+      </div>`,
+  });
+}

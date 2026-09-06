@@ -122,6 +122,107 @@ export async function toggleAdminUser(formData: FormData) {
   revalidatePath("/admin/users");
 }
 
+const giftSubscriptionSchema = z
+  .object({
+    user_id: z.string().uuid(),
+    months: z.enum(["1", "2", "3", "6"]).transform((v) => Number(v)),
+    reason: z.string().min(3).max(300),
+    notify: z
+      .union([z.literal("true"), z.literal("false"), z.literal("")])
+      .transform((v) => v !== "false")
+      .optional(),
+  })
+  .strict();
+
+export async function giftSubscriptionExtension(formData: FormData) {
+  await assertSameOrigin();
+  const admin = await getAdminUser();
+  if (!admin) throw new Error("unauthorized");
+  await checkAdminRateLimit(admin.id);
+  const data = parseForm(giftSubscriptionSchema, formData);
+
+  const sb = createAdminClient();
+  const { data: subs, error: fetchErr } = await sb
+    .from("subscriptions")
+    .select("id, status, period_end")
+    .eq("user_id", data.user_id)
+    .order("period_start", { ascending: false })
+    .limit(5);
+  if (fetchErr) throw new Error(fetchErr.message);
+
+  const now = new Date();
+  const active = (subs ?? []).find(
+    (s) => s.status === "active" && s.period_end && new Date(String(s.period_end)) >= now
+  );
+  // База отсчёта: конец активной подписки, иначе — сейчас (подарок запускает подписку).
+  const baseMs = active?.period_end
+    ? Math.max(new Date(String(active.period_end)).getTime(), now.getTime())
+    : now.getTime();
+  const newEnd = new Date(baseMs + data.months * 30 * 86400000);
+
+  const patch: Record<string, unknown> = {
+    status: "active",
+    period_end: newEnd.toISOString(),
+    extended_by_admin_reason: data.reason,
+    extended_by_admin_id: admin.id,
+    extended_by_admin_at: now.toISOString(),
+  };
+  if (active) {
+    const { error } = await sb.from("subscriptions").update(patch).eq("id", active.id);
+    if (error) throw new Error(error.message);
+  } else {
+    const { error } = await sb.from("subscriptions").insert({
+      user_id: data.user_id,
+      plan: "pro",
+      status: "active",
+      period_start: now.toISOString(),
+      period_end: newEnd.toISOString(),
+      auto_renewal: false,
+      ...patch,
+    });
+    if (error) throw new Error(error.message);
+  }
+
+  // Уведомление в колокольчик (in-app) — INSERT только service_role.
+  await sb.from("notifications").insert({
+    user_id: data.user_id,
+    type: "subscription_gift",
+    title: `Дарим ${data.months} мес. PRO в подарок`,
+    body: `${data.reason}. Подписка активна до ${newEnd.toLocaleDateString("ru-RU")}.`,
+  });
+
+  // Сервисное письмо (транзакционное, не реклама — отдельное согласие не требуется).
+  if (data.notify !== false) {
+    try {
+      const { sendSubscriptionGiftEmail } = await import("@/lib/mail");
+      const { data: prof } = await sb
+        .from("profiles")
+        .select("full_name")
+        .eq("id", data.user_id)
+        .single();
+      const { data: authUser } = await sb.auth.admin.getUserById(data.user_id);
+      const email = authUser?.user?.email;
+      if (email) {
+        await sendSubscriptionGiftEmail(email, prof?.full_name ?? "", data.months, newEnd, data.reason);
+      }
+    } catch (e) {
+      console.warn("[gift] notify email failed", e);
+    }
+  }
+
+  await logAdminAction({
+    adminId: admin.id,
+    action: "subscription_gift_extension",
+    resource: "subscriptions",
+    resourceId: data.user_id,
+    meta: { months: data.months, reason: data.reason, new_period_end: newEnd.toISOString() },
+  });
+
+  revalidatePath("/admin/users/" + data.user_id);
+  revalidatePath("/admin/users");
+  revalidatePath("/admin/subscriptions");
+}
+
 export async function updateSubscription(formData: FormData) {
   await assertSameOrigin();
   const admin = await getAdminUser();

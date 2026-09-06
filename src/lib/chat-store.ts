@@ -37,9 +37,36 @@ const threadKey = (v: string) => `chat:thread:${v}`;
 const visitorByThreadKey = (t: number) => `chat:visitor:thread:${t}`;
 const unreadKey = (v: string) => `chat:unread:${v}`;
 const profileKey = (v: string) => `chat:profile:${v}`;
+/** Sorted set всех активных переписок: score = ts последнего сообщения. */
+const ACTIVE_THREADS_KEY = "chat:active";
+const onlineKey = (v: string) => `chat:online:${v}`;
 
 export function chatStoreAvailable(): boolean {
   return !!redis;
+}
+
+/** Регистрация активности переписки (вызывается при каждом appendMessage). */
+export async function touchActiveThread(visitorId: string, ts: number): Promise<void> {
+  if (!redis) return;
+  await redis.zadd(ACTIVE_THREADS_KEY, { score: ts, member: visitorId });
+}
+
+/** Список последних активных visitorId (сначала свежие). */
+export async function listActiveThreads(limit = 50): Promise<string[]> {
+  if (!redis) return [];
+  return redis.zrange(ACTIVE_THREADS_KEY, 0, limit - 1, { rev: true });
+}
+
+/** Presence: вызывается на каждый poll виджета; TTL чуть больше 3 опросов. */
+export async function touchPresence(visitorId: string): Promise<void> {
+  if (!redis) return;
+  await redis.set(onlineKey(visitorId), 1, { ex: 45 });
+}
+
+/** Онлайн ли посетитель (ключ присутствия жив). */
+export async function isOnline(visitorId: string): Promise<boolean> {
+  if (!redis) return false;
+  return (await redis.exists(onlineKey(visitorId))) === 1;
 }
 
 export async function getThread(visitorId: string): Promise<number | null> {

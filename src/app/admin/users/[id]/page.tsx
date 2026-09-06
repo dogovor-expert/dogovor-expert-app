@@ -4,7 +4,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { Badge } from "@/components/ui/Badge";
 import { Card } from "@/components/ui/Card";
 import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from "@/components/ui/Table";
-import { updateProfile, toggleAdminUser, updateSubscription } from "./actions";
+import { updateProfile, toggleAdminUser, updateSubscription, giftSubscriptionExtension } from "./actions";
 
 const fmt = (s?: string | null) =>
   s ? new Date(s).toLocaleString("ru-RU", { day: "2-digit", month: "2-digit", year: "2-digit", hour: "2-digit", minute: "2-digit" }) : "—";
@@ -129,6 +129,39 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
         ) : (
           <p className="text-sm text-gray-600">Нет активной подписки</p>
         )}
+      </Card>
+
+      <Card padding="md">
+        <h2 className="font-semibold text-gray-900 mb-1">🎁 Подарочное продление</h2>
+        <p className="text-xs text-gray-600 mb-3">
+          Продлевает подписку бесплатно (или запускает новую PRO). Пользователь
+          получит уведомление в колокольчике и письмо. Факт фиксируется в аудите.
+        </p>
+        <form action={giftSubscriptionExtension} className="space-y-3">
+          <input type="hidden" name="user_id" value={id} />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <label className="text-sm text-gray-600 flex flex-col gap-1">
+              Срок
+              <select name="months" defaultValue="1" className="rounded-lg border border-gray-200 px-3 py-2 text-gray-800 outline-none focus:ring-2 focus:ring-brand-500/20">
+                <option value="1">1 месяц</option>
+                <option value="2">2 месяца</option>
+                <option value="3">3 месяца</option>
+                <option value="6">6 месяцев</option>
+              </select>
+            </label>
+            <label className="text-sm text-gray-600 flex flex-col gap-1">
+              Причина (для аудита и письма)
+              <input name="reason" required minLength={3} maxLength={300} placeholder="Например: компенсация за сбой" className="rounded-lg border border-gray-200 px-3 py-2 text-gray-800 outline-none focus:ring-2 focus:ring-brand-500/20" />
+            </label>
+          </div>
+          <label className="text-sm text-gray-600 flex items-center gap-2">
+            <input type="checkbox" name="notify" value="true" defaultChecked className="w-4 h-4" />
+            Уведомить пользователя письмом
+          </label>
+          <button type="submit" className="rounded-lg bg-amber-500 px-4 py-2 text-sm font-medium text-white hover:bg-amber-600">
+            Подарить продление
+          </button>
+        </form>
       </Card>
 
       <Card padding="none">
