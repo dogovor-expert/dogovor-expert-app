@@ -1,16 +1,19 @@
 "use client";
-import { Flame } from "lucide-react";
+import { Download, Flame } from "lucide-react";
 import { currentProPrice, PRO_PRICE_OLD, PROMO_LABEL, isPromoActive, promoCountdownTarget, formatRub } from "@/lib/pricing";
 import CountdownTimer from "@/components/billing/CountdownTimer";
 import { Modal } from "@/components/ui/Modal";
+import { track, goals } from "@/lib/analytics";
 
 interface PaywallModalProps {
   isOpen: boolean;
   onClose: () => void;
   title?: string;
+  /** Result-first: даёт free-пользователю сразу скачать PDF с пометкой сервиса. */
+  onDownloadFreePdf?: () => void;
 }
 
-export default function PaywallModal({ isOpen, onClose, title = "Экспорт в DOCX — функция PRO" }: PaywallModalProps) {
+export default function PaywallModal({ isOpen, onClose, title = "Экспорт в DOCX — функция PRO", onDownloadFreePdf }: PaywallModalProps) {
   const promo = isPromoActive();
   const price = currentProPrice();
 
@@ -65,6 +68,19 @@ export default function PaywallModal({ isOpen, onClose, title = "Экспорт 
           Пока нет
         </button>
       </div>
+      {onDownloadFreePdf && (
+        <button
+          onClick={() => {
+            track(goals.exportPdf, { source: "paywall_free" });
+            onDownloadFreePdf();
+            onClose();
+          }}
+          className="mt-2.5 w-full flex items-center justify-center gap-1.5 px-4 py-2.5 text-brand-700 bg-brand-50 hover:bg-brand-100 rounded-xl text-xs font-semibold transition border border-brand-100"
+        >
+          <Download className="w-3.5 h-3.5" />
+          Скачать PDF с пометкой (бесплатно)
+        </button>
+      )}
     </Modal>
   );
 }

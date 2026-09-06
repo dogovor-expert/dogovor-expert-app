@@ -65,6 +65,10 @@ export const limiters = {
   exportData: mk("rl:export-data", 5, "60 s"),
   /** Опрос статуса OCR-задачи (S4) — 60/мин на user.id (внешний прокси). */
   ocrStatus: mk("rl:ocr-status", 60, "60 s"),
+  /** OCR-загрузка через прокси — 10/мин на user.id (тяжёлый внешний вызов). */
+  ocrUpload: mk("rl:ocr-upload", 10, "60 s"),
+  /** Настройки биллинга (тумблер автопродления) — 10/мин на IP. */
+  billingSettings: mk("rl:billing-settings", 10, "60 s"),
   /** История Autoteka-отчётов (S4) — 30/мин на user.id. */
   autotekaHistory: mk("rl:autoteka-history", 30, "60 s"),
 };

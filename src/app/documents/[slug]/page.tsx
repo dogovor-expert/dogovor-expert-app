@@ -75,6 +75,12 @@ export default async function DocumentPage({
     .map((id) => LEGAL_TEMPLATES.find((x) => x.id === id))
     .filter((x): x is LegalTemplate => Boolean(x))
     .slice(0, 5);
+  // Sibling-перелинковка: документы той же категории (mesh внутри кластера),
+  // исключая текущий и уже показанные в «Связанных».
+  const relatedIds = new Set(related.map((r) => r.id));
+  const siblings = LEGAL_TEMPLATES.filter(
+    (x) => x.category === t.category && x.id !== t.id && !relatedIds.has(x.id)
+  ).slice(0, 6);
 
   return (
     <div className="p-6 max-w-4xl mx-auto space-y-10">
@@ -194,6 +200,31 @@ export default async function DocumentPage({
                 </p>
               </Link>
             ))}
+          </div>
+        </section>
+      )}
+
+      {siblings.length > 0 && (
+        <section>
+          <h2 className="text-lg font-bold text-gray-900 mb-4">
+            Другие документы категории
+          </h2>
+          <div className="flex flex-wrap gap-2">
+            {siblings.map((s) => (
+              <Link
+                key={s.id}
+                href={`/documents/${s.id}`}
+                className="px-3 py-1.5 bg-white border border-gray-200 rounded-full text-xs text-gray-700 hover:border-indigo-300 hover:text-indigo-600 transition"
+              >
+                {s.name}
+              </Link>
+            ))}
+            <Link
+              href="/templates"
+              className="px-3 py-1.5 bg-indigo-50 border border-indigo-100 rounded-full text-xs text-indigo-700 hover:bg-indigo-100 transition"
+            >
+              Все шаблоны →
+            </Link>
           </div>
         </section>
       )}

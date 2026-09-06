@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import { currentProPrice, PRO_PRICE_OLD, PRO_PRICE, PROMO_LABEL, isPromoActive, promoCountdownTarget, formatRub } from "@/lib/pricing";
 import CountdownTimer from "@/components/billing/CountdownTimer";
+import { track, goals } from "@/lib/analytics";
 
 interface PaymentRow {
   id: string;
@@ -145,6 +146,7 @@ export default function BillingPage() {
     const q = new URLSearchParams(window.location.search);
     if (q.get("success")) {
       setJustPaid(true);
+      track(goals.paymentSuccess);
       window.history.replaceState({}, "", "/billing");
     }
     if (q.get("renewed")) {
@@ -168,6 +170,7 @@ export default function BillingPage() {
         setPaying(false);
         return;
       }
+      track(goals.paymentCreated);
       window.location.href = json.confirmation_url;
     } catch {
       showToast("Сервис временно недоступен. Попробуйте ещё раз");
@@ -190,6 +193,7 @@ export default function BillingPage() {
       }
       setAutoRenewal(!!json.auto_renewal);
       showToast(json.auto_renewal ? "Автопродление включено" : "Автопродление отключено");
+      track(goals.billingAutorenewToggle, { enabled: json.auto_renewal });
     } finally {
       setTogglingAuto(false);
     }
