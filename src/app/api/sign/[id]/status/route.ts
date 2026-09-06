@@ -277,13 +277,32 @@ export async function GET(
     meta: { hashMatch, structuralValid, byteRangeValid: inspection.byteRangeValid },
   });
 
+  const cryptoVerified = sig.crypto_verified ?? false;
+  const chainVerified = sig.chain_verified ?? false;
+  const revocationStatus = sig.revocation_status ?? "unknown";
+  const issuer = sig.certificate_issuer ?? null;
+  const serial = sig.certificate_serial ?? null;
+
+  const notChecked: string[] = [];
+  if (!cryptoVerified) {
+    notChecked.push("Криптографическая валидность подписи CMS (ГОСТ Р 34.10-2012)");
+  }
+  if (!chainVerified) {
+    notChecked.push("Цепочка сертификатов до доверенного УЦ Минцифры");
+  }
+  if (revocationStatus === "unknown" || revocationStatus === "offline") {
+    notChecked.push("Отзыв сертификата по CRL/OCSP");
+  }
+  if (!sig.tsa_info) {
+    notChecked.push("Метка времени TSA (RFC 3161)");
+  }
+
   return NextResponse.json({
     signatureId: sig.id,
     documentId: sig.document_id,
     createdAt: sig.created_at,
     algorithm: sig.signature_algorithm,
 
-    // Что проверено
     integrity: {
       hashMatch,
       storedHash: sig.document_hash_sha256,
@@ -308,23 +327,23 @@ export async function GET(
     certificate: {
       thumbprint: sig.certificate_thumbprint,
       subject: sig.certificate_subject,
+      issuer,
+      serialNumber: serial,
       validTo: sig.certificate_valid_to,
       expired: certExpired,
       expiringSoon: certExpiringSoon,
+      isQualified: sig.is_qualified ?? false,
     },
 
-    // Честное признание границ проверки
-    cryptoVerified: false,
-    notChecked: [
-      "Криптографическая валидность подписи CMS (ГОСТ Р 34.10-2012)",
-      "Цепочка сертификатов",
-      "Отзыв сертификата по CRL/OCSP",
-      "Метка времени TSA (RFC 3161)",
-    ],
-    message:
-      "Проверена только структура подписи и целостность файла. " +
-      "Криптографическая проверка подписи требует ГОСТ-движка на сервере " +
-      "или проверки через плагин КриптоПро на клиенте.",
+    cryptoVerified,
+    chainVerified,
+    revocationStatus,
+    chainDetails: sig.chain_details ?? [],
+    timestamp: sig.tsa_info ?? null,
+    notChecked,
+    message: cryptoVerified
+      ? "Криптографическая проверка пройдена успешно."
+      : "Проверена только структура подписи и целостность файла. Криптографическая проверка не выполнялась или не прошла.",
     verifiedAt: new Date().toISOString(),
   });
 }

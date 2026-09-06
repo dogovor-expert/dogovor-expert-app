@@ -7,6 +7,7 @@ import { limiters, checkRateLimit, rateLimitResponse } from "@/lib/ratelimit";
 import { logSignAction } from "@/lib/sign-audit";
 import { PDFDocument, PDFName, PDFDict, PDFArray, asPDFName } from "pdf-lib";
 import { uint8ToBase64, hexToUint8 } from "@/lib/bytes";
+import { verifyPAdESCrypto, extractSignedContentFromPDF } from "@/lib/pades-verify";
 
 const SHA256_HEX = "sha-256";
 const MAX_PDF_SIZE = 50 * 1024 * 1024; // 50 MB
@@ -47,8 +48,9 @@ async function verifyPAdESSignature(pdfBytes: Uint8Array): Promise<{
     for (const fieldRef of fields.array) {
       const field = pdfDoc.context.lookup(fieldRef, PDFDict);
       if (field) {
-        const ft = (field as any).lookupMaybe(asPDFName("FT"));
-        if (ft && ft.value === "Sig") {
+        const ft = (field as any).lookupMaybe(asPDFName("FT"), PDFName);
+        // PDFName.asString() возвращает значение СО слешем ("/Sig"); .value — функция в pdf-lib 1.17
+        if (ft && ft.asString() === "/Sig") {
           sigDict = field;
           break;
         }
@@ -166,13 +168,46 @@ async function postHandler(req: Request) {
     return NextResponse.json({ error: "forbidden" }, { status: 403 });
   }
 
-  // Верификация PAdES подписи в PDF
   const pdfBytes = new Uint8Array(pdfBuffer);
-  const verification = await verifyPAdESSignature(pdfBytes);
 
-  if (!verification.valid) {
-    return NextResponse.json({ error: `Invalid signature: ${verification.error}` }, { status: 400 });
+  // Структурная проверка (существующая)
+  const structureVerification = await verifyPAdESSignature(pdfBytes);
+  if (!structureVerification.valid) {
+    return NextResponse.json({ error: `Invalid signature structure: ${structureVerification.error}` }, { status: 400 });
   }
+
+  // Извлекаем signedContent и CMS для криптографической верификации
+  const extracted = await extractSignedContentFromPDF(pdfBytes);
+  if (!extracted) {
+    return NextResponse.json({ error: "Failed to extract signature data from PDF" }, { status: 400 });
+  }
+  const { signedContent, cmsHex } = extracted;
+
+  // Криптографическая верификация (НОВАЯ)
+  const cryptoResult = await verifyPAdESCrypto(pdfBytes, signedContent, cmsHex);
+
+  if (!cryptoResult.valid) {
+    await logSignAction({
+      userId: user.id,
+      documentId,
+      action: "accept",
+      documentHash: "",
+      ip: req.headers.get("x-forwarded-for"),
+      userAgent: req.headers.get("user-agent"),
+      meta: { cryptoVerified: false, cryptoErrors: cryptoResult.errors, cryptoWarnings: cryptoResult.warnings },
+    });
+    return NextResponse.json({ error: "Cryptographic verification failed", details: cryptoResult.errors }, { status: 400 });
+  }
+
+  // Проверка соответствия метаданных (сервер не верит клиенту!)
+  // Thumbprint сверяем — это уникальный идентификатор сертификата
+  const clientThumbprint = body.thumbprint?.toUpperCase().replace(/:/g, "");
+  if (cryptoResult.signer.thumbprintSha1 !== clientThumbprint) {
+    return NextResponse.json({ error: "Thumbprint mismatch (SHA-1)" }, { status: 400 });
+  }
+  // Subject DN и ValidTo НЕ сверяем с body — сервер извлёк их из CMS.
+  // rawDN содержит числовые OID (2.5.4.3=...), а клиент присылает CN=... — они никогда не совпадут.
+  // ValidTo в клиенте может иметь другую точность/таймзону — доверяем серверному значению.
 
   // Пересчитываем хэш PDF
   const documentHash = await sha256Hex(pdfBuffer.buffer.slice(pdfBuffer.byteOffset, pdfBuffer.byteOffset + pdfBuffer.byteLength));
@@ -192,18 +227,24 @@ async function postHandler(req: Request) {
     return NextResponse.json({ error: "storage upload failed" }, { status: 500 });
   }
 
-  // Записываем в document_signatures
+  // Записываем в document_signatures (данные ИЗ CMS, а не из body!)
   const { data: signature, error: sigError } = await admin
     .from("document_signatures")
     .insert({
       document_id: documentId,
       user_id: user.id,
-      certificate_thumbprint: thumbprint,
-      certificate_subject: subjectName,
-      certificate_valid_to: new Date(validTo).toISOString(),
+      certificate_thumbprint: cryptoResult.signer.thumbprintSha1,
+      certificate_subject: cryptoResult.signer.subject.rawDN,
+      certificate_valid_to: cryptoResult.signer.validTo.toISOString(),
       signature_algorithm: algorithm,
       signature_path: storagePath,
       document_hash_sha256: documentHash,
+      // Новые поля для криптоверификации (требуют миграции)
+      certificate_issuer: cryptoResult.signer.issuer.rawDN,
+      certificate_serial: cryptoResult.signer.serialNumber,
+      crypto_verified: cryptoResult.cryptoVerified,
+      chain_verified: cryptoResult.chainValid,
+      revocation_status: cryptoResult.revocation.status,
     })
     .select()
     .single();
@@ -228,9 +269,15 @@ async function postHandler(req: Request) {
     userAgent: req.headers.get("user-agent"),
     meta: {
       signatureId: signature.id,
-      thumbprint,
+      thumbprint: cryptoResult.signer.thumbprintSha1,
       algorithm,
-      structureFound: verification.valid,
+      structureFound: structureVerification.valid,
+      cryptoVerified: cryptoResult.cryptoVerified,
+      chainVerified: cryptoResult.chainValid,
+      revocationStatus: cryptoResult.revocation.status,
+      isQualified: cryptoResult.signer.isQualified,
+      hashAlgorithm: cryptoResult.integrity.algorithm,
+      hashMatch: cryptoResult.integrity.hashMatch,
     },
   });
 
@@ -243,9 +290,15 @@ async function postHandler(req: Request) {
     signatureId: signature.id,
     downloadUrl: signedUrlData?.signedUrl ?? `/api/sign/${signature.id}/download`,
     verification: {
-      signerName: verification.signerName,
-      reason: verification.reason,
-      signingDate: verification.signingDate,
+      signerName: structureVerification.signerName,
+      reason: structureVerification.reason,
+      signingDate: structureVerification.signingDate,
+      cryptoVerified: cryptoResult.cryptoVerified,
+      chainVerified: cryptoResult.chainValid,
+      revocationStatus: cryptoResult.revocation.status,
+      isQualified: cryptoResult.signer.isQualified,
+      hashAlgorithm: cryptoResult.integrity.algorithm,
+      hashMatch: cryptoResult.integrity.hashMatch,
     },
   });
 }
