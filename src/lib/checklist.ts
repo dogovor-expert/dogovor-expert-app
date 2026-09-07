@@ -417,6 +417,54 @@ export const CHECKLIST_RULES: ChecklistItem[] = [
     cats: ["finance"],
     perspective: "seller",
   },
+
+  // ---------- РЕЕСТРЫ (гос. проверки, доступны для всех категорий) ----------
+  {
+    id: "fns-transparent",
+    label: "Проверить организацию в «Прозрачном бизнесе» ФНС",
+    group: "Государственные проверки",
+    kind: "gov",
+    govUrl: "https://bo.nalog.ru/",
+    govLabel: "Открыть «Прозрачный бизнес»",
+    why: "Показывает адрес массовой регистрации, дисквалифицированных руководителей, долги по налогам, среднесписочную численность.",
+    include: (ctx) =>
+      hasAnyField(ctx, ["buyer_inn", "seller_inn", "owner_inn", "party_inn", "company_inn"]) ||
+      hasCategory(ctx, "legal"),
+  },
+  {
+    id: "mvd-passport",
+    label: "Проверить действительность паспорта физлица в МВД",
+    group: "Государственные проверки",
+    kind: "gov",
+    govUrl: "https://сервисы.мвд.рф/info-service-validity-passport",
+    govLabel: "Проверка паспорта МВД",
+    why: "Сверяет паспорт по базе недействительных (утерянных, просроченных, поддельных).",
+    include: (ctx) =>
+      hasAnyField(ctx, ["buyer_passport_series", "seller_passport_series", "owner_passport_series", "passport_series"]),
+  },
+  {
+    id: "reestr-zalogov",
+    label: "Проверить имущество в реестре уведомлений о залоге (ФНП)",
+    group: "Государственные проверки",
+    kind: "gov",
+    govUrl: "https://reestr-zalogov.ru/search/index",
+    govLabel: "Реестр залогов движимого имущества",
+    why: "Если имущество в залоге (например, авто по автокредиту) — сделка может быть оспорена залогодержателем.",
+    cats: ["auto", "realty", "finance"],
+  },
+  {
+    id: "notary-reestr",
+    label: "Проверить доверенность в реестре нотариальных действий",
+    group: "Государственные проверки",
+    kind: "gov",
+    govUrl: "https://reestr-dover.ru/",
+    govLabel: "Реестр доверенностей ФНП",
+    why: "Подтверждает, что доверенность действующая и не отозвана (ст. 34.2 Основ законодательства о нотариате).",
+    include: (ctx) =>
+      hasAnyField(ctx, ["representative_basis", "agent_basis", "dovernennost"]) ||
+      hasCategory(ctx, "representative") ||
+      hasCategory(ctx, "agent"),
+  },
 ];
 
 export function getChecklist(ctx: ChecklistCtx): ChecklistItem[] {

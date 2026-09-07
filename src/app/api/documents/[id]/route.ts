@@ -19,6 +19,31 @@ async function patchHandler(req: Request, { params }: Params) {
   const body = await req.json().catch(() => null);
   if (!body) return NextResponse.json({ error: "bad body" }, { status: 400 });
 
+  // Оптимистичная блокировка: если клиент прислал `If-Match: <updated_at>`,
+  // убедимся, что версия не устарела (защита от «затереть» более новые
+  // правки из другой вкладки). При конфликте — 409 с текущими данными.
+  const ifMatch = req.headers.get("if-match");
+  if (ifMatch) {
+    const { data: current } = await supabase
+      .from("documents")
+      .select("updated_at")
+      .eq("id", id)
+      .eq("user_id", user.id)
+      .single();
+    if (current && current.updated_at && current.updated_at !== ifMatch) {
+      const { data: fresh } = await supabase
+        .from("documents")
+        .select("id, template_id, title, fields, checklist, versions, status, updated_at")
+        .eq("id", id)
+        .eq("user_id", user.id)
+        .single();
+      return NextResponse.json(
+        { error: "conflict", current: fresh, yourVersion: ifMatch },
+        { status: 409 }
+      );
+    }
+  }
+
   // Whitelist: только контентные поля. status/template_id/deleted_at управляются
   // через DELETE (корзина) и специальные роуты (/api/trash), чтобы клиент не
   // мог обойти логику корзины или подменить шаблон/дату удаления.

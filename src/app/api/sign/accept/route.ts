@@ -290,6 +290,7 @@ async function postHandler(req: Request) {
     .from("signed-documents")
     .createSignedUrl(storagePath, 60 * 60); // 1 час
 
+  const revocationStatus = cryptoResult.revocation.status;
   return NextResponse.json({
     signatureId: signature.id,
     downloadUrl: signedUrlData?.signedUrl ?? `/api/sign/${signature.id}/download`,
@@ -299,7 +300,9 @@ async function postHandler(req: Request) {
       signingDate: structureVerification.signingDate,
       cryptoVerified: cryptoResult.cryptoVerified,
       chainVerified: cryptoResult.chainValid,
-      revocationStatus: cryptoResult.revocation.status,
+      revocationStatus,
+      // Явный флаг «проверка отзыва не выполнена» — отличать от «не отозван»
+      revocationCheckPending: revocationStatus === "unknown" || revocationStatus === "offline",
       isQualified: cryptoResult.signer.isQualified,
       hashAlgorithm: cryptoResult.integrity.algorithm,
       hashMatch: cryptoResult.integrity.hashMatch,

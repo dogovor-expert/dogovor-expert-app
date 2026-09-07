@@ -114,6 +114,18 @@ export default function ApprovePage() {
           </div>
         </div>
 
+        {/* Баннер: ссылка одноразовая, не передавайте третьим лицам.
+            Содержит ПДн сторон, не предназначена для публикации. */}
+        <div className="mb-4 p-3 rounded-xl bg-amber-50 border border-amber-200 flex items-start gap-2.5">
+          <AlertTriangle className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
+          <div className="text-xs text-amber-800 leading-relaxed">
+            <b>Внешняя ссылка для согласования</b> · действует {expiresLabel} · содержит
+            персональные данные сторон по 152-ФЗ. Не передавайте её третьим лицам,
+            не публикуйте в открытых источниках. После согласования попросите
+            владельца закрыть доступ.
+          </div>
+        </div>
+
         <div className="bg-white rounded-2xl border border-gray-200 p-6 mb-6">
           <div className="flex items-center justify-between flex-wrap gap-2 mb-4">
             <p className="text-sm font-medium text-gray-700">

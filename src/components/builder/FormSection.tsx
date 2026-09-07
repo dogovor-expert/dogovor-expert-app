@@ -107,7 +107,10 @@ export default function FormSection({
       />
     ));
 
-  const sectionHeading = (tab: TemplateField["category"]) => {
+  const sectionHeading = (
+    tab: TemplateField["category"],
+    index: number
+  ) => {
     const fields = visibleFields.filter((f) => f.category === tab);
     const required = fields.filter((f) => f.validation?.required);
     const filled = required.filter((f) => formValues[f.id]?.trim());
@@ -115,6 +118,9 @@ export default function FormSection({
     const heading = tabRoleLabel(template.id, tab, TAB_LABELS[tab] || tab);
     return (
       <h3 className="flex items-center gap-2 text-sm font-semibold text-gray-800">
+        <span className="w-6 h-6 rounded-md bg-gray-100 grid place-items-center text-[11px] font-bold text-gray-700">
+          {index + 1}
+        </span>
         {heading}
         {required.length > 0 && (
           <span
@@ -133,17 +139,19 @@ export default function FormSection({
 
   return (
     <div className="bg-white rounded-xl border border-gray-100 shadow-sm">
-      <div className="p-5 space-y-6">
-        {tabs.map((tab) => (
-          <section key={tab} className="space-y-4">
-            <div className="flex items-center gap-3">
-              <span className="w-1 h-4 rounded-full bg-brand-500" />
-              {sectionHeading(tab)}
-            </div>
+      <div className="p-5 space-y-4">
+        {tabs.map((tab, i) => (
+          <fieldset
+            key={tab}
+            className="border border-gray-200 rounded-xl p-4 bg-white space-y-3"
+          >
+            <legend className="px-2 -ml-2">
+              {sectionHeading(tab, i)}
+            </legend>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {renderFields(visibleFields.filter((f) => f.category === tab))}
             </div>
-          </section>
+          </fieldset>
         ))}
       </div>
       <div className="px-5 pb-5 flex flex-wrap items-center justify-between gap-3">

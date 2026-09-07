@@ -14,6 +14,7 @@ import {
   Loader2,
   Camera,
   ChevronDown,
+  ArrowRight,
 } from "lucide-react";
 import { LEGAL_TEMPLATES } from "@/data/legalTemplates";
 import type { LegalTemplate, TemplateField } from "@/data/types";
@@ -27,6 +28,7 @@ import { saveDraft, loadDraft, clearDraft, clearDraftVersions, getAllDrafts, pus
 import { syncDraft, syncDelete, setUserFlag } from "@/lib/sync";
 import { createClient } from "@/lib/supabase/client";
 import { renderTemplateDocument, buildPackValues } from "@/lib/renderDocument";
+import { migrateFieldValues } from "@/lib/fieldMigration";
 import { Modal } from "@/components/ui/Modal";
 import { getSigning, canShowSignSheet } from "@/data/signingMeta";
 import { type DesignId } from "@/lib/docDesign";
@@ -285,6 +287,7 @@ function HomeContent() {
   );
 
   // Нормализация ответа: прокси отдаёт плоскую структуру, сырой DADATA — nested.
+  // Возвращаем все поля, которые нужны UI-компонентам (DadataPanel, lookupInn).
   const normParty = (s: any) => {
     if (!s || !s.data) return s;
     return {
@@ -293,42 +296,23 @@ function HomeContent() {
       ogrn: s.data.ogrn || "",
       name_short_with_opf: s.data.name?.short_with_opf || "",
       address_value: s.data.address?.value || "",
-      status: s.data.state?.status || "",
+      state_status: s.data.state?.status || "",
+      state_code: s.data.state?.code || "",
       management_name: s.data.management?.name || "",
     };
   };
 
   const callDadata = async (op: string, query: string, count = 10) => {
+    // Запрос идёт ТОЛЬКО через /api/dadata: серверный прокси для PRO, fallback
+    // для FREE с собственным серверным ключом. Клиент НИКОГДА не дёргает
+    // suggestions.dadata.ru напрямую — это утечка API-ключа в Network tab
+    // и нарушение ToS DaData. См. AGENTS.md «DADATA: только серверный прокси».
     const res = await fetch("/api/dadata", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ op, query, count, apiKey: dadataKey.trim() }),
+      body: JSON.stringify({ op, query, count }),
     });
-    if (res.status !== 503) {
-      return { status: res.status, json: res.ok ? await res.json() : null };
-    }
-    if (!dadataKey.trim()) return { status: 503, json: null };
-    const endpoint =
-      op === "find-party"
-        ? "findById/party"
-        : op.replace("suggest-", "suggest/");
-    const direct = await fetch(
-      `https://suggestions.dadata.ru/suggestions/api/4_1/rs/${endpoint}`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-          Authorization: "Token " + dadataKey.trim(),
-        },
-        body: JSON.stringify({ query, count }),
-      }
-    );
-    const json = direct.ok ? await direct.json() : null;
-    if (json?.suggestions) {
-      json.suggestions = json.suggestions.map(normParty);
-    }
-    return { status: direct.status, json };
+    return { status: res.status, json: res.ok ? await res.json() : null };
   };
 
   const applyPartyData = (s: { name_short_with_opf?: string; name?: { short_with_opf?: string; raw?: string }; kpp?: string; ogrn?: string; address_value?: string; address?: { value?: string } } | undefined, prefix: string): number => {
@@ -375,6 +359,20 @@ function HomeContent() {
       const s = normParty(json.suggestions[0]);
       if (!s) {
         setDadataMsg({ text: "Организация по этому ИНН не найдена", ok: false });
+        return;
+      }
+      // Предупреждение о статусе ЕГРЮЛ: запрещаем заполнение для ликвидированных/банкротов.
+      const BLOCK_STATUS = ["LIQUIDATED", "BANKRUPT", "LIQUIDATING"];
+      if (s.state_status && BLOCK_STATUS.includes(s.state_status)) {
+        const labels: Record<string, string> = {
+          LIQUIDATING: "в процессе ликвидации",
+          LIQUIDATED: "ликвидирована",
+          BANKRUPT: "банкрот",
+        };
+        setDadataMsg({
+          text: `Контрагент ${labels[s.state_status] || s.state_status} по ЕГРЮЛ — заполнение формы заблокировано`,
+          ok: false,
+        });
         return;
       }
       const prefix = fieldId.slice(0, fieldId.length - "_inn".length);
@@ -881,6 +879,7 @@ function HomeContent() {
   const selectRelatedTemplate = (templateId: string) => {
     if (templateId === selectedTemplateId) return;
     const prevValues = formValuesRef.current;
+    const prevTemplate = template;
     const nextTemplate =
       LEGAL_TEMPLATES.find((t) => t.id === templateId) ||
       LEGAL_TEMPLATES[0];
@@ -890,8 +889,18 @@ function HomeContent() {
       const val = pack[f.id];
       if (val !== undefined && val.trim() !== "") merged[f.id] = val;
     });
+    // Дополнительно: миграция полей по «роль+тип» (seller_inn ↔ buyer_inn,
+    // owner_phone ↔ tenant_phone и т.п.). Не затирает значения из pack.
+    const migration = migrateFieldValues(prevValues, prevTemplate, nextTemplate);
+    for (const [k, v] of Object.entries(migration.values)) {
+      if (!merged[k] || merged[k].trim() === "") merged[k] = v;
+    }
     pendingMergeRef.current = merged;
     setSelectedTemplateId(templateId);
+    setMigrationInfo({
+      migratedCount: migration.migratedIds.length,
+      totalFields: migration.totalNextFields,
+    });
     try { localStorage.setItem("dogovor_last_template", templateId); } catch { /* localStorage недоступен */ }
   };
 
@@ -1392,6 +1401,7 @@ function HomeContent() {
   const [approvalMode, setApprovalMode] = useState<"fill" | "edit">("fill");
   const [approvalBusy, setApprovalBusy] = useState(false);
   const [approvalMsg, setApprovalMsg] = useState("");
+  const [migrationInfo, setMigrationInfo] = useState<{ migratedCount: number; totalFields: number } | null>(null);
   const [approvalQr, setApprovalQr] = useState<{ token: string; svg: string } | null>(null);
 
   const showApprovalQr = async (token: string) => {
@@ -1499,6 +1509,21 @@ function HomeContent() {
           </h1>
           <p className="text-gray-600 mt-1 text-sm">{template.name}</p>
         </div>
+        {migrationInfo && (
+          <div className="px-3 py-2 rounded-lg bg-blue-50 border border-blue-200 text-xs text-blue-800 flex items-center gap-2">
+            <span className="font-medium">
+              Перенесено {migrationInfo.migratedCount} из {migrationInfo.totalFields} полей
+            </span>
+            <button
+              type="button"
+              onClick={() => setMigrationInfo(null)}
+              className="text-blue-500 hover:text-blue-700"
+              aria-label="Закрыть"
+            >
+              ×
+            </button>
+          </div>
+        )}
         <div className="flex items-center gap-3">
           {showSaved && (
             <div className="flex items-center gap-1.5 text-xs text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-lg">
@@ -1616,7 +1641,7 @@ function HomeContent() {
         >
           {/* Left: Form */}
           <div
-            className="xl:col-span-3 space-y-4"
+            className="xl:col-span-3 space-y-4 pb-20 xl:pb-0"
             style={{
               zoom: formScale !== 100 ? formScale / 100 : undefined,
               // iOS-клавиатура: держим активное поле над видимой областью
@@ -1721,6 +1746,33 @@ function HomeContent() {
                 <TemplateInfoPanel template={template} />
               </Collapsible>
             </>)}
+
+            {/* Mobile sticky CTA: дублируем кнопки «Проверить» и «Предпросмотр» снизу
+                на мобиле, чтобы не скроллить форму до конца. На десктопе скрыт. */}
+            {viewMode === "form" && (
+              <div
+                className="xl:hidden fixed inset-x-0 bottom-0 z-30 bg-white/95 backdrop-blur border-t border-gray-200 pb-safe"
+                style={{ paddingBottom: "max(8px, env(safe-area-inset-bottom))" }}
+              >
+                <div className="px-3 py-2 grid grid-cols-2 gap-2">
+                  <button
+                    onClick={handleAudit}
+                    className="inline-flex items-center justify-center font-medium transition-all h-12 text-sm rounded-xl gap-2 bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200"
+                  >
+                    <Shield className="w-4 h-4" />
+                    Проверить
+                  </button>
+                  <button
+                    onClick={goToPreview}
+                    className="inline-flex items-center justify-center font-medium transition-all h-12 text-sm rounded-xl gap-2 bg-brand-500 text-white hover:bg-brand-600"
+                  >
+                    <Eye className="w-4 h-4" />
+                    Предпросмотр
+                    <ArrowRight className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            )}
             {viewMode === "preview" && (
               <div className="fixed inset-0 z-40 bg-white overflow-y-auto">
                 <PreviewStage

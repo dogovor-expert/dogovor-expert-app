@@ -120,3 +120,51 @@ export function isInn(v: string): ValidateResult {
   const s2 = (n[0] * 3 + n[1] * 7 + n[2] * 2 + n[3] * 4 + n[4] * 10 + n[5] * 3 + n[6] * 5 + n[7] * 9 + n[8] * 4 + n[9] * 6 + n[10] * 8) % 11 % 10;
   return s1 === n[10] && s2 === n[11] ? { valid: true, message: "ИНН физлица/ИП корректен" } : { valid: false, message: "Контрольные цифры не совпадают" };
 }
+
+/**
+ * Паспорт РФ (Приказ МВД РФ № 605 от 13.11.2017): серия — 4 цифры (2 цифры года +
+ * 2 цифры кода подразделения), номер — 6 цифр, код подразделения — XXX-XXX,
+ * дата выдачи — не ранее 14 лет с даты рождения (Приказ МВД № 851) и не в будущем.
+ *
+ * Параметры:
+ *  - `series` — строка из 4 цифр (с пробелами или без)
+ *  - `number` — строка из 6 цифр
+ *  - `code`   — опционально, "123-456"
+ *  - `issued` — опционально, дата выдачи в ISO ("YYYY-MM-DD")
+ *  - `birthday` — опционально, дата рождения в ISO; используется для проверки
+ *    минимального возраста 14 лет. Если не передана — проверяется только,
+ *    что дата не в будущем.
+ */
+export function isPassport(args: {
+  series: string;
+  number: string;
+  code?: string;
+  issued?: string;
+  birthday?: string;
+}): ValidateResult {
+  const ser = digitsOnly(args.series);
+  const num = digitsOnly(args.number);
+  if (ser.length !== 4) return { valid: false, message: "Серия: 4 цифры" };
+  if (num.length !== 6) return { valid: false, message: "Номер: 6 цифр" };
+  if (args.code !== undefined && args.code !== "") {
+    const cd = args.code.replace(/\D/g, "");
+    if (cd.length !== 6) return { valid: false, message: "Код подразделения: XXX-XXX" };
+  }
+  if (args.issued) {
+    const d = new Date(args.issued);
+    if (isNaN(d.getTime())) return { valid: false, message: "Дата выдачи: неверный формат" };
+    const now = new Date();
+    if (d.getTime() > now.getTime()) return { valid: false, message: "Дата выдачи не может быть в будущем" };
+    if (args.birthday) {
+      const b = new Date(args.birthday);
+      if (!isNaN(b.getTime())) {
+        const minAge = new Date(b.getTime());
+        minAge.setFullYear(minAge.getFullYear() + 14);
+        if (d.getTime() < minAge.getTime()) {
+          return { valid: false, message: "Паспорт выдан ранее, чем владельцу исполнилось 14 лет" };
+        }
+      }
+    }
+  }
+  return { valid: true, message: "Паспорт корректен" };
+}
