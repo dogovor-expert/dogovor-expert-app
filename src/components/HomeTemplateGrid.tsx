@@ -25,7 +25,7 @@ export default function HomeTemplateGrid() {
   );
 
   return (
-    <section id="templates" className="mt-16 bg-white border-y border-gray-100">
+    <section id="templates" className="mt-16 bg-white border-y border-gray-100 @container/templates">
       <div className="max-w-7xl mx-auto px-6 py-14">
         <div className="flex items-end justify-between gap-4 mb-6">
           <div>
@@ -49,7 +49,7 @@ export default function HomeTemplateGrid() {
           ))}
         </div>
 
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 @md:grid-cols-2 @xl:grid-cols-3 @3xl:grid-cols-4 gap-4">
           {grid.map((t) => {
             const cd = CATEGORY_DATA.find((c) => c.id === t.category) || CATEGORY_DATA[5];
             const Icon = cd.icon;

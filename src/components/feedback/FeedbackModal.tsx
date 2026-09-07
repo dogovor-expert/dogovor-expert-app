@@ -19,7 +19,7 @@ export default function FeedbackModal() {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="fixed bottom-4 left-4 lg:left-[17rem] z-40 inline-flex items-center gap-2 px-4 py-3 rounded-full bg-brand-600 text-white shadow-lg hover:bg-brand-700 transition-colors"
+        className="fixed bottom-4 left-4 lg:left-[17rem] z-40 inline-flex items-center gap-2 px-4 py-3 rounded-full bg-brand-600 text-white shadow-lg hover:bg-brand-700 transition-colors pb-safe"
         aria-label="Сообщить о проблеме"
       >
         <span className="text-lg leading-none">💬</span>

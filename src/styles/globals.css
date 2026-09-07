@@ -91,10 +91,17 @@
   html, body {
     @apply antialiased;
     max-width: 100%;
-    overflow-x: hidden;
+    /* overflow-x: hidden здесь НЕ ставим: он маскировал бы реальные баги
+       переполнения. Диагностика 07.09 (e2e/overflow-diag.spec.ts, 12 публичных
+       страниц × 320/360/390px) — чисто. Локальные скролл-зоны дают
+       overflow-x-auto сами. */
   }
   body {
+    /* dvh = динамическая высота вьюпорта (учитывает скрываемые бары мобильных
+       браузеров). 100vh на iOS больше видимой области → контент «уезжает» под
+       строку состояния. Фолбэк vh — для браузеров без dvh (Safari <15.4). */
     min-height: 100vh;
+    min-height: 100dvh;
   }
   /* Увеличиваем минимальный размер шрифта на мобильных для полей ввода, чтобы избежать зума */
   @media (max-width: 640px) {
@@ -151,6 +158,33 @@
 }
 
 @layer utilities {
+  /* Safe-area паддинг: компенсирует home-indicator на iOS (viewport-fit=cover в meta).
+     Использовать на любых fixed-элементах с bottom-*. На десктопе = 0px. */
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  /* Fluid-типографика для крупных заголовков.
+     Правила (W3C F94, WCAG 2.1 SC 1.4.4):
+     - rem-компонент в clamp обязателен (при zoom до 200% в браузере rem
+       масштабируется, чистые vw — нет, и это fail по accessibility)
+     - max ≤ 2.5 × min (анти-гигантизм на широких экранах)
+     - линейная интерполяция между min и max в диапазоне 360–1280px */
+  .text-display-xl {
+    font-size: clamp(1.75rem, 0.875rem + 2.6vw, 3rem); /* 28 → 48px */
+    line-height: 1.1;
+    letter-spacing: -0.015em;
+  }
+  .text-display-lg {
+    font-size: clamp(1.5rem, 0.875rem + 1.85vw, 2.25rem); /* 24 → 36px */
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+  }
+  .text-display-md {
+    font-size: clamp(1.25rem, 0.875rem + 1.1vw, 1.75rem); /* 20 → 28px */
+    line-height: 1.2;
+    letter-spacing: -0.005em;
+  }
   .scrollbar-thin {
     scrollbar-width: thin;
   }
