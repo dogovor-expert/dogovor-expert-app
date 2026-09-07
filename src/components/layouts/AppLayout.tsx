@@ -8,7 +8,7 @@ import {
   FileText, Activity, Calculator,
   FolderOpen, Files, Trash2, CreditCard,
   Settings, HelpCircle, Menu, X, Bell, ChevronDown, Shield, Home, LogIn, Shuffle, Newspaper,
-  HardDrive, Download
+  HardDrive, Download, Cookie
 } from "lucide-react";
 import HeaderSearch from "@/components/search/HeaderSearch";
 import { CookieBanner } from "@/components/cookie/CookieBanner";
@@ -52,11 +52,18 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   const [draftCount, setDraftCount] = useState(0);
   const [profile, setProfile] = useState({ name: "Гость", initial: "Г", avatar: null as string | null });
   const [user, setUser] = useState<any>(null);
+  // Иконка cookies переехала в хедер рядом с колокольчиком, чтобы не
+  // перекрывать SupportLauncher (fixed bottom-right). Внешний флаг управляет
+  // панелью настроек в CookieBanner.
+  const [cookieSettingsOpen, setCookieSettingsOpen] = useState(false);
+  // Cookies-иконка показывается в хедере только после получения согласия
+  // (до этого есть first-visit баннер снизу).
+  const { isReady: cookieReady } = useCookieConsent();
+  const showCookieIcon = cookieReady;
   const pathname = usePathname();
   // Cookies-баннер вынесен в <CookieBanner/>: использует useSyncExternalStore,
   // не зависит от pathname, не пересоздаётся при навигации, не дёргает setState
   // в AppLayout. Это устраняет FOUC и race с loadProfile().
-  const { isReady: cookieReady } = useCookieConsent();
 
   const loadProfile = useCallback(async () => {
     const supabase = createClient();
@@ -280,6 +287,17 @@ export default function AppLayout({ children }: { children: ReactNode }) {
           <div className="flex items-center gap-2">
             {user ? (
               <>
+                {showCookieIcon && (
+                  <button
+                    type="button"
+                    onClick={() => setCookieSettingsOpen(true)}
+                    aria-label="Настройки cookies"
+                    title="Настройки cookies"
+                    className="p-2.5 hover:bg-gray-100 active:bg-gray-200 rounded-lg transition-colors motion-reduce:transition-none"
+                  >
+                    <Cookie className="w-5 h-5 text-gray-600" aria-hidden />
+                  </button>
+                )}
                 <NotificationBell />
                 <div className="relative group">
                   <Link href="/settings" className="flex items-center gap-2 p-2 hover:bg-gray-100 rounded-xl transition-colors" title={profile.name}>
@@ -310,17 +328,30 @@ export default function AppLayout({ children }: { children: ReactNode }) {
                 </div>
               </>
             ) : (
-              <Link
-                href="/login"
-                className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-brand-500 hover:bg-brand-600 rounded-xl focus:ring-2 focus:ring-brand-400 focus:outline-none transition-colors"
-              >
-                <LogIn className="w-4 h-4" />
-                Войти
-              </Link>
+              <>
+                {showCookieIcon && (
+                  <button
+                    type="button"
+                    onClick={() => setCookieSettingsOpen(true)}
+                    aria-label="Настройки cookies"
+                    title="Настройки cookies"
+                    className="p-2.5 hover:bg-gray-100 active:bg-gray-200 rounded-lg transition-colors motion-reduce:transition-none"
+                  >
+                    <Cookie className="w-5 h-5 text-gray-600" aria-hidden />
+                  </button>
+                )}
+                <Link
+                  href="/login"
+                  className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-brand-500 hover:bg-brand-600 rounded-xl focus:ring-2 focus:ring-brand-400 focus:outline-none transition-colors"
+                >
+                  <LogIn className="w-4 h-4" />
+                  Войти
+                </Link>
+              </>
             )}
           </div>
         </header>
-        <main className="flex-1 overflow-y-auto max-w-full px-4 sm:px-6 lg:px-8 pb-20 lg:pb-0">
+        <main className="flex-1 overflow-y-auto max-w-full px-4 sm:px-6 lg:px-8 pb-28 lg:pb-0">
   <div className="max-w-7xl mx-auto w-full">{children}</div>
 </main>
       </div>
@@ -329,7 +360,10 @@ export default function AppLayout({ children }: { children: ReactNode }) {
           (cookieReady === true). CookieBanner сам управляет видимостью
           и не зависит от состояния AppLayout. */}
       {cookieReady && <SupportLauncher />}
-      <CookieBanner />
+      <CookieBanner
+        settingsOpenExternal={cookieSettingsOpen}
+        onSettingsClosed={() => setCookieSettingsOpen(false)}
+      />
       <MobileTabBar />
     </div>
   );
