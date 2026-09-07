@@ -282,6 +282,12 @@ export async function GET(
   const revocationStatus = sig.revocation_status ?? "unknown";
   const issuer = sig.certificate_issuer ?? null;
   const serial = sig.certificate_serial ?? null;
+  // Согласно 63-ФЗ ст. 14, проверка отзыва обязательна. У нас сейчас
+  // checkRevocation возвращает 'unknown' (см. pades-verify.ts:407,409
+  // и signCryptoPro.ts:580-581) — клиент должен видеть это явно,
+  // а не путать с «не отозван». Поле revocationCheckPending разделяет
+  // «неизвестно» и «не проверялось».
+  const revocationCheckPending = revocationStatus === "unknown" || revocationStatus === "offline";
 
   const notChecked: string[] = [];
   if (!cryptoVerified) {
@@ -290,7 +296,7 @@ export async function GET(
   if (!chainVerified) {
     notChecked.push("Цепочка сертификатов до доверенного УЦ Минцифры");
   }
-  if (revocationStatus === "unknown" || revocationStatus === "offline") {
+  if (revocationCheckPending) {
     notChecked.push("Отзыв сертификата по CRL/OCSP");
   }
   if (!sig.tsa_info) {
@@ -338,6 +344,7 @@ export async function GET(
     cryptoVerified,
     chainVerified,
     revocationStatus,
+    revocationCheckPending,
     chainDetails: sig.chain_details ?? [],
     timestamp: sig.tsa_info ?? null,
     notChecked,

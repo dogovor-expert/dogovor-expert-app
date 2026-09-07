@@ -14,6 +14,7 @@ import {
   courtFeeAppeal,
   courtFeeCassation,
 } from "@/lib/legal/calc";
+import { isPassport, isInn, isSnils, isOgrn, isOgrnip, isKpp, isBik, isBankAccount } from "@/lib/legal/validators";
 
 describe("НДФЛ: стандартные вычеты на детей (ст. 218 НК)", () => {
   it("без детей — 13% с полной суммы", () => {
@@ -139,5 +140,82 @@ describe("Госпошлины (ст. 333.19 НК РФ, ред. ФЗ № 259-Ф�
   });
   it("кассационная жалоба: фиксированная 5000/20000", () => {
     expect(courtFeeCassation()).toEqual({ child: 5000, org: 20000 });
+  });
+});
+
+describe("isPassport: Приказ МВД № 605 (серия/номер/код/дата ≥14 лет)", () => {
+  it("валидный паспорт 18-летнего", () => {
+    const r = isPassport({ series: "4521", number: "123456", code: "770-001", issued: "2020-06-15", birthday: "2002-01-01" });
+    expect(r.valid).toBe(true);
+  });
+
+  it("отрицает серию ≠ 4 цифр", () => {
+    expect(isPassport({ series: "452", number: "123456" }).valid).toBe(false);
+  });
+
+  it("отрицает номер ≠ 6 цифр", () => {
+    expect(isPassport({ series: "4521", number: "12345" }).valid).toBe(false);
+  });
+
+  it("отрицает код подразделения ≠ XXX-XXX", () => {
+    expect(isPassport({ series: "4521", number: "123456", code: "7700" }).valid).toBe(false);
+  });
+
+  it("отрицает дату выдачи в будущем", () => {
+    const future = new Date();
+    future.setFullYear(future.getFullYear() + 1);
+    const fIso = future.toISOString().slice(0, 10);
+    const r = isPassport({ series: "4521", number: "123456", issued: fIso });
+    expect(r.valid).toBe(false);
+  });
+
+  it("отрицает выдачу ранее 14-летия", () => {
+    const r = isPassport({ series: "4521", number: "123456", issued: "2015-06-15", birthday: "2010-01-01" });
+    expect(r.valid).toBe(false);
+    expect(r.message).toMatch(/14 лет/);
+  });
+
+  it("позволяет выдачу в день 14-летия включительно", () => {
+    const r = isPassport({ series: "4521", number: "123456", issued: "2024-01-01", birthday: "2010-01-01" });
+    expect(r.valid).toBe(true);
+  });
+
+  it("без birthday проверяет только формат и «не в будущем»", () => {
+    const r = isPassport({ series: "4521", number: "123456", issued: "2010-06-15" });
+    expect(r.valid).toBe(true);
+  });
+
+  it("схлопывает пробелы и дефисы в серии/номере", () => {
+    const r = isPassport({ series: "45 21", number: "123-456" });
+    expect(r.valid).toBe(true);
+  });
+});
+
+describe("validators: re-exports для регрессии", () => {
+  it("isInn: 7707083893 (Сбер) — корректный", () => {
+    expect(isInn("7707083893").valid).toBe(true);
+  });
+  it("isSnils: 112-233-445 95 — корректный", () => {
+    expect(isSnils("112-233-445 95").valid).toBe(true);
+  });
+  it("isOgrn: 13 цифр с верной контрольной", () => {
+    // 1027700132195 — КонсультантПлюс
+    expect(isOgrn("1027700132195").valid).toBe(true);
+  });
+  it("isKpp: 770401001 — корректный", () => {
+    expect(isKpp("770401001").valid).toBe(true);
+  });
+  it("isBik: 044525225 (Сбер) — корректный", () => {
+    expect(isBik("044525225").valid).toBe(true);
+  });
+  it("isBankAccount: не 20 цифр — фейл", () => {
+    expect(isBankAccount("12345", "044525225").valid).toBe(false);
+  });
+  it("isBankAccount: без БИК — фейл (для обычного счёта)", () => {
+    const r = isBankAccount("40817810099910000000");
+    expect(r.valid).toBe(false);
+  });
+  it("isBankAccount: казначейский счёт — пропускается без БИК", () => {
+    expect(isBankAccount("40101810845250001001").valid).toBe(true);
   });
 });

@@ -3,6 +3,13 @@ import { Loader2, Search, Star } from "lucide-react";
 interface PartyData {
   inn?: string;
   kpp?: string;
+  ogrn?: string;
+  name_short_with_opf?: string;
+  address_value?: string;
+  /** Статус ЕГРЮЛ/ЕГРИП из DaData: ACTIVE/ LIQUIDATING/ LIQUIDATED/ BANKRUPT/ REORGANIZING. */
+  state_status?: string;
+  /** Код статуса: 1-действующий, 2-ликвидирован, 3-реорганизация, 5-банкрот, 6-ликвидация. */
+  state_code?: string;
 }
 
 interface PartyResult {
@@ -10,6 +17,15 @@ interface PartyResult {
   data: PartyData;
   prefix: string;
 }
+
+/** Маппинг кода статуса → (label, color) для UI-чипа «ликвидирован/банкрот». */
+const STATE_STATUS_LABEL: Record<string, { label: string; tone: "red" | "amber" | "gray" }> = {
+  ACTIVE: { label: "Действующее", tone: "gray" },
+  LIQUIDATING: { label: "В процессе ликвидации", tone: "amber" },
+  LIQUIDATED: { label: "Ликвидировано", tone: "red" },
+  BANKRUPT: { label: "Банкрот", tone: "red" },
+  REORGANIZING: { label: "Реорганизация", tone: "amber" },
+};
 
 interface DadataPanelProps {
   subscriptionActive: boolean;
@@ -94,21 +110,43 @@ export default function DadataPanel({
         </div>
         {partyResults.length > 0 && (
           <div className="space-y-1">
-            {partyResults.map((r, i) => (
-              <button
-                key={i}
-                onClick={() => onApplyResult(r)}
-                className="w-full text-left px-3 py-2 rounded-lg bg-white border border-gray-200 hover:border-brand-300 hover:bg-brand-50 transition-colors"
-              >
-                <p className="text-[11px] font-medium text-gray-800 truncate">
-                  {r.value}
-                </p>
-                <p className="text-[10px] text-gray-600">
-                  {r.data?.inn || "ИНН —"}
-                  {r.data?.kpp ? ` • КПП ${r.data.kpp}` : ""}
-                </p>
-              </button>
-            ))}
+            {partyResults.map((r, i) => {
+              const status = r.data?.state_status
+                ? STATE_STATUS_LABEL[r.data.state_status]
+                : null;
+              const isBlocked = status?.tone === "red";
+              return (
+                <button
+                  key={i}
+                  onClick={() => !isBlocked && onApplyResult(r)}
+                  disabled={isBlocked}
+                  className={`w-full text-left px-3 py-2 rounded-lg border transition-colors ${
+                    isBlocked
+                      ? "bg-red-50 border-red-200 cursor-not-allowed opacity-80"
+                      : "bg-white border-gray-200 hover:border-brand-300 hover:bg-brand-50"
+                  }`}
+                >
+                  <p className="text-[11px] font-medium text-gray-800 truncate">
+                    {r.value}
+                  </p>
+                  <p className="text-[10px] text-gray-600">
+                    {r.data?.inn || "ИНН —"}
+                    {r.data?.kpp ? ` • КПП ${r.data.kpp}` : ""}
+                  </p>
+                  {status && (
+                    <p
+                      className={`mt-1 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium ${
+                        status.tone === "red"
+                          ? "bg-red-100 text-red-700"
+                          : "bg-amber-100 text-amber-700"
+                      }`}
+                    >
+                      {status.label}
+                    </p>
+                  )}
+                </button>
+              );
+            })}
           </div>
         )}
       </div>

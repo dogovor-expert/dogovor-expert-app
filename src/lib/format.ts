@@ -77,7 +77,7 @@ export function applyFieldFormat(field: TemplateField, raw: string): string {
     return raw.replace(/[^\d.,]/g, "").slice(0, 12);
   }
   if (id.includes("inn")) {
-    return raw.replace(/\D/g, "").slice(0, 12);
+    return formatInn(raw);
   }
   if (id.includes("kpp")) {
     return raw.replace(/\D/g, "").slice(0, 9);
@@ -89,9 +89,43 @@ export function applyFieldFormat(field: TemplateField, raw: string): string {
     return raw.replace(/\D/g, "").slice(0, 20);
   }
   if (id.includes("phone")) {
-    return raw.replace(/\D/g, "").slice(0, 11);
+    return formatPhoneRu(raw);
   }
   return raw;
+}
+
+/** Форматирование ИНН группами по 4 цифры: «1234 5678 1234» (юр) или
+ *  «1234 5678 1234 5» (ИП, 12 цифр). Не проверяет контрольные разряды —
+ *  это задача validators.isInn. */
+export function formatInn(raw: string): string {
+  const digits = raw.replace(/\D/g, "").slice(0, 12);
+  if (digits.length === 0) return "";
+  const groups = digits.match(/.{1,4}/g) || [];
+  return groups.join(" ");
+}
+
+/** Маска телефона РФ: «+7 (XXX) XXX-XX-XX». Принимает цифры (10/11 шт.),
+ *  нормализует 8... к 7... Ввод поддерживает постепенный набор: 7 → «+7»,
+ *  7 (9 → «+7 (9», 7 (912 → «+7 (912) », и т.д. */
+export function formatPhoneRu(raw: string): string {
+  const digits = raw.replace(/\D/g, "");
+  let d = digits;
+  if (d.length === 11 && (d.startsWith("7") || d.startsWith("8"))) {
+    d = "7" + d.slice(1);
+  } else if (d.length > 11) {
+    d = d.slice(-11);
+  }
+  const tail = d.startsWith("7") ? d.slice(1) : d;
+  const t = tail.slice(0, 10);
+  const p1 = t.slice(0, 3);
+  const p2 = t.slice(3, 6);
+  const p3 = t.slice(6, 8);
+  const p4 = t.slice(8, 10);
+  if (t.length === 0) return "+7";
+  if (t.length < 4) return `+7 (${p1}`;
+  if (t.length < 7) return `+7 (${p1}) ${p2}`;
+  if (t.length < 9) return `+7 (${p1}) ${p2}-${p3}`;
+  return `+7 (${p1}) ${p2}-${p3}-${p4}`;
 }
 
 /** Нормализация типографики: «ёлочки», длинные тире, схлопывание пробелов. */

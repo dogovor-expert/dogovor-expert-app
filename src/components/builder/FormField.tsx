@@ -25,12 +25,17 @@ const AUTOCOMPLETE_HINTS: Record<string, string> = {
   inn: "organization",
 };
 
+const NUMERIC_IDS = ["inn", "snils", "passport", "ogrn", "ogrnip", "bik", "kpp", "vin"];
+
 function getInputHints(field: TemplateField) {
   const id = field.id.toLowerCase();
   const key = Object.keys(AUTOCOMPLETE_HINTS).find((k) => id.includes(k));
+  const isNumeric =
+    field.type === "number" ||
+    NUMERIC_IDS.some((n) => id.includes(n));
   return {
     autoComplete: key ? AUTOCOMPLETE_HINTS[key] : undefined,
-    inputMode: field.type === "number" ? ("numeric" as const) : undefined,
+    inputMode: isNumeric ? ("numeric" as const) : undefined,
   };
 }
 
@@ -158,7 +163,7 @@ export default function FormField({
       </p>
     ) : null;
 
-  const baseInputClass = `w-full px-3.5 py-2.5 text-base bg-gray-50 border rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all ${
+  const baseInputClass = `w-full px-3.5 py-2.5 max-sm:py-3 text-base bg-gray-50 border rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all ${
     hasError
       ? "border-red-400"
       : hasWarn
@@ -496,6 +501,14 @@ export default function FormField({
         {loading && (
           <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-600">
             ищем…
+          </span>
+        )}
+        {!loading && !hasError && !hasWarn && successMsg && value.trim() && (
+          <span
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-emerald-600 pointer-events-none"
+            aria-hidden
+          >
+            <CheckCircle className="w-4 h-4" />
           </span>
         )}
       </div>
