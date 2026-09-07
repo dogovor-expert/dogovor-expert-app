@@ -108,7 +108,7 @@ export default function SupportLauncher() {
         <button
           type="button"
           onClick={() => handleOpen(CHAT_ENABLED ? "chat" : "problem")}
-          className="fixed bottom-4 right-4 z-40 inline-flex items-center gap-2 px-4 py-3 rounded-full bg-brand-600 text-white shadow-lg hover:bg-brand-700 transition-colors"
+          className="fixed bottom-4 right-4 z-40 inline-flex items-center gap-2 px-4 py-3 rounded-full bg-brand-600 text-white shadow-lg hover:bg-brand-700 transition-colors pb-safe"
           aria-label="Поддержка"
         >
           <Headphones className="w-5 h-5" />
@@ -122,7 +122,7 @@ export default function SupportLauncher() {
       )}
 
       {open && (
-        <div className="fixed bottom-4 right-4 z-50 w-[min(92vw,380px)] bg-white rounded-3xl shadow-2xl overflow-hidden border border-slate-100">
+        <div className="fixed bottom-4 right-4 z-50 w-[min(92vw,380px)] bg-white rounded-3xl shadow-2xl overflow-hidden border border-slate-100 pb-safe">
           {/* Шапка с вкладками */}
           <div className="flex items-center gap-1 px-2 py-2 border-b border-slate-100 bg-white">
             {CHAT_ENABLED && (

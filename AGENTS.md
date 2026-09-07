@@ -13,6 +13,7 @@
 6. **Аудит-фиксы 20.08.2026** — YooKassa webhook, RLS write-lock, экранирование, rate limit, Next 15 API: [`docs/AUDIT_FIXES.md`](docs/AUDIT_FIXES.md).
 7. **Site audit protocol** — единая команда `npm run audit:full` + триггеры предложения аудита. Полный регламент: [`docs/SITE_AUDIT.md`](docs/SITE_AUDIT.md).
 8. **Правила среды выполнения (Windows / OpenCode)** — LF, UTF-8 no-BOM, безопасная замена: [`docs/ENV_RULES.md`](docs/ENV_RULES.md).
+9. **Адаптивность (responsive)** — mobile-first, dvh/safe-area, container queries; инварианты и план: [`docs/RESPONSIVE.md`](docs/RESPONSIVE.md). PWA/«сайт как приложение» и service worker — **НЕ внедрять** (решение владельца, отложено).
 
 ## Project overview
 

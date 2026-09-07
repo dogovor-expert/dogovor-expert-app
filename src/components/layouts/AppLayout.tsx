@@ -16,6 +16,7 @@ import { useCookieConsent } from "@/hooks/useCookieConsent";
 import PromoPill from "@/components/billing/PromoPill";
 import SupportLauncher from "@/components/support/SupportLauncher";
 import NotificationBell from "@/components/layout/NotificationBell";
+import MobileTabBar from "@/components/layouts/MobileTabBar";
 
 interface NavItem {
   icon: ReactNode;
@@ -319,7 +320,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
             )}
           </div>
         </header>
-        <main className="flex-1 overflow-y-auto max-w-full px-4 sm:px-6 lg:px-8">
+        <main className="flex-1 overflow-y-auto max-w-full px-4 sm:px-6 lg:px-8 pb-20 lg:pb-0">
   <div className="max-w-7xl mx-auto w-full">{children}</div>
 </main>
       </div>
@@ -329,6 +330,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
           и не зависит от состояния AppLayout. */}
       {cookieReady && <SupportLauncher />}
       <CookieBanner />
+      <MobileTabBar />
     </div>
   );
 }

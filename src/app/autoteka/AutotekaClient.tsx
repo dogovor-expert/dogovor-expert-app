@@ -270,7 +270,7 @@ export default function AutotekaClient() {
             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
             ГИБДД · ФНП · ЕАИСТО — напрямую
           </span>
-          <h1 className="text-3xl sm:text-4xl font-extrabold text-gray-900">
+          <h1 className="text-display-lg font-extrabold text-gray-900">
             Автотека — проверка истории <span className="bg-gradient-to-r from-brand-500 to-purple-600 bg-clip-text text-transparent">автомобиля по VIN</span>
           </h1>
           <p className="mt-2 text-gray-600">VIN, ДТП, залоги, розыск и реальный пробег из официальных источников.</p>
@@ -647,7 +647,7 @@ function Marketing() {
       {/* Блок 1 — Почему выгоднее */}
       <div>
         <div className="text-center max-w-2xl mx-auto">
-          <h2 className="text-3xl sm:text-4xl font-bold text-gray-900">
+          <h2 className="text-display-lg font-bold text-gray-900">
             Почему <span className="bg-gradient-to-r from-brand-500 to-purple-600 bg-clip-text text-transparent">Dogovor.expert</span> выгоднее
           </h2>
           <p className="mt-4 text-gray-600">Мы берём данные напрямую у первоисточника (TRONK), минуя посредников, и передаём экономию вам.</p>
@@ -672,7 +672,7 @@ function Marketing() {
       {/* Блок 2 — Цена против конкурентов */}
       <div>
         <div className="text-center max-w-2xl mx-auto">
-          <h2 className="text-3xl sm:text-4xl font-bold text-gray-900">
+          <h2 className="text-display-lg font-bold text-gray-900">
             Цена <span className="bg-gradient-to-r from-brand-500 to-purple-600 bg-clip-text text-transparent">против конкурентов</span>
           </h2>
           <p className="mt-4 text-gray-600">Базовый одиночный отчёт у лидеров рынка против наших тарифов.</p>
@@ -706,7 +706,7 @@ function Marketing() {
       {/* Блок 3 — Сравнение возможностей */}
       <div>
         <div className="text-center max-w-2xl mx-auto">
-          <h2 className="text-3xl sm:text-4xl font-bold text-gray-900">Что входит в каждый тариф</h2>
+          <h2 className="text-display-lg font-bold text-gray-900">Что входит в каждый тариф</h2>
           <p className="mt-4 text-gray-600">Открытый образец отчёта — листайте стрелками или кликом по краям.</p>
         </div>
         <div

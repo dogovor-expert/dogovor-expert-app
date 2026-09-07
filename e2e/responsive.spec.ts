@@ -53,25 +53,35 @@ for (const pg of PAGES) {
         }
       });
 
-      test(`@viewport=${vp.name} — тач-таргеты >= 24x24px`, async ({ page }) => {
+      test(`@viewport=${vp.name} — тач-таргеты >= 44x44px (кнопки/ссылки-виджеты)`, async ({ page }) => {
         await page.goto(pg.path);
         await page.waitForLoadState("networkidle");
 
         const smallTargets = await page.evaluate(() => {
-          const minSize = 24;
-          const elements = document.querySelectorAll('button, a, input[type="button"], input[type="submit"], [role="button"]');
+          const minSize = 44;
+          const elements = document.querySelectorAll(
+            'button, input[type="button"], input[type="submit"], [role="button"]'
+          );
           const small: { selector: string; width: number; height: number }[] = [];
           elements.forEach((el) => {
             const rect = el.getBoundingClientRect();
-            if (rect.width > 0 && rect.height > 0 && (rect.width < minSize || rect.height < minSize)) {
-              const cls = el.className || el.tagName;
+            const style = window.getComputedStyle(el);
+            // Пропускаем элементы, скрытые или не в потоке (absolute-иконки
+            // внутри larger-виджета), и чистые inline-sm в <a> внутри текста.
+            if (rect.width < 4 || rect.height < 4) return;
+            if (style.position === "absolute" && rect.width < 44 && rect.height < 44) return;
+            if (rect.width < minSize || rect.height < minSize) {
+              const cls = (el as HTMLElement).className || el.tagName;
               small.push({ selector: cls.substring(0, 100), width: Math.round(rect.width), height: Math.round(rect.height) });
             }
           });
           return small;
         });
+        // Диагностика, но НЕ жёсткий фейл: множество инлайн-кнопок в чистом
+        // UI (иконки, close-кнопки) меньше 44px умышленно. Храним как canary
+        // для ручной проверки, но не ломаем прогон.
         if (smallTargets.length > 0) {
-          console.log(`[${pg.name} @ ${vp.name}] Тач-таргеты < 24px:`, smallTargets);
+          console.log(`[${pg.name} @ ${vp.name}] Кнопки < 44px:`, smallTargets);
         }
       });
 
@@ -97,6 +107,84 @@ for (const pg of PAGES) {
     }
   });
 }
+
+test.describe("Responsive meta — окружение вьюпорта", () => {
+  test.use({ viewport: { width: 390, height: 844 } });
+
+  test("viewport meta: device-width + viewport-fit=cover + initial-scale=1", async ({ page }) => {
+    await page.goto("/");
+    const content = await page.locator('meta[name="viewport"]').getAttribute("content");
+    expect(content).toContain("width=device-width");
+    expect(content).toContain("initial-scale=1");
+    expect(content).toContain("viewport-fit=cover");
+    expect(content).not.toMatch(/maximum-scale\s*=\s*1(\.0)?\b/);
+  });
+
+  test("theme-color задан (цвет системных элементов мобильного браузера)", async ({ page }) => {
+    await page.goto("/");
+    await expect(page.locator('meta[name="theme-color"]')).toHaveAttribute("content", /.+/);
+  });
+
+  test("на мобильных нет горизонтального скролла на ключевых страницах кабинета", async ({ page }) => {
+    const paths = ["/login", "/templates", "/documents/receipt-cashless"];
+    for (const path of paths) {
+      await page.goto(path);
+      await page.waitForLoadState("networkidle");
+      const overflowing = await page.evaluate(() => {
+        const el = document.documentElement;
+        return { scrollWidth: el.scrollWidth, clientWidth: el.clientWidth };
+      });
+      expect(overflowing.scrollWidth, `${path}: scrollWidth=${overflowing.scrollWidth} > clientWidth=${overflowing.clientWidth}`).toBeLessThanOrEqual(
+        overflowing.clientWidth + 1
+      );
+    }
+  });
+});
+
+test.describe("Mobile tab bar (<lg / ≥1024px)", () => {
+  test.use({ viewport: { width: 390, height: 844 } });
+
+  test("на 390px таб-панель видна, все 5 ссылок рабочие", async ({ page }) => {
+    await page.goto("/templates");
+    await page.waitForLoadState("networkidle");
+
+    const tabBar = page.getByRole("navigation", { name: "Мобильная навигация" });
+    await expect(tabBar).toBeVisible();
+
+    const items = tabBar.getByRole("link");
+    await expect(items).toHaveCount(5);
+
+    const labels = await items.allInnerTexts();
+    expect(labels.map((s) => s.replace(/\s+/g, " ").trim())).toEqual([
+      "Главная",
+      "Шаблоны",
+      "Создать",
+      "Документы",
+      "Профиль",
+    ]);
+  });
+
+  test("на 1024px таб-панель скрыта", async ({ page }) => {
+    await page.setViewportSize({ width: 1024, height: 768 });
+    await page.goto("/templates");
+    await page.waitForLoadState("networkidle");
+    const tabBar = page.getByRole("navigation", { name: "Мобильная навигация" });
+    await expect(tabBar).toBeHidden();
+  });
+
+  test("на /admin и /builder/export-pdf таб-панель не показывается даже на мобильном", async ({ page }) => {
+    for (const path of ["/admin", "/builder/export-pdf?template=dkp-auto-short"]) {
+      await page.goto(path);
+      await page.waitForLoadState("networkidle");
+      const tabBar = page.getByRole("navigation", { name: "Мобильная навигация" });
+      // Может быть hidden, или вообще не в DOM
+      const count = await tabBar.count();
+      if (count > 0) {
+        await expect(tabBar).toBeHidden();
+      }
+    }
+  });
+});
 
 test.describe("Priority 1 Components — Lazy PDF/DOCX, Web Worker Scanner", () => {
   test.use({ viewport: { width: 1280, height: 720 } });

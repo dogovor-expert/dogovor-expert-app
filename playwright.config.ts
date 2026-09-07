@@ -21,6 +21,19 @@ const projects = browsers.flatMap((browser) =>
   }))
 );
 
+// Мобильные пресеты: touch + реальные deviceScaleFactor/viewport (в т.ч. «чёлка» iPhone).
+// Отдельные проекты только для responsive-спеков (см. testMatch), чтобы не умножать все e2e.
+const mobileDevices = [
+  { name: "mobile-chromium-pixel7", use: { ...devices["Pixel 7"] } },
+  { name: "mobile-webkit-iphone14", use: { ...devices["iPhone 13"] } },
+];
+
+const mobileProjects = mobileDevices.map((d) => ({
+  name: d.name,
+  testMatch: /responsive\.spec\.ts|overflow-diag\.spec\.ts/,
+  use: d.use,
+}));
+
 export default defineConfig({
   testDir: "./e2e",
   fullyParallel: false,
@@ -33,7 +46,7 @@ export default defineConfig({
     trace: "retain-on-failure",
     screenshot: "only-on-failure",
   },
-  projects,
+  projects: [...projects, ...mobileProjects],
   webServer: {
     command: "npm run build && npm run start -- -p 3100",
     port: 3100,

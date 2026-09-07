@@ -245,7 +245,7 @@ export default function BillingPage() {
               Акция {PROMO_LABEL} — успевайте до 20 сентября
             </span>
           )}
-          <h1 className="text-3xl md:text-5xl font-bold mt-5 text-gray-900">
+          <h1 className="text-display-xl font-bold mt-5 text-gray-900">
             PRO-подписка для тех, кто составляет договоры всерьёз
           </h1>
           <p className="text-slate-600 mt-4 max-w-2xl mx-auto text-lg">

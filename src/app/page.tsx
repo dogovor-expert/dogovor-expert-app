@@ -27,7 +27,7 @@ export default function HomePage() {
               <span className="w-2 h-2 rounded-full bg-emerald-500" />
               {TEMPLATE_META_LITE.length} шаблонов · бесплатно и без ограничений
             </span>
-            <h1 className="mt-5 text-4xl md:text-5xl font-extrabold tracking-tight text-gray-900 leading-[1.1]">
+            <h1 className="mt-5 text-display-xl font-extrabold tracking-tight text-gray-900">
               Документы, которые{" "}
               <span className="bg-gradient-to-r from-brand-600 to-purple-600 bg-clip-text text-transparent">
                 готовы к подписи
@@ -223,7 +223,7 @@ export default function HomePage() {
       <section className="max-w-7xl mx-auto px-6 pt-16">
         <div className="relative overflow-hidden bg-gradient-to-r from-brand-600 via-brand-700 to-purple-700 rounded-3xl py-14 px-8 text-center text-white shadow-card">
           <div className="absolute -top-24 -right-20 w-80 h-80 rounded-full bg-white/10" />
-          <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight">Начните бесплатно</h2>
+          <h2 className="text-display-lg font-extrabold tracking-tight">Начните бесплатно</h2>
           <p className="mt-3 text-blue-100 max-w-lg mx-auto text-sm leading-relaxed">
             Никаких карт и подписок. Выберите документ и скачайте его готовым — прямо сейчас.
           </p>

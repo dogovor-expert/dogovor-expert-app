@@ -236,7 +236,7 @@ export function CookieBanner() {
         onClick={() => setSettingsOpen(true)}
         aria-label="Изменить настройки cookies"
         title="Настройки cookies"
-        className="fixed bottom-4 right-4 z-40 w-10 h-10 rounded-full bg-white border border-gray-200 shadow-md flex items-center justify-center hover:bg-gray-50 active:bg-gray-100 transition-colors motion-reduce:transition-none cursor-pointer"
+        className="fixed bottom-4 right-4 z-40 w-10 h-10 rounded-full bg-white border border-gray-200 shadow-md flex items-center justify-center hover:bg-gray-50 active:bg-gray-100 transition-colors motion-reduce:transition-none cursor-pointer pb-safe"
       >
         <Cookie className="w-4.5 h-4.5 text-gray-600" aria-hidden />
       </button>
@@ -251,7 +251,7 @@ export function CookieBanner() {
       aria-labelledby="cookie-banner-title"
       aria-describedby="cookie-banner-desc"
       aria-live="polite"
-      className="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 w-[calc(100%-2rem)] max-w-xl bg-white border border-gray-200 rounded-2xl shadow-xl p-4"
+      className="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 w-[calc(100%-2rem)] max-w-xl bg-white border border-gray-200 rounded-2xl shadow-xl p-4 pb-safe"
     >
       <div className="flex items-start gap-3">
         <div

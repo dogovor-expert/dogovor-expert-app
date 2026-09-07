@@ -34,6 +34,7 @@ import { buildTemplateDefaults, getGreeting, normalizeTypography, todayStr } fro
 import { downloadBytes } from "@/lib/converter/download";
 import { uint8ToBase64 } from "@/lib/bytes";
 import { track, goals } from "@/lib/analytics";
+import { useVisualViewport } from "@/hooks/useVisualViewport";
 import dynamic from "next/dynamic";
 import ProgressSteps from "@/components/builder/ProgressSteps";
 import TemplateSelector from "@/components/builder/TemplateSelector";
@@ -117,6 +118,8 @@ function HomeContent() {
   const [templateSearch, setTemplateSearch] = useState("");
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
   const [viewMode, setViewMode] = useState<"form" | "preview">("form");
+  // iOS-клавиатура: visualViewport-паддинг для формы (Safari не ресайзится сам).
+  const { keyboardInset } = useVisualViewport();
   // Масштаб формы (этап 1 аудита): пользователь регулирует размер полей/текста.
   const [formScale, setFormScale] = useState<number>(100);
   useEffect(() => {
@@ -1614,7 +1617,12 @@ function HomeContent() {
           {/* Left: Form */}
           <div
             className="xl:col-span-3 space-y-4"
-            style={formScale !== 100 ? { zoom: formScale / 100 } : undefined}
+            style={{
+              zoom: formScale !== 100 ? formScale / 100 : undefined,
+              // iOS-клавиатура: держим активное поле над видимой областью
+              // (interactive-widget не работает в Safari). На десктопе = 0.
+              paddingBottom: keyboardInset ? `${keyboardInset + 24}px` : undefined,
+            }}
           >
             {viewMode === "form" && (<>
               {previewBlocked && (

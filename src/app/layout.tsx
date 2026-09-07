@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "@/styles/globals.css";
 import AppLayout from "@/components/layouts/AppLayout";
 import { JsonLd } from "@/components/seo/JsonLd";
@@ -72,6 +72,20 @@ export const metadata: Metadata = {
     apple: "/apple-icon.png",
   },
   manifest: "/manifest.webmanifest",
+};
+
+// Адаптивность вьюпорта: viewport-fit=cover — контент корректно работает с
+// вырезами/строкой состояния iOS (env(safe-area-inset-*)). interactive-widget —
+// на Android раскладка реагирует на виртуальную клавиатуру (на iOS Safari не
+// поддерживается, там используется visualViewport API). themeColor — цвет
+// системных элементов мобильного браузера.
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  interactiveWidget: "resizes-content",
+  themeColor: "#4f46e5",
+  colorScheme: "light",
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {

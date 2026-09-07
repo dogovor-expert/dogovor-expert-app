@@ -97,7 +97,7 @@ export default function BlanksIndexPage() {
       </nav>
 
       <section className="text-center py-6">
-        <h1 className="text-3xl sm:text-4xl font-bold text-gray-900">
+        <h1 className="text-display-lg font-bold text-gray-900">
           Пустые бланки договоров
         </h1>
         <p className="mt-3 text-gray-600 max-w-2xl mx-auto leading-relaxed">
