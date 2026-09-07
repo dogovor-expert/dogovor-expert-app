@@ -5,11 +5,13 @@
  * Архитектура:
  *  - Granular consent (GDPR Art. 7(2)): 2 кнопки одинакового веса
  *    «Принять всё» / «Только необходимые» + третья «Настроить»
- *  - Persistent UI: маленькая иконка 🍪 в углу → открывает панель настроек
- *    (отзыв согласия — GDPR Art. 7(3))
+ *  - Persistent UI: иконка 🍪 переехала В ХЕДЕР рядом с колокольчиком
+ *    (раньше была fixed bottom-right и перекрывала SupportLauncher).
+ *    Рендерится снаружи через AppLayout; этот компонент показывает
+ *    баннер-приветствие и управляет settings-диалогом по внешнему флагу.
  *  - A11y:
  *    - role="dialog" + aria-modal + aria-labelledby + aria-describedby
- *    - Escape → decline
+ *    - Escape → decline / закрыть
  *    - autoFocus на «Принять всё» (при первом визите)
  *    - aria-live="polite" для screen-reader announcement
  *  - Приватный режим: если запись не удалась — inline-предупреждение
@@ -24,7 +26,14 @@ import { useCookieConsent, type CookieCategories } from "@/hooks/useCookieConsen
 
 const FOCUSABLE = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
 
-export function CookieBanner() {
+interface CookieBannerProps {
+  /** Внешний флаг: показать панель настроек. Используется иконкой в хедере. */
+  settingsOpenExternal?: boolean;
+  /** Уведомить о закрытии панели, чтобы очистить внешний флаг. */
+  onSettingsClosed?: () => void;
+}
+
+export function CookieBanner({ settingsOpenExternal, onSettingsClosed }: CookieBannerProps = {}) {
   const {
     consent,
     isReady,
@@ -35,7 +44,7 @@ export function CookieBanner() {
     reset,
   } = useCookieConsent();
   const [mounted, setMounted] = useState(false);
-  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [settingsOpenInternal, setSettingsOpenInternal] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [draft, setDraft] = useState<CookieCategories>({
     necessary: true,
@@ -44,6 +53,13 @@ export function CookieBanner() {
   });
   const acceptBtnRef = useRef<HTMLButtonElement>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
+
+  // Внешний флаг имеет приоритет — иконка в хедере открывает панель
+  const settingsOpen = settingsOpenExternal === true || settingsOpenInternal;
+  const closeSettings = () => {
+    setSettingsOpenInternal(false);
+    onSettingsClosed?.();
+  };
 
   useEffect(() => {
     setMounted(true);
@@ -65,7 +81,7 @@ export function CookieBanner() {
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== "Escape") return;
       if (settingsOpen) {
-        setSettingsOpen(false);
+        closeSettings();
         setSaveError(null);
         return;
       }
@@ -128,7 +144,7 @@ export function CookieBanner() {
         );
         return;
       }
-      setSettingsOpen(false);
+      closeSettings();
     };
     return (
       <div
@@ -153,7 +169,7 @@ export function CookieBanner() {
             <button
               type="button"
               onClick={() => {
-                setSettingsOpen(false);
+                closeSettings();
                 setSaveError(null);
               }}
               className="p-1.5 hover:bg-gray-100 active:bg-gray-200 rounded-lg motion-reduce:transition-none"
@@ -215,7 +231,7 @@ export function CookieBanner() {
             <button
               type="button"
               onClick={() => {
-                setSettingsOpen(false);
+                closeSettings();
                 setSaveError(null);
               }}
               className="px-4 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-100 active:bg-gray-200 rounded-lg transition-colors motion-reduce:transition-none"
@@ -228,19 +244,10 @@ export function CookieBanner() {
     );
   }
 
-  // === Persistent icon (после решения) ===
+  // === Persistent icon переехал в AppLayout (хедер, рядом с колокольчиком) ===
+  // Возвращаем null, когда consent уже выбран — иначе фикс-иконка перекрывает SupportLauncher.
   if (consent !== null && isReady) {
-    return (
-      <button
-        type="button"
-        onClick={() => setSettingsOpen(true)}
-        aria-label="Изменить настройки cookies"
-        title="Настройки cookies"
-        className="fixed bottom-4 right-4 z-40 w-10 h-10 rounded-full bg-white border border-gray-200 shadow-md flex items-center justify-center hover:bg-gray-50 active:bg-gray-100 transition-colors motion-reduce:transition-none cursor-pointer pb-safe"
-      >
-        <Cookie className="w-4.5 h-4.5 text-gray-600" aria-hidden />
-      </button>
-    );
+    return null;
   }
 
   // === First-visit banner ===
@@ -311,7 +318,7 @@ export function CookieBanner() {
             </button>
             <button
               type="button"
-              onClick={() => setSettingsOpen(true)}
+              onClick={() => setSettingsOpenInternal(true)}
               className="px-3 py-3 text-sm font-medium text-brand-700 hover:bg-brand-50 active:bg-brand-100 rounded-lg transition-colors motion-reduce:transition-none flex items-center gap-1.5 cursor-pointer"
             >
               <Settings className="w-3.5 h-3.5" aria-hidden />
