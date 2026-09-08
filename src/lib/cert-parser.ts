@@ -135,10 +135,17 @@ export function getExtensions(cert: Certificate): CertificateExtensions {
       }
     }
 
-    if (oid === "2.5.29.37" && isRecord(value) && Array.isArray(value.array)) {
-      for (const k of value.array) {
-        if (isRecord(k) && isRecord(k.valueBlock)) {
-          extKeyUsage.push(k.valueBlock.toString());
+    if (oid === "2.5.29.37" && isRecord(value)) {
+      if (Array.isArray(value.array)) {
+        for (const k of value.array) {
+          if (isRecord(k) && isRecord(k.valueBlock)) {
+            extKeyUsage.push(k.valueBlock.toString());
+          }
+        }
+      } else if (Array.isArray(value.keyPurposes)) {
+        for (const k of value.keyPurposes) {
+          const oid = isRecord(k) && isRecord(k.valueBlock) ? k.valueBlock.toString() : undefined;
+          if (typeof oid === "string") extKeyUsage.push(oid);
         }
       }
     }
@@ -156,12 +163,27 @@ export function getExtensions(cert: Certificate): CertificateExtensions {
       subjectKeyId = valueHex ? Buffer.from(valueHex as ArrayBufferLike).toString("hex") : "";
     }
 
-    if (oid === "2.5.29.31" && isRecord(value) && Array.isArray(value.array)) {
-      for (const dp of value.array) {
-        if (!isRecord(dp) || !isRecord(dp.distributionPoint) || !Array.isArray(dp.distributionPoint.array)) continue;
-        for (const name of dp.distributionPoint.array) {
-          if (!isRecord(name) || name.type !== 0 || !isRecord(name.value) || !Array.isArray(name.value.array)) continue;
-          for (const gn of name.value.array) {
+    if (oid === "2.5.29.31" && isRecord(value)) {
+      if (Array.isArray(value.array)) {
+        for (const dp of value.array) {
+          if (!isRecord(dp) || !isRecord(dp.distributionPoint) || !Array.isArray(dp.distributionPoint.array)) continue;
+          for (const name of dp.distributionPoint.array) {
+            if (!isRecord(name) || name.type !== 0 || !isRecord(name.value) || !Array.isArray(name.value.array)) continue;
+            for (const gn of name.value.array) {
+              if (isRecord(gn) && gn.type === 6 && typeof gn.value === "string") {
+                crlDistributionPoints.push(gn.value);
+              }
+            }
+          }
+        }
+      } else if (Array.isArray(value.distributionPoints)) {
+        for (const dp of value.distributionPoints) {
+          if (!isRecord(dp)) continue;
+          const names = Array.isArray(dp.distributionPoint) ? dp.distributionPoint : undefined;
+          const fullName = !names && isRecord(dp.distributionPoint) && Array.isArray(dp.distributionPoint.array)
+            ? dp.distributionPoint.array
+            : undefined;
+          for (const gn of names ?? fullName ?? []) {
             if (isRecord(gn) && gn.type === 6 && typeof gn.value === "string") {
               crlDistributionPoints.push(gn.value);
             }
@@ -170,8 +192,9 @@ export function getExtensions(cert: Certificate): CertificateExtensions {
       }
     }
 
-    if (oid === "1.3.6.1.5.5.7.1.1" && isRecord(value) && Array.isArray(value.array)) {
-      for (const ad of value.array) {
+    if (oid === "1.3.6.1.5.5.7.1.1" && isRecord(value)) {
+      const descriptions = Array.isArray(value.accessDescriptions) ? value.accessDescriptions : Array.isArray(value.array) ? value.array : undefined;
+      for (const ad of descriptions ?? []) {
         if (!isRecord(ad)) continue;
         const locationValue = isRecord(ad.accessLocation) ? ad.accessLocation.value : undefined;
         if (ad.accessMethod === "1.3.6.1.5.5.7.48.1" && typeof locationValue === "string") {

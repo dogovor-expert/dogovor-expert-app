@@ -25,9 +25,19 @@ declare module "node-gost-crypto" {
     cert: {
       X509: new (template?: unknown) => {
         subject: Record<string, string>;
+        extensions?: Record<string, unknown>;
+        serialNumber?: unknown;
+        notBefore?: Date;
+        notAfter?: Date;
+        subjectPublicKeyInfo?: unknown;
+        signature?: { id: string };
+        signatureAlgorithm?: { id: string };
+        signatureValue?: unknown;
+        tbsCertificate?: { encode: () => ArrayBuffer };
         generate(provider: string): Promise<unknown>;
         sign(privateKey: unknown, issuerCertificate?: unknown): Promise<void>;
         verify(issuerCertificate?: unknown, issuerCRL?: unknown, date?: Date): Promise<unknown>;
+        encode(format?: string): ArrayBuffer;
       };
     };
   }

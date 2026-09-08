@@ -63,6 +63,8 @@ export function UKEPSigner({ pdfBytes, fileName = 'document', onClose, onBack, s
       };
 
       // 1) Узнаём длину CMS для этого сертификата (детерминирована) — кэшируем
+      // addTimestamp должен быть одинаковым в probe и в финальной подписи,
+      // иначе X-Long Type 1 изменит длину CMS и плейсхолдер не совпадёт.
       let cmsLen = cmsLengthCache.get(selectedCert.thumbprint);
       if (!cmsLen) {
         const probe = await preparePAdESPlaceholder(pdfBytes, 8192, opts);
@@ -70,6 +72,7 @@ export function UKEPSigner({ pdfBytes, fileName = 'document', onClose, onBack, s
           detached: true,
           encodingType: 'base64',
           addSigningTime: true,
+          addTimestamp: true,
         });
         cmsLen = hexLengthOfCms(cmsProbe);
         cmsLengthCache.set(selectedCert.thumbprint, cmsLen);
@@ -81,6 +84,7 @@ export function UKEPSigner({ pdfBytes, fileName = 'document', onClose, onBack, s
         detached: true,
         encodingType: 'base64',
         addSigningTime: true,
+        addTimestamp: true,
       });
 
       const cmsHex = uint8ArrayToHex(Uint8Array.from(atob(cmsBase64), c => c.charCodeAt(0)));

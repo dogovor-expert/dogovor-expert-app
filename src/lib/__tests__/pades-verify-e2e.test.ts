@@ -1,7 +1,15 @@
 // @vitest-environment node
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { gostCrypto } from "node-gost-crypto";
 import { verifyPAdESCrypto } from "@/lib/pades-verify";
+
+// Тест проверяет криптографию ГОСТ-подписи, а не TSL-цепочки доверия:
+// при заданных SUPABASE-env getTrustedRoots() идёт в прод-БД и легитимно
+// отвергает самоподписанную тестовую цепочку. Изолируем тест от БД.
+vi.mock("@/lib/trusted-roots", () => ({
+  getTrustedRoots: vi.fn(async () => []),
+  clearTrustedRootsCache: vi.fn(),
+}));
 
 function toHex(bytes: Uint8Array): string {
   let s = "";

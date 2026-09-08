@@ -3,6 +3,8 @@ import type * as asn1js from "asn1js";
 import { gostCrypto } from "node-gost-crypto";
 import { getTrustedRoots } from "@/lib/trusted-roots";
 import { parseSubject, parseIssuer, getValidity, getExtensions, getThumbprints, isQualifiedCertificate, type ParsedSubject } from "@/lib/cert-parser";
+import { checkOcsp } from "@/lib/ocsp";
+import { checkCrl } from "@/lib/crl";
 
 export interface SignerInfo {
   thumbprintSha1: string;
@@ -404,9 +406,17 @@ export async function verifyPAdESCrypto(
   let revocation: RevocationInfo = { status: "unknown", checkedAt: now, method: "none" };
   try {
     if (ocspUrls.length > 0) {
-      revocation = { status: "unknown", checkedAt: now, method: "OCSP", details: "OCSP check not implemented" };
+      // Приоритет 1: OCSP. В pades-verify нет доступа к issuerCert; checkOcsp
+      // соберёт запрос с issuerKeyHash=0, многие OCSP-серверы всё равно
+      // отвечают «authorized» по URL из AIA. Если ответ не пришёл — фолбэк
+      // на CRL делается на уровне вызывающего кода.
+      const ocspResult = await checkOcsp(signerCert, ocspUrls[0]);
+      revocation = { status: ocspResult.status, checkedAt: ocspResult.checkedAt, method: "OCSP" };
+      if (ocspResult.details) revocation.details = ocspResult.details;
     } else if (crlDistributionPoints.length > 0) {
-      revocation = { status: "unknown", checkedAt: now, method: "CRL", details: "CRL check not implemented" };
+      const crlResult = await checkCrl(signerCert, crlDistributionPoints[0]);
+      revocation = { status: crlResult.status, checkedAt: crlResult.checkedAt, method: "CRL" };
+      if (crlResult.details) revocation.details = crlResult.details;
     }
   } catch (e) {
     revocation = { status: "offline", checkedAt: now, method: "none", details: String(e) };
@@ -419,10 +429,14 @@ export async function verifyPAdESCrypto(
   }
 
   let timestamp: TimestampInfo = { present: false };
-  const unsignedAttrs = signerInfo.unsignedAttrs as unknown as { array?: PkijsAttribute[] };
-  if (unsignedAttrs?.array) {
-    for (const attr of unsignedAttrs.array) {
-      if (attr.attrId === "1.2.840.113549.1.9.16.2.14") {
+  // pkijs v3 кладёт атрибуты в SignedAndUnsignedAttributes.attributes (а не .array) —
+  // обрабатываем обе формы.
+  const unsignedAttrs = signerInfo.unsignedAttrs as unknown as { array?: PkijsAttribute[]; attributes?: PkijsAttribute[] };
+  const unsignedList = unsignedAttrs?.array ?? unsignedAttrs?.attributes;
+  if (unsignedList) {
+    for (const attr of unsignedList) {
+      const attrId = (attr as { attrId?: string; type?: unknown }).attrId ?? String((attr as { type?: unknown }).type);
+      if (attrId === "1.2.840.113549.1.9.16.2.14") {
         timestamp = { present: true, tsaUrl: "unknown", valid: false };
         warnings.push("TSA timestamp present but verification not implemented");
         break;

@@ -33,6 +33,8 @@
     "test:integration": "vitest run --config vitest.integration.config.ts",
     "coverage": "vitest run --coverage",
     "test:e2e": "playwright test",
+    "test:ukep": "vitest run src/lib/__tests__/ukep-e2e-pipeline.test.ts src/lib/__tests__/ocsp-crl.test.ts",
+    "test:ukep:live": "node scripts/test-ukep-live.mjs",
     "test:prod": "playwright test --config=playwright.prod.config.ts",
     "analyze": "ANALYZE=true next build",
     "lighthouse": "lhci autorun --config=lighthouserc.json",

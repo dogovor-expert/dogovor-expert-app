@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect, useCallback } from 'react';
 import type { CertValidationResult, CadesPlugin } from '@/lib/signCryptoPro';
+import { resolveTsaUrl } from '@/lib/tsa';
 
 declare global {
   interface Window {
@@ -213,13 +214,7 @@ export function useCryptoPro() {
     const encodingType = options?.encodingType ?? cadesplugin.CADESCOM_ENCODE_BASE64;
     const detached = options?.detached ?? false;
     const addTimestamp = options?.addTimestamp ?? false;
-    const tsaUrl = options?.tsaUrl ?? 'https://freetsa.org/tsr';
-
-    // TSA Timestamp (CAdES-X-Long Type 1)
-    if (addTimestamp) {
-      // Внимание: для полноценного TSA нужен HTTP запрос к TSA серверу
-      console.warn('TSA timestamp требует отдельного HTTP запроса к TSA серверу');
-    }
+    const tsaUrl = resolveTsaUrl(options?.tsaUrl);
 
     const cadesType = addTimestamp
       ? cadesplugin.CADESCOM_CADES_X_LONG_TYPE_1

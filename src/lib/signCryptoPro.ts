@@ -1,5 +1,7 @@
 'use client';
 
+import type { Certificate } from 'pkijs';
+
 // Minimal interfaces for CryptoPro cadesplugin COM objects
 export interface CadesPlugin {
   CreateObjectAsync(progId: string): Promise<CadesObject>;
@@ -64,6 +66,7 @@ interface CadesObject {
 // Реализация — в нейтральном модуле (без 'use client'), чтобы её можно было
 // использовать и на сервере.
 import { uint8ToBase64 } from '@/lib/bytes';
+import { resolveTsaUrl } from '@/lib/tsa';
 
 interface CertificatesCollection {
   Count: Promise<number>;
@@ -554,34 +557,85 @@ async function validateCertificateChain(cert: CadesObject, cadesplugin: CadesPlu
   }
 }
 
-async function checkRevocation(cert: CadesObject, cadesplugin: CadesPlugin): Promise<'valid' | 'revoked' | 'unknown' | 'offline'> {
+async function checkRevocation(cert: CadesObject, _cadesplugin: CadesPlugin): Promise<'valid' | 'revoked' | 'unknown' | 'offline'> {
   try {
-    // Пытаемся получить CRL Distribution Points
-    const extensions = await cert.Extensions;
-    const count = await extensions.Count;
-    const crlUrls: string[] = [];
+    // Пытаемся достать CRL/OCSP URL из COM-объекта. Полный парсинг CRL DP
+    // через COM-объект делать дорого и хрупко — вместо этого получаем
+    // сырой DER сертификата (CertEncoded) и парсим через pkijs.
+    // Это работает в браузере с КриптоПро Browser Plugin и в Node-тестах.
+    const certEncoded = await (cert as unknown as { CertEncoded?: Promise<ArrayBuffer | string> }).CertEncoded;
+    if (!certEncoded) return 'unknown';
 
-    for (let i = 1; i <= count; i++) {
-      const ext = await extensions.Item(i);
-      const oid = await ext.OID;
-      if (oid === '2.5.29.31') { // CRL Distribution Points
-        const value = await ext.Value;
-        // Парсинг CRL DP — сложно, упрощаем
+    let derBytes: ArrayBuffer;
+    if (typeof certEncoded === 'string') {
+      // Бинарное свойство COM может приходить как base64 или hex — КриптоПро
+      // отдаёт base64. Декодируем.
+      const clean = certEncoded.replace(/\s+/g, '');
+      try {
+        const bin = atob(clean);
+        derBytes = new ArrayBuffer(bin.length);
+        new Uint8Array(derBytes).set([...bin].map((c) => c.charCodeAt(0)));
+      } catch {
+        // Возможно, hex
+        const bytes = new Uint8Array(clean.length / 2);
+        for (let i = 0; i < clean.length; i += 2) {
+          bytes[i / 2] = parseInt(clean.substr(i, 2), 16);
+        }
+        derBytes = bytes.buffer as ArrayBuffer;
       }
+    } else {
+      derBytes = certEncoded as ArrayBuffer;
     }
 
-    // Для упрощения: используем встроенную проверку CAdESCOM
-    // CAdESCOM может проверить отзыв при верификации если включить флаг
-    const signedData = await cadesplugin.CreateObjectAsync('CAdESCOM.CadesSignedData');
-    // Попытка верификации с проверкой отзыва
-    // Но это требует подписанных данных... упрощаем
+    // Динамический импорт pkijs (чтобы не сломать 'use client' в браузере)
+    const pkijs = await import('pkijs');
+    const parsed = pkijs.Certificate.fromBER(derBytes);
+    const { ocspUrls, crlDistributionPoints } = parseRevocationUrls(parsed);
+    if (ocspUrls.length === 0 && crlDistributionPoints.length === 0) return 'unknown';
 
-    // В реальности здесь должен быть запрос к CRL/OCSP
-    // Для MVP возвращаем 'unknown' — лучше чем молча пропускать отозванный
-    return 'unknown';
+    const { checkOcsp } = await import('@/lib/ocsp');
+    const { checkCrl } = await import('@/lib/crl');
+
+    if (ocspUrls.length > 0) {
+      const r = await checkOcsp(parsed, ocspUrls[0]);
+      return r.status;
+    }
+    const r = await checkCrl(parsed, crlDistributionPoints[0]);
+    return r.status;
   } catch {
     return 'offline';
   }
+}
+
+// Мини-парсер: вытаскивает OCSP / CRL URLs из AIA / CDP расширений pkijs-сертификата.
+function parseRevocationUrls(cert: Certificate): {
+  ocspUrls: string[];
+  crlDistributionPoints: string[];
+} {
+  const ocspUrls: string[] = [];
+  const crlDistributionPoints: string[] = [];
+  for (const ext of cert.extensions ?? []) {
+    if (ext.extnID === '1.3.6.1.5.5.7.1.1') {
+      const v = ext.parsedValue as unknown as { accessDescriptions?: Array<{ accessMethod: string; accessLocation: { value: string } }> };
+      for (const ad of v?.accessDescriptions ?? []) {
+        if (ad.accessMethod === '1.3.6.1.5.5.7.48.1' && typeof ad.accessLocation.value === 'string') {
+          ocspUrls.push(ad.accessLocation.value);
+        }
+      }
+    } else if (ext.extnID === '2.5.29.31') {
+      const v = ext.parsedValue as unknown as {
+        distributionPoints?: Array<{ distributionPoint: { fullName?: { names?: Array<{ value: string }> } } }>;
+      };
+      for (const dp of v?.distributionPoints ?? []) {
+        for (const gn of dp.distributionPoint.fullName?.names ?? []) {
+          if (typeof gn.value === 'string') {
+            crlDistributionPoints.push(gn.value);
+          }
+        }
+      }
+    }
+  }
+  return { ocspUrls, crlDistributionPoints };
 }
 
 export async function signPdfWithCryptoPro(
@@ -622,20 +676,6 @@ export async function signPdfWithCryptoPro(
     await attrs.Add(cadesAttrs);
   }
 
-  // TSA Timestamp (CAdES-X-Long Type 1)
-  if (options.addTimestamp) {
-    const tsaUrl = options.tsaUrl || 'https://freetsa.org/tsr';
-    try {
-      const tsaAttr = await cadesplugin.CreateObjectAsync('CAdESCOM.CPAttribute');
-      await tsaAttr.propset_Name(cadesplugin.CAPICOM_AUTHENTICATED_ATTRIBUTE_SIGNATURE_TIMESTAMP_TOKEN);
-      // Внимание: для полноценного TSA нужно получить токен от TSA сервера
-      // Здесь упрощаем — в реальности нужно сделать HTTP запрос к TSA
-      console.warn('TSA timestamp требует отдельного HTTP запроса к TSA серверу');
-    } catch {
-      // Игнорируем недоступность TSA-атрибута
-    }
-  }
-
   const signedData = await cadesplugin.CreateObjectAsync('CAdESCOM.CadesSignedData');
   await signedData.propset_ContentEncoding(cadesplugin.CADESCOM_BASE64_TO_BINARY);
   await signedData.propset_Content(base64);
@@ -653,7 +693,7 @@ export async function signPdfWithCryptoPro(
 
   // Реальная метка времени от TSA (если запрошена) — через свойство плагина
   if (options.addTimestamp) {
-    const tsaUrl = options.tsaUrl || 'https://freetsa.org/tsr';
+    const tsaUrl = resolveTsaUrl(options.tsaUrl);
     try {
       await signer.propset_TSAAddress(tsaUrl);
     } catch (e) {
