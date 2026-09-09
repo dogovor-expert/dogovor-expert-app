@@ -7,6 +7,12 @@ const withBundleAnalyzer =
     ? bundleAnalyzer({ enabled: true })
     : (config) => config;
 
+// Self-hosted Supabase: добавляем env-хост в remotePatterns аддитивно,
+// чтобы собирать один и тот же конфиг и для Vercel (облако), и для
+// self-hosted развёртывания (свой API-шлюз).
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+const supabaseHost = supabaseUrl.replace(/^https?:\/\//, '').split('/')[0] || '';
+
 const nextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
@@ -14,6 +20,12 @@ const nextConfig = {
     formats: ['image/avif', 'image/webp'],
     remotePatterns: [
       { protocol: 'https', hostname: 'xkakhztknlpzqarklewq.supabase.co' },
+      ...(supabaseHost
+        ? [{
+            protocol: supabaseUrl.startsWith('http:') ? 'http' : 'https',
+            hostname: supabaseHost,
+          }]
+        : []),
       { protocol: 'https', hostname: 'lh3.googleusercontent.com' },
       { protocol: 'https', hostname: 'avatars.yandex.net' },
       { protocol: 'https', hostname: 'avatars.mds.yandex.net' },

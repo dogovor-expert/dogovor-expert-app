@@ -107,14 +107,20 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
   // Next.js и Яндекс.Метрики. no-cache на HTML не ставим — SSG остаётся.
   const isDev = process.env.NODE_ENV === 'development';
 
+  // Self-hosted Supabase: env-хост добавляется в img/connect-src аддитивно,
+  // чтобы одна конфигурация работала и на Vercel (облако), и на self-hosted.
+  const supabaseCspHost = (process.env.NEXT_PUBLIC_SUPABASE_URL || '')
+    .replace(/^https?:\/\//, '')
+    .split('/')[0];
+
   const csp = [
     `default-src 'self'`,
     `script-src 'self' 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval' https://inzuro.polis.online https://*.inzuro.ru https://polis.online https://api.polis.online https://challenges.cloudflare.com https://mc.yandex.ru https://mc.yandex.md https://www.cryptopro.ru https://download.rutoken.ru https://accounts.google.com`,
     `worker-src 'self' blob:`,
     `style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://api.polis.online https://inzuro.polis.online https://*.inzuro.ru`,
-    `img-src 'self' data: blob: https://*.inzuro.ru https://polis.online https://api.polis.online https://dkbm-web.autoins.ru https://xkakhztknlpzqarklewq.supabase.co https://lh3.googleusercontent.com https://avatars.yandex.net https://avatars.mds.yandex.net https://mc.yandex.ru https://mc.yandex.md https://mc.yandex.com`,
+    `img-src 'self' data: blob: https://*.inzuro.ru https://polis.online https://api.polis.online https://dkbm-web.autoins.ru https://xkakhztknlpzqarklewq.supabase.co${supabaseCspHost ? ` ${supabaseCspHost.startsWith('http') ? supabaseCspHost : `https://${supabaseCspHost}`} http://${supabaseCspHost}` : ''} https://lh3.googleusercontent.com https://avatars.yandex.net https://avatars.mds.yandex.net https://mc.yandex.ru https://mc.yandex.md https://mc.yandex.com`,
     `font-src 'self' data: https://fonts.gstatic.com`,
-    `connect-src 'self' https://accounts.google.com https://www.googleapis.com https://oauth.yandex.ru https://cloud-api.yandex.net https://inzuro.polis.online https://*.inzuro.ru https://polis.online https://api.polis.online https://dkbm-web.autoins.ru https://xkakhztknlpzqarklewq.supabase.co https://tessdata.projectnaptha.com https://challenges.cloudflare.com https://mc.yandex.ru https://mc.yandex.md https://mc.yandex.com https://yandex.ru https://huggingface.co https://*.huggingface.co https://cdn-lfs.huggingface.co https://cdn.hf.co https://*.cdn.hf.co wss://mc.yandex.ru wss://mc.yandex.com wss://mc.yandex.md wss://yandex.ru https://*.ingest.us.sentry.io`,
+    `connect-src 'self' https://accounts.google.com https://www.googleapis.com https://oauth.yandex.ru https://cloud-api.yandex.net https://inzuro.polis.online https://*.inzuro.ru https://polis.online https://api.polis.online https://dkbm-web.autoins.ru https://xkakhztknlpzqarklewq.supabase.co${supabaseCspHost ? ` ${supabaseCspHost.startsWith('http') ? supabaseCspHost : `https://${supabaseCspHost}`} http://${supabaseCspHost}` : ''} https://tessdata.projectnaptha.com https://challenges.cloudflare.com https://mc.yandex.ru https://mc.yandex.md https://mc.yandex.com https://yandex.ru https://huggingface.co https://*.huggingface.co https://cdn-lfs.huggingface.co https://cdn.hf.co https://*.cdn.hf.co wss://mc.yandex.ru wss://mc.yandex.com wss://mc.yandex.md wss://yandex.ru https://*.ingest.us.sentry.io`,
     `frame-src 'self' blob: https://widget.inzuro.ru https://*.inzuro.ru https://polis.online https://api.polis.online https://dkbm-web.autoins.ru https://mc.yandex.ru https://challenges.cloudflare.com https://accounts.google.com`,
     `media-src 'self'`,
     `object-src 'none'`,
