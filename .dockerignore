@@ -1,0 +1,16 @@
+node_modules
+.next
+.git
+.vercel
+playwright-report
+test-results
+visual-report
+audit-shots
+audit
+reports
+.lighthouseci
+coverage
+.env*
+*.log
+.nx
+.storybook
