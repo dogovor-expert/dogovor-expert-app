@@ -1,35 +1,45 @@
 "use client";
 import { useState } from "react";
-import { Check, CalendarDays } from "lucide-react";
-import { daysBetween, today, plusDays, fmtMoney } from "@/lib/legal/calc";
-
-const HOLIDAYS: Record<string, string[]> = {
-  "2025": ["2025-01-01", "2025-01-02", "2025-01-03", "2025-01-04", "2025-01-05", "2025-01-06", "2025-01-07", "2025-01-08", "2025-02-23", "2025-03-08", "2025-05-01", "2025-05-09", "2025-06-12", "2025-11-04"],
-  "2026": ["2026-01-01", "2026-01-02", "2026-01-03", "2026-01-04", "2026-01-05", "2026-01-06", "2026-01-07", "2026-01-08", "2026-02-23", "2026-03-08", "2026-05-01", "2026-05-09", "2026-06-12", "2026-11-04"],
-};
+import { Check, CalendarDays, AlertTriangle, ArrowRight } from "lucide-react";
+import { daysBetween, today, plusDays } from "@/lib/legal/calc";
+import { countWorkdays, shiftDeadline, hasTransferDecree } from "@/lib/legal/prodkalendar";
+import SaveCalcButton from "@/components/calculator/SaveCalcButton";
 
 export default function DayCounter() {
   const [from, setFrom] = useState("");
   const [to, setTo] = useState(today());
-  const [result, setResult] = useState<{ total: number; workdays: number; note: string } | null>(null);
+  const [result, setResult] = useState<{
+    total: number;
+    workdays: number;
+    rest: number;
+    deadlineDate: string;
+    deadlineShifted: boolean;
+    warning: string;
+  } | null>(null);
   const [error, setError] = useState("");
 
   const calc = () => {
     if (!from || !to) { setError("Укажите обе даты"); return; }
     if (from > to) { setError("Дата начала не может быть позже конца"); return; }
-    const total = daysBetween(from, to);
-    let workdays = 0;
-    const holidays = [...(HOLIDAYS[from.slice(0, 4)] ?? []), ...(HOLIDAYS[to.slice(0, 4)] ?? [])];
-    for (let i = 0; i <= total; i++) {
-      const d = new Date(parseDate(from).getTime() + i * 86400000);
-      const dow = d.getDay();
-      const ds = toDateStr(d);
-      if (dow !== 0 && dow !== 6 && !holidays.includes(ds)) workdays++;
+    const total = daysBetween(from, to) + 1;
+    const workdays = countWorkdays(from, to);
+    const dl = shiftDeadline(to);
+    const yearsWithoutDecree = new Set<string>();
+    const startY = Number(from.slice(0, 4));
+    const endY = Number(to.slice(0, 4));
+    for (let y = startY; y <= endY; y++) {
+      if (!hasTransferDecree(y)) yearsWithoutDecree.add(String(y));
     }
+    const warning = yearsWithoutDecree.size
+      ? `Переносы выходных на ${[...yearsWithoutDecree].join(", ")} г. ещё не утверждены — расчёт по базовым праздникам ТК РФ`
+      : "";
     setResult({
-      total: total + 1,
+      total,
       workdays,
-      note: holidays.length ? "с учётом сб/вс и федеральных праздников; переносы правительства не учтены" : "",
+      rest: total - workdays,
+      deadlineDate: dl.date,
+      deadlineShifted: dl.shifted,
+      warning,
     });
     setError("");
   };
@@ -59,43 +69,70 @@ export default function DayCounter() {
 
       {result && (
         <div className="bg-gray-50 rounded-xl p-4 border border-gray-200 space-y-1.5">
-          <div className="flex items-center gap-2">
-            <Check className="w-4 h-4 text-emerald-500" />
-            <span className="text-[10px] font-mono text-gray-600">Период</span>
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <Check className="w-4 h-4 text-emerald-500" />
+              <span className="text-[10px] font-mono text-gray-600">Период {from} — {to}</span>
+            </div>
+            <SaveCalcButton
+              kind="daycounter"
+              title={`Срок ${from} → ${to} — ${result.workdays} раб. дн.`}
+              lines={[
+                `Период: ${from} — ${to} (включительно)`,
+                `Всего календарных дней: ${result.total}`,
+                `Рабочих дней (произв. календарь, ст. 112 ТК + переносы ПП РФ): ${result.workdays}`,
+                `Выходных/праздников: ${result.rest}`,
+                result.deadlineShifted
+                  ? `Последний день срока — нерабочий; по ст. 193 ГК переносится на ${result.deadlineDate}`
+                  : `Последний день срока ${result.deadlineDate} — рабочий, переноса нет`,
+                ...(result.warning ? [result.warning] : []),
+                "",
+                "Расчёт: dogovor.expert, производственный календарь 2024–2026 (ПП РФ №1314, №1335, №1466).",
+              ]}
+            />
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-3 gap-3">
             <div>
               <p className="text-[10px] text-gray-600">Всего дней</p>
               <p className="text-xl font-bold text-gray-900">{result.total}</p>
             </div>
             <div>
-              <p className="text-[10px] text-gray-600">Рабочих дней</p>
+              <p className="text-[10px] text-gray-600">Рабочих</p>
               <p className="text-xl font-bold text-gray-900">{result.workdays}</p>
             </div>
+            <div>
+              <p className="text-[10px] text-gray-600">Выходных</p>
+              <p className="text-xl font-bold text-gray-900">{result.rest}</p>
+            </div>
           </div>
-          {result.note && <p className="text-[11px] text-gray-600">{result.note}</p>}
-          <p className="text-[11px] text-gray-600 pt-1 border-t border-gray-200">
-            {plusDays(from, 30)} — через 30 дней · {plusDays(from, 60)} — через 60 дней
+          <p className="text-[11px] text-gray-600">
+            Рабочие дни — по производственному календарю с учётом переносов Правительства РФ (ст. 112 ТК)
           </p>
+          {result.warning && (
+            <p className="text-[11px] text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-2.5 flex items-start gap-1.5">
+              <AlertTriangle className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
+              {result.warning}
+            </p>
+          )}
+          <p className="text-[11px] text-gray-600 pt-1 border-t border-gray-200 flex items-center gap-1.5 flex-wrap">
+            <ArrowRight className="w-3.5 h-3.5" />
+            {result.deadlineShifted
+              ? <>Срок, истекающий {to}, — в нерабочий день; по ст. 193 ГК он переносится на <b>{result.deadlineDate}</b></>
+              : <>Последний день срока {result.deadlineDate} — рабочий, переноса по ст. 193 ГК нет</>
+            }
+          </p>
+          {from && (
+            <p className="text-[11px] text-gray-600">
+              {plusDays(from, 30)} — через 30 дней · {plusDays(from, 60)} — через 60 дней
+            </p>
+          )}
         </div>
       )}
 
       <p className="text-[11px] text-gray-600 leading-relaxed flex items-start gap-1.5">
         <CalendarDays className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
-        Сроки в договорах и претензиях: если последний день срока — выходной, он переносится на следующий рабочий день (ст. 193 ГК). Переносы правительственных выходных 2026 уточняйте по производственному календарю.
+        Сроки в договорах и претензиях: если последний день срока выпадает на выходной или праздник, он переносится на следующий рабочий день (ст. 193 ГК РФ). Календарь учитывает праздники ст. 112 ТК РФ и переносы, утверждённые Постановлениями Правительства РФ (2024–2026 гг.).
       </p>
     </div>
   );
-}
-
-function parseDate(s: string): Date {
-  const [y, m, d] = s.split("-").map(Number);
-  return new Date(y, m - 1, d);
-}
-
-function toDateStr(d: Date): string {
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const dd = String(d.getDate()).padStart(2, "0");
-  return `${y}-${m}-${dd}`;
 }

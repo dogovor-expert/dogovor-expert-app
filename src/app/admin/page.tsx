@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { requireAdminPage } from "@/lib/admin-auth";
+import { atLeast } from "@/lib/admin-rbac";
 import { getDirectory } from "@/lib/admin-data";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { Card } from "@/components/ui/Card";
@@ -16,34 +17,41 @@ type LeadRow = { id: string; brand: string; status: string; created_at: string }
 export const dynamic = "force-dynamic";
 
 export default async function AdminOverviewPage() {
-  await requireAdminPage();
+  // 6.5 RBAC: обзор доступен любой роли, но PII-виджеты скрыты для модератора.
+  const me = await requireAdminPage();
+  const fullAccess = atLeast(me.role, "admin");
   const admin = createAdminClient();
   const { users, emailById } = await getDirectory();
 
-  const [_subsRes, paysRes, leadsRes, fbRes, subsActive, paysPaid, leadsTotal, fbNew] = await Promise.all([
-    admin.from("subscriptions").select("id, user_id, plan, status, period_end").order("created_at", { ascending: false }).limit(5),
-    admin.from("payments").select("id, user_id, amount, currency, provider, status, created_at").order("created_at", { ascending: false }).limit(5),
-    admin.from("leads").select("id, brand, status, created_at").order("created_at", { ascending: false }).limit(5),
-    admin.from("feedback").select("id, ticket_no, type, email, status, created_at").order("created_at", { ascending: false }).limit(5),
+  const [subsActive, paysPaid, leadsTotal, fbNew] = await Promise.all([
     admin.from("subscriptions").select("id", { count: "exact", head: true }).eq("status", "active"),
     admin.from("payments").select("id", { count: "exact", head: true }).eq("status", "paid"),
     admin.from("leads").select("id", { count: "exact", head: true }),
     admin.from("feedback").select("id", { count: "exact", head: true }).eq("status", "new"),
   ]);
+  const paysRes = fullAccess
+    ? await admin.from("payments").select("id, user_id, amount, currency, provider, status, created_at").order("created_at", { ascending: false }).limit(5)
+    : { data: [] as PaymentRow[] };
+  const [leadsRes, fbRes] = await Promise.all([
+    admin.from("leads").select("id, brand, status, created_at").order("created_at", { ascending: false }).limit(5),
+    admin.from("feedback").select("id, ticket_no, type, email, status, created_at").order("created_at", { ascending: false }).limit(5),
+  ]);
 
   const stats = [
-    { label: "Пользователей", value: users.length, icon: Users, href: "/admin/users" },
-    { label: "Активных подписок", value: subsActive.count ?? 0, icon: ShieldCheck, href: "/admin/subscriptions" },
-    { label: "Оплат (paid)", value: paysPaid.count ?? 0, icon: Banknote, href: "/admin/payments" },
-    { label: "Лидов (растаможка)", value: leadsTotal.count ?? 0, icon: Package, href: "/admin/leads" },
-    { label: "Новых отзывов", value: fbNew.count ?? 0, icon: MessageSquare, href: "/admin/feedback" },
-  ];
+    { label: "Пользователей", value: users.length, icon: Users, href: "/admin/users", adminOnly: true },
+    { label: "Активных подписок", value: subsActive.count ?? 0, icon: ShieldCheck, href: "/admin/subscriptions", adminOnly: true },
+    { label: "Оплат (paid)", value: paysPaid.count ?? 0, icon: Banknote, href: "/admin/payments", adminOnly: true },
+    { label: "Лидов (растаможка)", value: leadsTotal.count ?? 0, icon: Package, href: "/admin/leads", adminOnly: false },
+    { label: "Новых отзывов", value: fbNew.count ?? 0, icon: MessageSquare, href: "/admin/feedback", adminOnly: false },
+  ].filter((s) => fullAccess || !s.adminOnly);
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Обзор</h1>
-        <p className="text-gray-600 text-sm">Статистика и последняя активность</p>
+        <p className="text-gray-600 text-sm">
+          Статистика и последняя активность{fullAccess ? "" : " · разделы модератора"}
+        </p>
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
@@ -68,27 +76,30 @@ export default async function AdminOverviewPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card className="p-5">
-          <h2 className="font-semibold mb-3 flex items-center gap-2">
-            <Users className="w-4 h-4 text-brand-500" /> Новые пользователи
-          </h2>
-          <div className="divide-y divide-gray-100">
-            {users.slice(0, 6).map((u) => (
-              <div key={u.id} className="py-2.5 flex items-center justify-between">
-                <div className="min-w-0">
-                  <p className="text-sm font-medium text-gray-900 truncate">{u.email || u.full_name}</p>
-                  <p className="text-xs text-gray-600">{fmt(u.created_at)}</p>
+        {fullAccess && (
+          <Card className="p-5">
+            <h2 className="font-semibold mb-3 flex items-center gap-2">
+              <Users className="w-4 h-4 text-brand-500" /> Новые пользователи
+            </h2>
+            <div className="divide-y divide-gray-100">
+              {users.slice(0, 6).map((u) => (
+                <div key={u.id} className="py-2.5 flex items-center justify-between">
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-gray-900 truncate">{u.email || u.full_name}</p>
+                    <p className="text-xs text-gray-600">{fmt(u.created_at)}</p>
+                  </div>
+                  {u.is_admin && <Badge variant="purple" size="sm">админ</Badge>}
                 </div>
-                {u.is_admin && <Badge variant="purple" size="sm">админ</Badge>}
-              </div>
-            ))}
-          </div>
-        </Card>
+              ))}
+            </div>
+          </Card>
+        )}
 
-        <Card className="p-5">
-          <h2 className="font-semibold mb-3 flex items-center gap-2">
-            <Banknote className="w-4 h-4 text-brand-500" /> Последние платежи
-          </h2>
+        {fullAccess && (
+          <Card className="p-5">
+            <h2 className="font-semibold mb-3 flex items-center gap-2">
+              <Banknote className="w-4 h-4 text-brand-500" /> Последние платежи
+            </h2>
           <div className="divide-y divide-gray-100">
             {(paysRes.data ?? []).map((p: PaymentRow) => (
               <div key={p.id} className="py-2.5 flex items-center justify-between">
@@ -104,7 +115,8 @@ export default async function AdminOverviewPage() {
             ))}
             {!paysRes.data?.length && <p className="text-sm text-gray-600 py-4 text-center">Нет платежей</p>}
           </div>
-        </Card>
+          </Card>
+        )}
 
         <Card className="p-5">
           <h2 className="font-semibold mb-3 flex items-center gap-2">

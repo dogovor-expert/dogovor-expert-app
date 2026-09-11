@@ -20,28 +20,34 @@ import {
   Headphones,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { atLeast, ROLE_LABELS, type AdminRole } from "@/lib/admin-rbac";
 
-const NAV = [
+const NAV: { href: string; label: string; icon: typeof LayoutDashboard; exact?: boolean; minRole?: AdminRole }[] = [
   { href: "/admin", label: "Обзор", icon: LayoutDashboard, exact: true },
-  { href: "/admin/users", label: "Пользователи", icon: Users },
-  { href: "/admin/subscriptions", label: "Подписки", icon: CreditCard },
-  { href: "/admin/payments", label: "Платежи", icon: Receipt },
+  { href: "/admin/users", label: "Пользователи", icon: Users, minRole: "admin" },
+  { href: "/admin/subscriptions", label: "Подписки", icon: CreditCard, minRole: "admin" },
+  { href: "/admin/payments", label: "Платежи", icon: Receipt, minRole: "admin" },
   { href: "/admin/leads", label: "Лиды (растаможка)", icon: Package },
   { href: "/admin/feedback", label: "Обратная связь", icon: MessageSquare },
   { href: "/admin/chat", label: "Чат поддержки", icon: Headphones },
-  { href: "/admin/audit", label: "Журнал действий", icon: ScrollText },
+  { href: "/admin/audit", label: "Журнал действий", icon: ScrollText, minRole: "admin" },
 ];
 
 export default function AdminShell({
   userEmail,
+  role = "admin",
   children,
 }: {
   userEmail: string;
+  /** 6.5 RBAC: роль текущего админа — фильтр навигации + бейдж. */
+  role?: AdminRole;
   children: ReactNode;
 }) {
   const pathname = usePathname();
   const router = useRouter();
   const [open, setOpen] = useState(false);
+
+  const nav = NAV.filter((item) => !item.minRole || atLeast(role, item.minRole));
 
   const isActive = (href: string, exact?: boolean) =>
     exact ? pathname === href : pathname.startsWith(href);
@@ -74,7 +80,7 @@ export default function AdminShell({
         </div>
 
         <nav className="flex-1 overflow-y-auto p-3 space-y-1">
-          {NAV.map((item) => {
+          {nav.map((item) => {
             const active = isActive(item.href, item.exact);
             const Icon = item.icon;
             return (
@@ -118,7 +124,10 @@ export default function AdminShell({
               onSubmit={(e) => {
                 e.preventDefault();
                 const q = (e.currentTarget.elements.namedItem("q") as HTMLInputElement).value.trim();
-                if (q) router.push("/admin/search?q=" + encodeURIComponent(q));
+                if (q) {
+                  sessionStorage.setItem("admin_search_q", q);
+                  router.push("/admin/search");
+                }
               }}
               className="relative hidden sm:block"
             >
@@ -134,6 +143,12 @@ export default function AdminShell({
           </div>
           <div className="flex items-center gap-3">
             <span className="text-sm text-gray-600 hidden sm:inline">{userEmail}</span>
+            <span
+              className="hidden sm:inline-flex items-center rounded-full bg-brand-50 border border-brand-200 px-2.5 py-0.5 text-[11px] font-semibold text-brand-700"
+              title="Ваша роль в админке"
+            >
+              {ROLE_LABELS[role]}
+            </span>
             <button
               onClick={() => void handleLogout()}
               className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 rounded-xl transition-colors"

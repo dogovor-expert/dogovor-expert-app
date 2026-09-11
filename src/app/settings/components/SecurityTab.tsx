@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/client";
 import { KeyRound, Lock, Loader2, LogOut, CheckCircle2, ShieldCheck } from "lucide-react";
 
 export default function SecurityTab() {
+  const [currentPassword, setCurrentPassword] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [busy, setBusy] = useState(false);
@@ -18,23 +19,48 @@ export default function SecurityTab() {
     setError(null);
     setSuccess(false);
 
+    if (!currentPassword) {
+      setError("Введите текущий пароль");
+      return;
+    }
     if (password.length < 8) {
-      setError("Пароль должен содержать не менее 8 символов");
+      setError("Новый пароль должен содержать не менее 8 символов");
+      return;
+    }
+    if (password === currentPassword) {
+      setError("Новый пароль не должен совпадать с текущим");
       return;
     }
     if (password !== confirm) {
-      setError("Пароли не совпадают");
+      setError("Новые пароли не совпадают");
       return;
     }
     setBusy(true);
     try {
       const supabase = createClient();
+      const { data: userData } = await supabase.auth.getUser();
+      const email = userData?.user?.email;
+      if (!email) {
+        setError("Не удалось определить email аккаунта");
+        return;
+      }
+
+      const { error: verifyErr } = await supabase.auth.signInWithPassword({
+        email,
+        password: currentPassword,
+      });
+      if (verifyErr) {
+        setError("Текущий пароль неверен");
+        return;
+      }
+
       const { error: err } = await supabase.auth.updateUser({ password });
       if (err) {
         setError(err.message);
         return;
       }
       setSuccess(true);
+      setCurrentPassword("");
       setPassword("");
       setConfirm("");
     } finally {
@@ -64,6 +90,16 @@ export default function SecurityTab() {
         </div>
 
         <form onSubmit={handlePasswordChange} className="space-y-4">
+          <Input
+            label="Текущий пароль"
+            id="current-password"
+            type="password"
+            value={currentPassword}
+            onChange={(e) => setCurrentPassword(e.target.value)}
+            placeholder="Для подтверждения личности"
+            autoComplete="current-password"
+            disabled={busy}
+          />
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Input
               label="Новый пароль"

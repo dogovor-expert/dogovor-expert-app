@@ -114,7 +114,11 @@ export default function BillingPage() {
   const [autoRenewal, setAutoRenewal] = useState(false);
   const [hasPaymentMethod, setHasPaymentMethod] = useState(false);
   const [payments, setPayments] = useState<PaymentRow[]>([]);
+  const [hasMorePayments, setHasMorePayments] = useState(false);
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
+  const [periodFilter, setPeriodFilter] = useState<"30" | "90" | "365" | "all">("30");
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [paying, setPaying] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const [justPaid, setJustPaid] = useState(false);
@@ -133,13 +137,42 @@ export default function BillingPage() {
       setAutoRenewal(!!s.auto_renewal);
       setHasPaymentMethod(!!s.has_payment_method);
     }
-    const hRes = await fetch("/api/billing/history").catch(() => null);
+    const params = new URLSearchParams();
+    if (periodFilter !== "all") {
+      params.set("from", new Date(Date.now() - Number(periodFilter) * 86400000).toISOString());
+    }
+    const hRes = await fetch(`/api/billing/history?${params.toString()}`).catch(() => null);
     if (hRes?.ok) {
-      const { data } = await hRes.json();
-      setPayments(Array.isArray(data) ? data : []);
+      const json = await hRes.json();
+      setPayments(Array.isArray(json.data) ? json.data : []);
+      setHasMorePayments(!!json.hasMore);
+      setNextCursor(json.nextCursor ?? null);
     }
     setLoading(false);
-  }, []);
+  }, [periodFilter]);
+
+  const loadMore = useCallback(async () => {
+    if (!nextCursor || loadingMore) return;
+    setLoadingMore(true);
+    try {
+      const params = new URLSearchParams();
+      if (periodFilter !== "all") {
+        params.set("from", new Date(Date.now() - Number(periodFilter) * 86400000).toISOString());
+      }
+      if (nextCursor) params.set("cursor", nextCursor);
+      const hRes = await fetch(`/api/billing/history?${params.toString()}`).catch(() => null);
+      if (hRes?.ok) {
+        const json = await hRes.json();
+        if (Array.isArray(json.data)) {
+          setPayments((prev) => [...prev, ...json.data]);
+        }
+        setHasMorePayments(!!json.hasMore);
+        setNextCursor(json.nextCursor ?? null);
+      }
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [nextCursor, loadingMore, periodFilter]);
 
   useEffect(() => {
     load();
@@ -467,8 +500,30 @@ export default function BillingPage() {
         {/* PAYMENT HISTORY */}
         {!loading && (
           <Card variant="default" padding="none" className="mb-10">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+            <div className="flex flex-wrap items-center justify-between gap-2 px-6 py-4 border-b border-gray-100">
               <h2 className="font-semibold text-gray-900">История платежей</h2>
+              <div className="flex items-center gap-1" role="group" aria-label="Фильтр по периоду">
+                {([
+                  ["30", "30 дн"],
+                  ["90", "90 дн"],
+                  ["365", "Год"],
+                  ["all", "Всё"],
+                ] as const).map(([value, label]) => (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() => setPeriodFilter(value)}
+                    aria-pressed={periodFilter === value}
+                    className={`px-2.5 py-1 text-xs rounded-lg transition cursor-pointer ${
+                      periodFilter === value
+                        ? "bg-brand-500 text-white"
+                        : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
               <span className="text-xs text-gray-600">Всего: {payments.length}</span>
             </div>
             {payments.length === 0 ? (
@@ -531,6 +586,18 @@ export default function BillingPage() {
                     );
                   })}
                 </div>
+                {hasMorePayments && (
+                  <div className="px-6 py-3 border-t border-gray-100 text-center">
+                    <button
+                      type="button"
+                      onClick={loadMore}
+                      disabled={loadingMore}
+                      className="px-4 py-2 text-sm font-medium text-brand-700 bg-brand-50 rounded-xl hover:bg-brand-100 transition disabled:opacity-50 cursor-pointer"
+                    >
+                      {loadingMore ? "Загрузка…" : "Загрузить ещё"}
+                    </button>
+                  </div>
+                )}
               </>
             )}
           </Card>

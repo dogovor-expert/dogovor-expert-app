@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getAdminUser } from "@/lib/admin-auth";
+import { atLeast } from "@/lib/admin-rbac";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getDirectory } from "@/lib/admin-data";
 import { limiters, clientIp, checkRateLimit, rateLimitResponse } from "@/lib/ratelimit";
@@ -26,7 +27,9 @@ function toCsv(rows: Record<string, unknown>[], headers: string[], keys: string[
 
 export async function GET(req: Request) {
   const admin = await getAdminUser();
-  if (!admin) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  // 6.5 RBAC: экспорт PII (users/payments) — только admin и выше.
+  if (!admin || !atLeast(admin.role, "admin"))
+    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
 
   // Rate-limit: экспорт чувствительных данных (PII) — не больше 5 запросов в минуту
   // на admin.id. Защита от утечки через бесконтрольный слив.

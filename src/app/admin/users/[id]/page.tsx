@@ -1,10 +1,11 @@
 import Link from "next/link";
 import { requireAdminPage } from "@/lib/admin-auth";
+import { atLeast, parseAdminRole, ROLE_LABELS } from "@/lib/admin-rbac";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { Badge } from "@/components/ui/Badge";
 import { Card } from "@/components/ui/Card";
 import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from "@/components/ui/Table";
-import { updateProfile, toggleAdminUser, updateSubscription, giftSubscriptionExtension } from "./actions";
+import { updateProfile, setUserRole, updateSubscription, giftSubscriptionExtension } from "./actions";
 
 const fmt = (s?: string | null) =>
   s ? new Date(s).toLocaleString("ru-RU", { day: "2-digit", month: "2-digit", year: "2-digit", hour: "2-digit", minute: "2-digit" }) : "—";
@@ -19,7 +20,8 @@ type FeedbackRow = { id: string; ticket_no: string | null; type: string; message
 export const dynamic = "force-dynamic";
 
 export default async function AdminUserDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const admin = await requireAdminPage();
+  // 6.5 RBAC: карточка пользователя с финансами — admin и выше.
+  const admin = await requireAdminPage("admin");
   const { id } = await params;
   const sb = createAdminClient();
 
@@ -37,24 +39,37 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
     sb.from("feedback").select("*").eq("email", email).order("created_at", { ascending: false }).limit(50),
   ]);
 
-  const isAdmin = !!profile?.is_admin;
+  const targetRole = parseAdminRole(profile?.admin_role) ?? null;
+  const canManageRoles = atLeast(admin.role, "superadmin");
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto">
-      <div className="flex items-center justify-between gap-4">
+      <div className="flex items-center justify-between gap-4 flex-wrap">
         <div>
           <Link href="/admin/users" className="text-sm text-brand-600 hover:underline">← Все пользователи</Link>
           <h1 className="text-2xl font-bold text-gray-900 mt-1">{profile?.full_name || email}</h1>
           <p className="text-gray-600 text-sm">{email}</p>
         </div>
         <div className="flex items-center gap-2">
-          <Badge variant={isAdmin ? "purple" : "gray"} size="sm">{isAdmin ? "Админ" : "Пользователь"}</Badge>
-          {id !== admin.id && (
-            <form action={toggleAdminUser}>
+          <Badge variant={targetRole === "superadmin" ? "red" : targetRole ? "purple" : "gray"} size="sm">
+            {targetRole ? ROLE_LABELS[targetRole] : "Пользователь"}
+          </Badge>
+          {canManageRoles && id !== admin.id && (
+            <form action={setUserRole} className="flex items-center gap-1.5">
               <input type="hidden" name="id" value={id} />
-              <input type="hidden" name="make_admin" value={isAdmin ? "false" : "true"} />
+              <select
+                name="role"
+                defaultValue={targetRole ?? "none"}
+                aria-label="Роль в админке"
+                className="rounded-lg border border-gray-200 bg-white px-2 py-1.5 text-sm text-gray-700"
+              >
+                <option value="none">Без доступа</option>
+                <option value="moderator">Модератор</option>
+                <option value="admin">Админ</option>
+                <option value="superadmin">Суперадмин</option>
+              </select>
               <button type="submit" className="rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50">
-                {isAdmin ? "Снять админа" : "Сделать админом"}
+                Сменить роль
               </button>
             </form>
           )}

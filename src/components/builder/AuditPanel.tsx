@@ -1,4 +1,4 @@
-import { AlertCircle, AlertTriangle, CheckCircle } from "lucide-react";
+import { AlertCircle, AlertTriangle, CheckCircle, Info } from "lucide-react";
 import type { AuditResult } from "@/lib/validation";
 
 function RiskHeatmap({ results }: { results: AuditResult[] }) {
@@ -69,19 +69,27 @@ function getAuditIcon(type: string) {
     case "success":
       return <CheckCircle className="w-4 h-4 text-emerald-500" />;
     default:
-      return null;
+      return <Info className="w-4 h-4 text-slate-500" />;
   }
 }
 
 export default function AuditPanel({
   results,
   onResultClick,
+  lastCheckedAt,
 }: {
   results: AuditResult[];
   onResultClick?: (fieldId: string) => void;
+  lastCheckedAt?: Date;
 }) {
   return (
     <div className="space-y-2">
+      {lastCheckedAt && (
+        <p className="text-[10.5px] text-slate-500 text-center">
+          Результаты аудита от {lastCheckedAt.toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" })}
+          {" "}· обновите при изменении полей
+        </p>
+      )}
       <RiskHeatmap results={results} />
       {results.map((r, i) => {
         const clickable = !!onResultClick && r.field !== "_all";

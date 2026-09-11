@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Check, Store } from "lucide-react";
 import { usnTax, npdTax } from "@/lib/legal/fin";
 import { fmtMoney } from "@/lib/legal/calc";
+import SaveCalcButton from "@/components/calculator/SaveCalcButton";
 
 export default function UsnNpd() {
   const [mode, setMode] = useState<"usn" | "npd">("usn");
@@ -12,11 +13,13 @@ export default function UsnNpd() {
   const [ppl, setPpl] = useState("");
   const [org, setOrg] = useState("");
   const [result, setResult] = useState<string[]>([]);
+  const [npdLimit, setNpdLimit] = useState<{ total: number; state: "ok" | "warn" | "exceeded" } | null>(null);
 
   interface CalcResult { builder: string; link: string }
 
   const calc = () => {
     if (mode === "usn") {
+      setNpdLimit(null);
       const inc = parseFloat(income);
       if (isNaN(inc) || inc <= 0) return;
       const exp = parseFloat(expenses || "0");
@@ -36,10 +39,15 @@ export default function UsnNpd() {
     const p = parseFloat(ppl || "0");
     const o = parseFloat(org || "0");
     const r = npdTax(p, o);
+    const total = p + o;
+    const NPD_LIMIT = 2_400_000;
+    setNpdLimit({
+      total,
+      state: total > NPD_LIMIT ? "exceeded" : total >= NPD_LIMIT * 0.8 ? "warn" : "ok",
+    });
     setResult([
       `Налог НПД: ${fmtMoney(r.tax)} (${fmtMoney(p)} с физлиц × 4% + ${fmtMoney(o)} с юрлиц × 6%)`,
       `Вычет НБ на расходах 10 000 ₽: использовано ${fmtMoney(r.deductionUsed)}, осталось ${fmtMoney(r.deductionLeft)}`,
-      p + o >= 2_400_000 ? "Лимит НПД 2,4 млн ₽/год достигнут — налог перестаёт действовать с превышения" : "Лимит НПД: 2,4 млн ₽ в год",
     ]);
   };
 
@@ -105,13 +113,71 @@ export default function UsnNpd() {
 
       {result.length > 0 && (
         <div className="bg-gray-50 rounded-xl p-4 border border-gray-200 space-y-1.5">
-          <div className="flex items-center gap-2">
-            <Check className="w-4 h-4 text-emerald-500" />
-            <span className="text-[10px] font-mono text-gray-600">{mode === "usn" ? "УСН — ст. 346.20, 164 НК РФ" : "НПД — ФЗ-422"}</span>
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <Check className="w-4 h-4 text-emerald-500" />
+              <span className="text-[10px] font-mono text-gray-600">{mode === "usn" ? "УСН — ст. 346.20, 164 НК РФ" : "НПД — ФЗ-422"}</span>
+            </div>
+            <SaveCalcButton
+              kind="usn-npd"
+              title={`${mode === "usn" ? "УСН" : "НПД"} — расчёт налога`}
+              lines={[
+                ...(mode === "usn"
+                  ? [`Режим: УСН «${usnMode === "income" ? "доходы 6%" : "доходы минус расходы 15%"}»`, `Доход: ${income} ₽`, ...(usnMode === "incomeMinus" ? [`Расходы: ${expenses || "0"} ₽`] : [])]
+                  : [`Режим: НПД (ФЗ-422)`, `Доход от физлиц: ${ppl || "0"} ₽`, `Доход от юрлиц/ИП: ${org || "0"} ₽`]),
+                ...result,
+                ...(npdLimit ? [`Годовой доход: ${npdLimit.total.toLocaleString("ru-RU")} ₽ из 2 400 000 ₽ (лимит НПД)`] : []),
+                "",
+                "Расчёт: dogovor.expert. Региональные ставки УСН могут быть ниже (от 1%/5%).",
+              ]}
+            />
           </div>
           {result.map((line, i) => (
             <p key={i} className="text-[11px] text-gray-600">{line}</p>
           ))}
+          {mode === "npd" && npdLimit && (
+            <div className={`mt-1 rounded-xl border p-3 space-y-2 ${
+              npdLimit.state === "exceeded" ? "bg-red-50 border-red-200"
+              : npdLimit.state === "warn" ? "bg-amber-50 border-amber-200"
+              : "bg-emerald-50 border-emerald-200"
+            }`} role="status">
+              <div className="flex items-center justify-between">
+                <span className={`text-[10px] font-bold ${
+                  npdLimit.state === "exceeded" ? "text-red-700"
+                  : npdLimit.state === "warn" ? "text-amber-700" : "text-emerald-700"
+                }`}>
+                  {npdLimit.state === "exceeded" ? "Лимит НПД превышен — право на спецрежим утрачено"
+                    : npdLimit.state === "warn" ? "Внимание: доход уже на 80% лимита НПД"
+                    : "Лимит НПД: 2,4 млн ₽ в год"}
+                </span>
+                <span className="text-[10px] font-mono text-gray-600">{fmtMoney(npdLimit.total)} / 2,4 млн</span>
+              </div>
+              <div className="h-1.5 rounded-full bg-white/70 overflow-hidden" aria-hidden="true">
+                <div className={`h-full rounded-full ${
+                  npdLimit.state === "exceeded" ? "bg-red-500"
+                  : npdLimit.state === "warn" ? "bg-amber-500" : "bg-emerald-500"
+                }`} style={{ width: `${Math.min(100, (npdLimit.total / 2_400_000) * 100)}%` }} />
+              </div>
+              {npdLimit.state === "exceeded" ? (
+                <>
+                  <p className="text-[11px] text-red-700 leading-relaxed">
+                    По ФЗ-422 условие о лимите считается нарушенным со дня превышения 2,4 млн ₽:
+                    с этой даты НПД не применяется, а доход сверх лимита облагается НДФЛ 13%
+                    (либо УСН, если вы ИП и подали уведомление о переходе).
+                  </p>
+                  <button onClick={() => setMode("usn")}
+                    className="py-2 px-3 rounded-lg bg-white border border-red-300 text-red-700 font-bold text-[11px] hover:bg-red-100 transition cursor-pointer">
+                    Рассчитать УСН после превышения →
+                  </button>
+                </>
+              ) : npdLimit.state === "warn" ? (
+                <p className="text-[11px] text-amber-700 leading-relaxed">
+                  До конца года остаётся менее 480 тыс. ₽ запаса. Если прогноз дохода выше лимита —
+                  заранее рассмотрите переход на УСН (ставка 5–6% в большинстве регионов).
+                </p>
+              ) : null}
+            </div>
+          )}
           {mode === "usn" && <p className="text-[11px] text-gray-600">Лимит УСН 2026: 450 млн ₽ в год; НДС обязателен при доходах свыше 60 млн ₽.</p>}
           {mode === "npd" && (
             <a href="/builder?id=service-agreement"

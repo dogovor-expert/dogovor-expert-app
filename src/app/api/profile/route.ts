@@ -61,8 +61,13 @@ export const PATCH = withCsrf(async (req: Request) => {
         { status: 400 }
       );
     }
-    if (key === "avatar_url" && trimmed && !trimmed.startsWith(process.env.NEXT_PUBLIC_SUPABASE_URL + "/storage/v1/object/public/avatars/")) {
-      return NextResponse.json({ error: "invalid avatar_url" }, { status: 400 });
+    // 5.6 (аудит): аватар должен лежать в ПАПКЕ пользователя, а не просто в бакете —
+    // иначе можно подставить чужой/посторонний объект. Загрузка — только через /api/avatar.
+    if (key === "avatar_url" && trimmed) {
+      const ownPrefix = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/avatars/${user.id}/`;
+      if (!trimmed.startsWith(ownPrefix)) {
+        return NextResponse.json({ error: "invalid avatar_url" }, { status: 400 });
+      }
     }
     if (key === "signature" && trimmed && !SIGNATURE_RE.test(trimmed)) {
       return NextResponse.json({ error: "invalid signature format" }, { status: 400 });

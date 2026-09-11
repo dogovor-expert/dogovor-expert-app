@@ -27,33 +27,104 @@ export default function NotificationBell() {
   const [open, setOpen] = useState(false);
   const [items, setItems] = useState<Notification[]>([]);
   const [unread, setUnread] = useState(0);
+  const [activeIndex, setActiveIndex] = useState(-1);
   const wrapRef = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (signal?: AbortSignal) => {
     try {
-      const r = await fetch("/api/notifications", { cache: "no-store" });
+      const r = await fetch("/api/notifications", { cache: "no-store", signal });
       if (!r.ok) return;
       const j = await r.json();
       setItems(j.notifications ?? []);
       setUnread(j.unread ?? 0);
-    } catch {
+    } catch (err) {
+      if ((err as Error)?.name === "AbortError") return;
       // offline — молча пропускаем опрос
     }
   }, []);
 
   useEffect(() => {
-    load();
-    const t = setInterval(load, POLL_MS);
-    return () => clearInterval(t);
+    let controller: AbortController | null = null;
+
+    const poll = () => {
+      if (document.hidden) return; // не опрашиваем скрытую вкладку
+      controller?.abort();
+      controller = new AbortController();
+      void load(AbortSignal.any([controller.signal, AbortSignal.timeout(10_000)]));
+    };
+
+    poll();
+    const t = setInterval(poll, POLL_MS);
+    const onVisibility = () => {
+      if (!document.hidden) poll();
+    };
+
+    document.addEventListener("visibilitychange", onVisibility);
+    const onFocus = () => poll();
+    window.addEventListener("focus", onFocus);
+
+    return () => {
+      controller?.abort();
+      clearInterval(t);
+      document.removeEventListener("visibilitychange", onVisibility);
+      window.removeEventListener("focus", onFocus);
+    };
   }, [load]);
 
+  const close = useCallback(() => {
+    setOpen(false);
+    setActiveIndex(-1);
+    buttonRef.current?.focus(); // возврат фокуса на кнопку (APG)
+  }, []);
+
+  // Клик вне меню закрывает и возвращает фокус
   useEffect(() => {
+    if (!open) return;
     const onClickOutside = (e: MouseEvent) => {
-      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) setOpen(false);
+      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) close();
     };
-    if (open) document.addEventListener("mousedown", onClickOutside);
+    document.addEventListener("mousedown", onClickOutside);
     return () => document.removeEventListener("mousedown", onClickOutside);
-  }, [open]);
+  }, [open, close]);
+
+  const handleButtonKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "ArrowDown" || e.key === "ArrowUp" || e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      setOpen(true);
+      setActiveIndex(items.length > 0 ? 0 : -1);
+    } else if (e.key === "Escape") {
+      close();
+    }
+  };
+
+  const handleMenuKeyDown = (e: React.KeyboardEvent) => {
+    const count = items.length;
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setActiveIndex((p) => (p + 1) % Math.max(count, 1));
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setActiveIndex((p) => (p - 1 + Math.max(count, 1)) % Math.max(count, 1));
+    } else if (e.key === "Home") {
+      e.preventDefault();
+      setActiveIndex(count > 0 ? 0 : -1);
+    } else if (e.key === "End") {
+      e.preventDefault();
+      setActiveIndex(count - 1);
+    } else if (e.key === "Escape") {
+      e.preventDefault();
+      close();
+    } else if (e.key === "Tab") {
+      // фокус уходит за пределы меню — закрываем
+      close();
+    } else if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      if (activeIndex >= 0 && items[activeIndex] && !items[activeIndex].read_at) {
+        void markOne(items[activeIndex].id);
+      }
+    }
+  };
 
   const markAll = async () => {
     await fetch("/api/notifications", {
@@ -78,7 +149,12 @@ export default function NotificationBell() {
   return (
     <div className="relative" ref={wrapRef}>
       <button
+        ref={buttonRef}
         onClick={() => setOpen((v) => !v)}
+        onKeyDown={handleButtonKeyDown}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        aria-controls="notifications-menu"
         className="relative p-2 hover:bg-gray-100 rounded-xl text-gray-600 transition-colors"
         aria-label="Уведомления"
       >
@@ -91,11 +167,18 @@ export default function NotificationBell() {
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full mt-2 w-80 bg-white border border-gray-100 rounded-xl shadow-lg z-50 overflow-hidden">
+        <div
+          id="notifications-menu"
+          role="menu"
+          aria-label="Уведомления"
+          className="absolute right-0 top-full mt-2 w-80 bg-white border border-gray-100 rounded-xl shadow-lg z-50 overflow-hidden"
+          onKeyDown={handleMenuKeyDown}
+        >
           <div className="flex items-center justify-between px-4 py-2.5 border-b border-gray-100">
             <p className="text-sm font-semibold text-gray-900">Уведомления</p>
             {unread > 0 && (
               <button
+                role="menuitem"
                 onClick={markAll}
                 className="flex items-center gap-1 text-[11px] text-brand-600 hover:text-brand-700 font-medium"
               >
@@ -108,10 +191,13 @@ export default function NotificationBell() {
             {items.length === 0 ? (
               <p className="px-4 py-8 text-center text-xs text-gray-500">Пока нет уведомлений</p>
             ) : (
-              items.map((n) => (
+              items.map((n, i) => (
                 <button
                   key={n.id}
+                  role="menuitem"
+                  tabIndex={activeIndex === i ? 0 : -1}
                   onClick={() => !n.read_at && markOne(n.id)}
+                  onMouseEnter={() => setActiveIndex(i)}
                   className={`w-full text-left px-4 py-3 hover:bg-gray-50 transition ${!n.read_at ? "bg-brand-50/40" : ""}`}
                 >
                   <p className="text-xs font-semibold text-gray-900 flex items-center gap-1.5">

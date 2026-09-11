@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import SaveCalcButton from "@/components/calculator/SaveCalcButton";
 import { Scale, Check } from "lucide-react";
 import {
   courtFeeProperty,
@@ -130,9 +131,24 @@ export default function CourtFee() {
 
       {result && (
         <div className="bg-gray-50 rounded-xl p-4 border border-gray-200 space-y-2">
-          <div className="flex items-center gap-2">
-            <Check className="w-4 h-4 text-emerald-500" />
-            <span className="text-[10px] font-mono text-gray-600">Госпошлина (ст. 333.19 НК РФ)</span>
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <Check className="w-4 h-4 text-emerald-500" />
+              <span className="text-[10px] font-mono text-gray-600">Госпошлина — ст. 333.19 НК РФ</span>
+            </div>
+            <SaveCalcButton
+              kind="courtfee"
+              title={`Госпошлина — ${result.fee.toLocaleString("ru-RU")} ₽`}
+              lines={[
+                `Тип иска: ${{ property: "имущественный (ст. 333.19 п.1)", nonProperty: "неимущественный", alimony: "о взыскании алиментов", order: "заявление о выдаче судебного приказа", appeal: "апелляционная жалоба", cassation: "кассационная жалоба" }[mode]}${entity ? " — юрлицо" : " — физлицо"}`,
+                ...(mode === "property" ? [`Цена иска: ${Number(claim || 0).toLocaleString("ru-RU")} ₽`] : []),
+                `Формула: ${result.formula}`,
+                ...(result.note ? [`Примечание: ${result.note}`] : []),
+                `Госпошлина к уплате: ${result.fee.toLocaleString("ru-RU")} ₽`,
+                "",
+                "Расчёт: dogovor.expert, ст. 333.19 НК РФ (ред. на 01.01.2026).",
+              ]}
+            />
           </div>
           <p className="text-2xl font-bold text-gray-900">
             {result.fee.toLocaleString("ru-RU")} ₽

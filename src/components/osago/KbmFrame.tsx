@@ -1,28 +1,151 @@
-import { Clock } from "lucide-react";
+"use client";
+import { useState } from "react";
+import { ShieldCheck, ExternalLink, Check, X, Info } from "lucide-react";
+import { isDriverLicense, type ValidateResult } from "@/lib/legal/validators";
 
-export default function KbmFrame() {
+/** Официальный сервис проверки КБМ (оператор АИС страховщиков — АО «НСИС»). */
+const NSIS_KBM_URL = "https://dkbm-web.autoins.ru/dkbm-web-1.0/kbm/kbm.htm";
+
+/**
+ * Официальная шкала КБМ (Указание Банка России, приложение 2 к Правилам
+ * страхового тарифа по ОСАГО; в силе с 01.04.2022). Классы: от «М»
+ * (самый плохой) до 13 (самый лучший). Значения 3.92…0.46.
+ * Пересмотр класса — ежегодно 1 апреля по безубыточности.
+ */
+export const KBM_SCALE: { cls: string; kbm: number }[] = [
+  { cls: "М", kbm: 3.92 },
+  { cls: "0", kbm: 2.94 },
+  { cls: "1", kbm: 2.25 },
+  { cls: "2", kbm: 1.76 },
+  { cls: "3", kbm: 1.17 },
+  { cls: "4", kbm: 1.0 },
+  { cls: "5", kbm: 0.91 },
+  { cls: "6", kbm: 0.83 },
+  { cls: "7", kbm: 0.78 },
+  { cls: "8", kbm: 0.74 },
+  { cls: "9", kbm: 0.68 },
+  { cls: "10", kbm: 0.63 },
+  { cls: "11", kbm: 0.57 },
+  { cls: "12", kbm: 0.52 },
+  { cls: "13", kbm: 0.46 },
+];
+
+export default function KbmChecker() {
+  const [vuc, setVuc] = useState("");
+  const [result, setResult] = useState<ValidateResult | null>(null);
+  const [showScale, setShowScale] = useState(false);
+
+  const check = () => setResult(isDriverLicense(vuc));
+
   return (
     <div className="bg-white border border-gray-200 rounded-2xl p-6 sm:p-8 shadow-md shadow-gray-200/60">
       <div className="flex items-start gap-3">
-        <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-gray-400 to-gray-500 flex items-center justify-center text-white shadow-lg ring-2 ring-gray-300/50 flex-shrink-0">
-          <Clock className="h-5 w-5" />
+        <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white shadow-lg ring-2 ring-emerald-300/50 flex-shrink-0">
+          <ShieldCheck className="h-5 w-5" />
         </div>
         <div>
-          <h2 className="text-xl font-bold text-gray-900">Проверка и восстановление КБМ</h2>
+          <h2 className="text-xl font-bold text-gray-900">Проверка КБМ</h2>
           <p className="text-sm text-gray-600">
-            Раздел проверки коэффициента бонус-малус по ОСАГО временно недоступен.
+            Коэффициент бонус-малус напрямую влияет на цену ОСАГО: от 0.46 (скидка 54%)
+            до 3.92 (надбавка 292%).
           </p>
         </div>
       </div>
 
-      <div className="mt-6 flex flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-gray-300 bg-gray-50 py-12 text-center">
-        <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gray-100 text-gray-600 text-sm font-semibold">
-          <Clock className="w-4 h-4" />
-          Скоро
-        </span>
-        <p className="text-sm text-gray-600 max-w-sm">
-          Мы готовим удобный сервис проверки КБМ по официальной базе. Вернёмся к этому позже.
+      <div className="mt-6 space-y-3">
+        <div className="space-y-1">
+          <label htmlFor="kbm-vuc" className="text-[10px] font-mono text-gray-600">
+            Серия и номер водительского удостоверения
+          </label>
+          <div className="flex gap-2">
+            <input
+              id="kbm-vuc"
+              type="text"
+              inputMode="numeric"
+              value={vuc}
+              onChange={(e) => { setVuc(e.target.value); setResult(null); }}
+              onKeyDown={(e) => { if (e.key === "Enter") check(); }}
+              placeholder="0011 223344"
+              className="flex-1 bg-gray-50 border border-gray-200 text-sm py-2.5 px-3 rounded-lg text-gray-900 outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 font-mono"
+            />
+            <button
+              onClick={check}
+              className="px-4 py-2.5 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 font-bold text-xs transition cursor-pointer whitespace-nowrap"
+            >
+              Проверить
+            </button>
+          </div>
+        </div>
+
+        {result && (
+          <div className={`rounded-xl p-3 flex items-center gap-2.5 text-xs ${
+            result.valid ? "bg-emerald-50 border border-emerald-200 text-emerald-700" : "bg-red-50 border border-red-200 text-red-700"
+          }`} role="status">
+            {result.valid
+              ? <Check className="w-4 h-4 text-emerald-500 flex-shrink-0" />
+              : <X className="w-4 h-4 text-red-500 flex-shrink-0" />}
+            <span>{result.message}</span>
+          </div>
+        )}
+
+        <a
+          href={NSIS_KBM_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={`inline-flex w-full items-center justify-center gap-2 py-2.5 rounded-xl font-bold text-xs transition ${
+            result?.valid
+              ? "bg-emerald-600 text-white hover:bg-emerald-700"
+              : "bg-white text-emerald-700 border border-emerald-200 hover:bg-emerald-50"
+          }`}
+        >
+          <ExternalLink className="w-3.5 h-3.5" />
+          Узнать свой КБМ в официальной базе НСИС
+        </a>
+
+        <p className="text-[11px] text-gray-600 leading-relaxed flex items-start gap-1.5">
+          <Info className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
+          С 01.10.2024 оператором базы КБМ является АО «НСИС» (не РСА). Проверка бесплатна:
+          потребуются ФИО, дата рождения и серия/номер ВУ. Если КБМ не соответствует истории
+          вождения — его можно восстановить через страховую или запрос в НСИС.
         </p>
+
+        <button
+          onClick={() => setShowScale((s) => !s)}
+          aria-expanded={showScale}
+          className="text-xs font-semibold text-emerald-700 hover:text-emerald-900 transition cursor-pointer"
+        >
+          {showScale ? "Скрыть шкалу КБМ" : "Показать шкалу классов КБМ"}
+        </button>
+
+        {showScale && (
+          <div className="rounded-xl border border-gray-200 overflow-hidden">
+            <table className="w-full text-[11px]">
+              <thead className="bg-gray-50 text-gray-600">
+                <tr>
+                  <th className="text-left px-3 py-2 font-semibold">Класс</th>
+                  <th className="text-right px-3 py-2 font-semibold">КБМ</th>
+                  <th className="text-right px-3 py-2 font-semibold">Скидка/наценка</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {KBM_SCALE.map(({ cls, kbm }) => (
+                  <tr key={cls} className={kbm < 1 ? "bg-emerald-50/40" : kbm > 1 ? "bg-red-50/40" : ""}>
+                    <td className="px-3 py-1.5 text-gray-900">Класс {cls}</td>
+                    <td className="px-3 py-1.5 text-right font-mono text-gray-900">{kbm.toFixed(2)}</td>
+                    <td className="px-3 py-1.5 text-right text-gray-600">
+                      {kbm < 1 ? `−${Math.round((1 - kbm) * 100)}%` : kbm > 1 ? `+${Math.round((kbm - 1) * 100)}%` : "база"}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <p className="px-3 py-2 text-[10px] text-gray-500 bg-gray-50 border-t border-gray-200">
+              Класс пересматривается ежегодно 1 апреля: без аварий — растёт, авария по вине — падает.
+              Максимальный 13 класс (КБМ 0.46) достигается за 10+ лет безаварийной езды.
+              Источник: Приложение 2 к Правилам применения страховщиками тарифов (Указание Банка России).
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );

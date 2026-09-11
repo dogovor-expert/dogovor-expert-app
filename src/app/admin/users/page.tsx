@@ -1,10 +1,9 @@
-import { requireAdminPage, getAdminUser } from "@/lib/admin-auth";
+import { requireAdminPage } from "@/lib/admin-auth";
+import { atLeast } from "@/lib/admin-rbac";
 import { getDirectory } from "@/lib/admin-data";
-import ExportButton from "@/components/admin/ExportButton";
+import { setUserRole } from "@/app/admin/users/[id]/actions";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { logAdminAction } from "@/lib/audit";
-import { revalidatePath } from "next/cache";
-import { assertSameOrigin, checkAdminRateLimit } from "@/lib/secure-action";
+import ExportButton from "@/components/admin/ExportButton";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -16,34 +15,14 @@ const fmt = (s?: string | null) =>
 
 export const dynamic = "force-dynamic";
 
-async function toggleAdmin(userId: string, makeAdmin: boolean) {
-  "use server";
-  // Server Actions, мутирующие admin-флаги, требуют тех же трёх
-  // проверок, что и API-роуты: same-origin, auth, rate-limit.
-  // Без них компрометация сессии админа = эскалация привилегий.
-  await assertSameOrigin();
-  const admin = await getAdminUser();
-  if (!admin) return;
-  await checkAdminRateLimit(admin.id);
-  const supabase = createAdminClient();
-  const { error } = await supabase.from("profiles").update({ is_admin: makeAdmin }).eq("id", userId);
-  if (!error) {
-    await logAdminAction({
-      adminId: admin.id,
-      action: makeAdmin ? "grant_admin" : "revoke_admin",
-      resource: "profiles",
-      resourceId: userId,
-    });
-    revalidatePath("/admin/users");
-  }
-}
-
 export default async function AdminUsersPage({
   searchParams,
 }: {
   searchParams: Promise<{ q?: string; page?: string }>;
 }) {
-  await requireAdminPage();
+  // 6.5 RBAC: каталог пользователей — admin и выше.
+  const me = await requireAdminPage("admin");
+  const canManageRoles = atLeast(me.role, "superadmin");
   const sp = await searchParams;
   const q = (sp.q ?? "").trim().toLowerCase();
   const page = Math.max(1, parseInt(sp.page ?? "1", 10) || 1);
@@ -132,14 +111,39 @@ export default async function AdminUsersPage({
                     )}
                   </TableCell>
                   <TableCell>
-                    {u.is_admin ? <Badge variant="purple" size="sm">админ</Badge> : <Badge variant="gray" size="sm">юзер</Badge>}
+                    {u.is_admin ? (
+                      <Badge variant={u.admin_role === "superadmin" ? "red" : "purple"} size="sm">
+                        {u.admin_role === "superadmin" ? "суперадмин" : u.admin_role === "moderator" ? "модератор" : "админ"}
+                      </Badge>
+                    ) : (
+                      <Badge variant="gray" size="sm">юзер</Badge>
+                    )}
                   </TableCell>
                   <TableCell className="text-right">
-                    <form action={toggleAdmin.bind(null, u.id, !u.is_admin)}>
-                      <Button type="submit" size="sm" variant={u.is_admin ? "outline" : "primary"}>
-                        {u.is_admin ? "Снять админа" : "Сделать админом"}
-                      </Button>
-                    </form>
+                    {canManageRoles && u.id !== me.id && (
+                      u.is_admin ? (
+                        <form action={setUserRole} className="inline-flex items-center gap-1.5 justify-end">
+                          <input type="hidden" name="id" value={u.id} />
+                          <select
+                            name="role"
+                            defaultValue={u.admin_role ?? "admin"}
+                            aria-label={`Роль ${u.email}`}
+                            className="rounded-lg border border-gray-200 bg-white px-2 py-1.5 text-sm text-gray-700"
+                          >
+                            <option value="superadmin">Суперадмин</option>
+                            <option value="admin">Админ</option>
+                            <option value="moderator">Модератор</option>
+                          </select>
+                          <Button type="submit" size="sm" variant="outline">Сохранить</Button>
+                        </form>
+                      ) : (
+                        <form action={setUserRole}>
+                          <input type="hidden" name="id" value={u.id} />
+                          <input type="hidden" name="role" value="moderator" />
+                          <Button type="submit" size="sm" variant="primary">Выдать модератора</Button>
+                        </form>
+                      )
+                    )}
                   </TableCell>
                 </TableRow>
               );

@@ -3,6 +3,17 @@ import { useRef, useState } from "react";
 import { FileText, Loader2, Printer, Check, X, AlertTriangle } from "lucide-react";
 import { formatBytes } from "@/lib/converter/download";
 
+// Санитизация HTML, который пришёл из DOCX, перед записью в iframe.
+// mammoth.browser не имеет доступа к файловой системе (externalFileAccess не
+// применим в браузерной сборке), но может собрать href/src и атрибуты
+// событий из содержимого документа — потенциальный вектор DOM-XSS.
+function sanitizeHtml(html: string): string {
+  return html
+    .replace(/<script[\s\S]*?<\/script>/gi, "")
+    .replace(/\son\w+\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/gi, "")
+    .replace(/(\shref|\ssrc)\s*=\s*(?:"\s*javascript:[^"]*"|'\s*javascript:[^']*')/gi, " $1='#'");
+}
+
 export default function DocxToPrint() {
   const [file, setFile] = useState<File | null>(null);
   const [busy, setBusy] = useState(false);
@@ -37,6 +48,7 @@ export default function DocxToPrint() {
     try {
       const mammoth = await import("mammoth/mammoth.browser");
       const { value } = await mammoth.convertToHtml({ arrayBuffer: await file.arrayBuffer() });
+      const sanitized = sanitizeHtml(value);
       const iframe = iframeRef.current;
       if (!iframe) throw new Error("iframe unavailable");
       const doc = iframe.contentDocument || iframe.contentWindow?.document;
@@ -50,7 +62,7 @@ export default function DocxToPrint() {
   table { border-collapse: collapse; width: 100%; }
   td, th { border: 1px solid #333; padding: 4px 8px; }
   img { max-width: 100%; }
-</style></head><body>${value}</body></html>`);
+</style></head><body>${sanitized}</body></html>`);
       doc.close();
       await new Promise((r) => setTimeout(r, 300));
       iframe.contentWindow?.focus();

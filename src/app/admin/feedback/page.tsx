@@ -1,11 +1,13 @@
 import { requireAdminPage } from "@/lib/admin-auth";
+import { atLeast } from "@/lib/admin-rbac";
 import FeedbackAdminTable from "@/components/admin/FeedbackAdminTable";
 import ExportButton from "@/components/admin/ExportButton";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminFeedbackPage() {
-  await requireAdminPage();
+  // 6.5 RBAC: удаление фидбека — superadmin; статус/ответ — любая роль.
+  const me = await requireAdminPage();
   return (
     <div className="space-y-6 max-w-6xl mx-auto">
       <div>
@@ -15,7 +17,7 @@ export default async function AdminFeedbackPage() {
         </p>
       </div>
       <ExportButton type="feedback" />
-      <FeedbackAdminTable />
+      <FeedbackAdminTable canDelete={atLeast(me.role, "superadmin")} />
     </div>
   );
 }

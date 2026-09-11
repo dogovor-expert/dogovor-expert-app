@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { Percent, Check, Plus, Trash2 } from "lucide-react";
 import { calc395WithPayments, currentKeyRate, fmtMoney, formatDateRu, today } from "@/lib/legal/calc";
+import SaveCalcButton from "@/components/calculator/SaveCalcButton";
 
 interface Payment {
   date: string;
@@ -111,9 +112,28 @@ export default function Interest395() {
 
       {result && (
         <div className="bg-gray-50 rounded-xl p-4 border border-gray-200 space-y-3">
-          <div className="flex items-center gap-2">
-            <Check className="w-4 h-4 text-emerald-500" />
-            <span className="text-[10px] font-mono text-gray-600">Проценты по ст. 395 ГК РФ (ключевая ставка ЦБ, {currentKeyRate().toFixed(2).replace(".", ",")} % на сегодня)</span>
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <Check className="w-4 h-4 text-emerald-500" />
+              <span className="text-[10px] font-mono text-gray-600">Ст. 395 ГК РФ · ставка {currentKeyRate().toFixed(2).replace(".", ",")} %</span>
+            </div>
+            <SaveCalcButton
+              kind="interest395"
+              title={`Проценты по ст. 395 — ${fmtMoney(result.total)}`}
+              lines={[
+                `Долг: ${fmtMoney(parseFloat(debt) || 0)}`,
+                `Период: ${formatDateRu(from)} — ${formatDateRu(to)}`,
+                ...payments.filter((p) => p.date && parseFloat(p.amount) > 0)
+                  .map((p) => `Оплата ${formatDateRu(p.date)}: ${fmtMoney(parseFloat(p.amount))}`),
+                ...result.periods.map((p) =>
+                  `${formatDateRu(p.from)} — ${formatDateRu(p.to)}: ${p.days} дн. × ${p.rate.toFixed(2).replace(".", ",")}% при долге ${fmtMoney(Math.round(p.debt))} = ${fmtMoney(p.amount)}`
+                ),
+                `Итого процентов: ${fmtMoney(result.total)}`,
+                ...(result.remaining > 0 ? [`Остаток долга: ${fmtMoney(result.remaining)}`] : []),
+                "",
+                "Расчёт: dogovor.expert, ключевая ставка ЦБ РФ по периодам (365/366 дн.).",
+              ]}
+            />
           </div>
           <p className="text-2xl font-bold text-gray-900">{fmtMoney(result.total)}</p>
           {result.remaining > 0 && (

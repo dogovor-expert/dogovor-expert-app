@@ -253,7 +253,7 @@ export function CookieBanner({ settingsOpenExternal, onSettingsClosed }: CookieB
   // === First-visit banner ===
   return (
     <div
-      role="dialog"
+      role="region"
       aria-modal="false"
       aria-labelledby="cookie-banner-title"
       aria-describedby="cookie-banner-desc"

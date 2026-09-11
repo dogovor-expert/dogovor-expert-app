@@ -3,7 +3,6 @@ import { type FormEvent, useState, useEffect, useRef } from "react";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
-import { createClient } from "@/lib/supabase/client";
 import { isValidInn, formatInn } from "@/lib/inn";
 import { Camera, Loader2, CheckCircle, Save, Mail } from "lucide-react";
 
@@ -70,42 +69,42 @@ export default function ProfileTab() {
     const file = e.target.files?.[0];
     e.target.value = "";
     if (!file) return;
+    // Клиентские подсказки (быстрые фидбеки). Сервер всё равно проверяет
+    // magic-bytes и ре-энкодит через sharp (5.6 / OWASP) — не доверяем этим.
     if (!file.type.startsWith("image/")) {
       showToast("Нужен файл изображения");
       return;
     }
-    if (file.size > 2 * 1024 * 1024) {
-      showToast("Файл больше 2 МБ");
+    if (file.size > 5 * 1024 * 1024) {
+      showToast("Файл больше 5 МБ");
       return;
     }
     setUploadingAvatar(true);
     try {
-      const supabase = createClient();
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) return;
-      const path = `${user.id}/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
-      const { error } = await supabase.storage
-        .from("avatars")
-        .upload(path, file, { upsert: true, contentType: file.type });
-      if (error) {
-        showToast(`Не удалось загрузить: ${error.message}`);
-        return;
-      }
-      const url = supabase.storage.from("avatars").getPublicUrl(path).data.publicUrl;
-      const res = await fetch("/api/profile", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ avatar_url: url }),
-      });
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await fetch("/api/avatar", { method: "POST", body: fd });
       if (!res.ok) {
-        showToast("Не удалось сохранить аватар");
+        const msg: Record<string, string> = {
+          type_not_allowed: "Разрешены только JPEG, PNG, WEBP или AVIF",
+          too_large: "Файл больше 5 МБ",
+          signature_mismatch: "Файл не является изображением (проверка по содержимому)",
+          not_a_valid_image: "Изображение повреждено и не может быть обработано",
+          storage_upload_failed: "Не удалось сохранить файл",
+          profile_update_failed: "Не удалось обновить профиль",
+          too_many_requests: "Слишком много попыток, подождите минуту",
+        };
+        const body = await res.json().catch(() => ({ error: "" }));
+        showToast(msg[body?.error] ?? "Не удалось загрузить аватар");
         return;
       }
+      const json = await res.json();
+      const url: string = json.url;
       setProfile((p) => (p ? { ...p, avatar_url: url } : p));
       window.dispatchEvent(new Event("dogovor:profile"));
       showToast("Аватар обновлён");
+    } catch {
+      showToast("Не удалось загрузить аватар");
     } finally {
       setUploadingAvatar(false);
     }
