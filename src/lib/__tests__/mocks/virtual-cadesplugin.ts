@@ -5,9 +5,10 @@
 // (GOST Р 34.10-2012/256 / ГОСТ Р 34.11-2012-256). При вызове
 // `propset_TSAAddress` (или cadesType = CADESCOM_CADES_X_LONG_TYPE_1) в
 // unsignedAttrs подписанной CMS добавляется атрибут штампа времени
-// `1.2.840.113549.1.9.16.2.14` (id-smime-aa-timeStampToken) через pkijs
-// поверх готовой CMS — unsignedAttrs не входят в подпись, поэтому ГОСТ-подпись
-// остаётся валидной.
+// `1.2.840.113549.1.9.16.2.14` (id-smime-aa-timeStampToken) — НАСТОЯЩИЙ
+// RFC 3161 TimeStampToken с ГОСТ-подписью виртуального TSA-респондента
+// (см. createVirtualTsaPki/buildRealTsaToken). unsignedAttrs не входят в
+// подпись, поэтому ГОСТ-подпись остаётся валидной.
 
 import { gostCrypto } from "node-gost-crypto";
 import * as pkijs from "pkijs";
@@ -15,9 +16,108 @@ import * as asn1js from "asn1js";
 import { createHash } from "node:crypto";
 
 export const TSA_TIMESTAMP_OID = "1.2.840.113549.1.9.16.2.14";
+const TST_INFO_OID = "1.2.840.113549.1.9.16.1.4";
+const SHA256_OID = "2.16.840.1.101.3.4.2.1";
 
-// Минимальный корректный DER структуры ContentInfo pkcs7-data (пустой TST-токен).
-const TSA_OCTECTS = [0x30, 0x0c, 0x06, 0x08, 0x2a, 0x86, 0x48, 0x86, 0xf7, 0x0d, 0x01, 0x07, 0x04, 0x00];
+// ─── Виртуальная TSA-инфраструктура (реальный RFC 3161 токен) ─────────────
+// Раньше в unsignedAttrs клалась заглушка (пустой ContentInfo). После
+// TICKET-4 (pades-verify проверяет штамп криптографически) заглушка
+// корректно отвергается, поэтому мок генерирует НАСТОЯЩИЙ TimeStampToken:
+// CA → leaf с EKU timeStamping, подпись ГОСТ, messageImprint = SHA-256 от
+// значения основной подписи CMS.
+
+export interface VirtualTsaPki {
+  ca: InstanceType<typeof gostCrypto.cert.X509>;
+  caKey: unknown;
+  caDer: Uint8Array;
+  tsa: InstanceType<typeof gostCrypto.cert.X509>;
+  tsaKey: unknown;
+  tsaDer: Uint8Array;
+}
+
+let tsaPkiPromise: Promise<VirtualTsaPki> | null = null;
+
+/** Ленивый синглтон виртуальной TSA-инфраструктуры (для моков trusted roots). */
+export function getVirtualTsaPki(): Promise<VirtualTsaPki> {
+  if (!tsaPkiPromise) tsaPkiPromise = createVirtualTsaPki();
+  return tsaPkiPromise;
+}
+
+export async function createVirtualTsaPki(): Promise<VirtualTsaPki> {
+  const ca = new gostCrypto.cert.X509({
+    subject: { countryName: "RU", commonName: "Test TSA Root CA" },
+    notBefore: new Date("2020-01-01T00:00:00Z"),
+    notAfter: new Date("2035-12-31T00:00:00Z"),
+  });
+  const caKey = await ca.generate("TC-256");
+  await ca.sign(caKey);
+
+  const tsa = new gostCrypto.cert.X509({
+    subject: { countryName: "RU", commonName: "Test TSA Responder" },
+    extensions: { extKeyUsage: ["timeStamping"] },
+  });
+  const tsaKey = await tsa.generate("TC-256");
+  await tsa.sign(caKey, ca);
+
+  return {
+    ca,
+    caKey,
+    caDer: new Uint8Array(ca.encode("DER")),
+    tsa,
+    tsaKey,
+    tsaDer: new Uint8Array(tsa.encode("DER")),
+  };
+}
+
+/** Собирает настоящий TimeStampToken (RFC 3161) для значения основной подписи. */
+export async function buildRealTsaToken(
+  mainSignature: Uint8Array,
+  tsaPki: VirtualTsaPki,
+  genTime: Date = new Date()
+): Promise<Uint8Array> {
+  const imprint = new Uint8Array(createHash("sha256").update(mainSignature).digest());
+  const imprintAb = imprint.buffer.slice(imprint.byteOffset, imprint.byteOffset + imprint.byteLength) as ArrayBuffer;
+
+  const tstInfo = new pkijs.TSTInfo({
+    version: 1,
+    policy: "1.2.643.7.1.1.1.1",
+    serialNumber: new asn1js.Integer({ value: Date.now() }),
+    messageImprint: new pkijs.MessageImprint({
+      hashAlgorithm: new pkijs.AlgorithmIdentifier({ algorithmId: SHA256_OID }),
+      hashedMessage: new asn1js.OctetString({ valueHex: imprintAb }),
+    }),
+    genTime,
+    accuracy: new pkijs.Accuracy({ seconds: 1 }),
+    ordering: true,
+    nonce: new asn1js.Integer({ valueHex: new Uint8Array(randomBytesLocal(8)).buffer }),
+  });
+  const tstDer = tstInfo.toSchema().toBER(false);
+
+  const cms = new gostCrypto.cms.SignedDataContentInfo();
+  cms.setEnclosed({ contentType: "data", content: tstDer });
+  // eContentType обязан быть id-ct-TSTInfo, а не data.
+  (cms as unknown as { encapContentInfo: { eContentType: string } }).encapContentInfo.eContentType = TST_INFO_OID;
+  gostCrypto.cms.options.autoAddCert = true;
+  await cms.addSignature(tsaPki.tsaKey, tsaPki.tsa, true);
+  return new Uint8Array(cms.encode("DER"));
+}
+
+function randomBytesLocal(n: number): Uint8Array {
+  // Детерминистически-случайные байты без зависимости от globalThis.crypto
+  // (в jsdom-среде vitest он не всегда пригоден для WebCrypto).
+  const out = new Uint8Array(n);
+  let fill = createHash("sha256")
+    .update(`${Date.now()}-${Math.random()}`)
+    .digest();
+  for (let i = 0; i < n; i++) {
+    if (i % 32 === 0 && i > 0) {
+      fill = createHash("sha256").update(fill).digest();
+    }
+    out[i] = fill[i % 32];
+  }
+  out[0] &= 0x7f; // Integer должен быть положительным
+  return out;
+}
 
 const OID = {
   KEY_USAGE: "2.5.29.15",
@@ -53,11 +153,13 @@ export async function createVirtualGostPki(): Promise<VirtualGostPki> {
  * Пост-обработка CMS через pkijs:
  *  1) делает CMS ОТКРЕПЛЁННОЙ (detached) — удаляет eContent из encapContentInfo
  *     (по PAdES/ISO 32000-1 тело документа НЕ дублируется внутри CMS);
- *  2) при needTsa добавляет атрибут timeStampToken в unsignedAttrs.
+ *  2) при needTsa добавляет НАСТОЯЩИЙ timeStampToken (RFC 3161, ГОСТ-подпись
+ *     виртуального TSA-респондента) в unsignedAttrs.
  * node-gost подписывает только signedAttrs (messageDigest от контента), поэтому
- * detachment не нарушает валидность ГОСТ-подписи.
+ * detachment не нарушает валидность ГОСТ-подписи; unsignedAttrs тоже вне
+ * подписи — штамп добавляется постфактум, как это делает реальный КриптоПро.
  */
-export function attachTsaTimestampToCms(cmsDer: Uint8Array, needTsa = true): Uint8Array {
+export async function attachTsaTimestampToCms(cmsDer: Uint8Array, needTsa = true): Promise<Uint8Array> {
   const arrayBuffer = cmsDer.buffer.slice(cmsDer.byteOffset, cmsDer.byteOffset + cmsDer.byteLength) as ArrayBuffer;
   const contentInfo = pkijs.ContentInfo.fromBER(arrayBuffer);
   if (contentInfo.contentType !== pkijs.ContentInfo.SIGNED_DATA) {
@@ -69,9 +171,17 @@ export function attachTsaTimestampToCms(cmsDer: Uint8Array, needTsa = true): Uin
   if (needTsa) {
     const signerInfo = signedData.signerInfos[0];
     if (!signerInfo) throw new Error("No signerInfo in CMS");
+    const tsaPki = await getVirtualTsaPki();
+    const tokenDer = await buildRealTsaToken(new Uint8Array(signerInfo.signature as unknown as ArrayBufferLike), tsaPki);
+    const tokenAsn1 = asn1js.fromBER(tokenDer);
+    if (tokenAsn1.offset === -1 || !tokenAsn1.result) {
+      throw new Error("Generated TSA token is not parseable");
+    }
+    // Значением атрибута id-smime-aa-timeStampToken является DER ContentInfo
+    // (SEQUENCE), а не OCTET STRING — как в реальных токенах КриптоПро.
     const attr = new pkijs.Attribute({
       type: TSA_TIMESTAMP_OID,
-      values: [new asn1js.OctetString({ valueHex: Uint8Array.from(TSA_OCTECTS).buffer })],
+      values: [tokenAsn1.result],
     });
     signerInfo.unsignedAttrs = new pkijs.SignedAndUnsignedAttributes({ type: 1, attributes: [attr] });
   }
@@ -294,7 +404,7 @@ export function createCadesPlugin(pki: VirtualGostPki): VirtualCadesPluginResult
         const tsaSet = (signer?.__getTsaAddress as (() => string) | undefined)?.() !== "";
         // PAdES: CMS обязана быть ОТКРЕПЛЁННОЙ (тело документа не дублируется в eContent).
         // TSA-штамп добавляется при tsaSet или cadesType=99 (X-Long).
-        der = attachTsaTimestampToCms(der, tsaSet || cadesType === 99);
+        der = await attachTsaTimestampToCms(der, tsaSet || cadesType === 99);
         return Buffer.from(der).toString("base64");
       };
       handle.VerifyCades = () => Promise.resolve();

@@ -128,7 +128,7 @@ describe("ukep e2e pipeline (VirtualCadesPlugin + verifyPAdESCrypto)", () => {
     expect(result.warnings.some((w) => /offline/i.test(w))).toBe(true);
   });
 
-  it("5. TSA: присутствует атрибут timeStampToken (unsignedAttrs) и подпись остаётся валидной", async () => {
+  it("5. TSA: настоящий RFC 3161 токен проходит криптоверификацию (TICKET-4)", async () => {
     const signature = await signPdfWithCryptoPro(pdfBytes, pki.thumbprint, { addTimestamp: true });
     const cmsHex = base64ToHex(signature);
     const cmsBytes = Buffer.from(cmsHex, "hex");
@@ -145,5 +145,11 @@ describe("ukep e2e pipeline (VirtualCadesPlugin + verifyPAdESCrypto)", () => {
     const result = await verifyPAdESCrypto(pdfBytes, pdfBytes, cmsHex);
     expect(result.cryptoVerified).toBe(true);
     expect(result.timestamp.present).toBe(true);
+    // getTrustedRoots замокан на [] → штамп криптографически валиден,
+    // но цепочка TSA не проверялась (chainOk:false) — это не блокирует вердикт.
+    expect(result.timestamp.status).toBe("valid");
+    expect(result.timestamp.chainOk).toBe(false);
+    expect(result.timestamp.genTime).toBeInstanceOf(Date);
+    expect(result.valid).toBe(true);
   });
 });

@@ -112,9 +112,11 @@ describe("VERIFICATION: pades-verify — КРИТ 2.3 (CRL/OCSP 'not implemented
     expect(ext.caIssuersUrls).toEqual([]);
   });
 
-  it("[TSA-АУДИТ-УТОЧНЕНИЕ] Исходник pades-verify.ts до сих пор содержит 'TSA timestamp present but verification not implemented'", () => {
+  it("[TSA-АУДИТ] Заглушка удалена: pades-verify.ts содержит реальную верификацию TSA (TICKET-4, 2026-09-12)", () => {
     const src = readFileSync("src/lib/pades-verify.ts", "utf8");
-    expect(src).toMatch(/TSA timestamp present but verification not implemented/);
+    expect(src).not.toMatch(/TSA timestamp present but verification not implemented/);
+    expect(src).toMatch(/export async function verifyTsaTimestamp/);
+    expect(src).toMatch(/messageImprint/);
   });
 
   it("[2.3-АУДИТ-УТОЧНЕНИЕ] Структура revocation-объекта — задокументирована, не падает при отсутствии URL", async () => {

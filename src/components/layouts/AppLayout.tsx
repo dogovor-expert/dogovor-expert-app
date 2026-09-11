@@ -287,7 +287,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
           <div className="mt-3 px-3 py-2 bg-gradient-to-r from-brand-50 to-purple-50 rounded-xl">
             <div className="flex items-center gap-2">
               <Shield className="w-3.5 h-3.5 text-brand-600" />
-              <span className="text-[10px] font-medium text-brand-700">152-ФЗ · документы — только в браузере</span>
+              <span className="text-[10px] font-medium text-brand-700">152-ФЗ · документы в браузере, OCR — по согласию</span>
             </div>
           </div>
           <div className="mt-3 flex flex-wrap gap-x-3 gap-y-2 px-1">

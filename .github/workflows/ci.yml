@@ -31,6 +31,11 @@ jobs:
       - name: Run unit tests
         run: npm run test:unit
 
+      # TICKET-5: ГОСТ-криптография УКЭП (эмулятор cadesplugin, без сети).
+      # Регрессия в signCryptoPro/pades-verify/ocsp/crl должна валить PR.
+      - name: UKEP signature tests
+        run: npm run test:ukep
+
       - name: Install Playwright browsers
         run: npx playwright install --with-deps
 
