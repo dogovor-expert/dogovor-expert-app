@@ -103,11 +103,28 @@ function TemplatesContent() {
     setFavorites(loadFavorites());
     // №10 аудита: состояние каталога восстанавливается из URL (q/cat/view).
     const params = new URLSearchParams(window.location.search);
+    let dirty = false;
     // Алиас ?category= → ?cat= (SEO: Google мог проиндексировать ?category=)
     const categoryAlias = params.get("category");
     if (categoryAlias) {
       params.delete("category");
       params.set("cat", categoryAlias);
+      dirty = true;
+    }
+    // 8.2 (аудит): невалидный фасет не должен оставлять «пустую» страницу —
+    // параметр убирается, остаётся канонический /templates.
+    const cat = params.get("cat");
+    if (cat && TEMPLATE_CATEGORIES.some((c) => c.id === cat)) {
+      setActiveCategory(cat);
+    } else if (cat) {
+      params.delete("cat");
+      dirty = true;
+    }
+    const q = params.get("q");
+    if (q) setSearch(q);
+    const view = params.get("view");
+    if (view === "list" || view === "grid") setViewMode(view);
+    if (dirty) {
       const qs = params.toString();
       window.history.replaceState(
         null,
@@ -115,12 +132,6 @@ function TemplatesContent() {
         qs ? `?${qs}` : window.location.pathname,
       );
     }
-    const q = params.get("q");
-    if (q) setSearch(q);
-    const cat = params.get("cat");
-    if (cat) setActiveCategory(cat);
-    const view = params.get("view");
-    if (view === "list" || view === "grid") setViewMode(view);
   }, []);
 
   useEffect(() => {

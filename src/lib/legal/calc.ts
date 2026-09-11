@@ -445,3 +445,22 @@ export function calcAlimony(income: number, children: number, debt: number, pena
     penalty: Math.round(debt * 0.005 * penaltyDays * 100) / 100,
   };
 }
+
+/**
+ * Алименты в твёрдой денежной сумме — ст. 83, 117 СК РФ: размер кратен
+ * величине прожиточного минимума на ребёнка в субъекте РФ по месту
+ * жительства получателя (при отсутствии региональной — федеральной).
+ * Пени — ст. 115 СК РФ (0,5% за день просрочки), применяется к задолженности.
+ */
+export function calcAlimonyFixed(
+  childPm: number,
+  multiple: number,
+  debt = 0,
+  penaltyDays = 0,
+): { monthly: number; penalty: number } {
+  if (childPm <= 0 || multiple <= 0) return { monthly: 0, penalty: 0 };
+  return {
+    monthly: Math.round(childPm * multiple * 100) / 100,
+    penalty: Math.round(debt * 0.005 * penaltyDays * 100) / 100,
+  };
+}

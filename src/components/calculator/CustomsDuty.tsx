@@ -1,8 +1,9 @@
 "use client";
-import { useState } from "react";
-import { Check, Ship, PhoneCall, ShieldCheck } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import { Check, Ship, PhoneCall, ShieldCheck, RefreshCw } from "lucide-react";
 import { calcImportCosts, FX_RATES, type ImportScenario, type TaxDutyRow } from "@/lib/legal/autoDuty";
 import { fmtMoney } from "@/lib/legal/calc";
+import SaveCalcButton from "@/components/calculator/SaveCalcButton";
 
 const SCENARIOS = [
   { id: "individual", label: "Физлицо · для себя" },
@@ -31,6 +32,16 @@ const SERVICES = [
 
 const LEAD_MODULE_READY = true;
 
+function todayIso(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
+interface RateInfo {
+  rates: Record<string, number>;
+  source: "cbr" | "fallback";
+  actualDate?: string;
+}
+
 export default function CustomsDuty() {
   const [scenario, setScenario] = useState<ImportScenario["subject"]>("individual");
   const [fuel, setFuel] = useState<ImportScenario["fuel"]>("petrol");
@@ -40,6 +51,29 @@ export default function CustomsDuty() {
   const [value, setValue] = useState("");
   const [result, setResult] = useState<{ rows: TaxDutyRow[]; total: number; carWithDuty: number } | null>(null);
   const [error, setError] = useState("");
+
+  const [regDate, setRegDate] = useState(todayIso());
+  const [rate, setRate] = useState<RateInfo | null>(null);
+  const [rateLoading, setRateLoading] = useState(false);
+
+  const loadRate = useCallback(async (iso: string) => {
+    setRateLoading(true);
+    try {
+      const r = await fetch(`/api/customs-rate?date=${encodeURIComponent(iso)}`);
+      if (!r.ok) throw new Error("bad status");
+      const json = await r.json();
+      setRate({ rates: json.rates, source: json.source, actualDate: json.actualDate });
+    } catch {
+      setRate({ rates: { ...FX_RATES }, source: "fallback" });
+    } finally {
+      setRateLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { loadRate(regDate); }, [regDate, loadRate]);
+
+  const eur = rate?.rates?.EUR ?? FX_RATES.EUR;
+  const usd = rate?.rates?.USD ?? FX_RATES.USD;
 
   const [service, setService] = useState<(typeof SERVICES)[number]["id"]>("docs");
   const [brand, setBrand] = useState("");
@@ -56,7 +90,7 @@ export default function CustomsDuty() {
     const vl = parseFloat(value);
     if (isNaN(vl) || vl <= 0) { setError("Укажите стоимость автомобиля"); return; }
     const s: ImportScenario = { subject: scenario, fuel, ageYears: age, volumeCm3: v, powerHp: p, valueRub: vl };
-    setResult(calcImportCosts(s));
+    setResult(calcImportCosts(s, rate?.rates));
     setError("");
   };
 
@@ -144,20 +178,69 @@ export default function CustomsDuty() {
               className="w-full bg-gray-50 border border-gray-200 text-xs py-2.5 px-3 rounded-lg text-gray-900 outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500" />
           </div>
         </div>
-        <button onClick={calc}
-          className="w-full py-2.5 bg-indigo-500 text-white rounded-xl hover:bg-indigo-600 font-bold text-xs transition cursor-pointer">
-          Рассчитать таможенные платежи
-        </button>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="space-y-1">
+            <label htmlFor="cd-regdate" className="text-[10px] font-mono text-gray-600">Дата регистрации таможенной декларации</label>
+            <input id="cd-regdate" type="date" value={regDate} max={todayIso()} onChange={(e) => { setRegDate(e.target.value || todayIso()); setResult(null); }}
+              className="w-full bg-gray-50 border border-gray-200 text-xs py-2.5 px-3 rounded-lg text-gray-900 outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500" />
+          </div>
+          <div className="flex items-end">
+            <p className="text-[10px] text-gray-500 leading-relaxed">
+              По ст. 52 ТК ЕАЭС пошлина пересчитывается по курсу ЦБ на день регистрации
+              декларации (для выходных — курс предыдущего рабочего дня).
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <button onClick={calc}
+            className="flex-1 py-2.5 bg-indigo-500 text-white rounded-xl hover:bg-indigo-600 font-bold text-xs transition cursor-pointer">
+            Рассчитать таможенные платежи
+          </button>
+          <button onClick={() => loadRate(regDate)} disabled={rateLoading}
+            title="Обновить курс ЦБ"
+            aria-label="Обновить курс ЦБ"
+            className="p-2.5 rounded-xl border border-gray-200 bg-white text-gray-600 hover:border-brand-300 hover:text-brand-600 transition cursor-pointer disabled:opacity-50">
+            <RefreshCw className={`w-3.5 h-3.5 ${rateLoading ? "animate-spin" : ""}`} />
+          </button>
+        </div>
+        <p className="text-[10px] text-gray-500">
+          {rateLoading
+            ? "Загружаем курс ЦБ…"
+            : `Курс для расчёта: 1 € = ${eur.toLocaleString("ru-RU", { maximumFractionDigits: 2 })} ₽${rate?.source === "fallback" ? " (справочно — проверьте на cbr.ru)" : ""}`}
+        </p>
       </div>
 
       {error && <p className="text-[11px] text-red-600 bg-red-50 border border-red-200 rounded-lg p-2.5">{error}</p>}
 
       {result && (
         <div className="bg-gray-50 rounded-xl p-4 border border-gray-200 space-y-2">
-          <div className="flex items-center gap-2">
-            <Check className="w-4 h-4 text-emerald-500" />
-            <span className="text-[10px] font-mono text-gray-600">Расчёт по курсам ЦБ: 1 € = {fmt(FX_RATES.EUR)} ₽ · 1 $ = {fmt(FX_RATES.USD)} ₽</span>
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-[10px] font-mono text-gray-600">
+              Курс ЦБ на {new Date(regDate + "T00:00:00").toLocaleDateString("ru-RU")}: 1 € = {eur.toLocaleString("ru-RU", { maximumFractionDigits: 4 })} ₽ · 1 $ = {usd.toLocaleString("ru-RU", { maximumFractionDigits: 4 })} ₽
+              {rate?.source === "cbr" ? " · cbr.ru" : " · справочно"}
+            </p>
+            <SaveCalcButton
+              kind="customs"
+              title={`Растаможка — ${fmt(result.total)} ₽`}
+              lines={[
+                `Ставка: ${{ individual: "физлицо", individualResale: "физлицо (перепродажа)", legal: "юрлицо" }[scenario]} · топливо: ${{ petrol: "бензин", diesel: "дизель", electric: "электро", parallelHybrid: "паралл. гибрид", sequentialHybrid: "послед. гибрид" }[fuel]}`,
+                `Возраст авто: ${age === 0 ? "до 3 лет" : age <= 5 ? "3–5 лет" : "старше 5 лет"}`,
+                `Объём: ${volume} см³ · Мощность: ${power} л.с. · Стоимость: ${value} €`,
+                `Дата регистрации декларации: ${regDate} (курс ЦБ: 1 € = ${eur.toFixed(4).replace(".", ",")} ₽${rate?.source === "fallback" ? ", справочно" : ""})`,
+                ...result.rows.map((r) => `${r.name}: ${fmt(r.amount)} ₽ (${r.formula})`),
+                `ВСЕГО: ${fmt(result.total)} ₽`,
+                `Цена авто с платежами: ${fmt(result.carWithDuty)} ₽`,
+                "",
+                "Расчёт: dogovor.expert. Ставки — ЕТТ ТС, курс — ст. 52 ТК ЕАЭС (день регистрации ДТ).",
+              ]}
+            />
           </div>
+          {rate?.source === "fallback" && (
+            <p className="text-[10px] text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-2.5 py-1.5">
+              Курс ЦБ временно недоступен — использован справочный снапшот. Перед подачей декларации
+              проверьте официальный курс на дату регистрации на cbr.ru.
+            </p>
+          )}
           <div className="divide-y divide-gray-200 border border-gray-200 rounded-lg bg-white">
             {result.rows.map((r) => (
               <div key={r.name} className="flex items-center justify-between gap-3 px-3 py-2">

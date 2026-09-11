@@ -108,6 +108,7 @@ function HomeContent() {
     useState<TemplateField["category"]>("seller");
   const [scanPhotos, setScanPhotos] = useState<Record<string, string[]>>({});
   const [auditResults, setAuditResults] = useState<AuditResult[] | null>(null);
+  const [auditTimestamp, setAuditTimestamp] = useState<Date | null>(null);
   const [liveAudit, setLiveAudit] = useState<AuditResult[]>([]);
   const [draftInfos, setDraftInfos] = useState<DraftData[]>([]);
   const [showAudit, setShowAudit] = useState(false);
@@ -816,6 +817,7 @@ function HomeContent() {
       }
     }
     setAuditResults(null);
+    setAuditTimestamp(null);
     setShowAudit(false);
     setLiveAudit([]);
     setDraftInfos(getAllDrafts());
@@ -966,7 +968,10 @@ function HomeContent() {
 
   const handleAuditResultClick = (fieldId: string) => {
     const el = document.querySelector(`[data-field="${fieldId}"]`);
-    if (!el) return;
+    if (!el) {
+      showToast("Поле больше не используется в этой версии шаблона");
+      return;
+    }
     el.scrollIntoView({ behavior: "smooth", block: "center" });
     const focusable = el.querySelector(
       "input, select, textarea"
@@ -980,6 +985,7 @@ function HomeContent() {
 
   const handleAudit = () => {
     setAuditResults(runLegalAudit(template, formValues));
+    setAuditTimestamp(new Date());
     setShowAudit(true);
     setSidebarTab("preview");
     setTimeout(() => {
@@ -1000,6 +1006,7 @@ function HomeContent() {
   const goToPreview = () => {
     const res = runLegalAudit(template, formValues);
     setAuditResults(res);
+    setAuditTimestamp(new Date());
     const errors = res.filter((r) => r.type === "error");
     if (errors.length > 0) {
       setPreviewBlocked(errors);
@@ -1838,6 +1845,7 @@ function HomeContent() {
                   <AuditPanel
                     results={auditResults}
                     onResultClick={handleAuditResultClick}
+                    lastCheckedAt={auditTimestamp ?? undefined}
                   />
                 </Collapsible>
               )}

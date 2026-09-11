@@ -71,6 +71,8 @@ export const limiters = {
   billingSettings: mk("rl:billing-settings", 10, "60 s"),
   /** История Autoteka-отчётов (S4) — 30/мин на user.id. */
   autotekaHistory: mk("rl:autoteka-history", 30, "60 s"),
+  /** Загрузка аватара (валидация + ре-энкод) — 5/мин на user.id. */
+  avatarUpload: mk("rl:avatar-upload", 5, "60 s"),
 };
 
 export function clientIp(req: Request): string {

@@ -30,7 +30,16 @@ async function postHandler(req: Request) {
   if (!rl.ok) return rateLimitResponse(rl.retryAfter);
 
   // P1: Zod-валидация (best practice 2026: safeParse + structured error)
-  const parsed = await req.json().catch(() => null);
+  const raw = await req.text();
+  if (raw.length > 2 * 1024 * 1024) {
+    return NextResponse.json({ error: "payload_too_large" }, { status: 413 });
+  }
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    return NextResponse.json({ error: "invalid_json" }, { status: 400 });
+  }
   const validated = validateBody(importSchema, parsed);
   if (!validated.success) return validated.error;
   const { drafts, force } = validated.data;

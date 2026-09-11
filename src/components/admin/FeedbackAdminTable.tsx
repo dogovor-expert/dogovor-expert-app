@@ -1,11 +1,17 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { X, Paperclip, Monitor, Mail, CheckSquare, Square } from "lucide-react";
+import { X, Paperclip, Monitor, Mail, CheckSquare, Square, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
 import { Select } from "@/components/ui/Select";
 import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from "@/components/ui/Table";
-import { bulkFeedbackStatus, replyFeedback } from "@/app/admin/feedback/actions";
+import ConfirmDialog from "@/components/ui/ConfirmDialog";
+import {
+  bulkFeedbackStatus,
+  bulkFeedbackDelete,
+  deleteFeedback,
+  replyFeedback,
+} from "@/app/admin/feedback/actions";
 
 interface Feedback {
   id: string;
@@ -45,7 +51,7 @@ const STATUS_VARIANT: Record<string, "blue" | "green" | "gray"> = {
 const fmt = (s?: string) =>
   s ? new Date(s).toLocaleString("ru-RU", { day: "2-digit", month: "2-digit", year: "2-digit", hour: "2-digit", minute: "2-digit" }) : "—";
 
-export default function FeedbackAdminTable() {
+export default function FeedbackAdminTable({ canDelete = false }: { canDelete?: boolean }) {
   const [data, setData] = useState<Feedback[]>([]);
   const [loading, setLoading] = useState(true);
   const [type, setType] = useState("");
@@ -53,6 +59,13 @@ export default function FeedbackAdminTable() {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [selectedRow, setSelectedRow] = useState<Feedback | null>(null);
   const [busy, setBusy] = useState(false);
+  // 6.8: статус, выбранный в bulk-панели (управляемый — не залочен на «done»).
+  const [bulkStatus, setBulkStatus] = useState("done");
+  const [bulkBusy, setBulkBusy] = useState(false);
+  // 6.2: подтверждение необратимых операций.
+  const [confirmBulkDelete, setConfirmBulkDelete] = useState(false);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -70,6 +83,12 @@ export default function FeedbackAdminTable() {
   useEffect(() => {
     void load();
   }, [load]);
+
+  useEffect(() => {
+    if (!notice) return;
+    const t = setTimeout(() => setNotice(null), 4000);
+    return () => clearTimeout(t);
+  }, [notice]);
 
   const toggle = (id: string) =>
     setSelected((prev) => {
@@ -93,7 +112,61 @@ export default function FeedbackAdminTable() {
     }
   };
 
-  const idsString = Array.from(selected).join(",");
+  const applyBulkStatus = async () => {
+    const ids = Array.from(selected);
+    if (!ids.length) return;
+    setBulkBusy(true);
+    const fd = new FormData();
+    fd.set("ids", ids.join(","));
+    fd.set("status", bulkStatus);
+    try {
+      const r = await bulkFeedbackStatus(fd);
+      setData((prev) => prev.map((f) => (ids.includes(f.id) ? { ...f, status: bulkStatus } : f)));
+      setSelected(new Set());
+      setNotice(`Статус обновлён у ${r.updated} из ${ids.length} заявок`);
+    } catch {
+      setNotice("Не удалось изменить статус — обновите страницу");
+    } finally {
+      setBulkBusy(false);
+    }
+  };
+
+  const applyBulkDelete = async () => {
+    const ids = Array.from(selected);
+    setBulkBusy(true);
+    const fd = new FormData();
+    fd.set("ids", ids.join(","));
+    try {
+      const r = await bulkFeedbackDelete(fd);
+      setData((prev) => prev.filter((f) => !ids.includes(f.id)));
+      setSelected(new Set());
+      setConfirmBulkDelete(false);
+      setNotice(`Удалено заявок: ${r.deleted}`);
+    } catch {
+      setNotice("Не удалось удалить — обновите страницу");
+    } finally {
+      setBulkBusy(false);
+    }
+  };
+
+  const applyDeleteOne = async (id: string) => {
+    const fd = new FormData();
+    fd.set("id", id);
+    try {
+      await deleteFeedback(fd);
+      setData((prev) => prev.filter((f) => f.id !== id));
+      setSelected((prev) => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
+      setSelectedRow((prev) => (prev?.id === id ? null : prev));
+      setConfirmDeleteId(null);
+      setNotice("Обращение удалено вместе со скриншотами");
+    } catch {
+      setNotice("Не удалось удалить — обновите страницу");
+    }
+  };
 
   return (
     <div className="space-y-4">
@@ -128,15 +201,21 @@ export default function FeedbackAdminTable() {
         </button>
       </div>
 
+      {notice && (
+        <div role="status" className="rounded-xl border border-brand-200 bg-brand-50 px-3 py-2 text-sm text-brand-800">
+          {notice}
+        </div>
+      )}
+
       {selected.size > 0 && (
-        <form action={bulkFeedbackStatus} className="flex items-end gap-2 flex-wrap bg-brand-50 border border-brand-100 rounded-xl px-3 py-2">
-          <input type="hidden" name="ids" value={idsString} />
-          <span className="text-sm text-gray-600">Выбрано: <b>{selected.size}</b></span>
+        <div className="flex items-end gap-2 flex-wrap bg-brand-50 border border-brand-100 rounded-xl px-3 py-2">
+          <span className="text-sm text-gray-600 pb-1.5">
+            Выбрано: <b>{selected.size}</b>
+          </span>
           <Select
             label=""
-            name="status"
-            value="done"
-            onChange={() => {}}
+            value={bulkStatus}
+            onChange={(e) => setBulkStatus(e.target.value)}
             options={[
               { value: "new", label: "Новая" },
               { value: "done", label: "Обработана" },
@@ -144,13 +223,33 @@ export default function FeedbackAdminTable() {
             ]}
             className="w-44"
           />
-          <button type="submit" className="rounded-lg bg-brand-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-700">
-            Применить
+          <button
+            type="button"
+            onClick={() => void applyBulkStatus()}
+            disabled={bulkBusy}
+            className="rounded-lg bg-brand-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-60"
+          >
+            {bulkBusy ? "Выполняется…" : "Применить статус"}
           </button>
-          <button type="button" onClick={() => setSelected(new Set())} className="text-sm text-gray-600 hover:underline">
+          {canDelete && (
+            <button
+              type="button"
+              onClick={() => setConfirmBulkDelete(true)}
+              disabled={bulkBusy}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-red-200 bg-white px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-red-50 disabled:opacity-60"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+              Удалить…
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={() => setSelected(new Set())}
+            className="text-sm text-gray-600 hover:underline pb-1.5"
+          >
             Сбросить
           </button>
-        </form>
+        </div>
       )}
 
       <div className="bg-white rounded-xl border border-gray-100 shadow-soft overflow-hidden">
@@ -169,6 +268,9 @@ export default function FeedbackAdminTable() {
               <TableHeader>Сообщение</TableHeader>
               <TableHeader>Статус</TableHeader>
               <TableHeader>Дата</TableHeader>
+              <TableHeader className="w-10">
+                <span className="sr-only">Действия</span>
+              </TableHeader>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -204,16 +306,28 @@ export default function FeedbackAdminTable() {
                   </select>
                 </TableCell>
                 <TableCell className="text-gray-600 whitespace-nowrap" onClick={() => setSelectedRow(f)}>{fmt(f.created_at)}</TableCell>
+                <TableCell onClick={(e) => e.stopPropagation()}>
+                  {canDelete && (
+                    <button
+                      onClick={() => setConfirmDeleteId(f.id)}
+                      title="Удалить заявку"
+                      aria-label={`Удалить заявку ${f.ticket_no}`}
+                      className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  )}
+                </TableCell>
               </TableRow>
             ))}
             {!loading && !data.length && (
               <TableRow>
-                <TableCell colSpan={7} className="text-center text-gray-600 py-10">Заявок нет</TableCell>
+                <TableCell colSpan={9} className="text-center text-gray-600 py-10">Заявок нет</TableCell>
               </TableRow>
             )}
             {loading && (
               <TableRow>
-                <TableCell colSpan={7} className="text-center text-gray-600 py-10">Загрузка…</TableCell>
+                <TableCell colSpan={9} className="text-center text-gray-600 py-10">Загрузка…</TableCell>
               </TableRow>
             )}
           </TableBody>
@@ -288,23 +402,65 @@ export default function FeedbackAdminTable() {
                 </button>
               </form>
 
-              <div className="flex items-center gap-2 border-t border-gray-100 pt-3">
-                <span className="text-sm text-gray-600">Статус:</span>
-                <select
-                  value={selectedRow.status}
-                  disabled={busy}
-                  onChange={(e) => { void changeStatus(selectedRow.id, e.target.value); }}
-                  className="text-sm bg-gray-50 border border-gray-200 rounded-lg px-3 py-1.5 text-gray-700 outline-none focus:ring-2 focus:ring-brand-500/20"
-                >
-                  <option value="new">Новая</option>
-                  <option value="done">Обработана</option>
-                  <option value="spam">Спам</option>
-                </select>
+              <div className="flex items-center justify-between gap-2 border-t border-gray-100 pt-3">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-gray-600">Статус:</span>
+                  <select
+                    value={selectedRow.status}
+                    disabled={busy}
+                    onChange={(e) => { void changeStatus(selectedRow.id, e.target.value); }}
+                    className="text-sm bg-gray-50 border border-gray-200 rounded-lg px-3 py-1.5 text-gray-700 outline-none focus:ring-2 focus:ring-brand-500/20"
+                  >
+                    <option value="new">Новая</option>
+                    <option value="done">Обработана</option>
+                    <option value="spam">Спам</option>
+                  </select>
+                </div>
+                {canDelete && (
+                  <button
+                    type="button"
+                    onClick={() => setConfirmDeleteId(selectedRow.id)}
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-red-200 px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-red-50"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    Удалить…
+                  </button>
+                )}
               </div>
             </div>
           </div>
         </div>
       )}
+
+      <ConfirmDialog
+        isOpen={confirmBulkDelete}
+        title={`Удалить выбранные заявки? (${selected.size})`}
+        danger
+        busy={bulkBusy}
+        message={
+          <>
+            Действие необратимо: будут удалены сами обращения, email-адреса и все
+            прикреплённые скриншоты. Восстановить их будет нельзя.
+          </>
+        }
+        confirmLabel="Удалить"
+        onCancel={() => setConfirmBulkDelete(false)}
+        onConfirm={() => void applyBulkDelete()}
+      />
+
+      <ConfirmDialog
+        isOpen={confirmDeleteId !== null}
+        title="Удалить заявку?"
+        danger
+        message={
+          <>
+            Обращение вместе с email и скриншотами будет удалено безвозвратно.
+          </>
+        }
+        confirmLabel="Удалить"
+        onCancel={() => setConfirmDeleteId(null)}
+        onConfirm={() => { if (confirmDeleteId) void applyDeleteOne(confirmDeleteId); }}
+      />
     </div>
   );
 }

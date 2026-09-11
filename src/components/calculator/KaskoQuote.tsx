@@ -2,6 +2,11 @@
 import { useState } from "react";
 import { Check, ShieldQuestion, PhoneCall } from "lucide-react";
 import { fmtMoney } from "@/lib/legal/calc";
+import SaveCalcButton from "@/components/calculator/SaveCalcButton";
+
+function labelOf<T extends { id: string; label: string }>(arr: readonly T[], id: string): string {
+  return arr.find((x) => x.id === id)?.label ?? id;
+}
 
 const KASKO_READY = false;
 
@@ -32,8 +37,9 @@ const CITIES = [
 
 const FRANCHISES = [
   { id: "none", label: "Без франшизы", adj: 0 },
-  { id: "f30", label: "30 000 ₽", adj: -1.5 },
-  { id: "f50", label: "50 000 ₽", adj: -2.5 },
+  { id: "f20", label: "20 000 ₽", adj: -0.8 },
+  { id: "f50", label: "50 000 ₽", adj: -1.8 },
+  { id: "f100", label: "100 000 ₽", adj: -2.8 },
 ] as const;
 
 export default function KaskoQuote() {
@@ -42,7 +48,7 @@ export default function KaskoQuote() {
   const [price, setPrice] = useState<(typeof PRICES)[number]["id"]>("p5");
   const [city, setCity] = useState<(typeof CITIES)[number]["id"]>("region");
   const [fran, setFran] = useState<(typeof FRANCHISES)[number]["id"]>("none");
-  const [result, setResult] = useState<{ min: number; max: number; rate: number } | null>(null);
+  const [result, setResult] = useState<{ min: number; max: number; rate: number; franLabel: string | null } | null>(null);
 
   const [phone, setPhone] = useState("");
   const [brand, setBrand] = useState("");
@@ -60,7 +66,8 @@ export default function KaskoQuote() {
     const rate = Math.min(11, Math.max(2.5, 6.5 + adj));
     const min = Math.round(p.value * (rate - 0.8) / 100);
     const max = Math.round(p.value * (rate + 0.8) / 100);
-    setResult({ min, max, rate: Math.round(rate * 10) / 10 });
+    const franObj = FRANCHISES.find((x) => x.id === fran)!;
+    setResult({ min, max, rate: Math.round(rate * 10) / 10, franLabel: franObj.id === "none" ? null : franObj.label });
   };
 
   const sendLead = async () => {
@@ -123,12 +130,32 @@ export default function KaskoQuote() {
 
       {result && (
         <div className="bg-gray-50 rounded-xl p-4 border border-gray-200 space-y-2">
-          <div className="flex items-center gap-2">
-            <Check className="w-4 h-4 text-emerald-500" />
-            <span className="text-[10px] font-mono text-gray-600">Оценочная премия КАСКО — тариф {result.rate.toLocaleString("ru-RU")}%</span>
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <Check className="w-4 h-4 text-emerald-500" />
+              <span className="text-[10px] font-mono text-gray-600">Оценка КАСКО — тариф {result.rate.toLocaleString("ru-RU")}%</span>
+            </div>
+            <SaveCalcButton
+              kind="kasko"
+              title={`Оценка КАСКО — ${fmt(result.min)}–${fmt(result.max)} ₽/год`}
+              lines={[
+                `Возраст водителя: ${labelOf(AGES, age)} · Стаж: ${labelOf(EXPERIENCES, exp)}`,
+                `Стоимость авто: ${labelOf(PRICES, price)} · Регион: ${labelOf(CITIES, city)}`,
+                `Франшиза: ${result.franLabel ?? "без франшизы"}`,
+                `Оценочный тариф: ${result.rate.toLocaleString("ru-RU")}% от стоимости авто`,
+                `Диапазон годовой премии: ${fmt(result.min)} – ${fmt(result.max)} ₽`,
+                "",
+                "Оценка dogovor.expert по усреднённым рыночным тарифам. Точную цену определяет страховая компания.",
+              ]}
+            />
           </div>
           <p className="text-2xl font-bold text-gray-900">{fmt(result.min)} – {fmt(result.max)} ₽/год</p>
           <p className="text-[11px] text-gray-600">Диапазон по рынку: {fmt(result.min)}…{fmt(result.max)} ₽ в год. Точный тариф устанавливает страховая компания.</p>
+          {result.franLabel && (
+            <p className="text-[11px] text-gray-600">
+              Учтена франшиза <b>{result.franLabel}</b>: при мелком ущербе в пределах франшизы выплату не получаете, но премия ниже.
+            </p>
+          )}
         </div>
       )}
 

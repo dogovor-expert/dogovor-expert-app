@@ -5,6 +5,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { withCsrf } from "@/lib/csrf";
 import { isSameOrigin } from "@/lib/admin-auth";
 import { limiters, checkRateLimit, rateLimitResponse } from "@/lib/ratelimit";
+import { hashPassword } from "@/lib/crypto.server";
 
 const APPROVAL_DAYS = 7;
 
@@ -30,6 +31,12 @@ async function postHandler(req: Request) {
   if (!templateId) return NextResponse.json({ error: "templateId is required" }, { status: 400 });
   const values = body.values && typeof body.values === "object" ? body.values : {};
   const checklist = body.checklist && typeof body.checklist === "object" ? body.checklist : {};
+  // Опциональная парольная защита ссылки: контрагент вводит пароль перед просмотром ПДн.
+  const password = typeof body.password === "string" ? body.password : "";
+  if (password.length > 64) {
+    return NextResponse.json({ error: "password too long" }, { status: 400 });
+  }
+  const passwordHash = password.length > 0 ? hashPassword(password) : null;
 
   const token = randomUUID();
   const now = new Date();
@@ -45,6 +52,7 @@ async function postHandler(req: Request) {
       mode,
       values,
       checklist,
+      password_hash: passwordHash,
       expires_at: expiresAt.toISOString(),
     })
     .select("id, token, template_id, mode, created_at, expires_at, changed, updated_at")

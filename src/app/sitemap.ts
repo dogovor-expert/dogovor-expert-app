@@ -45,13 +45,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
     lastModified: parseLastUpdated(t.lastUpdated),
   }));
 
-  const blanks: MetadataRoute.Sitemap = LEGAL_TEMPLATES.map((t) => ({
-    url: `${SITE_URL}/blanks/${t.id}`,
-    changeFrequency: "monthly" as const,
-    priority: 0.7,
-    lastModified: parseLastUpdated(t.lastUpdated),
-  }));
-
   const blog: MetadataRoute.Sitemap = BLOG_POSTS.map((p) => ({
     url: `${SITE_URL}/blog/${p.slug}`,
     changeFrequency: "monthly" as const,
@@ -59,5 +52,9 @@ export default function sitemap(): MetadataRoute.Sitemap {
     lastModified: parseLastUpdated(p.updatedAt),
   }));
 
-  return [...staticPages, ...documents, ...blanks, ...blog];
+  // 8.3 (аудит): страницы /blanks/{slug} исключены из sitemap — они
+  // cross-canonical'ятся на /documents/{slug} (см. generateMetadata
+  // blanks/[slug]). В индексе должна быть только каноническая страница;
+  // базовый каталог /blanks остаётся (у него свой листинг-контент).
+  return [...staticPages, ...documents, ...blog];
 }

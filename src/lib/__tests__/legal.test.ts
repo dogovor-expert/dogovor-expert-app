@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { ndflTax, usnTax } from "@/lib/legal/fin";
+import { ndflTax, usnTax, vacationPayWithBonuses } from "@/lib/legal/fin";
 import {
   KOAP_CHAPTER_12,
   fineWithDiscount,
@@ -14,7 +14,7 @@ import {
   courtFeeAppeal,
   courtFeeCassation,
 } from "@/lib/legal/calc";
-import { isPassport, isInn, isSnils, isOgrn, isOgrnip, isKpp, isBik, isBankAccount } from "@/lib/legal/validators";
+import { isPassport, isInn, isSnils, isOgrn, isOgrnip, isKpp, isBik, isBankAccount, isDriverLicense } from "@/lib/legal/validators";
 
 describe("НДФЛ: стандартные вычеты на детей (ст. 218 НК)", () => {
   it("без детей — 13% с полной суммы", () => {
@@ -191,6 +191,37 @@ describe("isPassport: Приказ МВД № 605 (серия/номер/код/
   });
 });
 
+describe("isDriverLicense: ВУ по Приказу МВД № 365 (серия 4 + номер 6)", () => {
+  it("пластик «77 01 123456» — корректно", () => {
+    expect(isDriverLicense("77 01 123456").valid).toBe(true);
+  });
+  it("сплошные 10 цифр — корректно", () => {
+    expect(isDriverLicense("7701123456").valid).toBe(true);
+  });
+  it("дефисы схлопываются", () => {
+    expect(isDriverLicense("77-01-123456").valid).toBe(true);
+  });
+  it("9 цифр — невалидно", () => {
+    const r = isDriverLicense("770112345");
+    expect(r.valid).toBe(false);
+    expect(r.message).toContain("10");
+  });
+  it("11 цифр — невалидно", () => {
+    expect(isDriverLicense("77011234567").valid).toBe(false);
+  });
+  it("серия 0000 — невалидно", () => {
+    expect(isDriverLicense("0000123456").valid).toBe(false);
+  });
+  it("пустая строка — невалидно", () => {
+    expect(isDriverLicense("").valid).toBe(false);
+  });
+  it("в сообщении — нормализованные серия/номер", () => {
+    const r = isDriverLicense("9910 000123");
+    expect(r.message).toContain("99 10");
+    expect(r.message).toContain("000123");
+  });
+});
+
 describe("validators: re-exports для регрессии", () => {
   it("isInn: 7707083893 (Сбер) — корректный", () => {
     expect(isInn("7707083893").valid).toBe(true);
@@ -217,5 +248,43 @@ describe("validators: re-exports для регрессии", () => {
   });
   it("isBankAccount: казначейский счёт — пропускается без БИК", () => {
     expect(isBankAccount("40101810845250001001").valid).toBe(true);
+  });
+});
+
+describe("vacationPayWithBonuses: премии по п.15 ПП №540", () => {
+  it("полный период, годовая премия — включается полностью", () => {
+    // 900000 оклад + 100000 годовая, 28 дней
+    const r = vacationPayWithBonuses({ salary12: 900000, annualBonus: 100000 }, 28)!;
+    // СДЗ = (900000+100000) / (29.3*12) = 1000000 / 351.6 = 2844.14
+    expect(r.denominator).toBeCloseTo(351.6, 1);
+    expect(r.bonusesIncluded).toBeCloseTo(100000, 2);
+    expect(r.sdz).toBeCloseTo(2844.14, 1);
+  });
+
+  it("неполный период (9/12) — не-пропорциональные премии режутся", () => {
+    const r = vacationPayWithBonuses({
+      salary12: 675000, annualBonus: 100000, fullyWorkedMonths: 9, partialMonthDays: 0,
+    }, 28)!;
+    // workedFraction = 29.3*9 / 351.6 = 263.7/351.6 = 0.75
+    expect(r.workedFraction).toBeCloseTo(0.75, 2);
+    // годовая премия пропорционально: 100000*0.75 = 75000
+    expect(r.bonusesIncluded).toBeCloseTo(75000, 0);
+  });
+
+  it("флаг «премии уже пропорциональны» — берём полностью", () => {
+    const r = vacationPayWithBonuses({
+      salary12: 675000, annualBonus: 75000, fullyWorkedMonths: 9, bonusesAlreadyProportional: true,
+    }, 28)!;
+    expect(r.bonusesIncluded).toBeCloseTo(75000, 0);
+  });
+
+  it("без премий = базовая формула 29.3", () => {
+    const r = vacationPayWithBonuses({ salary12: 900000 }, 28)!;
+    const s = 900000 / (29.3 * 12);
+    expect(r.sdz).toBeCloseTo(Math.round(s * 100) / 100, 1);
+  });
+
+  it("нулевой знаменатель (0 месяцев) → null", () => {
+    expect(vacationPayWithBonuses({ salary12: 100000, fullyWorkedMonths: 0 }, 28)).toBeNull();
   });
 });

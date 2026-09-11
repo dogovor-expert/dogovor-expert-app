@@ -1,5 +1,5 @@
 "use client";
-import { useId, useState, useRef, useEffect, useCallback } from "react";
+import { useId, useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { Search } from "lucide-react";
 import { TEMPLATE_META } from "@/data/templatesMeta";
@@ -18,6 +18,27 @@ const CATEGORY_ICONS: Record<string, string> = {
   postal: "📄",
 };
 
+type ScoredItem = {
+  t: (typeof TEMPLATE_META)[number];
+  score: number;
+};
+
+function scoreItems(q: string, tokens: string[][]): ScoredItem[] {
+  return TEMPLATE_META
+    .filter((t) =>
+      textMatchesTokens(
+        `${t.name} ${t.description} ${(t.suggestedDocs || []).join(" ")}`,
+        tokens
+      )
+    )
+    .map((t) => ({
+      t,
+      score: Math.max(scoreText(t.name, tokens, 0), scoreText(t.description, tokens, 20)),
+    }))
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 6);
+}
+
 export default function HeaderSearch() {
   const router = useRouter();
   const uid = useId();
@@ -32,23 +53,11 @@ export default function HeaderSearch() {
   const inputRef = useRef<HTMLInputElement>(null);
   const rootRef = useRef<HTMLDivElement>(null);
 
-  const suggestions = useCallback(() => {
+  const items = useMemo(() => {
     const q = query.trim();
-    if (q.length < 2) return [];
+    if (q.length < 2) return [] as ReturnType<typeof scoreItems>;
     const tokens = tokenGroups(q);
-    return TEMPLATE_META
-      .filter((t) =>
-        textMatchesTokens(
-          `${t.name} ${t.description} ${(t.suggestedDocs || []).join(" ")}`,
-          tokens
-        )
-      )
-      .map((t) => ({
-        t,
-        score: Math.max(scoreText(t.name, tokens, 0), scoreText(t.description, tokens, 20)),
-      }))
-      .sort((a, b) => b.score - a.score)
-      .slice(0, 6);
+    return scoreItems(q, tokens);
   }, [query]);
 
   const goSearch = useCallback((q: string) => {
@@ -62,7 +71,8 @@ export default function HeaderSearch() {
 
   useEffect(() => {
     if (mobileOpen) {
-      setTimeout(() => inputRef.current?.focus(), 100);
+      const id = setTimeout(() => inputRef.current?.focus(), 100);
+      return () => clearTimeout(id);
     }
   }, [mobileOpen]);
 
@@ -83,7 +93,6 @@ export default function HeaderSearch() {
   }, []);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    const items = suggestions();
     if (e.key === "ArrowDown") {
       e.preventDefault();
       if (!open) setOpen(true);
@@ -111,7 +120,6 @@ export default function HeaderSearch() {
     }
   };
 
-  const items = suggestions();
   const showList = open && items.length > 0;
 
   const SuggestionsList = ({ id, optIdFn, className }: { id: string; optIdFn: (i: number) => string; className?: string }) => (

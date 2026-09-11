@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { getAdminUser } from "@/lib/admin-auth";
+import { atLeast, ROLE_LABELS, type AdminRole } from "@/lib/admin-rbac";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { logAdminAction } from "@/lib/audit";
 import {
@@ -35,9 +36,7 @@ const updateProfileSchema = z
 const toggleAdminSchema = z
   .object({
     id: z.string().uuid(),
-    make_admin: z
-      .union([z.literal("true"), z.literal("false")])
-      .transform((v) => v === "true"),
+    role: z.enum(["superadmin", "admin", "moderator", "none"]),
   })
   .strict();
 
@@ -60,9 +59,9 @@ const updateSubscriptionSchema = z
 export async function updateProfile(formData: FormData) {
   // 1. CSRF
   await assertSameOrigin();
-  // 2. Авторизация
+  // 2. Авторизация (6.5: правки профиля — от admin и выше)
   const admin = await getAdminUser();
-  if (!admin) throw new Error("unauthorized");
+  if (!admin || !atLeast(admin.role, "admin")) throw new Error("unauthorized");
   // 3. Rate-limit per admin.id
   await checkAdminRateLimit(admin.id);
   // 4. Zod-валидация входа
@@ -93,29 +92,62 @@ export async function updateProfile(formData: FormData) {
   revalidatePath("/admin/users");
 }
 
-export async function toggleAdminUser(formData: FormData) {
+export async function setUserRole(formData: FormData) {
   await assertSameOrigin();
   const admin = await getAdminUser();
   if (!admin) throw new Error("unauthorized");
+  // 6.5 RBAC: выдача ролей — эксклюзив superadmin.
+  if (!atLeast(admin.role, "superadmin")) throw new Error("forbidden: требуется суперадмин");
   await checkAdminRateLimit(admin.id);
 
   const data = parseForm(toggleAdminSchema, formData);
-  // Анти-самоограничение (бизнес-правило, не меняем).
+  // Анти-самоограничение: смена собственной роли только через ручной SQL.
   if (data.id === admin.id) throw new Error("нельзя менять свою роль");
 
   const sb = createAdminClient();
+
+  const { data: target, error: fetchErr } = await sb
+    .from("profiles")
+    .select("admin_role")
+    .eq("id", data.id)
+    .maybeSingle();
+  if (fetchErr) throw new Error(fetchErr.message);
+
+  // Защита от потери управления: последнего суперадмина понизить нельзя.
+  if (target?.admin_role === "superadmin" && data.role !== "superadmin") {
+    const { count } = await sb
+      .from("profiles")
+      .select("id", { count: "exact", head: true })
+      .eq("admin_role", "superadmin")
+      .neq("id", data.id);
+    if ((count ?? 0) === 0) {
+      throw new Error("Нельзя снять роль с последнего суперадмина");
+    }
+  }
+
+  const nextRole: AdminRole | null = data.role === "none" ? null : data.role;
   const { error } = await sb
     .from("profiles")
-    .update({ is_admin: data.make_admin })
+    .update({ is_admin: nextRole !== null, admin_role: nextRole })
     .eq("id", data.id);
   if (error) throw new Error(error.message);
+
+  // Синхронизируем app_metadata (грубый гейт middleware/JWT). Сбой не критичен:
+  // getAdminUser читает роль из БД, метаданные обновятся при следующем логине.
+  try {
+    await sb.auth.admin.updateUserById(data.id, {
+      app_metadata: { is_admin: nextRole !== null },
+    });
+  } catch (e) {
+    console.warn("[setUserRole] app_metadata sync failed", e);
+  }
 
   await logAdminAction({
     adminId: admin.id,
     action: "admin_role",
     resource: "profiles",
     resourceId: data.id,
-    meta: { make_admin: data.make_admin },
+    meta: { from: target?.admin_role ?? null, to: data.role },
   });
 
   revalidatePath("/admin/users/" + data.id);
@@ -137,7 +169,7 @@ const giftSubscriptionSchema = z
 export async function giftSubscriptionExtension(formData: FormData) {
   await assertSameOrigin();
   const admin = await getAdminUser();
-  if (!admin) throw new Error("unauthorized");
+  if (!admin || !atLeast(admin.role, "admin")) throw new Error("unauthorized");
   await checkAdminRateLimit(admin.id);
   const data = parseForm(giftSubscriptionSchema, formData);
 
@@ -226,7 +258,7 @@ export async function giftSubscriptionExtension(formData: FormData) {
 export async function updateSubscription(formData: FormData) {
   await assertSameOrigin();
   const admin = await getAdminUser();
-  if (!admin) throw new Error("unauthorized");
+  if (!admin || !atLeast(admin.role, "admin")) throw new Error("unauthorized");
   await checkAdminRateLimit(admin.id);
 
   const data = parseForm(updateSubscriptionSchema, formData);

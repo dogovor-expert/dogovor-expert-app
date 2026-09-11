@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect, useCallback, type ReactNode } from "react";
+import type { User } from "@supabase/auth-js";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { getAllDrafts } from "@/lib/autosave";
@@ -51,7 +52,8 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false);
   const [draftCount, setDraftCount] = useState(0);
   const [profile, setProfile] = useState({ name: "Гость", initial: "Г", avatar: null as string | null });
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
+  const [profileVersion, setProfileVersion] = useState(0);
   // Иконка cookies переехала в хедер рядом с колокольчиком, чтобы не
   // перекрывать SupportLauncher (fixed bottom-right). Внешний флаг управляет
   // панелью настроек в CookieBanner.
@@ -67,41 +69,71 @@ export default function AppLayout({ children }: { children: ReactNode }) {
 
   const loadProfile = useCallback(async () => {
     const supabase = createClient();
-    const { data } = await supabase.auth.getUser();
-    if (data.user) {
-      setUser(data.user);
-      let name = data.user.email || "Пользователь";
-      let avatar: string | null = null;
-      try {
-        const res = await fetch("/api/profile");
-        if (res.ok) {
-          const { data: profile } = await res.json();
-          if (profile?.full_name) name = profile.full_name;
-          if (profile?.avatar_url) avatar = profile.avatar_url;
-        }
-      } catch {
-        // Fall back to session metadata
-      }
-      setProfile({
-        name,
-        initial: name.trim().charAt(0).toUpperCase() || "П",
-        avatar,
-      });
-    } else {
-      setUser(null);
+    const { data } = await supabase.auth.getSession();
+    const sessionUser = data.session?.user ?? null;
+    setUser(sessionUser);
+    if (!sessionUser) {
       setProfile({ name: "Гость", initial: "Г", avatar: null });
+      return;
     }
   }, []);
 
+  // Аутентификация: только синхронное обновление состояния в onAuthStateChange.
+  // НИКАКИХ await supabase внутри колбэка — это вызывает deadlock клиента
+  // (supabase/auth-js#762). Профиль тянется отдельным эффектом ниже.
   useEffect(() => {
     void loadProfile();
-  }, [pathname, loadProfile]);
+    const supabase = createClient();
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      const sessionUser = session?.user ?? null;
+      setUser(sessionUser);
+      if (!sessionUser) setProfile({ name: "Гость", initial: "Г", avatar: null });
+      else setProfileVersion((v) => v + 1);
+    });
+    return () => subscription.unsubscribe();
+  }, [loadProfile]);
 
+  // Загрузка профиля: только при смене user.id (и после внешних событий
+  // dogovor:profile). AbortController + ignore флаг против гонок и
+  // отмены уже неактуальных запросов при быстрой навигации.
   useEffect(() => {
-    const onProfileUpdate = () => void loadProfile();
+    if (!user) return;
+    const controller = new AbortController();
+    let ignore = false;
+
+    const initialName = user.email || "Пользователь";
+    setProfile({ name: initialName, initial: initialName.trim().charAt(0).toUpperCase() || "П", avatar: null });
+
+    (async () => {
+      try {
+        const res = await fetch("/api/profile", { signal: controller.signal });
+        if (!res.ok) return;
+        const { data: p } = await res.json();
+        if (ignore) return;
+        const name = p?.full_name || initialName;
+        setProfile({
+          name,
+          initial: name.trim().charAt(0).toUpperCase() || "П",
+          avatar: p?.avatar_url ?? null,
+        });
+      } catch {
+        // Abort (навигация/последующая загрузка) или сетевой сбой — fallback уже установлен
+      }
+    })();
+
+    return () => {
+      ignore = true;
+      controller.abort();
+    };
+  }, [user?.id, profileVersion]);
+
+  // Внешние события `dogovor:profile` (например, после смены имени в настройках)
+  // заставляют перезапросить профиль.
+  useEffect(() => {
+    const onProfileUpdate = () => setProfileVersion((v) => v + 1);
     window.addEventListener("dogovor:profile", onProfileUpdate);
     return () => window.removeEventListener("dogovor:profile", onProfileUpdate);
-  }, [loadProfile]);
+  }, []);
 
   const handleSignOut = async () => {
     const supabase = createClient();

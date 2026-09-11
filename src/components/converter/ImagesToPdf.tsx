@@ -1,6 +1,6 @@
 "use client";
 import { useRef, useState } from "react";
-import { Image as ImageIcon, Loader2, Download, Check, X } from "lucide-react";
+import { Image as ImageIcon, Loader2, Download, Check, X, ArrowUp, ArrowDown } from "lucide-react";
 import { downloadBytes, formatBytes } from "@/lib/converter/download";
 import { usePdfWorker } from "@/lib/hooks/usePdfWorker";
 
@@ -40,6 +40,17 @@ export default function ImagesToPdf() {
 
   const removeFile = (i: number) => {
     setFiles((prev) => prev.filter((_, idx) => idx !== i));
+    setDone(false);
+  };
+
+  const moveFile = (i: number, dir: -1 | 1) => {
+    setFiles((prev) => {
+      const j = i + dir;
+      if (j < 0 || j >= prev.length) return prev;
+      const next = [...prev];
+      [next[i], next[j]] = [next[j], next[i]];
+      return next;
+    });
     setDone(false);
   };
 
@@ -155,19 +166,31 @@ export default function ImagesToPdf() {
             <ImageIcon className="w-6 h-6 text-brand-500" />
           </div>
           <div className="text-sm font-semibold text-gray-900">Выберите изображения</div>
-          <div className="text-xs text-gray-600">JPG, PNG, WEBP. Каждая картинка — на отдельной странице A4. Данные не покидают ваш браузер.</div>
+          <div className="text-xs text-gray-600">JPG, PNG, WEBP. Каждая картинка — на отдельной странице A4. Порядок страниц можно менять стрелками. Данные не покидают ваш браузер.</div>
         </button>
       ) : (
         <div className="space-y-3">
           <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
             {files.map((f, i) => (
               <div key={`${f.name}-${i}`} className="relative bg-gray-50 border border-gray-200 rounded-xl p-3 group">
-                <p className="text-[11px] font-medium text-gray-800 truncate pr-5">{f.name}</p>
+                <p className="text-[11px] font-medium text-gray-800 truncate pr-10">{f.name}</p>
                 <p className="text-[10px] text-gray-600">{formatBytes(f.size)}</p>
-                <button onClick={() => removeFile(i)}
-                  className="absolute top-1.5 right-1.5 p-1 rounded-lg hover:bg-red-50 text-red-400 hover:text-red-600 cursor-pointer">
-                  <X className="w-3.5 h-3.5" />
-                </button>
+                <div className="absolute top-1.5 right-1.5 flex items-center gap-0.5">
+                  <button onClick={() => moveFile(i, -1)} disabled={i === 0}
+                    aria-label="Переместить выше"
+                    className="p-1 rounded-lg hover:bg-gray-200 text-gray-500 hover:text-gray-800 disabled:opacity-30 disabled:cursor-default cursor-pointer">
+                    <ArrowUp className="w-3 h-3" />
+                  </button>
+                  <button onClick={() => moveFile(i, 1)} disabled={i === files.length - 1}
+                    aria-label="Переместить ниже"
+                    className="p-1 rounded-lg hover:bg-gray-200 text-gray-500 hover:text-gray-800 disabled:opacity-30 disabled:cursor-default cursor-pointer">
+                    <ArrowDown className="w-3 h-3" />
+                  </button>
+                  <button onClick={() => removeFile(i)}
+                    className="p-1 rounded-lg hover:bg-red-50 text-red-400 hover:text-red-600 cursor-pointer">
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </div>
               </div>
             ))}
           </div>

@@ -62,6 +62,13 @@ export function generateMetadata({ params }: { params: Promise<{ slug: string }>
       title: truncateWord(baseTitle, 60),
       description: truncateWord(baseDesc, 160),
       ogType: "article",
+      // 8.3 (аудит): /blanks/{slug} и /documents/{slug} — близнецы по контенту
+      // (369×2). Каноническая — /documents (основная страница шаблона с формой).
+      // Страницу бланка оставляем жив для интента «скачать бланк», но вес
+      // склеиваем на каноническую через cross-page canonical (рекомендация
+      // Google для дублей; слабее 301, но сохраняет обе пользовательские
+      // страницы). Ссылки со /blanks на /documents — follow.
+      alternates: { canonical: `/documents/${t.id}` },
       keywords: [
         `скачать бланк ${t.name}`,
         `пустой бланк ${t.name}`,

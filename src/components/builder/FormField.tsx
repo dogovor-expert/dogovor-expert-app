@@ -235,6 +235,7 @@ export default function FormField({
         <select
           id={field.id}
           value={value}
+          autoComplete="off"
           onChange={(e) => onChange(field.id, e.target.value)}
           className={baseInputClass}
         >

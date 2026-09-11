@@ -1,4 +1,5 @@
 import { createAdminClient } from "@/lib/supabase/admin";
+import { parseAdminRole, type AdminRole } from "@/lib/admin-rbac";
 
 export interface DirectoryUser {
   id: string;
@@ -8,6 +9,8 @@ export interface DirectoryUser {
   inn: string;
   phone: string;
   is_admin: boolean;
+  /** 6.5 RBAC: роль из profiles.admin_role (null = не админ). */
+  admin_role: AdminRole | null;
   created_at: string;
   last_sign_in_at: string | null;
 }
@@ -25,7 +28,7 @@ export async function getDirectory(): Promise<Directory> {
   const admin = createAdminClient();
   const [{ data: authData }, { data: profiles }] = await Promise.all([
     admin.auth.admin.listUsers({ page: 1, perPage: 200 }),
-    admin.from("profiles").select("id, full_name, company, inn, phone, is_admin, created_at"),
+    admin.from("profiles").select("id, full_name, company, inn, phone, is_admin, admin_role, created_at"),
   ]);
 
   const authUsers = (authData?.users ?? []) as Array<{
@@ -46,6 +49,7 @@ export async function getDirectory(): Promise<Directory> {
       phone: p?.phone ?? "",
       inn: p?.inn ?? "",
       is_admin: p?.is_admin ?? false,
+      admin_role: parseAdminRole(p?.admin_role) ?? null,
       created_at: u.created_at ?? "",
       last_sign_in_at: u.last_sign_in_at ?? null,
     };

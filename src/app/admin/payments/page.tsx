@@ -35,7 +35,7 @@ export default async function AdminPaymentsPage({
 }: {
   searchParams: Promise<{ status?: string; q?: string }>;
 }) {
-  await requireAdminPage();
+  await requireAdminPage("admin");
   const sp = await searchParams;
   const status = sp.status ?? "";
   const q = (sp.q ?? "").trim().toLowerCase();

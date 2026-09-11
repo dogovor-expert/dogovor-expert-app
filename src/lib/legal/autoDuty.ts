@@ -113,7 +113,12 @@ export function exciseFor(powerHp: number): { amount: number; rate: number } {
   return { amount: Math.round(powerHp * t.rubPerHp), rate: t.rubPerHp };
 }
 
-export function calcImportCosts(s: ImportScenario): { rows: TaxDutyRow[]; total: number; carWithDuty: number } {
+export function calcImportCosts(
+  s: ImportScenario,
+  /** Курс на день регистрации декларации (ст. 52 ТК ЕАЭС). По умолчанию — снапшот FX_RATES. */
+  fx?: Partial<typeof FX_RATES>,
+): { rows: TaxDutyRow[]; total: number; carWithDuty: number } {
+  const eur = fx?.EUR ?? FX_RATES.EUR;
   const rows: TaxDutyRow[] = [];
   const fee = customsFeeFor(s.valueRub);
   rows.push({ name: "Таможенный сбор", amount: fee, formula: fee.toLocaleString("ru-RU") + " ₽ (по стоимости)" });
@@ -121,14 +126,14 @@ export function calcImportCosts(s: ImportScenario): { rows: TaxDutyRow[]; total:
   let duty = 0;
   let dutyNote = "";
   if (s.subject === "individual") {
-    const valueEur = s.valueRub / FX_RATES.EUR;
+    const valueEur = s.valueRub / eur;
     if (s.ageYears < 3) {
       const r = dutyForFizNew(valueEur, s.volumeCm3);
-      duty = r.duty * FX_RATES.EUR;
+      duty = r.duty * eur;
       dutyNote = r.rate;
     } else {
       const r = dutyForFizOld(s.ageYears, s.volumeCm3);
-      duty = r.duty * FX_RATES.EUR;
+      duty = r.duty * eur;
       dutyNote = r.rate;
     }
   } else {
@@ -138,7 +143,7 @@ export function calcImportCosts(s: ImportScenario): { rows: TaxDutyRow[]; total:
       dutyNote = `${Math.round(pct * 100)}% от таможенной стоимости`;
       if (s.ageYears >= 3 && s.ageYears < 7) {
         const minPerCm3 = s.fuel === "diesel" ? 0.32 : 0.36;
-        const minDuty = s.volumeCm3 / 1000 * minPerCm3 * FX_RATES.EUR;
+        const minDuty = s.volumeCm3 / 1000 * minPerCm3 * eur;
         if (duty < minDuty) {
           duty = minDuty;
           dutyNote = `мин. ${minPerCm3} €/см³`;
@@ -146,7 +151,7 @@ export function calcImportCosts(s: ImportScenario): { rows: TaxDutyRow[]; total:
       }
     } else {
       const eurPerCm3 = s.ageYears >= 7 ? (s.fuel === "diesel" ? 1.4 : s.volumeCm3 > 3000 ? 3.2 : s.volumeCm3 > 2300 ? 2.2 : s.volumeCm3 > 1800 ? 2.2 : s.volumeCm3 > 1500 ? 1.6 : s.volumeCm3 > 1000 ? 1.5 : 1.4) : 1.4;
-      duty = s.volumeCm3 / 1000 * eurPerCm3 * FX_RATES.EUR;
+      duty = s.volumeCm3 / 1000 * eurPerCm3 * eur;
       dutyNote = `${eurPerCm3} €/см³`;
     }
   }

@@ -19,6 +19,8 @@ import {
   Upload,
   Loader2,
   HardDrive,
+  Copy,
+  Calculator,
 } from "lucide-react";
 import { getAllDrafts, clearDraft, clearDraftVersions, getDraftVersions, restoreDraftVersion, type DraftData, type DraftVersion } from "@/lib/autosave";
 import { exportDocument, getConnectedProviders } from "@/lib/cloud/manager";
@@ -31,7 +33,8 @@ import CloudExportMenu from "@/components/cloud/CloudExportMenu";
 import { usePaywall } from "@/hooks/usePaywall";
 import { TEMPLATE_META } from "@/data/templatesMeta";
 import Highlight from "@/components/ui/Highlight";
-import { tokenGroups, textMatchesTokens, scoreText } from "@/lib/search";
+import { tokenGroups, textMatchesTokens } from "@/lib/search";
+import { calcKindFromTemplateId, CALC_KIND_LABEL } from "@/lib/calcDoc";
 
 interface ServerDoc {
   id: string;
@@ -54,6 +57,9 @@ interface DocItem {
   fieldCount: number;
   filledCount: number;
   raw: DraftData;
+  /** 3.10: протокол из калькулятора (синтетический template_id `calc-…`). */
+  calc?: boolean;
+  protocol?: string;
 }
 
 const CATEGORY_BADGE: Record<string, { variant: "blue" | "green" | "amber" | "gray" | "red" | "purple" }> = {
@@ -65,6 +71,7 @@ const CATEGORY_BADGE: Record<string, { variant: "blue" | "green" | "amber" | "gr
   other: { variant: "gray" },
   migration: { variant: "gray" },
   postal: { variant: "gray" },
+  calc: { variant: "amber" },
 };
 
 export default function DocumentsPage() {
@@ -74,9 +81,14 @@ export default function DocumentsPage() {
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
   const [sortBy, setSortBy] = useState<"date" | "name">("date");
-  const [page, setPage] = useState(1);
   const [docs, setDocs] = useState<DocItem[]>([]);
   const [loading, setLoading] = useState(true);
+  // 5.1 (аудит): серверная cursor-пагинация вместо загрузки всего списка разом.
+  const SERVER_PAGE = 20;
+  const [hasMore, setHasMore] = useState(false);
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [importCount, setImportCount] = useState(0);
   const [importing, setImporting] = useState(false);
   const [importToast, setImportToast] = useState<string | null>(null);
@@ -84,69 +96,144 @@ export default function DocumentsPage() {
   const [exporting, setExporting] = useState<string | null>(null);
   const [exportToast, setExportToast] = useState<string | null>(null);
   const [folderPicker, setFolderPicker] = useState<{ providerId: CloudProviderId; docId: string; format: "pdf" | "vault-backup" } | null>(null);
-  const perPage = 10;
 
-  const toDocItem = useCallback((id: string, fields: Record<string, string>, savedAt: string): DocItem => {
-    const tpl = TEMPLATE_META.find((t) => t.id === id);
-    const filledCount = Object.values(fields).filter(
-      (v) => v && v.trim() !== ""
-    ).length;
-    return {
-      id,
-      name: tpl?.name || id,
-      typeName: tpl?.category || "Прочее",
-      category: tpl?.category || "other",
-      savedAt,
-      fieldCount: tpl?.fieldCount || 0,
-      filledCount,
-      raw: { templateId: id, values: fields, checklist: {}, activeTab: "", savedAt },
-    };
-  }, []);
+  const toDocItem = useCallback(
+    (id: string, fields: Record<string, string>, savedAt: string, title?: string): DocItem => {
+      // 3.10: синтетический протокол из калькулятора (нет в каталоге шаблонов).
+      const calcKind = calcKindFromTemplateId(id);
+      if (calcKind) {
+        return {
+          id,
+          name: title?.trim() || CALC_KIND_LABEL[calcKind],
+          typeName: "Расчёт",
+          category: "calc",
+          savedAt,
+          fieldCount: 1,
+          filledCount: 1,
+          calc: true,
+          protocol: fields?.protocol ?? "",
+          raw: { templateId: id, values: fields ?? {}, checklist: {}, activeTab: "", savedAt },
+        };
+      }
+      const tpl = TEMPLATE_META.find((t) => t.id === id);
+      const filledCount = Object.values(fields).filter(
+        (v) => v && v.trim() !== ""
+      ).length;
+      return {
+        id,
+        name: tpl?.name || id,
+        typeName: tpl?.category || "Прочее",
+        category: tpl?.category || "other",
+        savedAt,
+        fieldCount: tpl?.fieldCount || 0,
+        filledCount,
+        raw: { templateId: id, values: fields, checklist: {}, activeTab: "", savedAt },
+      };
+    },
+    []
+  );
 
-  const loadDocs = useCallback(async () => {
-    setLoading(true);
-    let serverIds = new Set<string>();
-    try {
-      const res = await fetch("/api/documents");
-      if (res.ok) {
-        const { data } = await res.json();
-        if (Array.isArray(data) && data.length > 0) {
-          serverIds = new Set(data.map((s: ServerDoc) => s.template_id));
-          const items: DocItem[] = data.map((s: ServerDoc) =>
-            toDocItem(s.template_id, s.fields, s.updated_at)
-          );
+  const buildParams = (q: string, cursor?: string | null) => {
+    const params = new URLSearchParams();
+    params.set("limit", String(SERVER_PAGE));
+    if (cursor) params.set("cursor", cursor);
+    const tokens = tokenGroups(q);
+    if (tokens.length > 0) {
+      params.set("q", q.trim().slice(0, 100));
+      // Русские названия шаблонов живут в TEMPLATE_META — резолвим запрос
+      // в список template_id и просим сервер искать по ним + по title.
+      const ids = TEMPLATE_META.filter((t) =>
+        textMatchesTokens([t.name, t.id, t.category].join(" "), tokens)
+      )
+        .map((t) => t.id)
+        .slice(0, 300);
+      if (ids.length) params.set("tpls", ids.join(","));
+    }
+    return params;
+  };
+
+  const serverDocsToItems = (rows: ServerDoc[]) =>
+    rows.map((s: ServerDoc) => toDocItem(s.template_id, s.fields, s.updated_at, s.title));
+
+  const loadDocs = useCallback(
+    async (q: string) => {
+      setLoading(true);
+      let serverIds = new Set<string>();
+      try {
+        const res = await fetch(`/api/documents?${buildParams(q)}`);
+        if (res.ok) {
+          const { data, hasMore: hm, nextCursor: nc } = await res.json();
+          const items = serverDocsToItems(data ?? []);
           setDocs(items);
+          setHasMore(!!hm);
+          setNextCursor(nc ?? null);
         }
+      } catch {
+        // offline → fallback к localStorage
+      }
+      // Точный список серверных template_id для счётчика импорта — lightweight
+      // режим ids=1 (без JSONB fields), даже когда показана только страница.
+      try {
+        const resIds = await fetch("/api/documents?ids=1");
+        if (resIds.ok) {
+          const { data } = await resIds.json();
+          serverIds = new Set((data ?? []).map((s: ServerDoc) => s.template_id));
+        }
+      } catch {
+        // ignore
+      }
+      const local = getAllDrafts();
+      const notImported = local.filter(
+        (d) => !serverIds.has(d.templateId)
+      ).length;
+      setImportCount(notImported);
+      if (serverIds.size === 0 && local.length > 0) {
+        const items: DocItem[] = local.map((d) => {
+          const tpl = TEMPLATE_META.find((t) => t.id === d.templateId);
+          const filledCount = Object.values(d.values).filter(
+            (v) => v && v.trim() !== ""
+          ).length;
+          return {
+            id: d.templateId,
+            name: tpl?.name || d.templateId,
+            typeName: tpl?.category || "Прочее",
+            category: tpl?.category || "other",
+            savedAt: d.savedAt,
+            fieldCount: tpl?.fieldCount || 0,
+            filledCount,
+            raw: d,
+          };
+        });
+        setDocs(items);
+      }
+      setLoading(false);
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [toDocItem]
+  );
+
+  const loadMore = useCallback(async () => {
+    if (!nextCursor || loadingMore) return;
+    setLoadingMore(true);
+    try {
+      const res = await fetch(`/api/documents?${buildParams(debouncedSearch, nextCursor)}`);
+      if (res.ok) {
+        const { data, hasMore: hm, nextCursor: nc } = await res.json();
+        const items = serverDocsToItems(data ?? []);
+        setDocs((prev) => {
+          const seen = new Set(prev.map((d) => d.id));
+          return [...prev, ...items.filter((i) => !seen.has(i.id))];
+        });
+        setHasMore(!!hm);
+        setNextCursor(nc ?? null);
       }
     } catch {
-      // offline → fallback к localStorage
+      // keep current page
+    } finally {
+      setLoadingMore(false);
     }
-    const local = getAllDrafts();
-    const notImported = local.filter(
-      (d) => !serverIds.has(d.templateId)
-    ).length;
-    setImportCount(notImported);
-    if (serverIds.size === 0 && local.length > 0) {
-      const items: DocItem[] = local.map((d) => {
-        const tpl = TEMPLATE_META.find((t) => t.id === d.templateId);
-        const filledCount = Object.values(d.values).filter(
-          (v) => v && v.trim() !== ""
-        ).length;
-        return {
-          id: d.templateId,
-          name: tpl?.name || d.templateId,
-          typeName: tpl?.category || "Прочее",
-          category: tpl?.category || "other",
-          savedAt: d.savedAt,
-          fieldCount: tpl?.fieldCount || 0,
-          filledCount,
-          raw: d,
-        };
-      });
-      setDocs(items);
-    }
-    setLoading(false);
-  }, [toDocItem]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [nextCursor, loadingMore, debouncedSearch, toDocItem]);
 
   const handleImport = async () => {
     setImporting(true);
@@ -168,13 +255,18 @@ export default function DocumentsPage() {
       }
     } finally {
       setImporting(false);
-      loadDocs();
+      loadDocs(debouncedSearch);
     }
   };
 
   useEffect(() => {
-    loadDocs();
-  }, [loadDocs]);
+    const t = setTimeout(() => setDebouncedSearch(search.trim()), 350);
+    return () => clearTimeout(t);
+  }, [search]);
+
+  useEffect(() => {
+    loadDocs(debouncedSearch);
+  }, [loadDocs, debouncedSearch]);
 
   useEffect(() => {
     async function loadCloud() {
@@ -185,27 +277,16 @@ export default function DocumentsPage() {
     loadCloud();
   }, []);
 
+  // Поиск выполняется на сервере (q + tpls из TEMPLATE_META), категория — на
+  // клиенте по загруженной витрине. Глубокий поиск по значениям полей JSONB на
+  // всех страницах потребовал бы tsvector-миграции — сознательно вне объёма 5.1.
   const filtered = docs
-    .filter((d) => {
-      if (typeFilter !== "all" && d.typeName !== typeFilter) return false;
-      const tokens = tokenGroups(search);
-      if (tokens.length === 0) return true;
-      const content = [
-        d.name,
-        d.typeName,
-        d.category,
-        ...Object.values(d.raw?.values ?? {}),
-      ].join(" ");
-      return textMatchesTokens(content, tokens);
-    })
+    .filter((d) => typeFilter === "all" || d.typeName === typeFilter)
     .sort((a, b) =>
       sortBy === "date"
         ? new Date(b.savedAt).getTime() - new Date(a.savedAt).getTime()
         : a.name.localeCompare(b.name)
     );
-
-  const totalPages = Math.ceil(filtered.length / perPage);
-  const paged = filtered.slice((page - 1) * perPage, page * perPage);
 
   const categories = Array.from(new Set(docs.map((d) => d.typeName)));
 
@@ -235,7 +316,7 @@ export default function DocumentsPage() {
     }
     clearDraft(templateId);
     clearDraftVersions(templateId);
-    loadDocs();
+    loadDocs(debouncedSearch);
   };
 
   const handleMigrateToVault = async (templateId: string) => {
@@ -272,7 +353,7 @@ export default function DocumentsPage() {
       await fetch(`/api/documents/${s.id}`, { method: "DELETE" });
       clearDraft(templateId);
       clearDraftVersions(templateId);
-      loadDocs();
+      loadDocs(debouncedSearch);
       setExportToast("Документ перенесён в защищённое хранилище на этом устройстве");
       setTimeout(() => setExportToast(null), 4000);
     } catch (e) {
@@ -369,6 +450,20 @@ export default function DocumentsPage() {
   const [historyDoc, setHistoryDoc] = useState<DocItem | null>(null);
   const [historyVersions, setHistoryVersions] = useState<DraftVersion[]>([]);
   const [historyToast, setHistoryToast] = useState<string | null>(null);
+  // 3.10: просмотр протокола калькулятора (нет шаблона → не открываем в builder).
+  const [calcViewDoc, setCalcViewDoc] = useState<DocItem | null>(null);
+  const [calcCopied, setCalcCopied] = useState(false);
+
+  const copyCalcProtocol = async () => {
+    if (!calcViewDoc?.protocol) return;
+    try {
+      await navigator.clipboard.writeText(calcViewDoc.protocol);
+      setCalcCopied(true);
+      setTimeout(() => setCalcCopied(false), 2500);
+    } catch {
+      /* clipboard недоступен */
+    }
+  };
 
   const openHistory = (doc: DocItem) => {
     setHistoryDoc(doc);
@@ -380,7 +475,7 @@ export default function DocumentsPage() {
     restoreDraftVersion(historyDoc.id, v);
     setHistoryToast(`Версия от ${formatDate(v.savedAt)} восстановлена`);
     setHistoryDoc(null);
-    loadDocs();
+    loadDocs(debouncedSearch);
     setTimeout(() => setHistoryToast(null), 3000);
   };
 
@@ -407,7 +502,7 @@ export default function DocumentsPage() {
         </div>
         <div className="flex items-center gap-2">
           <button
-            onClick={loadDocs}
+            onClick={() => loadDocs(debouncedSearch)}
             className="p-2.5 rounded-xl border border-gray-200 hover:bg-gray-50 transition-colors"
             title="Обновить"
           >
@@ -503,7 +598,6 @@ export default function DocumentsPage() {
                   value={search}
                   onChange={(e) => {
                     setSearch(e.target.value);
-                    setPage(1);
                   }}
                   className="w-full pl-10 pr-4 py-2.5 text-sm border border-gray-200 rounded-xl bg-gray-50 focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 focus:bg-white transition-all"
                 />
@@ -513,7 +607,6 @@ export default function DocumentsPage() {
                   value={typeFilter}
                   onChange={(e) => {
                     setTypeFilter(e.target.value);
-                    setPage(1);
                   }}
                   className="px-3 py-2.5 text-sm border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-brand-500/20"
                 >
@@ -549,7 +642,7 @@ export default function DocumentsPage() {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {paged.map((doc) => {
+                {filtered.map((doc) => {
                   const badge = CATEGORY_BADGE[doc.category] || {
                     variant: "gray" as const,
                   };
@@ -561,8 +654,12 @@ export default function DocumentsPage() {
                     <TableRow key={doc.id}>
                       <TableCell>
                         <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-lg bg-brand-50 flex items-center justify-center">
-                            <FileText className="w-4 h-4 text-brand-500" />
+                          <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${doc.calc ? "bg-amber-50" : "bg-brand-50"}`}>
+                            {doc.calc ? (
+                              <Calculator className="w-4 h-4 text-amber-600" />
+                            ) : (
+                              <FileText className="w-4 h-4 text-brand-500" />
+                            )}
                           </div>
                           <span className="font-medium text-gray-900 text-sm">
                             <Highlight text={doc.name} query={search} />
@@ -575,6 +672,9 @@ export default function DocumentsPage() {
                         </Badge>
                       </TableCell>
                       <TableCell>
+                        {doc.calc ? (
+                          <span className="text-xs text-gray-500">протокол</span>
+                        ) : (
                         <div className="flex items-center gap-2">
                           <div className="w-20 h-1.5 bg-gray-100 rounded-full overflow-hidden">
                             <div
@@ -592,6 +692,7 @@ export default function DocumentsPage() {
                             {doc.filledCount}/{doc.fieldCount}
                           </span>
                         </div>
+                        )}
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-1 text-xs text-gray-600">
@@ -599,56 +700,77 @@ export default function DocumentsPage() {
                           {formatDate(doc.savedAt)}
                         </div>
                       </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-1 relative">
-                          <button
-                            onClick={() => handlePreview(doc.id)}
-                            className="p-1.5 hover:bg-brand-50 rounded-lg text-brand-500 transition-colors"
-                            title="Предпросмотр"
-                          >
-                            <Eye className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => handleOpen(doc.id)}
-                            className="p-1.5 hover:bg-brand-50 rounded-lg text-brand-500 transition-colors"
-                            title="Открыть"
-                          >
-                            <Pencil className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => openHistory(doc)}
-                            className="p-1.5 hover:bg-brand-50 rounded-lg text-gray-600 hover:text-brand-500 transition-colors"
-                            title="История версий"
-                          >
-                            <Clock className="w-4 h-4" />
-                          </button>
-                          <CloudExportMenu
-                            providers={cloudProviders}
-                            busy={exporting === doc.id}
-                            triggerTitle={
-                              cloudProviders.length > 0
-                                ? "Экспорт в облако: бэкап или PDF"
-                                : "Подключите Яндекс / Google / Dropbox"
-                            }
-                            onPick={(pid, pname, fmt) => handleExportPick(doc.id, pid, pname, fmt)}
-                            onManage={() => router.push("/connections")}
-                            subscriptionActive={cloudPro}
-                            onUpgrade={openCloudPaywall}
-                          />
-                          <button
-                            onClick={() => handleMigrateToVault(doc.id)}
-                            className="p-1.5 hover:bg-blue-50 rounded-lg text-blue-600 hover:text-blue-700 transition-colors"
-                            title="Перенести в локальное защищённое хранилище (удалить с сервера)"
-                          >
-                            <HardDrive className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => handleDelete(doc.id)}
-                            className="p-1.5 hover:bg-red-50 rounded-lg text-gray-600 hover:text-red-500 transition-colors"
-                            title="Удалить"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
+                       <TableCell>
+                         <div className="flex items-center gap-1 relative">
+                           {doc.calc ? (
+                             <button
+                               onClick={() => {
+                                 setCalcViewDoc(doc);
+                                 setCalcCopied(false);
+                               }}
+                               className="p-1.5 hover:bg-brand-50 rounded-lg text-brand-500 transition-colors"
+                               title="Просмотр протокола расчёта"
+                             >
+                               <Eye className="w-4 h-4" />
+                             </button>
+                           ) : (
+                             <button
+                               onClick={() => handlePreview(doc.id)}
+                               className="p-1.5 hover:bg-brand-50 rounded-lg text-brand-500 transition-colors"
+                               title="Предпросмотр"
+                             >
+                               <Eye className="w-4 h-4" />
+                             </button>
+                           )}
+                           {!doc.calc && (
+                             <button
+                               onClick={() => handleOpen(doc.id)}
+                               className="p-1.5 hover:bg-brand-50 rounded-lg text-brand-500 transition-colors"
+                               title="Открыть"
+                             >
+                               <Pencil className="w-4 h-4" />
+                             </button>
+                           )}
+                           {!doc.calc && (
+                             <button
+                               onClick={() => openHistory(doc)}
+                               className="p-1.5 hover:bg-brand-50 rounded-lg text-gray-600 hover:text-brand-500 transition-colors"
+                               title="История версий"
+                             >
+                               <Clock className="w-4 h-4" />
+                             </button>
+                           )}
+                           {!doc.calc && (
+                             <CloudExportMenu
+                               providers={cloudProviders}
+                               busy={exporting === doc.id}
+                               triggerTitle={
+                                 cloudProviders.length > 0
+                                   ? "Экспорт в облако: бэкап или PDF"
+                                   : "Подключите Яндекс / Google / Dropbox"
+                               }
+                               onPick={(pid, pname, fmt) => handleExportPick(doc.id, pid, pname, fmt)}
+                               onManage={() => router.push("/connections")}
+                               subscriptionActive={cloudPro}
+                               onUpgrade={openCloudPaywall}
+                             />
+                           )}
+                           {!doc.calc && (
+                             <button
+                               onClick={() => handleMigrateToVault(doc.id)}
+                               className="p-1.5 hover:bg-blue-50 rounded-lg text-blue-600 hover:text-blue-700 transition-colors"
+                               title="Перенести в локальное защищённое хранилище (удалить с сервера)"
+                             >
+                               <HardDrive className="w-4 h-4" />
+                             </button>
+                           )}
+                           <button
+                             onClick={() => handleDelete(doc.id)}
+                             className="p-1.5 hover:bg-red-50 rounded-lg text-gray-600 hover:text-red-500 transition-colors"
+                             title="Удалить"
+                           >
+                             <Trash2 className="w-4 h-4" />
+                           </button>
                         </div>
                       </TableCell>
                     </TableRow>
@@ -658,45 +780,67 @@ export default function DocumentsPage() {
             </Table>
           </div>
 
-          {totalPages > 1 && (
+          {(hasMore || filtered.length > 0) && (
             <div className="px-5 py-4 border-t border-gray-100 flex items-center justify-between text-sm text-gray-600">
               <span>
-                {(page - 1) * perPage + 1}–
-                {Math.min(page * perPage, filtered.length)} из {filtered.length}
+                Загружено: {filtered.length}
+                {hasMore ? " · есть ещё" : ""}
               </span>
-              <div className="flex items-center gap-2">
+              {hasMore && (
                 <button
-                  className="px-3 py-1.5 border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-30"
-                  disabled={page <= 1}
-                  onClick={() => setPage(page - 1)}
+                  className="px-4 py-1.5 border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-40 font-medium"
+                  disabled={loadingMore}
+                  onClick={loadMore}
                 >
-                  Назад
+                  {loadingMore ? "Загрузка…" : "Загрузить ещё"}
                 </button>
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map(
-                  (p) => (
-                    <button
-                      key={p}
-                      className={`w-8 h-8 rounded-lg text-sm font-medium ${
-                        p === page
-                          ? "bg-brand-500 text-white"
-                          : "hover:bg-gray-100"
-                      }`}
-                      onClick={() => setPage(p)}
-                    >
-                      {p}
-                    </button>
-                  )
-                )}
-                <button
-                  className="px-3 py-1.5 border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-30"
-                  disabled={page >= totalPages}
-                  onClick={() => setPage(page + 1)}
-                >
-                  Вперёд
-                </button>
-              </div>
+              )}
             </div>
           )}
+        </div>
+      )}
+
+      {calcViewDoc && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Протокол расчёта"
+          onClick={() => setCalcViewDoc(null)}
+        >
+          <div
+            className="bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[80vh] flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start justify-between gap-3 p-5 border-b border-gray-100">
+              <div>
+                <p className="text-[11px] font-mono uppercase text-amber-600">Расчёт из калькулятора</p>
+                <h3 className="text-base font-bold text-gray-900 mt-0.5">{calcViewDoc.name}</h3>
+                <p className="text-xs text-gray-500 mt-0.5">Сохранён {formatDate(calcViewDoc.savedAt)}</p>
+              </div>
+              <button
+                onClick={() => setCalcViewDoc(null)}
+                className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-500"
+                aria-label="Закрыть"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="p-5 overflow-y-auto">
+              <pre className="text-xs font-mono whitespace-pre-wrap break-words text-gray-800 bg-gray-50 border border-gray-200 rounded-xl p-4 leading-relaxed">
+                {calcViewDoc.protocol || "Пусто"}
+              </pre>
+            </div>
+            <div className="flex items-center justify-end gap-2 p-4 border-t border-gray-100">
+              <Button variant="secondary" size="sm" onClick={copyCalcProtocol}>
+                <Copy className="w-3.5 h-3.5" />
+                {calcCopied ? "Скопировано" : "Копировать"}
+              </Button>
+              <Button variant="primary" size="sm" onClick={() => setCalcViewDoc(null)}>
+                Закрыть
+              </Button>
+            </div>
+          </div>
         </div>
       )}
 

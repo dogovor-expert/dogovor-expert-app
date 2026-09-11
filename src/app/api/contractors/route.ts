@@ -3,8 +3,21 @@ import { createClient } from "@/lib/supabase/server";
 import { withCsrf } from "@/lib/csrf";
 import { isSameOrigin } from "@/lib/admin-auth";
 import { limiters, checkRateLimit, rateLimitResponse } from "@/lib/ratelimit";
+import { isInn } from "@/lib/legal/validators";
+import { z } from "zod";
 
 const FIELDS = ["name", "inn", "kpp", "ogrn", "address", "email", "phone", "note"];
+
+const contractorSchema = z.object({
+  name: z.string().trim().max(500).optional().default(""),
+  inn: z.string().trim().max(20).optional().default(""),
+  kpp: z.string().trim().max(20).optional().default(""),
+  ogrn: z.string().trim().max(20).optional().default(""),
+  address: z.string().trim().max(500).optional().default(""),
+  email: z.string().trim().max(254).optional().default(""),
+  phone: z.string().trim().max(20).optional().default(""),
+  note: z.string().trim().max(500).optional().default(""),
+});
 
 export async function GET() {
   const supabase = await createClient();
@@ -37,18 +50,30 @@ async function postHandler(req: NextRequest) {
   const rl = await checkRateLimit(limiters.crudMutation, user.id);
   if (!rl.ok) return rateLimitResponse(rl.retryAfter);
 
-  const body = await req.json().catch(() => null);
-  if (!body || typeof body !== "object") {
+  const raw = await req.json().catch(() => null);
+  if (!raw || typeof raw !== "object") {
     return NextResponse.json({ error: "bad body" }, { status: 400 });
   }
 
-  const row: Record<string, string> = {};
-  for (const key of FIELDS) {
-    const value = body[key];
-    row[key] = typeof value === "string" ? value.trim().slice(0, 500) : "";
+  const parsed = contractorSchema.safeParse(raw);
+  if (!parsed.success) {
+    return NextResponse.json({ error: "validation", details: parsed.error.flatten() }, { status: 400 });
   }
+  const row = parsed.data;
+
   if (!row.name && !row.inn) {
     return NextResponse.json({ error: "Заполните наименование или ИНН" }, { status: 400 });
+  }
+
+  if (row.inn) {
+    const innCheck = isInn(row.inn);
+    if (!innCheck.valid) {
+      return NextResponse.json({ error: innCheck.message || "ИНН некорректен" }, { status: 400 });
+    }
+  }
+
+  if (row.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(row.email)) {
+    return NextResponse.json({ error: "Некорректный email" }, { status: 400 });
   }
 
   const { data, error } = await supabase

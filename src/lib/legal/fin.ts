@@ -117,6 +117,80 @@ export function vacationPay(salary12: number, days: number): { sdz: number; pay:
   return { sdz: Math.round(sdz * 100) / 100, pay: Math.round(Math.max(0, sdz) * days * 100) / 100 };
 }
 
+/**
+ * Отпускные с учётом премий — ПП РФ № 540 от 24.04.2025 (п. 15),
+ * ранее ПП № 922 п. 15 (формула идентична).
+ *
+ * Правила п. 15:
+ *  - ежемесячные премии — не более одной выплаты за каждый показатель
+ *    за каждый месяц расчётного периода;
+ *  - премии за период > 1 месяца, но ≤ расчётного периода (квартальные,
+ *    полугодовые) — по одной за каждый показатель;
+ *  - годовое вознаграждение (и за выслугу лет) — за календарный год,
+ *    предшествующий событию, независимо от времени начисления;
+ *  - если расчётный период отработан не полностью — премии учитываются
+ *    пропорционально отработанному времени, КРОМЕ премий, начисленных
+ *    уже за фактически отработанное время (они берутся полностью).
+ *
+ * Периоды по п. 5 (больничный, отпуск, простой, командировка) исключаются
+ * из расчётного периода: знаменатель = 29,3 × полные месяцы + дни в неполных.
+ */
+export interface VacationBonusInput {
+  /** Выплаты по окладу/тарифу за расчётный период (без премий), ₽. */
+  salary12: number;
+  /** Сумма ежемесячных премий, начисленных в расчётном периоде, ₽. */
+  monthlyBonuses?: number;
+  /** Сумма квартальных/полугодовых премий (за период ≤ расчётного), ₽. */
+  periodBonuses?: number;
+  /** Годовая премия (и выслуга) за предшествующий календарный год, ₽. */
+  annualBonus?: number;
+  /** Полностью отработанные месяцы из 12 (12–0), по умолчанию 12. */
+  fullyWorkedMonths?: number;
+  /** Календарные дни в неполностью отработанных месяцах, по умолчанию 0. */
+  partialMonthDays?: number;
+  /** Премии начислены уже пропорционально отработанному времени → берём полностью. */
+  bonusesAlreadyProportional?: boolean;
+}
+
+export interface VacationBonusResult {
+  sdz: number;
+  pay: number;
+  /** Итоговые включённые премии (с учётом пропорционализации). */
+  bonusesIncluded: number;
+  /** Знаменатель: 29,3 × полные месяцы + дни неполных (или 29,3 × 12). */
+  denominator: number;
+  /** Доля отработанного времени (для пропорционализации премий). */
+  workedFraction: number;
+}
+
+export function vacationPayWithBonuses(
+  i: VacationBonusInput,
+  days: number,
+): VacationBonusResult | null {
+  const fm = Math.max(0, Math.min(12, i.fullyWorkedMonths ?? 12));
+  const pd = Math.max(0, Math.min(31, i.partialMonthDays ?? 0));
+  const denominator = fm >= 12 ? 29.3 * 12 : 29.3 * fm + pd;
+  if (denominator <= 0 || !isFinite(i.salary12) || i.salary12 < 0) return null;
+
+  const workedFraction = Math.min(1, denominator / (29.3 * 12));
+  const proportional = workedFraction < 1 && !i.bonusesAlreadyProportional;
+  const scale = (v: number) => (proportional ? v * workedFraction : v);
+
+  const bonusesIncluded =
+    scale(i.monthlyBonuses ?? 0) +
+    scale(i.periodBonuses ?? 0) +
+    scale(i.annualBonus ?? 0);
+
+  const sdz = (Math.max(0, i.salary12) + bonusesIncluded) / denominator;
+  return {
+    sdz: Math.round(sdz * 100) / 100,
+    pay: Math.round(Math.max(0, sdz) * days * 100) / 100,
+    bonusesIncluded: Math.round(bonusesIncluded * 100) / 100,
+    denominator: Math.round(denominator * 100) / 100,
+    workedFraction: Math.round(workedFraction * 1000) / 1000,
+  };
+}
+
 /** Компенсация неиспользованного отпуска: 2,33 дня за месяц работы. */
 export function unusedVacationDays(monthsWorked: number): number {
   return Math.min(Math.round(monthsWorked * 2.33 * 100) / 100, 28);

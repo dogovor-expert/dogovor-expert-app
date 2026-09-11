@@ -14,6 +14,7 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 const supabaseHost = supabaseUrl.replace(/^https?:\/\//, '').split('/')[0] || '';
 
 const nextConfig = {
+  output: 'standalone',
   reactStrictMode: true,
   poweredByHeader: false,
   images: {
