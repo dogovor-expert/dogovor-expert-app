@@ -55,6 +55,24 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: false, error: 'unauthorized' }, { status: 401 });
   }
 
+  // 1a) TICKET-1 (152-ФЗ ст. 9): серверный OCR разрешён только при наличии
+  //     зафиксированного согласия (profiles.ocr_consent_at). UI-чекбокс —
+  //     удобство; вот этот гейт — юридически значимая граница.
+  const { data: consentRow, error: consentErr } = await supabase
+    .from('profiles')
+    .select('ocr_consent_at')
+    .eq('id', user.id)
+    .maybeSingle();
+  if (consentErr) {
+    return NextResponse.json({ ok: false, error: 'db_error' }, { status: 500 });
+  }
+  if (!consentRow?.ocr_consent_at) {
+    return NextResponse.json(
+      { ok: false, error: 'consent_required' },
+      { status: 403 }
+    );
+  }
+
   // 1b) Rate limit: тяжёлая загрузка (10/min на user.id). Ограничиваем строго, т.к. каждый
   //     вызов проксирует на домашний сервер (Tailscale/домашний ПК).
   const rl = await checkRateLimit(limiters.ocrUpload, user.id);
@@ -148,8 +166,13 @@ export async function POST(req: NextRequest) {
 
     const headers: Record<string, string> = {};
     if (ocularApiKey) headers['X-API-Key'] = ocularApiKey;
+    // TICKET-1: запрет кэширования входных изображений на occular-сервере
+    // (хранить отпечатки паспортов на сервере — неоправданный риск).
+    // Сервер должен уважать X-No-Cache; параметр — страховка для реализаций,
+    // читающих query. Если payload.cache === true — фиксируем в ответе.
+    headers['X-No-Cache'] = '1';
 
-    const upstreamRes = await fetch(`${ocularBaseUrl}/ocr`, {
+    const upstreamRes = await fetch(`${ocularBaseUrl}/ocr?nocache=1`, {
       method: 'POST',
       body: upstream,
       headers,

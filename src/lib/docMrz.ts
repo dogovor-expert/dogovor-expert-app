@@ -153,13 +153,34 @@ export function applyMrzToRole(
     mrz.fields.documentNumber ?? null
   );
   put([`${prefix}_birthday`, `${prefix}_birth_date`], formatDate6(mrz.fields.birthDate));
-  put([`${prefix}_passport_date`], formatDate6(mrz.fields.expiryDate));
+  // ВАЖНО: ДАТУ ВЫДАЧИ из MRZ получить невозможно — в машиночитаемой зоне
+  // (ICAO 9303 TD1/TD2/TD3) есть только номер, дата рождения и СРОК ДЕЙСТВИЯ.
+  // Раньше сюда ошибочно писалась expiryDate → в договор молча попадала дата
+  // окончания вместо даты выдачи. Поле остаётся пустым; см. mrzManualHints().
   put(
     [`${prefix}_passport_valid_until`, `${prefix}_valid_until`],
     formatDate6(mrz.fields.expiryDate)
   );
 
   return out;
+}
+
+/**
+ * Поля шаблона, которые MRZ принципиально не может заполнить, но которые
+ * ожидаются для этого типа документа → UI должен попросить пользователя
+ * заполнить их вручную (иначе молчаливая пустота или, что хуже, догадка).
+ */
+export function mrzManualHints(
+  template: LegalTemplate,
+  prefix: string
+): string[] {
+  const hints: string[] = [];
+  if (template.fields.some((f) => f.id === `${prefix}_passport_date`)) {
+    hints.push(
+      "Дата выдачи паспорта не считывается с MRZ загранпаспорта — заполните вручную из визуальной зоны"
+    );
+  }
+  return hints;
 }
 
 /** YYMMDD (mrz) → DD.MM.YYYY, с обработкой '<' / мусора. */

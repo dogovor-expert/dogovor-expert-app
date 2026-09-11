@@ -1,4 +1,5 @@
 ﻿"use client";
+import Link from "next/link";
 import { useRef, useState, useMemo, useEffect } from "react";
 import {
   Camera,
@@ -32,10 +33,12 @@ import {
 import { planFromScan } from "@/lib/docPlanner";
 import { prepareDocumentImage, type ImageQuality } from "@/lib/docImage";
 import { paddleRecognize, paddleWarmup } from "@/lib/paddleOcr";
-import { tryParseMrz, applyMrzToRole, type MrzParseSuccess } from "@/lib/docMrz";
+import { tryParseMrz, applyMrzToRole, mrzManualHints, type MrzParseSuccess } from "@/lib/docMrz";
 import {
   fetchOcularStatus,
   postOcrRequest,
+  shouldUseServerOcr,
+  OCR_CONSENT_STORAGE_KEY,
   type OcularStatus,
 } from "@/lib/ocrStatus";
 
@@ -80,6 +83,7 @@ interface ScanResult {
   ocrWidth?: number;
   ocrHeight?: number;
   quality?: ImageQuality;
+  manualHints?: string[];
   slotId: string;
 }
 
@@ -136,6 +140,9 @@ export default function DocScanner({
   const [dragOver, setDragOver] = useState<string | null>(null);
   const [lightbox, setLightbox] = useState<{ slotId: string; index: number } | null>(null);
   const [ocularStatus, setOcularStatus] = useState<OcularStatus | null>(null);
+  // TICKET-1: явный opt-in на серверный OCR (152-ФЗ ст. 9). По умолчанию —
+  // выключен: без согласия работает только клиентский Tesseract/Paddle.
+  const [ocrConsent, setOcrConsent] = useState(false);
   const fileInputsRef = useRef<Record<string, HTMLInputElement | null>>({});
   const lastFilesRef = useRef<Record<string, File | null>>({});
 
@@ -180,6 +187,56 @@ export default function DocScanner({
       window.clearTimeout(id);
     };
   }, []);
+
+  // TICKET-1: восстановление согласия — локальный ключ сразу, сервер (для
+  // синхронизации между устройствами) как источник истины, если доступен.
+  useEffect(() => {
+    try {
+      if (localStorage.getItem(OCR_CONSENT_STORAGE_KEY) === "1") {
+        setOcrConsent(true);
+      }
+    } catch {
+      // localStorage недоступен (приватный режим) — остаёмся «без согласия».
+    }
+    const ctrl = new AbortController();
+    void fetch("/api/ocr-consent", { cache: "no-store", signal: ctrl.signal })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d: { consented?: unknown } | null) => {
+        if (d && typeof d.consented === "boolean") {
+          setOcrConsent(d.consented);
+          try {
+            if (d.consented) localStorage.setItem(OCR_CONSENT_STORAGE_KEY, "1");
+            else localStorage.removeItem(OCR_CONSENT_STORAGE_KEY);
+          } catch {
+            /* noop */
+          }
+        }
+      })
+      .catch(() => {
+        // Сервер недоступен — решение по localStorage.
+      });
+    return () => ctrl.abort();
+  }, []);
+
+  const setServerOcrConsent = (granted: boolean) => {
+    setOcrConsent(granted);
+    try {
+      if (granted) localStorage.setItem(OCR_CONSENT_STORAGE_KEY, "1");
+      else localStorage.removeItem(OCR_CONSENT_STORAGE_KEY);
+    } catch {
+      /* noop */
+    }
+    // Фиксация в БД (доказательная база согласия). Ошибка сети не откатывает
+    // локальный выбор: серверный OCR при отсутствии ocr_consent_at в БД
+    // вернёт 403 и сканер бесшовно упадёт на клиентский движок.
+    void fetch("/api/ocr-consent", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ granted }),
+    }).catch(() => {
+      /* noop */
+    });
+  };
 
   /** Скроллит форму к первому заполненному полю и подсвечивает все. */
   const focusFilledFields = (ids: string[]) => {
@@ -281,6 +338,7 @@ export default function DocScanner({
     "confidence" | "words" | "quality" | "ocrWidth" | "ocrHeight"
   > => {
     const values: Record<string, string> = {};
+    const manualHints: string[] = [];
     let mrz: MrzParseSuccess | null = null;
     switch (slot.ocrKind) {
       case "passport":
@@ -290,6 +348,7 @@ export default function DocScanner({
         mrz = tryParseMrz(text);
         if (mrz && slot.rolePrefix) {
           Object.assign(values, applyMrzToRole(template, slot.rolePrefix, mrz));
+          manualHints.push(...mrzManualHints(template, slot.rolePrefix));
         }
         // 2) Регулярный парсинг РФ-паспорта (у него MRZ нет).
         const data = extractPassportData(text);
@@ -363,6 +422,7 @@ export default function DocScanner({
       filled: entries.length,
       missing,
       filledFields,
+      manualHints: manualHints.length > 0 ? manualHints : undefined,
       slotId: slot.id,
     };
   };
@@ -414,11 +474,11 @@ export default function DocScanner({
         let ocr = await runOcr(slot, prepared.ocrRaw, prepared.ocrBinary, tesseractParams);
 
         // 2a) Серверный occular-OCR (домашний/VDS) — точный распознаватель
-        //     для русских документов. Используется, если доступен И его
-        //     средняя confidence по строкам выше, чем у Tesseract. Любая
-        //     ошибка (offline, таймаут, недоступность) — бесшовный fallback
-        //     на локальный движок, без уведомления пользователя.
-        if (ocularStatus?.available) {
+        //     для русских документов. Используется, только если сервер доступен
+        //     И пользователь явно включил точный режим (TICKET-1, 152-ФЗ).
+        //     Любая ошибка (offline, таймаут, 403 без согласия в БД) — бесшовный
+        //     fallback на локальный движок, без уведомления пользователя.
+        if (shouldUseServerOcr(ocularStatus, ocrConsent)) {
           try {
             setProgress((p) => ({
               ...p,
@@ -712,6 +772,19 @@ export default function DocScanner({
                 ))}
               </div>
             )}
+            {res.manualHints && res.manualHints.length > 0 && (
+              <div className="mt-1.5 space-y-1">
+                {res.manualHints.map((h, i) => (
+                  <div
+                    key={i}
+                    className="flex items-start gap-1.5 text-[10px] font-medium text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-1.5 py-1"
+                  >
+                    <AlertTriangle className="w-3 h-3 shrink-0 mt-0.5" />
+                    {h}
+                  </div>
+                ))}
+              </div>
+            )}
             {res.filledFields.length > 0 && (
               <>
                 <button
@@ -939,16 +1012,29 @@ export default function DocScanner({
                   Проверяем точный режим…
                 </p>
               ) : ocularStatus.available ? (
-                <p
-                  className="text-[10px] text-emerald-100 leading-tight mt-1 flex items-center gap-1"
-                  title={`Серверный OCR (${ocularStatus.languages ?? "ru"}, ${ocularStatus.threads ?? "?"} потоков) — повышенная точность на русских документах`}
-                >
-                  <span
-                    className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-300 animate-pulse"
-                    aria-hidden
-                  />
-                  Точный режим включён
-                </p>
+                ocrConsent ? (
+                  <p
+                    className="text-[10px] text-emerald-100 leading-tight mt-1 flex items-center gap-1"
+                    title={`Серверный OCR (${ocularStatus.languages ?? "ru"}, ${ocularStatus.threads ?? "?"} потоков) — повышенная точность на русских документах`}
+                  >
+                    <span
+                      className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-300 animate-pulse"
+                      aria-hidden
+                    />
+                    Точный режим включён
+                  </p>
+                ) : (
+                  <p
+                    className="text-[10px] text-white/60 leading-tight mt-1 flex items-center gap-1"
+                    title="Серверный OCR доступен, но выключен: включите согласие в подписи ниже"
+                  >
+                    <span
+                      className="inline-block w-1.5 h-1.5 rounded-full bg-white/40"
+                      aria-hidden
+                    />
+                    Точный режим доступен (выключен)
+                  </p>
+                )
               ) : (
                 <p
                   className="text-[10px] text-white/60 leading-tight mt-1 flex items-center gap-1"
@@ -990,10 +1076,42 @@ export default function DocScanner({
             </button>
           </div>
         </div>
-        <p className="mt-2.5 flex items-center gap-1.5 text-[10.5px] text-white/70">
-          <ShieldCheck className="w-3.5 h-3.5" /> Данные не покидают браузер ·
-          соответствует 152-ФЗ
-        </p>
+        {ocularStatus?.available ? (
+          <label className="mt-2.5 flex items-start gap-2 text-[10.5px] text-white/80 cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={ocrConsent}
+              onChange={(e) => setServerOcrConsent(e.target.checked)}
+              className="mt-0.5 w-3.5 h-3.5 shrink-0 accent-emerald-400 cursor-pointer"
+            />
+            <span>
+              {ocrConsent ? (
+                <>
+                  <AlertTriangle className="inline w-3 h-3 -mt-0.5 mr-1 text-amber-200" aria-hidden />
+                  Точный режим: фото передаётся на защищённый сервер распознавания
+                  (Россия), не сохраняется и не используется иначе.{" "}
+                  <Link href="/privacy" className="underline font-semibold">
+                    Политика
+                  </Link>
+                </>
+              ) : (
+                <>
+                  <ShieldCheck className="inline w-3 h-3 -mt-0.5 mr-1" aria-hidden />
+                  Базовый режим — данные не покидают браузер. Отметьте, чтобы
+                  включить точный серверный OCR (фото передастся на сервер
+                  распознавания в России, не сохраняется).{" "}
+                  <Link href="/privacy" className="underline font-semibold">
+                    Подробнее
+                  </Link>
+                </>
+              )}
+            </span>
+          </label>
+        ) : (
+          <p className="mt-2.5 flex items-center gap-1.5 text-[10.5px] text-white/70">
+            <ShieldCheck className="w-3.5 h-3.5" /> Данные не покидают браузер
+          </p>
+        )}
       </div>
 
       {collapsed ? (

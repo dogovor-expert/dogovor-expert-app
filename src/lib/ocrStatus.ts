@@ -145,6 +145,22 @@ export interface OcularProxyResult {
   elapsed_ms: number;
 }
 
+/**
+ * TICKET-1 (152-ФЗ): серверный OCR допустим только после явного opt-in
+ * пользователя. Чистая функция — единый источник правды для UI-гейта;
+ * на сервере то же условие обеспечивается проверкой profiles.ocr_consent_at
+ * в /api/ocr-proxy (403 consent_required).
+ */
+export function shouldUseServerOcr(
+  status: OcularStatus | null,
+  consentGiven: boolean
+): boolean {
+  return Boolean(status?.available) && consentGiven;
+}
+
+/** Ключ localStorage для согласия на серверный OCR. */
+export const OCR_CONSENT_STORAGE_KEY = "dogovor:ocr-server-consent";
+
 const PROXY_TIMEOUT_MS = 60_000;
 
 export async function postOcrRequest(

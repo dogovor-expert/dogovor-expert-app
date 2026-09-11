@@ -1,7 +1,7 @@
 import * as pkijs from "pkijs";
 import type * as asn1js from "asn1js";
 import { gostCrypto } from "node-gost-crypto";
-import { getTrustedRoots } from "@/lib/trusted-roots";
+import { getTrustedRoots, type TrustedRoot } from "@/lib/trusted-roots";
 import { parseSubject, parseIssuer, getValidity, getExtensions, getThumbprints, isQualifiedCertificate, type ParsedSubject } from "@/lib/cert-parser";
 import { checkOcsp } from "@/lib/ocsp";
 import { checkCrl } from "@/lib/crl";
@@ -45,6 +45,12 @@ export interface TimestampInfo {
   tsaUrl?: string;
   valid?: boolean;
   signer?: ParsedSubject;
+  /** TICKET-4: результат криптоверификации штампа RFC 3161. */
+  status?: "valid" | "invalid" | "unknown_offline";
+  genTime?: Date;
+  tsaSubject?: ParsedSubject;
+  chainOk?: boolean;
+  details?: string;
 }
 
 export interface IntegrityInfo {
@@ -154,6 +160,185 @@ function getSignedAttrValue(attrs: unknown, oid: string): asn1js.AsnType | undef
     }
   }
   return undefined;
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// TICKET-4: криптографическая верификация TSA-штампа (RFC 3161 TimeStampToken).
+// Статусы: valid / invalid (целостность под вопросом → понижает вердикт) /
+// unknown_offline (нет доверенных корней/сбой сети → только warning).
+// ─────────────────────────────────────────────────────────────────────────
+
+export interface TsaVerifyOutcome {
+  status: "valid" | "invalid" | "unknown_offline";
+  genTime?: Date;
+  tsaSubject?: ParsedSubject;
+  chainOk?: boolean;
+  details?: string;
+}
+
+const TST_INFO_OID = "1.2.840.113549.1.9.16.1.4";
+const EKU_TIMESTAMPING = "1.3.6.1.5.5.7.3.8";
+
+function toAbs(buf: Uint8Array): ArrayBuffer {
+  return buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength) as ArrayBuffer;
+}
+
+function bytesToHex(buf: ArrayBufferLike | Uint8Array): string {
+  return Buffer.from(buf as Uint8Array).toString("hex").toLowerCase();
+}
+
+export async function verifyTsaTimestamp(
+  tokenValue: asn1js.AsnType,
+  signerSignature: Uint8Array,
+): Promise<TsaVerifyOutcome> {
+  let tokenDer: ArrayBuffer;
+  try {
+    tokenDer = tokenValue.toBER(false);
+  } catch (e) {
+    return { status: "invalid", details: `TSA token re-encode failed: ${e instanceof Error ? e.message : e}` };
+  }
+
+  // 1) Структура: ContentInfo(signedData) → SignedData → TSTInfo.
+  let signedData: pkijs.SignedData;
+  let tst: pkijs.TSTInfo;
+  try {
+    const ci = pkijs.ContentInfo.fromBER(tokenDer);
+    if (ci.contentType !== pkijs.ContentInfo.SIGNED_DATA) {
+      return { status: "invalid", details: `TSA token is not SignedData (${ci.contentType})` };
+    }
+    signedData = new pkijs.SignedData({ schema: ci.content });
+    const eci = signedData.encapContentInfo;
+    if (eci.eContentType !== TST_INFO_OID) {
+      return { status: "invalid", details: `Unexpected eContentType ${eci.eContentType} (expected TSTInfo)` };
+    }
+    if (!eci.eContent) return { status: "invalid", details: "TSA token has no attached content" };
+    const eContent = new Uint8Array(eci.eContent.valueBlock.valueHexView);
+    tst = pkijs.TSTInfo.fromBER(toAbs(eContent));
+  } catch (e) {
+    return { status: "invalid", details: `TSA token parse error: ${e instanceof Error ? e.message : e}` };
+  }
+
+  // 2) messageImprint: хэш от значения основной подписи должен совпадать —
+  //    это привязывает штамп именно к этой подписи (защита от переноса).
+  const imprintAlgOid = tst.messageImprint.hashAlgorithm.algorithmId;
+  const { algorithm: imprintAlg } = mapHashOidToAlgorithm(imprintAlgOid);
+  if (imprintAlg === "unknown") {
+    return { status: "invalid", details: `Unknown messageImprint hash algorithm ${imprintAlgOid}` };
+  }
+  try {
+    const computed = await computeHash(imprintAlg, signerSignature);
+    const expected = bytesToHex(tst.messageImprint.hashedMessage.valueBlock.valueHexView);
+    if (computed.toLowerCase() !== expected) {
+      return {
+        status: "invalid",
+        details: "TSA messageImprint mismatch: timestamp does not cover this signature (content or signature was swapped)",
+      };
+    }
+  } catch (e) {
+    return { status: "invalid", details: `messageImprint hash error: ${e instanceof Error ? e.message : e}` };
+  }
+
+  // 3) Сертификат TSA по SID из токена.
+  const tsaSignerInfo = signedData.signerInfos[0];
+  if (!tsaSignerInfo) return { status: "invalid", details: "TSA token has no signerInfo" };
+  const tsaCerts = (signedData.certificates ?? []).filter(
+    (c): c is pkijs.Certificate => c instanceof pkijs.Certificate,
+  );
+  const derHex = (ber: ArrayBuffer): string => Buffer.from(ber).toString("hex").toLowerCase();
+  const tsaSid = tsaSignerInfo.sid as pkijs.IssuerAndSerialNumber | undefined;
+  const tsaCert = tsaCerts.find((c) => {
+    try {
+      if (!tsaSid?.issuer || !tsaSid.serialNumber) return false;
+      if (derHex(c.subject.toSchema().toBER(false)) !== derHex(tsaSid.issuer.toSchema().toBER(false))) return false;
+      const cs = Buffer.from((c.serialNumber as unknown as { valueBlock: { valueHex: ArrayBuffer } }).valueBlock.valueHex).toString("hex").toLowerCase();
+      const ss = Buffer.from((tsaSid.serialNumber as unknown as { valueBlock: { valueHex: ArrayBuffer } }).valueBlock.valueHex).toString("hex").toLowerCase();
+      return cs === ss;
+    } catch {
+      return false;
+    }
+  }) ?? tsaCerts[0];
+  if (!tsaCert) return { status: "invalid", details: "TSA certificate not found in token" };
+
+  // 4) Криптоверификация подписи токена (ГОСТ-движок, attached content).
+  try {
+    const gostCi = gostCrypto.asn1.ContentInfo.decode(tokenDer);
+    const gostSd = new gostCrypto.cms.SignedDataContentInfo(gostCi);
+    const gostTsaCert = new gostCrypto.cert.X509(tsaCert.toSchema().toBER(false));
+    await gostSd.verifySignature(gostTsaCert);
+  } catch (e) {
+    return { status: "invalid", details: `TSA signature verification failed: ${e instanceof Error ? e.message : e}` };
+  }
+
+  // 5) genTime внутри срока действия сертификата TSA.
+  const { notBefore, notAfter } = getValidity(tsaCert);
+  if (tst.genTime < notBefore || tst.genTime > notAfter) {
+    return { status: "invalid", details: "TSA genTime outside certificate validity" };
+  }
+
+  // 6) Цепочка доверия сертификата TSA до configured trusted roots.
+  const tsaSubject = parseSubject(tsaCert);
+  const { extKeyUsage } = getExtensions(tsaCert);
+  let chainOk = false;
+  let trustedRoots: TrustedRoot[];
+  try {
+    trustedRoots = await getTrustedRoots();
+  } catch (e) {
+    return { status: "unknown_offline", genTime: tst.genTime, tsaSubject, details: `trusted roots unavailable: ${e instanceof Error ? e.message : e}` };
+  }
+  if (trustedRoots.length === 0) {
+    return { status: "valid", genTime: tst.genTime, tsaSubject, chainOk: false, details: "TSA chain not verified: no trusted roots configured" };
+  }
+
+  const nameKey = (name: pkijs.RelativeDistinguishedNames): string => {
+    try {
+      return derHex(name.toSchema().toBER(false));
+    } catch {
+      return "";
+    }
+  };
+  const pool: pkijs.Certificate[] = [...tsaCerts, ...trustedRoots.map((r) => r.cert)];
+  const bySubject = new Map<string, pkijs.Certificate>();
+  for (const c of pool) {
+    const k = nameKey(c.subject);
+    if (k && !bySubject.has(k)) bySubject.set(k, c);
+  }
+  const toGost = (c: pkijs.Certificate) => new gostCrypto.cert.X509(c.toSchema().toBER(false));
+  let current = tsaCert;
+  const visited = new Set<string>();
+  for (;;) {
+    const curKey = nameKey(current.subject);
+    if (visited.has(curKey)) {
+      return { status: "invalid", genTime: tst.genTime, tsaSubject, details: "TSA certificate chain loop" };
+    }
+    visited.add(curKey);
+    const curSha1 = (await getThumbprints(current)).sha1;
+    if (trustedRoots.some((r) => r.thumbprintSha1 === curSha1)) {
+      chainOk = true;
+      break;
+    }
+    if (nameKey(current.issuer) === curKey) {
+      return { status: "invalid", genTime: tst.genTime, tsaSubject, details: "TSA chain ends at untrusted self-signed certificate" };
+    }
+    const parent = bySubject.get(nameKey(current.issuer));
+    if (!parent) {
+      return { status: "invalid", genTime: tst.genTime, tsaSubject, details: "TSA chain incomplete: issuer not found" };
+    }
+    let ok = false;
+    try {
+      ok = Boolean(await toGost(current).verify(toGost(parent)));
+    } catch (e) {
+      return { status: "invalid", genTime: tst.genTime, tsaSubject, details: `TSA chain error: ${e instanceof Error ? e.message : e}` };
+    }
+    if (!ok) {
+      return { status: "invalid", genTime: tst.genTime, tsaSubject, details: "TSA chain: invalid signature in certificate" };
+    }
+    current = parent;
+  }
+
+  const extra = extKeyUsage.includes(EKU_TIMESTAMPING)
+    ? undefined
+    : "TSA certificate lacks id-kp-timeStamping EKU";
+  return { status: "valid", genTime: tst.genTime, tsaSubject, chainOk, details: extra };
 }
 
 export async function verifyPAdESCrypto(
@@ -437,8 +622,34 @@ export async function verifyPAdESCrypto(
     for (const attr of unsignedList) {
       const attrId = (attr as { attrId?: string; type?: unknown }).attrId ?? String((attr as { type?: unknown }).type);
       if (attrId === "1.2.840.113549.1.9.16.2.14") {
-        timestamp = { present: true, tsaUrl: "unknown", valid: false };
-        warnings.push("TSA timestamp present but verification not implemented");
+        // TICKET-4: полноценная верификация TimeStampToken.
+        const tokenValue = getSignedAttrValue(signerInfo.unsignedAttrs, attrId);
+        timestamp = { present: true, valid: false };
+        if (tokenValue) {
+          try {
+            const tsa = await verifyTsaTimestamp(tokenValue, new Uint8Array(signerInfo.signature as unknown as ArrayBufferLike));
+            timestamp.status = tsa.status;
+            timestamp.genTime = tsa.genTime;
+            timestamp.time = tsa.genTime;
+            timestamp.tsaSubject = tsa.tsaSubject;
+            timestamp.signer = tsa.tsaSubject;
+            timestamp.chainOk = tsa.chainOk;
+            timestamp.details = tsa.details;
+            if (tsa.status === "valid") {
+              timestamp.valid = true;
+              if (tsa.details) warnings.push(`TSA: ${tsa.details}`);
+            } else if (tsa.status === "invalid") {
+              errors.push(`TSA timestamp invalid: ${tsa.details ?? "verification failed"}`);
+            } else {
+              warnings.push(`TSA status unknown (offline): ${tsa.details ?? ""}`.trim());
+            }
+          } catch (e) {
+            timestamp.status = "invalid";
+            errors.push(`TSA verification error: ${e instanceof Error ? e.message : e}`);
+          }
+        } else {
+          warnings.push("TSA attribute has no parseable value");
+        }
         break;
       }
     }

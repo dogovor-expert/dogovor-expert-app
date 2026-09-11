@@ -1,0 +1,35 @@
+name: UKEP live TSA (nightly)
+
+# Живые тесты против УЦ КриптоПро (testca2012.cryptopro.ru) — dependency
+# на внешний сервис, поэтому отдельно от PR-pipeline и без блокировки:
+# падение помечается, но не валит main.
+
+on:
+  schedule:
+    - cron: '30 3 * * *'
+  workflow_dispatch:
+
+jobs:
+  ukep-live:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run live UKEP/TSA tests
+        continue-on-error: true
+        run: npm run test:ukep:live
+
+      - name: Notify on failure
+        if: failure()
+        run: |
+          echo "::warning::UKEP live tests failed — check availability of testca2012.cryptopro.ru or certificate validity"

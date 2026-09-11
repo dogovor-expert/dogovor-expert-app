@@ -106,7 +106,7 @@ export default function HomePage() {
         {/* stats strip */}
         <div className="relative max-w-7xl mx-auto px-6 pb-2">
           <div className="border-y border-gray-200 bg-white/70 rounded-2xl shadow-sm grid grid-cols-2 md:grid-cols-4 gap-6 px-8 py-6">
-            {[[String(TEMPLATE_META_LITE.length), "шаблонов документов"], ["100%", "бесплатно"], ["< 5 мин", "до готового файла"], ["152-ФЗ", "данные только в браузере"]].map(([n, l]) => (
+            {[[String(TEMPLATE_META_LITE.length), "шаблонов документов"], ["100%", "бесплатно"], ["< 5 мин", "до готового файла"], ["152-ФЗ", "данные в браузере"]].map(([n, l]) => (
               <div key={l}>
                 <div className="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-brand-600 to-purple-600 bg-clip-text text-transparent">{n}</div>
                 <div className="text-[11px] text-gray-600 font-semibold uppercase tracking-widest mt-1">{l}</div>
@@ -204,8 +204,8 @@ export default function HomePage() {
         </div>
         <div className="grid md:grid-cols-3 gap-5">
           {[
-            { icon: FileLock, t: "Данные не покидают устройство", d: "Все документы и черновики хранятся в вашем браузере. Никакого сервера — нечего утечь." },
-            { icon: Shield, t: "Соответствие 152-ФЗ", d: "Данные ваших документов обрабатываются локально; партнёрские сервисы работают только с вашего согласия." },
+            { icon: FileLock, t: "Данные под контролем", d: "Документы и черновики хранятся в вашем браузере. Точный серверный OCR и облачная синхронизация включаются только по вашему явному согласию." },
+            { icon: Shield, t: "Соответствие 152-ФЗ", d: "Данные документов обрабатываются локально; серверное распознавание и партнёрские сервисы работают только после отдельного согласия (см. Политику)." },
             { icon: FileCheck, t: "Правовая проверка встроена", d: "Каждый шаблон содержит чек-лист соответствия требованиям закона и проверку обязательных полей перед печатью." },
           ].map((q) => (
             <div key={q.t} className="bg-white border border-gray-100 rounded-2xl p-6 shadow-soft">
@@ -231,7 +231,7 @@ export default function HomePage() {
             Создать первый документ
             <ArrowRight className="w-4 h-4" />
           </Link>
-          <p className="mt-4 text-xs text-blue-200">152-ФЗ · данные документов — только в вашем браузере</p>
+          <p className="mt-4 text-xs text-blue-200">152-ФЗ · данные документов — в вашем браузере; точный OCR — по согласию</p>
         </div>
       </section>
 
