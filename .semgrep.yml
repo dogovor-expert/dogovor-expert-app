@@ -1,11 +1,13 @@
 rules:
   # Next.js / React безопасность
   - id: nextjs-no-dangerously-set-inner-html
-    pattern: dangerouslySetInnerHTML={...}
+    patterns:
+      - pattern: '<$X dangerouslySetInnerHTML={{ __html: $Y }} ... />'
+      - pattern: '<$X ... dangerouslySetInnerHTML={{ __html: $Y }} ... />'
     message: |
       XSS risk. dangerouslySetInnerHTML должен быть обёрнут в DOMPurify
       (см. src/lib/dompurify.ts) или заменён на безопасный API.
-    languages: [typescript, tsx]
+    languages: [typescript, javascript]
     severity: ERROR
 
   - id: nextjs-no-window-open
@@ -13,7 +15,7 @@ rules:
     message: |
       window.open() без `noopener,noreferrer` — утечка window.opener.
       Используйте `window.open(url, '_blank', 'noopener,noreferrer')`.
-    languages: [typescript, tsx]
+    languages: [typescript, javascript]
     severity: WARNING
 
   - id: react-use-client-with-server-only
@@ -29,7 +31,7 @@ rules:
     message: |
       cookies() доступен ТОЛЬКО в server components/actions.
       "use client" директива запрещает server-only импорты.
-    languages: [typescript, tsx]
+    languages: [typescript, javascript]
     severity: ERROR
 
   - id: react-no-direct-fetch-in-component
@@ -43,7 +45,7 @@ rules:
     message: |
       Рассмотрите React Query / SWR / Server Component вместо прямого fetch.
       Для простых случаев OK, но для production лучше useSWR/useQuery.
-    languages: [typescript, tsx]
+    languages: [typescript, javascript]
     severity: INFO
 
   - id: nextjs-no-process-env-in-client
@@ -59,21 +61,21 @@ rules:
     message: |
       process.env доступен в client только для NEXT_PUBLIC_* переменных.
       Для server-side секретов — используйте server actions.
-    languages: [typescript, tsx]
+    languages: [typescript, javascript]
     severity: WARNING
 
   - id: supabase-missing-rls
-    pattern: |
-      create table $T ($$$);
+    # Semgrep не может выразить «в файле нет ALTER ... ENABLE ROW LEVEL SECURITY»
+    # паттерном по одной строке — это INFO-напоминание, проверка на ревью.
+    pattern-regex: '(?i)^\s*create\s+table'
     message: |
-      Каждая новая таблица должна иметь:
-        ALTER TABLE $T ENABLE ROW LEVEL SECURITY;
-      + политики для SELECT/INSERT/UPDATE/DELETE.
-    languages: [sql]
-    severity: ERROR
+      Новая таблица: убедитесь, что есть ENABLE ROW LEVEL SECURITY + политики
+      SELECT/INSERT/UPDATE/DELETE в той же миграции.
+    languages: [generic]
+    severity: INFO
     paths:
-      exclude:
-        - "supabase/.branches/**"
+      include:
+        - "supabase/migrations/**"
 
   - id: console-log-in-production
     pattern: console.log(...)
@@ -82,7 +84,7 @@ rules:
       - Sentry.captureMessage() для алертов
       - console.warn / console.error допустимы
       - для dev: console.log + process.env.NODE_ENV check
-    languages: [typescript, tsx]
+    languages: [typescript, javascript]
     severity: WARNING
     paths:
       exclude:
@@ -90,13 +92,13 @@ rules:
         - "src/lib/validations/**"
 
   - id: any-type-cast
-    pattern: "as any"
+    pattern: $X as any
     message: |
       `as any` отключает type safety. Используйте:
       - `as unknown as Type` (явное приведение)
       - исправьте тип
       - `// @ts-expect-error` (с обоснованием)
-    languages: [typescript, tsx]
+    languages: [typescript, javascript]
     severity: WARNING
 
   - id: hardcoded-secret
@@ -105,7 +107,7 @@ rules:
     message: |
       Hardcoded secret. Перенесите в env (process.env.* или .env.local).
       Если это пример — добавьте в .gitleaksignore.
-    languages: [typescript, tsx, javascript]
+    languages: [typescript, javascript]
     severity: ERROR
 
   - id: zod-any-or-unknown
@@ -116,22 +118,23 @@ rules:
       z.any() / z.unknown() отключают валидацию. Используйте:
       - z.string() с transform/parse
       - z.object({ ... }).passthrough() если нужна гибкость
-    languages: [typescript, tsx]
+    languages: [typescript, javascript]
     severity: WARNING
 
   - id: missing-csrf-protection
     patterns:
-      - pattern: |
-          export async function POST(req: Request) {
-            ...
-            if (req.method === "POST") { $$$ }
-          }
-      - pattern: |
-          export const POST = $HANDLER;
+      - pattern: export const POST = $HANDLER;
+      - pattern: export const PUT = $HANDLER;
+      - pattern: export const PATCH = $HANDLER;
+      - pattern: export const DELETE = $HANDLER;
+      - pattern-not: export const POST = withCsrf($$$);
+      - pattern-not: export const PUT = withCsrf($$$);
+      - pattern-not: export const PATCH = withCsrf($$$);
+      - pattern-not: export const DELETE = withCsrf($$$);
     message: |
       POST/PUT/DELETE без withCsrf() — уязвимость CSRF.
       Оберните в withCsrf(handler) из src/lib/csrf.ts.
-    languages: [typescript, tsx]
+    languages: [typescript, javascript]
     severity: ERROR
     paths:
       include:
