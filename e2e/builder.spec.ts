@@ -45,7 +45,9 @@ async function gotoGibdd(page: Page) {
 
 async function fillFields(page: Page, fields: Record<string, string>) {
   for (const [id, value] of Object.entries(fields)) {
-    await page.locator(`#${id}`).fill(value);
+    const loc = page.locator(`#${id}`);
+    if (await loc.count() === 0) continue; // поле есть не во всех версиях шаблона
+    await loc.fill(value);
   }
 }
 
@@ -54,8 +56,12 @@ const DKP_FIELDS: Record<string, string> = {
   date: "2026-08-14",
   contract_price: "1500000",
   seller_fio: "Иванов Иван Иванович",
+  seller_passport: "4512 123456",
+  seller_passport_issued: "ОВД г. Москвы",
   seller_address: "г. Москва, ул. Ленина, д. 1",
   buyer_fio: "Петров Пётр Петрович",
+  buyer_passport: "4615 987654",
+  buyer_passport_issued: "ОВД г. Москвы",
   buyer_address: "г. Москва, ул. Пушкина, д. 2",
   car_brand: "Toyota Camry",
   car_year: "2021",
@@ -93,7 +99,8 @@ test.describe("E1: ДКП → предпросмотр → скачать PDF", 
     const downloadPromise = page.waitForEvent("download");
     await page
       .getByRole("button", { name: "Скачать", exact: true })
-      .click();
+      .click(); // открывает меню экспорта
+    await page.getByRole("button", { name: "Скачать PDF" }).click();
     const download = await downloadPromise;
 
     expect(download.suggestedFilename().toLowerCase()).toMatch(/\.pdf$/);
@@ -144,7 +151,7 @@ test.describe("E4: черновик сохраняется и восстанав
 
     await page.getByRole("button", { name: "Документы и инструменты" }).click();
     const draftRow = page
-      .getByRole("button", { name: /Договор купли-продажи автомобиля.*\d{2}\.\d{2}\.\d{4}/ })
+      .getByRole("button", { name: /ДКП авто — Краткий.*\d{2}\.\d{2}\.\d{4}/ })
       .first();
     await expect(draftRow).toBeVisible();
     await draftRow.click();
@@ -164,18 +171,19 @@ test.describe("E6: DOCX-экспорт для free-пользователя = pa
       page.getByRole("heading", { name: "Предварительный просмотр" })
     ).toBeVisible();
 
-    await page.getByRole("button", { name: "Скачать", exact: true }).hover();
+    await page.getByRole("button", { name: "Скачать", exact: true }).click();
     await page.getByRole("button", { name: "Скачать DOCX" }).click();
     await expect(
-      page.getByRole("heading", { name: "Экспорт в DOCX — функция PRO" })
+      page.getByRole("heading", { name: /DOCX.*PRO/ })
     ).toBeVisible();
     await page.getByRole("button", { name: "Пока нет" }).click();
     await expect(
-      page.getByRole("heading", { name: "Экспорт в DOCX — функция PRO" })
+      page.getByRole("heading", { name: /DOCX.*PRO/ })
     ).toHaveCount(0);
 
     const downloadPromise = page.waitForEvent("download");
     await page.getByRole("button", { name: "Скачать", exact: true }).click();
+    await page.getByRole("button", { name: "Скачать PDF" }).click();
     const download = await downloadPromise;
     expect(download.suggestedFilename().toLowerCase()).toMatch(/\.pdf$/);
   });
@@ -186,6 +194,8 @@ test.describe("E7: демо-подсказки вместо демо-значе�
     page,
   }) => {
     await gotoDkp(page);
+    // дефолт — Краткий; поля copies_count/адрес-совпадает есть в Полном
+    await page.getByRole("button", { name: "Полный", exact: true }).first().click();
     await expect(page.locator("#seller_fio")).toHaveValue("");
     await expect(
       page.getByText("значение по умолчанию (образец)")
@@ -261,8 +271,12 @@ test.describe("E8: переключатель Полный/Краткий ДКП
   test("переключение шаблона сохраняет значения", async ({ page }) => {
     await gotoDkp(page);
 
-    await expect(page.getByRole("button", { name: "Полный" })).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "Полный", exact: true }).first()
+    ).toBeVisible();
 
+    // дефолт — Краткий; переходим в Полный и заполняем
+    await page.getByRole("button", { name: "Полный", exact: true }).first().click();
     await page.locator("#seller_fio").fill("Иванов Иван Иванович");
     await page.locator("#city").fill("Москва");
     await page.locator("#contract_price").fill("1500000");
@@ -270,10 +284,10 @@ test.describe("E8: переключатель Полный/Краткий ДКП
     await page.locator("#car_vin").fill("JTNBE3BK203456789");
     await page.locator("#car_sts").fill("99 12 345678");
 
-    await page.getByRole("button", { name: "Краткий (1 стр.)" }).click();
+    await page.getByRole("button", { name: "Краткий (1 стр.)", exact: true }).first().click();
     await expect(page.locator("#car_vin")).toBeVisible();
 
-    await page.getByRole("button", { name: "Полный" }).click();
+    await page.getByRole("button", { name: "Полный", exact: true }).first().click();
     await expect(page.locator("#seller_fio")).toHaveValue("Иванов Иван Иванович");
     await expect(page.locator("#contract_price")).toHaveValue("1500000");
   });
