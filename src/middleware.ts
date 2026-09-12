@@ -225,7 +225,12 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
       return withVaryAccept(withSecurityHeaders(NextResponse.redirect(new URL("/dashboard", request.url)), csp, isDev));
     }
     const mfaEnabled = user.user_metadata?.mfa_enabled === true;
-    const force2fa = process.env.ADMIN_REQUIRE_2FA === "true";
+    // 2FA для админки ОБЯЗАТЕЛЬНА по умолчанию (внешний ре-аудит 2026-09-12):
+    // раньше требовался env ADMIN_REQUIRE_2FA="true", который теряется при переносе
+    // .env (Vercel → self-hosted). Теперь opt-out только явным
+    // ADMIN_REQUIRE_2FA="false" (dev/аварийный режим). Незарегистрировавшему MFA
+    // админу — редирект на /settings/security?enforce_2fa=1 (не тупик).
+    const force2fa = process.env.ADMIN_REQUIRE_2FA !== "false";
     if ((mfaEnabled || force2fa) && sessionAal(request) !== "aal2") {
       if (mfaEnabled) {
         const url = new URL("/login", request.url);
@@ -233,8 +238,11 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
         url.searchParams.set("next", pathname);
         return withVaryAccept(withSecurityHeaders(NextResponse.redirect(url), csp, isDev));
       }
-      const url = new URL("/settings/security", request.url);
-      url.searchParams.set("enforce_2fa", "1");
+      // Незарегистрированная MFA: на /security (единственная страница enroll/verify;
+      // редирект на несуществующий /settings/security был латентным 404).
+      const url = new URL("/security", request.url);
+      url.searchParams.set("need_mfa", "1");
+      url.searchParams.set("next", pathname);
       return withVaryAccept(withSecurityHeaders(NextResponse.redirect(url), csp, isDev));
     }
     return response;

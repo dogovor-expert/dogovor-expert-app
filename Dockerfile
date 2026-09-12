@@ -9,6 +9,32 @@ ENV NEXT_TELEMETRY_DISABLED=1 \
     SENTRY_ORG="" \
     SENTRY_PROJECT=""
 
+# NEXT_PUBLIC_* инлайнятся в клиентский бандл во время БИЛДА (не в рантайме!).
+# Coolify/docker build передаёт их как --build-arg; без этого клиент получает
+# пустые ключи и сайт «оживает» только после пересборки (классика переездов).
+ARG NEXT_PUBLIC_SUPABASE_URL=""
+ARG NEXT_PUBLIC_SUPABASE_ANON_KEY=""
+ARG NEXT_PUBLIC_TURNSTILE_SITE_KEY=""
+ARG NEXT_PUBLIC_GOOGLE_CLIENT_ID=""
+ARG NEXT_PUBLIC_YANDEX_CLIENT_ID=""
+ARG NEXT_PUBLIC_DROPBOX_CLIENT_ID=""
+ARG NEXT_PUBLIC_APP_URL=""
+ARG NEXT_PUBLIC_SITE_URL=""
+ARG NEXT_PUBLIC_CHAT_ENABLED=""
+ARG NEXT_PUBLIC_DEFAULT_TSA_URL=""
+ARG NEXT_PUBLIC_INZURO_API_KEY=""
+ENV NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL \
+    NEXT_PUBLIC_SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY \
+    NEXT_PUBLIC_TURNSTILE_SITE_KEY=$NEXT_PUBLIC_TURNSTILE_SITE_KEY \
+    NEXT_PUBLIC_GOOGLE_CLIENT_ID=$NEXT_PUBLIC_GOOGLE_CLIENT_ID \
+    NEXT_PUBLIC_YANDEX_CLIENT_ID=$NEXT_PUBLIC_YANDEX_CLIENT_ID \
+    NEXT_PUBLIC_DROPBOX_CLIENT_ID=$NEXT_PUBLIC_DROPBOX_CLIENT_ID \
+    NEXT_PUBLIC_APP_URL=$NEXT_PUBLIC_APP_URL \
+    NEXT_PUBLIC_SITE_URL=$NEXT_PUBLIC_SITE_URL \
+    NEXT_PUBLIC_CHAT_ENABLED=$NEXT_PUBLIC_CHAT_ENABLED \
+    NEXT_PUBLIC_DEFAULT_TSA_URL=$NEXT_PUBLIC_DEFAULT_TSA_URL \
+    NEXT_PUBLIC_INZURO_API_KEY=$NEXT_PUBLIC_INZURO_API_KEY
+
 COPY package.json package-lock.json .npmrc ./
 
 RUN npm ci --no-audit --no-fund --fetch-retries=5 --fetch-retry-mintimeout=10000
@@ -18,26 +44,34 @@ COPY . .
 RUN npm run build
 
 # ---- runtime stage ----
+# Self-hosted (Coolify/VDS): минимальный standalone-сервер Next без dev-зависимостей,
+# под непривилегированным пользователем (аудит 2026-09-12: не root).
 FROM node:22-bookworm-slim AS run
-
-WORKDIR /app
 
 ENV NODE_ENV=production \
     PORT=3000 \
     HOSTNAME=0.0.0.0 \
-    NEXT_TELEMETRY_DISABLED=1 \
-    PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
+    NEXT_TELEMETRY_DISABLED=1
 
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends tzdata ca-certificates \
+    && apt-get install -y --no-install-recommends tzdata ca-certificates curl \
     && rm -rf /var/lib/apt/lists/*
 
-COPY --from=build /app/package.json ./package.json
-COPY --from=build /app/next.config.mjs ./next.config.mjs
-COPY --from=build /app/node_modules ./node_modules
-COPY --from=build /app/.next ./.next
-COPY --from=build /app/public ./public
+# node:22-*-slim содержит встроенного пользователя `node` (uid 1000) — используем его.
+# standalone-бандл сам тянет прод-зависимости (traced); sharp/@img добавлены
+# через outputFileTracingIncludes в next.config.mjs (динамический import в /api/avatar).
+COPY --from=build --chown=node:node /app/.next/standalone ./
+COPY --from=build --chown=node:node /app/.next/static ./.next/static
+# /app/blanks читает public/blank-previews через fs в рантайме — public обязателен.
+COPY --from=build --chown=node:node /app/public ./public
+
+USER node
 
 EXPOSE 3000
 
-CMD ["npm", "run", "start"]
+HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
+    CMD curl -fsS "http://127.0.0.1:${PORT:-3000}/" || exit 1
+
+# node как PID 1: корректная передача SIGTERM (graceful stop в Coolify),
+# без лишнего npm-процесса-прослойки.
+CMD ["node", "server.js"]
