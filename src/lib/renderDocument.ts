@@ -366,8 +366,12 @@ export function renderTemplateDocument(
   } catch {
     let html = options.previewTemplate ?? template.previewTemplate ?? "";
     for (const [key, value] of Object.entries(formValues)) {
+      // Ключи полей приходят из данных пользователя — спецсимволы регэкспов
+      // ( ( [ и т.п.) должны быть экранированы, иначе SyntaxError в fallback-пути
+      // вместо аккуратной деградации (внешний ре-аудит 2026-09-12).
+      const safeKey = key.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
       html = html.replace(
-        new RegExp(`\\{\\{${key}\\}\\}`, "g"),
+        new RegExp(`\\{\\{${safeKey}\\}\\}`, "g"),
         escapeHtml(value || "___________________")
       );
     }

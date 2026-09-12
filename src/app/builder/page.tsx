@@ -202,38 +202,11 @@ function HomeContent() {
     }
   }, []);
 
-  // Инициализация formValues после загрузки selectedTemplateId
-  useEffect(() => {
-    if (selectedTemplateId) {
-      const template = LEGAL_TEMPLATES.find((x) => x.id === selectedTemplateId) || LEGAL_TEMPLATES[0];
-      
-      // Вычисляем tabs из полей шаблона
-      const tabsList = Array.from(
-        new Set(template.fields.map((f) => f.category))
-      );
-      
-      // Пытаемся загрузить черновик
-      const draft = loadDraft(selectedTemplateId);
-      if (draft) {
-        // Черновик может не содержать полей, добавленных в шаблон позже —
-        // новые поля получают дефолтные значения (статусы сторон и т.п.).
-        setFormValues({ ...buildTemplateDefaults(template), ...draft.values });
-        setChecklist(draft.checklist);
-        setScanPhotos(draft.photos || {});
-        const draftTab = draft.activeTab as TemplateField["category"];
-        const tabsList = Array.from(
-          new Set(template.fields.map((f) => f.category))
-        );
-        setActiveTab(
-          (tabsList.includes(draftTab) ? draftTab : tabsList[0])
-        );
-      } else {
-        setFormValues(buildTemplateDefaults(template));
-        setChecklist({});
-        setScanPhotos({});
-      }
-    }
-  }, [selectedTemplateId]);
+  // NOTE (внешний ре-аудит 2026-09-12): здесь был дублирующий эффект
+  // инициализации formValues по selectedTemplateId — он полностью покрывался
+  // effect'ом «template change → load draft/defaults» ниже (тот же расчёт +
+  // pendingMergeRef + сброс аудита), а его работа зависела лишь от порядка
+  // объявления useEffect. Удалён как второй источник истины.
 
   useEffect(() => {
     fetch("/api/profile")
@@ -1096,6 +1069,12 @@ function HomeContent() {
       const side2 = partyName(1, "___________");
       const role1 = meta.signers[0]?.role || "Сторона 1";
       const role2 = meta.signers[1]?.role || "Сторона 2";
+      // Гигиена (внешний ре-аудит 2026-09-12): значения из формы — данные
+      // пользователя. Сейчас обложка потребляется только нашим pdf-парсером
+      // (не DOM), но экранируем, чтобы будущий email/HTML-потребитель не стал
+      // внезапным XSS.
+      const esc = (v: string) =>
+        v.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
       return `<div class="flex flex-col font-serif text-[14px] leading-relaxed text-gray-900" style="padding:48px 56px;">
         <div class="text-center font-bold text-[18px] mb-2">ПАСПОРТ СДЕЛКИ</div>
@@ -1110,8 +1089,8 @@ function HomeContent() {
           </thead>
           <tbody>${rows.join("")}</tbody>
         </table>
-        <div class="mb-1"><b>${role1}:</b> ${side1}</div>
-        <div class="mb-6"><b>${role2}:</b> ${side2}</div>
+        <div class="mb-1"><b>${role1}:</b> ${esc(side1)}</div>
+        <div class="mb-6"><b>${role2}:</b> ${esc(side2)}</div>
         <div class="text-xs text-justify">Хеши рассчитаны по итоговому HTML-содержимому каждого документа на момент формирования пакета и позволяют зафиксировать неизменность редакций (сравнение с актуальным состоянием — на странице «Предпросмотр»).</div>
       </div>`;
     } catch (err) {
@@ -1133,11 +1112,13 @@ function HomeContent() {
           : [{ role: "Подписант", fieldId: "" }];
         for (const s of list) {
           const name = (s.fieldId && formValues[s.fieldId]) || "___________";
+          const escN = (v: string) =>
+            v.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
           signerRows.push(`
             <tr>
               <td style="padding:8px 10px;border:1px solid #d4d4d8;font-size:12px;">${t.name}</td>
               <td style="padding:8px 10px;border:1px solid #d4d4d8;font-size:12px;">${s.role}</td>
-              <td style="padding:8px 10px;border:1px solid #d4d4d8;font-size:12px;">${name}</td>
+              <td style="padding:8px 10px;border:1px solid #d4d4d8;font-size:12px;">${escN(name)}</td>
               <td style="padding:8px 10px;border:1px solid #d4d4d8;font-size:12px;width:120px;"></td>
             </tr>`);
         }

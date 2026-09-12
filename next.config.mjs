@@ -15,6 +15,11 @@ const supabaseHost = supabaseUrl.replace(/^https?:\/\//, '').split('/')[0] || ''
 
 const nextConfig = {
   output: 'standalone',
+  // sharp грузится динамическим import() внутри /api/avatar — file-tracing не всегда
+  // включает нативные бинарники @img/*; для standalone/Docker добираем явно.
+  outputFileTracingIncludes: {
+    '/api/avatar': ['./node_modules/sharp/**', './node_modules/@img/**'],
+  },
   reactStrictMode: true,
   poweredByHeader: false,
   images: {
