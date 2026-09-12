@@ -3,6 +3,7 @@ import DOMPurify from "@/lib/dompurify";
 import type { LegalTemplate, TemplateField } from "@/data/types";
 import { rublesToWords } from "@/lib/words";
 import { declineFullName, looksLikeFullName } from "@/lib/names";
+import { isFieldVisible } from "@/lib/validation";
 
 const RU_MONTHS_GEN = [
   "января", "февраля", "марта", "апреля", "мая", "июня",
@@ -173,6 +174,15 @@ export function renderTemplateDocument(
 
     const blankSeenGroups = new Set<string>();
     for (const f of template.fields) {
+      // Аудит Ф3: скрытые по dependsOn не должны попадать в документ —
+      // например, сменили статус продавца с ИП на юрлицо, а сохранённые
+      // ИП-реквизиты остались в formValues. Значения НЕ затираются (вернёшь
+      // статус — вернутся данные), но для рендера поле считается пустым:
+      // секции {{#field}} скрываются, а одиночные {{field}} дают пустоту.
+      if (!options.blank && !isFieldVisible(f, formValues)) {
+        view[f.id] = "";
+        continue;
+      }
       const raw = formValues[f.id] || "";
 
       // Режим «пустой бланк»: вместо значений — маркеры для ручного заполнения.

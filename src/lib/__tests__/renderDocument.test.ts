@@ -5,6 +5,43 @@ import {
   buildPackValues,
 } from "@/lib/renderDocument";
 import { dkpLikeTemplate, invoiceTemplate, receiptTemplate } from "./fixtures";
+import type { LegalTemplate, TemplateField } from "@/data/types";
+
+// Сквозной фикс D-6 (аудит Ф3): скрытые по dependsOn значения не должны
+// протекать в документ после смены статуса стороны.
+const visibilityTemplate: LegalTemplate = {
+  id: "vis-test",
+  name: "Тест видимости",
+  category: "auto",
+  actSource: "ГК РФ",
+  lastUpdated: "2026-01-01",
+  description: "",
+  suggestedDocs: [],
+  fields: [
+    { id: "is_company", label: "Статус", type: "select", category: "seller", defaultValue: "false", options: ["true", "false"] },
+    { id: "seller_inn", label: "ИНН", type: "text", category: "seller", defaultValue: "", dependsOn: { fieldId: "is_company", value: "true" } },
+  ] as TemplateField[],
+  previewTemplate: "<div>ИНН: {{seller_inn}}</div>",
+};
+
+describe("renderTemplateDocument: dependsOn-видимость (D-6)", () => {
+  it("скрытое поле НЕ попадает в документ, даже если значение осталось в форме", () => {
+    const html = renderTemplateDocument(visibilityTemplate, {
+      is_company: "false",
+      seller_inn: "770000000000",
+    });
+    expect(html).not.toContain("770000000000");
+    expect(html).toContain("ИНН:");
+  });
+
+  it("видимое поле выводится как обычно", () => {
+    const html = renderTemplateDocument(visibilityTemplate, {
+      is_company: "true",
+      seller_inn: "770000000000",
+    });
+    expect(html).toContain("770000000000");
+  });
+});
 
 describe("formatRuDate", () => {
   it("ГОСТ Р 7.0.97-2016: словесно-цифровой", () => {

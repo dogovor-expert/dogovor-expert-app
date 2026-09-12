@@ -223,9 +223,9 @@ export const TEMPLATES_FINANCE: LegalTemplate[] = [
         category: "payment",
       },
       {
-        id: "nds_rate", label: "Ставка НДС (%)", type: "select", defaultValue: "20",
+        id: "nds_rate", label: "Ставка НДС (%)", type: "select", defaultValue: "22",
         category: "payment",
-        options: ["0", "5", "7", "10", "20", "без НДС"],
+        options: ["0", "5", "7", "10", "22", "20", "без НДС"],
         dependsOn: { fieldId: "show_nds", value: "true" },
       },
       {

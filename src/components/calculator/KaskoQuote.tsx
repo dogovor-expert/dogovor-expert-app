@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import Link from "next/link";
 import dynamic from "next/dynamic";
 import { Check, ShieldQuestion, PhoneCall } from "lucide-react";
 import { fmtMoney } from "@/lib/legal/calc";
@@ -64,6 +65,7 @@ export default function KaskoQuote() {
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const [captchaNonce, setCaptchaNonce] = useState(0);
   const captchaRequired = Boolean(CAPTCHA_SITE_KEY);
+  const [consent, setConsent] = useState(false);
 
   const calc = () => {
     const p = PRICES.find((x) => x.id === price)!;
@@ -83,6 +85,7 @@ export default function KaskoQuote() {
     const digits = phone.replace(/\D/g, "");
     if (!brand.trim()) { setLeadErr("Укажите марку и модель автомобиля"); return; }
     if (digits.length < 10) { setLeadErr("Укажите корректный номер телефона"); return; }
+    if (!consent) { setLeadErr("Нужно согласие на обработку персональных данных"); return; }
     if (captchaRequired && !captchaToken) { setLeadErr("Подтвердите, что вы не робот"); return; }
     setSending(true);
     setLeadErr("");
@@ -192,10 +195,18 @@ export default function KaskoQuote() {
                 placeholder="Телефон (+7 …)"
                 className="w-full bg-white border border-gray-200 text-xs py-2.5 px-3 rounded-lg text-gray-900 outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500" />
               {leadErr && <p className="text-[11px] text-red-600">{leadErr}</p>}
+              <label className="flex items-start gap-2 cursor-pointer select-none">
+                <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)}
+                  className="mt-0.5 w-3.5 h-3.5 shrink-0 accent-brand-600 cursor-pointer" />
+                <span className="text-[10px] text-gray-600 leading-snug">
+                  Согласен на обработку персональных данных (тел.: {"+"} номер, марка авто) для подбора КАСКО —
+                  {" "}<Link href="/privacy" className="underline text-brand-600 hover:text-brand-700">политика</Link>
+                </span>
+              </label>
               {captchaRequired && (
                 <TurnstileCaptcha key={captchaNonce} onToken={setCaptchaToken} />
               )}
-              <button onClick={sendLead} disabled={sending || (captchaRequired && !captchaToken)}
+              <button onClick={sendLead} disabled={sending || !consent || (captchaRequired && !captchaToken)}
                 className="w-full py-2.5 bg-brand-600 text-white rounded-xl hover:bg-brand-700 font-bold text-xs transition cursor-pointer disabled:opacity-60 flex items-center justify-center gap-1.5">
                 <PhoneCall className="w-3.5 h-3.5" /> {sending ? "Отправка…" : captchaRequired && !captchaToken ? "Подтвердите капчу" : "Подобрать КАСКО"}
               </button>

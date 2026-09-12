@@ -17,6 +17,7 @@ import { useCookieConsent } from "@/hooks/useCookieConsent";
 import PromoPill from "@/components/billing/PromoPill";
 import SupportLauncher from "@/components/support/SupportLauncher";
 import NotificationBell from "@/components/layout/NotificationBell";
+import OfflineBanner from "@/components/layout/OfflineBanner";
 import MobileTabBar from "@/components/layouts/MobileTabBar";
 
 interface NavItem {
@@ -391,6 +392,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
       {/* SupportLauncher появляется только когда юзер сделал выбор
           (cookieReady === true). CookieBanner сам управляет видимостью
           и не зависит от состояния AppLayout. */}
+      <OfflineBanner />
       {cookieReady && <SupportLauncher />}
       <CookieBanner
         settingsOpenExternal={cookieSettingsOpen}
