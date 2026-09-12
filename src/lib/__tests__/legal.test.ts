@@ -90,6 +90,21 @@ describe("КоАП: скидка 50% при оплате в 20 дней", () => 
     expect(fineWithDiscount(f)).toBeNull();
   });
 
+  it("управление лишённым прав (12.7 ч.2, 30 000 ₽) — скидка НЕ в исключениях ст. 32.2 ч.1.3, действует", () => {
+    const f = KOAP_CHAPTER_12.find((x) => x.article === "12.7" && x.part === 2)!;
+    expect(f.noDiscount).toBeUndefined();
+    expect(fineWithDiscount(f)).toBe(Math.round(30000 * 0.75)); // 22500
+  });
+
+  it("повторная регистрация (12.1 ч.1.1) и алкоголь после ДТП (12.27 ч.3) — в исключениях, без скидки", () => {
+    const f1 = KOAP_CHAPTER_12.find((x) => x.article === "12.1" && x.part === 1.1)!;
+    const f3 = KOAP_CHAPTER_12.find((x) => x.article === "12.27" && x.part === 3)!;
+    expect(f1).toBeDefined();
+    expect(f3).toBeDefined();
+    expect(fineWithDiscount(f1)).toBeNull();
+    expect(fineWithDiscount(f3)).toBeNull();
+  });
+
   it("срок скидки +30 дней с учётом длины месяца", () => {
     expect(discountDeadline("2025-01-01")).toBe("2025-01-31");
     expect(discountDeadline("2025-01-15")).toBe("2025-02-14");

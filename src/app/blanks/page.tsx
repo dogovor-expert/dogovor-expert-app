@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { LEGAL_TEMPLATES } from "@/data/templates";
+import { POPULAR_TEMPLATE_IDS } from "@/data/popular";
 import BlanksBrowser, { type BlankCategory, type BlankItem } from "@/components/blank/BlanksBrowser";
 import { withSeo } from "@/lib/seo/withSeo";
 import { JsonLd } from "@/components/seo/JsonLd";
@@ -140,14 +141,7 @@ export default function BlanksIndexPage() {
   );
 }
 
-const POPULAR_IDS = [
-  "dkp-auto",
-  "dogovor-arendy-kvartiry",
-  "raspiska-money",
-  "akt-priema-kvartiry",
-  "akt-naym",
-  "raspiska-generic",
-];
+const POPULAR_IDS = POPULAR_TEMPLATE_IDS;
 
 function PopularBlanks({ items }: { items: BlankItem[] }) {
   const popular = POPULAR_IDS.map((id) => items.find((i) => i.id === id)).filter(
