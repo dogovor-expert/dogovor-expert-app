@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { randomUUID } from "crypto";
+import { createHash } from "crypto";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { currentProPrice } from "@/lib/pricing";
@@ -45,15 +45,47 @@ async function postHandler(req: Request) {
     return NextResponse.json({ error: "no_saved_payment_method" }, { status: 400 });
   }
 
+  // Анти-дабл-чардж (аудитор 2026-09-12): если за последние 10 минут уже
+  // создавалась попытка автопродления (pending — списание в процессе/не
+  // подтверждено; succeeded — уже списано), не отправляем повторное
+  // безвозвратное capture:true списание.
+  const admin = createAdminClient();
+  const recentSince = new Date(Date.now() - 10 * 60 * 1000).toISOString();
+  const { data: inFlight } = await admin
+    .from("payments")
+    .select("id")
+    .eq("user_id", user.id)
+    .eq("meta->>auto_renewal", true)
+    .in("status", ["pending", "succeeded"])
+    .gte("created_at", recentSince)
+    .limit(1);
+  if (inFlight && inFlight.length > 0) {
+    return NextResponse.json(
+      { error: "renew_in_progress", message: "Продление уже выполняется — не нажимайте повторно" },
+      { status: 409 }
+    );
+  }
+
   const host = req.headers.get("host") ?? "dogovor.expert";
   const proto = host.includes("localhost") || host.includes("127.0.0.1") ? "http" : "https";
   const price = currentProPrice();
+
+  // Детерминированный идемпотентный ключ (аудитор 2026-09-12): раньше был
+  // randomUUID — каждый повторный вызов (двойной клик, ретрай фронта) создавал
+  // НОВЫЙ платёж с capture:true = двойное списание. Ключ «подписка + бакет
+  // 5 минут»: всплеск дублей дедуплицируется на стороне YooKassa (окно
+  // идемпотентности 24ч), а через 5+ минут легитимный ретрай после отказа —
+  // возможен. От повторного УСПЕШНОГО списания защищает пре-чек выше
+  // (pending/succeeded за 10 минут → 409).
+  const idempotenceKey = createHash("sha256")
+    .update(`renew:${active.id}:${Math.floor(Date.now() / 300000)}`)
+    .digest("hex");
 
   const res = await fetch("https://api.yookassa.ru/v3/payments", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "Idempotence-Key": randomUUID(),
+      "Idempotence-Key": idempotenceKey,
       Authorization: "Basic " + Buffer.from(`${shopId}:${secretKey}`).toString("base64"),
     },
     body: JSON.stringify({
@@ -70,7 +102,6 @@ async function postHandler(req: Request) {
   }
   const payment = await res.json();
 
-  const admin = createAdminClient();
   await admin.from("payments").insert({
     user_id: user.id,
     amount: price,

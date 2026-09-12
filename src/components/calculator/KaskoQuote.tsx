@@ -1,8 +1,14 @@
 "use client";
 import { useState } from "react";
+import dynamic from "next/dynamic";
 import { Check, ShieldQuestion, PhoneCall } from "lucide-react";
 import { fmtMoney } from "@/lib/legal/calc";
 import SaveCalcButton from "@/components/calculator/SaveCalcButton";
+
+const CAPTCHA_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
+const TurnstileCaptcha = dynamic(() => import("@/components/auth/TurnstileCaptcha"), {
+  ssr: false,
+});
 
 function labelOf<T extends { id: string; label: string }>(arr: readonly T[], id: string): string {
   return arr.find((x) => x.id === id)?.label ?? id;
@@ -55,6 +61,9 @@ export default function KaskoQuote() {
   const [leadErr, setLeadErr] = useState("");
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const [captchaNonce, setCaptchaNonce] = useState(0);
+  const captchaRequired = Boolean(CAPTCHA_SITE_KEY);
 
   const calc = () => {
     const p = PRICES.find((x) => x.id === price)!;
@@ -74,17 +83,24 @@ export default function KaskoQuote() {
     const digits = phone.replace(/\D/g, "");
     if (!brand.trim()) { setLeadErr("Укажите марку и модель автомобиля"); return; }
     if (digits.length < 10) { setLeadErr("Укажите корректный номер телефона"); return; }
+    if (captchaRequired && !captchaToken) { setLeadErr("Подтвердите, что вы не робот"); return; }
     setSending(true);
     setLeadErr("");
     try {
       const res = await fetch("/api/leads", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ service: "kasko", brand, phone }),
+        body: JSON.stringify({ service: "kasko", brand, phone, captchaToken }),
       });
       const json = await res.json().catch(() => null);
       if (!res.ok) {
-        setLeadErr(json?.error === "phone is required" ? "Укажите корректный номер телефона" : "Не удалось отправить заявку. Попробуйте ещё раз");
+        const msg =
+          json?.error === "phone is required" ? "Укажите корректный номер телефона"
+          : /робот|Капча/i.test(String(json?.error ?? "")) ? "Капча не пройдена — попробуйте ещё раз"
+          : "Не удалось отправить заявку. Попробуйте ещё раз";
+        setLeadErr(msg);
+        setCaptchaToken(null);
+        setCaptchaNonce((n) => n + 1);
         setSending(false);
         return;
       }
@@ -176,9 +192,12 @@ export default function KaskoQuote() {
                 placeholder="Телефон (+7 …)"
                 className="w-full bg-white border border-gray-200 text-xs py-2.5 px-3 rounded-lg text-gray-900 outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500" />
               {leadErr && <p className="text-[11px] text-red-600">{leadErr}</p>}
-              <button onClick={sendLead} disabled={sending}
+              {captchaRequired && (
+                <TurnstileCaptcha key={captchaNonce} onToken={setCaptchaToken} />
+              )}
+              <button onClick={sendLead} disabled={sending || (captchaRequired && !captchaToken)}
                 className="w-full py-2.5 bg-brand-600 text-white rounded-xl hover:bg-brand-700 font-bold text-xs transition cursor-pointer disabled:opacity-60 flex items-center justify-center gap-1.5">
-                <PhoneCall className="w-3.5 h-3.5" /> {sending ? "Отправка…" : "Подобрать КАСКО"}
+                <PhoneCall className="w-3.5 h-3.5" /> {sending ? "Отправка…" : captchaRequired && !captchaToken ? "Подтвердите капчу" : "Подобрать КАСКО"}
               </button>
             </div>
           )}

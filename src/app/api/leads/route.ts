@@ -6,16 +6,45 @@ import { limiters, clientIp, checkRateLimit, rateLimitResponse } from "@/lib/rat
 import { withCsrf } from "@/lib/csrf";
 import { sendEmail, sendTelegram, SUPPORT_EMAIL } from "@/lib/mail";
 import { leadSchema, validateBody } from "@/lib/validations/api";
+import { turnstileConfigured, verifyTurnstile } from "@/lib/turnstile";
 
 const STATUSES = ["new", "paid", "docs", "filed", "done", "canceled"] as const;
 
-export async function POST(req: Request) {
+async function postHandler(req: Request) {
+  // CSRF + same-origin: лид-форма — публичная, но не должна принимать
+  // кросс-доменные POST (дроп заявок через чужие сайты).
+  if (!isSameOrigin(req)) return NextResponse.json({ error: "forbidden" }, { status: 403 });
+
   const rl = await checkRateLimit(limiters.publicForm, clientIp(req));
   if (!rl.ok) return rateLimitResponse(rl.retryAfter);
 
   const rawBody = await req.json().catch(() => null);
   if (!rawBody) {
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+  }
+
+  // Капча Cloudflare Turnstile (когда настроена): защита от спама на
+  // Telegram/почту поддержки. Одинаковая семантика с логином: fail-open
+  // только при недоступности самого сервиса Turnstile.
+  if (turnstileConfigured()) {
+    const captchaToken =
+      typeof rawBody.captchaToken === "string" ? rawBody.captchaToken : "";
+    if (!captchaToken) {
+      return NextResponse.json(
+        { error: "Подтвердите, что вы не робот" },
+        { status: 400 }
+      );
+    }
+    const verdict = await verifyTurnstile(captchaToken, clientIp(req));
+    if (verdict === "fail") {
+      return NextResponse.json(
+        { error: "Капча не пройдена — попробуйте ещё раз" },
+        { status: 400 }
+      );
+    }
+    if (verdict === "unavailable") {
+      console.warn("[leads] Turnstile недоступен — fail-open");
+    }
   }
 
   // Zod-валидация
@@ -97,5 +126,7 @@ async function patchHandler(req: Request) {
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ data });
 }
+
+export const POST = withCsrf(postHandler);
 
 export const PATCH = withCsrf(patchHandler);
