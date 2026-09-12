@@ -204,7 +204,13 @@ export const TRANSPORT_FEDERAL_RATES: { upTo: number; rate: number }[] = [
   { upTo: Infinity, rate: 15 },
 ];
 
-export const TRANSPORT_REGIONS: Record<string, { name: string; rates: { upTo: number; rate: number }[] }> = {
+export const TRANSPORT_REGIONS: Record<string, {
+  name: string;
+  rates: { upTo: number; rate: number }[];
+  /** Ставки, дифференцированные по налоговым периодам (Свердловская обл.). */
+  byYear?: Record<number, { upTo: number; rate: number }[]>;
+  note?: string;
+}> = {
   federal: { name: "Федеральные (базовые)", rates: TRANSPORT_FEDERAL_RATES },
   moscow: {
     name: "Москва",
@@ -246,14 +252,96 @@ export const TRANSPORT_REGIONS: Record<string, { name: string; rates: { upTo: nu
       { upTo: Infinity, rate: 30 },
     ],
   },
+  // Закон РТ от 29.11.2002 № 24-ЗРТ, ст. 5 (ред. 2026)
+  tat: {
+    name: "Татарстан",
+    rates: [
+      { upTo: 100, rate: 10 },
+      { upTo: 150, rate: 35 },
+      { upTo: 200, rate: 50 },
+      { upTo: 250, rate: 75 },
+      { upTo: Infinity, rate: 150 },
+    ],
+    note: "До 100 л.с.: для организаций — 25 ₽, для физлиц — 10 ₽ (указана ставка физлиц).",
+  },
+  // Закон СО от 29.11.2002 № 43-ОЗ (ред. от 14.11.2024) — ставки растут по годам
+  sverdl: {
+    name: "Свердловская область",
+    rates: [
+      { upTo: 100, rate: 10.4 },
+      { upTo: 150, rate: 14.6 },
+      { upTo: 200, rate: 35.4 },
+      { upTo: 250, rate: 53.7 },
+      { upTo: Infinity, rate: 107.3 },
+    ],
+    byYear: {
+      2025: [
+        { upTo: 100, rate: 10 },
+        { upTo: 150, rate: 14 },
+        { upTo: 200, rate: 34 },
+        { upTo: 250, rate: 51.6 },
+        { upTo: Infinity, rate: 103.2 },
+      ],
+      2026: [
+        { upTo: 100, rate: 10.4 },
+        { upTo: 150, rate: 14.6 },
+        { upTo: 200, rate: 35.4 },
+        { upTo: 250, rate: 53.7 },
+        { upTo: Infinity, rate: 107.3 },
+      ],
+      2027: [
+        { upTo: 100, rate: 10.8 },
+        { upTo: 150, rate: 15.2 },
+        { upTo: 200, rate: 36.8 },
+        { upTo: 250, rate: 55.8 },
+        { upTo: Infinity, rate: 111.6 },
+      ],
+      2028: [
+        { upTo: 100, rate: 11.2 },
+        { upTo: 150, rate: 15.8 },
+        { upTo: 200, rate: 38.3 },
+        { upTo: 250, rate: 58 },
+        { upTo: Infinity, rate: 116.1 },
+      ],
+    },
+    note: "Ставки повышаются ежегодно (2025→2028). Выберите налоговый период.",
+  },
+  // Обл. закон Ростовской обл. от 10.05.2012 № 843-ЗС, ст. 5 (ред. 27.11.2025 № 370-ЗС)
+  rostov: {
+    name: "Ростовская область",
+    rates: [
+      { upTo: 100, rate: 16 },
+      { upTo: 150, rate: 25 },
+      { upTo: 200, rate: 50 },
+      { upTo: 250, rate: 75 },
+      { upTo: Infinity, rate: 150 },
+    ],
+    note: "До 100 л.с.: 12 ₽ для авто старше 10 лет, иначе 16 ₽. С 2027: 100–150 л.с. — 30 ₽ (расчёт по базовым).",
+  },
+  // Закон НО от 28.11.2002 № 71-З — дополнительный интервал «до 45 л.с.»
+  nnov: {
+    name: "Нижегородская область",
+    rates: [
+      { upTo: 45, rate: 13.5 },
+      { upTo: 100, rate: 22.5 },
+      { upTo: 150, rate: 31.5 },
+      { upTo: 200, rate: 45 },
+      { upTo: 250, rate: 75 },
+      { upTo: Infinity, rate: 150 },
+    ],
+    note: "Есть отдельная ставка до 45 л.с. (13,5 ₽).",
+  },
 };
 
-export function transportTax(power: number, region: keyof typeof TRANSPORT_REGIONS, months = 12, luxuryCoef = 1): {
-  rate: number;
-  tax: number;
-  luxury: number;
-} {
-  const rates = TRANSPORT_REGIONS[region]?.rates ?? TRANSPORT_FEDERAL_RATES;
+export function transportTax(
+  power: number,
+  region: keyof typeof TRANSPORT_REGIONS,
+  months = 12,
+  luxuryCoef = 1,
+  year = 2026
+): { rate: number; tax: number; luxury: number } {
+  const conf = TRANSPORT_REGIONS[region];
+  const rates = conf?.byYear?.[year] ?? conf?.rates ?? TRANSPORT_FEDERAL_RATES;
   const bracket = rates.find((r) => power <= r.upTo);
   if (!bracket) {
     throw new Error(`No transport tax bracket for power=${power}`);

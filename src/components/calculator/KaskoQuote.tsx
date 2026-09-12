@@ -4,6 +4,7 @@ import Link from "next/link";
 import dynamic from "next/dynamic";
 import { Check, ShieldQuestion, PhoneCall } from "lucide-react";
 import { fmtMoney } from "@/lib/legal/calc";
+import { formatPhoneRu } from "@/lib/format";
 import SaveCalcButton from "@/components/calculator/SaveCalcButton";
 
 const CAPTCHA_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
@@ -191,7 +192,7 @@ export default function KaskoQuote() {
               <input type="text" value={brand} onChange={(e) => setBrand(e.target.value)}
                 placeholder="Марка и модель"
                 className="w-full bg-white border border-gray-200 text-xs py-2.5 px-3 rounded-lg text-gray-900 outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500" />
-              <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)}
+              <input type="tel" inputMode="tel" value={phone} onChange={(e) => setPhone(e.target.value ? formatPhoneRu(e.target.value) : "")}
                 placeholder="Телефон (+7 …)"
                 className="w-full bg-white border border-gray-200 text-xs py-2.5 px-3 rounded-lg text-gray-900 outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500" />
               {leadErr && <p className="text-[11px] text-red-600">{leadErr}</p>}
