@@ -87,7 +87,7 @@ rules:
     paths:
       exclude:
         - "**/*.test.ts"
-        - - "src/lib/validations/**"
+        - "src/lib/validations/**"
 
   - id: any-type-cast
     pattern: "as any"
