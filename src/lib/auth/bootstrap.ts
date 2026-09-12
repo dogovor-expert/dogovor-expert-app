@@ -1,0 +1,106 @@
+"use client";
+import { createClient } from "@/lib/supabase/client";
+
+type CookieSession = { access_token: string; refresh_token: string };
+
+// Формат куки @supabase/ssr: sb-<ref>-auth-token (при больших сессиях —
+// чанки sb-<ref>-auth-token-0..N). Внутри — JSON вида
+// { currentSession: <string|object|null>, session?, expiresAt? },
+// закодирован encodeURIComponent или base64url (зависит от версии).
+export function parseSupabaseAuthCookie(cookieHeader: string): CookieSession | null {
+  const chunks = new Map<number, string>();
+  let single: string | null = null;
+  for (const part of cookieHeader.split(";")) {
+    const idx = part.indexOf("=");
+    if (idx < 0) continue;
+    const name = part.slice(0, idx).trim();
+    const value = part.slice(idx + 1).trim();
+    const m = /^sb-[^=;]+-auth-token(?:-(\d+))?$/.exec(name);
+    if (!m || !value || value === '""') continue;
+    if (m[1] === undefined) single = value;
+    else chunks.set(Number(m[1]), value);
+  }
+  const raw = chunks.size
+    ? Array.from(chunks.entries())
+        .sort((a, b) => a[0] - b[0])
+        .map(([, v]) => v)
+        .join("")
+    : single;
+  if (!raw) return null;
+
+  const candidates: string[] = [raw];
+  try {
+    candidates.push(decodeURIComponent(raw));
+  } catch {
+    /* не url-encoded — ок */
+  }
+  for (const c of candidates) {
+    const session = tryExtractSession(c);
+    if (session) return session;
+  }
+  return null;
+}
+
+function tryExtractSession(text: string): CookieSession | null {
+  const jsonStrings: string[] = [text];
+  // base64 (стандартный и url-safe), как делает @supabase/ssr >= 0.12
+  try {
+    const b64 = text.replace(/-/g, "+").replace(/_/g, "/");
+    const pad = b64.length % 4 ? b64 + "=".repeat(4 - (b64.length % 4)) : b64;
+    const decoded = atob(pad);
+    if (decoded.startsWith("{") || decoded.startsWith("%")) jsonStrings.push(decoded);
+  } catch {
+    /* не base64 */
+  }
+  for (const s of jsonStrings) {
+    try {
+      let obj = JSON.parse(s);
+      if (typeof obj === "string") obj = JSON.parse(obj);
+      let cur = obj?.currentSession ?? obj?.session ?? obj;
+      if (typeof cur === "string") cur = JSON.parse(cur);
+      if (cur?.access_token && cur?.refresh_token) {
+        return { access_token: cur.access_token, refresh_token: cur.refresh_token };
+      }
+    } catch {
+      /* форматы перебираем */
+    }
+  }
+  return null;
+}
+
+export function clearSupabaseAuthCookies() {
+  if (typeof document === "undefined") return;
+  for (const part of document.cookie.split(";")) {
+    const name = part.split("=")[0]?.trim();
+    if (name && /^sb-[^=;]+-auth-token(-\d+)?$/.test(name)) {
+      document.cookie = `${name}=; path=/; max-age=0`;
+      document.cookie = `${name}=; path=/; domain=${location.hostname}; max-age=0`;
+    }
+  }
+}
+
+/**
+ * «Призрачная сессия»: сервер (middleware) видит валидную cookie и редиректит
+ * /login → /dashboard, а клиентский localStorage пуст (Opera чистит site
+ * storage, но оставляет cookies) — хедер показывает «Войти», и пользователь
+ * попадает в цикл login→dashboard без формы входа. Восстанавливаем клиентскую
+ * сессию из cookie; если она не валидна — чистим cookie, разрывая цикл.
+ */
+export async function restoreSessionFromCookie(): Promise<boolean> {
+  if (typeof document === "undefined") return false;
+  try {
+    const supabase = createClient();
+    const { data } = await supabase.auth.getSession();
+    if (data.session) return true;
+    const cookieSession = parseSupabaseAuthCookie(document.cookie);
+    if (!cookieSession) return false;
+    const { error } = await supabase.auth.setSession(cookieSession);
+    if (error) {
+      clearSupabaseAuthCookies();
+      return false;
+    }
+    return true;
+  } catch {
+    return false;
+  }
+}
