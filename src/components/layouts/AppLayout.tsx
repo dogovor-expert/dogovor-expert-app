@@ -413,7 +413,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
             )}
           </div>
         </header>
-        <main className="flex-1 overflow-y-auto max-w-full px-4 sm:px-6 lg:px-8 pb-28 lg:pb-0">
+        <main className="flex-1 overflow-y-auto max-w-full px-4 sm:px-6 lg:px-8 pb-28 lg:pb-0" tabIndex={0}>
   <div className="max-w-7xl mx-auto w-full">{children}</div>
 </main>
       </div>

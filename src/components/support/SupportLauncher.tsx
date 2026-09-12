@@ -93,7 +93,7 @@ function SupportPanel({
       role="dialog"
       aria-modal="true"
       aria-labelledby="support-panel-title"
-      className="fixed bottom-4 right-4 z-50 w-[min(92vw,380px)] bg-white rounded-3xl shadow-2xl overflow-hidden border border-slate-100 pb-safe"
+      className="fixed bottom-[calc(4.75rem+env(safe-area-inset-bottom))] lg:bottom-4 right-4 z-50 w-[min(92vw,380px)] bg-white rounded-3xl shadow-2xl overflow-hidden border border-slate-100 pb-safe"
       onKeyDown={(e) => {
         if (e.key === "Escape") onClose();
       }}
@@ -227,7 +227,7 @@ export default function SupportLauncher() {
           ref={triggerRef}
           type="button"
           onClick={() => handleOpen(CHAT_ENABLED ? "chat" : "problem")}
-          className="fixed bottom-4 right-4 z-40 inline-flex items-center gap-2 px-4 py-3 rounded-full bg-brand-600 text-white shadow-lg hover:bg-brand-700 transition-colors pb-safe"
+          className="fixed bottom-[calc(4.75rem+env(safe-area-inset-bottom))] lg:bottom-4 right-4 z-40 inline-flex items-center gap-2 px-4 py-3 rounded-full bg-brand-600 text-white shadow-lg hover:bg-brand-700 transition-colors pb-safe"
           aria-label="Поддержка"
         >
           <Headphones className="w-5 h-5" />

@@ -98,7 +98,7 @@ export default function BlogList({ posts, labels }: BlogListProps) {
           </p>
         </header>
 
-        <div className="flex flex-wrap gap-2 mb-6" role="tablist" aria-label="Категории блога">
+        <div className="flex flex-wrap gap-2 mb-6" role="group" aria-label="Категории блога">
           <button
             type="button"
             onClick={() => onSelectCat("all")}

@@ -60,7 +60,7 @@ export default function DayCounter() {
           </div>
         </div>
         <button onClick={calc}
-          className="w-full py-2.5 bg-indigo-500 text-white rounded-xl hover:bg-indigo-600 font-bold text-xs transition cursor-pointer">
+          className="w-full py-2.5 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 font-bold text-xs transition cursor-pointer">
           Посчитать дни
         </button>
       </div>

@@ -215,7 +215,7 @@ export default function CustomsDuty() {
         </div>
         <div className="flex items-center gap-2">
           <button onClick={calc}
-            className="flex-1 py-2.5 bg-indigo-500 text-white rounded-xl hover:bg-indigo-600 font-bold text-xs transition cursor-pointer">
+            className="flex-1 py-2.5 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 font-bold text-xs transition cursor-pointer">
             Рассчитать таможенные платежи
           </button>
           <button onClick={() => loadRate(regDate)} disabled={rateLoading}

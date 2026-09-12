@@ -117,7 +117,7 @@ export default async function DocumentPage({
           <FileText className="h-6 w-6" />
         </div>
         <div>
-          <p className="text-[10px] font-mono uppercase tracking-widest text-indigo-500 mb-1">
+          <p className="text-[10px] font-mono uppercase tracking-widest text-indigo-700 mb-1">
             Бесплатно · Без регистрации · {t.actSource}
           </p>
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">{t.name}</h1>
@@ -136,7 +136,7 @@ export default async function DocumentPage({
           </Link>
           <Link
             href={`/builder?template=${t.id}`}
-            className="inline-flex items-center gap-2 px-5 py-3 bg-indigo-500 text-white rounded-xl hover:bg-indigo-600 font-bold text-sm transition cursor-pointer"
+            className="inline-flex items-center gap-2 px-5 py-3 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 font-bold text-sm transition cursor-pointer"
           >
             Составить документ
             <ChevronRight className="w-4 h-4" />
