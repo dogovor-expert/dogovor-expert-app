@@ -151,7 +151,7 @@ export default async function BlankPage({ params }: { params: Promise<{ slug: st
           <FileText className="h-6 w-6" />
         </div>
         <div className="flex-1">
-          <p className="text-[10px] font-mono uppercase tracking-widest text-indigo-500 mb-1">
+          <p className="text-[10px] font-mono uppercase tracking-widest text-indigo-700 mb-1">
             Пустой бланк · Бесплатно · {t.actSource}
           </p>
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">

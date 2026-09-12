@@ -111,7 +111,7 @@ export default function PddFines() {
             </p>
           )}
           <button onClick={calcDiscount}
-            className="w-full py-2.5 bg-indigo-500 text-white rounded-xl hover:bg-indigo-600 font-bold text-xs transition cursor-pointer">
+            className="w-full py-2.5 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 font-bold text-xs transition cursor-pointer">
             Рассчитать со скидкой
           </button>
 

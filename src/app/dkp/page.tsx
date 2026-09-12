@@ -130,7 +130,7 @@ export default function DkpPage() {
           <Car className="h-6 w-6" />
         </div>
         <div>
-          <p className="text-[10px] font-mono uppercase tracking-widest text-indigo-500 mb-1">
+          <p className="text-[10px] font-mono uppercase tracking-widest text-indigo-700 mb-1">
             Бесплатно · Без регистрации · По ст. 454 ГК РФ
           </p>
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
@@ -144,7 +144,7 @@ export default function DkpPage() {
         </div>
         <a
           href="/builder?template=dkp-auto"
-          className="sm:ml-auto inline-flex items-center gap-2 px-5 py-3 bg-indigo-500 text-white rounded-xl hover:bg-indigo-600 font-bold text-sm transition cursor-pointer flex-shrink-0"
+          className="sm:ml-auto inline-flex items-center gap-2 px-5 py-3 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 font-bold text-sm transition cursor-pointer flex-shrink-0"
         >
           Составить договор
           <ChevronRight className="w-4 h-4" />

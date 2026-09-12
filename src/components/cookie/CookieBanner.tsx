@@ -254,11 +254,10 @@ export function CookieBanner({ settingsOpenExternal, onSettingsClosed }: CookieB
   return (
     <div
       role="region"
-      aria-modal="false"
       aria-labelledby="cookie-banner-title"
       aria-describedby="cookie-banner-desc"
       aria-live="polite"
-      className="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 w-[calc(100%-2rem)] max-w-xl bg-white border border-gray-200 rounded-2xl shadow-xl p-4 pb-safe"
+      className="fixed bottom-[calc(4.75rem+env(safe-area-inset-bottom))] lg:bottom-4 left-1/2 -translate-x-1/2 z-40 w-[calc(100%-2rem)] max-w-xl bg-white border border-gray-200 rounded-2xl shadow-xl p-4 pb-safe"
     >
       <div className="flex items-start gap-3">
         <div

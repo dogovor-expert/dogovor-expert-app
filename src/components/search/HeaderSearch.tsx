@@ -51,6 +51,10 @@ export default function HeaderSearch() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [active, setActive] = useState(-1);
   const inputRef = useRef<HTMLInputElement>(null);
+  // Отдельный ref для мобильного оверлея: общий ref с десктоп-полем терялся
+  // при закрытии оверлея (React обнулял ref, висящий на том же объекте).
+  const mobileInputRef = useRef<HTMLInputElement>(null);
+  const anyInput = () => mobileInputRef.current ?? inputRef.current;
   const rootRef = useRef<HTMLDivElement>(null);
 
   const items = useMemo(() => {
@@ -71,7 +75,7 @@ export default function HeaderSearch() {
 
   useEffect(() => {
     if (mobileOpen) {
-      const id = setTimeout(() => inputRef.current?.focus(), 100);
+      const id = setTimeout(() => mobileInputRef.current?.focus(), 100);
       return () => clearTimeout(id);
     }
   }, [mobileOpen]);
@@ -106,7 +110,7 @@ export default function HeaderSearch() {
         router.push(`/builder?template=${items[active].t.id}`);
         closeAll();
         setQuery("");
-        inputRef.current?.blur();
+        (e.currentTarget as HTMLInputElement).blur();
       } else {
         e.preventDefault();
         const q = query.trim();
@@ -114,7 +118,7 @@ export default function HeaderSearch() {
       }
     } else if (e.key === "Escape") {
       closeAll();
-      inputRef.current?.blur();
+      (e.currentTarget as HTMLInputElement).blur();
     } else if (e.key === "Tab") {
       closeAll();
     }
@@ -197,6 +201,7 @@ export default function HeaderSearch() {
           aria-controls={listboxId}
           aria-activedescendant={active >= 0 ? optId(active) : undefined}
           aria-autocomplete="list"
+          aria-label="Поиск документов и шаблонов"
           placeholder="Поиск документов, шаблонов..."
           value={query}
           onChange={(e) => setQuery(e.target.value)}
@@ -229,13 +234,14 @@ export default function HeaderSearch() {
           >
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-600 pointer-events-none" />
             <input
-              ref={inputRef}
+              ref={mobileInputRef}
               type="text"
               role="combobox"
               aria-expanded={showList}
               aria-controls={listboxMobileId}
               aria-activedescendant={active >= 0 ? optMobileId(active) : undefined}
               aria-autocomplete="list"
+              aria-label="Поиск документов и шаблонов"
               placeholder="Поиск документов, шаблонов..."
               value={query}
               onChange={(e) => setQuery(e.target.value)}
@@ -246,7 +252,7 @@ export default function HeaderSearch() {
             {query && (
               <button
                 type="button"
-                onClick={() => { setQuery(""); inputRef.current?.focus(); }}
+                onClick={() => { setQuery(""); mobileInputRef.current?.focus(); }}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-600 hover:text-gray-900"
                 aria-label="Очистить"
               >
