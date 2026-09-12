@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { randomUUID } from "crypto";
+import { createHash } from "crypto";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { currentProPrice } from "@/lib/pricing";
@@ -31,11 +31,18 @@ async function postHandler(req: Request) {
   const proto = host.includes("localhost") || host.includes("127.0.0.1") ? "http" : "https";
   const price = currentProPrice();
 
+  // Идемпотентность (аудитор 2026-09-12): бакет 5 минут — двойной клик
+  // создаёт ОДИН платёж в YooKassa; повтор позже (после отмены/истечения
+  // pending) получает свежий счёт, как и нужно пользователю.
+  const idempotenceKey = createHash("sha256")
+    .update(`first-pay:${user.id}:${Math.floor(Date.now() / 300000)}`)
+    .digest("hex");
+
   const res = await fetch("https://api.yookassa.ru/v3/payments", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "Idempotence-Key": randomUUID(),
+      "Idempotence-Key": idempotenceKey,
       Authorization: "Basic " + Buffer.from(`${shopId}:${secretKey}`).toString("base64"),
     },
     body: JSON.stringify({

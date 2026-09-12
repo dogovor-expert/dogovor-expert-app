@@ -5,27 +5,7 @@ import { NextResponse } from 'next/server';
 import { withCsrf } from '@/lib/csrf';
 import { isSameOrigin } from '@/lib/admin-auth';
 import { limiters, clientIp, checkRateLimit, rateLimitResponse } from '@/lib/ratelimit';
-
-// S5 (аудит): серверная верификация Turnstile — вход оставался единственным
-// auth-эндпоинтом без капчи (только rate-limit). Возвращает:
-// ok — пройдено/не настроено; fail — капча не пройдена; unavailable — CF недоступен.
-async function verifyTurnstile(token: string, ip: string): Promise<'ok' | 'fail' | 'unavailable'> {
-  const secret = process.env.TURNSTILE_SECRET_KEY;
-  if (!secret) return 'ok';
-  try {
-    const res = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams({ secret, response: token, remoteip: ip }).toString(),
-      cache: 'no-store',
-    });
-    if (!res.ok) return 'unavailable';
-    const data = (await res.json()) as { success: boolean };
-    return data.success ? 'ok' : 'fail';
-  } catch {
-    return 'unavailable';
-  }
-}
+import { verifyTurnstile, turnstileConfigured } from '@/lib/turnstile';
 
 async function loginHandler(req: Request) {
   // Belt-and-suspenders: CSRF + isSameOrigin
@@ -46,7 +26,7 @@ async function loginHandler(req: Request) {
 
   // S5: Turnstile — строго при настроенном TURNSTILE_SECRET_KEY. Токен без
   // таймаута Cloudflare (unavailable) — fail-open, чтобы не валить легитимные входы.
-  if (process.env.TURNSTILE_SECRET_KEY) {
+  if (turnstileConfigured()) {
     const captchaToken =
       typeof body.captchaToken === 'string' && body.captchaToken.length > 0
         ? body.captchaToken
