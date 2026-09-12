@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { getAllDrafts } from "@/lib/autosave";
 import { createClient } from "@/lib/supabase/client";
+import { restoreSessionFromCookie } from "@/lib/auth/bootstrap";
 import {
   FileText, Activity, Calculator,
   FolderOpen, Files, Trash2, CreditCard,
@@ -93,6 +94,14 @@ export default function AppLayout({ children }: { children: ReactNode }) {
     });
     return () => subscription.unsubscribe();
   }, [loadProfile]);
+
+  // «Призрачная сессия» (Opera/мобильные браузеры чистят localStorage, но
+  // оставляют cookie): middleware пускает в /dashboard, а хедер показывает
+  // «Войти» и /login отбивается редиректом — цикл без формы входа. Чиним на
+  // старте: поднимаем клиентскую сессию из cookie либо сбрасываем протухшую.
+  useEffect(() => {
+    void restoreSessionFromCookie();
+  }, []);
 
   // Загрузка профиля: только при смене user.id (и после внешних событий
   // dogovor:profile). AbortController + ignore флаг против гонок и
