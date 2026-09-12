@@ -2,6 +2,56 @@ const STORAGE_PREFIX = "dogovor_draft_";
 const VERSIONS_PREFIX = "dogovor_versions_";
 const VERSION_LIMIT = 10;
 
+export type DraftSaveFailure = "quota" | "unavailable";
+
+/** Имя события, которое диспатчится при отказе записи (для глобального тоста). */
+export const DRAFT_SAVE_ERROR_EVENT = "dogovor:draft-save-error";
+
+function dispatchSaveError(reason: DraftSaveFailure) {
+  try {
+    window.dispatchEvent(new CustomEvent(DRAFT_SAVE_ERROR_EVENT, { detail: reason }));
+  } catch {
+    /* SSR / окружение без CustomEvent */
+  }
+}
+
+function write(key: string, payload: string): boolean {
+  try {
+    localStorage.setItem(key, payload);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * LRU-эвикция при переполнении квоты (5–10 МБ): удаляем самые старые черновики
+ * (по savedAt), кроме текущего. Молчаливая потеря данных хуже, чем удаление
+ * давно не открывавшихся; предупреждаем событием.
+ */
+function evictOldestDrafts(protectId: string, count = 3): void {
+  const ages: { key: string; savedAt: number }[] = [];
+  try {
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (!key?.startsWith(STORAGE_PREFIX)) continue;
+      const tpl = key.slice(STORAGE_PREFIX.length);
+      if (tpl === protectId) continue;
+      let savedAt = 0;
+      try {
+        savedAt = Date.parse((JSON.parse(localStorage.getItem(key) || "{}").savedAt) ?? "") || 0;
+      } catch {
+        /* битая запись — считаем самой старой и чистим первой */
+      }
+      ages.push({ key, savedAt });
+    }
+  } catch {
+    return;
+  }
+  ages.sort((a, b) => a.savedAt - b.savedAt);
+  for (const { key } of ages.slice(0, count)) localStorage.removeItem(key);
+}
+
 export interface DraftData {
   templateId: string;
   values: Record<string, string>;
@@ -28,7 +78,7 @@ export function saveDraft(
   activeTab: string,
   selectedVersion?: string,
   photos?: Record<string, string[]>
-): void {
+): boolean {
   const data: DraftData = {
     templateId,
     values,
@@ -38,11 +88,21 @@ export function saveDraft(
     savedAt: new Date().toISOString(),
     photos,
   };
-  try {
-    localStorage.setItem(STORAGE_PREFIX + templateId, JSON.stringify(data));
-  } catch {
-    // localStorage may be full
+  const key = STORAGE_PREFIX + templateId;
+  // Стратегия при переполнении квоты: 1) полная запись; 2) без фото
+  // (сканы — самые тяжёлые, текст обязательно сохраняем); 3) LRU-эвикция
+  // старых черновиков + повтор; всё неудачно → событие, UI предупредит.
+  if (write(key, JSON.stringify(data))) return true;
+  if (photos && Object.keys(photos).length > 0) {
+    const withoutPhotos: DraftData = { ...data, photos: undefined };
+    if (write(key, JSON.stringify(withoutPhotos))) return true;
   }
+  evictOldestDrafts(templateId, 3);
+  if (write(key, JSON.stringify(data))) return true;
+  const minimal: DraftData = { ...data, photos: undefined };
+  if (write(key, JSON.stringify(minimal))) return true;
+  dispatchSaveError("quota");
+  return false;
 }
 
 export function loadDraft(templateId: string): DraftData | null {

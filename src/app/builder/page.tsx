@@ -24,7 +24,7 @@ import {
   type AuditResult,
 } from "@/lib/validation";
 import { calculateCosts, numberToWords } from "@/lib/calculator";
-import { saveDraft, loadDraft, clearDraft, clearDraftVersions, getAllDrafts, pushDraftVersion, type DraftData } from "@/lib/autosave";
+import { saveDraft, loadDraft, clearDraft, clearDraftVersions, getAllDrafts, pushDraftVersion, DRAFT_SAVE_ERROR_EVENT, type DraftData } from "@/lib/autosave";
 import { syncDraft, syncDelete, setUserFlag } from "@/lib/sync";
 import { createClient } from "@/lib/supabase/client";
 import { renderTemplateDocument, buildPackValues } from "@/lib/renderDocument";
@@ -149,6 +149,8 @@ function HomeContent() {
   const pendingMergeRef = useRef<Record<string, string> | null>(null);
   const [exportPages, setExportPages] = useState(0);
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Есть ли несохранённые локально правки (для beforeunload, аудит Ф1).
+  const dirtyRef = useRef(false);
   const lastVersionRef = useRef<number>(0);
   const saveCountRef = useRef(0);
   const [packTemplateIds, setPackTemplateIds] = useState<string[]>([]);
@@ -798,8 +800,10 @@ function HomeContent() {
 
   useEffect(() => {
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    dirtyRef.current = true;
     saveTimerRef.current = setTimeout(() => {
-      saveDraft(template.id, formValues, checklist, activeTab, undefined, scanPhotos);
+      const savedOk = saveDraft(template.id, formValues, checklist, activeTab, undefined, scanPhotos);
+      dirtyRef.current = !savedOk;
       syncDraft({
         templateId: template.id,
         values: formValues,
@@ -825,6 +829,27 @@ function HomeContent() {
       if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
     };
   }, [formValues, checklist, activeTab, scanPhotos, template.id]);
+
+  // Аудит Ф1: не даём потерять несохранённые правки при закрытии вкладки
+  // (окно = дебаунс автосейва ~1с или отказ квоты localStorage) и честно
+  // предупреждаем, если черновик не записался.
+  useEffect(() => {
+    const onBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (dirtyRef.current) {
+        e.preventDefault();
+        e.returnValue = "";
+      }
+    };
+    const onSaveError = () => {
+      showToast("Хранилище браузера заполнено — черновик не сохранён локально. Удалите старые черновики или выгрузите документы в облако");
+    };
+    window.addEventListener("beforeunload", onBeforeUnload);
+    window.addEventListener(DRAFT_SAVE_ERROR_EVENT, onSaveError);
+    return () => {
+      window.removeEventListener("beforeunload", onBeforeUnload);
+      window.removeEventListener(DRAFT_SAVE_ERROR_EVENT, onSaveError);
+    };
+  }, []);
 
   // Живой аудит: проверка с небольшим дебаунсом прямо при вводе.
   useEffect(() => {
