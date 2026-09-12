@@ -22,6 +22,8 @@ export interface PdfPreviewProps {
   design?: DesignId;
   watermark?: string;
   onPagesChange?: (n: number) => void;
+  /** Отдаёт растровые страницы (dataURL) наружу — для полноэкранного вьюера. */
+  onImagesReady?: (imgs: string[]) => void;
   /** id корня печати (по умолчанию "print-root"). Позволяет иметь
    *  несколько экземпляров без конфликта id. */
   rootId?: string;
@@ -34,10 +36,12 @@ export interface PdfPreviewProps {
  * (buildPdf) и отрисовываем страницы через pdf.js. Пагинация, шрифты,
  * акценты и логика «уместить на страницу» совпадают с экспортом на 100%.
  */
-export default function PdfPreview({ docs, design, watermark, onPagesChange, rootId = "print-root", className }: PdfPreviewProps) {
+export default function PdfPreview({ docs, design, watermark, onPagesChange, rootId = "print-root", className, onImagesReady }: PdfPreviewProps) {
   const [pages, setPages] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const reqId = useRef(0);
+  const imagesCbRef = useRef(onImagesReady);
+  imagesCbRef.current = onImagesReady;
   const sig = docs.join("");
 
   useEffect(() => {
@@ -83,6 +87,7 @@ export default function PdfPreview({ docs, design, watermark, onPagesChange, roo
         await task.destroy();
         if (cancelled || reqId.current !== id) return;
         setPages(imgs);
+        imagesCbRef.current?.(imgs);
         onPagesChange?.(imgs.length || total);
       } catch (e) {
         console.error("PdfPreview error", e);

@@ -1,5 +1,6 @@
 import {
   ArrowLeft,
+  ArrowRight,
   Check,
   ChevronDown,
   Copy,
@@ -9,8 +10,12 @@ import {
   FileText,
   Loader2,
   Mail,
+  Maximize2,
+  Minus,
   Pencil,
+  Plus,
   Printer,
+  X,
 } from "lucide-react";
 import type { LegalTemplate, TemplateField } from "@/data/types";
 import PdfPreview from "@/components/PdfPreview";
@@ -75,12 +80,33 @@ export default function PreviewStage({
   const [copied, setCopied] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const copiedTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [pageImgs, setPageImgs] = useState<string[]>([]);
+  const [viewerOpen, setViewerOpen] = useState(false);
+  const [viewerIdx, setViewerIdx] = useState(0);
+  const [zoom, setZoom] = useState(1);
+  const touchX = useRef<number | null>(null);
 
   useEffect(() => {
     return () => {
       if (copiedTimer.current) clearTimeout(copiedTimer.current);
     };
   }, []);
+
+  useEffect(() => {
+    if (!viewerOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setViewerOpen(false);
+      if (e.key === "ArrowRight") setViewerIdx((i) => Math.min(i + 1, pageImgs.length - 1));
+      if (e.key === "ArrowLeft") setViewerIdx((i) => Math.max(i - 1, 0));
+    };
+    document.addEventListener("keydown", onKey);
+    const prevBody = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.body.style.overflow = prevBody;
+    };
+  }, [viewerOpen, pageImgs.length]);
 
   const handleCopyJson = () => {
     onCopyJson();
@@ -168,6 +194,16 @@ export default function PreviewStage({
                 aria-expanded={quickEditOpen}
               >
                 <Pencil className="w-4 h-4" />
+              </button>
+            )}
+            {pageImgs.length > 0 && (
+              <button
+                onClick={() => { setViewerIdx(0); setZoom(1); setViewerOpen(true); }}
+                className="inline-flex items-center gap-1.5 px-2 py-1.5 text-xs font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg transition-colors"
+                title="Полноэкранный просмотр (удобно на телефоне)"
+              >
+                <Maximize2 className="w-3.5 h-3.5" />
+                Просмотр
               </button>
             )}
             <div className="relative" ref={dropdownRef}>
@@ -279,6 +315,7 @@ export default function PreviewStage({
               design="classic"
               watermark={watermark}
               onPagesChange={onPagesChange}
+              onImagesReady={setPageImgs}
             />
           </div>
         </div>
@@ -302,6 +339,87 @@ export default function PreviewStage({
           </span>
         </div>
       </div>
+      {viewerOpen && pageImgs.length > 0 && (
+        <div
+          className="fixed inset-0 z-[70] bg-black/95 flex flex-col"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Просмотр страниц документа"
+        >
+          <div className="flex items-center justify-between px-4 py-3 text-white/90 bg-black/60">
+            <span className="text-sm font-medium tabular-nums">
+              {viewerIdx + 1} / {pageImgs.length}
+            </span>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => setZoom((z) => Math.max(1, +(z - 0.25).toFixed(2)))}
+                disabled={zoom <= 1}
+                className="p-2 rounded-lg hover:bg-white/10 disabled:opacity-40"
+                aria-label="Уменьшить"
+              >
+                <Minus className="w-4 h-4" />
+              </button>
+              <span className="text-xs w-12 text-center tabular-nums">{Math.round(zoom * 100)}%</span>
+              <button
+                onClick={() => setZoom((z) => Math.min(3, +(z + 0.25).toFixed(2)))}
+                disabled={zoom >= 3}
+                className="p-2 rounded-lg hover:bg-white/10 disabled:opacity-40"
+                aria-label="Увеличить"
+              >
+                <Plus className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => setViewerOpen(false)}
+                className="p-2 rounded-lg hover:bg-white/10 ml-2"
+                aria-label="Закрыть просмотр"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+          </div>
+          <div
+            className="relative flex-1 overflow-auto"
+            onTouchStart={(e) => {
+              touchX.current = e.touches[0]?.clientX ?? null;
+            }}
+            onTouchEnd={(e) => {
+              if (touchX.current === null || zoom > 1) return;
+              const dx = (e.changedTouches[0]?.clientX ?? 0) - touchX.current;
+              if (dx < -60) setViewerIdx((i) => Math.min(i + 1, pageImgs.length - 1));
+              if (dx > 60) setViewerIdx((i) => Math.max(i - 1, 0));
+              touchX.current = null;
+            }}
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={pageImgs[Math.min(viewerIdx, pageImgs.length - 1)]}
+              alt={`Страница ${viewerIdx + 1}`}
+              className="block mx-auto my-4 bg-white shadow-xl"
+              style={{ width: `${zoom * 100}%`, maxWidth: "none", height: "auto" }}
+            />
+          </div>
+          {pageImgs.length > 1 && (
+            <div className="flex items-center justify-center gap-6 py-3 bg-black/60">
+              <button
+                onClick={() => setViewerIdx((i) => Math.max(i - 1, 0))}
+                disabled={viewerIdx === 0}
+                className="p-3 rounded-full bg-white/10 text-white hover:bg-white/20 disabled:opacity-30"
+                aria-label="Предыдущая страница"
+              >
+                <ArrowLeft className="w-5 h-5" />
+              </button>
+              <button
+                onClick={() => setViewerIdx((i) => Math.min(i + 1, pageImgs.length - 1))}
+                disabled={viewerIdx >= pageImgs.length - 1}
+                className="p-3 rounded-full bg-white/10 text-white hover:bg-white/20 disabled:opacity-30"
+                aria-label="Следующая страница"
+              >
+                <ArrowRight className="w-5 h-5" />
+              </button>
+            </div>
+          )}
+        </div>
+      )}
     </>
   );
 }

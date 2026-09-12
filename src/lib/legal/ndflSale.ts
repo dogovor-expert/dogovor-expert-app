@@ -3,11 +3,18 @@ import { ndflTax } from "./fin";
 /** Имущественные вычеты при продаже (ст. 220 НК РФ, ред. 2022–2026). */
 export const CAR_DEDUCTION = 250_000; // иное имущество
 export const REALTY_DEDUCTION = 1_000_000; // недвижимое имущество
-export const FAMILY_DEDUCTION_PER_CHILD = 1_000_000; // семьи с 2+ детьми (п. 2.1 ст. 220 НК)
+
+/** Освобождение семей с 2+ детьми (п. 2.1 ст. 217.1 НК РФ, ФЗ № 179-ФЗ):
+ *  это НЕ вычет, а полное освобождение от НДФЛ при продаже ЖИЛЬЯ,
+ *  независимо от срока владения, при одновременном соблюдении условий. */
+/** Кадастровая стоимость проданного жилья для льготы — не более 50 млн ₽ (п. 2.1 ст. 217.1 НК). */
+export const FAMILY_EXEMPTION_MAX_CADASTRAL = 50_000_000;
 
 /** Минимальный срок владения, лет (ст. 217.1 НК РФ). */
 export const FREE_SALE_YEARS = 3; // иное имущество
 export const FREE_SALE_YEARS_REALTY = 5; // недвижимость (общее правило)
+/** Основания снижения срока для недвижимости до 3 лет (п. 3 ст. 217.1 НК). */
+export type RealtyThreeYearReason = "sole-home" | "inheritance-or-relative" | "privatization" | "rent";
 
 /** Категории продаваемого имущества. */
 export type NdflAssetType = "other" | "realty";
@@ -19,12 +26,16 @@ export interface NdflSaleInput {
   /** Тип имущества. По умолчанию `other` — обратная совместимость. */
   assetType?: NdflAssetType;
   /** Кол-во детей до 18 лет (или до 24 при очном обучении) — для льготы
-   *  семей с 2+ детьми (п. 2.1 ст. 220 НК). Льгота применяется ТОЛЬКО при
-   *  наличии ≥ 2 детей и не чаще раза в год на ребёнка. */
+   *  семей с 2+ детьми (п. 2.1 ст. 217.1 НК). Применяется ТОЛЬКО к продаже жилья. */
   childrenCount?: number;
+  /** Подтверждено, что в течение 4 мес. после продажи покупается жильё
+   *  БОЛЬШЕЙ площади/кадастровой стоимости — обязательное условие льготы п. 2.1 ст. 217.1 НК. */
+  familyBuyBiggerHome?: boolean;
   /** Кадастровая стоимость (с коэффициентом 0.7) — при продаже недвижимости,
    *  если она выше цены договора, берётся она (ст. 214.10 НК). */
   cadastralValue?: number | null;
+  /** Основание для минимального срока 3 года вместо 5 для недвижимости (п. 3 ст. 217.1 НК). */
+  realtyThreeYearReason?: RealtyThreeYearReason;
 }
 
 export interface NdflSaleResult {
@@ -43,8 +54,11 @@ export interface NdflSaleResult {
 }
 
 /** Возвращает минимальный срок владения для освобождения от НДФЛ. */
-function getMinYears(assetType: NdflAssetType | undefined): number {
-  return assetType === "realty" ? FREE_SALE_YEARS_REALTY : FREE_SALE_YEARS;
+function getMinYears(input: NdflSaleInput): number {
+  if (input.assetType === "realty") {
+    return input.realtyThreeYearReason ? 3 : FREE_SALE_YEARS_REALTY;
+  }
+  return FREE_SALE_YEARS;
 }
 
 /** Нормативный (фиксированный) вычет по ст. 220 НК. */
@@ -56,31 +70,44 @@ export function ndflSaleCalc(input: NdflSaleInput): NdflSaleResult {
   const sell = Math.max(0, input.sellPrice);
   const owned = input.yearsOwned ?? 0;
   const assetType = input.assetType ?? "other";
-  const minYears = getMinYears(assetType);
+  const minYears = getMinYears(input);
   const fixedNorm = getFixedDeduction(assetType);
   const notes: string[] = [];
+  const children = input.childrenCount ?? 0;
 
-  // 1) Льгота для семей с 2+ детьми (п. 2.1 ст. 220 НК): срок владения
-  //    НЕ применяется; вычет — до 1 000 000 ₽ на каждого ребёнка
-  //    (в пределах суммы продажи). Условие: ≤ 18 (или 24 при очном обучении).
-  //    Применяется не чаще раза в календарный год на ребёнка.
-  if ((input.childrenCount ?? 0) >= 2) {
-    const familyDeduction = Math.min(sell, FAMILY_DEDUCTION_PER_CHILD * (input.childrenCount ?? 0));
-    const base = Math.max(0, sell - familyDeduction);
-    const r = ndflTax(base, 0);
-    const rate = base > 0 ? Math.round((r.tax / base) * 10000) / 100 : 0;
-    notes.push(`Льгота семьи с 2+ детьми: вычет ${familyDeduction.toLocaleString("ru-RU")} ₽ (п. 2.1 ст. 220 НК).`);
-    return {
-      exempt: false,
-      taxableBase: base,
-      deductionUsed: familyDeduction,
-      deductionType: "family",
-      fixedDeductionNorm: fixedNorm,
-      tax: Math.round(r.tax),
-      rate,
-      mustFile: true,
-      notes,
-    };
+  // 1) Освобождение семей с 2+ детьми (п. 2.1 ст. 217.1 НК РФ, ФЗ № 179-ФЗ):
+  //    полное освобождение (не вычет) при продаже ЖИЛЬЯ независимо от срока
+  //    владения. Условия: 2+ детей (до 18 / до 24 очно / нетрудоспособные);
+  //    покупка жилья БОЛЬШЕЙ площади (или кадастровой стоимости) в течение
+  //    4 мес. после продажи; продаваемое жильё ≤ 50 млн ₽ кадастровой (или
+  //    ≤ 400 м² без кадастровой); нет другого жилья больше продаваемого;
+  //    не чаще одного раза в год. Без явного подтверждения условий
+  //    освобождение НЕ применяется — показываем памятку.
+  if (children >= 2 && assetType === "realty") {
+    if (input.familyBuyBiggerHome) {
+      notes.push(
+        "Льгота п. 2.1 ст. 217.1 НК: освобождение от НДФЛ при продаже жилья семьёй с 2+ детьми — при одновременном соблюдении условий (покупка большего жилья в течение 4 мес., кадастровая стоимость проданного ≤ 50 млн ₽, отсутствие другого превышающего жилья, не чаще раза в год). Проверьте их перед подачей."
+      );
+      return {
+        exempt: true,
+        exemptReason: "family_with_children",
+        taxableBase: 0,
+        deductionUsed: 0,
+        deductionType: "family",
+        fixedDeductionNorm: fixedNorm,
+        tax: 0,
+        rate: 0,
+        mustFile: false,
+        notes,
+      };
+    }
+    notes.push(
+      "Семьям с 2+ детьми доступно полное освобождение от НДФЛ при продаже жилья (п. 2.1 ст. 217.1 НК) — если в течение 4 месяцев покупается жильё большей площади/стоимости. Отметьте это условие выше, чтобы применить льготу."
+    );
+  } else if (children >= 2) {
+    notes.push(
+      "Льгота п. 2.1 ст. 217.1 НК (семьи с 2+ детьми) применяется только к продаже жилья — на автомобиль и иное имущество не распространяется."
+    );
   }
 
   // 2) Освобождение по сроку владения
@@ -137,7 +164,7 @@ export function ndflSaleCalc(input: NdflSaleInput): NdflSaleResult {
     fixedDeductionNorm: fixedNorm,
     tax: Math.round(r.tax),
     rate,
-    mustFile: true,
+    mustFile: base > 0,
     notes,
   };
 }

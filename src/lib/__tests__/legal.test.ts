@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { ndflTax, usnTax, vacationPayWithBonuses } from "@/lib/legal/fin";
+import { ndflTax, usnTax, vacationPayWithBonuses, transportTax, luxuryCoefFor } from "@/lib/legal/fin";
 import {
   KOAP_CHAPTER_12,
   fineWithDiscount,
@@ -301,5 +301,45 @@ describe("vacationPayWithBonuses: премии по п.15 ПП №540", () => {
 
   it("нулевой знаменатель (0 месяцев) → null", () => {
     expect(vacationPayWithBonuses({ salary12: 100000, fullyWorkedMonths: 0 }, 28)).toBeNull();
+  });
+});
+
+describe("Транспортный налог: региональные ставки 2025–2026 (ст. 361, 362 НК)", () => {
+  it("Свердловская обл.: ставки растут по годам (10 → 10,4 до 100 л.с.)", () => {
+    const y25 = transportTax(90, "sverdl", 12, 1, 2025);
+    const y26 = transportTax(90, "sverdl", 12, 1, 2026);
+    expect(y25.rate).toBe(10);
+    expect(y26.rate).toBeCloseTo(10.4, 1);
+    expect(y26.tax).toBeGreaterThan(y25.tax);
+  });
+
+  it("Свердловская обл. 2028 свыше 250 л.с. — 116,1", () => {
+    const r = transportTax(300, "sverdl", 12, 1, 2028);
+    expect(r.rate).toBeCloseTo(116.1, 1);
+    expect(r.tax).toBeCloseTo(300 * 116.1, 1);
+  });
+
+  it("Татарстан: до 100 л.с. — 10 ₽ (физлицо)", () => {
+    expect(transportTax(98, "tat", 12, 1, 2026).rate).toBe(10);
+  });
+
+  it("Нижегородская обл.: доп. интервал до 45 л.с. — 13,5", () => {
+    expect(transportTax(40, "nnov", 12, 1, 2026).rate).toBeCloseTo(13.5, 1);
+    expect(transportTax(70, "nnov", 12, 1, 2026).rate).toBeCloseTo(22.5, 1);
+  });
+
+  it("Ростовская обл. 2026: до 100 л.с. — 16 ₽", () => {
+    expect(transportTax(100, "rostov", 12, 1, 2026).rate).toBe(16);
+  });
+
+  it("пропорция месяцев и «люкс»-коэффициент ×3 для 12 млн / 8 лет", () => {
+    const coef = luxuryCoefFor(12_000_000, 8);
+    expect(coef).toBe(3);
+    const r = transportTax(220, "moscow", 6, coef);
+    expect(r.tax).toBe(Math.round(220 * 75 * (6 / 12) * 3 * 100) / 100);
+  });
+
+  it("неизвестный регион — федеральная база", () => {
+    expect(transportTax(80, "unknown-region-xyz" as never, 12, 1, 2026).rate).toBe(2.5);
   });
 });

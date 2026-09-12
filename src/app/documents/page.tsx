@@ -158,21 +158,11 @@ export default function DocumentsPage() {
   const loadDocs = useCallback(
     async (q: string) => {
       setLoading(true);
-      let serverIds = new Set<string>();
-      try {
-        const res = await fetch(`/api/documents?${buildParams(q)}`);
-        if (res.ok) {
-          const { data, hasMore: hm, nextCursor: nc } = await res.json();
-          const items = serverDocsToItems(data ?? []);
-          setDocs(items);
-          setHasMore(!!hm);
-          setNextCursor(nc ?? null);
-        }
-      } catch {
-        // offline → fallback к localStorage
-      }
+      const local = getAllDrafts();
+      const tokens = tokenGroups(q);
       // Точный список серверных template_id для счётчика импорта — lightweight
       // режим ids=1 (без JSONB fields), даже когда показана только страница.
+      let serverIds = new Set<string>();
       try {
         const resIds = await fetch("/api/documents?ids=1");
         if (resIds.ok) {
@@ -180,32 +170,48 @@ export default function DocumentsPage() {
           serverIds = new Set((data ?? []).map((s: ServerDoc) => s.template_id));
         }
       } catch {
-        // ignore
+        // offline
       }
-      const local = getAllDrafts();
-      const notImported = local.filter(
-        (d) => !serverIds.has(d.templateId)
-      ).length;
+      let items: DocItem[] = [];
+      try {
+        const res = await fetch(`/api/documents?${buildParams(q)}`);
+        if (res.ok) {
+          const { data, hasMore: hm, nextCursor: nc } = await res.json();
+          items = serverDocsToItems(data ?? []);
+          setHasMore(!!hm);
+          setNextCursor(nc ?? null);
+        } else {
+          setHasMore(false);
+          setNextCursor(null);
+        }
+      } catch {
+        // offline → fallback к localStorage
+        setHasMore(false);
+        setNextCursor(null);
+      }
+      // 2.10: локальная (не синхронизированная) версия новее серверной —
+      // показываем в списке её, иначе после офлайн-правок виден устаревший контент.
+      const localById = new Map(local.map((d) => [d.templateId, d] as const));
+      items = items.map((it) => {
+        const d = localById.get(it.id);
+        if (d && new Date(d.savedAt).getTime() > new Date(it.savedAt).getTime()) {
+          return toDocItem(it.id, d.values, d.savedAt, it.name);
+        }
+        return it;
+      });
+      // 2.10: локальные черновики, которых нет на сервере, тоже видны в списке
+      // (раньше полное локальное представление включалось только при пустом сервере).
+      const extra: DocItem[] = local
+        .filter((d) => !serverIds.has(d.templateId) && !items.some((i) => i.id === d.templateId))
+        .filter((d) => {
+          if (tokens.length === 0) return true;
+          const t = TEMPLATE_META.find((x) => x.id === d.templateId);
+          return textMatchesTokens([t?.name ?? "", d.templateId, t?.category ?? ""].join(" "), tokens);
+        })
+        .map((d) => toDocItem(d.templateId, d.values, d.savedAt));
+      const notImported = local.filter((d) => !serverIds.has(d.templateId)).length;
       setImportCount(notImported);
-      if (serverIds.size === 0 && local.length > 0) {
-        const items: DocItem[] = local.map((d) => {
-          const tpl = TEMPLATE_META.find((t) => t.id === d.templateId);
-          const filledCount = Object.values(d.values).filter(
-            (v) => v && v.trim() !== ""
-          ).length;
-          return {
-            id: d.templateId,
-            name: tpl?.name || d.templateId,
-            typeName: tpl?.category || "Прочее",
-            category: tpl?.category || "other",
-            savedAt: d.savedAt,
-            fieldCount: tpl?.fieldCount || 0,
-            filledCount,
-            raw: d,
-          };
-        });
-        setDocs(items);
-      }
+      setDocs(items.length > 0 || serverIds.size > 0 ? [...items, ...extra] : extra);
       setLoading(false);
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps

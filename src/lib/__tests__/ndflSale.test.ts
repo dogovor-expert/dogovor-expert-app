@@ -3,7 +3,6 @@ import {
   ndflSaleCalc,
   CAR_DEDUCTION,
   REALTY_DEDUCTION,
-  FAMILY_DEDUCTION_PER_CHILD,
   FREE_SALE_YEARS,
   FREE_SALE_YEARS_REALTY,
 } from "@/lib/legal/ndflSale";
@@ -82,32 +81,58 @@ describe("ndflSaleCalc: недвижимость (5 лет, 1 000 000)", () => {
   });
 });
 
-describe("ndflSaleCalc: семья с 2+ детьми (п. 2.1 ст. 220 НК)", () => {
-  it("2 ребёнка — вычет 2 000 000 ₽, срок не важен", () => {
-    // Продал за 3 000 000, 1 год владения — без льготы было бы
-    // (3 000 000 - 1 000 000) * 0.13 = 260 000. С льготой: 3 000 000 - 2 000 000 = 1 000 000 * 0.13 = 130 000.
+describe("ndflSaleCalc: недвижимость, 3-летний срок (п. 3 ст. 217.1 НК)", () => {
+  it("единственное жильё — 3 года достаточно", () => {
+    const r = ndflSaleCalc({ sellPrice: 3_000_000, buyPrice: null, yearsOwned: 3, assetType: "realty", realtyThreeYearReason: "sole-home" });
+    expect(r.exempt).toBe(true);
+    expect(r.exemptReason).toBe("ownership_term");
+  });
+
+  it("наследство — 3 года достаточно", () => {
+    const r = ndflSaleCalc({ sellPrice: 2_000_000, buyPrice: null, yearsOwned: 3, assetType: "realty", realtyThreeYearReason: "inheritance-or-relative" });
+    expect(r.exempt).toBe(true);
+  });
+
+  it("без основания 3 года НЕ освобождает", () => {
+    const r = ndflSaleCalc({ sellPrice: 3_000_000, buyPrice: null, yearsOwned: 3, assetType: "realty" });
+    expect(r.exempt).toBe(false);
+  });
+});
+
+describe("ndflSaleCalc: семья с 2+ детьми (п. 2.1 ст. 217.1 НК — полное освобождение жилья)", () => {
+  it("жильё + 2 детей + покупка большего — освобождение, срок не важен", () => {
+    const r = ndflSaleCalc({ sellPrice: 8_000_000, buyPrice: null, yearsOwned: 1, assetType: "realty", childrenCount: 2, familyBuyBiggerHome: true });
+    expect(r.exempt).toBe(true);
+    expect(r.exemptReason).toBe("family_with_children");
+    expect(r.tax).toBe(0);
+    expect(r.mustFile).toBe(false);
+  });
+
+  it("жильё + 2 детей без подтверждения переезда — НЕ освобождает, но даёт памятку", () => {
+    const r = ndflSaleCalc({ sellPrice: 5_000_000, buyPrice: null, yearsOwned: 0, assetType: "realty", childrenCount: 2 });
+    expect(r.exempt).toBe(false);
+    expect(r.deductionType).toBe("fixed");
+    expect(r.notes?.some((n) => n.includes("4 месяцев"))).toBe(true);
+  });
+
+  it("автомобиль + 2 детей — льгота не применяется (только жильё)", () => {
     const r = ndflSaleCalc({ sellPrice: 3_000_000, buyPrice: null, yearsOwned: 1, childrenCount: 2 });
-    expect(r.deductionType).toBe("family");
-    expect(r.deductionUsed).toBe(2 * FAMILY_DEDUCTION_PER_CHILD);
-    expect(r.tax).toBe(130_000);
+    expect(r.deductionType).not.toBe("family");
+    expect(r.deductionType).toBe("fixed");
+    expect(r.notes?.some((n) => n.includes("только к продаже жилья"))).toBe(true);
   });
 
   it("1 ребёнок — льгота НЕ применяется", () => {
-    const r = ndflSaleCalc({ sellPrice: 3_000_000, buyPrice: null, yearsOwned: 1, childrenCount: 1 });
+    const r = ndflSaleCalc({ sellPrice: 3_000_000, buyPrice: null, yearsOwned: 1, assetType: "realty", childrenCount: 1 });
     expect(r.deductionType).not.toBe("family");
     expect(r.deductionType).toBe("fixed");
   });
 
-  it("льгота при 1 годе владения — срок не важен", () => {
-    const r = ndflSaleCalc({ sellPrice: 5_000_000, buyPrice: null, yearsOwned: 0, childrenCount: 2, assetType: "realty" });
-    expect(r.exempt).toBe(false);
-    expect(r.deductionType).toBe("family");
-  });
-
-  it("вычет не превышает цену продажи", () => {
-    const r = ndflSaleCalc({ sellPrice: 500_000, buyPrice: null, yearsOwned: 1, childrenCount: 3 });
-    expect(r.deductionUsed).toBe(500_000);
+  it("вычет не превышает цену продажи и обнуляет декларацию", () => {
+    const r = ndflSaleCalc({ sellPrice: 200_000, buyPrice: null, yearsOwned: 1 });
+    expect(r.deductionUsed).toBe(200_000);
     expect(r.tax).toBe(0);
+    expect(r.mustFile).toBe(false);
   });
 });
 

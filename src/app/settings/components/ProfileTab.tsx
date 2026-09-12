@@ -4,6 +4,7 @@ import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { isValidInn, formatInn } from "@/lib/inn";
+import { formatPhoneRu } from "@/lib/format";
 import { Camera, Loader2, CheckCircle, Save, Mail } from "lucide-react";
 
 interface ProfileData {
@@ -216,7 +217,7 @@ export default function ProfileTab() {
                 label="Телефон"
                 id="phone"
                 value={form.phone}
-                onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                onChange={(e) => setForm({ ...form, phone: e.target.value ? formatPhoneRu(e.target.value) : "" })}
                 placeholder="+7 (900) 000-00-00"
               />
               <Input

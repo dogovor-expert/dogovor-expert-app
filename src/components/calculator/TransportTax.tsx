@@ -8,6 +8,7 @@ export default function TransportTax() {
   const [power, setPower] = useState("");
   const [region, setRegion] = useState<keyof typeof TRANSPORT_REGIONS>("moscow");
   const [months, setMonths] = useState("12");
+  const [year, setYear] = useState("2026");
   const [price, setPrice] = useState("");
   const [age, setAge] = useState("");
   const [result, setResult] = useState<{ rate: number; tax: number; luxury: number } | null>(null);
@@ -21,10 +22,12 @@ export default function TransportTax() {
     const priceV = parseFloat(price || "0");
     const ageV = parseFloat(age || "0");
     const coef = priceV > 0 ? luxuryCoefFor(priceV, ageV) : 1;
-    const r = transportTax(p, region, tm, coef);
+    const r = transportTax(p, region, tm, coef, parseInt(year, 10) || 2026);
     setResult(r);
     setError("");
   };
+
+  const regionConf = TRANSPORT_REGIONS[region];
 
   return (
     <div className="space-y-4">
@@ -50,6 +53,22 @@ export default function TransportTax() {
               <option key={k} value={k}>{v.name}</option>
             ))}
           </select>
+          {regionConf?.byYear && (
+            <div className="space-y-1 pt-1">
+              <label className="text-[10px] font-mono text-gray-600">Налоговый период (год)</label>
+              <select value={year} onChange={(e) => setYear(e.target.value)}
+                className="w-full bg-gray-50 border border-gray-200 text-xs py-2.5 px-3 rounded-lg text-gray-900 outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500">
+                {Object.keys(regionConf.byYear).map((y) => (
+                  <option key={y} value={y}>{y}</option>
+                ))}
+              </select>
+            </div>
+          )}
+          {regionConf?.note && (
+            <p className="text-[10px] leading-snug text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-2">
+              {regionConf.note}
+            </p>
+          )}
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-1">

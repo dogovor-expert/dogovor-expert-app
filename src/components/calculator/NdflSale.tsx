@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { Check, CarTaxiFront, Clock3 } from "lucide-react";
-import { ndflSaleCalc, CAR_DEDUCTION, FREE_SALE_YEARS, FAMILY_DEDUCTION_PER_CHILD } from "@/lib/legal/ndflSale";
+import { ndflSaleCalc, CAR_DEDUCTION, FREE_SALE_YEARS } from "@/lib/legal/ndflSale";
 import { fmtMoney } from "@/lib/legal/calc";
 
 const NDFL_SERVICE_READY = false;
@@ -10,7 +10,6 @@ export default function NdflSale() {
   const [sell, setSell] = useState("");
   const [buy, setBuy] = useState("");
   const [ownedLong, setOwnedLong] = useState<boolean | null>(null);
-  const [children, setChildren] = useState("");
   const [result, setResult] = useState<ReturnType<typeof ndflSaleCalc> | null>(null);
   const [error, setError] = useState("");
 
@@ -19,25 +18,21 @@ export default function NdflSale() {
     if (isNaN(s) || s <= 0) { setError("Укажите цену продажи"); return; }
     if (ownedLong === null) { setError("Укажите срок владения"); return; }
     const b = parseFloat(buy || "");
-    const c = parseInt(children || "0", 10);
     const r = ndflSaleCalc({
       sellPrice: s,
       buyPrice: !isNaN(b) && b > 0 ? b : null,
       yearsOwned: ownedLong ? 10 : 1,
-      childrenCount: !isNaN(c) && c > 0 ? c : 0,
     });
     setResult(r);
     setError("");
   };
 
   const deductionLabel =
-    result?.deductionType === "family"
-      ? `Льгота семьи с 2+ детьми (${FAMILY_DEDUCTION_PER_CHILD.toLocaleString("ru-RU")} ₽ × ${result.deductionUsed / FAMILY_DEDUCTION_PER_CHILD}, п. 2.1 ст. 220 НК)`
-      : result?.deductionType === "expenses"
-        ? "Вычет по расходам на покупку"
-        : result?.deductionType === "fixed"
-          ? `Имущественный вычет (${fmtMoney(CAR_DEDUCTION)}, пп. 1 п. 2 ст. 220 НК)`
-          : "Вычет не применён";
+    result?.deductionType === "expenses"
+      ? "Вычет по расходам на покупку"
+      : result?.deductionType === "fixed"
+        ? `Имущественный вычет (${fmtMoney(CAR_DEDUCTION)}, пп. 1 п. 2 ст. 220 НК)`
+        : "Вычет не применён";
 
   return (
     <div className="space-y-4">
@@ -66,12 +61,6 @@ export default function NdflSale() {
               3 года и более
             </button>
           </div>
-        </div>
-        <div className="space-y-1">
-          <label className="text-[10px] font-mono text-gray-600">Кол-во детей до 18 (или 24 при очном обучении) — для льготы п. 2.1 ст. 220 НК</label>
-          <input type="number" min="0" max="20" value={children} onChange={(e) => setChildren(e.target.value)}
-            placeholder="0"
-            className="w-full bg-gray-50 border border-gray-200 text-xs py-2.5 px-3 rounded-lg text-gray-900 outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500" />
         </div>
         <button onClick={calc}
           className="w-full py-2.5 bg-indigo-500 text-white rounded-xl hover:bg-indigo-600 font-bold text-xs transition cursor-pointer">
@@ -108,10 +97,16 @@ export default function NdflSale() {
                 {n}
               </p>
             ))}
-            <p className="text-[11px] text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-2 flex items-start gap-1.5">
-              <Clock3 className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
-              Декларацию нужно подать до <b>30 апреля</b> следующего года, налог уплатить до <b>15 июля</b> — даже если налог равен нулю.
-            </p>
+            {result.mustFile ? (
+              <p className="text-[11px] text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-2 flex items-start gap-1.5">
+                <Clock3 className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
+                Декларацию нужно подать до <b>30 апреля</b> следующего года, налог уплатить до <b>15 июля</b>.
+              </p>
+            ) : (
+              <p className="text-[11px] text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-lg p-2">
+                Налоговая база равна нулю — НДФЛ платить не нужно, декларацию подавать не требуется.
+              </p>
+            )}
             {NDFL_SERVICE_READY ? (
               <a href="/builder?id=claim-generic"
                 className="inline-block mt-1 py-2 px-3 rounded-lg bg-white border border-brand-300 text-brand-600 font-bold text-[11px] hover:bg-brand-50 transition">
@@ -132,7 +127,7 @@ export default function NdflSale() {
 
       <p className="text-[11px] text-gray-600 leading-relaxed flex items-start gap-1.5">
         <CarTaxiFront className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
-        При продаже авто, бывшего в собственности менее 3 лет, доход можно уменьшить на {fmtMoney(CAR_DEDUCTION)} (фиксированный вычет) либо на подтверждённые расходы на покупку — что выгоднее. Ставка — прогрессивная 13–22% по ст. 224 НК. Семьи с 2+ детьми могут применить увеличенный вычет 1 000 000 ₽ на ребёнка (п. 2.1 ст. 220 НК).
+        При продаже авто, бывшего в собственности менее 3 лет, доход можно уменьшить на {fmtMoney(CAR_DEDUCTION)} (фиксированный вычет) либо на подтверждённые расходы на покупку — что выгоднее. Ставка — прогрессивная 13–22% по ст. 224 НК. Льгота для семей с 2+ детьми (полное освобождение, п. 2.1 ст. 217.1 НК) относится только к продаже жилья и на автомобиль не распространяется.
       </p>
     </div>
   );
