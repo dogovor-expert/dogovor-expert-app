@@ -30,7 +30,7 @@ test.describe("Cookies banner (granular consent, Фаза 1)", () => {
     await page.goto(BASE, { waitUntil: "domcontentloaded" });
     await page.waitForLoadState("networkidle", { timeout: 15000 }).catch(() => {});
 
-    const banner = page.locator('[role="dialog"]', { hasText: /Мы используем cookies/i });
+    const banner = page.locator('[role="region"]', { hasText: /Мы используем cookies/i });
     await expect(banner).toBeVisible({ timeout: 8000 });
 
     await expect(banner.locator('button:has-text("Принять всё")')).toBeVisible();
@@ -43,7 +43,7 @@ test.describe("Cookies banner (granular consent, Фаза 1)", () => {
     await page.goto(BASE, { waitUntil: "domcontentloaded" });
     await page.waitForLoadState("networkidle", { timeout: 15000 }).catch(() => {});
 
-    const banner = page.locator('[role="dialog"]', { hasText: /Мы используем cookies/i });
+    const banner = page.locator('[role="region"]', { hasText: /Мы используем cookies/i });
     await expect(banner).toBeVisible({ timeout: 8000 });
 
     await banner.locator('button:has-text("Принять всё")').click();
@@ -68,7 +68,7 @@ test.describe("Cookies banner (granular consent, Фаза 1)", () => {
     await page.goto(BASE, { waitUntil: "domcontentloaded" });
     await page.waitForLoadState("networkidle", { timeout: 15000 }).catch(() => {});
 
-    const banner = page.locator('[role="dialog"]', { hasText: /Мы используем cookies/i });
+    const banner = page.locator('[role="region"]', { hasText: /Мы используем cookies/i });
     await expect(banner).toBeVisible({ timeout: 8000 });
 
     await banner.locator('button:has-text("Только необходимые")').click();
@@ -85,7 +85,7 @@ test.describe("Cookies banner (granular consent, Фаза 1)", () => {
     await page.goto(BASE, { waitUntil: "domcontentloaded" });
     await page.waitForLoadState("networkidle", { timeout: 15000 }).catch(() => {});
 
-    const banner = page.locator('[role="dialog"]', { hasText: /Мы используем cookies/i });
+    const banner = page.locator('[role="region"]', { hasText: /Мы используем cookies/i });
     await expect(banner).toBeVisible({ timeout: 8000 });
     await banner.locator('button:has-text("Настроить")').click();
 
@@ -113,12 +113,12 @@ test.describe("Cookies banner (granular consent, Фаза 1)", () => {
     await page.goto(BASE, { waitUntil: "domcontentloaded" });
     await page.waitForLoadState("networkidle", { timeout: 15000 }).catch(() => {});
 
-    const banner = page.locator('[role="dialog"]', { hasText: /Мы используем cookies/i });
+    const banner = page.locator('[role="region"]', { hasText: /Мы используем cookies/i });
     await banner.locator('button:has-text("Принять всё")').click();
     await expect(banner).not.toBeVisible();
 
     // Persistent иконка
-    const icon = page.locator('button[aria-label="Изменить настройки cookies"]');
+    const icon = page.getByRole("button", { name: "Настройки cookies" }).first();
     await expect(icon).toBeVisible({ timeout: 3000 });
 
     // Кликаем → открывается панель
@@ -136,7 +136,7 @@ test.describe("Cookies banner (granular consent, Фаза 1)", () => {
     await page.goto(BASE, { waitUntil: "domcontentloaded" });
     await page.waitForLoadState("networkidle", { timeout: 15000 }).catch(() => {});
 
-    const banner = page.locator('[role="dialog"]', { hasText: /Мы используем cookies/i });
+    const banner = page.locator('[role="region"]', { hasText: /Мы используем cookies/i });
     await expect(banner).toBeVisible({ timeout: 8000 });
 
     await page.keyboard.press("Escape");
@@ -152,12 +152,16 @@ test.describe("Cookies banner (granular consent, Фаза 1)", () => {
     await page.goto(BASE, { waitUntil: "domcontentloaded" });
     await page.waitForLoadState("networkidle", { timeout: 15000 }).catch(() => {});
 
-    const banner = page.locator('[role="dialog"]', { hasText: /Мы используем cookies/i });
+    const banner = page.locator('[role="region"]', { hasText: /Мы используем cookies/i });
     await banner.locator('button:has-text("Принять всё")').click();
 
-    await page.goto(`${BASE}/utils`, { waitUntil: "domcontentloaded" });
+    // Клиентская навигация — тот же документ, consent сохраняется.
+    // На мобиле сайдбар спрятан — сначала открываем бургер-меню.
+    const burger = page.getByRole("button", { name: "Открыть меню навигации" });
+    if (await burger.isVisible()) await burger.click();
+    await page.getByRole("link", { name: "Бланки" }).first().click();
     await page.waitForLoadState("networkidle", { timeout: 15000 }).catch(() => {});
-    await page.waitForTimeout(1000);
+    await expect(page).toHaveURL(/\/blanks/);
     await expect(banner).not.toBeVisible();
   });
 });
