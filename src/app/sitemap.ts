@@ -1,7 +1,10 @@
 import type { MetadataRoute } from "next";
 import { LEGAL_TEMPLATES } from "@/data/templates";
+import { POPULAR_TEMPLATE_IDS } from "@/data/popular";
 import { BLOG_POSTS } from "@/data/blog/posts";
 import { SITE_URL } from "@/lib/site";
+
+const POPULAR = new Set(POPULAR_TEMPLATE_IDS);
 const MONTHS: Record<string, number> = {
   января: 1, февраля: 2, марта: 3, апреля: 4, мая: 5, июня: 6,
   июля: 7, августа: 8, сентября: 9, октября: 10, ноября: 11, декабря: 12,
@@ -40,8 +43,10 @@ export default function sitemap(): MetadataRoute.Sitemap {
 
   const documents: MetadataRoute.Sitemap = LEGAL_TEMPLATES.map((t) => ({
     url: `${SITE_URL}/documents/${t.id}`,
-    changeFrequency: "monthly" as const,
-    priority: 0.7,
+    // 8.5 (аудит): популярные шаблоны — приоритет 0.8 и недельный crawl,
+    // остальные — 0.6 / monthly. Список популярных общий с /blanks (data/popular.ts).
+    changeFrequency: (POPULAR.has(t.id) ? "weekly" : "monthly") as "weekly" | "monthly",
+    priority: POPULAR.has(t.id) ? 0.8 : 0.6,
     lastModified: parseLastUpdated(t.lastUpdated),
   }));
 

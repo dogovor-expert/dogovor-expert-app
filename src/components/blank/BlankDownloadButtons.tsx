@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { LEGAL_TEMPLATES } from "@/data/legalTemplates";
 import { renderTemplateDocument } from "@/lib/renderDocument";
 import { saveAs } from "file-saver";
@@ -16,7 +16,19 @@ function safeFileName(name: string): string {
 
 export default function BlankDownloadButtons({ templateId }: { templateId: string }) {
   const [busy, setBusy] = useState<null | "pdf" | "docx" | "print">(null);
+  const [done, setDone] = useState<null | "pdf" | "docx" | "print">(null);
   const [error, setError] = useState<string | null>(null);
+  const doneTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const markDone = (kind: "pdf" | "docx" | "print") => {
+    setDone(kind);
+    if (doneTimer.current) clearTimeout(doneTimer.current);
+    doneTimer.current = setTimeout(() => setDone(null), 2500);
+  };
+
+  useEffect(() => () => {
+    if (doneTimer.current) clearTimeout(doneTimer.current);
+  }, []);
 
   const handlePrint = async () => {
     setBusy("print");
@@ -63,6 +75,7 @@ export default function BlankDownloadButtons({ templateId }: { templateId: strin
       };
       iframe.src = url;
       document.body.appendChild(iframe);
+      markDone("print");
     } catch (e) {
       console.error("Blank print error:", e);
       setError("Не удалось подготовить печать. Попробуйте скачать PDF.");
@@ -101,6 +114,7 @@ export default function BlankDownloadButtons({ templateId }: { templateId: strin
         const { exportToDocxHtml } = await import("@/lib/exportDocx");
         await exportToDocxHtml(html, fileName, { design: "classic" });
       }
+      markDone(format);
     } catch (e) {
       console.error("Blank download error:", e);
       setError("Не удалось сформировать файл. Попробуйте ещё раз.");
@@ -116,6 +130,7 @@ export default function BlankDownloadButtons({ templateId }: { templateId: strin
           type="button"
           onClick={() => void handleDownload("pdf")}
           disabled={busy !== null}
+          aria-busy={busy === "pdf"}
           className="inline-flex items-center justify-center gap-2 px-5 py-3.5 bg-indigo-600 text-white rounded-xl font-semibold text-sm hover:bg-indigo-700 disabled:opacity-60 transition"
         >
           {busy === "pdf" ? (
@@ -123,12 +138,13 @@ export default function BlankDownloadButtons({ templateId }: { templateId: strin
           ) : (
             <FileText className="w-5 h-5" />
           )}
-          Скачать PDF
+          {busy === "pdf" ? "Готовим PDF…" : done === "pdf" ? "Скачано ✓" : "Скачать PDF"}
         </button>
         <button
           type="button"
           onClick={() => void handleDownload("docx")}
           disabled={busy !== null}
+          aria-busy={busy === "docx"}
           className="inline-flex items-center justify-center gap-2 px-5 py-3.5 bg-white border border-indigo-200 text-indigo-700 rounded-xl font-semibold text-sm hover:bg-indigo-50 disabled:opacity-60 transition"
         >
           {busy === "docx" ? (
@@ -136,7 +152,7 @@ export default function BlankDownloadButtons({ templateId }: { templateId: strin
           ) : (
             <FileType2 className="w-5 h-5" />
           )}
-          Скачать Word
+          {busy === "docx" ? "Готовим Word…" : done === "docx" ? "Скачано ✓" : "Скачать Word"}
         </button>
       </div>
       <button
@@ -145,13 +161,13 @@ export default function BlankDownloadButtons({ templateId }: { templateId: strin
         disabled={busy !== null}
         className="inline-flex items-center justify-center gap-2 px-5 py-3 w-full bg-white border border-gray-300 text-gray-700 rounded-xl font-semibold text-sm hover:bg-gray-50 disabled:opacity-60 transition"
       >
-        {busy === "print" ? (
-          <Loader2 className="w-5 h-5 animate-spin" />
-        ) : (
-          <Printer className="w-5 h-5" />
-        )}
-        Печатать пустой бланк
-      </button>
+{busy === "print" ? (
+        <Loader2 className="w-5 h-5 animate-spin" />
+      ) : (
+        <Printer className="w-5 h-5" />
+      )}
+      {busy === "print" ? "Готовим печать…" : done === "print" ? "Отправлено в печать ✓" : "Печатать пустой бланк"}
+    </button>
       <p className="text-xs text-gray-500 flex items-center gap-1.5">
         <Download className="w-3.5 h-3.5" />
         Пустой бланк с адресом сайта dogovor.expert — заполняйте от руки или онлайн.

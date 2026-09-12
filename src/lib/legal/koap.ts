@@ -13,7 +13,8 @@ export interface KoapFine {
 }
 
 export const KOAP_CHAPTER_12: KoapFine[] = [
-  { article: "12.1", part: 1, title: "Управление ТС, не зарегистрированным в установленном порядке", fineMin: 500, fineMax: 800, punish: "fine", repeatText: "повторно — 5 000 ₽ или лишение 1–3 мес" },
+  { article: "12.1", part: 1, title: "Управление ТС, не зарегистрированным в установленном порядке", fineMin: 500, fineMax: 800, punish: "fine", repeatText: "повторно (ч. 1.1) — 5 000 ₽ или лишение 1–3 мес" },
+  { article: "12.1", part: 1.1, title: "Повторное управление ТС, не зарегистрированным в установленном порядке", fineMin: 5000, fineMax: 5000, punish: "fineOrRevoke", revokeMonths: [1, 3], noDiscount: true },
   { article: "12.2", part: 1, title: "Управление ТС с нечитаемыми, нестандартными или видоизменёнными госномерами", fineMin: 500, fineMax: 500, punish: "fine" },
   { article: "12.2", part: 2, title: "Управление ТС без госномеров или с скрытыми/подложными номерами", fineMin: 5000, fineMax: 5000, punish: "fineOrRevoke", revokeMonths: [1, 3] },
   { article: "12.3", part: 1, title: "Управление ТС без регистрационных документов, ВУ или полиса ОСАГО", fineMin: 500, fineMax: 500, punish: "fine" },
@@ -21,7 +22,7 @@ export const KOAP_CHAPTER_12: KoapFine[] = [
   { article: "12.5", part: 3.1, title: "Несоблюдение сезонности шин (шипованная/летняя не по сезону)", fineMin: 500, fineMax: 500, punish: "fine" },
   { article: "12.6", part: 0, title: "Управление ТС водителем, не пристёгнутым ремнём безопасности, или перевозка непристёгнутых пассажиров", fineMin: 1000, fineMax: 1000, punish: "fine" },
   { article: "12.7", part: 1, title: "Управление ТС водителем, не имеющим права управления", fineMin: 5000, fineMax: 15000, punish: "fine" },
-  { article: "12.7", part: 2, title: "Управление ТС водителем, лишённым права управления", fineMin: 30000, fineMax: 30000, punish: "fineOrArrest", arrestDays: [1, 15], noDiscount: true },
+  { article: "12.7", part: 2, title: "Управление ТС водителем, лишённым права управления", fineMin: 30000, fineMax: 30000, punish: "fineOrArrest", arrestDays: [1, 15] },
   { article: "12.8", part: 1, title: "Управление ТС в состоянии опьянения", fineMin: 45000, fineMax: 45000, punish: "fineAndRevoke", revokeMonths: [18, 24], noDiscount: true, repeatText: "повторно — 50 000–100 000 ₽ или лишение 3 года (уголовная ст. 264.1 УК)" },
   { article: "12.8", part: 2, title: "Передача управления лицу, находящемуся в состоянии опьянения", fineMin: 45000, fineMax: 45000, punish: "fineAndRevoke", revokeMonths: [18, 24], noDiscount: true },
   { article: "12.9", part: 2, title: "Превышение установленной скорости на 20–40 км/ч", fineMin: 500, fineMax: 500, punish: "fine" },
@@ -57,7 +58,8 @@ export const KOAP_CHAPTER_12: KoapFine[] = [
   { article: "12.24", part: 2, title: "Нарушение ПДД, повлёкшее вред здоровью средней тяжести", fineMin: 10000, fineMax: 25000, punish: "fineOrRevoke", revokeMonths: [18, 24], noDiscount: true },
   { article: "12.26", part: 1, title: "Отказ от медицинского освидетельствования на состояние опьянения", fineMin: 45000, fineMax: 45000, punish: "fineAndRevoke", revokeMonths: [18, 24], noDiscount: true, repeatText: "повторно — уголовная ответственность (ст. 264.1 УК)" },
   { article: "12.27", part: 1, title: "Невыполнение обязанностей в связи с ДТП (не остановился, не включил аварийку)", fineMin: 1000, fineMax: 1000, punish: "fine" },
-  { article: "12.27", part: 2, title: "Оставление водителем места ДТП, участником которого он являлся", fineMin: null, fineMax: null, punish: "revokeOrArrest", revokeMonths: [12, 18], arrestDays: [1, 15], noDiscount: true, cameraAllowed: false },
+  { article: "12.27", part: 2, title: "Оставление водителем места ДТП, участником которого он являлся", fineMin: null, fineMax: null, punish: "revokeOrArrest", revokeMonths: [12, 18], arrestDays: [1, 15], cameraAllowed: false },
+  { article: "12.27", part: 3, title: "Употребление алкоголя/наркотических средств после ДТП до освидетельствования", fineMin: 30000, fineMax: 30000, punish: "fineAndRevoke", revokeMonths: [18, 24], noDiscount: true },
   { article: "12.29", part: 1, title: "Нарушение ПДД пешеходом или пассажиром", fineMin: 500, fineMax: 500, punish: "fine" },
   { article: "12.29", part: 2, title: "Нарушение ПДД пешеходом в состоянии опьянения", fineMin: 1000, fineMax: 1500, punish: "fine" },
   { article: "12.32", part: 0, title: "Допуск к управлению ТС водителя, находящегося в состоянии опьянения", fineMin: 30000, fineMax: 30000, punish: "fine" },

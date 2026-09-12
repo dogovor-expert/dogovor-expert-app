@@ -136,6 +136,26 @@ export default function AppLayout({ children }: { children: ReactNode }) {
     return () => window.removeEventListener("dogovor:profile", onProfileUpdate);
   }, []);
 
+  // Мобильный сайдбар = модальная поверхность: блокируем скролл body пока
+  // открыт (иначе под автораем прокручивается контент, на iOS — bouncing),
+  // закрываем по Escape.
+  useEffect(() => {
+    if (!open) return;
+    const prevBody = document.body.style.overflow;
+    const prevHtml = document.documentElement.style.overflow;
+    document.body.style.overflow = "hidden";
+    document.documentElement.style.overflow = "hidden";
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => {
+      document.body.style.overflow = prevBody;
+      document.documentElement.style.overflow = prevHtml;
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+
   const handleSignOut = async () => {
     const supabase = createClient();
     await supabase.auth.signOut();
@@ -305,7 +325,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
       </aside>
 
       {/* Overlay */}
-      {open && <div className="fixed inset-0 bg-black/20 z-20 lg:hidden" onClick={() => setOpen(false)} />}
+      {open && <div className="fixed inset-0 bg-black/20 z-20 lg:hidden touch-none" onClick={() => setOpen(false)} />}
 
       {/* Main */}
       <div className="flex-1 flex flex-col min-w-0 max-w-full">
