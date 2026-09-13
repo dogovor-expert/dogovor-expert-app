@@ -35,7 +35,7 @@ ENV NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL \
     NEXT_PUBLIC_DEFAULT_TSA_URL=$NEXT_PUBLIC_DEFAULT_TSA_URL \
     NEXT_PUBLIC_INZURO_API_KEY=$NEXT_PUBLIC_INZURO_API_KEY
 
-COPY package.json package-lock.json .npmrc ./
+COPY package.json package-lock.json ./
 
 RUN npm ci --no-audit --no-fund --fetch-retries=5 --fetch-retry-mintimeout=10000
 
