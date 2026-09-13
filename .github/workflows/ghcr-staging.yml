@@ -3,7 +3,36 @@
 on:
   push:
     branches: [master]
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      NEXT_PUBLIC_SUPABASE_URL:
+        description: 'Supabase project URL (public)'
+        type: string
+        default: ''
+      NEXT_PUBLIC_SUPABASE_ANON_KEY:
+        description: 'Supabase anon key (public)'
+        type: string
+        default: ''
+      NEXT_PUBLIC_TURNSTILE_SITE_KEY:
+        description: 'Turnstile site key (public)'
+        type: string
+        default: ''
+      NEXT_PUBLIC_CHAT_ENABLED:
+        description: '1 = include chat widget'
+        type: string
+        default: ''
+      NEXT_PUBLIC_APP_URL:
+        description: 'Canonical app URL'
+        type: string
+        default: ''
+      NEXT_PUBLIC_SITE_URL:
+        description: 'Canonical site URL'
+        type: string
+        default: ''
+      NEXT_PUBLIC_INZURO_API_KEY:
+        description: 'Inzuro widget public key'
+        type: string
+        default: ''
 
 permissions:
   contents: read
@@ -39,3 +68,14 @@ jobs:
           tags: ghcr.io/dogovor-expert/dogovor-expert-app:staging
           cache-from: type=gha
           cache-to: type=gha,mode=max
+          # NEXT_PUBLIC_* инлайнятся в клиентский бандл на билде — значения
+          # берутся из репозиторийных Variables, либо из входных параметров
+          # workflow_dispatch (все значения публичные, в git не хранятся).
+          build-args: |
+            NEXT_PUBLIC_SUPABASE_URL=${{ vars.NEXT_PUBLIC_SUPABASE_URL || inputs.NEXT_PUBLIC_SUPABASE_URL }}
+            NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ vars.NEXT_PUBLIC_SUPABASE_ANON_KEY || inputs.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+            NEXT_PUBLIC_TURNSTILE_SITE_KEY=${{ vars.NEXT_PUBLIC_TURNSTILE_SITE_KEY || inputs.NEXT_PUBLIC_TURNSTILE_SITE_KEY }}
+            NEXT_PUBLIC_CHAT_ENABLED=${{ vars.NEXT_PUBLIC_CHAT_ENABLED || inputs.NEXT_PUBLIC_CHAT_ENABLED }}
+            NEXT_PUBLIC_APP_URL=${{ vars.NEXT_PUBLIC_APP_URL || inputs.NEXT_PUBLIC_APP_URL }}
+            NEXT_PUBLIC_SITE_URL=${{ vars.NEXT_PUBLIC_SITE_URL || inputs.NEXT_PUBLIC_SITE_URL }}
+            NEXT_PUBLIC_INZURO_API_KEY=${{ vars.NEXT_PUBLIC_INZURO_API_KEY || inputs.NEXT_PUBLIC_INZURO_API_KEY }}
