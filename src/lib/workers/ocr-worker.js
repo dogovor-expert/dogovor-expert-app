@@ -39,7 +39,7 @@ async function initWorker() {
   lastProgress = 0;
   tesseractWorker = await createWorker("rus", 1, {
     workerPath: "/workers/tesseract-worker.min.js",
-    corePath: "/workers/tesseract-core/",
+    corePath: "/workers/tesseract-core/tesseract-core-simd.wasm.js",
     langPath: "/workers/tessdata/",
     // Прямой same-origin worker без blob-обёртки — надёжнее под строгим CSP.
     workerBlobURL: false,

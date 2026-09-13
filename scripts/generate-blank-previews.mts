@@ -16,6 +16,7 @@ import { readFile, writeFile, mkdir, readdir } from "node:fs/promises";
 import { pathToFileURL, fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
 import { JSDOM } from "jsdom";
+import sharp from "sharp";
 import { createCanvas } from "@napi-rs/canvas";
 
 // --- полифилы DOM, нужные buildPdf в Node ---
@@ -68,7 +69,7 @@ async function rasterizeFirstPages(pdfBytes: Uint8Array): Promise<Buffer[]> {
     ctx.fillStyle = "#ffffff";
     ctx.fillRect(0, 0, cc.canvas.width, cc.canvas.height);
     await page.render({ canvasContext: ctx, viewport, canvas: cc.canvas }).promise;
-    out.push((cc.canvas as any).toBuffer("image/webp", { quality: 0.8 }));
+    out.push((cc.canvas as any).toBuffer("image/png"));
     page.cleanup();
   }
   // Явная очистка транспорта/воркера, т.к. doc.destroy() в v6 убран,
@@ -102,7 +103,10 @@ async function main() {
     const bytes = new Uint8Array(await blob.arrayBuffer());
     const pages = await rasterizeFirstPages(bytes);
     for (let i = 0; i < pages.length; i++) {
-      await writeFile(resolve(OUT_DIR, `${t.id}-${i + 1}.webp`), pages[i]);
+      const avif = await sharp(pages[i], { limitInputPixels: false })
+        .avif({ quality: 60, effort: 5 })
+        .toBuffer();
+      await writeFile(resolve(OUT_DIR, `${t.id}-${i + 1}.avif`), avif);
     }
     manifest[t.id] = pages.length;
     done++;

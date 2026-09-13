@@ -41,7 +41,7 @@ function getBlankPreviewImages(slug: string): string[] {
     if (!n) return [];
     const imgs: string[] = [];
     for (let i = 1; i <= n; i++) {
-      const rel = `/blank-previews/${slug}-${i}.webp`;
+      const rel = `/blank-previews/${slug}-${i}.avif`;
       if (existsSync(join(process.cwd(), "public", rel))) imgs.push(rel);
     }
     return imgs;
