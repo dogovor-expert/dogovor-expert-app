@@ -22,7 +22,7 @@ function getWorker() {
       const { createWorker } = await import("tesseract.js");
       const worker = await createWorker("rus", 1, {
         workerPath: "/workers/tesseract-worker.min.js",
-        corePath: "/workers/tesseract-core/",
+        corePath: "/workers/tesseract-core/tesseract-core-simd.wasm.js",
         langPath: "/workers/tessdata/",
         logger: () => {},
       });
