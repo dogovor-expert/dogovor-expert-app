@@ -79,3 +79,11 @@ jobs:
             NEXT_PUBLIC_APP_URL=${{ vars.NEXT_PUBLIC_APP_URL || inputs.NEXT_PUBLIC_APP_URL }}
             NEXT_PUBLIC_SITE_URL=${{ vars.NEXT_PUBLIC_SITE_URL || inputs.NEXT_PUBLIC_SITE_URL }}
             NEXT_PUBLIC_INZURO_API_KEY=${{ vars.NEXT_PUBLIC_INZURO_API_KEY || inputs.NEXT_PUBLIC_INZURO_API_KEY }}
+
+      - name: Deploy to CapRover (staging)
+        uses: caprover/deploy-from-github@v2
+        with:
+          server: 'https://captain.vds.dogovor.expert'
+          app: dogovor
+          token: ${{ secrets.CAPROVER_APP_TOKEN_STAGING }}
+          image: ghcr.io/dogovor-expert/dogovor-expert-app:staging
