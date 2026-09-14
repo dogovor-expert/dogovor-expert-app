@@ -26,9 +26,11 @@ export default function InssmartWidget() {
     script.src = WIDGET_SCRIPT;
     script.dataset.id = "inssmart-b2c";
     script.dataset.origin = "https://widgets.inssmart.ru";
-    script.dataset.product = process.env.NEXT_PUBLIC_INSSMART_PRODUCT ?? "/eosago";
-    script.dataset.token = process.env.NEXT_PUBLIC_INSSMART_TOKEN ?? "0b980598-dd32-408e-a0a6-8e239c4ea96e";
-    script.dataset.secret = process.env.NEXT_PUBLIC_INSSMART_SECRET ?? "127d4c25-b847-4d32-af81-91ed71cfcfab";
+    // ВНИМАНИЕ: именно ||, а не ??: NEXT_PUBLIC_* подставляется на этапе
+    // сборки, и пустая строка ("" не null) с ?? пробила бы атрибуты пустым значением.
+    script.dataset.product = process.env.NEXT_PUBLIC_INSSMART_PRODUCT || "/eosago";
+    script.dataset.token = process.env.NEXT_PUBLIC_INSSMART_TOKEN || "0b980598-dd32-408e-a0a6-8e239c4ea96e";
+    script.dataset.secret = process.env.NEXT_PUBLIC_INSSMART_SECRET || "127d4c25-b847-4d32-af81-91ed71cfcfab";
     script.async = true;
 
     // Загрузчик inssmart вставляет iframe ПЕРЕД тегом скрипта, поэтому
