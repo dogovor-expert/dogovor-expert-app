@@ -10,7 +10,7 @@ const allReq = [];
 const consoleMsgs = [];
 page.on("response", (r) => {
   const u = r.url();
-  if (u.includes("inzuro") || u.includes("polis.online") || u.includes("widget")) {
+  if (u.includes("inssmart") || u.includes("widget")) {
     allReq.push({ url: u, status: r.status(), ct: r.headers()["content-type"] });
   }
 });

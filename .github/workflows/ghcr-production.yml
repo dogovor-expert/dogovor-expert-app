@@ -27,8 +27,12 @@ on:
         description: 'Canonical site URL'
         type: string
         default: ''
-      NEXT_PUBLIC_INZURO_API_KEY:
-        description: 'Inzuro widget public key'
+      NEXT_PUBLIC_INSSMART_TOKEN:
+        description: 'Inssmart widget token'
+        type: string
+        default: ''
+      NEXT_PUBLIC_INSSMART_SECRET:
+        description: 'Inssmart widget secret'
         type: string
         default: ''
 
@@ -75,7 +79,8 @@ jobs:
             NEXT_PUBLIC_CHAT_ENABLED=${{ inputs.NEXT_PUBLIC_CHAT_ENABLED || vars.NEXT_PUBLIC_CHAT_ENABLED }}
             NEXT_PUBLIC_APP_URL=${{ inputs.NEXT_PUBLIC_APP_URL || vars.NEXT_PUBLIC_APP_URL }}
             NEXT_PUBLIC_SITE_URL=${{ inputs.NEXT_PUBLIC_SITE_URL || vars.NEXT_PUBLIC_SITE_URL }}
-            NEXT_PUBLIC_INZURO_API_KEY=${{ inputs.NEXT_PUBLIC_INZURO_API_KEY || vars.NEXT_PUBLIC_INZURO_API_KEY }}
+            NEXT_PUBLIC_INSSMART_TOKEN=${{ inputs.NEXT_PUBLIC_INSSMART_TOKEN || vars.NEXT_PUBLIC_INSSMART_TOKEN }}
+            NEXT_PUBLIC_INSSMART_SECRET=${{ inputs.NEXT_PUBLIC_INSSMART_SECRET || vars.NEXT_PUBLIC_INSSMART_SECRET }}
 
       - name: Deploy to CapRover (production)
         uses: caprover/deploy-from-github@v2
