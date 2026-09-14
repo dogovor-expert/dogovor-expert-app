@@ -8,11 +8,11 @@ import { Input } from '@/components/ui/Input';
 import { useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
 
-// S5 (аудит): сервер /api/auth/login требует Turnstile-токен, когда настроен
-// TURNSTILE_SECRET_KEY. Виджет рендерится, только если есть site key;
+// S5 (аудит): сервер /api/auth/login требует SmartCaptcha-токен, когда настроен
+// SMARTCAPTCHA_SECRET_KEY. Виджет рендерится, только если есть site key;
 // при ошибке сервера ремоунтим виджет — токен одноразовый.
-const CAPTCHA_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
-const TurnstileCaptcha = dynamic(() => import('@/components/auth/TurnstileCaptcha'), {
+const CAPTCHA_SITE_KEY = process.env.NEXT_PUBLIC_SMARTCAPTCHA_SITE_KEY;
+const SmartCaptchaWidget = dynamic(() => import('@/components/auth/SmartCaptcha'), {
   ssr: false,
   loading: () => null,
 });
@@ -66,7 +66,7 @@ export function LoginForm({ onSuccess, initialEmail }: LoginFormProps) {
 
       if (!response.ok) {
         setServerError(result.error || 'Ошибка входа');
-        // Токен Turnstile одноразовый: после отказа сервера нужен свежий.
+        // Токен SmartCaptcha одноразовый: после отказа сервера нужен свежий.
         if (captchaRequired) {
           setCaptchaToken(null);
           setCaptchaNonce((n) => n + 1);
@@ -132,7 +132,7 @@ export function LoginForm({ onSuccess, initialEmail }: LoginFormProps) {
       )}
 
       {captchaRequired && (
-        <TurnstileCaptcha key={captchaNonce} onToken={setCaptchaToken} />
+        <SmartCaptchaWidget key={captchaNonce} onToken={setCaptchaToken} />
       )}
 
       <Button

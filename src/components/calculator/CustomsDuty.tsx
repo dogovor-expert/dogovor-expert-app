@@ -8,8 +8,8 @@ import { fmtMoney } from "@/lib/legal/calc";
 import { formatPhoneRu } from "@/lib/format";
 import SaveCalcButton from "@/components/calculator/SaveCalcButton";
 
-const CAPTCHA_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
-const TurnstileCaptcha = dynamic(() => import("@/components/auth/TurnstileCaptcha"), {
+const CAPTCHA_SITE_KEY = process.env.NEXT_PUBLIC_SMARTCAPTCHA_SITE_KEY;
+const SmartCaptchaWidget = dynamic(() => import("@/components/auth/SmartCaptcha"), {
   ssr: false,
 });
 
@@ -89,7 +89,7 @@ export default function CustomsDuty() {
   const [leadErr, setLeadErr] = useState("");
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
-  // Turnstile для лид-формы (сервер требует captchaToken, когда настроен).
+  // SmartCaptcha для лид-формы (сервер требует captchaToken, когда настроен).
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const [captchaNonce, setCaptchaNonce] = useState(0);
   const captchaRequired = Boolean(CAPTCHA_SITE_KEY);
@@ -128,7 +128,7 @@ export default function CustomsDuty() {
           : /робот|Капча/i.test(String(json?.error ?? "")) ? "Капча не пройдена — попробуйте ещё раз"
           : "Не удалось отправить заявку. Попробуйте ещё раз";
         setLeadErr(msg);
-        // Токен Turnstile одноразовый — после ошибки перевыпускаем виджет.
+        // Токен SmartCaptcha одноразовый — после ошибки перевыпускаем виджет.
         setCaptchaToken(null);
         setCaptchaNonce((n) => n + 1);
         setSending(false);
@@ -323,7 +323,7 @@ export default function CustomsDuty() {
                 </span>
               </label>
               {captchaRequired && (
-                <TurnstileCaptcha key={captchaNonce} onToken={setCaptchaToken} />
+                <SmartCaptchaWidget key={captchaNonce} onToken={setCaptchaToken} />
               )}
               <button onClick={sendLead} disabled={sending || !consent || (captchaRequired && !captchaToken)}
                 className="w-full py-2.5 bg-brand-600 text-white rounded-xl hover:bg-brand-700 font-bold text-xs transition cursor-pointer disabled:opacity-60 flex items-center justify-center gap-1.5">

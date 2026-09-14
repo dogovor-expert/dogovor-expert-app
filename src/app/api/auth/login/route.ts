@@ -5,7 +5,7 @@ import { NextResponse } from 'next/server';
 import { withCsrf } from '@/lib/csrf';
 import { isSameOrigin } from '@/lib/admin-auth';
 import { limiters, clientIp, checkRateLimit, rateLimitResponse } from '@/lib/ratelimit';
-import { verifyTurnstile, turnstileConfigured } from '@/lib/turnstile';
+import { verifySmartCaptcha, smartcaptchaConfigured } from '@/lib/smartcaptcha';
 
 async function loginHandler(req: Request) {
   // Belt-and-suspenders: CSRF + isSameOrigin
@@ -24,9 +24,9 @@ async function loginHandler(req: Request) {
     return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
   }
 
-  // S5: Turnstile — строго при настроенном TURNSTILE_SECRET_KEY. Токен без
-  // таймаута Cloudflare (unavailable) — fail-open, чтобы не валить легитимные входы.
-  if (turnstileConfigured()) {
+  // S5: SmartCaptcha — строго при настроенном SMARTCAPTCHA_SECRET_KEY. Токен без
+  // ответа сервиса (unavailable) — fail-open, чтобы не валить легитимные входы.
+  if (smartcaptchaConfigured()) {
     const captchaToken =
       typeof body.captchaToken === 'string' && body.captchaToken.length > 0
         ? body.captchaToken
@@ -34,7 +34,7 @@ async function loginHandler(req: Request) {
     if (!captchaToken) {
       return NextResponse.json({ error: 'Подтвердите, что вы не робот' }, { status: 400 });
     }
-    const verdict = await verifyTurnstile(captchaToken, ip);
+    const verdict = await verifySmartCaptcha(captchaToken, ip);
     if (verdict === 'fail') {
       return NextResponse.json(
         { error: 'Проверка капчи не пройдена. Попробуйте ещё раз' },
@@ -42,7 +42,7 @@ async function loginHandler(req: Request) {
       );
     }
     if (verdict === 'unavailable') {
-      console.warn('[login] Turnstile siteverify unavailable — allowing request');
+      console.warn('[login] SmartCaptcha validate unavailable — allowing request');
     }
   }
 

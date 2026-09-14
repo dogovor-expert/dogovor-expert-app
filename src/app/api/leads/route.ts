@@ -6,7 +6,7 @@ import { limiters, clientIp, checkRateLimit, rateLimitResponse } from "@/lib/rat
 import { withCsrf } from "@/lib/csrf";
 import { sendEmail, sendTelegram, SUPPORT_EMAIL } from "@/lib/mail";
 import { leadSchema, validateBody } from "@/lib/validations/api";
-import { turnstileConfigured, verifyTurnstile } from "@/lib/turnstile";
+import { smartcaptchaConfigured, verifySmartCaptcha } from "@/lib/smartcaptcha";
 
 const STATUSES = ["new", "paid", "docs", "filed", "done", "canceled"] as const;
 
@@ -23,10 +23,10 @@ async function postHandler(req: Request) {
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
   }
 
-  // Капча Cloudflare Turnstile (когда настроена): защита от спама на
+  // Капча Yandex SmartCaptcha (когда настроена): защита от спама на
   // Telegram/почту поддержки. Одинаковая семантика с логином: fail-open
-  // только при недоступности самого сервиса Turnstile.
-  if (turnstileConfigured()) {
+  // только при недоступности самого сервиса SmartCaptcha.
+  if (smartcaptchaConfigured()) {
     const captchaToken =
       typeof rawBody.captchaToken === "string" ? rawBody.captchaToken : "";
     if (!captchaToken) {
@@ -35,7 +35,7 @@ async function postHandler(req: Request) {
         { status: 400 }
       );
     }
-    const verdict = await verifyTurnstile(captchaToken, clientIp(req));
+    const verdict = await verifySmartCaptcha(captchaToken, clientIp(req));
     if (verdict === "fail") {
       return NextResponse.json(
         { error: "Капча не пройдена — попробуйте ещё раз" },
@@ -43,7 +43,7 @@ async function postHandler(req: Request) {
       );
     }
     if (verdict === "unavailable") {
-      console.warn("[leads] Turnstile недоступен — fail-open");
+      console.warn("[leads] SmartCaptcha недоступен — fail-open");
     }
   }
 

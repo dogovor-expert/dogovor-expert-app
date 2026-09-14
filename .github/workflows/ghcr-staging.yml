@@ -13,8 +13,8 @@ on:
         description: 'Supabase anon key (public)'
         type: string
         default: ''
-      NEXT_PUBLIC_TURNSTILE_SITE_KEY:
-        description: 'Turnstile site key (public)'
+      NEXT_PUBLIC_SMARTCAPTCHA_SITE_KEY:
+        description: 'Yandex SmartCaptcha client key (public)'
         type: string
         default: ''
       NEXT_PUBLIC_CHAT_ENABLED:
@@ -74,7 +74,7 @@ jobs:
           build-args: |
             NEXT_PUBLIC_SUPABASE_URL=${{ vars.NEXT_PUBLIC_SUPABASE_URL || inputs.NEXT_PUBLIC_SUPABASE_URL }}
             NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ vars.NEXT_PUBLIC_SUPABASE_ANON_KEY || inputs.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
-            NEXT_PUBLIC_TURNSTILE_SITE_KEY=${{ vars.NEXT_PUBLIC_TURNSTILE_SITE_KEY || inputs.NEXT_PUBLIC_TURNSTILE_SITE_KEY }}
+            NEXT_PUBLIC_SMARTCAPTCHA_SITE_KEY=${{ vars.NEXT_PUBLIC_SMARTCAPTCHA_SITE_KEY || inputs.NEXT_PUBLIC_SMARTCAPTCHA_SITE_KEY }}
             NEXT_PUBLIC_CHAT_ENABLED=${{ vars.NEXT_PUBLIC_CHAT_ENABLED || inputs.NEXT_PUBLIC_CHAT_ENABLED }}
             NEXT_PUBLIC_APP_URL=${{ vars.NEXT_PUBLIC_APP_URL || inputs.NEXT_PUBLIC_APP_URL }}
             NEXT_PUBLIC_SITE_URL=${{ vars.NEXT_PUBLIC_SITE_URL || inputs.NEXT_PUBLIC_SITE_URL }}
