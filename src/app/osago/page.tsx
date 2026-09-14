@@ -1,10 +1,10 @@
 import { Calculator, Shield } from "lucide-react";
-import InzuroWidget from "@/components/osago/InzuroWidget";
+import InssmartWidget from "@/components/osago/InssmartWidget";
 import KbmChecker from "@/components/osago/KbmFrame";
 
 // E4 (аудит): страница была целиком 'use client' — поисковики получали пустой
 // HTML (thin content). Теперь это серверный компонент с SEO-контентом, а виджет
-// Inzuro остаётся клиентским островом ('use client' внутри InzuroWidget).
+// Inssmart остаётся клиентским островом ('use client' внутри InssmartWidget).
 export default function OsagoPage() {
   return (
     <div className="p-6 max-w-3xl mx-auto space-y-6">
@@ -33,7 +33,7 @@ export default function OsagoPage() {
           </div>
         </div>
         <div className="p-6 sm:p-8">
-          <InzuroWidget />
+          <InssmartWidget />
         </div>
       </div>
 

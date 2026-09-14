@@ -2,23 +2,10 @@
 import { useEffect, useState } from "react";
 import { Shield, ExternalLink } from "lucide-react";
 
-declare module "react" {
-  // eslint-disable-next-line @typescript-eslint/no-namespace
-  namespace JSX {
-    interface IntrinsicElements {
-      "polis-online-widget-osago": {
-        name?: string;
-        "data-api-key"?: string;
-        "data-widget-id"?: number;
-      };
-    }
-  }
-}
+const WIDGET_SCRIPT = "https://widgets.inssmart.ru/widgets/b2c-frame.loader.js";
+const CONSENT_KEY = "dogovor_inssmart_osago_consent_v1";
 
-const WIDGET_SCRIPT = "https://inzuro.polis.online/widget_v2.min.js";
-const CONSENT_KEY = "dogovor_inzuro_osago_consent_v1";
-
-export default function InzuroWidget() {
+export default function InssmartWidget() {
   const [consented, setConsented] = useState(false);
   const [checked, setChecked] = useState(false);
 
@@ -30,14 +17,20 @@ export default function InzuroWidget() {
 
   useEffect(() => {
     if (!consented) return;
-    if (document.getElementById("inzuro-widget-script")) return;
+    if (document.getElementById("inssmart-widget-script")) return;
     const script = document.createElement("script");
-    script.id = "inzuro-widget-script";
+    script.id = "inssmart-widget-script";
+    script.type = "text/javascript";
     script.src = WIDGET_SCRIPT;
+    script.dataset.id = "inssmart-b2c";
+    script.dataset.origin = "https://widgets.inssmart.ru";
+    script.dataset.product = "/mortgage";
+    script.dataset.token = process.env.NEXT_PUBLIC_INSSMART_TOKEN ?? "0b980598-dd32-408e-a0a6-8e239c4ea96e";
+    script.dataset.secret = process.env.NEXT_PUBLIC_INSSMART_SECRET ?? "127d4c25-b847-4d32-af81-91ed71cfcfab";
     script.async = true;
     document.body.appendChild(script);
     return () => {
-      document.getElementById("inzuro-widget-script")?.remove();
+      document.getElementById("inssmart-widget-script")?.remove();
     };
   }, [consented]);
 
@@ -52,24 +45,18 @@ export default function InzuroWidget() {
         <span className="inline-flex items-center gap-1 text-[10px] font-mono font-semibold uppercase tracking-wide text-white bg-brand-600 border border-brand-700 rounded px-2.5 py-1 shadow-sm">
           Партнёрский сервис
         </span>
-        <span className="text-[11px] text-gray-600">расчёт и оформление выполняет Инзуро (inzuro.ru)</span>
+        <span className="text-[11px] text-gray-600">расчёт и оформление выполняет Inssmart (inssmart.ru)</span>
       </div>
 
       {consented ? (
-        <div>
-          <polis-online-widget-osago
-            name="polis-online-widget-osago"
-            data-api-key={process.env.NEXT_PUBLIC_INZURO_API_KEY ?? "Z4iX8clg06"}
-            data-widget-id={168742}
-          />
-        </div>
+        <div id="inssmart-b2c" />
       ) : (
         <div className="bg-gradient-to-b from-white to-brand-50/50 border border-brand-200 rounded-xl p-5 space-y-3">
           <p className="text-xs text-gray-600 leading-relaxed">
             Этот блок — партнёрский сервис. Расчёт стоимости полиса ОСАГО и его оформление выполняет
-            компания <b>Инзуро</b> через встроенный калькулятор. Для расчёта вам потребуется ввести
+            компания <b>Inssmart</b> через встроенный калькулятор. Для расчёта вам потребуется ввести
             государственный номер, VIN и паспортные данные —{" "}
-            <b>эти данные передаются партнёру Инзуро и страховым компаниям</b> и не хранятся на
+            <b>эти данные передаются партнёру Inssmart и страховым компаниям</b> и не хранятся на
             серверах Dogovor.
           </p>
           <label className="flex items-start gap-2.5 text-xs text-gray-700 cursor-pointer select-none">
@@ -81,9 +68,9 @@ export default function InzuroWidget() {
             />
             <span>
               Я согласен(на) на передачу моих персональных данных (госномер, VIN, паспортные данные)
-              партнёрскому сервису Инзуро и страховым компаниям для расчёта и оформления полиса ОСАГО
+              партнёрскому сервису Inssmart и страховым компаниям для расчёта и оформления полиса ОСАГО
               и ознакомлен(а) с{" "}
-              <a href="https://inzuro.ru/privacy/" target="_blank" rel="noopener noreferrer" className="text-brand-600 hover:underline inline-flex items-center gap-0.5">
+              <a href="https://inssmart.ru/privacy/" target="_blank" rel="noopener noreferrer" className="text-brand-600 hover:underline inline-flex items-center gap-0.5">
                 условиями партнёра <ExternalLink className="w-3 h-3" />
               </a>
             </span>
