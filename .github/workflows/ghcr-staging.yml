@@ -37,6 +37,10 @@ on:
         description: 'Inssmart widget secret'
         type: string
         default: ''
+      NEXT_PUBLIC_INSSMART_PRODUCT:
+        description: 'Inssmart widget product path (ex: /eosago)'
+        type: string
+        default: ''
 
 permissions:
   contents: read
@@ -84,6 +88,7 @@ jobs:
             NEXT_PUBLIC_SITE_URL=${{ vars.NEXT_PUBLIC_SITE_URL || inputs.NEXT_PUBLIC_SITE_URL }}
             NEXT_PUBLIC_INSSMART_TOKEN=${{ vars.NEXT_PUBLIC_INSSMART_TOKEN || inputs.NEXT_PUBLIC_INSSMART_TOKEN }}
             NEXT_PUBLIC_INSSMART_SECRET=${{ vars.NEXT_PUBLIC_INSSMART_SECRET || inputs.NEXT_PUBLIC_INSSMART_SECRET }}
+            NEXT_PUBLIC_INSSMART_PRODUCT=${{ vars.NEXT_PUBLIC_INSSMART_PRODUCT || inputs.NEXT_PUBLIC_INSSMART_PRODUCT }}}
 
       - name: Deploy to CapRover (staging)
         uses: caprover/deploy-from-github@v2
