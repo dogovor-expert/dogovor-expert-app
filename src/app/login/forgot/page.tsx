@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Card } from "@/components/ui/Card";
 import { CheckCircle2, KeyRound, Loader2 } from "lucide-react";
-import TurnstileCaptcha from "@/components/auth/TurnstileCaptcha";
+import SmartCaptchaWidget from "@/components/auth/SmartCaptcha";
 
 function ForgotForm() {
   const router = useRouter();
@@ -91,7 +91,7 @@ function ForgotForm() {
                 "Отправить ссылку для сброса"
               )}
             </Button>
-            <TurnstileCaptcha onToken={(t) => setCaptchaToken(t ?? undefined)} />
+            <SmartCaptchaWidget onToken={(t) => setCaptchaToken(t ?? undefined)} />
           </>
         )}
 

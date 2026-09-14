@@ -7,8 +7,8 @@ import { fmtMoney } from "@/lib/legal/calc";
 import { formatPhoneRu } from "@/lib/format";
 import SaveCalcButton from "@/components/calculator/SaveCalcButton";
 
-const CAPTCHA_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
-const TurnstileCaptcha = dynamic(() => import("@/components/auth/TurnstileCaptcha"), {
+const CAPTCHA_SITE_KEY = process.env.NEXT_PUBLIC_SMARTCAPTCHA_SITE_KEY;
+const SmartCaptchaWidget = dynamic(() => import("@/components/auth/SmartCaptcha"), {
   ssr: false,
 });
 
@@ -205,7 +205,7 @@ export default function KaskoQuote() {
                 </span>
               </label>
               {captchaRequired && (
-                <TurnstileCaptcha key={captchaNonce} onToken={setCaptchaToken} />
+                <SmartCaptchaWidget key={captchaNonce} onToken={setCaptchaToken} />
               )}
               <button onClick={sendLead} disabled={sending || !consent || (captchaRequired && !captchaToken)}
                 className="w-full py-2.5 bg-brand-600 text-white rounded-xl hover:bg-brand-700 font-bold text-xs transition cursor-pointer disabled:opacity-60 flex items-center justify-center gap-1.5">

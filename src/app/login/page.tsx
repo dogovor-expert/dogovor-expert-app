@@ -9,7 +9,7 @@ import { CheckCircle2, Loader2, Mail, ShieldCheck, Smartphone, Flame } from "luc
 import Link from "next/link";
 import type { Provider } from "@supabase/supabase-js";
 import dynamic from "next/dynamic";
-const TurnstileCaptcha = dynamic(() => import("@/components/auth/TurnstileCaptcha"), { ssr: false });
+const SmartCaptchaWidget = dynamic(() => import("@/components/auth/SmartCaptcha"), { ssr: false });
 const CountdownTimer = dynamic(() => import("@/components/billing/CountdownTimer"), { ssr: false });
 import { currentProPrice, PRO_PRICE_OLD, PROMO_LABEL, isPromoActive, promoCountdownTarget, formatRub } from "@/lib/pricing";
 import { LoginForm as LoginFormComponent } from "@/components/auth/LoginForm";
@@ -453,7 +453,7 @@ function LoginForm() {
                     </Link>
                   </span>
                 </label>
-                <TurnstileCaptcha onToken={(t) => setCaptchaToken(t ?? undefined)} />
+                <SmartCaptchaWidget onToken={(t) => setCaptchaToken(t ?? undefined)} />
                 <div className="mt-4">
                   <RegisterPromo />
                 </div>
