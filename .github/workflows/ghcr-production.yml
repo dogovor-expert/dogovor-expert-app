@@ -1,4 +1,4 @@
-name: Build & Push GHCR (production)
+﻿name: Build & Push GHCR (production)
 
 on:
   workflow_dispatch:
@@ -66,13 +66,21 @@ jobs:
           tags: ghcr.io/dogovor-expert/dogovor-expert-app:production
           cache-from: type=gha,scope=production
           cache-to: type=gha,mode=max,scope=production
-          # NEXT_PUBLIC_* инлайнятся в клиентский бандл на билде — значения
-          # передаются входными параметрами workflow_dispatch (все публичные).
+          # NEXT_PUBLIC_* РёРЅР»Р°Р№РЅСЏС‚СЃСЏ РІ РєР»РёРµРЅС‚СЃРєРёР№ Р±Р°РЅРґР» РЅР° Р±РёР»РґРµ вЂ” Р·РЅР°С‡РµРЅРёСЏ
+          # РїРµСЂРµРґР°СЋС‚СЃСЏ РІС…РѕРґРЅС‹РјРё РїР°СЂР°РјРµС‚СЂР°РјРё workflow_dispatch (РІСЃРµ РїСѓР±Р»РёС‡РЅС‹Рµ).
           build-args: |
-            NEXT_PUBLIC_SUPABASE_URL=${{ vars.NEXT_PUBLIC_SUPABASE_URL || inputs.NEXT_PUBLIC_SUPABASE_URL }}
-            NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ vars.NEXT_PUBLIC_SUPABASE_ANON_KEY || inputs.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
-            NEXT_PUBLIC_SMARTCAPTCHA_SITE_KEY=${{ vars.NEXT_PUBLIC_SMARTCAPTCHA_SITE_KEY || inputs.NEXT_PUBLIC_SMARTCAPTCHA_SITE_KEY }}
-            NEXT_PUBLIC_CHAT_ENABLED=${{ vars.NEXT_PUBLIC_CHAT_ENABLED || inputs.NEXT_PUBLIC_CHAT_ENABLED }}
-            NEXT_PUBLIC_APP_URL=${{ vars.NEXT_PUBLIC_APP_URL || inputs.NEXT_PUBLIC_APP_URL }}
-            NEXT_PUBLIC_SITE_URL=${{ vars.NEXT_PUBLIC_SITE_URL || inputs.NEXT_PUBLIC_SITE_URL }}
-            NEXT_PUBLIC_INZURO_API_KEY=${{ vars.NEXT_PUBLIC_INZURO_API_KEY || inputs.NEXT_PUBLIC_INZURO_API_KEY }}
+            NEXT_PUBLIC_SUPABASE_URL=${{ inputs.NEXT_PUBLIC_SUPABASE_URL || vars.NEXT_PUBLIC_SUPABASE_URL }}
+            NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ inputs.NEXT_PUBLIC_SUPABASE_ANON_KEY || vars.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+            NEXT_PUBLIC_SMARTCAPTCHA_SITE_KEY=${{ inputs.NEXT_PUBLIC_SMARTCAPTCHA_SITE_KEY || vars.NEXT_PUBLIC_SMARTCAPTCHA_SITE_KEY }}
+            NEXT_PUBLIC_CHAT_ENABLED=${{ inputs.NEXT_PUBLIC_CHAT_ENABLED || vars.NEXT_PUBLIC_CHAT_ENABLED }}
+            NEXT_PUBLIC_APP_URL=${{ inputs.NEXT_PUBLIC_APP_URL || vars.NEXT_PUBLIC_APP_URL }}
+            NEXT_PUBLIC_SITE_URL=${{ inputs.NEXT_PUBLIC_SITE_URL || vars.NEXT_PUBLIC_SITE_URL }}
+            NEXT_PUBLIC_INZURO_API_KEY=${{ inputs.NEXT_PUBLIC_INZURO_API_KEY || vars.NEXT_PUBLIC_INZURO_API_KEY }}
+
+      - name: Deploy to CapRover (production)
+        uses: caprover/deploy-from-github@v2
+        with:
+          server: 'https://captain.vds.dogovor.expert'
+          app: dogovor-prod
+          token: ${{ secrets.CAPROVER_APP_TOKEN_PROD }}
+          image: ghcr.io/dogovor-expert/dogovor-expert-app:production
