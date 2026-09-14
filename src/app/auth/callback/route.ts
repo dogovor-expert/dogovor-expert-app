@@ -8,6 +8,18 @@ function safeNext(next: string | null | undefined): string {
   return next;
 }
 
+// В standalone-контейнере request.url строится от внутреннего HOSTNAME:PORT
+// (https://0.0.0.0:3000), поэтому абсолютные редиректы берём из заголовков прокси.
+function siteOrigin(request: Request): string {
+  const host =
+    request.headers.get("x-forwarded-host") ?? request.headers.get("host");
+  if (host && !/^(0\.0\.0\.0|localhost|127\.0\.0\.1)(:\d+)?$/.test(host)) {
+    const proto = request.headers.get("x-forwarded-proto") ?? "https";
+    return `${proto}://${host}`;
+  }
+  return new URL(request.url).origin;
+}
+
 function secureRedirect(location: string): NextResponse {
   // N2 (independent audit): redirect() не наследует заголовки middleware,
   // потому что этот роут — auth/callback (не под matcher в некоторых конфигах).
@@ -30,7 +42,8 @@ function secureRedirect(location: string): NextResponse {
 }
 
 export async function GET(request: Request) {
-  const { searchParams, origin } = new URL(request.url);
+  const { searchParams } = new URL(request.url);
+  const origin = siteOrigin(request);
   const code = searchParams.get("code");
   const next = safeNext(searchParams.get("next"));
 
