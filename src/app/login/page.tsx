@@ -91,6 +91,7 @@ function LoginForm() {
   const [mode, setMode] = useState<"register" | "login">("register");
   const [step, setStep] = useState<"email" | "password" | "confirm" | "mfa">("email");
   const [mfaFactor, setMfaFactor] = useState<string | null>(null);
+  const [mfaChecking, setMfaChecking] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -102,13 +103,27 @@ function LoginForm() {
   useEffect(() => {
     if (searchParams.get("mfa") !== "1" || step !== "email") return;
     let cancelled = false;
+    setMfaChecking(true);
+    setError(null);
     (async () => {
-      const { data } = await supabase.auth.mfa.listFactors();
-      const verified = data?.totp.find((f) => f.status === "verified");
-      if (cancelled) return;
-      if (verified) {
-        setMfaFactor(verified.id);
-        setStep("mfa");
+      try {
+        const { data, error: listError } = await supabase.auth.mfa.listFactors();
+        if (cancelled) return;
+        if (listError) {
+          setError("Не удалось проверить статус 2FA. Обновите страницу или войдите заново.");
+          return;
+        }
+        const verified = data?.totp.find((f) => f.status === "verified");
+        if (verified) {
+          setMfaFactor(verified.id);
+          setStep("mfa");
+        } else {
+          setError("2FA включена, но подтверждённый TOTP-фактор не найден. Обратитесь в поддержку.");
+        }
+      } catch {
+        if (!cancelled) setError("Проверка 2FA недоступна — проблема с сетью. Попробуйте ещё раз.");
+      } finally {
+        if (!cancelled) setMfaChecking(false);
       }
     })();
     return () => {
@@ -371,7 +386,16 @@ function LoginForm() {
           </>
         )}
 
-        {step === "email" && (mode === "register" || mode === "login") ? (
+        {step === "email" && mfaChecking ? (
+          <div
+            className="flex items-center gap-2 text-sm text-gray-600 py-8 justify-center"
+            role="status"
+            aria-live="polite"
+          >
+            <Loader2 className="w-4 h-4 animate-spin" />
+            Проверка 2FA…
+          </div>
+        ) : step === "email" && (mode === "register" || mode === "login") ? (
           <>
             {mode === "register" && <RegisterPromo />}
             <label className="block text-sm font-medium text-gray-700 mb-2">
