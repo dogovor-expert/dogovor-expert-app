@@ -92,6 +92,7 @@ function LoginForm() {
   const [step, setStep] = useState<"email" | "password" | "confirm" | "mfa">("email");
   const [mfaFactor, setMfaFactor] = useState<string | null>(null);
   const [mfaChecking, setMfaChecking] = useState(false);
+  const [mfaRemember, setMfaRemember] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -159,6 +160,15 @@ function LoginForm() {
       if (error) {
         setError(translateAuthError(error.message));
         return;
+      }
+      try {
+        await fetch("/api/auth/mfa/trust-device", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ remember: mfaRemember }),
+        });
+      } catch {
+        // Не критично: без куки просто чаще спрашиваем код.
       }
       router.push(next);
       router.refresh();
@@ -534,6 +544,15 @@ function LoginForm() {
               }}
             />
             {error && <p className="text-sm text-red-600 mt-2">{error}</p>}
+            <label className="flex items-center gap-2 mt-3 text-xs text-gray-600 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={mfaRemember}
+                onChange={(e) => setMfaRemember(e.target.checked)}
+                className="w-4 h-4 rounded border-gray-300 text-brand-600 focus:ring-brand-500"
+              />
+              <span>Запомнить это устройство на 30 дней</span>
+            </label>
             <Button className="w-full mt-4" onClick={verifyMfa} disabled={loading}>
               {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Подтвердить и войти"}
             </Button>

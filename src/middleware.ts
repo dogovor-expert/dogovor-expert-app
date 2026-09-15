@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { MFA_DEVICE_COOKIE, verifyDeviceCookie } from "@/lib/mfa-device";
 
 const PROTECTED_PREFIXES = ["/dashboard", "/settings", "/trash", "/billing", "/security", "/connections", "/builder"];
 
@@ -198,6 +199,17 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
     data: { user },
   } = await supabase.auth.getUser();
 
+  // «Запомнить это устройство»: валидная подписанная кука заменяет повторный
+  // запрос TOTP в течение 30 дней (aal2-требование считается выполненным).
+  // Работает только при включённой 2FA; без env MFA_DEVICE_TRUST_SECRET — no-op.
+  const deviceTrusted = user
+    ? await verifyDeviceCookie(
+        process.env.MFA_DEVICE_TRUST_SECRET,
+        user.id,
+        request.cookies.get(MFA_DEVICE_COOKIE)?.value
+      )
+    : false;
+
   const isProtected =
     PROTECTED_PREFIXES.some((p) => pathname.startsWith(p)) ||
     pathname === "/documents" ||
@@ -231,7 +243,7 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
     // ADMIN_REQUIRE_2FA="false" (dev/аварийный режим). Незарегистрировавшему MFA
     // админу — редирект на /settings/security?enforce_2fa=1 (не тупик).
     const force2fa = process.env.ADMIN_REQUIRE_2FA !== "false";
-    if ((mfaEnabled || force2fa) && sessionAal(request) !== "aal2") {
+    if ((mfaEnabled || force2fa) && sessionAal(request) !== "aal2" && !deviceTrusted) {
       if (mfaEnabled) {
         const url = new URL("/login", request.url);
         url.searchParams.set("mfa", "1");
@@ -254,7 +266,13 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
     return withVaryAccept(withSecurityHeaders(NextResponse.redirect(url), csp, isDev));
   }
 
-  if (isProtected && user && user.user_metadata?.mfa_enabled === true && sessionAal(request) !== "aal2") {
+  if (
+    isProtected &&
+    user &&
+    user.user_metadata?.mfa_enabled === true &&
+    sessionAal(request) !== "aal2" &&
+    !deviceTrusted
+  ) {
     const url = new URL("/login", request.url);
     url.searchParams.set("mfa", "1");
     url.searchParams.set("next", pathname);
@@ -263,7 +281,7 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
 
   if (user && pathname === "/login") {
     const mfaEnabled = user.user_metadata?.mfa_enabled === true;
-    if (!mfaEnabled || sessionAal(request) === "aal2") {
+    if (!mfaEnabled || sessionAal(request) === "aal2" || deviceTrusted) {
       return withVaryAccept(withSecurityHeaders(NextResponse.redirect(new URL("/dashboard", request.url)), csp, isDev));
     }
   }

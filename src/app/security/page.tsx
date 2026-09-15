@@ -29,6 +29,7 @@ export default function SecurityPage() {
   const supabase = createClient();
   const [loading, setLoading] = useState(true);
   const [factorId, setFactorId] = useState<string | null>(null);
+  const [factors, setFactors] = useState<{ id: string; name?: string; status?: string }[]>([]);
 
   const [passwordForm, setPasswordForm] = useState({ newPass: "", confirm: "" });
   const [passwordBusy, setPasswordBusy] = useState(false);
@@ -36,6 +37,8 @@ export default function SecurityPage() {
 
   const [qrCode, setQrCode] = useState<string | null>(null);
   const [secret, setSecret] = useState<string | null>(null);
+  const [factorName, setFactorName] = useState("");
+  const [trustedUntil, setTrustedUntil] = useState<number | null>(null);
   const [pendingFactorId, setPendingFactorId] = useState<string | null>(null);
   const [otpCode, setOtpCode] = useState("");
   const [enrollBusy, setEnrollBusy] = useState(false);
@@ -51,6 +54,10 @@ export default function SecurityPage() {
     const { data } = await supabase.auth.mfa.listFactors();
     const verified = data?.totp.find((f) => f.status === "verified");
     setFactorId(verified?.id ?? null);
+    setFactors((data?.totp ?? []).map((f) => ({ id: f.id, name: f.friendly_name, status: f.status })));
+    const { data: ud } = await supabase.auth.getUser();
+    const meta: unknown = ud.user?.user_metadata?.mfa_trusted_at;
+    setTrustedUntil(typeof meta === "number" && Number.isFinite(meta) ? meta + 30 * 24 * 60 * 60 * 1000 : null);
     setLoading(false);
   }, [supabase]);
 
@@ -82,7 +89,10 @@ export default function SecurityPage() {
   const handleEnable = async () => {
     setEnrollError(null);
     setEnrollBusy(true);
-    const { data, error } = await supabase.auth.mfa.enroll({ factorType: "totp" });
+    const { data, error } = await supabase.auth.mfa.enroll({
+      factorType: "totp",
+      friendlyName: factorName.trim() || `Устройство ${new Date().toLocaleDateString("ru-RU")}`,
+    });
     setEnrollBusy(false);
     if (error || !data) {
       setEnrollError(error?.message ?? "Не удалось начать настройку");
@@ -122,6 +132,7 @@ export default function SecurityPage() {
     setPendingFactorId(null);
     setQrCode(null);
     setSecret(null);
+    setFactorName("");
     setOtpCode("");
     await loadFactors();
     showToast("Двухфакторная аутентификация включена");
@@ -130,15 +141,50 @@ export default function SecurityPage() {
   const handleDisable = async () => {
     if (!factorId) return;
     setEnrollBusy(true);
-    const { error } = await supabase.auth.mfa.unenroll({ factorId });
-    setEnrollBusy(false);
-    if (error) {
-      setEnrollError(translateMfaError(error.message));
-      return;
+    for (const f of factors.filter((x) => x.status === "verified")) {
+      const { error } = await supabase.auth.mfa.unenroll({ factorId: f.id });
+      if (error) {
+        setEnrollBusy(false);
+        setEnrollError(translateMfaError(error.message));
+        return;
+      }
     }
-    await supabase.auth.updateUser({ data: { mfa_enabled: false } });
+    await supabase.auth.updateUser({ data: { mfa_enabled: false, mfa_trusted_at: null } });
+    try {
+      await fetch("/api/auth/mfa/trust-device", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ remember: false }),
+      });
+    } catch {
+      // куку также сотрёт выход/истечение
+    }
+    setEnrollBusy(false);
     setFactorId(null);
+    await loadFactors();
     showToast("Двухфакторная аутентификация отключена");
+  };
+
+  const setDeviceTrust = async (remember: boolean) => {
+    setEnrollBusy(true);
+    try {
+      const r = await fetch("/api/auth/mfa/trust-device", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ remember }),
+      });
+      if (!r.ok) {
+        showToast(
+          remember
+            ? "Не удалось: сначала подтвердите код 2FA при входе"
+            : "Не удалось удалить доверие с устройства"
+        );
+      }
+    } catch {
+      showToast("Нет связи с сервером");
+    }
+    setEnrollBusy(false);
+    await loadFactors();
   };
 
   const handleSignOutAll = async () => {
@@ -226,21 +272,72 @@ export default function SecurityPage() {
             <div className="flex justify-center py-8">
               <Loader2 className="w-6 h-6 text-brand-500 animate-spin" />
             </div>
-          ) : factorId ? (
+          ) : factorId && !qrCode ? (
             <div className="space-y-4">
               <p className="text-sm text-gray-600">
-                При входе потребуется 6-значный код из приложения-аутентификатора (Google Authenticator, Authy и другие).
+                При входе на недоверенном устройстве потребуется 6-значный код из
+                приложения-аутентификатора (Google Authenticator, Authy, 1Password, Bitwarden).
               </p>
-              <Button variant="danger" size="sm" onClick={handleDisable} disabled={enrollBusy}>
-                {enrollBusy ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShieldOff className="w-4 h-4" />}
-                Отключить 2FA
-              </Button>
+              <ul className="space-y-2">
+                {factors.map((f) => (
+                  <li key={f.id} className="flex items-center gap-2 text-sm text-gray-700">
+                    <Smartphone className="w-4 h-4 text-brand-600 shrink-0" />
+                    <span className="truncate">{f.name || "Устройство"}</span>
+                    {f.status === "verified" ? (
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600 ml-auto shrink-0" />
+                    ) : (
+                      <Badge variant="gray" size="sm">не подтверждён</Badge>
+                    )}
+                  </li>
+                ))}
+              </ul>
+              <p className="text-xs text-gray-500">
+                Совет: добавьте второе устройство (другой телефон или планшет) и сохраните
+                секретный код в менеджер паролей — так 2FA не потеряется при смене телефона.
+              </p>
+              {trustedUntil && trustedUntil > Date.now() ? (
+                <p className="text-xs text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2 flex items-center justify-between gap-2">
+                  <span>
+                    Это устройство доверено до {new Date(trustedUntil).toLocaleDateString("ru-RU")} — вход без кода
+                  </span>
+                  <button
+                    className="text-brand-600 hover:text-brand-700 underline shrink-0"
+                    onClick={() => void setDeviceTrust(false)}
+                    disabled={enrollBusy}
+                  >
+                    Забыть
+                  </button>
+                </p>
+              ) : (
+                <Button variant="ghost" size="sm" onClick={() => void setDeviceTrust(true)} disabled={enrollBusy}>
+                  Доверить это устройство (30 дней без кода)
+                </Button>
+              )}
+              {enrollError && <p className="text-sm text-red-600">{enrollError}</p>}
+              <div className="flex gap-2">
+                <Button variant="ghost" size="sm" onClick={handleEnable} disabled={enrollBusy}>
+                  {enrollBusy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Smartphone className="w-4 h-4" />}
+                  Добавить устройство
+                </Button>
+                <Button variant="danger" size="sm" onClick={handleDisable} disabled={enrollBusy}>
+                  {!enrollBusy && <ShieldOff className="w-4 h-4" />}
+                  Отключить 2FA
+                </Button>
+              </div>
             </div>
           ) : qrCode ? (
             <div className="space-y-4">
               <p className="text-sm text-gray-600">
                 Отсканируйте QR-код приложением-аутентификатором или введите секрет вручную, затем введите 6-значный код.
               </p>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Название устройства</label>
+                <Input
+                  value={factorName}
+                  onChange={(e) => setFactorName(e.target.value.slice(0, 40))}
+                  placeholder="Например: iPhone рабочий, второй телефон…"
+                />
+              </div>
               <div className="flex justify-center">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={qrCode} alt="QR-код для настройки 2FA" className="w-48 h-48 rounded-xl border border-gray-200" />
@@ -255,6 +352,10 @@ export default function SecurityPage() {
                   {copied ? "Скопировано" : "Копировать"}
                 </button>
               </div>
+              <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+                Сохраните этот секрет в менеджере паролей (1Password, Bitwarden) — они умеют
+                генерировать коды. Без секрета при потере телефона 2FA придётся сбрасывать через администратора.
+              </p>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">Код из приложения</label>
                 <Input
@@ -268,7 +369,7 @@ export default function SecurityPage() {
               <div className="flex gap-2">
                 <Button variant="primary" size="sm" onClick={handleConfirmEnroll} disabled={enrollBusy}>
                   {enrollBusy ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
-                  Подтвердить и включить
+                  {factorId ? "Подтвердить и добавить" : "Подтвердить и включить"}
                 </Button>
                 <Button
                   variant="ghost"
