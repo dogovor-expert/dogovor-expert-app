@@ -73,8 +73,9 @@ USER node
 
 EXPOSE 3000
 
+# /api/health — детерминированный 200 пока жив рантайм Next (не зависит от SSR-ошибок главной).
 HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
-    CMD curl -fsS "http://127.0.0.1:${PORT:-3000}/" || exit 1
+    CMD curl -fsS "http://127.0.0.1:${PORT:-3000}/api/health" || exit 1
 
 # node как PID 1: корректная передача SIGTERM (graceful stop в Coolify),
 # без лишнего npm-процесса-прослойки.
