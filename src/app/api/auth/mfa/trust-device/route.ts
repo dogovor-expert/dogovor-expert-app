@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { withCsrf } from "@/lib/csrf";
 import {
   MFA_DEVICE_COOKIE,
   MFA_DEVICE_MAX_AGE_S,
@@ -18,7 +19,7 @@ function cookieOptions(maxAge: number) {
   };
 }
 
-export async function POST(request: NextRequest) {
+async function trustDeviceHandler(request: NextRequest) {
   let remember = true;
   try {
     const body = await request.json();
@@ -62,3 +63,4 @@ export async function POST(request: NextRequest) {
   response.cookies.set(MFA_DEVICE_COOKIE, value, cookieOptions(MFA_DEVICE_MAX_AGE_S));
   return NextResponse.json({ ok: true, trusted: true, expiresAt: exp });
 }
+export const POST = withCsrf(trustDeviceHandler);
