@@ -1,4 +1,5 @@
 import { createBrowserClient } from "@supabase/ssr";
+import { supabaseCookieOptions } from "./cookie-options";
 
 export function createClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -9,5 +10,7 @@ export function createClient() {
   // пройдёт, и сайт не «валится» целиком на форках/PR/превью без env.
   const finalUrl = url && url.length > 0 ? url : "https://placeholder.supabase.co";
   const finalKey = key && key.length > 0 ? key : "public-anon-placeholder-key";
-  return createBrowserClient(finalUrl, finalKey);
+  return createBrowserClient(finalUrl, finalKey, {
+    cookieOptions: supabaseCookieOptions,
+  });
 }
