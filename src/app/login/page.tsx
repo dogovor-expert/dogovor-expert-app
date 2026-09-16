@@ -108,15 +108,18 @@ function LoginForm() {
     setError(null);
     (async () => {
       try {
-        const { data, error: listError } = await supabase.auth.mfa.listFactors();
+        // Сессия после OAuth/парольного логина лежит в httpOnly-cookies, поэтому
+        // список факторов запрашиваем серверным роутом (браузерный Supabase
+        // клиент не видит httpOnly-сессию и падал бы с AuthSessionMissingError).
+        const res = await fetch("/api/auth/mfa/list");
+        const data = (await res.json()) as { factorId?: string | null };
         if (cancelled) return;
-        if (listError) {
+        if (!res.ok) {
           setError("Не удалось проверить статус 2FA. Обновите страницу или войдите заново.");
           return;
         }
-        const verified = data?.totp.find((f) => f.status === "verified");
-        if (verified) {
-          setMfaFactor(verified.id);
+        if (typeof data.factorId === "string") {
+          setMfaFactor(data.factorId);
           setStep("mfa");
         } else {
           setError("2FA включена, но подтверждённый TOTP-фактор не найден. Обратитесь в поддержку.");
@@ -130,7 +133,6 @@ function LoginForm() {
     return () => {
       cancelled = true;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams, step]);
 
   const verifyMfa = async () => {
@@ -145,20 +147,18 @@ function LoginForm() {
     }
     setLoading(true);
     try {
-      const { data: challenge, error: challengeError } = await supabase.auth.mfa.challenge({
-        factorId: mfaFactor,
+      const res = await fetch("/api/auth/mfa/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ factorId: mfaFactor, code: code.trim() }),
       });
-      if (challengeError) {
-        setError(translateAuthError(challengeError.message));
-        return;
-      }
-      const { error } = await supabase.auth.mfa.verify({
-        factorId: mfaFactor,
-        challengeId: challenge.id,
-        code: code.trim(),
-      });
-      if (error) {
-        setError(translateAuthError(error.message));
+      const data = (await res.json()) as { error?: string };
+      if (!res.ok) {
+        setError(
+          translateAuthError(
+            data.error || "Неверный код. Проверьте цифры или подождите генерации нового кода."
+          )
+        );
         return;
       }
       try {
@@ -172,6 +172,8 @@ function LoginForm() {
       }
       router.push(next);
       router.refresh();
+    } catch {
+      setError("Не удалось подтвердить код — проблема с сетью. Попробуйте ещё раз.");
     } finally {
       setLoading(false);
     }
