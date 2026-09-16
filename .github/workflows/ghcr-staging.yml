@@ -70,6 +70,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build & push
+        id: build
         uses: docker/build-push-action@v6
         with:
           context: .
@@ -98,4 +99,5 @@ jobs:
           server: 'https://captain.vds.dogovor.expert'
           app: dogovor
           token: ${{ secrets.CAPROVER_APP_TOKEN_STAGING }}
-          image: ghcr.io/dogovor-expert/dogovor-expert-app:staging
+          # Пин digest гарантирует пересоздание задачи в Swarm (мутабельный тег :staging иначе = no-op)
+          image: ghcr.io/dogovor-expert/dogovor-expert-app:staging@${{ steps.build.outputs.digest }}
