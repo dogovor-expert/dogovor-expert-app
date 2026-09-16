@@ -41,11 +41,16 @@ ENV NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL \
 
 COPY package.json package-lock.json ./
 
-RUN npm ci --no-audit --no-fund --fetch-retries=5 --fetch-retry-mintimeout=10000
+# npm ci с buildkit-кэшем (модули переиспользуются между сборками)
+RUN --mount=type=cache,target=/root/.npm \
+    npm ci --no-audit --no-fund --fetch-retries=5 --fetch-retry-mintimeout=10000
 
 COPY . .
 
-RUN npm run build
+# .next/cache кэшируется между сборками (партиальный Webpack/Turbopack инкремент)
+RUN --mount=type=cache,target=/root/.npm \
+    --mount=type=cache,target=/app/.next/cache \
+    npm run build
 
 # ---- runtime stage ----
 # Self-hosted (Coolify/VDS): минимальный standalone-сервер Next без dev-зависимостей,
