@@ -3,10 +3,9 @@ import { createClient } from "@/lib/supabase/client";
 
 type CookieSession = { access_token: string; refresh_token: string };
 
-// Формат куки @supabase/ssr: sb-<ref>-auth-token (при больших сессиях —
-// чанки sb-<ref>-auth-token-0..N). Внутри — JSON вида
-// { currentSession: <string|object|null>, session?, expiresAt? },
-// закодирован encodeURIComponent или base64url (зависит от версии).
+// Формат куки @supabase/ssr >= 0.12: значение `base64-<base64url(JSON)>`,
+// имя `sb-<ref>-auth-token`; при больших сессиях — чанки `sb-<ref>-auth-token.0..N`
+// (в старых версиях разделитель был `-`: `-auth-token-0`). Поддерживаем оба.
 export function parseSupabaseAuthCookie(cookieHeader: string): CookieSession | null {
   const chunks = new Map<number, string>();
   let single: string | null = null;
@@ -15,7 +14,7 @@ export function parseSupabaseAuthCookie(cookieHeader: string): CookieSession | n
     if (idx < 0) continue;
     const name = part.slice(0, idx).trim();
     const value = part.slice(idx + 1).trim();
-    const m = /^sb-[^=;]+-auth-token(?:-(\d+))?$/.exec(name);
+    const m = /^sb-[^=;]+-auth-token(?:[.-](\d+))?$/.exec(name);
     if (!m || !value || value === '""') continue;
     if (m[1] === undefined) single = value;
     else chunks.set(Number(m[1]), value);
@@ -28,30 +27,33 @@ export function parseSupabaseAuthCookie(cookieHeader: string): CookieSession | n
     : single;
   if (!raw) return null;
 
-  const candidates: string[] = [raw];
+  return tryExtractSession(raw);
+}
+
+function base64Decode(input: string): string | null {
   try {
-    candidates.push(decodeURIComponent(raw));
+    const b64 = input.replace(/-/g, "+").replace(/_/g, "/");
+    const pad = b64.length % 4 ? b64 + "=".repeat(4 - (b64.length % 4)) : b64;
+    return atob(pad);
   } catch {
-    /* не url-encoded — ок */
+    return null;
   }
-  for (const c of candidates) {
-    const session = tryExtractSession(c);
-    if (session) return session;
-  }
-  return null;
 }
 
 function tryExtractSession(text: string): CookieSession | null {
-  const jsonStrings: string[] = [text];
-  // base64 (стандартный и url-safe), как делает @supabase/ssr >= 0.12
+  const jsonStrings: string[] = [];
+  // base64url (как пишет @supabase/ssr >= 0.12) — с префиксом `base64-` или без.
+  const b64Body = text.startsWith("base64-") ? text.slice("base64-".length) : text;
+  const decodedB64 = base64Decode(b64Body);
+  if (decodedB64) jsonStrings.push(decodedB64);
+  // Прочие исторические форматы: сырой JSON и URL-encoded JSON.
+  jsonStrings.push(text);
   try {
-    const b64 = text.replace(/-/g, "+").replace(/_/g, "/");
-    const pad = b64.length % 4 ? b64 + "=".repeat(4 - (b64.length % 4)) : b64;
-    const decoded = atob(pad);
-    if (decoded.startsWith("{") || decoded.startsWith("%")) jsonStrings.push(decoded);
+    jsonStrings.push(decodeURIComponent(text));
   } catch {
-    /* не base64 */
+    /* не url-encoded — ок */
   }
+
   for (const s of jsonStrings) {
     try {
       let obj = JSON.parse(s);
@@ -62,7 +64,7 @@ function tryExtractSession(text: string): CookieSession | null {
         return { access_token: cur.access_token, refresh_token: cur.refresh_token };
       }
     } catch {
-      /* форматы перебираем */
+      /* перебираем форматы */
     }
   }
   return null;
@@ -72,7 +74,7 @@ export function clearSupabaseAuthCookies() {
   if (typeof document === "undefined") return;
   for (const part of document.cookie.split(";")) {
     const name = part.split("=")[0]?.trim();
-    if (name && /^sb-[^=;]+-auth-token(-\d+)?$/.test(name)) {
+    if (name && /^sb-[^=;]+-auth-token(?:[.-]\d+)?$/.test(name)) {
       document.cookie = `${name}=; path=/; max-age=0`;
       document.cookie = `${name}=; path=/; domain=${location.hostname}; max-age=0`;
     }
@@ -81,10 +83,10 @@ export function clearSupabaseAuthCookies() {
 
 /**
  * «Призрачная сессия»: сервер (middleware) видит валидную cookie и редиректит
- * /login → /dashboard, а клиентский localStorage пуст (Opera чистит site
- * storage, но оставляет cookies) — хедер показывает «Войти», и пользователь
- * попадает в цикл login→dashboard без формы входа. Восстанавливаем клиентскую
- * сессию из cookie; если она не валидна — чистим cookie, разрывая цикл.
+ * /login → /dashboard, а клиентский supabase-клиент сессию не поднял (например,
+ * cookie перезаписана server-клиентом после логина) — хедер показывает «Войти»,
+ * и пользователь попадает в цикл login→dashboard без формы входа. Восстанавливаем
+ * клиентскую сессию из cookie; если она не валидна — чистим cookie, разрывая цикл.
  */
 export async function restoreSessionFromCookie(): Promise<boolean> {
   if (typeof document === "undefined") return false;

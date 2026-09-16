@@ -49,6 +49,26 @@ describe("parseSupabaseAuthCookie (@supabase/ssr ghost-session)", () => {
     expect(parsed?.access_token).toBe("tok-123");
   });
 
+  it("актуальный формат @supabase/ssr 0.12 (префикс base64- + base64url) парсится", () => {
+    const json = JSON.stringify(SESSION);
+    const b64url = btoa(json).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+    const parsed = parseSupabaseAuthCookie(`sb-proj-auth-token=base64-${b64url}`);
+    expect(parsed).toEqual({ access_token: "tok-123", refresh_token: "rt-456" });
+  });
+
+  it("склеивает чанки с разделителем-точкой .0/.1 (актуальный формат)", () => {
+    const json = JSON.stringify(SESSION);
+    const b64url = btoa(json).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+    const full = `base64-${b64url}`;
+    const mid = Math.ceil(full.length / 2);
+    const cookie = [
+      `sb-proj-auth-token.0=${full.slice(0, mid)}`,
+      `sb-proj-auth-token.1=${full.slice(mid)}`,
+    ].join("; ");
+    const parsed = parseSupabaseAuthCookie(cookie);
+    expect(parsed?.refresh_token).toBe("rt-456");
+  });
+
   it("пустая/нулевая сессия → null", () => {
     expect(
       parseSupabaseAuthCookie(cookieString("sb-proj-auth-token", { currentSession: null }))
