@@ -1,6 +1,6 @@
 "use client";
 import { useState, Suspense, useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -70,7 +70,6 @@ function isSafeRedirect(url: string | null): url is string {
 }
 
 function LoginForm() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const rawNext = searchParams.get("next");
   const next = isSafeRedirect(rawNext) ? rawNext : "/dashboard";
@@ -101,6 +100,8 @@ function LoginForm() {
   const [captchaToken, setCaptchaToken] = useState<string | undefined>(undefined);
 
   // Если на /login пришли с ?mfa=1 (после OAuth/magic link), начинаем с шага 2FA.
+  // Факторы запрашиваем БРАУЗЕРНЫМ клиентом: он владеет сессией (cookie не-httpOnly).
+  // Серверный роут при этом может ротировать refresh-токен и «уронить» клиентскую сессию.
   useEffect(() => {
     if (searchParams.get("mfa") !== "1" || step !== "email") return;
     let cancelled = false;
@@ -108,18 +109,17 @@ function LoginForm() {
     setError(null);
     (async () => {
       try {
-        // Сессия после OAuth/парольного логина лежит в httpOnly-cookies, поэтому
-        // список факторов запрашиваем серверным роутом (браузерный Supabase
-        // клиент не видит httpOnly-сессию и падал бы с AuthSessionMissingError).
-        const res = await fetch("/api/auth/mfa/list");
-        const data = (await res.json()) as { factorId?: string | null };
-        if (cancelled) return;
-        if (!res.ok) {
-          setError("Не удалось проверить статус 2FA. Обновите страницу или войдите заново.");
-          return;
+        const { data } = await supabase.auth.mfa.listFactors();
+        let factorId = data?.totp?.find((f) => f.status === "verified")?.id ?? null;
+        if (!data) {
+          // Фолбэк: браузерный клиент не увидел сессию — спросим серверный роут.
+          const res = await fetch("/api/auth/mfa/list");
+          const json = (await res.json()) as { factorId?: string | null };
+          factorId = res.ok && typeof json.factorId === "string" ? json.factorId : null;
         }
-        if (typeof data.factorId === "string") {
-          setMfaFactor(data.factorId);
+        if (cancelled) return;
+        if (factorId) {
+          setMfaFactor(factorId);
           setStep("mfa");
         } else {
           setError("2FA включена, но подтверждённый TOTP-фактор не найден. Обратитесь в поддержку.");
@@ -133,7 +133,7 @@ function LoginForm() {
     return () => {
       cancelled = true;
     };
-  }, [searchParams, step]);
+  }, [searchParams, step, supabase]);
 
   const verifyMfa = async () => {
     setError(null);
@@ -147,31 +147,50 @@ function LoginForm() {
     }
     setLoading(true);
     try {
-      const res = await fetch("/api/auth/mfa/verify", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ factorId: mfaFactor, code: code.trim() }),
+      // MFA выполняем БРАУЗЕРНЫМ клиентом — он владелец сессии. Серверный verify
+      // ротировал refresh-токен, браузерный клиент оставался со stale-сессией и
+      // middleware отбрасывал свежую aal2-cookie (refresh_token_not_found) —
+      // поэтому кнопка «Подтвердить и войти» внешне ничего не делала.
+      const { data: challenge, error: challengeError } = await supabase.auth.mfa.challenge({
+        factorId: mfaFactor,
       });
-      const data = (await res.json()) as { error?: string };
-      if (!res.ok) {
+      if (challengeError || !challenge) {
         setError(
           translateAuthError(
-            data.error || "Неверный код. Проверьте цифры или подождите генерации нового кода."
+            challengeError?.message || "Не удалось начать проверку кода. Попробуйте ещё раз."
           )
         );
         return;
       }
+      const { error: verifyError } = await supabase.auth.mfa.verify({
+        factorId: mfaFactor,
+        challengeId: challenge.id,
+        code: code.trim(),
+      });
+      if (verifyError) {
+        setError(
+          translateAuthError(
+            verifyError.message || "Неверный код. Проверьте цифры или подождите генерации нового кода."
+          )
+        );
+        return;
+      }
+      // «Запомнить устройство»: сервер ставит HMAC-куку (без мутации сессии),
+      // метаданные обновляет браузерный клиент — он сам сохранит новый токен.
       try {
         await fetch("/api/auth/mfa/trust-device", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ remember: mfaRemember }),
         });
+        await supabase.auth.updateUser({
+          data: { mfa_trusted_at: mfaRemember ? Date.now() : null },
+        });
       } catch {
         // Не критично: без куки просто чаще спрашиваем код.
       }
-      router.push(next);
-      router.refresh();
+      // Полная перезагрузка: сервер (middleware) прочитает свежую aal2-cookie.
+      window.location.assign(next);
     } catch {
       setError("Не удалось подтвердить код — проблема с сетью. Попробуйте ещё раз.");
     } finally {
@@ -506,8 +525,8 @@ function LoginForm() {
                 <LoginFormComponent
                   initialEmail={email}
                   onSuccess={() => {
-                    router.push(next);
-                    router.refresh();
+                    // Полная перезагрузка: сервер (middleware) прочитает свежую cookie сессии.
+                    window.location.assign(next);
                   }}
                 />
                 <div className="mt-3 text-center">

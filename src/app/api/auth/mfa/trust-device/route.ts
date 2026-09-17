@@ -39,7 +39,8 @@ async function trustDeviceHandler(request: NextRequest) {
   const response = NextResponse.json({ ok: true });
 
   if (!remember) {
-    await supabase.auth.updateUser({ data: { mfa_trusted_at: null } });
+    // Метаданные (mfa_trusted_at) обновляет браузерный клиент-владелец сессии.
+    // Серверный updateUser ротировал refresh-токен и ломал клиентскую сессию.
     response.cookies.set(MFA_DEVICE_COOKIE, "", cookieOptions(0));
     return response;
   }
@@ -59,7 +60,6 @@ async function trustDeviceHandler(request: NextRequest) {
 
   const exp = Date.now() + MFA_DEVICE_MAX_AGE_S * 1000;
   const value = await signDeviceCookie(secret, user.id, exp);
-  await supabase.auth.updateUser({ data: { mfa_trusted_at: Date.now() } });
   response.cookies.set(MFA_DEVICE_COOKIE, value, cookieOptions(MFA_DEVICE_MAX_AGE_S));
   return NextResponse.json({ ok: true, trusted: true, expiresAt: exp });
 }
