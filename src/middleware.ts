@@ -10,39 +10,108 @@ function decodeB64url(input: string): string {
   return atob(padded);
 }
 
-// Декодирует aal-claim из access token в куке сессии ("aal1"/"aal2").
-// aal2 означает, что 2FA (если включена) уже подтверждена кодом.
-function sessionAal(request: NextRequest): "aal1" | "aal2" | null {
-  const cookies = request.cookies.getAll();
-  // @supabase/ssr чанкает большие сессии: кука -auth-token.0, .1, ...
-  // Склеиваем чанки по индексу; если чанков нет — берём базовую куку.
-  const chunks = cookies
-    .filter((c) => /-auth-token\.\d+$/.test(c.name))
-    .sort(
-      (a, b) =>
-        Number(a.name.split(".").pop()) - Number(b.name.split(".").pop())
-    );
-  const base = cookies.find((c) => c.name.endsWith("-auth-token"));
-  const raw = chunks.length > 0 ? chunks.map((c) => c.value).join("") : base?.value;
-  if (!raw) return null;
+// Оригинатор (iss) токенов ТЕКУЩЕГО проекта. Cookie чужого Supabase-проекта
+// (например, прежнего облачного *.supabase.co) может жить в браузере годами и
+// раньше «подмешивалась» в sessionAal: middleware видел aal1 при валидной
+// aal2-сессии текущего проекта → бесконечный редирект на /login?mfa=1.
+function supabaseIssuer(): string {
   try {
-    // @supabase/ssr хранит сессию в формате "base64-<base64url(JSON)>".
-    const value = raw.startsWith("base64-") ? raw.slice("base64-".length) : raw;
+    return `${new URL(process.env.NEXT_PUBLIC_SUPABASE_URL || "").origin}/auth/v1`;
+  } catch {
+    return "";
+  }
+}
+
+type RawCookie = { name: string; value: string };
+
+function parseRawCookies(header: string): RawCookie[] {
+  const out: RawCookie[] = [];
+  for (const part of header.split(";")) {
+    const idx = part.indexOf("=");
+    if (idx < 0) continue;
+    const name = part.slice(0, idx).trim();
+    if (!name) continue;
+    out.push({ name, value: part.slice(idx + 1).trim() });
+  }
+  return out;
+}
+
+// Декодирует aal/iss/iat из значения куки сессии @supabase/ssr.
+function decodeSessionCookie(
+  value: string
+): { aal: "aal1" | "aal2"; iss: string; iat: number } | null {
+  if (!value) return null;
+  try {
+    const raw = value.startsWith("base64-") ? value.slice("base64-".length) : value;
     let json: string;
     try {
-      json = decodeB64url(value);
+      json = decodeB64url(raw);
     } catch {
-      json = value;
+      json = raw;
     }
     const parsed = JSON.parse(json) as { access_token?: string };
     const token = parsed.access_token ?? "";
     const claimsB64 = token.split(".")[1];
     if (!claimsB64) return null;
-    const claims = JSON.parse(decodeB64url(claimsB64)) as { aal?: string };
-    return claims.aal === "aal2" ? "aal2" : "aal1";
+    const claims = JSON.parse(decodeB64url(claimsB64)) as {
+      aal?: string;
+      iss?: string;
+      iat?: number;
+    };
+    return {
+      aal: claims.aal === "aal2" ? "aal2" : "aal1",
+      iss: claims.iss ?? "",
+      iat: claims.iat ?? 0,
+    };
   } catch {
     return null;
   }
+}
+
+// Все сессии ТЕКУЩЕГО проекта из cookie (с учётом чанков -auth-token.N и
+// дублей одного имени в разных скоупах домена). Чужие проекты отбрасываются.
+function currentProjectSessions(
+  request: NextRequest
+): Array<{ aal: "aal1" | "aal2"; iat: number }> {
+  const issuer = supabaseIssuer();
+  const auth = parseRawCookies(request.headers.get("cookie") || "").filter((c) =>
+    /-auth-token(\.\d+)?$/.test(c.name)
+  );
+  if (auth.length === 0) return [];
+
+  const byBase = new Map<string, RawCookie[]>();
+  for (const c of auth) {
+    const base = c.name.replace(/\.\d+$/, "");
+    const list = byBase.get(base) ?? [];
+    list.push(c);
+    byBase.set(base, list);
+  }
+
+  const sessions: Array<{ aal: "aal1" | "aal2"; iat: number }> = [];
+  for (const list of byBase.values()) {
+    const chunks = list
+      .filter((c) => /\.\d+$/.test(c.name))
+      .sort((a, b) => Number(a.name.split(".").pop()) - Number(b.name.split(".").pop()));
+    const values: string[] = [];
+    if (chunks.length > 0) values.push(chunks.map((c) => c.value).join(""));
+    for (const c of list) if (!/\.\d+$/.test(c.name)) values.push(c.value);
+    for (const value of values) {
+      const decoded = decodeSessionCookie(value);
+      if (!decoded) continue;
+      if (issuer && decoded.iss && decoded.iss !== issuer) continue;
+      sessions.push({ aal: decoded.aal, iat: decoded.iat });
+    }
+  }
+  return sessions;
+}
+
+// aal-claim сессии текущего проекта: берём самую свежую (max iat). Устойчиво
+// к stale/дублирующим cookie прежних проектов и скоупов.
+function sessionAal(request: NextRequest): "aal1" | "aal2" | null {
+  const sessions = currentProjectSessions(request);
+  if (sessions.length === 0) return null;
+  sessions.sort((a, b) => b.iat - a.iat);
+  return sessions[0].aal;
 }
 
 /**
