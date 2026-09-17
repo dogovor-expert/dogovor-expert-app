@@ -175,16 +175,14 @@ function LoginForm() {
         );
         return;
       }
-      // «Запомнить устройство»: сервер ставит HMAC-куку (без мутации сессии),
-      // метаданные обновляет браузерный клиент — он сам сохранит новый токен.
+      // «Запомнить устройство»: сервер ставит HMAC-куку доверия (её читает
+      // middleware). Метаданные здесь не обновляем: updateUser ротирует
+      // refresh-токен и может подменить свежую aal2-сессию на aal1.
       try {
         await fetch("/api/auth/mfa/trust-device", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ remember: mfaRemember }),
-        });
-        await supabase.auth.updateUser({
-          data: { mfa_trusted_at: mfaRemember ? Date.now() : null },
         });
       } catch {
         // Не критично: без куки просто чаще спрашиваем код.
