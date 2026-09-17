@@ -21,6 +21,54 @@ export type { PassportData, VehicleData, PersonEntity, VehicleEntity, CompanyEnt
 
 const clean = (s: string) => s.replace(/\s+/g, " ").trim();
 
+/**
+ * Приводит ФИО/название к нормальному виду «Иванов Иван Иванович»:
+ * документы печатают ФИО ЗАГЛАВНЫМИ, а в договор нужно в обычном регистре.
+ * Дефисные фамилии сохраняются: «ПЕТРОВА-СМИРНОВА» → «Петрова-Смирнова».
+ */
+function normalizePersonCase(s: string): string {
+  return clean(s)
+    .toLowerCase()
+    .replace(/(^|[\s.-])([а-яёa-z])/g, (_m, sep: string, ch: string) => sep + ch.toUpperCase());
+}
+
+/**
+ * Значения вида «ОТСУТСТВУЕТ» / «НЕ УСТАНОВЛЕН» / «НЕТ» — это НЕ номер.
+ * Такие поля (шасси, кузов, двигатель) должны оставаться пустыми.
+ */
+function isPlaceholderValue(s: string | undefined): boolean {
+  if (!s) return true;
+  return /^(отсутству|не\s*установлен|нет|бн|без\s*номера|не\s*предусмотрен)/i.test(clean(s));
+}
+
+/**
+ * ФИО из «размеченного» паспорта РФ: значения идут отдельными строками с
+ * метками (ФАМИЛИЯ/ИМЯ/ОТЧЕСТВО), часто ЗАГЛАВНЫМИ, в любом порядке и с
+ * двоеточием или без. Так выглядит вывод и Tesseract, и occular на реальных
+ * документах — раньше такой формат не распознавался вообще (ФИО терялось).
+ */
+function extractLabeledFio(text: string): string | undefined {
+  const grab = (label: RegExp): string | undefined => {
+    const m = text.match(new RegExp(`${label.source}[^\\nА-ЯЁа-яё]{0,6}([А-ЯЁа-яё][А-ЯЁа-яё-]{1,40})`, "i"));
+    if (!m) return undefined;
+    const value = clean(m[1]);
+    // Отсекаем случай, когда «значением» оказалась другая метка
+    // (например, в шапке «Фамилия Имя Отчество» без значений).
+    if (/^(фамилия|имя|отчество)$/i.test(value)) return undefined;
+    return value;
+  };
+  const surname = grab(/фамили[яи]/);
+  // \b у JS не работает для кириллицы (ASCII-\w), поэтому границы слова
+  // задаём вручную: «имя» не должно быть частью другого слова.
+  const name = grab(/(?:^|[^а-яё])имя(?![а-яё])/);
+  const patronymic = grab(/отчество/);
+  if (surname && name) {
+    const parts = [surname, name, patronymic].filter(Boolean) as string[];
+    return normalizePersonCase(parts.join(" "));
+  }
+  return undefined;
+}
+
 // Нормализация латиница→кириллица для омоглифов (ИBAHOB → ИВАНОВ и т.п.).
 // Применяется только в extractPassportData: паспорт — чисто кириллический
 // документ, а VIN/ГРЗ в extractVehicleData остаются латиницей (не трогаем).
@@ -73,23 +121,32 @@ function extractAddressLine(text: string): string | undefined {
   return undefined;
 }
 
-export function extractPassportData(text: string): PassportData {  const data: PassportData = {};
+export function extractPassportData(text: string): PassportData {
+  const data: PassportData = {};
   text = latinToCyrillic(text);
 
-  // ФИО: паспорта печатают ФИО ЗАГЛАВНЫМИ («ИВАНОВ ИВАН ИВАНОВИЧ»), поэтому
-  // допускаем и all-caps, и смешанный регистр. Ищем построчно (чтобы перевод
-  // строки не сливал шапку с именем) и берём ПЕРВУЮ подходящую трёхсловную
-  // заглавную последовательность — ФИО обычно выше блока «ВЫДАН ОТДЕЛОМ…».
-  const fioStop = /паспорт|российск|федераци|гражданин|фамилия|имя|отчество|пол|загран|серия|номер|зарегистрирован|выдан|выдач|адресу|рождения|родился|место|подразделения|москва|россии|отделом|управления|внутренних|министерств|района|города|области|края|республик|кем|дата|код/i;
-  const fioCands: string[] = [];
-  for (const ln of text.split(/\n/)) {
-    const ms = ln.match(
-      /([А-ЯЁ][А-ЯЁа-яё]+\s+[А-ЯЁ][А-ЯЁа-яё]+\s+[А-ЯЁ][А-ЯЁа-яё]+)/g
-    );
-    if (ms) fioCands.push(...ms);
+  // ФИО. Приоритет — размеченный формат (ФАМИЛИЯ/ИМЯ/ОТЧЕСТВО отдельными
+  // строками): именно так печатает паспорт РФ и так его отдают оба движка.
+  // Если меток нет — ищем трёхсловную последовательность в одной строке
+  // («Иванов Иван Иванович» / «ИВАНОВ ИВАН ИВАНОВИЧ»).
+  const labeledFio = extractLabeledFio(text);
+  if (labeledFio) {
+    data.fio = labeledFio;
+  } else {
+    const fioStop = /паспорт|российск|федераци|гражданин|фамилия|имя|отчество|пол|загран|серия|номер|зарегистрирован|выдан|выдач|адресу|рождения|родился|место|подразделения|москва|россии|отделом|управления|внутренних|министерств|района|города|области|края|республик|кем|дата|код/i;
+    const fioCands: string[] = [];
+    for (const ln of text.split(/\n/)) {
+      const ms = ln.match(
+        /([А-ЯЁ][А-ЯЁа-яё-]+\s+[А-ЯЁ][А-ЯЁа-яё-]+\s+[А-ЯЁ][А-ЯЁа-яё-]+)/g
+      );
+      if (ms) fioCands.push(...ms);
+    }
+    const validFio = fioCands.filter((m) => !fioStop.test(m));
+    if (validFio.length > 0) {
+      const v = clean(validFio[0]);
+      data.fio = v === v.toUpperCase() ? normalizePersonCase(v) : v;
+    }
   }
-  const validFio = fioCands.filter((m) => !fioStop.test(m));
-  if (validFio.length > 0) data.fio = validFio[0].trim();
 
   const issuedIdx = text.toLowerCase().indexOf("выдан");
   const after = issuedIdx >= 0 ? text.slice(issuedIdx) : text;
@@ -106,9 +163,27 @@ export function extractPassportData(text: string): PassportData {  const data: P
   const seriesMatch =
     text.match(/(?:серия)[^0-9]{0,12}?(\d{2})\s?(\d{2})/i) ||
     (() => {
-      const m = text.match(/(\d{2})\s?(\d{2})\s?(\d{6})/);
-      if (!m || !hasContextBefore(text, m.index ?? 0, /паспорт|серия|№/i)) return null;
-      return m;
+      // Голая строка «4512 123456» или «45 12 123456» (без слова «Серия») —
+      // так паспорт печатает номер под фотографией и в MRZ-зоне. Требуем
+      // паспортный контекст рядом и не цифры по краям, чтобы не ловить
+      // произвольные числа (суммы, телефоны, даты).
+      const cands = [
+        text.match(/(\d{2})\s?(\d{2})\s?(\d{6})/),
+        text.match(/(\d{4})\s(\d{6})/),
+      ];
+      for (const m of cands) {
+        if (!m) continue;
+        const idx = m.index ?? 0;
+        const before = text[idx - 1] ?? "";
+        const after = text[idx + m[0].length] ?? "";
+        if (/\d/.test(before) || /\d/.test(after)) continue;
+        if (!hasContextBefore(text, idx, /паспорт|серия|№|федераци|гражданин|выдан|росси/i, 120)) continue;
+        if (m.length === 3) {
+          return [m[0], m[1].slice(0, 2), m[1].slice(2), m[2]] as unknown as RegExpMatchArray;
+        }
+        return m;
+      }
+      return null;
     })();
   if (seriesMatch) {
     data.series = `${seriesMatch[1]}${seriesMatch[2]}`;
@@ -167,7 +242,6 @@ export function extractPassportData(text: string): PassportData {  const data: P
 
 export function extractVehicleData(text: string): VehicleData {
   const data: VehicleData = {};
-  const lower = text.toLowerCase();
 
   const vinMatch = text.match(/\b([A-HJ-NPR-Z0-9]{17})\b/);
   if (vinMatch) data.vin = normalizeVin(vinMatch[1]) ?? vinMatch[1].toUpperCase();
@@ -178,58 +252,88 @@ export function extractVehicleData(text: string): VehicleData {
   if (plateMatch) data.plate = normalizePlate(plateMatch[1]) ?? plateMatch[1].toUpperCase();
 
   const brandMatch = text.match(
-    /(?:марка,\s*модель|марка|модель)[:\s]*([^\n]{3,50})/i
+    /(?:марка,\s*модель|марка|модель)(?:\s*тс)?[^:\n]{0,8}[:=\s]*([^\n]{3,60})/i
   );
-  if (brandMatch) data.brand = clean(brandMatch[1]);
+  if (brandMatch) {
+    // Снимаем возможный остаток метки: «ТС: LADA GRANTA» → «LADA GRANTA».
+    data.brand = clean(brandMatch[1]).replace(/^(?:тс|ts)\s*[:-]?\s*/i, "");
+  }
 
   const yearMatch = text.match(
     /(?:год выпуска|выпуска|год изготовления|изготовления)[:\s]*(\d{4})/i
   );
   if (yearMatch) data.year = yearMatch[1];
 
-  const engineMatch = text.match(
-    /(?:№\s*двигателя|двигатель)[^:\n]{0,6}[:=\s]*([A-ZА-ЯЁ0-9]{3,17})/i
-  );
-  if (engineMatch) data.engine = engineMatch[1].toUpperCase();
+  // Номер двигателя — ВСЯ последовательность (модель + номер): раньше
+  // терялся префикс («21179 1234567» → «21179»). Общий вариант «двигателя»
+  // требуем с двоеточием, значением — не короче 5 символов и не строку про
+  // мощность («Мощность двигателя, кВт: 64»), иначе получали ложное «64».
+  // Значение «отсутствует» не пишем.
+  const engineMatch =
+    text.match(/№\s*двигателя[^:\n]{0,8}[:=\s]*([A-ZА-ЯЁ0-9][A-ZА-ЯЁ0-9 ]{2,30})/i) ||
+    (() => {
+      const m = text.match(/двигател[ья][^:\n]{0,8}[:=]\s*([A-ZА-ЯЁ0-9][A-ZА-ЯЁ0-9 ]{4,30})/i);
+      if (!m) return null;
+      const idx = m.index ?? 0;
+      if (/мощност/i.test(text.slice(Math.max(0, idx - 20), idx))) return null;
+      return m;
+    })();
+  const engine = engineMatch ? clean(engineMatch[1]).replace(/\s+/g, "").toUpperCase() : undefined;
+  if (!isPlaceholderValue(engine)) data.engine = engine;
 
   const chassisMatch = text.match(
-    /(?:шасси|рама)[^:\n]{0,6}[:=\s]*([A-ZА-ЯЁ0-9]{3,17})/i
+    /(?:шасси|рама)[^:\n]{0,8}[:=\s]*([A-ZА-ЯЁ0-9][A-ZА-ЯЁ0-9 ]{2,30})/i
   );
-  if (chassisMatch) data.chassis = chassisMatch[1].toUpperCase();
+  const chassis = chassisMatch ? clean(chassisMatch[1]).replace(/\s+/g, "").toUpperCase() : undefined;
+  if (!isPlaceholderValue(chassis)) data.chassis = chassis;
 
   const bodyMatch = text.match(
-    /(?:кузова|кузов)[^:\n]{0,6}[:=\s]*([A-ZА-ЯЁ0-9]{3,17})/i
+    /(?:кузова|кузов)[^:\n]{0,8}[:=\s]*([A-ZА-ЯЁ0-9][A-ZА-ЯЁ0-9 ]{2,30})/i
   );
-  if (bodyMatch) data.body = bodyMatch[1].toUpperCase();
+  const body = bodyMatch ? clean(bodyMatch[1]).replace(/\s+/g, "").toUpperCase() : undefined;
+  if (!isPlaceholderValue(body)) data.body = body;
 
   const colorMatch = text.match(
     /(?:цвет)[:\s]*([а-яёА-ЯЁa-zA-Z -]{3,20})/i
   );
   if (colorMatch) data.color = clean(latinToCyrillic(colorMatch[1]));
 
-  const powerKwMatch = text.match(/(\d{2,4}(?:\.\d+)?)\s*(квт|кВт|kw)/);
+  // Мощность: в ПТС/СТС встречаются оба порядка записи — «64 кВт» и
+  // «Мощность двигателя, кВт: 64». Раньше парсился только первый.
+  const powerKwMatch =
+    text.match(/(\d{2,4}(?:\.\d+)?)\s*(?:квт|kw)/i) ||
+    text.match(/(?:квт|kw)\s*[:=]?\s*(\d{2,4}(?:\.\d+)?)/i);
   if (powerKwMatch) data.powerKw = powerKwMatch[1];
 
-  const powerHpMatch = text.match(
-    /(\d{2,4})\s*(л\.?\s*с\.?|лс|л\.с)/i
-  );
+  const powerHpMatch =
+    text.match(/(\d{2,4})\s*(?:л\.?\s*с\.?|лс)/i) ||
+    text.match(/(?:л\.?\s*с\.?|лс)\s*[:=]?\s*(\d{2,4})/i);
   if (powerHpMatch) data.powerHp = powerHpMatch[1];
 
-  const ptsMatch =
-    text.match(/(\d{2})\s*([А-ЯЁ]{2})\s*(\d{6})/i) ||
-    text.match(/(?:серия)[^0-9]{0,12}?(\d{2})\s?(\d{2})\s?(\d{6})/i) ||
-    (() => {
-      const m = text.match(/(\d{2})\s?(\d{2})\s?(\d{6})/);
-      if (!m || !hasContextBefore(text, m.index ?? 0, /птс|птр|серия|свидетельство|регистрац/i, 60)) return null;
-      return m;
-    })();
-  if (ptsMatch) {
-    if (ptsMatch[3] && /[А-ЯЁ]/i.test(ptsMatch[2] || "")) {
-      data.ptsSeries = `${ptsMatch[1]}${ptsMatch[2]}`;
-      data.ptsNumber = ptsMatch[3];
-    } else {
-      data.ptsSeries = `${ptsMatch[1]}${ptsMatch[2]}`;
-      data.ptsNumber = ptsMatch[3];
+  // ПТС и СТС различаются форматом серии:
+  //   ПТС — 2 цифры + 2 БУКВЫ + 6 цифр («63 НУ 456789»);
+  //   СТС — 2 цифры + 2 цифры + 6 цифр («77 12 345678»).
+  // Раньше обе формы присваивались полям ПТС сразу, из-за чего номер СТС
+  // попадал в ПТС (ложное срабатывание). Теперь вид номера решает КОНТЕКСТ.
+  const ptsMarker = /птс|птр|паспорт\s*транспортн/i;
+  const stsMarker = /свидетельств|стс|регистрац/i;
+
+  const ptsWithLetters = text.match(/(\d{2})\s*([А-ЯЁ]{2})\s*(\d{6})/i);
+  if (ptsWithLetters) {
+    data.ptsSeries = `${ptsWithLetters[1]}${ptsWithLetters[2].toUpperCase()}`;
+    data.ptsNumber = ptsWithLetters[3];
+  } else {
+    const digitsSeries = text.match(/(\d{2})\s?(\d{2})\s?(\d{6})/);
+    if (digitsSeries) {
+      const idx = digitsSeries.index ?? 0;
+      const ctx = text.slice(Math.max(0, idx - 60), idx);
+      if (ptsMarker.test(ctx)) {
+        data.ptsSeries = `${digitsSeries[1]} ${digitsSeries[2]}`;
+        data.ptsNumber = digitsSeries[3];
+      } else if (stsMarker.test(ctx)) {
+        data.stsSeries = `${digitsSeries[1]} ${digitsSeries[2]}`;
+        data.stsNumber = digitsSeries[3];
+      }
     }
   }
 
@@ -242,28 +346,12 @@ export function extractVehicleData(text: string): VehicleData {
     })();
   if (eptsMatch) data.eptsNumber = eptsMatch[1];
 
-  const stsNumberMatch = text.match(
-    /(?:свидетельство|СТС)[\s\S]{0,30}?(\d{6})/i
-  );
-  if (stsNumberMatch) data.stsNumber = stsNumberMatch[1];
-
-  // Серия СТС — 2 буквы (код региона), обычно перед номером или отдельной строкой.
-  const stsSeriesMatch = text.match(
-    /(?:серия)\s*(?:СТС|свидетельства)?\s*([А-ЯЁ]{2})/i
-  );
-  if (stsSeriesMatch) {
-    data.stsSeries = stsSeriesMatch[1].toUpperCase();
-  } else {
-    // Fallback: 2 кириллические буквы перед 6-значным номером в контексте СТС
-    const ss = text.match(/([А-ЯЁ]{2})\s*(\d{6})/);
-    if (
-      ss &&
-      /(?:СТС|СВИДЕТЕЛЬСТВО|РЕГИСТРАЦИ|ТРАНСПОРТН)/i.test(
-        text.slice(0, (ss.index ?? 0) + 2)
-      )
-    ) {
-      data.stsSeries = ss[1].toUpperCase();
-    }
+  // СТС: номер обычно разобран выше (формат «77 12 345678»). Если не найден —
+  // берём 6 цифр после слова «Свидетельство». Буквенной эвристики для серии
+  // СТС больше нет: серия СТС — цифры, а прежний фолбэк давал мусор («НУ»).
+  if (!data.stsNumber) {
+    const stsNumberMatch = text.match(/(?:свидетельство|СТС)[^\n]{0,40}?(\d{6})/i);
+    if (stsNumberMatch) data.stsNumber = stsNumberMatch[1];
   }
 
   const ownerFioMatch = text.match(
