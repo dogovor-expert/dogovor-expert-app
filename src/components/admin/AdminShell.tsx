@@ -19,6 +19,7 @@ import {
   Search,
   Headphones,
   BarChart3,
+  PlaySquare,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { atLeast, ROLE_LABELS, type AdminRole } from "@/lib/admin-rbac";
@@ -29,6 +30,7 @@ const NAV: { href: string; label: string; icon: typeof LayoutDashboard; exact?: 
   { href: "/admin/subscriptions", label: "Подписки", icon: CreditCard, minRole: "admin" },
   { href: "/admin/payments", label: "Платежи", icon: Receipt, minRole: "admin" },
   { href: "/admin/analytics", label: "Аналитика", icon: BarChart3, minRole: "admin" },
+  { href: "/admin/replays", label: "Записи визитов", icon: PlaySquare, minRole: "admin" },
   { href: "/admin/leads", label: "Лиды (растаможка)", icon: Package },
   { href: "/admin/feedback", label: "Обратная связь", icon: MessageSquare },
   { href: "/admin/chat", label: "Чат поддержки", icon: Headphones },

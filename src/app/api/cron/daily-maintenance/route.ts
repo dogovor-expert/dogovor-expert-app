@@ -8,6 +8,8 @@ const DAY_MS = 86400000;
 const RENEW_WINDOW_DAYS = 3;
 // Срок хранения документов в корзине перед безвозвратным удалением.
 const TRASH_RETENTION_DAYS = 30;
+// Срок хранения записей визитов (rrweb) — поведенческие данные, не дольше 30 дней.
+const REPLAY_RETENTION_DAYS = 30;
 
 /**
  * Сравнение CRON_SECRET в constant-time.
@@ -90,6 +92,13 @@ async function purgeOldEvents(): Promise<{ ok: boolean; error?: string }> {
   return error ? { ok: false, error: error.message } : { ok: true };
 }
 
+/** 152-ФЗ: записи визитов (session replay) храним ограниченно (30 дней). */
+async function purgeOldReplays(): Promise<{ ok: boolean; error?: string }> {
+  const admin = createAdminClient();
+  const { error } = await admin.rpc("purge_old_session_replays", { p_days: REPLAY_RETENTION_DAYS });
+  return error ? { ok: false, error: error.message } : { ok: true };
+}
+
 /**
  * Ежедневное обслуживание: автосписание подписок + очистка корзины.
  * Объединяет прежние /api/cron/auto-renew и /api/cron/trash-cleanup
@@ -104,10 +113,11 @@ export async function GET(req: Request) {
   const renew = await renewSubscriptions();
   const trash = await cleanupTrash();
   const events = await purgeOldEvents();
+  const replays = await purgeOldReplays();
 
-  const ok = !renew.error && !trash.error && events.ok;
+  const ok = !renew.error && !trash.error && events.ok && replays.ok;
   return NextResponse.json(
-    { ok, renew: { processed: renew.processed, results: renew.results, error: renew.error }, trash, events },
+    { ok, renew: { processed: renew.processed, results: renew.results, error: renew.error }, trash, events, replays },
     { status: ok ? 200 : 500 },
   );
 }

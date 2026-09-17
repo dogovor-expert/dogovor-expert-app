@@ -175,6 +175,14 @@ export function isKnownEvent(event: string): event is EventName {
   return Object.prototype.hasOwnProperty.call(EVENT_CATALOG, event);
 }
 
+/**
+ * Префикс session_id для событий, которые пишет СЕРВЕР (вебхук оплаты,
+ * создание платежа). У них нет клиентского визита, поэтому это «служебная»
+ * псевдосессия; при подсчёте уникальных визитов такие session_id
+ * исключаются (см. getKpiTotals в userEventsQueries.ts).
+ */
+export const SERVER_SESSION_PREFIX = "srv-";
+
 export type DeviceType = "mobile" | "tablet" | "desktop";
 
 export function deviceFromUserAgent(ua: string | null): DeviceType {
