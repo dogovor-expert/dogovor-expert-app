@@ -53,16 +53,20 @@ describe("getDocRequirements", () => {
     expect(getDocRequirements(t)).toEqual([]);
   });
 
-  it("ЭПТС вместо ПТС для нового авто", () => {
+  it("ЭПТС вместо ПТС для нового авто (ПТС опционален)", () => {
     const t = makeTemplate([
       { id: "seller_fio", label: "ФИО", type: "text", category: "seller", defaultValue: "" },
       { id: "seller_passport", label: "Паспорт", type: "text", category: "seller", defaultValue: "" },
       { id: "car_vin", label: "VIN", type: "text", category: "vehicle", defaultValue: "" },
       { id: "car_epts", label: "ЭПТС", type: "text", category: "vehicle", defaultValue: "" },
     ]);
-    const ids = getDocRequirements(t).map((s) => s.id);
+    const slots = getDocRequirements(t);
+    const ids = slots.map((s) => s.id);
     expect(ids).toContain("epts");
-    expect(ids).not.toContain("pts_front");
+    // ПТС и СТС опциональны для всех car_ шаблонов (даже без pts/sts полей)
+    const ptsSlot = slots.find((s) => s.id === "pts_front");
+    expect(ptsSlot).toBeDefined();
+    expect(ptsSlot!.optional).toBe(true);
   });
 
   it("роли доверенности: owner + driver", () => {

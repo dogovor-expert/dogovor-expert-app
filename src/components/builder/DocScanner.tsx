@@ -371,7 +371,15 @@ export default function DocScanner({
         break;
       }
       case "vuc": {
-        if (slot.rolePrefix) {
+        // Универсальный планировщик (docProfiles: vuc_new) извлекает
+        // категории, дату выдачи, ФИО — значительно полнее applyVucToRole.
+        const plan = planFromScan(template, text, {
+          activeRole: slot.rolePrefix,
+        });
+        if (plan.values.length > 0) {
+          for (const v of plan.values) values[v.fieldId] = v.value;
+        } else if (slot.rolePrefix) {
+          // Фолбэк: слабый парсер (только серия+номер)
           Object.assign(
             values,
             applyVucToRole(template, slot.rolePrefix, text)
@@ -986,8 +994,8 @@ export default function DocScanner({
   };
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200/70 shadow-soft overflow-hidden">
-      <div className="sticky top-0 z-10 relative bg-gradient-to-br from-brand-500 to-brand-700 px-4 py-4 text-white">
+    <div className="bg-white rounded-2xl border border-slate-200/70 shadow-soft">
+      <div className="sticky top-0 z-20 bg-gradient-to-br from-brand-500 to-brand-700 px-4 py-4 text-white rounded-t-2xl">
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-3 min-w-0">
             <div className="w-11 h-11 rounded-2xl bg-white/15 backdrop-blur flex items-center justify-center shrink-0">
@@ -1059,6 +1067,15 @@ export default function DocScanner({
             </div>
           </div>
           <div className="flex items-center gap-2 shrink-0">
+            <span
+              className="inline-flex items-center gap-1 rounded-lg bg-white/15 px-2 py-1 text-[11px] font-bold tabular-nums"
+              title="Загружено документов"
+            >
+              {loadedCount}/{slots.length}
+              {slots.length > 0 && loadedCount === slots.length && (
+                <Check className="w-3 h-3 text-emerald-200" />
+              )}
+            </span>
             {loadedCount > 0 && (
               <button
                 onClick={clearAll}

@@ -182,22 +182,22 @@ export function getDocRequirements(template: LegalTemplate): DocSlot[] {
   );
 
   if (hasVehicleFields(fields)) {
-    if (hasPts) {
-      slots.push({
-        id: "pts_front",
-        label: "ПТС — лицевая сторона",
-        hint: "VIN, марка, модель, год, № двигателя, кузова, цвет, серия/№ ПТС",
-        maxPhotos: 1,
-        ocrKind: "pts",
-      });
-      slots.push({
-        id: "pts_back",
-        label: "ПТС — оборотная сторона",
-        hint: "Сведения о собственниках — сверка с продавцом",
-        maxPhotos: 1,
-        ocrKind: "pts",
-      });
-    }
+    slots.push({
+      id: "pts_front",
+      label: "ПТС — лицевая сторона",
+      hint: "VIN, марка, модель, год, № двигателя, кузова, цвет, серия/№ ПТС",
+      maxPhotos: 1,
+      ocrKind: "pts",
+      optional: !hasPts,
+    });
+    slots.push({
+      id: "pts_back",
+      label: "ПТС — оборотная сторона",
+      hint: "Сведения о собственниках — сверка с продавцом",
+      maxPhotos: 1,
+      ocrKind: "pts",
+      optional: !hasPts,
+    });
     if (hasEpts) {
       slots.push({
         id: "epts",
@@ -207,15 +207,22 @@ export function getDocRequirements(template: LegalTemplate): DocSlot[] {
         ocrKind: "epts",
       });
     }
-    if (hasSts) {
-      slots.push({
-        id: "sts_front",
-        label: "СТС — лицевая сторона",
-        hint: "Гос. номер, VIN, владелец, серия/№ СТС",
-        maxPhotos: 1,
-        ocrKind: "sts",
-      });
-    }
+    slots.push({
+      id: "sts_front",
+      label: "СТС — лицевая сторона",
+      hint: "Гос. номер, VIN, владелец, серия/№ СТС",
+      maxPhotos: 1,
+      ocrKind: "sts",
+      optional: !hasSts,
+    });
+    slots.push({
+      id: "sts_back",
+      label: "СТС — оборотная сторона",
+      hint: "Ограничения и особые отметки (при наличии)",
+      maxPhotos: 1,
+      ocrKind: "sts",
+      optional: true,
+    });
   }
 
   // Плитка водительского удостоверения — только для ролей, которые РЕАЛЬНО
