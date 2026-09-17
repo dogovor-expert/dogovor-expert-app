@@ -117,6 +117,27 @@ export function track(goal: string, params?: GoalParams): void {
   sendToOwnBackend(goal, params);
 }
 
+/**
+ * Цель ТОЛЬКО в Метрику — без записи в собственный журнал. Для событий,
+ * которые надёжнее фиксирует сервер (создание/успех оплаты: см.
+ * /api/billing/create-payment и /api/billing/webhook): так журнал не
+ * задваивается, а цель в Метрике остаётся на месте.
+ */
+export function trackMetrikaOnly(goal: string, params?: GoalParams): void {
+  try {
+    const fn = ym();
+    if (!fn) return;
+    const counterId = Number(YANDEX_METRIKA_ID);
+    if (params) {
+      fn(counterId, "reachGoal", goal, params);
+    } else {
+      fn(counterId, "reachGoal", goal);
+    }
+  } catch {
+    // Аналитика не должна ломать пользовательский сценарий.
+  }
+}
+
 export const goals = {
   pageView: "page_view",
   builderStart: "builder_start",

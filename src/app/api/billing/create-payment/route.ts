@@ -6,6 +6,7 @@ import { currentProPrice } from "@/lib/pricing";
 import { withCsrf } from "@/lib/csrf";
 import { isSameOrigin } from "@/lib/admin-auth";
 import { limiters, checkRateLimit, rateLimitResponse } from "@/lib/ratelimit";
+import { logUserEvent, SERVER_SESSION_PREFIX } from "@/lib/userEvents";
 
 async function postHandler(req: Request) {
   if (!isSameOrigin(req)) {
@@ -90,6 +91,18 @@ async function postHandler(req: Request) {
     .single();
 
   if (error) return NextResponse.json({ error: error.message, detail: error.message }, { status: 500 });
+
+  // Журнал аналитики: фиксируем создание платежа С СЕРВЕРА (надёжнее
+  // клиента). session_id — служебная псевдосессия, привязанная к id платежа
+  // YooKassa, чтобы связать «создан» и «оплачен» из вебхука (тот же id).
+  await logUserEvent({
+    event: "payment_created",
+    userId: user.id,
+    sessionId: `${SERVER_SESSION_PREFIX}${payment.id}`,
+    path: "/billing",
+    meta: { plan: "pro" },
+  });
+
   return NextResponse.json({
     confirmation_url: payment.confirmation.confirmation_url,
     payment_id: data.id,

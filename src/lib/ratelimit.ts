@@ -45,6 +45,8 @@ export const limiters = {
   adminAction: mk("rl:admin-action", 30, "60 s"),
   /** Приём событий аналитики (/api/events) — щедро, шлётся часто с фронта. */
   events: mk("rl:events", 120, "60 s"),
+  /** Приём чанков записи визитов (rrweb) — чанк раз в ~10 c на сессию. */
+  replay: mk("rl:replay", 60, "60 s"),
   /** Админ-экспорт чувствительных данных (CSV) — 5/мин на admin.id. */
   adminExport: mk("rl:admin-export", 5, "60 s"),
   /** Auth-чувствительные операции (refresh-token, login) — 5/мин на user.id. */

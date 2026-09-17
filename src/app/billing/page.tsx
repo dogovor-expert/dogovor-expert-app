@@ -24,7 +24,7 @@ import {
 } from "lucide-react";
 import { currentProPrice, PRO_PRICE_OLD, PRO_PRICE, PROMO_LABEL, isPromoActive, promoCountdownTarget, formatRub } from "@/lib/pricing";
 import CountdownTimer from "@/components/billing/CountdownTimer";
-import { track, goals } from "@/lib/analytics";
+import { track, trackMetrikaOnly, goals } from "@/lib/analytics";
 
 interface PaymentRow {
   id: string;
@@ -179,7 +179,9 @@ export default function BillingPage() {
     const q = new URLSearchParams(window.location.search);
     if (q.get("success")) {
       setJustPaid(true);
-      track(goals.paymentSuccess);
+      // Журнал (user_events) пишет сервер из вебхука оплаты — здесь только
+      // цель Метрики, чтобы не задваивать события в /admin/analytics.
+      trackMetrikaOnly(goals.paymentSuccess);
       window.history.replaceState({}, "", "/billing");
     }
     if (q.get("renewed")) {
@@ -203,7 +205,7 @@ export default function BillingPage() {
         setPaying(false);
         return;
       }
-      track(goals.paymentCreated);
+      trackMetrikaOnly(goals.paymentCreated);
       window.location.href = json.confirmation_url;
     } catch {
       showToast("Сервис временно недоступен. Попробуйте ещё раз");

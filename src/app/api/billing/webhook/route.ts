@@ -4,6 +4,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { collectReport } from "@/lib/tronk";
 import { limiters, checkRateLimit, rateLimitResponse } from "@/lib/ratelimit";
 import { yookassaWebhookSchema, validateBody } from "@/lib/validations/api";
+import { logUserEvent, SERVER_SESSION_PREFIX } from "@/lib/userEvents";
 
 // Увеличенный таймаут для этого роута — collectReport может выполняться
 // до ~45 секунд. Полноценный фикс — вынос в фоновую очередь (TODO).
@@ -275,6 +276,16 @@ export async function POST(req: Request) {
   if (paid) {
     const meta = row.meta ?? {};
     const now = new Date();
+
+    // Журнал аналитики: успех оплаты пишет СЕРВЕР (вебхук уже прошёл
+    // идемпотентную проверку row.status !== 'paid' выше). Так событие не
+    // теряется, если пользователь закрыл вкладку до /billing?success=1.
+    await logUserEvent({
+      event: "payment_success",
+      userId: row.user_id,
+      sessionId: `${SERVER_SESSION_PREFIX}${payment.id}`,
+      meta: { plan: typeof meta.plan === "string" ? meta.plan : undefined },
+    });
 
     if (meta.type === "report" && typeof meta.vin === "string") {
       const vin = meta.vin.toUpperCase();

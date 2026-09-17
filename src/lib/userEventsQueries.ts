@@ -1,5 +1,5 @@
 import { createAdminClient } from "@/lib/supabase/admin";
-import { EVENT_CATALOG, type EventName } from "@/lib/userEvents";
+import { EVENT_CATALOG, SERVER_SESSION_PREFIX, type EventName } from "@/lib/userEvents";
 
 export interface DailyPoint {
   day: string; // YYYY-MM-DD
@@ -168,7 +168,14 @@ export async function getKpiTotals(): Promise<KpiTotals> {
 
   const rows = (last7 ?? []) as { event: string; session_id: string }[];
   const visits7d = rows.filter((r) => r.event === "page_view").length;
-  const uniqueSessions7d = new Set(rows.map((r) => r.session_id)).size;
+  // Уникальные визиты считаем по клиентским session_id; служебные
+  // серверные псевдосессии (srv-..., платежи) сюда не попадают, иначе
+  // «уникальные визиты» завышались бы на каждую оплату.
+  const uniqueSessions7d = new Set(
+    rows
+      .filter((r) => !r.session_id.startsWith(SERVER_SESSION_PREFIX))
+      .map((r) => r.session_id)
+  ).size;
   const starts = rows.filter((r) => r.event === "builder_start").length;
   const success = rows.filter((r) => r.event === "payment_success").length;
 
