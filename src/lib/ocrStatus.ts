@@ -60,14 +60,16 @@ export class OcularCircuitBreaker {
   /** Сбой — увеличиваем счётчик и, при пороге, открываем breaker. */
   onFailure(): void {
     if (this.state === 'half-open') {
-      this.failures = 1;
-      this.state = 'closed';
-    } else {
-      this.failures += 1;
-    }
-    if (this.failures >= this.threshold) {
+      // Probe провалился → сервер всё ещё мёртв — reopen с полным cooldown
+      this.failures = this.threshold;
       this.state = 'open';
       this.openedAt = Date.now();
+    } else {
+      this.failures += 1;
+      if (this.failures >= this.threshold) {
+        this.state = 'open';
+        this.openedAt = Date.now();
+      }
     }
   }
 

@@ -23,7 +23,7 @@ interface EventSpec {
   /** Человекочитаемое название — для дашборда и docs. */
   label: string;
   /** Группа для воронки/фильтров в /admin/analytics. */
-  group: "traffic" | "builder" | "export" | "billing" | "signing" | "support";
+  group: "traffic" | "builder" | "ocr" | "export" | "billing" | "signing" | "support";
   /**
    * Разрешённые ключи meta и опциональный enum допустимых значений
    * (для строк). Если поле не строковый enum — просто перечисляем ключ
@@ -57,6 +57,24 @@ export const EVENT_CATALOG = {
     label: "Использован сканер документов",
     group: "builder",
     meta: { doc_type: null, server_ocr: ["true", "false"] as const },
+  },
+  ocr_engine_used: {
+    label: "OCR: движок",
+    group: "ocr",
+    meta: {
+      engine: ["tesseract", "paddle", "ocular", "tesseract+paddle", "tesseract+ocular"] as const,
+      confidence: null,
+      doc_type: null,
+    },
+  },
+  ocr_fallback: {
+    label: "OCR: fallback",
+    group: "ocr",
+    meta: {
+      from: ["tesseract", "ocular"] as const,
+      to: ["paddle", "tesseract"] as const,
+      reason: ["low_confidence", "short_text", "server_error", "timeout"] as const,
+    },
   },
   audit_run: {
     label: "Запущена проверка документа",

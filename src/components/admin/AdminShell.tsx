@@ -15,6 +15,7 @@ import {
   Menu,
   X,
   Shield,
+  ShieldCheck,
   ScrollText,
   Search,
   Headphones,
@@ -35,6 +36,7 @@ const NAV: { href: string; label: string; icon: typeof LayoutDashboard; exact?: 
   { href: "/admin/feedback", label: "Обратная связь", icon: MessageSquare },
   { href: "/admin/chat", label: "Чат поддержки", icon: Headphones },
   { href: "/admin/audit", label: "Журнал действий", icon: ScrollText, minRole: "admin" },
+  { href: "/admin/consent-logs", label: "Согласия OCR", icon: ShieldCheck, minRole: "admin" },
 ];
 
 export default function AdminShell({

@@ -121,9 +121,17 @@ function extractAddressLine(text: string): string | undefined {
   return undefined;
 }
 
-export function extractPassportData(text: string): PassportData {
+export function extractPassportData(text: string, isRegistration = false): PassportData {
   const data: PassportData = {};
   text = latinToCyrillic(text);
+
+  // Страница регистрации паспорта содержит ТОЛЬКО адрес и штамп.
+  // ФИО/серия/номер — дубли с главной страницы, их извлекать не нужно.
+  if (isRegistration) {
+    const addr = extractAddressLine(text);
+    if (addr) data.address = addr;
+    return data;
+  }
 
   // ФИО. Приоритет — размеченный формат (ФАМИЛИЯ/ИМЯ/ОТЧЕСТВО отдельными
   // строками): именно так печатает паспорт РФ и так его отдают оба движка.

@@ -150,40 +150,65 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // 4) Делаем запрос к occular-серверу
+  // 4) Делаем запрос к occular-серверу с retry для 5xx/timeout
   const timeoutMs = Number(process.env.OCCULAR_PROXY_TIMEOUT_MS) || 55_000;
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+  const MAX_RETRIES = 2;
+  const RETRY_DELAYS = [1000, 3000]; // exponential backoff
 
-  try {
-    // 4a) Собираем multipart для upstream
-    const upstream = new FormData();
-    const fileName = (file && typeof file === 'object' && 'name' in file && typeof file.name === 'string')
-      ? file.name
-      : '';
-    const filename = fileName || `scan.${(blob.type.split('/')[1] || 'jpg').toLowerCase()}`;
-    upstream.append('file', blob, filename);
+  // 4a) Собираем multipart для upstream
+  const upstream = new FormData();
+  const fileName = (file && typeof file === 'object' && 'name' in file && typeof file.name === 'string')
+    ? file.name
+    : '';
+  const filename = fileName || `scan.${(blob.type.split('/')[1] || 'jpg').toLowerCase()}`;
+  upstream.append('file', blob, filename);
 
-    const headers: Record<string, string> = {};
-    if (ocularApiKey) headers['X-API-Key'] = ocularApiKey;
-    // TICKET-1: запрет кэширования входных изображений на occular-сервере
-    // (хранить отпечатки паспортов на сервере — неоправданный риск).
-    // Сервер должен уважать X-No-Cache; параметр — страховка для реализаций,
-    // читающих query. Если payload.cache === true — фиксируем в ответе.
-    headers['X-No-Cache'] = '1';
+  const headers: Record<string, string> = {};
+  if (ocularApiKey) headers['X-API-Key'] = ocularApiKey;
+  headers['X-No-Cache'] = '1';
 
-    const upstreamRes = await fetch(`${ocularBaseUrl}/ocr?nocache=1`, {
-      method: 'POST',
-      body: upstream,
-      headers,
-      signal: controller.signal,
-    });
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
-    clearTimeout(timeoutId);
+    try {
+      const upstreamRes = await fetch(`${ocularBaseUrl}/ocr?nocache=1`, {
+        method: 'POST',
+        body: upstream,
+        headers,
+        signal: controller.signal,
+      });
 
-    if (!upstreamRes.ok) {
-      // 5xx → fallback; 4xx (кроме 408) → пробрасываем
-      if (upstreamRes.status >= 500) {
+      clearTimeout(timeoutId);
+
+      if (upstreamRes.ok) {
+        const payload = (await upstreamRes.json()) as OccularResponse;
+        if (payload.ok) {
+          return NextResponse.json({
+            ok: true,
+            source: 'server',
+            lines: payload.lines,
+            cached: payload.cache,
+            upstream_elapsed_ms: payload.elapsed_ms,
+            elapsed_ms: Date.now() - startedAt,
+          });
+        }
+        return NextResponse.json({
+          ok: true,
+          source: 'client-fallback',
+          reason: 'upstream_not_ok',
+          lines: [],
+          elapsed_ms: Date.now() - startedAt,
+          cached: false,
+        });
+      }
+
+      // 5xx/408 — retryable
+      if (upstreamRes.status >= 500 || upstreamRes.status === 408) {
+        if (attempt < MAX_RETRIES) {
+          await new Promise((r) => setTimeout(r, RETRY_DELAYS[attempt]));
+          continue;
+        }
         return NextResponse.json({
           ok: true,
           source: 'client-fallback',
@@ -193,6 +218,8 @@ export async function POST(req: NextRequest) {
           cached: false,
         });
       }
+
+      // 4xx (кроме 408) — не retryable, пробрасываем
       let details: unknown = null;
       try {
         details = await upstreamRes.json();
@@ -203,40 +230,25 @@ export async function POST(req: NextRequest) {
         { ok: false, error: 'upstream_rejected', status: upstreamRes.status, details },
         { status: 502 }
       );
-    }
+    } catch (err) {
+      clearTimeout(timeoutId);
+      const isAbort = err instanceof Error && err.name === 'AbortError';
 
-    const payload = (await upstreamRes.json()) as OccularResponse;
-    if (!payload.ok) {
+      // Timeout/network — retryable
+      if (attempt < MAX_RETRIES) {
+        await new Promise((r) => setTimeout(r, RETRY_DELAYS[attempt]));
+        continue;
+      }
+
       return NextResponse.json({
         ok: true,
         source: 'client-fallback',
-        reason: 'upstream_not_ok',
+        reason: isAbort ? 'upstream_timeout' : 'upstream_unreachable',
         lines: [],
         elapsed_ms: Date.now() - startedAt,
         cached: false,
       });
     }
-
-    return NextResponse.json({
-      ok: true,
-      source: 'server',
-      lines: payload.lines,
-      cached: payload.cache,
-      upstream_elapsed_ms: payload.elapsed_ms,
-      elapsed_ms: Date.now() - startedAt,
-    });
-  } catch (err) {
-    clearTimeout(timeoutId);
-    const isAbort = err instanceof Error && err.name === 'AbortError';
-    return NextResponse.json({
-      ok: true,
-      source: 'client-fallback',
-      reason: isAbort ? 'upstream_timeout' : 'upstream_unreachable',
-      details: err instanceof Error ? err.message : 'unknown',
-      lines: [],
-      elapsed_ms: Date.now() - startedAt,
-      cached: false,
-    });
   }
 }
 

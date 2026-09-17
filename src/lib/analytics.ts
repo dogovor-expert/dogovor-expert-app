@@ -143,6 +143,8 @@ export const goals = {
   builderStart: "builder_start",
   builderTemplateSwitch: "builder_template_switch",
   scannerUsed: "scanner_used",
+  ocrEngineUsed: "ocr_engine_used",
+  ocrFallback: "ocr_fallback",
   auditRun: "audit_run",
   previewOpened: "preview_opened",
   exportPdf: "export_pdf",

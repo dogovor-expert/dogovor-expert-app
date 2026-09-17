@@ -59,6 +59,9 @@ const PADDLE_FALLBACK_THRESHOLD = 60;
  */
 const PADDLE_FALLBACK_MIN_TEXT_LENGTH = 80;
 
+/** Версия текста согласия — при изменении текста в UI инкрементировать. */
+const CONSENT_VERSION = "1.0";
+
 interface DocScannerProps {
   template: LegalTemplate;
   photos: Record<string, string[]>;
@@ -86,6 +89,32 @@ interface ScanResult {
   quality?: ImageQuality;
   manualHints?: string[];
   slotId: string;
+}
+
+/**
+ * Конвертирует dataURL (PNG) в JPEG Blob для экономии трафика
+ * при отправке на серверный OCR (2-5 MB PNG → 200-600 KB JPEG).
+ */
+function dataUrlToJpegBlob(dataUrl: string, quality = 0.85): Promise<Blob> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement("canvas");
+      canvas.width = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return reject(new Error("Canvas 2D unavailable"));
+      ctx.drawImage(img, 0, 0);
+      canvas.toBlob(
+        (blob) =>
+          blob ? resolve(blob) : reject(new Error("canvas.toBlob failed")),
+        "image/jpeg",
+        quality
+      );
+    };
+    img.onerror = () => reject(new Error("Failed to load image for JPEG conversion"));
+    img.src = dataUrl;
+  });
 }
 
 /** Стадии tesseract.js → понятные подписи для пользователя. */
@@ -171,8 +200,8 @@ export default function DocScanner({
       // Резервный движок грузим в фоне тихо — он нужен только при
       // низком confidence основного.
       void paddleWarmup();
-    } catch {
-      // Прогрев опционален — при скане модель загрузится штатно.
+    } catch (err) {
+      console.warn("[DocScanner] OCR warmup failed:", err);
     }
   }, [collapsed]);
 
@@ -233,7 +262,7 @@ export default function DocScanner({
     void fetch("/api/ocr-consent", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ granted }),
+      body: JSON.stringify({ granted, consent_version: CONSENT_VERSION }),
     }).catch(() => {
       /* noop */
     });
@@ -342,8 +371,7 @@ export default function DocScanner({
     const manualHints: string[] = [];
     let mrz: MrzParseSuccess | null = null;
     switch (slot.ocrKind) {
-      case "passport":
-      case "passportReg": {
+      case "passport": {
         // 1) Пробуем MRZ (загранпаспорта): чек-суммы дают 100% точность
         //    номера и дат — приоритет над регэкспами по сыром тексту.
         mrz = tryParseMrz(text);
@@ -357,6 +385,17 @@ export default function DocScanner({
           Object.assign(
             values,
             applyPassportToRole(template, slot.rolePrefix, data)
+          );
+        }
+        break;
+      }
+      case "passportReg": {
+        // Страница регистрации — только адрес (ФИО/номер — дубли).
+        const regData = extractPassportData(text, true);
+        if (slot.rolePrefix) {
+          Object.assign(
+            values,
+            applyPassportToRole(template, slot.rolePrefix, regData)
           );
         }
         break;
@@ -493,7 +532,7 @@ export default function DocScanner({
               ...p,
               [slot.id]: { status: "Точный серверный OCR…", progress: 0.05 },
             }));
-            const ocularBlob = await (await fetch(prepared.ocrRaw)).blob();
+            const ocularBlob = await dataUrlToJpegBlob(prepared.ocrRaw, 0.85);
             const ocularResult = await postOcrRequest(
               ocularBlob,
               `${slot.id}-${Date.now()}.jpg`
@@ -524,8 +563,9 @@ export default function DocScanner({
                 };
               }
             }
-          } catch {
-            // Серверный OCR недоступен — остаётся результат Tesseract/PP-OCRv5.
+          } catch (err) {
+            console.warn("[DocScanner] Ocular server fallback:", err);
+            track(goals.ocrFallback, { from: "ocular", to: "tesseract", reason: "server_error" });
           }
         }
 
@@ -554,8 +594,9 @@ export default function DocScanner({
                 words: ocr.words, // боксы остаются от tesseract (приблизительная подсветка)
               };
             }
-          } catch {
-            // Paddle недоступен (сеть/CDN) — остаётся результат Tesseract.
+          } catch (err) {
+            console.warn("[DocScanner] PaddleOCR fallback:", err);
+            track(goals.ocrFallback, { from: "tesseract", to: "paddle", reason: "low_confidence" });
           }
         }
 
@@ -576,6 +617,19 @@ export default function DocScanner({
         track(goals.scannerUsed, {
           doc_type: slot.ocrKind,
           server_ocr: String(shouldUseServerOcr(ocularStatus, ocrConsent)),
+        });
+
+        // Определяем финальный engine для аналитики
+        const usedOcular = shouldUseServerOcr(ocularStatus, ocrConsent) && ocr.confidence >= 70;
+        const usedPaddle = !alreadyGood && ocr.confidence >= PADDLE_FALLBACK_THRESHOLD;
+        let finalEngine: "tesseract" | "paddle" | "ocular" | "tesseract+paddle" | "tesseract+ocular" = "tesseract";
+        if (usedOcular && usedPaddle) finalEngine = "tesseract+ocular";
+        else if (usedOcular) finalEngine = "ocular";
+        else if (usedPaddle) finalEngine = "tesseract+paddle";
+        track(goals.ocrEngineUsed, {
+          engine: finalEngine,
+          confidence: ocr.confidence,
+          doc_type: slot.ocrKind ?? "generic",
         });
       } else {
         setResults((r) => ({
