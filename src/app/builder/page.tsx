@@ -12,8 +12,6 @@ import {
   Wrench,
   Crown,
   Loader2,
-  Camera,
-  ChevronDown,
   ArrowRight,
 } from "lucide-react";
 import { LEGAL_TEMPLATES } from "@/data/legalTemplates";
@@ -114,7 +112,6 @@ function HomeContent() {
   const [showAudit, setShowAudit] = useState(false);
   const [checklist, setChecklist] = useState<Record<string, boolean>>({});
   const [showSaved, setShowSaved] = useState(false);
-  const [showScanner, setShowScanner] = useState(false);
   const [ownershipYears, setOwnershipYears] = useState<string>("");
   const [isExporting, setIsExporting] = useState(false);
   const [templateCategory, setTemplateCategory] = useState<string>("all");
@@ -1900,14 +1897,14 @@ function HomeContent() {
               )}
             </>) : (<>
               {/* Document assembly tools */}
-              {showScanner && subscriptionActive ? (
+              {subscriptionActive ? (
                 <DocScanner
                   template={template}
                   photos={scanPhotos}
                   onPhotosChange={handlePhotosChange}
                   onFieldChange={handleFieldChange}
                 />
-              ) : showScanner && !subscriptionActive ? (
+              ) : (
                 <div className="rounded-2xl border-2 border-dashed border-brand-300 bg-brand-50 p-6 text-center">
                   <div className="mx-auto w-14 h-14 rounded-full bg-brand-100 flex items-center justify-center mb-3">
                     <Crown className="w-7 h-7 text-brand-600" />
@@ -1923,16 +1920,7 @@ function HomeContent() {
                     Оформить PRO и включить сканер
                   </button>
                 </div>
-              ) : null}
-              <button
-                type="button"
-                onClick={() => setShowScanner(!showScanner)}
-                className="w-full px-3 py-2 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 text-left text-sm font-medium text-gray-700 flex items-center gap-2 transition-colors"
-              >
-                <Camera className="w-4 h-4 text-gray-600" />
-                <span>{showScanner ? "Скрыть сканер" : "Показать сканер документов"}</span>
-                <ChevronDown className={`w-4 h-4 text-gray-600 transition-transform ${showScanner ? "rotate-180" : ""}`} />
-              </button>
+              )}
               {getRelatedDocs().length > 0 && (
                 <Collapsible
                   id="related"
