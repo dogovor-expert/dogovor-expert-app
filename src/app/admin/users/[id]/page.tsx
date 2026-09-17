@@ -6,6 +6,8 @@ import { Badge } from "@/components/ui/Badge";
 import { Card } from "@/components/ui/Card";
 import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from "@/components/ui/Table";
 import { updateProfile, setUserRole, updateSubscription, giftSubscriptionExtension } from "./actions";
+import { getUserEventTimeline } from "@/lib/userEventsQueries";
+import { EVENT_CATALOG, type EventName } from "@/lib/userEvents";
 
 const fmt = (s?: string | null) =>
   s ? new Date(s).toLocaleString("ru-RU", { day: "2-digit", month: "2-digit", year: "2-digit", hour: "2-digit", minute: "2-digit" }) : "—";
@@ -32,11 +34,12 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
 
   const email = authUser?.user?.email ?? profile?.email ?? "—";
 
-  const [{ data: sub }, { data: pays }, { data: leads }, { data: feedback }] = await Promise.all([
+  const [{ data: sub }, { data: pays }, { data: leads }, { data: feedback }, events] = await Promise.all([
     sb.from("subscriptions").select("*").eq("user_id", id).maybeSingle(),
     sb.from("payments").select("*").eq("user_id", id).order("created_at", { ascending: false }).limit(50),
     sb.from("leads").select("*").eq("user_id", id).order("created_at", { ascending: false }).limit(50),
     sb.from("feedback").select("*").eq("email", email).order("created_at", { ascending: false }).limit(50),
+    getUserEventTimeline(id, 50),
   ]);
 
   const targetRole = parseAdminRole(profile?.admin_role) ?? null;
@@ -252,6 +255,48 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
               </TableRow>
             ))}
             {!feedback?.length && <TableRow><TableCell colSpan={5} className="text-center text-gray-600 py-6">Нет обращений</TableCell></TableRow>}
+          </TableBody>
+        </Table>
+      </Card>
+
+      <Card padding="none">
+        <h2 className="font-semibold text-gray-900 p-4 pb-2">
+          Активность на сайте ({events.length})
+        </h2>
+        <p className="text-xs text-gray-500 px-4 pb-2">
+          Лента для саппорта: что пользователь делал перед обращением. Без содержимого полей форм —
+          только тип действия и шаблон.
+        </p>
+        <Table variant="minimal">
+          <TableHead>
+            <TableRow>
+              <TableHeader>Действие</TableHeader>
+              <TableHeader>Страница</TableHeader>
+              <TableHeader>Устройство</TableHeader>
+              <TableHeader>Когда</TableHeader>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {events.map((e) => (
+              <TableRow key={e.id}>
+                <TableCell className="font-medium text-gray-800">
+                  {EVENT_CATALOG[e.event as EventName]?.label ?? e.event}
+                  {e.meta?.template ? (
+                    <span className="text-gray-400 font-normal"> · {String(e.meta.template)}</span>
+                  ) : null}
+                </TableCell>
+                <TableCell className="text-gray-500 font-mono text-xs">{e.path || "—"}</TableCell>
+                <TableCell className="text-gray-500">{e.device || "—"}</TableCell>
+                <TableCell className="text-gray-600">{fmt(e.created_at)}</TableCell>
+              </TableRow>
+            ))}
+            {!events.length && (
+              <TableRow>
+                <TableCell colSpan={4} className="text-center text-gray-600 py-6">
+                  Пока нет событий
+                </TableCell>
+              </TableRow>
+            )}
           </TableBody>
         </Table>
       </Card>

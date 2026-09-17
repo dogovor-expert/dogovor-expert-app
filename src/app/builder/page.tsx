@@ -897,6 +897,7 @@ function HomeContent() {
     }
     pendingMergeRef.current = merged;
     setSelectedTemplateId(templateId);
+    track(goals.builderTemplateSwitch, { from: prevTemplate.id, to: templateId });
     setMigrationInfo({
       migratedCount: migration.migratedIds.length,
       totalFields: migration.totalNextFields,
@@ -982,7 +983,12 @@ function HomeContent() {
   };
 
   const handleAudit = () => {
-    setAuditResults(runLegalAudit(template, formValues));
+    const res = runLegalAudit(template, formValues);
+    setAuditResults(res);
+    track(goals.auditRun, {
+      template: template.id,
+      errors: res.filter((r) => r.type === "error").length,
+    });
     setAuditTimestamp(new Date());
     setShowAudit(true);
     setSidebarTab("preview");
@@ -1013,6 +1019,7 @@ function HomeContent() {
     }
     setPreviewBlocked(null);
     setViewMode("preview");
+    track(goals.previewOpened, { template: template.id });
     window.scrollTo(0, 0);
   };
 
@@ -1466,6 +1473,7 @@ function HomeContent() {
         throw new Error(j?.error === "unauthorized" ? "Войдите в аккаунт, чтобы создавать ссылки" : "Не удалось создать ссылку");
       }
       setApprovalMsg("Ссылка создана");
+      track(goals.approvalCreated, { template: template.id });
       loadMyApprovals();
     } catch (e) {
       setApprovalMsg(e instanceof Error ? e.message : "Не удалось создать ссылку");
