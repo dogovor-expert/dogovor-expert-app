@@ -14,6 +14,7 @@ export const dynamic = "force-dynamic";
 const GROUP_LABELS: Record<string, string> = {
   traffic: "Трафик",
   builder: "Конструктор",
+  ocr: "Распознавание",
   export: "Экспорт",
   signing: "Подписание",
   billing: "Монетизация",

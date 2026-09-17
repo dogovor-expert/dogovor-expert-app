@@ -11,8 +11,8 @@ export const dynamic = "force-dynamic";
  * GET  /api/ocr-consent — текущее состояние согласия для залогиненного
  *      пользователя (для синхронизации между устройствами).
  * POST /api/ocr-consent — зафиксировать/отозвать согласие.
- *      Тело: { granted: boolean }. При granted:true пишется timestamp
- *      (доказательная база), при false — NULL (отзыв).
+ *      Тело: { granted: boolean, consent_version?: string }.
+ *      Append-only аудит в ocr_consent_log (IP, UA, версия текста).
  */
 
 async function requireUser() {
@@ -64,6 +64,10 @@ export const POST = withCsrf(async (req: NextRequest) => {
   if (typeof granted !== "boolean") {
     return NextResponse.json({ error: "granted_must_be_boolean" }, { status: 400 });
   }
+  const consentVersion =
+    body && typeof body === "object" && typeof (body as { consent_version?: unknown }).consent_version === "string"
+      ? ((body as { consent_version: string }).consent_version).slice(0, 20)
+      : "1.0";
 
   const { error } = await supabase
     .from("profiles")
@@ -72,5 +76,24 @@ export const POST = withCsrf(async (req: NextRequest) => {
   if (error) {
     return NextResponse.json({ error: "db_error" }, { status: 500 });
   }
+
+  // 152-ФЗ: append-only аудит согласия (IP, UA, версия текста)
+  await supabase.from("ocr_consent_log").insert({
+    user_id: user.id,
+    action: granted ? "grant" : "revoke",
+    consent_version: consentVersion,
+    ip: clientIpOf(req),
+    user_agent: req.headers.get("user-agent")?.slice(0, 300) ?? null,
+  });
+
   return NextResponse.json({ ok: true, granted });
 });
+
+function clientIpOf(req: NextRequest): string | null {
+  return (
+    req.headers.get("x-vercel-forwarded-for")?.split(",")[0]?.trim() ||
+    req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+    req.headers.get("x-real-ip")?.trim() ||
+    null
+  );
+}
