@@ -25,7 +25,7 @@ let workerFailed = false;
 function createPaddleWorker(): Worker | null {
   try {
     return new Worker(
-      new URL("../../lib/workers/paddle-worker.js", import.meta.url),
+      new URL("./workers/paddle-worker.js", import.meta.url),
       { type: "module" }
     );
   } catch {
