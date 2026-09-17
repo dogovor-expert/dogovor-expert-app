@@ -83,6 +83,13 @@ async function cleanupTrash(): Promise<{ deleted: number; error?: string }> {
   return { deleted: data?.length ?? 0 };
 }
 
+/** 152-ФЗ: не хранить поведенческую аналитику дольше необходимого (12 мес). */
+async function purgeOldEvents(): Promise<{ ok: boolean; error?: string }> {
+  const admin = createAdminClient();
+  const { error } = await admin.rpc("purge_old_user_events");
+  return error ? { ok: false, error: error.message } : { ok: true };
+}
+
 /**
  * Ежедневное обслуживание: автосписание подписок + очистка корзины.
  * Объединяет прежние /api/cron/auto-renew и /api/cron/trash-cleanup
@@ -96,10 +103,11 @@ export async function GET(req: Request) {
 
   const renew = await renewSubscriptions();
   const trash = await cleanupTrash();
+  const events = await purgeOldEvents();
 
-  const ok = !renew.error && !trash.error;
+  const ok = !renew.error && !trash.error && events.ok;
   return NextResponse.json(
-    { ok, renew: { processed: renew.processed, results: renew.results, error: renew.error }, trash },
+    { ok, renew: { processed: renew.processed, results: renew.results, error: renew.error }, trash, events },
     { status: ok ? 200 : 500 },
   );
 }

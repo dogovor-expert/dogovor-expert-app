@@ -6,6 +6,7 @@ import { Check, ShieldQuestion, PhoneCall } from "lucide-react";
 import { fmtMoney } from "@/lib/legal/calc";
 import { formatPhoneRu } from "@/lib/format";
 import SaveCalcButton from "@/components/calculator/SaveCalcButton";
+import { track, goals } from "@/lib/analytics";
 
 const CAPTCHA_SITE_KEY = process.env.NEXT_PUBLIC_SMARTCAPTCHA_SITE_KEY;
 const SmartCaptchaWidget = dynamic(() => import("@/components/auth/SmartCaptcha"), {
@@ -110,6 +111,7 @@ export default function KaskoQuote() {
       }
       setSent(true);
       setSending(false);
+      track(goals.leadSubmitted, { service: "kasko" });
     } catch {
       setLeadErr("Сервис временно недоступен. Попробуйте ещё раз");
       setSending(false);

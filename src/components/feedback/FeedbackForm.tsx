@@ -5,6 +5,7 @@ import {
   AlertCircle, CheckCircle2, Upload, X, Loader2, ShieldCheck, Bug, Lightbulb, FileText, HelpCircle,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { track, goals } from "@/lib/analytics";
 
 interface TemplateSummary {
   id: string;
@@ -183,6 +184,7 @@ export default function FeedbackForm({ defaultDocSlug, onSuccess, compact }: Pro
       if (!res.ok) throw new Error(data?.error || "request_failed");
       setTicketNo(data.ticket_no || "");
       setStatus("success");
+      track(goals.feedbackSubmitted, { type });
       onSuccess?.(data.ticket_no || "");
     } catch {
       setStatus("error");

@@ -6,6 +6,7 @@ import { CryptoProCertSelector } from './CryptoProCertSelector';
 import { signPdfWithCryptoPro } from '@/lib/signCryptoPro';
 import { preparePAdESPlaceholder, embedCms, hexLengthOfCms, uint8ArrayToHex } from '@/lib/embedPades';
 import { downloadBytes } from '@/lib/converter/download';
+import { track, goals } from '@/lib/analytics';
 
 // Длина CMS детерминирована для конкретного сертификата (detached) → кэшируем, чтобы не запрашивать PIN дважды
 const cmsLengthCache = new Map<string, number>();
@@ -52,6 +53,7 @@ export function UKEPSigner({ pdfBytes, fileName = 'document', onClose, onBack, s
     signingRef.current = true;
 
     setError(null);
+    track(goals.signingStarted);
 
     try {
       const opts = {
@@ -101,6 +103,7 @@ export function UKEPSigner({ pdfBytes, fileName = 'document', onClose, onBack, s
       downloadBytes(signedPdf, downloadName);
 
       setStep('done');
+      track(goals.signingCompleted);
     } catch (e: any) {
       console.error('UKEP signing error:', e);
       signingRef.current = false;

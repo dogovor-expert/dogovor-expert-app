@@ -201,7 +201,7 @@ export function CookieBanner({ settingsOpenExternal, onSettingsClosed }: CookieB
             />
             <CategoryRow
               title="Аналитика"
-              desc="Яндекс.Метрика: обезличенная статистика посещаемости."
+              desc="Сторонний счётчик Яндекс.Метрики (по согласию). Собственная обезличенная аналитика сервиса."
               checked={draft.analytics}
               onChange={toggle("analytics")}
             />
@@ -277,7 +277,8 @@ export function CookieBanner({ settingsOpenExternal, onSettingsClosed }: CookieB
             id="cookie-banner-desc"
             className="text-xs text-gray-600 mt-0.5 leading-relaxed"
           >
-            Аналитика посещаемости (Яндекс.Метрика). Без маркетинга.{" "}
+            Аналитика посещаемости: Яндекс.Метрика — по согласию, собственная
+            обезличенная статистика сервиса. Без маркетинга.{" "}
             <Link
               href="/privacy"
               className="text-brand-600 hover:underline"

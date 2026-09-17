@@ -30,6 +30,7 @@ import {
   applyVucToRole,
   expectedFields,
 } from "@/lib/docOcr";
+import { track, goals } from "@/lib/analytics";
 import { planFromScan } from "@/lib/docPlanner";
 import { prepareDocumentImage, type ImageQuality } from "@/lib/docImage";
 import { paddleRecognize, paddleWarmup } from "@/lib/paddleOcr";
@@ -564,6 +565,10 @@ export default function DocScanner({
         if (res.ok && res.filledFields.length > 0) {
           focusFilledFields(res.filledFields.map((f) => f.id));
         }
+        track(goals.scannerUsed, {
+          doc_type: slot.ocrKind,
+          server_ocr: String(shouldUseServerOcr(ocularStatus, ocrConsent)),
+        });
       } else {
         setResults((r) => ({
           ...r,
