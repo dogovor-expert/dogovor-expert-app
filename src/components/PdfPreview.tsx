@@ -2,7 +2,6 @@
 import { useEffect, useRef, useState } from "react";
 import { getDesign, type DesignId } from "@/lib/docDesign";
 import { Loader2 } from "lucide-react";
-import type { PDFDocumentProxy } from "pdfjs-dist";
 
 // eslint-disable-next-line @typescript-eslint/consistent-type-imports
 type PdfJsLib = typeof import("pdfjs-dist");

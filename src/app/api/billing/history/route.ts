@@ -38,7 +38,10 @@ export async function GET(req: NextRequest) {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  const rows = data ?? [];
+  const rawRows: unknown = data;
+  const rows = Array.isArray(rawRows)
+    ? (rawRows as { id: string; amount: number; status: string; provider: string; meta: unknown; created_at: string }[])
+    : [];
   const hasMore = rows.length > PAGE_SIZE;
   const page = hasMore ? rows.slice(0, PAGE_SIZE) : rows;
   const nextCursor = page.length > 0 ? page[page.length - 1].created_at : null;

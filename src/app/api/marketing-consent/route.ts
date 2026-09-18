@@ -7,6 +7,16 @@ import { isSameOrigin } from "@/lib/admin-auth";
 
 export const dynamic = "force-dynamic";
 
+interface ConsentRow {
+  pd_consent: boolean | null;
+  ad_consent: boolean | null;
+}
+
+interface ConsentBody {
+  kind?: unknown;
+  value?: unknown;
+}
+
 /**
  * Согласия на маркетинговую рассылку (152-ФЗ + 38-ФЗ ст.18).
  * Хранится доказательная база: факт согласия (дата, IP, UA) — не менее 3 лет.
@@ -20,13 +30,15 @@ export async function GET() {
   if (!user) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
 
   const admin = createAdminClient();
-  const { data } = await admin
+  const consentResult = await admin
     .from("marketing_consents")
     .select("pd_consent, ad_consent")
     .eq("user_id", user.id)
     .order("created_at", { ascending: false })
     .limit(1)
     .maybeSingle();
+  const rawData: unknown = consentResult.data;
+  const data = rawData as ConsentRow | null;
 
   return NextResponse.json({
     pd_consent: data?.pd_consent ?? false,
@@ -47,7 +59,7 @@ async function postHandler(req: Request) {
   } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
 
-  const body = await req.json().catch(() => null);
+  const body = (await req.json().catch(() => null)) as ConsentBody | null;
   if (
     !body ||
     (body.kind !== "pd" && body.kind !== "ad") ||
@@ -57,11 +69,13 @@ async function postHandler(req: Request) {
   }
 
   const admin = createAdminClient();
-  const { data: prof } = await admin
+  const profResult = await admin
     .from("profiles")
     .select("email")
     .eq("id", user.id)
     .single();
+  const rawProf: unknown = profResult.data;
+  const prof = rawProf as { email: string | null } | null;
 
   const now = new Date().toISOString();
   const row = {

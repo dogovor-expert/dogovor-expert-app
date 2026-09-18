@@ -52,7 +52,7 @@ function declineName(word: string, female: boolean): string[] {
   return [word, base + "а", base + "у", base + "а", base + "ом", base + "е"];
 }
 
-function declinePatronymic(word: string, female: boolean): string[] {
+function declinePatronymic(word: string, _female: boolean): string[] {
   if (!word) return ["", "", "", "", "", ""];
   const last = word[word.length - 1];
   if (last === "а" || last === "я") {

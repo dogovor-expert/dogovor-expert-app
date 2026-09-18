@@ -15,8 +15,6 @@ export default function UsnNpd() {
   const [result, setResult] = useState<string[]>([]);
   const [npdLimit, setNpdLimit] = useState<{ total: number; state: "ok" | "warn" | "exceeded" } | null>(null);
 
-  interface CalcResult { builder: string; link: string }
-
   const calc = () => {
     if (mode === "usn") {
       setNpdLimit(null);

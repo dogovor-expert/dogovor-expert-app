@@ -44,10 +44,10 @@ export default function AdminSearchPage() {
         body: JSON.stringify({ q }),
       });
       if (!r.ok) {
-        const j = await r.json().catch(() => ({}));
+        const j = (await r.json().catch(() => ({}))) as { error?: string };
         throw new Error(j.error || "Ошибка поиска");
       }
-      setResult(await r.json());
+      setResult((await r.json()) as Result);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Ошибка поиска");
     } finally {

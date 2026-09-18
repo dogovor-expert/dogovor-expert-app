@@ -6,12 +6,6 @@ import { idbGet, idbPut, idbDelete, idbGetAll, STORE } from "@/lib/vault/idb";
 import { encryptJSON, decryptJSON, type Envelope } from "@/lib/vault/keyManager";
 import type { CloudTokens, CloudProviderId } from "./types";
 
-const TOKEN_PREFIX = "cloud_tokens_";
-
-function tokenKey(providerId: CloudProviderId): string {
-  return TOKEN_PREFIX + providerId;
-}
-
 export async function saveCloudTokens(tokens: CloudTokens): Promise<void> {
   const enc = await encryptJSON(tokens);
   await idbPut(STORE.tokens, { providerId: tokens.provider, enc });

@@ -2,7 +2,9 @@
 
 ## Status
 
-Accepted (2024-Q2, обновлено 2026-09-05)
+Accepted (2024-Q2, обновлено 2026-09-05; актуализировано 2026-09-18: self-hosted реализован — прод использует Supabase на VDS, см. docs/DEPLOY.md)
+
+> **Реализация (2026-09-18):** пункт «Self-hosted опция» ниже стал фактом — прод-окружение работает на self-hosted Supabase (`supabase.vds.dogovor.expert`, VDS 82.146.35.220). Облачный ref `xkakhztknlpzqarklewq.supabase.co` остался только для локальной разработки.
 
 ## Context
 
@@ -23,7 +25,7 @@ Accepted (2024-Q2, обновлено 2026-09-05)
 2. **RLS из коробки** — критично для GDPR/152-ФЗ compliance
 3. **Auth поддерживает OAuth (VK, Yandex, Google)** + email/password + 2FA
 4. **Realtime через WebSocket** — не нужен отдельный socket-сервер
-5. **Self-hosted опция** — если в будущем нужна миграция с облака
+5. **Self-hosted опция** — если в будущем нужна миграция с облака ✅ (реализовано 2026-09: прод на self-hosted, см. Status выше)
 6. **Один SDK** для всех сервисов (auth, db, storage, functions)
 
 ## Consequences

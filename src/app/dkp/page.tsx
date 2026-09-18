@@ -8,7 +8,6 @@ import {
   Printer,
   ScanLine,
   ShieldCheck,
-  Download,
   Stamp,
 } from "lucide-react";
 import { LEGAL_TEMPLATES } from "@/data/templates";
@@ -20,7 +19,8 @@ import { faqJsonLd, breadcrumbJsonLd } from "@/lib/seo/faq";
 export const revalidate = 3600;
 export const dynamic = "force-static"; // P0: явно включаем SSG (см. INVARIANTS.md).
 
-const dkp = LEGAL_TEMPLATES.find((t) => t.id === "dkp-auto")!;
+const dkp = LEGAL_TEMPLATES.find((t) => t.id === "dkp-auto");
+if (!dkp) throw new Error("Шаблон dkp-auto не найден");
 
 const DEMO_VALUES: Record<string, string> = {
   city: "Москва",

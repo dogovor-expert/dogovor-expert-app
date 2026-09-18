@@ -190,17 +190,18 @@ export async function replyFeedback(formData: FormData) {
 
   const data = parseForm(replySchema, formData);
   const sb = createAdminClient();
-  const { data: fb } = await sb.from("feedback").select("*").eq("id", data.id).maybeSingle();
+  const fbResult = await sb.from("feedback").select("*").eq("id", data.id).maybeSingle();
+  const fb = fbResult.data as { ticket_no: string; email: string } | null;
   if (!fb) throw new Error("not found");
 
-  const ticketNo = fb.ticket_no as string;
+  const ticketNo = fb.ticket_no;
   const html = `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:24px;">
     <h2 style="margin:0 0 12px;color:#111827;">Ответ на обращение ${esc(ticketNo)}</h2>
     <p style="margin:0 0 12px;color:#374151;white-space:pre-wrap;">${esc(data.message)}</p>
     <p style="margin:0;color:#6b7280;font-size:12px;">Команда Dogovor.expert</p>
   </div>`;
 
-  await sendEmail({ to: fb.email as string, subject: `Re: Обращение ${ticketNo}`, html });
+  await sendEmail({ to: fb.email, subject: `Re: Обращение ${ticketNo}`, html });
 
   const { error } = await sb.from("feedback").update({ status: "done" }).eq("id", data.id);
   if (error) throw new Error(error.message);

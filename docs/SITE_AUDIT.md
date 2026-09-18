@@ -70,7 +70,7 @@
 - Изменение политики CSP, заголовков кэширования, конфигурации SEO/метаданных
 - Оптимизация шрифтов, изображений, списков; рефакторинг тяжёлых компонентов
 - Массовые правки a11y или удаление неиспользуемого CSS/JS
-- Изменение `next.config.mjs`, `vercel.json`, `sentry.*.config.ts`
+- Изменение `next.config.mjs`, `Dockerfile`, `vercel.json` (легаси), `sentry.*.config.ts`, `.github/workflows/caprover-deploy.yml`
 - Правка AGENTS.md / commitlint / husky / CI workflows
 
 **Формат обязательного вопроса** в конце отчёта о крупной задаче:
@@ -79,7 +79,7 @@
 
 ## 8. Примечания
 
-- `audit:full` НЕ подключён в pre-commit / CI / vercel-build — это ручной инструмент, медленный, требует прод-доступ.
+- `audit:full` НЕ подключён в pre-commit / CI / Docker build — это ручной инструмент, медленный, требует прод-доступ.
 - squirrel free tier: local crawl only (no JS rendering). `squirrel auth` разблокирует полный аудит.
 - PSI 429 = дневная квота без ключа; используй `PSI_API_KEY` или запускай реже.
 - Phase 2 + 3 требуют локально поднятого `next start` либо прямого доступа к https://dogovor.expert.

@@ -1,7 +1,6 @@
 'use client';
 import { useState, useCallback, useRef } from 'react';
 import { Loader2, Check, AlertCircle, Shield, FileText, ArrowLeft } from 'lucide-react';
-import { PDFDocument } from 'pdf-lib';
 import { CryptoProCertSelector } from './CryptoProCertSelector';
 import { signPdfWithCryptoPro } from '@/lib/signCryptoPro';
 import { preparePAdESPlaceholder, embedCms, hexLengthOfCms, uint8ArrayToHex } from '@/lib/embedPades';
@@ -104,10 +103,10 @@ export function UKEPSigner({ pdfBytes, fileName = 'document', onClose, onBack, s
 
       setStep('done');
       track(goals.signingCompleted);
-    } catch (e: any) {
+    } catch (e: unknown) {
       console.error('UKEP signing error:', e);
       signingRef.current = false;
-      setError(e.message || 'Неизвестная ошибка при подписании');
+      setError(e instanceof Error ? e.message : 'Неизвестная ошибка при подписании');
       setStep('error');
     }
   }, [pdfBytes, fileName, selectedCert, signerName]);

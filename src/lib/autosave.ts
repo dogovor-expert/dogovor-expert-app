@@ -39,7 +39,9 @@ function evictOldestDrafts(protectId: string, count = 3): void {
       if (tpl === protectId) continue;
       let savedAt = 0;
       try {
-        savedAt = Date.parse((JSON.parse(localStorage.getItem(key) || "{}").savedAt) ?? "") || 0;
+        const rec: unknown = JSON.parse(localStorage.getItem(key) || "{}");
+        const rawSavedAt = rec && typeof rec === "object" ? (rec as { savedAt?: unknown }).savedAt : undefined;
+        savedAt = typeof rawSavedAt === "string" ? Date.parse(rawSavedAt) || 0 : 0;
       } catch {
         /* битая запись — считаем самой старой и чистим первой */
       }
@@ -169,7 +171,7 @@ export function getDraftVersions(templateId: string): DraftVersion[] {
   try {
     const raw = localStorage.getItem(VERSIONS_PREFIX + templateId);
     if (!raw) return [];
-    const parsed = JSON.parse(raw);
+    const parsed: unknown = JSON.parse(raw);
     return Array.isArray(parsed) ? (parsed as DraftVersion[]) : [];
   } catch {
     return [];

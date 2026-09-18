@@ -14,10 +14,6 @@ const PAGE_SIZE_MAX = 100;
 
 // Значения для PostgREST-фильтров: запятые/скобки ломают синтаксис or(),
 // % и _ — непредсказуемые wildcard'ы в ilike. Вырезаем их.
-// 3.10 (аудит): результаты калькуляторов сохраняются как синтетические
-// template_id `calc-<kind>-<ts>`; их нет в каталоге шаблонов, и в конструктор
-// они не открываются (страница /documents показывает их как протокол).
-const CALC_TEMPLATE_RE = /^calc-[a-z0-9-]{1,90}$/;
 
 function sanitizeFilterValue(v: string): string {
   return v.replace(/[,()%_*"\\]/g, " ").trim().slice(0, 100);
@@ -113,7 +109,7 @@ async function postHandler(req: Request) {
   const rl = await checkRateLimit(limiters.documentCreate, user.id);
   if (!rl.ok) return rateLimitResponse(rl.retryAfter);
 
-  const body = await req.json().catch(() => null);
+  const body: unknown = await req.json().catch(() => null);
   if (!body) {
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
   }
@@ -125,7 +121,7 @@ async function postHandler(req: Request) {
   }
   const { template_id, title, fields, checklist, versions } = validation.data;
 
-  const { data, error } = await supabase
+  const insertResult = await supabase
     .from("documents")
     .insert({
       user_id: user.id,
@@ -139,7 +135,8 @@ async function postHandler(req: Request) {
     .select()
     .single();
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (insertResult.error) return NextResponse.json({ error: insertResult.error.message }, { status: 500 });
+  const data: unknown = insertResult.data;
   return NextResponse.json({ data }, { status: 201 });
 }
 

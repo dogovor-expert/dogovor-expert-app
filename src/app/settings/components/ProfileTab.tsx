@@ -47,7 +47,7 @@ export default function ProfileTab() {
     try {
       const res = await fetch("/api/profile");
       if (res.ok) {
-        const { data } = await res.json();
+        const { data } = (await res.json()) as { data: ProfileData };
         setProfile(data);
         setForm({
           full_name: data.full_name ?? "",
@@ -63,7 +63,7 @@ export default function ProfileTab() {
   };
 
   useEffect(() => {
-    loadProfile();
+    void loadProfile();
   }, []);
 
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -95,12 +95,12 @@ export default function ProfileTab() {
           profile_update_failed: "Не удалось обновить профиль",
           too_many_requests: "Слишком много попыток, подождите минуту",
         };
-        const body = await res.json().catch(() => ({ error: "" }));
-        showToast(msg[body?.error] ?? "Не удалось загрузить аватар");
+        const body = (await res.json().catch(() => null)) as { error?: string } | null;
+        showToast((body?.error ? msg[body.error] : undefined) ?? "Не удалось загрузить аватар");
         return;
       }
-      const json = await res.json();
-      const url: string = json.url;
+      const json = (await res.json()) as { url?: string };
+      const url = json.url ?? "";
       setProfile((p) => (p ? { ...p, avatar_url: url } : p));
       window.dispatchEvent(new Event("dogovor:profile"));
       showToast("Аватар обновлён");
@@ -128,14 +128,14 @@ export default function ProfileTab() {
         body: JSON.stringify(form),
       });
       if (res.ok) {
-        const { data } = await res.json();
+        const { data } = (await res.json()) as { data: Partial<ProfileData> };
         setProfile((p) => (p ? { ...p, ...data } : p));
         setSaved(true);
         showToast("Профиль сохранён");
         setTimeout(() => setSaved(false), 2000);
         window.dispatchEvent(new Event("dogovor:profile"));
       } else {
-        const { error } = await res.json().catch(() => ({}));
+        const { error } = (await res.json().catch(() => ({}))) as { error?: string };
         showToast(error || "Не удалось сохранить");
       }
     } finally {
@@ -147,7 +147,7 @@ export default function ProfileTab() {
   const avatarUrl = profile?.avatar_url;
 
   return (
-    <form onSubmit={handleSubmit}>
+    <form onSubmit={(e) => { void handleSubmit(e); }}>
       <Card variant="elevated" padding="lg">
         {loading ? (
           <div className="flex items-center justify-center py-16 text-gray-600 text-sm">
@@ -163,6 +163,7 @@ export default function ProfileTab() {
                   }`}
                 >
                   {avatarUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element -- URL аватара приходит из Supabase Storage и может быть внешним; размеры фиксированы контейнером
                     <img src={avatarUrl} alt="Аватар" className="w-full h-full object-cover" />
                   ) : (
                     initials
@@ -186,7 +187,7 @@ export default function ProfileTab() {
                   type="file"
                   accept="image/*"
                   className="hidden"
-                  onChange={handleAvatarUpload}
+                  onChange={(e) => { void handleAvatarUpload(e); }}
                 />
               </div>
               <div>

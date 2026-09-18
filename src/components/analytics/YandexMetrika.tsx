@@ -3,7 +3,6 @@
  * Яндекс.Метрика: гейтится по granular consent (analytics).
  * Подписывается на broadcast-событие useCookieConsent.
  */
-import { useEffect, useState } from "react";
 import Script from "next/script";
 import { YANDEX_METRIKA_ID } from "@/lib/site";
 import { useCookieConsent } from "@/hooks/useCookieConsent";
@@ -27,6 +26,7 @@ export function YandexMetrika({ nonce }: { nonce?: string }) {
       </Script>
       <noscript>
         <div>
+          {/* eslint-disable-next-line @next/next/no-img-element -- пиксель Метрики: внешний tracking-URL, next/image неприменим */}
           <img
             src={`https://mc.yandex.ru/watch/${YANDEX_METRIKA_ID}`}
             style={{ position: "absolute", left: "-9999px" }}

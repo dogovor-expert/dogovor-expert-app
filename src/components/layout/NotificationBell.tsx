@@ -35,7 +35,7 @@ export default function NotificationBell() {
     try {
       const r = await fetch("/api/notifications", { cache: "no-store", signal });
       if (!r.ok) return;
-      const j = await r.json();
+      const j = (await r.json()) as { notifications?: Notification[]; unread?: number };
       setItems(j.notifications ?? []);
       setUnread(j.unread ?? 0);
     } catch (err) {
@@ -179,7 +179,7 @@ export default function NotificationBell() {
             {unread > 0 && (
               <button
                 role="menuitem"
-                onClick={markAll}
+                onClick={() => { void markAll(); }}
                 className="flex items-center gap-1 text-[11px] text-brand-600 hover:text-brand-700 font-medium"
               >
                 <CheckCheck className="w-3.5 h-3.5" />
@@ -196,7 +196,7 @@ export default function NotificationBell() {
                   key={n.id}
                   role="menuitem"
                   tabIndex={activeIndex === i ? 0 : -1}
-                  onClick={() => !n.read_at && markOne(n.id)}
+                  onClick={() => { if (!n.read_at) void markOne(n.id); }}
                   onMouseEnter={() => setActiveIndex(i)}
                   className={`w-full text-left px-4 py-3 hover:bg-gray-50 transition ${!n.read_at ? "bg-brand-50/40" : ""}`}
                 >

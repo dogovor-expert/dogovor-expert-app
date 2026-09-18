@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import {
   X,
   ShieldCheck,
@@ -8,10 +8,8 @@ import {
   FileText,
   Loader2,
   CheckCircle,
-  Download,
   AlertCircle,
 } from "lucide-react";
-import { CheckPlugin } from "@/components/sign/CheckPlugin";
 import { CertificateList, type CertInfo } from "@/components/sign/CertificateList";
 import { signPdfWithCryptoPro } from "@/lib/signCryptoPro";
 import { embedCms, uint8ArrayToHex } from "@/lib/embedPades";
@@ -23,7 +21,6 @@ interface SignDialogProps {
   documentId: string;
   documentTitle: string;
   designId?: string;
-  html?: string;
 }
 
 interface DisclaimerState {
@@ -45,7 +42,6 @@ export function SignDialog({
   documentId,
   documentTitle,
   designId,
-  html,
 }: SignDialogProps) {
   const [step, setStep] = useState<"disclaimer" | "certificate" | "signing" | "embedding" | "complete" | "error">("disclaimer");
   const [disclaimer, setDisclaimer] = useState<DisclaimerState>({ accepted: false });
@@ -73,11 +69,11 @@ export function SignDialog({
         });
 
         if (!res.ok) {
-          const err = await res.json().catch(() => ({ error: "prepare failed" }));
+          const err = (await res.json().catch(() => ({ error: "prepare failed" }))) as { error?: string };
           throw new Error(err.error || "Не удалось подготовить документ");
         }
 
-        const data: PrepareResponse = await res.json();
+        const data = (await res.json()) as PrepareResponse;
         if (mounted) {
           const placeholder = Uint8Array.from(atob(data.placeholderPdfBase64), (c) => c.charCodeAt(0));
           const content = Uint8Array.from(atob(data.signedContentBase64), (c) => c.charCodeAt(0));
@@ -96,7 +92,7 @@ export function SignDialog({
       }
     }
 
-    prepare();
+    void prepare();
 
     return () => {
       mounted = false;
@@ -182,11 +178,11 @@ export function SignDialog({
       });
 
       if (!res.ok) {
-        const err = await res.json().catch(() => ({ error: "accept failed" }));
+        const err = (await res.json().catch(() => ({ error: "accept failed" }))) as { error?: string };
         throw new Error(err.error || "Не удалось сохранить подпись на сервере");
       }
 
-      const data = await res.json();
+      await res.json();
       setStep("complete");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Ошибка подписания");
@@ -329,7 +325,7 @@ export function SignDialog({
 
               <button
                 type="button"
-                onClick={handleSign}
+                onClick={() => { void handleSign(); }}
                 disabled={!selectedCert || signing}
                 className="w-full py-3 px-4 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >

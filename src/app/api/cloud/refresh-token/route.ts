@@ -37,7 +37,10 @@ async function handler(req: NextRequest) {
   const rl = await checkRateLimit(limiters.authAction, user.id);
   if (!rl.ok) return rateLimitResponse(rl.retryAfter);
 
-  const body = await req.json().catch(() => ({}));
+  const body = (await req.json().catch(() => ({}))) as {
+    provider?: unknown;
+    refreshToken?: unknown;
+  };
   const { provider, refreshToken } = body;
   if (provider !== "google") {
     return NextResponse.json({ error: "Only google provider supported for now" }, { status: 400 });
@@ -87,7 +90,11 @@ async function handler(req: NextRequest) {
     return NextResponse.json({ error: "upstream_error" }, { status: 502 });
   }
 
-  const data = await res.json();
+  const data = (await res.json()) as {
+    access_token?: unknown;
+    expires_in?: unknown;
+    scope?: unknown;
+  };
   if (typeof data.access_token !== "string") {
     return NextResponse.json({ error: "invalid_upstream_response" }, { status: 502 });
   }

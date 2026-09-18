@@ -318,7 +318,7 @@ export function calcCapRepairPenalty(sum: number, fromDate: string, toDate: stri
 /**
  * Госпошлина по имущественному иску — пп. 1 п. 1 ст. 333.19 НК РФ (ред. 09.09.2024).
  */
-export function courtFeeProperty(claim: number, entity: boolean): { fee: number; formula: string } {
+export function courtFeeProperty(claim: number, _entity: boolean): { fee: number; formula: string } {
   if (claim <= 100000) {
     return { fee: 4000, formula: "4 000 ₽ (минимум)" };
   }

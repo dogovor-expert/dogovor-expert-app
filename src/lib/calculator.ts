@@ -13,10 +13,6 @@ export interface CalculationResult {
 
 const REGISTRATION_FEE = 2850;
 
-function formatNumber(n: number): string {
-  return n.toLocaleString("ru-RU");
-}
-
 export function calculateCosts(
   price: number,
   ownershipYears?: number

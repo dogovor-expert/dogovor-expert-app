@@ -47,7 +47,7 @@ function bytesToHex(u8: Uint8Array): string {
 function cacheKey(cert: Certificate, issuerCert: Certificate | null, ocspUrl: string): string {
   // Ключу кэша достаточно уникальности, криптостойкость не нужна —
   // берём hex DER имени издателя напрямую (изоморфно, без node:crypto).
-  const issuerNameHex = bytesToHex(new Uint8Array(cert.issuer.toSchema().toBER(false) as ArrayBuffer));
+  const issuerNameHex = bytesToHex(new Uint8Array(cert.issuer.toSchema().toBER(false)));
   const issuerKeyHex = issuerCert
     ? bytesToHex(
         (issuerCert.subjectPublicKeyInfo.subjectPublicKey as unknown as {
@@ -81,7 +81,7 @@ export async function buildOcspRequestDer(
     });
   } else {
     // Без issuer — собираем минимальный запрос вручную (SHA-1 по RFC 6960 через WebCrypto).
-    const issuerDer = cert.issuer.toSchema().toBER(false) as ArrayBuffer;
+    const issuerDer = cert.issuer.toSchema().toBER(false);
     const issuerNameHash = new Uint8Array(await globalThis.crypto.subtle.digest("SHA-1", issuerDer));
     const serial = getSerialBytes(cert);
     const certId = new pkijs.CertID();
@@ -162,7 +162,7 @@ export async function checkOcsp(
   const reqBase64 = Buffer.from(reqDer).toString("base64");
 
   const timeoutMs = options.timeoutMs ?? 4000;
-  const f = options.fetchImpl ?? (globalThis.fetch as typeof fetch);
+  const f = options.fetchImpl ?? (globalThis.fetch);
   let resp: Response;
   try {
     const controller = new AbortController();
@@ -201,7 +201,7 @@ export async function checkOcsp(
   let ocspResponse: pkijs.OCSPResponse;
   try {
     const respAsn1 = fromBER(
-      respBody.buffer.slice(respBody.byteOffset, respBody.byteOffset + respBody.byteLength) as ArrayBuffer,
+      respBody.buffer.slice(respBody.byteOffset, respBody.byteOffset + respBody.byteLength),
     );
     const parseError = (respAsn1 as { error?: string }).error;
     if (parseError) throw new Error(parseError);

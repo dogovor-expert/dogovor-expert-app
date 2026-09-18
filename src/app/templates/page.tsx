@@ -68,7 +68,7 @@ const PAGE_SIZE = 24;
 function loadFavorites(): Set<string> {
   try {
     const raw = localStorage.getItem(FAVORITES_KEY);
-    return raw ? new Set(JSON.parse(raw)) : new Set();
+    return raw ? new Set(JSON.parse(raw) as string[]) : new Set();
   } catch {
     return new Set();
   }
@@ -200,7 +200,7 @@ function TemplatesContent() {
     if (q.length < 2 || filtered.length > 0) return;
     try {
       const raw = localStorage.getItem("dogovor_zero_queries");
-      const list = raw ? JSON.parse(raw) : [];
+      const list = (raw ? JSON.parse(raw) : []) as { q: string; ts: number }[];
       if (list.length === 0 || list[list.length - 1].q !== q) {
         list.push({ q, ts: Date.now() });
         localStorage.setItem("dogovor_zero_queries", JSON.stringify(list.slice(-50)));

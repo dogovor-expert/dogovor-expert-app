@@ -5,8 +5,8 @@
  */
 import { useState } from "react";
 import {
-  Landmark, Check, X as XIcon, Calculator, Hash,
-  Scale, Percent, Banknote, Home, Baby, FileWarning, TrendingUp, ShieldCheck,
+  Landmark, Check, X as XIcon, Hash,
+  Scale, Percent, Banknote, Home, Baby, FileWarning, TrendingUp,
   Briefcase, Wallet, Store, Plane, Car, CarFront, Fingerprint, Hash as HashIcon, CalendarDays, Recycle, Ship, CarTaxiFront, ShieldQuestion
 } from "lucide-react";
 import CourtFee from "@/components/calculator/CourtFee";
@@ -124,8 +124,8 @@ function DocsTools() {
 export default function UtilsTools() {
   const [group, setGroup] = useState("law");
   const [active, setActive] = useState("docs");
-  const currentGroup = GROUPS.find((g) => g.id === group)!;
-  const current = currentGroup.tools.find((t) => t.id === active)!;
+  const currentGroup = GROUPS.find((g) => g.id === group) ?? GROUPS[0];
+  const current = currentGroup.tools.find((t) => t.id === active) ?? currentGroup.tools[0];
   const Icon = current.icon;
 
   const selectTool = (gid: string, tid: string) => {

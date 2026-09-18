@@ -6,6 +6,13 @@ import { logSignAction } from "@/lib/sign-audit";
 
 const SHA256_HEX = "sha-256";
 
+interface SignatureRow {
+  user_id: string;
+  signature_path: string;
+  document_hash_sha256: string;
+  document_id: string;
+}
+
 async function sha256Hex(data: ArrayBuffer): Promise<string> {
   const buffer = await crypto.subtle.digest(SHA256_HEX, data);
   return Array.from(new Uint8Array(buffer))
@@ -34,21 +41,24 @@ export async function GET(
   const admin = createAdminClient();
 
   // Загружаем запись подписи
-  const { data: sig, error: sigError } = await admin
+  const sigResult = await admin
     .from("document_signatures")
     .select("*")
     .eq("id", id)
     .single();
 
-  if (sigError || !sig) {
+  const rawSig: unknown = sigResult.data;
+  const sig = rawSig as SignatureRow | null;
+
+  if (sigResult.error || !sig) {
     return NextResponse.json({ error: "signature not found" }, { status: 404 });
   }
 
   // Проверка прав доступа
   if (sig.user_id !== user.id) {
     // Админы могут скачивать любые
-    const { data: isAdmin } = await admin.rpc("is_admin");
-    if (!isAdmin) {
+    const isAdminResult = await admin.rpc("is_admin");
+    if (!isAdminResult.data) {
       return NextResponse.json({ error: "forbidden" }, { status: 403 });
     }
   }

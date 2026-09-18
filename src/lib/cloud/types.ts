@@ -29,10 +29,25 @@ export interface CloudProvider {
   refreshTokens?(tokens: CloudTokens): Promise<CloudTokens>;
   /** Список папок (для folder picker) */
   listFolders?(tokens: CloudTokens, path: string): Promise<CloudFolder[]>;
+  /**
+   * Список файлов в папке облака (для выбора бэкапа). Реализуется не всеми
+   * провайдерами; используется менеджером как best-effort.
+   */
+  listFiles?(
+    tokens: CloudTokens,
+    folder: string
+  ): Promise<
+    Array<{ name?: string; path?: string; size?: number; modified?: string; created?: string }>
+  >;
+  /** Поиск файла по имени (реализуется Google Drive). */
+  searchFile?(
+    tokens: CloudTokens,
+    name: string
+  ): Promise<Array<{ id?: string; name?: string }>>;
   /** Создание папки (для folder picker) */
   createFolder?(
     tokens: CloudTokens,
-    ...args: any[]
+    ...args: unknown[]
   ): Promise<void | string>;
   /** Загрузка файла в облако */
   uploadFile(

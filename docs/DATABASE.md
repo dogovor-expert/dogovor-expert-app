@@ -1,10 +1,12 @@
 # 🗄️ КАРТА БАЗЫ ДАННЫХ (SUPABASE)
 
-**Project ref:** `xkakhztknlpzqarklewq`  
-**URL:** `https://xkakhztknlpzqarklewq.supabase.co`  
+**Project ref:** self-hosted на VDS (без облачного ref)  
+**URL:** `https://supabase.vds.dogovor.expert` (прод; VDS 82.146.35.220)  
 **Auth:** Supabase Auth (email/password, Google OAuth, Yandex OAuth через `custom:yandex` provider, 2FA TOTP)  
-**Миграции:** `supabase/migrations/*.sql` (19 файлов)  
+**Миграции:** `supabase/migrations/*.sql` (30 файлов, в т.ч. `20260918_ocr_consent_log.sql`)  
 **RLS:** Включён на всех пользовательских таблицах.
+
+> Облачный ref `xkakhztknlpzqarklewq.supabase.co` остался только в локальном dev-окружении (`.env.local`/`.env.production.local`). Прод использует БД на VDS.
 
 ## 1. Таблицы
 
@@ -110,7 +112,7 @@ CREATE POLICY "self_insert" ON public.documents
 
 ## 8. Backup и восстановление
 
-- Supabase автоматически делает daily backup (Point-in-Time Recovery включён на Pro).
+- На self-hosted Supabase облачные auto-daily backup/PITR **не действуют**: резервирование настраивается на уровне базы/VDS (например, pg_dump по crontab или бэкап снапшотами). Текущую схему бэкапа прод-БД уточнить у владельца и зафиксировать здесь.
 - Владелец: `pochta.alik@gmail.com` (id `1c402366-877a-412e-83d8-d19cc507458a`).
 
 ## 9. Правила для новых миграций
@@ -120,9 +122,9 @@ CREATE POLICY "self_insert" ON public.documents
 3. RLS-политики: явно `ENABLE ROW LEVEL SECURITY` + `CREATE POLICY` для каждой операции.
 4. Service-role only: `GRANT ... TO service_role`, **отзывать** у `anon`/`authenticated`.
 5. **Не возвращать** клиентские GRANT'ы на `subscriptions`/`payments` (миграции 009, 20260902).
-6. После написания миграции — применить к prod через Management API `POST /v1/projects/<ref>/database/query` (токен из справочника, спросить владельца) или supabase db push / SQL editor.
+6. После написания миграции — применить к прод-БД (self-hosted) через панель `https://supabase.vds.dogovor.expert` → SQL Editor, либо `npx supabase db push --db-url ...` (см. docs/DEPLOY.md и DEPLOY_TSL.md).
 7. Зафиксировать в `docs/CHANGELOG_AGENTS.md` (раздел "DB").
 
 ---
 
-**Последнее обновление:** 2026-09-04.
+**Последнее обновление:** 2026-09-18.

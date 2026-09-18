@@ -1,4 +1,4 @@
-import type { LegalTemplate, TemplateField } from "@/data/types";
+import type { LegalTemplate } from "@/data/types";
 
 /** Извлекает «роль» из id поля: seller_inn → "seller", owner_phone → "owner",
  *  fio → "default", contract_price → "contract". */

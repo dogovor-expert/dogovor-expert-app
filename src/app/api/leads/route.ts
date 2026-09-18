@@ -18,7 +18,7 @@ async function postHandler(req: Request) {
   const rl = await checkRateLimit(limiters.publicForm, clientIp(req));
   if (!rl.ok) return rateLimitResponse(rl.retryAfter);
 
-  const rawBody = await req.json().catch(() => null);
+  const rawBody = (await req.json().catch(() => null)) as Record<string, unknown> | null;
   if (!rawBody) {
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
   }
@@ -57,13 +57,14 @@ async function postHandler(req: Request) {
   const { service, brand, phone, vin } = body;
 
   const supabase = createAdminClient();
-  const { data, error } = await supabase
+  const leadResult = await supabase
     .from("leads")
     .insert({ service, brand, phone, vin: vin ?? "", status: "new" })
     .select()
     .single();
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (leadResult.error) return NextResponse.json({ error: leadResult.error.message }, { status: 500 });
+  const data: unknown = leadResult.data;
 
   const text = `Новый лид (растаможка)\nУслуга: ${service}\nБренд: ${brand}\nVIN: ${vin || "—"}\nТел: ${phone}`;
   await sendTelegram("🔔 " + text);
@@ -111,19 +112,20 @@ async function patchHandler(req: Request) {
   const supabase = await requireAdmin();
   if (!supabase) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
 
-  const body = await req.json().catch(() => null);
-  if (!body?.id || !STATUSES.includes(body.status)) {
+  const body = (await req.json().catch(() => null)) as { id?: unknown; status?: unknown } | null;
+  if (!body?.id || typeof body.status !== "string" || !STATUSES.includes(body.status as (typeof STATUSES)[number])) {
     return NextResponse.json({ error: "invalid id or status" }, { status: 400 });
   }
 
-  const { data, error } = await supabase
+  const updResult = await supabase
     .from("leads")
     .update({ status: body.status })
     .eq("id", body.id)
     .select()
     .single();
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (updResult.error) return NextResponse.json({ error: updResult.error.message }, { status: 500 });
+  const data: unknown = updResult.data;
   return NextResponse.json({ data });
 }
 

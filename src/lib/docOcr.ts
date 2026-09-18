@@ -3,10 +3,6 @@ import type { DocSlot } from "@/lib/docRequirements";
 import type {
   PassportData,
   VehicleData,
-  PersonEntity,
-  VehicleEntity,
-  CompanyEntity,
-  LicenseEntity,
 } from "@/lib/entities";
 import {
   toDigits,
@@ -15,7 +11,6 @@ import {
   normalizePlate,
   latinToCyrillic as latinToCyr,
 } from "@/lib/ocrPostprocess";
-import { mapEntityToFields } from "@/lib/fieldMap";
 
 export type { PassportData, VehicleData, PersonEntity, VehicleEntity, CompanyEntity, LicenseEntity } from "@/lib/entities";
 

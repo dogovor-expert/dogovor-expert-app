@@ -4,7 +4,7 @@ import { useState } from "react";
 import { LEGAL_TEMPLATES } from "@/data/legalTemplates";
 import { TEMPLATE_PREVIEWS } from "@/data/templatePreviews";
 import { renderTemplateDocument } from "@/lib/renderDocument";
-import { DOC_DESIGNS, type DesignId } from "@/lib/docDesign";
+import { type DesignId } from "@/lib/docDesign";
 
 const SAMPLE: Record<string, string> = {
   city: "Москва",
@@ -45,7 +45,7 @@ const SAMPLE: Record<string, string> = {
 
 export default function DebugPdfPage() {
   const [templateId, setTemplateId] = useState("dkp-auto");
-  const [designId, setDesignId] = useState<DesignId>("classic");
+  const [designId] = useState<DesignId>("classic");
   const [pageCount, setPageCount] = useState<number | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -99,7 +99,7 @@ export default function DebugPdfPage() {
           ))}
         </select>
         <button
-          onClick={handleDownload}
+          onClick={() => { void handleDownload(); }}
           disabled={busy}
           className="px-4 py-2 rounded-lg bg-brand-500 text-white text-sm font-medium disabled:opacity-50"
         >

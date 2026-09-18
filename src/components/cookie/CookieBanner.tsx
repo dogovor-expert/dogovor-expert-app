@@ -19,7 +19,7 @@
  *    после гидратации, без мерцания — useSyncExternalStore даёт реальное
  *    значение синхронно).
  */
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Cookie, Settings, X, Check } from "lucide-react";
 import Link from "next/link";
 import { useCookieConsent, type CookieCategories } from "@/hooks/useCookieConsent";
@@ -37,11 +37,9 @@ export function CookieBanner({ settingsOpenExternal, onSettingsClosed }: CookieB
   const {
     consent,
     isReady,
-    categories,
     acceptAll,
     declineAll,
     update,
-    reset,
   } = useCookieConsent();
   const [mounted, setMounted] = useState(false);
   const [settingsOpenInternal, setSettingsOpenInternal] = useState(false);
@@ -56,10 +54,10 @@ export function CookieBanner({ settingsOpenExternal, onSettingsClosed }: CookieB
 
   // Внешний флаг имеет приоритет — иконка в хедере открывает панель
   const settingsOpen = settingsOpenExternal === true || settingsOpenInternal;
-  const closeSettings = () => {
+  const closeSettings = useCallback(() => {
     setSettingsOpenInternal(false);
     onSettingsClosed?.();
-  };
+  }, [onSettingsClosed]);
 
   useEffect(() => {
     setMounted(true);
@@ -92,7 +90,7 @@ export function CookieBanner({ settingsOpenExternal, onSettingsClosed }: CookieB
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [mounted, settingsOpen, consent, isReady, declineAll]);
+  }, [mounted, settingsOpen, consent, isReady, declineAll, closeSettings]);
 
   // autoFocus на «Принять всё» при первом визите (только если consent не выбран)
   useEffect(() => {

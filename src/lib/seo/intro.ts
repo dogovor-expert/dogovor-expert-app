@@ -105,8 +105,9 @@ export function fieldsSummary(template: LegalTemplate): string[] {
   const grouped = new Map<string, string[]>();
   for (const f of template.fields) {
     const label = FIELD_CATEGORY_LABELS[f.category] || "прочие данные";
-    if (!grouped.has(label)) grouped.set(label, []);
-    grouped.get(label)!.push(f.label);
+    const arr = grouped.get(label);
+    if (arr) arr.push(f.label);
+    else grouped.set(label, [f.label]);
   }
   return [...grouped.entries()].map(
     ([cat, labels]) => `${cat[0].toUpperCase()}${cat.slice(1)}: ${labels.join(", ")}.`

@@ -16,7 +16,7 @@ async function patchHandler(req: Request, { params }: Params) {
   } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
 
-  const body = await req.json().catch(() => null);
+  const body = (await req.json().catch(() => null)) as Record<string, unknown> | null;
   if (!body) return NextResponse.json({ error: "bad body" }, { status: 400 });
 
   // Оптимистичная блокировка: если клиент прислал `If-Match: <updated_at>`,
@@ -63,7 +63,7 @@ async function patchHandler(req: Request, { params }: Params) {
   }
   updates.updated_at = new Date().toISOString();
 
-  const { data, error } = await supabase
+  const updResult = await supabase
     .from("documents")
     .update(updates)
     .eq("id", id)
@@ -71,9 +71,10 @@ async function patchHandler(req: Request, { params }: Params) {
     .select()
     .single();
 
-  if (error && error.code !== "PGRST116") {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  if (updResult.error && updResult.error.code !== "PGRST116") {
+    return NextResponse.json({ error: updResult.error.message }, { status: 500 });
   }
+  const data: unknown = updResult.data;
   if (!data) return NextResponse.json({ error: "not found" }, { status: 404 });
   return NextResponse.json({ data });
 }

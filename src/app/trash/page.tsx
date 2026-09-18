@@ -3,7 +3,7 @@ import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { useState, useEffect, useCallback } from "react";
-import { Search, Trash2, RotateCcw, AlertTriangle, Clock, FileText, Info } from "lucide-react";
+import { Search, Trash2, RotateCcw, AlertTriangle, FileText, Info } from "lucide-react";
 import { tokenGroups, textMatchesTokens } from "@/lib/search";
 
 interface TrashedDoc {
@@ -72,7 +72,7 @@ export default function TrashPage() {
     try {
       const res = await fetch("/api/trash");
       if (!res.ok) throw new Error("Failed to load");
-      const { data } = await res.json();
+      const { data } = (await res.json()) as { data?: TrashedDoc[] };
       setDocs(Array.isArray(data) ? data : []);
     } catch {
       showToast("Не удалось загрузить корзину", "error");
@@ -83,7 +83,7 @@ export default function TrashPage() {
   }, []);
 
   useEffect(() => {
-    loadDocs();
+    void loadDocs();
   }, [loadDocs]);
 
   const toggleSelect = (id: string) => {
@@ -112,7 +112,7 @@ export default function TrashPage() {
       if (!res.ok) throw new Error("Restore failed");
       showToast(`Восстановлено: ${selected.size}`);
       setSelected(new Set());
-      loadDocs();
+      void loadDocs();
     } catch {
       showToast("Не удалось восстановить", "error");
     }
@@ -134,7 +134,7 @@ export default function TrashPage() {
       showToast(`Навсегда удалено: ${selected.size}`);
       setSelected(new Set());
       setConfirmDelete(false);
-      loadDocs();
+      void loadDocs();
     } catch {
       showToast("Не удалось удалить навсегда", "error");
       setConfirmDelete(false);
@@ -184,7 +184,7 @@ export default function TrashPage() {
           <p className="text-gray-600 mt-1">Документы автоматически удаляются через 30 дней</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" disabled={selected.size === 0} onClick={handleRestore}>
+          <Button variant="outline" size="sm" disabled={selected.size === 0} onClick={() => { void handleRestore(); }}>
             <RotateCcw className="w-4 h-4" />
             Восстановить ({selected.size})
           </Button>
@@ -203,7 +203,7 @@ export default function TrashPage() {
               <p className="text-sm font-medium text-red-800 mb-1">Подтвердите удаление</p>
               <p className="text-sm text-red-700 mb-3">Вы действительно хотите безвозвратно удалить {selected.size} документ(ов)? Это действие нельзя отменить.</p>
               <div className="flex gap-2">
-                <Button variant="danger" size="sm" onClick={confirmPermanentDelete}>
+                <Button variant="danger" size="sm" onClick={() => { void confirmPermanentDelete(); }}>
                   <Trash2 className="w-4 h-4" />
                   Удалить {selected.size} документ(ов)
                 </Button>
@@ -279,7 +279,7 @@ export default function TrashPage() {
                       <button
                         onClick={() => {
                           setSelected(new Set([doc.id]));
-                          handleRestore();
+                          void handleRestore();
                         }}
                         className="p-1.5 hover:bg-emerald-50 rounded-lg text-emerald-600 transition-colors" title="Восстановить"
                       >

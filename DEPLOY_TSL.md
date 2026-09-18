@@ -1,98 +1,69 @@
-# 🚀 Деплой TSL интеграции (Trust Service List Минцифры)
+# 🚀 TSL интеграция (Trust Service List Минцифры) на VDS
+
+Актуализировано 2026-09-18 под self-hosted стек: **прод на VDS** (CapRover + self-hosted Supabase), Vercel больше не используется.
 
 ## ⚠️ БЕЗОПАСНОСТЬ
 
 **service_role ключ Supabase:**
 - Обходит ВСЕ Row Level Security (RLS) политики
 - Даёт полный доступ к БД (любые SELECT/INSERT/UPDATE/DELETE)
-- Доступ к Storage, Auth, Edge Functions
+- Доступ к Storage, Auth
 - Должен использоваться **ТОЛЬКО** для миграций и админ-задач
 - **НЕ отправляйте** его в чатах, issues, email
-- Храните только в `.env.local` (НЕ коммитить) или Vercel Environment Variables
-- **Сбрасывайте** после каждого использования (Supabase Dashboard → Settings → API)
+- **НЕ храните** в коде/репо; на проде он живёт в environment variables приложения CapRover (или в контейнере БД — для миграций)
+- **Сбрасывайте** после каждого использования (Supabase панель self-hosted → Settings → API Keys)
 
 ---
 
-## 🚀 БЫСТРЫЙ ДЕПЛОЙ (всё в одной команде)
+## Миграция применил — что дальше
 
-Vercel CLI уже установлен. Если вы залогинены (`vercel login`), запустите:
+Миграция TSL уже в репозитории: `supabase/migrations/20260907_tsl_certificates.sql`. Cron на VDS уже настроен (см. docs/DEPLOY.md):
 
-```bash
-npm run deploy:tsl
+```
+0 3 * * * curl -fsS -H "Authorization: Bearer $CRON_SECRET" https://dogovor.expert/api/cron/tsl-refresh
 ```
 
-**Что делает скрипт:**
-1. Проверяет авторизацию Vercel
-2. Запрашивает `SUPABASE_PROJECT_REF` и пароль БД
-3. Применяет миграцию (через psql или pg)
-4. Деплоит на Vercel production
-5. Настраивает `CRON_SECRET` (генерирует если не задан)
-6. Опционально: `TSL_USE_REMOTE` / `TSL_LOCAL_FILE`
-7. Тестирует cron endpoint
+## Как применить миграцию к self-hosted БД
 
-**Все credentials вводятся интерактивно, ничего не сохраняется на диск.**
+**Через SQL Editor self-hosted (рекомендуется):**
+1. Откройте панель `https://supabase.vds.dogovor.expert` (вход под владельцем).
+2. SQL Editor → вставить содержимое `supabase/migrations/20260907_tsl_certificates.sql` → Run.
 
----
-
-## Ручной деплой (если автоматический не подходит)
-
-### Шаг 1: Применить миграцию
-
-**Через Supabase Dashboard (рекомендуется):**
-1. Откройте https://supabase.com/dashboard/project/_/sql/new
-2. Скопируйте содержимое файла `supabase/migrations/20260907_tsl_certificates.sql`
-3. Вставьте в SQL Editor
-4. Нажмите **"Run"** (или Ctrl+Enter)
-
-**Через npm скрипт:**
+**Через npm скрипт (прямой доступ к Postgres):**
 ```bash
 npm run migrate:tsl
-# Введите connection string когда попросит
+# Введите connection string (SUPABASE_DB_POOL_URL) когда попросит
 ```
 
-**Через Supabase CLI:**
+**Через Supabase CLI (указав self-hosted URL):**
 ```bash
-npx supabase db push
+npx supabase db push --db-url "postgresql://postgres:<пароль>@supabase.vds.dogovor.expert:5432/postgres"
 ```
 
 ---
 
-### Шаг 2: Закоммитить и запушить
+## ENV на проде (CapRover)
 
-```bash
-git add vercel.json scripts/apply-migration.mjs scripts/deploy-tsl.mjs DEPLOY_TSL.md src/lib/tsl-parser.ts src/lib/tsl-fetcher.ts src/lib/trusted-roots.ts src/app/api/cron/tsl-refresh/route.ts
-git commit -m "feat: TSL integration (Trust Service List Минцифры)"
-git push
-```
-
-Vercel автоматически задеплоит и подхватит `vercel.json` (cron в 03:00 UTC).
-
----
-
-### Шаг 3: Настроить ENV в Vercel Dashboard
-
-1. Vercel Dashboard → Project → Settings → Environment Variables
-2. Добавить:
+Среда приложения CapRover уже содержит (или должна содержать):
 
 ```env
-# Обязательно
 CRON_SECRET=<случайные_32_символа>
-# Сгенерировать: node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+NEXT_PUBLIC_SUPABASE_URL=https://supabase.vds.dogovor.expert
+SUPABASE_SERVICE_ROLE_KEY=<...>
 
-# Опционально (для offline режима)
+# Опционально (offline-режим)
 TSL_USE_REMOTE=false
 TSL_LOCAL_FILE=/tmp/tsl.xml
 ```
 
-3. **Redeploy** проект
+После правки env — **пересобрать образ** (NEXT_PUBLIC_* инлайнятся при билде), runtime-only переменные достаточно «перезапустить».
 
 ---
 
-### Шаг 4: Проверить работу
+## Проверка работы
 
-**Через npm скрипт:**
+**Через npm скрипт (URL теперь фиксированный, без VERCEL_URL):**
 ```bash
-export VERCEL_URL=https://dogovor.expert
 export CRON_SECRET=ваш_секрет
 npm run tsl:status      # GET /api/cron/tsl-refresh?action=status
 npm run tsl:refresh     # POST /api/cron/tsl-refresh (принудительный sync)
@@ -124,24 +95,11 @@ curl -X POST "https://dogovor.expert/api/cron/tsl-refresh" \
 
 ---
 
-### Шаг 5: Сбросить service_role ключ
-
-⚠️ **ОБЯЗАТЕЛЬНО после применения миграции!**
-
-1. Supabase Dashboard → Settings → API
-2. **Generate new service_role key** → затем **Revoke** старый
-3. **НЕ сохраняйте** новый ключ в коде, репо, чатах
-4. Если используется Vercel env var — обновите там
-
----
-
-## Проверка в Supabase Dashboard
-
-### Что должно появиться в БД:
+## Проверка в БД
 
 **Таблица `tsl_certificates`:**
 ```sql
-SELECT 
+SELECT
   COUNT(*) as total,
   COUNT(*) FILTER (WHERE is_root = true) as root_count,
   MAX(last_synced_at) as last_sync
@@ -160,48 +118,34 @@ SELECT * FROM tsl_sync_metadata;
 ## Troubleshooting
 
 ### TSL не загружается (fetch failed)
-- Vercel → Settings → Functions → увеличить timeout
-- Попробуйте `TSL_USE_REMOTE=false` + `TSL_LOCAL_FILE=/tmp/tsl.xml`
-- Положите `tsl.xml` в `/tmp/` через Vercel CLI: `vercel cp ./tsl.xml /tmp/tsl.xml`
+- При `TSL_USE_REMOTE=false`: убедиться, что `TSL_LOCAL_FILE` доступен в контейнере (для self-hosted класть в volume).
+- Внешний сетевой доступ с VDS: проверить, что с сервера доступен источник TSL (URL Минцифры) и у контейнера разрешён исходящий трафик.
 
-### Миграция не применяется (psql не найден)
-- Установите PostgreSQL client: https://www.postgresql.org/download/
-- Или используйте Supabase Dashboard (рекомендуется)
-- Скрипт `scripts/apply-migration.mjs` сам установит `pg` если нужно
+### Миграция не применяется (psql/connection refused)
+- Проверить, что self-hosted Supabase отвечает: `https://supabase.vds.dogovor.expert` → 401 (живой).
+- Использовать панель SQL Editor (рекомендуется).
 
-### Vercel CLI не авторизован
-```bash
-vercel login
-# Введите email, перейдите по ссылке в email
-```
-
-### Cron не запускается
-- Проверьте Vercel Dashboard → Settings → Cron Jobs
-- Должна быть запись `/api/cron/tsl-refresh` с `0 3 * * *`
-- Vercel Hobby: только 2 cron, может быть конфликт с auto-renew/trash-cleanup
-
-### Цепочка доверия не работает
-- Проверьте, что в `pades-verify.ts` `getTrustedRoots()` возвращает непустой массив
-- Смотрите логи: `[trusted-roots] TSL loaded ... root certs`
-- Если `root_certificates_count: 0` — возможно, TSL не синхронизировался
+### Chain of trust не работает
+- Проверьте, что в `pades-verify.ts` `getTrustedRoots()` возвращает непустой массив.
+- Смотрите логи: `docker logs <container>` — `[trusted-roots] TSL loaded ... root certs`.
+- Если `root_certificates_count: 0` — возможно, TSL не синхронизировался (запусти `npm run tsl:refresh`).
 
 ---
 
 ## Мониторинг
 
-### Логи (Vercel Dashboard → Logs):
-- `[tsl-refresh] Completed in Xms` — успешный sync
-- `[tsl-refresh] Failed:` — ошибка (алерт в Sentry)
-- `[trusted-roots] TSL loaded (from cache/fresh)` — кэш работает
+### Логи (контейнер CapRover → App Logs):
+- `[tsl-refresh] Completed in Xms` — успешный sync.
+- `[tsl-refresh] Failed:` — ошибка (алерт в Sentry).
+- `[trusted-roots] TSL loaded (from cache/fresh)` — кэш работает.
 
 ### Sentry alerts:
 - Error: `[tsl-refresh] Remote TSL fetch failed`
 - Error: `[trusted-roots] No TSL data available`
 
-### Vercel Functions метрики:
-- `/api/cron/tsl-refresh` → invocations, errors, duration
+### Деплой изменений кода TSL
+Собирается и деплоится тем же путём, что и само приложение (docs/DEPLOY.md), т.к. TSL-логика — часть приложения.
 
 ---
 
-**Версия:** 2026-09-06
-**Автор:** Claude (opencode)
+**Версия:** 2026-09-06 (актуализировано 2026-09-18 под VDS)

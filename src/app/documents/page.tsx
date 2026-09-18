@@ -16,8 +16,6 @@ import {
   Pencil,
   X,
   Cloud,
-  Upload,
-  Loader2,
   HardDrive,
   Copy,
   Calculator,
@@ -46,6 +44,12 @@ interface ServerDoc {
   status: string;
   created_at: string;
   updated_at: string;
+}
+
+interface DocumentsResponse {
+  data?: ServerDoc[];
+  hasMore?: boolean;
+  nextCursor?: string | null;
 }
 
 interface DocItem {
@@ -94,7 +98,7 @@ export default function DocumentsPage() {
   const [importToast, setImportToast] = useState<string | null>(null);
   const [cloudProviders, setCloudProviders] = useState<Array<{id: string; name: string}>>([]);
   const [exporting, setExporting] = useState<string | null>(null);
-  const [exportToast, setExportToast] = useState<string | null>(null);
+  const [, setExportToast] = useState<string | null>(null);
   const [folderPicker, setFolderPicker] = useState<{ providerId: CloudProviderId; docId: string; format: "pdf" | "vault-backup" } | null>(null);
 
   const toDocItem = useCallback(
@@ -166,7 +170,7 @@ export default function DocumentsPage() {
       try {
         const resIds = await fetch("/api/documents?ids=1");
         if (resIds.ok) {
-          const { data } = await resIds.json();
+          const { data } = (await resIds.json()) as { data?: ServerDoc[] };
           serverIds = new Set((data ?? []).map((s: ServerDoc) => s.template_id));
         }
       } catch {
@@ -176,7 +180,7 @@ export default function DocumentsPage() {
       try {
         const res = await fetch(`/api/documents?${buildParams(q)}`);
         if (res.ok) {
-          const { data, hasMore: hm, nextCursor: nc } = await res.json();
+          const { data, hasMore: hm, nextCursor: nc } = (await res.json()) as DocumentsResponse;
           items = serverDocsToItems(data ?? []);
           setHasMore(!!hm);
           setNextCursor(nc ?? null);
@@ -224,7 +228,7 @@ export default function DocumentsPage() {
     try {
       const res = await fetch(`/api/documents?${buildParams(debouncedSearch, nextCursor)}`);
       if (res.ok) {
-        const { data, hasMore: hm, nextCursor: nc } = await res.json();
+        const { data, hasMore: hm, nextCursor: nc } = (await res.json()) as DocumentsResponse;
         const items = serverDocsToItems(data ?? []);
         setDocs((prev) => {
           const seen = new Set(prev.map((d) => d.id));
@@ -251,7 +255,7 @@ export default function DocumentsPage() {
         body: JSON.stringify({ drafts: local }),
       });
       if (res.ok) {
-        const { imported } = await res.json();
+        const { imported } = (await res.json()) as { imported?: number };
         setImportToast(`${imported} документов импортировано в аккаунт`);
         setImportCount(0);
         setTimeout(() => setImportToast(null), 4000);
@@ -261,7 +265,7 @@ export default function DocumentsPage() {
       }
     } finally {
       setImporting(false);
-      loadDocs(debouncedSearch);
+      void loadDocs(debouncedSearch);
     }
   };
 
@@ -271,7 +275,7 @@ export default function DocumentsPage() {
   }, [search]);
 
   useEffect(() => {
-    loadDocs(debouncedSearch);
+    void loadDocs(debouncedSearch);
   }, [loadDocs, debouncedSearch]);
 
   useEffect(() => {
@@ -280,7 +284,7 @@ export default function DocumentsPage() {
       const providers = await getConnectedProviders();
       setCloudProviders(providers.map((p) => ({ id: p.id, name: p.name })));
     }
-    loadCloud();
+    void loadCloud();
   }, []);
 
   // Поиск выполняется на сервере (q + tpls из TEMPLATE_META), категория — на
@@ -308,11 +312,11 @@ export default function DocumentsPage() {
   };
 
   const handleDelete = async (templateId: string) => {
-    const server = await fetch("/api/documents").then((r) =>
+    const server = (await fetch("/api/documents").then((r) =>
       r.ok ? r.json() : null
-    );
+    )) as { data?: ServerDoc[] } | null;
     const rows = server?.data ?? [];
-    const s = rows.find((x: ServerDoc) => x.template_id === templateId);
+    const s = rows.find((x) => x.template_id === templateId);
     if (s) {
       try {
         await fetch(`/api/documents/${s.id}`, { method: "DELETE" });
@@ -322,7 +326,7 @@ export default function DocumentsPage() {
     }
     clearDraft(templateId);
     clearDraftVersions(templateId);
-    loadDocs(debouncedSearch);
+    void loadDocs(debouncedSearch);
   };
 
   const handleMigrateToVault = async (templateId: string) => {
@@ -334,11 +338,11 @@ export default function DocumentsPage() {
       setTimeout(() => setExportToast(null), 4000);
       return;
     }
-    const server = await fetch("/api/documents").then((r) =>
+    const server = (await fetch("/api/documents").then((r) =>
       r.ok ? r.json() : null
-    );
+    )) as { data?: ServerDoc[] } | null;
     const rows = server?.data ?? [];
-    const s = rows.find((x: ServerDoc) => x.template_id === templateId);
+    const s = rows.find((x) => x.template_id === templateId);
     if (!s) return;
     try {
       // Сохраняем в vault
@@ -359,7 +363,7 @@ export default function DocumentsPage() {
       await fetch(`/api/documents/${s.id}`, { method: "DELETE" });
       clearDraft(templateId);
       clearDraftVersions(templateId);
-      loadDocs(debouncedSearch);
+      void loadDocs(debouncedSearch);
       setExportToast("Документ перенесён в защищённое хранилище на этом устройстве");
       setTimeout(() => setExportToast(null), 4000);
     } catch (e) {
@@ -414,7 +418,7 @@ export default function DocumentsPage() {
         const { renderTemplateDocument } = await import("@/lib/renderDocument");
         const { buildPdf } = await import("@/lib/exportPdf");
         const html = renderTemplateDocument(
-          { id: templateId, name: tpl?.name || templateId, fields: [] } as any,
+          { id: templateId, name: tpl?.name || templateId, fields: [] },
           vaultDoc.values,
           { qrSvg: null, previewTemplate: undefined }
         );
@@ -429,7 +433,7 @@ export default function DocumentsPage() {
         const { renderTemplateDocument } = await import("@/lib/renderDocument");
         const { buildPdf } = await import("@/lib/exportPdf");
         const html = renderTemplateDocument(
-          { id: templateId, name: tpl?.name || templateId, fields: [] } as any,
+          { id: templateId, name: tpl?.name || templateId, fields: [] },
           draft.values,
           { qrSvg: null, previewTemplate: undefined }
         );
@@ -481,7 +485,7 @@ export default function DocumentsPage() {
     restoreDraftVersion(historyDoc.id, v);
     setHistoryToast(`Версия от ${formatDate(v.savedAt)} восстановлена`);
     setHistoryDoc(null);
-    loadDocs(debouncedSearch);
+    void loadDocs(debouncedSearch);
     setTimeout(() => setHistoryToast(null), 3000);
   };
 
@@ -508,7 +512,7 @@ export default function DocumentsPage() {
         </div>
         <div className="flex items-center gap-2">
           <button
-            onClick={() => loadDocs(debouncedSearch)}
+            onClick={() => { void loadDocs(debouncedSearch); }}
             className="p-2.5 rounded-xl border border-gray-200 hover:bg-gray-50 transition-colors"
             title="Обновить"
           >
@@ -564,7 +568,7 @@ export default function DocumentsPage() {
           </div>
           <Button            variant="primary"
             size="sm"
-            onClick={handleImport}
+            onClick={() => { void handleImport(); }}
             disabled={importing}
             className="flex-shrink-0"
           >
@@ -763,7 +767,7 @@ export default function DocumentsPage() {
                            )}
                            {!doc.calc && (
                              <button
-                               onClick={() => handleMigrateToVault(doc.id)}
+                                onClick={() => { void handleMigrateToVault(doc.id); }}
                                className="p-1.5 hover:bg-blue-50 rounded-lg text-blue-600 hover:text-blue-700 transition-colors"
                                title="Перенести в локальное защищённое хранилище (удалить с сервера)"
                              >
@@ -771,7 +775,7 @@ export default function DocumentsPage() {
                              </button>
                            )}
                            <button
-                             onClick={() => handleDelete(doc.id)}
+                              onClick={() => { void handleDelete(doc.id); }}
                              className="p-1.5 hover:bg-red-50 rounded-lg text-gray-600 hover:text-red-500 transition-colors"
                              title="Удалить"
                            >
@@ -796,7 +800,7 @@ export default function DocumentsPage() {
                 <button
                   className="px-4 py-1.5 border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-40 font-medium"
                   disabled={loadingMore}
-                  onClick={loadMore}
+                  onClick={() => { void loadMore(); }}
                 >
                   {loadingMore ? "Загрузка…" : "Загрузить ещё"}
                 </button>
@@ -838,7 +842,7 @@ export default function DocumentsPage() {
               </pre>
             </div>
             <div className="flex items-center justify-end gap-2 p-4 border-t border-gray-100">
-              <Button variant="secondary" size="sm" onClick={copyCalcProtocol}>
+              <Button variant="secondary" size="sm" onClick={() => { void copyCalcProtocol(); }}>
                 <Copy className="w-3.5 h-3.5" />
                 {calcCopied ? "Скопировано" : "Копировать"}
               </Button>
@@ -948,9 +952,8 @@ export default function DocumentsPage() {
           >
             <FolderPicker
               providerId={folderPicker.providerId}
-              onSelect={async (path) => {
-                await handleExportToCloudWithPath(folderPicker.docId, folderPicker.providerId, folderPicker.format, path);
-                setFolderPicker(null);
+              onSelect={(path) => {
+                void handleExportToCloudWithPath(folderPicker.docId, folderPicker.providerId, folderPicker.format, path).then(() => setFolderPicker(null));
               }}
               onCancel={() => setFolderPicker(null)}
               initialPath="/Dogovor.expert"

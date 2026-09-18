@@ -5,6 +5,18 @@ function isRecord(v: unknown): v is Record<string, unknown> {
   return typeof v === "object" && v !== null;
 }
 
+/** Строковое представление asn1js valueBlock (OID или текстовое значение). */
+function valueBlockToString(v: unknown): string {
+  if (typeof v === "string") return v;
+  if (typeof v === "number" || typeof v === "boolean") return String(v);
+  if (isRecord(v)) {
+    if (typeof v.value === "string") return v.value;
+    const fn: unknown = v.toString;
+    if (typeof fn === "function") return (fn as () => string).call(v);
+  }
+  return "";
+}
+
 export interface ParsedSubject {
   cn?: string;
   snils?: string;
@@ -118,7 +130,7 @@ export function getExtensions(cert: Certificate): CertificateExtensions {
 
   for (const ext of cert.extensions) {
     const oid = ext.extnID;
-    const value = ext.parsedValue;
+    const value: unknown = ext.parsedValue;
 
     if (oid === "2.5.29.15" && isRecord(value)) {
       const valueBlock = value.valueBlock;
@@ -139,13 +151,13 @@ export function getExtensions(cert: Certificate): CertificateExtensions {
       if (Array.isArray(value.array)) {
         for (const k of value.array) {
           if (isRecord(k) && isRecord(k.valueBlock)) {
-            extKeyUsage.push(k.valueBlock.toString());
+            extKeyUsage.push(valueBlockToString(k.valueBlock));
           }
         }
       } else if (Array.isArray(value.keyPurposes)) {
         for (const k of value.keyPurposes) {
-          const oid = isRecord(k) && isRecord(k.valueBlock) ? k.valueBlock.toString() : undefined;
-          if (typeof oid === "string") extKeyUsage.push(oid);
+          const oid = isRecord(k) && isRecord(k.valueBlock) ? valueBlockToString(k.valueBlock) : undefined;
+          if (typeof oid === "string" && oid !== "") extKeyUsage.push(oid);
         }
       }
     }

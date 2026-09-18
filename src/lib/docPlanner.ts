@@ -10,7 +10,7 @@
  */
 
 import type { LegalTemplate } from "@/data/types";
-import { allRolePrefixes, DOC_PROFILES, detectAllProfiles, type detectProfile } from "@/lib/docProfiles";
+import { allRolePrefixes, detectAllProfiles, type detectProfile } from "@/lib/docProfiles";
 import { normalizeVin, isValidInn } from "@/lib/ocrPostprocess";
 
 export interface PlannedValue {
@@ -91,8 +91,9 @@ export function planFromScan(
       valueMap.set(`${role}_inn`, inn);
     }
     const vin = valueMap.get(`${role}_vin`);
-    if (vin && normalizeVin(vin)) {
-      valueMap.set(`${role}_vin`, normalizeVin(vin)!);
+    const normVin = vin ? normalizeVin(vin) : "";
+    if (normVin) {
+      valueMap.set(`${role}_vin`, normVin);
     }
   }
 

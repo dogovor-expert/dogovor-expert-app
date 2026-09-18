@@ -40,7 +40,6 @@ function declineSurname(word: string, caseForm: CaseForm, male: boolean): string
     return word;
   }
 
-  const base = word.slice(0, -2);
   if (caseForm === "gen") {
     if (last2 === "ов" || last2 === "ев" || last2 === "ёв" || last2 === "ин" || last2 === "ын") {
       return word + "а";

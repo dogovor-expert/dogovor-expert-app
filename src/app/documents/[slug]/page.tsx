@@ -25,7 +25,7 @@ function slugToTemplate(slug: string): LegalTemplate | undefined {
 }
 
 export function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
-  return params.then(async ({ slug }) => {
+  return params.then(({ slug }) => {
     const t = slugToTemplate(slug);
     if (!t) return {};
     const url = `/documents/${t.id}`;

@@ -7,6 +7,14 @@ import { isSameOrigin } from "@/lib/admin-auth";
 import { limiters, clientIp, checkRateLimit, rateLimitResponse } from "@/lib/ratelimit";
 import { withCsrf } from "@/lib/csrf";
 
+interface SubscriptionRow {
+  id: string;
+  status: string | null;
+  period_end: string | null;
+  auto_renewal: boolean | null;
+  yookassa_payment_method_id: string | null;
+}
+
 async function postHandler(req: Request) {
   // CSRF: реальное списание с сохранённой карты допустимо только с same-origin.
   if (!isSameOrigin(req)) return NextResponse.json({ error: "forbidden" }, { status: 403 });
@@ -26,12 +34,14 @@ async function postHandler(req: Request) {
     return NextResponse.json({ error: "payment_unavailable" }, { status: 503 });
   }
 
-  const { data: subs } = await supabase
+  const subsResult = await supabase
     .from("subscriptions")
     .select("id, status, period_end, auto_renewal, yookassa_payment_method_id")
     .eq("user_id", user.id)
     .order("period_end", { ascending: false })
     .limit(5);
+  const rawSubs: unknown = subsResult.data;
+  const subs = Array.isArray(rawSubs) ? (rawSubs as SubscriptionRow[]) : [];
 
   const now = new Date();
   const active = (subs ?? []).find(
@@ -100,7 +110,7 @@ async function postHandler(req: Request) {
   if (!res.ok) {
     return NextResponse.json({ error: "provider_error" }, { status: 502 });
   }
-  const payment = await res.json();
+  const payment = (await res.json()) as { id: string; status: string };
 
   await admin.from("payments").insert({
     user_id: user.id,

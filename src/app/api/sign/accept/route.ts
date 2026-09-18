@@ -36,19 +36,18 @@ async function verifyPAdESSignature(pdfBytes: Uint8Array): Promise<{
     const pdfDoc = await PDFDocument.load(pdfBytes, { ignoreEncryption: true });
 
     // Ищем поле подписи в AcroForm
-    const catalog: any = pdfDoc.catalog;
+    const catalog = pdfDoc.catalog;
     const acroForm = catalog.lookupMaybe(asPDFName("AcroForm"), PDFDict);
     if (!acroForm) return { valid: false, error: "No AcroForm found" };
 
-    const acroFormDict = acroForm as any;
-    const fields = acroFormDict.lookupMaybe(asPDFName("Fields"), PDFArray);
+    const fields = acroForm.lookupMaybe(asPDFName("Fields"), PDFArray);
     if (!fields) return { valid: false, error: "No Fields in AcroForm" };
 
-    let sigDict: any = null;
-    for (const fieldRef of fields.array) {
+    let sigDict: PDFDict | null = null;
+    for (const fieldRef of fields.asArray()) {
       const field = pdfDoc.context.lookup(fieldRef, PDFDict);
       if (field) {
-        const ft = (field as any).lookupMaybe(asPDFName("FT"), PDFName);
+        const ft = field.lookupMaybe(asPDFName("FT"), PDFName);
         // PDFName.asString() возвращает значение СО слешем ("/Sig"); .value — функция в pdf-lib 1.17
         if (ft && ft.asString() === "/Sig") {
           sigDict = field;
@@ -60,10 +59,11 @@ async function verifyPAdESSignature(pdfBytes: Uint8Array): Promise<{
     if (!sigDict) return { valid: false, error: "No signature field found" };
 
     // Извлекаем Contents (CMS/PKCS#7)
-    const contents = (sigDict as any).lookupMaybe(asPDFName("Contents"));
+    const contents = sigDict.get(asPDFName("Contents"));
     if (!contents) return { valid: false, error: "No Contents in signature" };
 
-    const cmsHex = contents.value; // hex string без <>
+    const contentsObj = contents as { value?: unknown };
+    const cmsHex: string = typeof contentsObj.value === "string" ? contentsObj.value : "";
 
     // Базовая проверка: CMS должен быть валидным hex
     if (!/^[0-9A-Fa-f]+$/.test(cmsHex) || cmsHex.length < 100) {
@@ -74,9 +74,13 @@ async function verifyPAdESSignature(pdfBytes: Uint8Array): Promise<{
     const cmsBase64 = uint8ToBase64(hexToUint8(cmsHex));
 
     // Извлекаем метаданные подписи
-    const name = (sigDict as any).lookupMaybe(asPDFName("Name"))?.value;
-    const reason = (sigDict as any).lookupMaybe(asPDFName("Reason"))?.value;
-    const m = (sigDict as any).lookupMaybe(asPDFName("M"))?.value;
+    const readStr = (v: unknown): string | undefined => {
+      const obj = v as { value?: unknown } | null | undefined;
+      return typeof obj?.value === "string" ? obj.value : undefined;
+    };
+    const name = readStr(sigDict.get(asPDFName("Name")));
+    const reason = readStr(sigDict.get(asPDFName("Reason")));
+    const m = readStr(sigDict.get(asPDFName("M")));
 
     return {
       valid: true,
@@ -128,7 +132,7 @@ async function postHandler(req: Request) {
     algorithm?: "CAdES-BES" | "CAdES-X-Long-Type-1";
   };
   try {
-    body = await req.json();
+    body = (await req.json()) as typeof body;
   } catch {
     return NextResponse.json({ error: "bad body" }, { status: 400 });
   }
@@ -232,7 +236,7 @@ async function postHandler(req: Request) {
   }
 
   // Записываем в document_signatures (данные ИЗ CMS, а не из body!)
-  const { data: signature, error: sigError } = await admin
+  const sigResult = await admin
     .from("document_signatures")
     .insert({
       document_id: documentId,
@@ -253,7 +257,9 @@ async function postHandler(req: Request) {
     .select()
     .single();
 
-  if (sigError || !signature) {
+  const signature = sigResult.data as { id: string } | null;
+
+  if (sigResult.error || !signature) {
     // Попытка удалить загруженный файл при ошибке БД
     try {
       await admin.storage.from("signed-documents").remove([storagePath]);

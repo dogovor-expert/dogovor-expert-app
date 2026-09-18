@@ -375,7 +375,7 @@ export default function SetupGuide({ providerId, clientIdFilled, error }: SetupG
                                 </code>
                                 <button
                                   type="button"
-                                  onClick={() => copyStep(step.id, copyText)}
+                                  onClick={() => { void copyStep(step.id, copyText); }}
                                   className="inline-flex items-center gap-1 rounded-md border border-gray-200 bg-white px-2 py-0.5 text-[11px] font-medium text-gray-600 transition-colors hover:border-brand-400 hover:text-brand-600"
                                 >
                                   <Copy className="h-3 w-3" />

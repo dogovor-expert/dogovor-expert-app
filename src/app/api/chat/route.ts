@@ -104,10 +104,10 @@ async function postHandler(req: Request) {
   }
 
   // P1: Zod-валидация (best practice 2026: safeParse + structured error)
-  const parsed = await req.json().catch(() => null);
+  const parsed: unknown = await req.json().catch(() => null);
   const validated = validateBody(chatSchema, parsed);
   if (!validated.success) return validated.error;
-  const { visitorId, text: rawText, name, email, page, ctx: rawCtx } = validated.data;
+  const { visitorId, text: rawText, name, email, ctx: rawCtx } = validated.data;
   const text = rawText.trim();
   const safeVisitorId = visitorId.slice(0, 64);
   const ctx = rawCtx ?? {};

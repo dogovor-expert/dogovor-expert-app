@@ -10,7 +10,6 @@ import { buildTemplateDefaults, todayStr } from "@/lib/format";
 import { buildPdf } from "@/lib/exportPdf";
 import { saveAs } from "file-saver";
 import {
-  encodeShareState,
   decodeShareState,
   encodeShareStateV2,
   decodeShareStateV2,
@@ -18,20 +17,7 @@ import {
   type SharePayload,
   type EncryptedShareLink,
 } from "@/lib/shareState";
-import { Download, Printer, ChevronLeft, Share2, Check, FileDown, Loader2 } from "lucide-react";
-
-// Кастомные шрифты документа — предзагружаем перед печатью, чтобы в PDF/
-// на бумаге не было подмены шрифта (FOUT) и архивная вёрстка совпадала
-// с экраном (подход react-to-print: проп fonts гарантирует загрузку).
-type PrintFont = { family: string; source: string; weight?: string; style?: string };
-const PRINT_FONTS: PrintFont[] = [
-  { family: "PT Astra Sans", source: "/fonts/pt-astra-regular.ttf", weight: "400", style: "normal" },
-  { family: "PT Astra Sans", source: "/fonts/pt-astra-bold.ttf", weight: "700", style: "normal" },
-  { family: "PT Astra Sans", source: "/fonts/pt-astra-italic.ttf", weight: "400", style: "italic" },
-  { family: "PT Astra Sans", source: "/fonts/pt-astra-bolditalic.ttf", weight: "700", style: "italic" },
-  { family: "PT Serif", source: "/fonts/pt-serif-regular.ttf", weight: "400", style: "normal" },
-  { family: "PT Serif", source: "/fonts/pt-serif-bold.ttf", weight: "700", style: "normal" },
-];
+import { Download, Printer, ChevronLeft, Share2, Check, FileDown } from "lucide-react";
 
 export default function PreviewPage() {
   return (
@@ -73,7 +59,7 @@ function PreviewContent() {
   //     который браузер НЕ отправляет на сервер, сервер видит лишь ciphertext.
   useEffect(() => {
     let cancelled = false;
-    (async () => {
+    void (async () => {
       const d = searchParams.get("d");
       const k = window.location.hash.startsWith("#k=")
         ? decodeURIComponent(window.location.hash.slice(3))
@@ -211,7 +197,7 @@ function PreviewContent() {
         </div>
         <div className="flex items-center gap-1">
           <button
-            onClick={handleShare}
+            onClick={() => { void handleShare(); }}
             className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-100 transition-colors"
             title="Скопировать ссылку на документ (откроется на любом устройстве)"
           >
@@ -219,7 +205,7 @@ function PreviewContent() {
             {copied ? "Скопировано" : "Поделиться"}
           </button>
           <button
-            onClick={handleDownloadPdf}
+            onClick={() => { void handleDownloadPdf(); }}
             disabled={pdfBusy}
             className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-100 transition-colors disabled:opacity-50"
             title="Скачать документ в виде PDF (архивное качество)"

@@ -19,7 +19,7 @@ async function loginHandler(req: Request) {
   const rlIp = await checkRateLimit(limiters.authAction, `login:ip:${ip}`);
   if (!rlIp.ok) return rateLimitResponse(rlIp.retryAfter);
 
-  const body = await req.json().catch(() => null);
+  const body = (await req.json().catch(() => null)) as { captchaToken?: unknown } | null;
   if (!body) {
     return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
   }

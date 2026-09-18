@@ -46,7 +46,7 @@ function deepFind(obj: unknown, names: string[]): unknown {
 
 function extractSummary(payload: ReportPayload) {
   // TRONK reportjson — единый полный отчёт (ГИБДД, ДТП, розыск, залоги, VIN).
-  const rj = (payload as any)?.reportjson;
+  const rj = (payload as { reportjson?: unknown }).reportjson;
 
   const vin = (deepFind(rj, ["vin"]) as string) ?? "";
   const brand = (deepFind(rj, ["marka", "brand", "марка"]) as string) ?? "";
@@ -93,7 +93,7 @@ export default function AutotekaClient() {
   const [toast, setToast] = useState<string | null>(null);
   const [isAuthed, setIsAuthed] = useState<boolean | null>(null);
   const [history, setHistory] = useState<ReportItem[]>([]);
-  const [loadingHistory, setLoadingHistory] = useState(false);
+  const [, setLoadingHistory] = useState(false);
   const [tariff, setTariff] = useState<Tariff>("std");
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -123,15 +123,18 @@ export default function AutotekaClient() {
         setError("Проверка временно недоступна — попробуйте позже");
         return;
       }
-      const json = await res.json().catch(() => null);
+      const json = (await res.json().catch(() => null)) as {
+        status?: CheckStatus;
+        report?: { payload?: ReportPayload };
+      } | null;
       if (!res.ok || !json) {
         setStatus("idle");
         setError("Не удалось проверить VIN. Попробуйте ещё раз");
         return;
       }
-      setStatus(json.status);
+      if (json.status) setStatus(json.status);
       if (json.status === "ready" && json.report?.payload) {
-        setPayload(json.report.payload as ReportPayload);
+        setPayload(json.report.payload ?? null);
         if (poll && pollRef.current) {
           clearInterval(pollRef.current);
           pollRef.current = null;
@@ -153,8 +156,8 @@ export default function AutotekaClient() {
         setIsAuthed(false);
         return;
       }
-      const json = await res.json().catch(() => null);
-      if (json?.reports) setHistory(json.reports as ReportItem[]);
+      const json = (await res.json().catch(() => null)) as { reports?: ReportItem[] } | null;
+      if (json?.reports) setHistory(json.reports);
     } catch {
       // ignore
     } finally {
@@ -166,7 +169,7 @@ export default function AutotekaClient() {
     if (vin.length !== 17) return;
     setPayload(null);
     setStatus("idle");
-    check(vin);
+    void check(vin);
   };
 
   const handlePay = async () => {
@@ -178,7 +181,13 @@ export default function AutotekaClient() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ vin, premium: tariff === "prem" }),
       });
-      const json = await res.json().catch(() => null);
+      const json = (await res.json().catch(() => null)) as {
+        error?: string;
+        detail?: string;
+        free_limit?: number;
+        free?: boolean;
+        confirmation_url?: string;
+      } | null;
       if (res.status === 401) {
         setError("Войдите или зарегистрируйтесь, чтобы купить отчёт и сохранить его в истории");
         return;
@@ -198,12 +207,12 @@ export default function AutotekaClient() {
         return;
       }
       track(goals.autotekaOrderStart, { tariff });
-      if (json.free) {
+      if (json?.free) {
         setStatus("pending");
-        check(vin);
+        void check(vin);
         return;
       }
-      window.location.href = json.confirmation_url;
+      if (json?.confirmation_url) window.location.href = json.confirmation_url;
     } catch {
       setError("Сервис временно недоступен. Попробуйте ещё раз");
     } finally {
@@ -215,7 +224,7 @@ export default function AutotekaClient() {
     setPayload(null);
     setStatus("idle");
     setVin(v.toUpperCase());
-    check(v.toUpperCase());
+    void check(v.toUpperCase());
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
@@ -227,8 +236,10 @@ export default function AutotekaClient() {
       const v = (q.get("vin") ?? "").toUpperCase();
       setVin(v);
       setStatus("pending");
-      check(v, true);
-      pollRef.current = setInterval(() => check(v, true), 3000);
+      void check(v, true);
+      pollRef.current = setInterval(() => {
+        void check(v, true);
+      }, 3000);
       window.history.replaceState({}, "", "/autoteka");
     }
     return () => {
@@ -237,7 +248,7 @@ export default function AutotekaClient() {
   }, [check]);
 
   useEffect(() => {
-    (async () => {
+    void (async () => {
       try {
         const res = await fetch("/api/autoteka/check", {
           method: "POST",
@@ -249,7 +260,7 @@ export default function AutotekaClient() {
           return;
         }
         setIsAuthed(true);
-        loadHistory();
+        void loadHistory();
       } catch {
         setIsAuthed(null);
       }
@@ -408,7 +419,9 @@ export default function AutotekaClient() {
             </div>
 
             <button
-              onClick={handlePay}
+              onClick={() => {
+                void handlePay();
+              }}
               disabled={paying}
               className="w-full py-3.5 bg-gradient-to-r from-brand-500 to-purple-600 text-white font-bold text-sm rounded-xl hover:opacity-95 transition disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
             >
@@ -450,7 +463,7 @@ export default function AutotekaClient() {
               {[
                 { label: "Статус учёта", value: String(summary.status ?? ""), ok: true },
                 { label: "Розыск", value: String(summary.theft ?? ""), ok: true },
-                { label: "ДТП", value: String(summary.dtpCount ?? ""), ok: !summary.dtpCount || summary.dtpCount === "0" },
+                { label: "ДТП", value: typeof summary.dtpCount === "number" || typeof summary.dtpCount === "string" ? String(summary.dtpCount) : "", ok: !summary.dtpCount || summary.dtpCount === "0" },
                 { label: "Залоги", value: String(summary.pledge ?? ""), ok: true },
               ].map((item, i) => (
                 <div key={i} className="bg-gray-50 rounded-2xl p-4 border border-gray-100">
@@ -602,9 +615,9 @@ function Marketing() {
   const [slide, setSlide] = useState(0);
   const slides = SAMPLE_SLIDES;
 
-  const close = () => setOpen(false);
-  const next = () => setSlide((s) => (s + 1) % slides.length);
-  const prev = () => setSlide((s) => (s - 1 + slides.length) % slides.length);
+  const close = useCallback(() => setOpen(false), []);
+  const next = useCallback(() => setSlide((s) => (s + 1) % SAMPLE_SLIDES.length), []);
+  const prev = useCallback(() => setSlide((s) => (s - 1 + SAMPLE_SLIDES.length) % SAMPLE_SLIDES.length), []);
 
   useEffect(() => {
     if (!open) return;
@@ -615,7 +628,7 @@ function Marketing() {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [open]);
+  }, [open, next, prev]);
 
   const whyCards = [
     { icon: Banknote, color: "brand", title: "Дешевле на 40–60%", text: "Тот же объём данных, что у конкурентов за 499 ₽, у нас стоит 199–299 ₽. Прямая закупка без наценки." },
@@ -760,6 +773,7 @@ function Marketing() {
           <button onClick={(e) => { e.stopPropagation(); next(); }} aria-label="Вперёд" className="absolute right-3 sm:right-6 text-white/80 hover:text-white">
             <ChevronRight className="w-9 h-9 sm:w-11 sm:h-11" />
           </button>
+          {/* eslint-disable-next-line @next/next/no-img-element -- образец отчёта отдаётся как inline SVG data-URL, оптимизация next/image неприменима */}
           <img
             src={slides[slide]}
             alt="Образец отчёта Dogovor.expert"

@@ -181,7 +181,7 @@ export async function verifyTslXmlSignature(xmlContent: string): Promise<XmlDsig
     signerSubject = cert.subject?.typesAndValues
       .map((t) => {
         const raw: unknown = t.value?.valueBlock?.value;
-        return typeof raw === "string" ? raw : String(raw ?? "");
+        return typeof raw === "string" ? raw : typeof raw === "number" ? String(raw) : "";
       })
       .filter(Boolean)
       .join(", ")
@@ -208,8 +208,8 @@ export async function verifyTslXmlSignature(xmlContent: string): Promise<XmlDsig
     signatureVerified = await gostCrypto.subtle.verify(
       { name: "GOST R 34.10-2012-256" },
       publicKey,
-      toArrayBuffer(sigBytes) as BufferSource,
-      toArrayBuffer(signedInfoDigest) as BufferSource
+      toArrayBuffer(sigBytes),
+      toArrayBuffer(signedInfoDigest)
     );
   } catch (e) {
     result.error = `Signature verification error: ${e instanceof Error ? e.message : e}`;

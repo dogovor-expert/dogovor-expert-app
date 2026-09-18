@@ -1,5 +1,3 @@
-import * as pkijs from "pkijs";
-
 let initialized = false;
 
 export function initPkijsGost(): void {

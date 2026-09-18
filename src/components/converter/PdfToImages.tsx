@@ -92,7 +92,7 @@ export default function PdfToImages() {
         type="file"
         accept="application/pdf,.pdf"
         className="hidden"
-        onChange={(e) => { onFile(e.target.files); e.target.value = ""; }}
+        onChange={(e) => { void onFile(e.target.files); e.target.value = ""; }}
       />
 
       {!file ? (
@@ -134,7 +134,7 @@ export default function PdfToImages() {
             <p className="text-[10px] text-gray-600 pt-1">300 DPI — для печати и распознавания, 100 DPI — для веба. Чем выше DPI, тем больше файлы.</p>
           </div>
 
-          <button onClick={convert} disabled={busy}
+          <button onClick={() => { void convert(); }} disabled={busy}
             className="w-full py-2.5 bg-brand-500 text-white rounded-xl hover:bg-brand-600 font-bold text-sm transition disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer">
             {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
             {busy ? "Конвертация..." : `Скачать ${pageCount || ""} JPG`}

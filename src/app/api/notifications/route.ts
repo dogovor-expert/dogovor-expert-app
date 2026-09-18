@@ -51,7 +51,7 @@ async function postHandler(req: Request) {
   } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
 
-  const body = await req.json().catch(() => null);
+  const body = (await req.json().catch(() => null)) as { all?: unknown; id?: unknown } | null;
   if (!body || typeof body !== "object") {
     return NextResponse.json({ error: "invalid_body" }, { status: 400 });
   }

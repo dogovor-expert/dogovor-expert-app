@@ -7,7 +7,14 @@ import { limiters, clientIp, checkRateLimit, rateLimitResponse } from "@/lib/rat
 
 function csvEscape(v: unknown): string {
   if (v === null || v === undefined) return "";
-  const s = typeof v === "object" ? JSON.stringify(v) : String(v);
+  const s =
+    typeof v === "object"
+      ? JSON.stringify(v)
+      : typeof v === "string"
+        ? v
+        : typeof v === "number" || typeof v === "boolean"
+          ? String(v)
+          : "";
   // Prevent CSV formula injection: prefix with ' if starts with = + - @
   const hasFormulaPrefix = /^[=+\-@]/.test(s);
   const needsQuotes = /[",\n;]/.test(s);

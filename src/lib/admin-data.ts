@@ -20,6 +20,16 @@ export interface Directory {
   emailById: Map<string, string>;
 }
 
+interface ProfileRow {
+  id: string;
+  full_name: string | null;
+  company: string | null;
+  inn: string | null;
+  phone: string | null;
+  is_admin: boolean | null;
+  admin_role: unknown;
+}
+
 /**
  * Справочник пользователей: объединяет auth.users (email, last_sign_in)
  * и profiles (full_name, company, is_admin). Используется админ-страницами.
@@ -37,7 +47,8 @@ export async function getDirectory(): Promise<Directory> {
     created_at?: string;
     last_sign_in_at?: string | null;
   }>;
-  const profMap = new Map((profiles ?? []).map((p: any) => [p.id, p]));
+  const profRows = (profiles ?? []) as ProfileRow[];
+  const profMap = new Map(profRows.map((p) => [p.id, p]));
 
   const users: DirectoryUser[] = authUsers.map((u) => {
     const p = profMap.get(u.id);

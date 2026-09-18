@@ -44,7 +44,7 @@ export default function ChatInbox() {
     try {
       const r = await fetch("/api/admin/chat", { cache: "no-store" });
       if (!r.ok) return;
-      const j = await r.json();
+      const j = (await r.json()) as { threads?: ThreadPreview[] };
       setThreads(j.threads ?? []);
     } finally {
       setLoading(false);
@@ -58,7 +58,7 @@ export default function ChatInbox() {
         cache: "no-store",
       });
       if (!r.ok) return;
-      const j = await r.json();
+      const j = (await r.json()) as { messages?: ChatMessage[]; online?: boolean };
       setMessages(j.messages ?? []);
       setOnline(!!j.online);
     } finally {
@@ -67,15 +67,15 @@ export default function ChatInbox() {
   }, []);
 
   useEffect(() => {
-    loadThreads();
-    const t = setInterval(loadThreads, 15_000);
+    void loadThreads();
+    const t = setInterval(() => { void loadThreads(); }, 15_000);
     return () => clearInterval(t);
   }, [loadThreads]);
 
   useEffect(() => {
     if (!selected) return;
-    loadHistory(selected);
-    const t = setInterval(() => loadHistory(selected), 5_000);
+    void loadHistory(selected);
+    const t = setInterval(() => { void loadHistory(selected); }, 5_000);
     return () => clearInterval(t);
   }, [selected, loadHistory]);
 

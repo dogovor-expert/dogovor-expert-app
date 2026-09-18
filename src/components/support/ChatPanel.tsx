@@ -53,7 +53,6 @@ export default function ChatPanel({ visitorId }: { visitorId: string }) {
   // Поллинг сообщений (только в стадии чата).
   useEffect(() => {
     if (stage !== "chat") return;
-    let active = true;
     let since = 0;
 
     const tick = async () => {
@@ -66,8 +65,8 @@ export default function ChatPanel({ visitorId }: { visitorId: string }) {
           if (res.status === 503) setUnavailable(true);
           return;
         }
-        const data = await res.json();
-        const incoming: ChatMessage[] = Array.isArray(data.messages) ? data.messages : [];
+        const data = (await res.json()) as { messages?: unknown };
+        const incoming: ChatMessage[] = Array.isArray(data.messages) ? (data.messages as ChatMessage[]) : [];
         if (incoming.length) {
           setMessages((prev) => {
             const ids = new Set(prev.map((m) => m.id));
@@ -85,7 +84,6 @@ export default function ChatPanel({ visitorId }: { visitorId: string }) {
     void tick();
     const iv = setInterval(() => { void tick(); }, POLL_MS);
     return () => {
-      active = false;
       clearInterval(iv);
     };
   }, [stage, visitorId]);
@@ -126,16 +124,16 @@ export default function ChatPanel({ visitorId }: { visitorId: string }) {
           ctx,
         }),
       });
-      const data = await res.json().catch(() => ({}));
+      const data = (await res.json().catch(() => ({}))) as { message?: unknown };
       if (!res.ok) {
         if (res.status === 503) {
           setUnavailable(true);
         } else {
-          setError(data?.message || "Не удалось отправить. Попробуйте ещё раз.");
+          setError(typeof data.message === "string" && data.message ? data.message : "Не удалось отправить. Попробуйте ещё раз.");
         }
         return;
       }
-      if (data.message) {
+      if (typeof data.message === "object" && data.message !== null) {
         setMessages((prev) => [...prev, data.message as ChatMessage]);
       }
       setDraft("");
@@ -247,7 +245,7 @@ export default function ChatPanel({ visitorId }: { visitorId: string }) {
           />
           <button
             type="button"
-            onClick={send}
+            onClick={() => { void send(); }}
             disabled={!draft.trim() || sending}
             className="inline-flex items-center justify-center w-10 h-10 bg-brand-600 text-white rounded-xl hover:bg-brand-700 disabled:opacity-50 transition flex-shrink-0"
             aria-label="Отправить"

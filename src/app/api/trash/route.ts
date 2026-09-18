@@ -55,7 +55,7 @@ async function postHandler(req: Request) {
   const rl = await checkRateLimit(limiters.crudMutation, user.id);
   if (!rl.ok) return rateLimitResponse(rl.retryAfter);
 
-  const body = await req.json().catch(() => null);
+  const body = (await req.json().catch(() => null)) as { ids?: unknown } | null;
   const parsed = parseIds(body?.ids);
   if (!parsed.ok) {
     return NextResponse.json({ error: parsed.error }, { status: 400 });
@@ -85,7 +85,7 @@ async function deleteHandler(req: Request) {
   const rl = await checkRateLimit(limiters.crudMutation, `delete:${user.id}`);
   if (!rl.ok) return rateLimitResponse(rl.retryAfter);
 
-  const body = await req.json().catch(() => null);
+  const body = (await req.json().catch(() => null)) as { ids?: unknown } | null;
   const parsed = parseIds(body?.ids);
   if (!parsed.ok) {
     return NextResponse.json({ error: parsed.error }, { status: 400 });

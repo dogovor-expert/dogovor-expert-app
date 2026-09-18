@@ -12,6 +12,24 @@ const YANDEX_API = "https://cloud-api.yandex.net/v1/disk";
 const DEFAULT_SCOPES = ["cloud_api:disk.write", "cloud_api:disk.read", "cloud_api:disk.info"];
 const OFFLINE_SCOPES = [...DEFAULT_SCOPES, "offline"]; // для refresh_token
 
+/** Элемент ресурса Яндекс.Диска (файл или папка). */
+interface YandexItem {
+  name?: string;
+  path?: string;
+  type?: string;
+  size?: number;
+  created?: string;
+  modified?: string;
+}
+
+interface YandexTokenResponse {
+  access_token?: string;
+  refresh_token?: string;
+  expires_in?: number;
+  token_type?: string;
+  scope?: string;
+}
+
 export class YandexDiskProvider implements CloudProvider {
   readonly id = "yandex" as const;
   readonly name = "Яндекс.Диск";
@@ -61,10 +79,10 @@ export class YandexDiskProvider implements CloudProvider {
         const txt = await res.text().catch(() => "");
         throw new Error(`Yandex token exchange ${res.status}: ${txt}`);
       }
-      const data = await res.json();
+      const data = (await res.json()) as YandexTokenResponse;
       return {
         provider: "yandex",
-        accessToken: data.access_token,
+        accessToken: data.access_token ?? "",
         refreshToken: data.refresh_token,
         expiresAt: data.expires_in ? Date.now() + data.expires_in * 1000 : undefined,
         tokenType: data.token_type,
@@ -105,10 +123,10 @@ export class YandexDiskProvider implements CloudProvider {
       const txt = await res.text().catch(() => "");
       throw new Error(`Yandex token refresh ${res.status}: ${txt}`);
     }
-    const data = await res.json();
+    const data = (await res.json()) as YandexTokenResponse;
     return {
       provider: "yandex",
-      accessToken: data.access_token,
+      accessToken: data.access_token ?? "",
       refreshToken: data.refresh_token || tokens.refreshToken,
       expiresAt: data.expires_in ? Date.now() + data.expires_in * 1000 : undefined,
       tokenType: data.token_type,
@@ -133,7 +151,7 @@ export class YandexDiskProvider implements CloudProvider {
       const txt = await res.text().catch(() => "");
       throw new Error(`Yandex Disk API ${res.status}: ${txt || res.statusText}`);
     }
-    return res.json();
+    return (await res.json()) as T;
   }
 
   async uploadFile(
@@ -158,7 +176,11 @@ export class YandexDiskProvider implements CloudProvider {
       throw new Error(`Upload failed ${putRes.status}: ${txt}`);
     }
     // Yandex возвращает метаданную ресурса
-    const meta = await putRes.json().catch(() => ({}));
+    const meta = (await putRes.json().catch(() => ({}))) as {
+      path?: string;
+      file?: string;
+      public_url?: string;
+    };
     return { id: meta.path || path, url: meta.file || meta.public_url };
   }
 
@@ -184,8 +206,8 @@ export class YandexDiskProvider implements CloudProvider {
   }
 
   // Удобный метод: получить список файлов в папке
-  async listFiles(tokens: CloudTokens, path: string = "/"): Promise<any[]> {
-    const resp = await this.request<{ _embedded?: { items: any[] } }>(
+  async listFiles(tokens: CloudTokens, path: string = "/"): Promise<YandexItem[]> {
+    const resp = await this.request<{ _embedded?: { items: YandexItem[] } }>(
       tokens,
       `/resources?path=${encodeURIComponent(path)}&limit=100`
     );
@@ -196,10 +218,10 @@ export class YandexDiskProvider implements CloudProvider {
   async listFolders(tokens: CloudTokens, path: string = "/"): Promise<CloudFolder[]> {
     const items = await this.listFiles(tokens, path);
     return items
-      .filter((item: any) => item.type === "dir")
-      .map((item: any) => ({
-        name: item.name,
-        path: item.path,
+      .filter((item) => item.type === "dir")
+      .map((item) => ({
+        name: item.name ?? "",
+        path: item.path ?? "",
         isFolder: true as const,
       }));
   }

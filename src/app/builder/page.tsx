@@ -209,8 +209,9 @@ function HomeContent() {
 
   useEffect(() => {
     fetch("/api/profile")
-      .then((r) => (r.ok ? r.json() : null))
-      .then(({ data } = {}) => {
+      .then((r) => (r.ok ? (r.json() as Promise<{ data?: { full_name?: string } }>) : null))
+      .then((res) => {
+        const data = res?.data;
         if (data?.full_name) {
           setUserName(data.full_name.split(" ")[0]);
           setMeFio(data.full_name);
@@ -238,7 +239,7 @@ function HomeContent() {
   } | null>(null);
   useEffect(() => {
     fetch("/api/subscription-status")
-      .then((r) => r.json())
+      .then((r) => r.json() as Promise<{ subscription_active?: boolean }>)
       .then((j) => setSubscriptionActive(!!j.subscription_active))
       .catch((e) => console.warn("[builder] subscription-status load failed", e));
   }, []);
@@ -261,21 +262,65 @@ function HomeContent() {
 
   // Нормализация ответа: прокси отдаёт плоскую структуру, сырой DADATA — nested.
   // Возвращаем все поля, которые нужны UI-компонентам (DadataPanel, lookupInn).
-  const normParty = (s: any) => {
-    if (!s || !s.data) return s;
+  type DadataPartyData = {
+    inn?: string;
+    kpp?: string;
+    ogrn?: string;
+    name?: string | { short_with_opf?: string; raw?: string };
+    address?: { value?: string };
+    state?: { status?: string; code?: string };
+    surname?: string;
+    patronymic?: string;
+    birthdate?: string;
+    passport_issued_by?: string;
+    passport_issue_date?: string;
+    passport_code?: string;
+    snils?: string;
+  };
+  type DadataSuggestion = { value?: string; data?: DadataPartyData; inn?: string };
+  type DadataResponse = { suggestions?: DadataSuggestion[] };
+  type PartyNorm = {
+    inn: string;
+    kpp: string;
+    ogrn: string;
+    name_short_with_opf: string;
+    address_value: string;
+    state_status: string;
+    state_code: string;
+  };
+  // Минимальный структурный тип для данных ЕГРЮЛ, который принимают и
+  // DadataPanel (PartyData), и наш нормализованный PartyNorm.
+  type PartyDataLike = {
+    inn?: string;
+    kpp?: string;
+    ogrn?: string;
+    name_short_with_opf?: string;
+    address_value?: string;
+  };
+  type Contractor = {
+    id: string;
+    name: string;
+    inn: string;
+    kpp: string;
+    address: string;
+    ogrn?: string;
+  };
+
+  const normParty = (s: DadataSuggestion | undefined): PartyNorm => {
+    const d = s?.data;
+    const nm = d?.name;
     return {
-      inn: s.data.inn || "",
-      kpp: s.data.kpp || "",
-      ogrn: s.data.ogrn || "",
-      name_short_with_opf: s.data.name?.short_with_opf || "",
-      address_value: s.data.address?.value || "",
-      state_status: s.data.state?.status || "",
-      state_code: s.data.state?.code || "",
-      management_name: s.data.management?.name || "",
+      inn: d?.inn || "",
+      kpp: d?.kpp || "",
+      ogrn: d?.ogrn || "",
+      name_short_with_opf: typeof nm === "string" ? nm : nm?.short_with_opf || "",
+      address_value: d?.address?.value || "",
+      state_status: d?.state?.status || "",
+      state_code: d?.state?.code || "",
     };
   };
 
-  const callDadata = async (op: string, query: string, count = 10) => {
+  const callDadata = async (op: string, query: string, count = 10): Promise<{ status: number; json: DadataResponse | null }> => {
     // Запрос идёт ТОЛЬКО через /api/dadata: серверный прокси для PRO, fallback
     // для FREE с собственным серверным ключом. Клиент НИКОГДА не дёргает
     // suggestions.dadata.ru напрямую — это утечка API-ключа в Network tab
@@ -285,20 +330,20 @@ function HomeContent() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ op, query, count }),
     });
-    return { status: res.status, json: res.ok ? await res.json() : null };
+    const json = res.ok ? ((await res.json()) as DadataResponse) : null;
+    return { status: res.status, json };
   };
 
-  const applyPartyData = (s: { name_short_with_opf?: string; name?: { short_with_opf?: string; raw?: string }; kpp?: string; ogrn?: string; address_value?: string; address?: { value?: string } } | undefined, prefix: string): number => {
+  const applyPartyData = (s: PartyDataLike | undefined, prefix: string): number => {
     if (!s) return 0;
     let filled = 0;
     template.fields.forEach((f) => {
       if (!f.id.startsWith(prefix)) return;
       let v: string | undefined;
-      if (f.id.includes("company"))
-        v = s.name_short_with_opf || s.name?.short_with_opf || s.name?.raw || "";
+      if (f.id.includes("company")) v = s.name_short_with_opf || "";
       else if (f.id.includes("kpp")) v = s.kpp || "";
       else if (f.id.includes("ogrn")) v = s.ogrn || "";
-      else if (f.id.includes("address")) v = s.address_value || s.address?.value || "";
+      else if (f.id.includes("address")) v = s.address_value || "";
       if (v) {
         handleFieldChange(f.id, v);
         filled++;
@@ -362,66 +407,8 @@ function HomeContent() {
     }
   };
 
-  const lookupFioByPassport = async (fieldId: string) => {
-    const prefix = fieldId.replace(/(passport_series|passport_number)$/, "");
-    const series = (formValuesRef.current[`${prefix}passport_series`] || "").replace(/\D/g, "");
-    const number = (formValuesRef.current[`${prefix}passport_number`] || "").replace(/\D/g, "");
-    if (series.length !== 4 || number.length !== 6) {
-      setDadataMsg({ text: "Неверный формат паспорта (серия 4 цифры, номер 6 цифр)", ok: false });
-      return;
-    }
-    setDadataLoading(true);
-    setDadataMsg(null);
-    try {
-      const query = `${series} ${number}`;
-      const { status, json } = await callDadata("find-fio", query);
-      if (status === 401 || status === 403) {
-        setDadataMsg({ text: "Ключ DADATA недействителен — проверьте его", ok: false });
-        return;
-      }
-      if (status === 503 && !json) {
-        setDadataMsg({
-          text: "Введите бесплатный ключ DADATA ниже или подключите подписку для авто-заполнения",
-          ok: false,
-        });
-        return;
-      }
-      if (!json || !json.suggestions?.length) {
-        setDadataMsg({ text: "Физлицо по этому паспорту не найдено", ok: false });
-        return;
-      }
-      const s = json.suggestions[0];
-      const d = s.data ?? {};
-      let filled = 0;
-      template.fields.forEach((f) => {
-        if (!f.id.startsWith(prefix)) return;
-        let v: string | undefined;
-        if (f.id.includes("fio")) v = [d.surname, d.name, d.patronymic].filter(Boolean).join(" ");
-        else if (f.id.includes("birthday")) v = d.birthdate || "";
-        else if (f.id.includes("passport_issued_by")) v = d.passport_issued_by || "";
-        else if (f.id.includes("passport_issue_date")) v = d.passport_issue_date || "";
-        else if (f.id.includes("passport_code")) v = d.passport_code || "";
-        else if (f.id.includes("snils")) v = d.snils || "";
-        else if (f.id.includes("inn")) v = d.inn || "";
-        if (v) {
-          handleFieldChange(f.id, v);
-          filled++;
-        }
-      });
-      setDadataMsg(
-        filled > 0
-          ? { text: `Заполнено полей: ${filled} (данные МВД)`, ok: true }
-          : { text: "Физлицо найдено, но совпадающих полей в форме нет", ok: false }
-      );
-    } catch {
-      setDadataMsg({ text: "Ошибка запроса к DADATA", ok: false });
-    } finally {
-      setDadataLoading(false);
-    }
-  };
-
   const [partyQuery, setPartyQuery] = useState("");
-  const [partyResults, setPartyResults] = useState<{ value: string; data: any; prefix: string }[]>([]);
+  const [partyResults, setPartyResults] = useState<{ value: string; data: PartyNorm; prefix: string }[]>([]);
   const [partyAnalyzing, setPartyAnalyzing] = useState(false);
 
   const searchParty = async () => {
@@ -461,8 +448,8 @@ function HomeContent() {
               ? "seller"
               : "";
       setPartyResults(
-        (json.suggestions || []).map((sg: { value: string; data: any; inn?: string }) => ({
-          value: sg.value,
+        (json.suggestions || []).map((sg) => ({
+          value: sg.value ?? "",
           data: normParty(sg),
           prefix,
         }))
@@ -478,11 +465,11 @@ function HomeContent() {
     }
   };
 
-  const applyPartyResult = (r: { data: any; prefix: string; value: string }) => {
+  const applyPartyResult = (r: { data: PartyDataLike; prefix: string; value: string }) => {
     const filled = applyPartyData(r.data, r.prefix || "");
     const innField = `${r.prefix}_inn`;
     if (r.prefix && !filled && template.fields.some((f) => f.id === innField)) {
-      handleFieldChange(innField, r.data?.inn || "");
+      handleFieldChange(innField, r.data.inn || "");
     }
     setPartyResults([]);
     setPartyQuery("");
@@ -493,22 +480,22 @@ function HomeContent() {
     );
   };
 
-  const [contractors, setContractors] = useState<any[] | null>(null);
+  const [contractors, setContractors] = useState<Contractor[] | null>(null);
   const [contractorsMsg, setContractorsMsg] = useState<string | null>(null);
 
-  const loadContractors = async () => {
+  const loadContractors = useCallback(async () => {
     try {
       const res = await fetch("/api/contractors");
       if (!res.ok) throw new Error(String(res.status));
-      const json = await res.json();
+      const json = (await res.json()) as { data?: Contractor[] };
       setContractors(Array.isArray(json.data) ? json.data : []);
     } catch {
       setContractors([]);
     }
-  };
+  }, []);
   useEffect(() => {
     void loadContractors();
-  }, []);
+  }, [loadContractors]);
 
   const contractorFields = (prefix: string): Record<string, string> => {
     const out: Record<string, string> = {};
@@ -538,7 +525,7 @@ function HomeContent() {
         body: JSON.stringify(data),
       });
       if (!res.ok) {
-        const j = await res.json().catch(() => null);
+        const j = (await res.json().catch(() => null)) as { error?: string } | null;
         setContractorsMsg(j?.error || "Не удалось сохранить");
         return;
       }
@@ -549,7 +536,7 @@ function HomeContent() {
     }
   };
 
-  const applyContractor = (c: any) => {
+  const applyContractor = (c: Contractor) => {
     let filled = 0;
     ["seller", "buyer"].forEach((prefix) => {
       if (!template.fields.some((f) => f.id.startsWith(prefix))) return;
@@ -588,7 +575,7 @@ function HomeContent() {
     try {
       const res = await fetch("/api/persons");
       if (!res.ok) throw new Error(String(res.status));
-      const json = await res.json();
+      const json = (await res.json()) as { data?: PersonRow[] };
       setPersons(Array.isArray(json.data) ? json.data : []);
     } catch {
       setPersons([]);
@@ -611,7 +598,7 @@ function HomeContent() {
         body: JSON.stringify(data),
       });
       if (!res.ok) {
-        const j = await res.json().catch(() => null);
+        const j = (await res.json().catch(() => null)) as { error?: string } | null;
         setPersonsMsg(j?.error || "Не удалось сохранить");
         return;
       }
@@ -749,7 +736,7 @@ function HomeContent() {
   useEffect(() => {
     try {
       const raw = localStorage.getItem(FAVORITES_KEY);
-      if (raw) setFavorites(new Set(JSON.parse(raw)));
+      if (raw) setFavorites(new Set(JSON.parse(raw) as string[]));
     } catch {
       // ignore
     }
@@ -801,7 +788,7 @@ function HomeContent() {
     saveTimerRef.current = setTimeout(() => {
       const savedOk = saveDraft(template.id, formValues, checklist, activeTab, undefined, scanPhotos);
       dirtyRef.current = !savedOk;
-      syncDraft({
+      void syncDraft({
         templateId: template.id,
         values: formValues,
         checklist,
@@ -919,7 +906,7 @@ function HomeContent() {
   const removeDraft = (d: DraftData) => {
     clearDraft(d.templateId);
     clearDraftVersions(d.templateId);
-    syncDelete(d.templateId);
+    void syncDelete(d.templateId);
     setDraftInfos(getAllDrafts());
   };
 
@@ -969,9 +956,9 @@ function HomeContent() {
       return;
     }
     el.scrollIntoView({ behavior: "smooth", block: "center" });
-    const focusable = el.querySelector(
+    const focusable = el.querySelector<HTMLElement>(
       "input, select, textarea"
-    ) as HTMLElement | null;
+    );
     if (focusable) focusable.focus({ preventScroll: true });
   };
 
@@ -1001,7 +988,7 @@ function HomeContent() {
   };
 
   const handleCopyJson = () => {
-    navigator.clipboard.writeText(JSON.stringify(formValues, null, 2));
+    void navigator.clipboard.writeText(JSON.stringify(formValues, null, 2));
   };
 
   const goToPreview = () => {
@@ -1224,6 +1211,9 @@ function HomeContent() {
       }
     })();
     return () => { cancelled = true; };
+    // buildCoverHtml/buildSignHtml пересоздаются каждый рендер — в зависимостях
+    // был бы бесконечный цикл; пересчёт нужен только при смене этих данных.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [packTemplates, signSheetEnabled, formValues, designId]);
 
   const handleExportDocx = async () => {
@@ -1298,7 +1288,7 @@ function HomeContent() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: address, filename: fileName, pdfBase64 }),
       });
-      const data = await res.json().catch(() => null);
+      const data = (await res.json().catch(() => null)) as { error?: string } | null;
       if (!res.ok) {
         setEmailStatus({
           kind: "error",
@@ -1333,7 +1323,7 @@ function HomeContent() {
   const buildInvoiceQrData = () => {
     let items: { sum?: number }[] = [];
     try {
-      items = JSON.parse(formValues.items || "[]");
+      items = JSON.parse(formValues.items || "[]") as { sum?: number }[];
     } catch {
       items = [];
     }
@@ -1375,7 +1365,7 @@ function HomeContent() {
     }
     const data = buildInvoiceQrData();
     let cancelled = false;
-    (async () => {
+    void (async () => {
       const { default: QRCode } = await import("qrcode");
       const svg = await QRCode.toString(data, {
         type: "svg",
@@ -1442,7 +1432,7 @@ function HomeContent() {
 
   const loadMyApprovals = () => {
     fetch("/api/approval")
-      .then((r) => (r.ok ? r.json() : null))
+      .then((r) => (r.ok ? (r.json() as Promise<{ data?: MyApproval[] }>) : null))
       .then((d) => setMyApprovals(Array.isArray(d?.data) ? d.data : []))
       .catch(() => setMyApprovals([]));
   };
@@ -1466,7 +1456,7 @@ function HomeContent() {
         }),
       });
       if (!r.ok) {
-        const j = await r.json().catch(() => null);
+        const j = (await r.json().catch(() => null)) as { error?: string } | null;
         throw new Error(j?.error === "unauthorized" ? "Войдите в аккаунт, чтобы создавать ссылки" : "Не удалось создать ссылку");
       }
       setApprovalMsg("Ссылка создана");
@@ -1481,7 +1471,11 @@ function HomeContent() {
 
   const applyApproval = (a: MyApproval) => {
     fetch(`/api/approval/${a.token}`)
-      .then((r) => (r.ok ? r.json() : Promise.reject(new Error("expired"))))
+      .then((r) =>
+        r.ok
+          ? (r.json() as Promise<{ values?: Record<string, string>; checklist?: Record<string, boolean> }>)
+          : Promise.reject(new Error("expired"))
+      )
       .then((d) => {
         if (d?.values && Object.keys(d.values).length > 0) {
           setFormValues((prev) => ({ ...prev, ...d.values }));
@@ -1803,9 +1797,9 @@ function HomeContent() {
                   renderPreview={renderPreview}
                   onPrint={handlePrint}
                   onCopyJson={handleCopyJson}
-                  onExportPdf={() => handleExportPdf("pack")}
-                  onExportPdfCurrent={() => handleExportPdf("current")}
-                  onExportDocx={handleExportDocx}
+                  onExportPdf={() => { void handleExportPdf("pack"); }}
+                  onExportPdfCurrent={() => { void handleExportPdf("current"); }}
+                  onExportDocx={() => { void handleExportDocx(); }}
                   onOpenEmailModal={handleExportEmail}
                   emailSending={emailSending}
                   onBackToForm={backToForm}
@@ -1974,11 +1968,11 @@ function HomeContent() {
                   approvalMsg={approvalMsg}
                   myApprovals={myApprovals}
                   approvalQr={approvalQr}
-                  onCreate={createApproval}
+                  onCreate={() => { void createApproval(); }}
                   onRefresh={loadMyApprovals}
                   onApply={applyApproval}
                   onCopyLink={copyApprovalLink}
-                  onToggleQr={showApprovalQr}
+                  onToggleQr={(token) => { void showApprovalQr(token); }}
                   subscriptionActive={subscriptionActive}
                   onUpgrade={() => requirePro("Согласование с контрагентом — функция PRO")}
                 />
@@ -2020,7 +2014,7 @@ function HomeContent() {
                   partyAnalyzing={partyAnalyzing}
                   dadataLoading={dadataLoading}
                   dadataMsg={dadataMsg}
-                  onSearch={searchParty}
+                  onSearch={() => { void searchParty(); }}
                   onApplyResult={applyPartyResult}
                   onClearResults={() => setPartyResults([])}
                 />
@@ -2037,8 +2031,8 @@ function HomeContent() {
                   contractors={contractors}
                   contractorsMsg={contractorsMsg}
                   onApply={applyContractor}
-                  onDelete={deleteContractor}
-                  onSave={saveContractor}
+                  onDelete={(id) => { void deleteContractor(id); }}
+                  onSave={(prefix) => { void saveContractor(prefix); }}
                 />
               </Collapsible>
 
@@ -2056,8 +2050,8 @@ function HomeContent() {
                     meFio={meFio}
                     onApplyToRole={applyPersonToRole}
                     onApplyMe={applyMeToRole}
-                    onDelete={deletePerson}
-                    onSave={savePerson}
+                    onDelete={(id) => { void deletePerson(id); }}
+                    onSave={(prefix) => { void savePerson(prefix); }}
                   />
                 </Collapsible>
               )}
@@ -2084,7 +2078,7 @@ function HomeContent() {
           isOpen={true}
           onClose={() => setPaywallOpen(false)}
           title={paywallTitle}
-          onDownloadFreePdf={() => handleExportPdf("current")}
+          onDownloadFreePdf={() => { void handleExportPdf("current"); }}
         />
       )}
 
@@ -2132,7 +2126,7 @@ function HomeContent() {
               Отмена
             </button>
             <button
-              onClick={handleSendEmail}
+              onClick={() => { void handleSendEmail(); }}
               disabled={emailSending}
               className="inline-flex items-center justify-center font-medium px-4 py-2 text-sm rounded-xl gap-2 bg-emerald-500 text-white hover:bg-emerald-600 disabled:opacity-50"
             >

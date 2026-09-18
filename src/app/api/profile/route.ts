@@ -35,7 +35,7 @@ export const PATCH = withCsrf(async (req: Request) => {
   } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
 
-  const body = await req.json().catch(() => null);
+  const body: unknown = await req.json().catch(() => null);
   if (!body || typeof body !== "object") {
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
   }
@@ -81,14 +81,15 @@ export const PATCH = withCsrf(async (req: Request) => {
     return NextResponse.json({ data: null });
   }
 
-  const { data, error } = await supabase
+  const updResult = await supabase
     .from("profiles")
     .update(update)
     .eq("id", user.id)
     .select()
     .single();
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (updResult.error) return NextResponse.json({ error: updResult.error.message }, { status: 500 });
+  const data: unknown = updResult.data;
 
   // Синхронизируем full_name с auth-метаданными, чтобы JWT/данные сессии не устаревали.
   if (update.full_name && update.full_name !== (user.user_metadata?.full_name ?? "")) {

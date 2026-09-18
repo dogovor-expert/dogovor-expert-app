@@ -10,10 +10,8 @@ import { AlertCircle, CheckCircle2, KeyRound, Loader2 } from "lucide-react";
 function ResetForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const next =
-    typeof searchParams.get("next") === "string"
-      ? searchParams.get("next")!
-      : "/dashboard";
+  const nextParam = searchParams.get("next");
+  const next = typeof nextParam === "string" ? nextParam : "/dashboard";
   const supabase = createClient();
 
   const [password, setPassword] = useState("");
@@ -23,7 +21,7 @@ function ResetForm() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    (async () => {
+    void (async () => {
       const { data } = await supabase.auth.getSession();
       if (!data.session) {
         setError(
@@ -121,7 +119,7 @@ function ResetForm() {
             )}
             <Button
               className="w-full mt-4"
-              onClick={savePassword}
+              onClick={() => { void savePassword(); }}
               disabled={loading || !!error}
             >
               {loading ? (

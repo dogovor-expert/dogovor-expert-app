@@ -171,7 +171,7 @@ export function CertificateList({
   }, []);
 
   useEffect(() => {
-    loadCertificates();
+    void loadCertificates();
   }, [loadCertificates]);
 
   // useMemo вместо useState + useEffect — чище и без лишних рендеров
@@ -233,7 +233,7 @@ export function CertificateList({
         </div>
         <button
           type="button"
-          onClick={loadCertificates}
+          onClick={() => { void loadCertificates(); }}
           className="text-sm text-blue-600 hover:underline"
         >
           Попробовать снова
@@ -280,7 +280,8 @@ export function CertificateList({
 
       <div className="max-h-96 overflow-y-auto border border-gray-200 rounded-lg bg-white" role="list">
         {filtered.map((cert) => {
-          const state = certStates.get(cert.thumbprint)!;
+          const state = certStates.get(cert.thumbprint);
+          if (!state) return null;
           return (
             <button
               key={cert.thumbprint}

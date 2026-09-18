@@ -8,13 +8,11 @@ import { LEGAL_TEMPLATES } from "@/data/templates";
 import type { LegalTemplate } from "@/data/types";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { faqForTemplate, faqJsonLd, breadcrumbJsonLd } from "@/lib/seo/faq";
-import { buildIntro, fieldsSummary } from "@/lib/seo/intro";
+import { fieldsSummary } from "@/lib/seo/intro";
 import { renderTemplateDocument } from "@/lib/renderDocument";
 import BlankDownloadButtons from "@/components/blank/BlankDownloadButtons";
 import { withSeo } from "@/lib/seo/withSeo";
 import { SITE_URL } from "@/lib/site";
-
-const YEAR = new Date().getFullYear();
 
 export const dynamicParams = false;
 
@@ -51,7 +49,7 @@ function getBlankPreviewImages(slug: string): string[] {
 }
 
 export function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
-  return params.then(async ({ slug }) => {
+  return params.then(({ slug }) => {
     const t = slugToTemplate(slug);
     if (!t) return {};
     const url = `/blanks/${t.id}`;
@@ -188,6 +186,7 @@ export default async function BlankPage({ params }: { params: Promise<{ slug: st
                   key={i}
                   className="bg-white shadow-lg ring-1 ring-gray-200 rounded-lg overflow-hidden"
                 >
+                  {/* eslint-disable-next-line @next/next/no-img-element -- статичные AVIF-превью бланков из public/ с фиксированными размерами; next/image не даёт выигрыша */}
                   <img
                     src={src}
                     alt={`Пустой бланк «${t.name}», страница ${i + 1}`}

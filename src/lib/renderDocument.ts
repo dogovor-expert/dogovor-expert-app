@@ -164,7 +164,7 @@ export function buildPackValues(
  * документ всегда выглядел одинаково.
  */
 export function renderTemplateDocument(
-  template: LegalTemplate,
+  template: Pick<LegalTemplate, "id" | "name" | "fields" | "previewTemplate">,
   formValues: Record<string, string>,
   options: RenderOptions = {}
 ): string {
@@ -220,7 +220,7 @@ export function renderTemplateDocument(
       if (f.type === "repeating") {
         let items: Record<string, unknown>[] = [];
         try {
-          items = JSON.parse(raw || "[]");
+          items = JSON.parse(raw || "[]") as Record<string, unknown>[];
         } catch {
           items = [];
         }
@@ -233,8 +233,10 @@ export function renderTemplateDocument(
               safe[k] = v;
             } else if (typeof v === "object") {
               safe[k] = JSON.stringify(v);
-            } else {
+            } else if (typeof v === "number" || typeof v === "boolean") {
               safe[k] = String(v);
+            } else {
+              safe[k] = "";
             }
           });
           return safe;
@@ -314,7 +316,7 @@ export function renderTemplateDocument(
     if (template.id === "invoice") {
       let items: { sum?: number }[] = [];
       try {
-        items = JSON.parse(formValues.items || "[]");
+        items = JSON.parse(formValues.items || "[]") as { sum?: number }[];
       } catch {
         items = [];
       }
@@ -341,7 +343,7 @@ export function renderTemplateDocument(
     ) {
       let items: { sum?: number }[] = [];
       try {
-        items = JSON.parse(formValues.items || "[]");
+        items = JSON.parse(formValues.items || "[]") as { sum?: number }[];
       } catch {
         items = [];
       }
@@ -438,7 +440,7 @@ function blankSize(f: TemplateField): number {
  */
 export function applyBlankMarkers(
   html: string,
-  template: LegalTemplate,
+  template: Pick<LegalTemplate, "fields">,
   mode: "html" | "pdf" | "docx" = "html"
 ): string {
   void mode;
@@ -453,6 +455,6 @@ export function applyBlankMarkers(
 }
 
 /** Подпись с адресом сайта — брендирование каждого скачанного бланка. */
-function buildBlankFooter(template: LegalTemplate): string {
+function buildBlankFooter(template: Pick<LegalTemplate, "name">): string {
   return `<div class="blank-source text-center text-[10px] text-zinc-400 mt-6 pt-3 border-t border-zinc-200">Пустой бланк «${escapeHtml(template.name)}» — подготовлен на Dogovor.expert. Бесплатно заполняйте онлайн или от руки: dogovor.expert</div>`;
 }

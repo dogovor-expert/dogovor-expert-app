@@ -4,7 +4,6 @@
 
 import type { CloudProvider, CloudTokens, CloudConfig, CloudFolder } from "../types";
 
-const GOOGLE_API = "https://www.googleapis.com";
 const DRIVE_UPLOAD = "https://www.googleapis.com/upload/drive/v3/files";
 const DEFAULT_SCOPES = ["https://www.googleapis.com/auth/drive.file"]; // per-file access
 const OFFLINE_SCOPES = [...DEFAULT_SCOPES, "https://www.googleapis.com/auth/drive.offline"]; // для refresh_token
@@ -38,7 +37,14 @@ declare global {
           initTokenClient: (config: {
             client_id: string;
             scope: string;
-            callback: (resp: { access_token: string; expires_in: number; error?: string }) => void;
+            access_type?: string;
+            prompt?: string;
+            callback: (resp: {
+              access_token: string;
+              expires_in: number;
+              refresh_token?: string;
+              error?: string;
+            }) => void;
           }) => {
             requestAccessToken: (opts: { prompt?: string }) => void;
           };
@@ -78,14 +84,19 @@ export class GoogleDriveProvider implements CloudProvider {
         reject(new Error("Google Identity Services не загружен"));
         return;
       }
-      // Используем type assertion для доступа к access_type и refresh_token
-      // которые есть в runtime но нет в типах @types/google-identity-services
-      const clientConfig: any = {
+      // access_type/prompt есть в runtime GIS, но отсутствуют в базовых типах —
+      // они добавлены в declare global выше.
+      const clientConfig = {
         client_id: config.clientId,
         scope: scopes.join(" "),
         access_type: "offline",
         prompt: "consent",
-        callback: (resp: any) => {
+        callback: (resp: {
+          access_token: string;
+          expires_in: number;
+          refresh_token?: string;
+          error?: string;
+        }) => {
           if (resp.error) {
             reject(new Error(`Google OAuth error: ${resp.error}`));
             return;
@@ -120,10 +131,14 @@ export class GoogleDriveProvider implements CloudProvider {
       throw new Error(`Google token refresh failed: ${txt}`);
     }
 
-    const data = await res.json();
+    const data = (await res.json()) as {
+      accessToken?: string;
+      expiresAt?: number;
+      scope?: string;
+    };
     return {
       provider: "google",
-      accessToken: data.accessToken,
+      accessToken: data.accessToken ?? "",
       refreshToken: tokens.refreshToken, // refresh_token обычно не меняется
       expiresAt: data.expiresAt,
       tokenType: "Bearer",
@@ -154,7 +169,7 @@ export class GoogleDriveProvider implements CloudProvider {
     tokens: CloudTokens,
     path: string,
     blob: Blob,
-    contentType?: string
+    _contentType?: string
   ): Promise<{ id: string; url?: string }> {
     // multipart upload — простой и надежный для файлов до 5MB (а наши PDF/JSON маленькие)
     const metadata = { name: path.split("/").pop() || "document", parents: [] };
@@ -167,8 +182,8 @@ export class GoogleDriveProvider implements CloudProvider {
       method: "POST",
       body: form,
     });
-    const data = await res.json();
-    return { id: data.id, url: data.webViewLink };
+    const data = (await res.json()) as { id?: string; webViewLink?: string };
+    return { id: data.id ?? "", url: data.webViewLink };
   }
 
   async downloadFile(tokens: CloudTokens, path: string): Promise<Blob> {
@@ -186,7 +201,7 @@ export class GoogleDriveProvider implements CloudProvider {
       tokens,
       `https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id,name)`
     );
-    const data = await res.json();
+    const data = (await res.json()) as { files?: Array<{ id: string; name: string }> };
     return data.files || [];
   }
 
@@ -198,12 +213,14 @@ export class GoogleDriveProvider implements CloudProvider {
       tokens,
       `https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id,name,size,modifiedTime)`
     );
-    const data = await res.json();
-    return (data.files || []).map((f: any) => ({
-      name: f.name,
-      path: f.id,
+    const data = (await res.json()) as {
+      files?: Array<{ id?: string; name?: string; size?: string; modifiedTime?: string }>;
+    };
+    return (data.files || []).map((f) => ({
+      name: f.name ?? "",
+      path: f.id ?? "",
       size: parseInt(f.size || "0", 10),
-      modified: f.modifiedTime,
+      modified: f.modifiedTime ?? "",
     }));
   }
 
@@ -212,7 +229,7 @@ export class GoogleDriveProvider implements CloudProvider {
       tokens,
       "https://www.googleapis.com/oauth2/v2/userinfo"
     );
-    const data = await res.json();
+    const data = (await res.json()) as { name?: string; email?: string };
     return { name: data.name, email: data.email };
   }
 
@@ -230,10 +247,10 @@ export class GoogleDriveProvider implements CloudProvider {
       tokens,
       `https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id,name)`
     );
-    const data = await res.json();
-    return (data.files || []).map((f: any) => ({
-      name: f.name,
-      path: f.id,
+    const data = (await res.json()) as { files?: Array<{ id?: string; name?: string }> };
+    return (data.files || []).map((f) => ({
+      name: f.name ?? "",
+      path: f.id ?? "",
       isFolder: true as const,
     }));
   }
@@ -255,7 +272,7 @@ export class GoogleDriveProvider implements CloudProvider {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(metadata),
     });
-    const data = await res.json();
+    const data = (await res.json()) as { id: string };
     return data.id;
   }
 }

@@ -114,7 +114,7 @@ export function usePdfWorker(): UsePdfWorker {
         });
         // Сборка финального сообщения с jobId (TS-distributive Omit не сохраняет literal type
         // на стороне вызова, поэтому делаем явное приведение в полный PdfWorkerRequest).
-        w.postMessage({ ...req, jobId } as unknown as PdfWorkerRequest);
+        w.postMessage({ ...req, jobId });
       });
     },
     []

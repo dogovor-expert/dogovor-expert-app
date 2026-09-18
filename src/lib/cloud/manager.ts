@@ -22,7 +22,7 @@ import {
 
 // Реэкспорт для удобства
 export { loadCloudTokens, isTokenValid } from "./tokenStore";
-import { openAuthPopup, parseTokenFromFragment } from "./oauth";
+import { openAuthPopup } from "./oauth";
 
 const PROVIDERS: Record<CloudProviderId, CloudProvider> = {
   yandex: yandexDiskProvider,
@@ -30,39 +30,38 @@ const PROVIDERS: Record<CloudProviderId, CloudProvider> = {
   dropbox: dropboxProvider,
 };
 
-const YANDEX_TOKEN = "https://oauth.yandex.ru/token";
-const GOOGLE_TOKEN = "https://oauth2.googleapis.com/token";
-
 /** Экспоненциальный бэкофф с джиттером для повторных попыток + авто-refresh при 401. */
 async function withRetry<T>(
   fn: () => Promise<T>,
   maxAttempts = 3,
   baseDelayMs = 500
 ): Promise<T> {
-  let lastError: Error;
+  let lastError: Error | undefined;
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     try {
       return await fn();
     } catch (e) {
       lastError = e as Error;
-      const err = e as any;
+      const err = e as { message?: string; provider?: CloudProviderId };
       // Авто-refresh при 401 (токен истёк) — попытка обновить и повторить ОДИН раз
       if (attempt === 1 && (err?.message?.includes?.("401") || err?.message?.includes?.("истёк") || err?.message?.includes?.("expired"))) {
         try {
-          await refreshProviderTokens(err.provider || "unknown");
-          // Повторяем один раз после refresh
-          return await fn();
+          if (err.provider) {
+            await refreshProviderTokens(err.provider);
+            // Повторяем один раз после refresh
+            return await fn();
+          }
         } catch {
           // refresh не удался — падаем в общий цикл
         }
       }
-      if (attempt === maxAttempts) throw lastError;
+      if (attempt === maxAttempts) throw lastError ?? new Error("withRetry failed");
       // экспоненциальный бэкофф: 500ms, 1000ms, 2000ms + jitter
       const delay = baseDelayMs * Math.pow(2, attempt - 1) + Math.random() * 200;
       await new Promise((r) => setTimeout(r, delay));
     }
   }
-  throw lastError!;
+  throw lastError ?? new Error("withRetry failed");
 }
 
 const CONFIG_KEY = "cloud_config_v1";
@@ -103,7 +102,7 @@ function loadStoredConfig(): StoredConfig {
   if (typeof window === "undefined") return {};
   try {
     const raw = localStorage.getItem(CONFIG_KEY);
-    return raw ? JSON.parse(raw) : {};
+    return raw ? (JSON.parse(raw) as StoredConfig) : {};
   } catch {
     return {};
   }
@@ -192,7 +191,11 @@ export async function getConnectedProviders(): Promise<
   Array<{ id: CloudProviderId; name: string; userInfo?: { name?: string; email?: string } }>
 > {
   const ids = await listConnectedProviders();
-  const result = [];
+  const result: Array<{
+    id: CloudProviderId;
+    name: string;
+    userInfo?: { name?: string; email?: string };
+  }> = [];
   for (const id of ids) {
     const tokens = await loadCloudTokens(id);
     if (tokens && isTokenValid(tokens)) {
@@ -245,7 +248,7 @@ export async function exportDocument(
 /** Экспорт всех документов vault в облако (как зашифрованный бэкап). */
 export async function exportAllVaultDocuments(
   providerId: CloudProviderId,
-  docs: Array<{ meta: { id: string; title: string }; payload: any }>,
+  docs: Array<{ meta: { id: string; title: string }; payload: unknown }>,
   remoteFolder: string = "/Dogovor.expert/vault-backup"
 ): Promise<{ success: number; failed: string[] }> {
   const provider = getProvider(providerId);
@@ -285,27 +288,24 @@ export async function listCloudFiles(
 
   // У провайдеров разные методы листинга - используем общий через download метаданных
   if (providerId === "yandex") {
-    const yandex = provider as any;
-    const items = await yandex.listFiles(tokens, remoteFolder);
-    return items.map((f: any) => ({
-      name: f.name,
-      path: f.path,
+    const items = (await provider.listFiles?.(tokens, remoteFolder)) ?? [];
+    return items.map((f) => ({
+      name: f.name ?? "",
+      path: f.path ?? "",
       size: f.size || 0,
       modified: f.modified || f.created || new Date().toISOString(),
     }));
   }
   if (providerId === "google") {
-    const google = provider as any;
-    const items = await google.searchFile(tokens, ""); // поиск всех в папке - упрощение
-    return items.map((f: any) => ({
-      name: f.name,
-      path: f.id,
+    const items = (await provider.searchFile?.(tokens, "")) ?? []; // поиск всех в папке - упрощение
+    return items.map((f) => ({
+      name: f.name ?? "",
+      path: f.id ?? "",
       size: 0,
       modified: new Date().toISOString(),
     }));
   }
   if (providerId === "dropbox") {
-    const dropbox = provider as any;
     // Dropbox list folder
     const res = await fetch("https://api.dropboxapi.com/2/files/list_folder", {
       method: "POST",
@@ -316,14 +316,22 @@ export async function listCloudFiles(
       body: JSON.stringify({ path: remoteFolder, recursive: false }),
     });
     if (!res.ok) throw new Error("Dropbox list failed");
-    const data = await res.json();
+    const data = (await res.json()) as {
+      entries?: Array<{
+        [".tag"]?: string;
+        name?: string;
+        path_display?: string;
+        size?: number;
+        server_modified?: string;
+      }>;
+    };
     return (data.entries || [])
-      .filter((e: any) => e[".tag"] === "file")
-      .map((e: any) => ({
-        name: e.name,
-        path: e.path_display,
-        size: e.size,
-        modified: e.server_modified,
+      .filter((e) => e[".tag"] === "file")
+      .map((e) => ({
+        name: e.name ?? "",
+        path: e.path_display ?? "",
+        size: e.size ?? 0,
+        modified: e.server_modified ?? "",
       }));
   }
   return [];
@@ -349,8 +357,8 @@ export async function importVaultFromCloud(
 ): Promise<void> {
   const blob = await downloadCloudFile(providerId, remotePath);
   const text = await blob.text();
-  const backup = JSON.parse(text);
   const { importVaultBackup } = await import("@/lib/vault/keyManager");
+  const backup = JSON.parse(text) as Parameters<typeof importVaultBackup>[0];
   await importVaultBackup(backup, passphrase);
 }
 

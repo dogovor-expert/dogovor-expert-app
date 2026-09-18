@@ -450,7 +450,6 @@ async function validateCertificateChain(cert: CadesObject, cadesplugin: CadesPlu
       const issuerName = await currentCert.IssuerName;
       const validFrom = await currentCert.ValidFromDate;
       const validTo = await currentCert.ValidToDate;
-      const thumbprint = await currentCert.Thumbprint;
 
       // Проверяем, является ли текущий сертификат корневым (самоподписанным)
       const currentSubject = await currentCert.SubjectName;
@@ -581,10 +580,10 @@ async function checkRevocation(cert: CadesObject, _cadesplugin: CadesPlugin): Pr
         for (let i = 0; i < clean.length; i += 2) {
           bytes[i / 2] = parseInt(clean.substr(i, 2), 16);
         }
-        derBytes = bytes.buffer as ArrayBuffer;
+        derBytes = bytes.buffer;
       }
     } else {
-      derBytes = certEncoded as ArrayBuffer;
+      derBytes = certEncoded;
     }
 
     // Динамический импорт pkijs (чтобы не сломать 'use client' в браузере)
@@ -679,10 +678,6 @@ export async function signPdfWithCryptoPro(
   const signedData = await cadesplugin.CreateObjectAsync('CAdESCOM.CadesSignedData');
   await signedData.propset_ContentEncoding(cadesplugin.CADESCOM_BASE64_TO_BINARY);
   await signedData.propset_Content(base64);
-
-  const encodingType = options.encodingType === 'binary'
-    ? cadesplugin.CADESCOM_ENCODE_BINARY
-    : cadesplugin.CADESCOM_ENCODE_BASE64;
 
   const detached = options.detached ?? true;
 

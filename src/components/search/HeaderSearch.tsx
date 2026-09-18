@@ -54,7 +54,6 @@ export default function HeaderSearch() {
   // Отдельный ref для мобильного оверлея: общий ref с десктоп-полем терялся
   // при закрытии оверлея (React обнулял ref, висящий на том же объекте).
   const mobileInputRef = useRef<HTMLInputElement>(null);
-  const anyInput = () => mobileInputRef.current ?? inputRef.current;
   const rootRef = useRef<HTMLDivElement>(null);
 
   const items = useMemo(() => {

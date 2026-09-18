@@ -69,7 +69,7 @@ export default function FeedbackForm({ defaultDocSlug, onSuccess, compact }: Pro
     if (docListLoaded) return;
     try {
       const res = await fetch("/api/templates/summary");
-      const json = await res.json();
+      const json = (await res.json()) as { data?: TemplateSummary[] };
       if (Array.isArray(json?.data)) {
         setDocList(json.data);
         setDocListLoaded(true);
@@ -82,12 +82,12 @@ export default function FeedbackForm({ defaultDocSlug, onSuccess, compact }: Pro
   // Автоподстановка email для залогина и документа со страницы.
   useEffect(() => {
     const supabase = createClient();
-    supabase.auth.getUser().then(({ data }) => {
+    void supabase.auth.getUser().then(({ data }) => {
       if (data.user?.email) setEmail(data.user.email);
     });
     if (defaultDocSlug) {
       setType("doc_error");
-      ensureDocList().then(() => {
+      void ensureDocList().then(() => {
         const t = docList.find((x) => x.id === defaultDocSlug);
         if (t) {
           setDocSlug(t.id);
@@ -101,7 +101,7 @@ export default function FeedbackForm({ defaultDocSlug, onSuccess, compact }: Pro
 
   // Подгружаем список при выборе типа «Ошибка в документе».
   useEffect(() => {
-    if (type === "doc_error") ensureDocList();
+    if (type === "doc_error") void ensureDocList();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [type]);
 
@@ -159,7 +159,7 @@ export default function FeedbackForm({ defaultDocSlug, onSuccess, compact }: Pro
           (f) =>
             new Promise<{ name: string; type: string; dataUrl: string }>((resolve, reject) => {
               const r = new FileReader();
-              r.onload = () => resolve({ name: f.name, type: f.type, dataUrl: String(r.result) });
+              r.onload = () => resolve({ name: f.name, type: f.type, dataUrl: typeof r.result === "string" ? r.result : "" });
               r.onerror = reject;
               r.readAsDataURL(f);
             })
@@ -180,7 +180,7 @@ export default function FeedbackForm({ defaultDocSlug, onSuccess, compact }: Pro
           screenshots,
         }),
       });
-      const data = await res.json().catch(() => ({}));
+      const data = (await res.json().catch(() => ({}))) as { error?: string; ticket_no?: string };
       if (!res.ok) throw new Error(data?.error || "request_failed");
       setTicketNo(data.ticket_no || "");
       setStatus("success");
@@ -495,13 +495,13 @@ export default function FeedbackForm({ defaultDocSlug, onSuccess, compact }: Pro
         >
           <AlertCircle className="w-4 h-4 flex-shrink-0" />
           <span className="flex-1">{submitError}</span>
-          <button onClick={submit} className="font-semibold underline">Повторить</button>
+          <button onClick={() => { void submit(); }} className="font-semibold underline">Повторить</button>
         </div>
       )}
 
       <button
         type="button"
-        onClick={submit}
+        onClick={() => { void submit(); }}
         disabled={status === "submitting"}
         aria-busy={status === "submitting"}
         aria-disabled={status === "submitting"}

@@ -30,10 +30,10 @@ export class DropboxProvider implements CloudProvider {
   }
 
   buildAuthUrl(config: CloudConfig): string {
-    // PKCE: нам нужен code_challenge
-    // Этот метод вызывается до connect, поэтому PKCE создаем здесь и сохраняем в sessionStorage
-    const scopes = config.scopes.length ? config.scopes : DEFAULT_SCOPES;
-    return ""; // фактический URL строится в connect() через createPKCE
+    // PKCE: code_challenge формируется в startAuth/connect().
+    // Этот метод существует только для соответствия интерфейсу CloudProvider.
+    void config;
+    return "";
   }
 
   async exchangeCodeForTokens(
@@ -63,11 +63,17 @@ export class DropboxProvider implements CloudProvider {
       const txt = await res.text().catch(() => "");
       throw new Error(`Dropbox token exchange ${res.status}: ${txt}`);
     }
-    const data = await res.json();
+    const data = (await res.json()) as {
+      access_token?: string;
+      refresh_token?: string;
+      expires_in?: number;
+      token_type?: string;
+      scope?: string;
+    };
     sessionStorage.removeItem("dbx_pkce_verifier");
     return {
       provider: "dropbox",
-      accessToken: data.access_token,
+      accessToken: data.access_token ?? "",
       refreshToken: data.refresh_token, // сохраняем refresh_token
       expiresAt: data.expires_in ? Date.now() + data.expires_in * 1000 : undefined,
       tokenType: data.token_type,
@@ -93,10 +99,15 @@ export class DropboxProvider implements CloudProvider {
       const txt = await res.text().catch(() => "");
       throw new Error(`Dropbox token refresh ${res.status}: ${txt}`);
     }
-    const data = await res.json();
+    const data = (await res.json()) as {
+      access_token?: string;
+      expires_in?: number;
+      token_type?: string;
+      scope?: string;
+    };
     return {
       provider: "dropbox",
-      accessToken: data.access_token,
+      accessToken: data.access_token ?? "",
       refreshToken: tokens.refreshToken,
       expiresAt: data.expires_in ? Date.now() + data.expires_in * 1000 : undefined,
       tokenType: data.token_type,
@@ -170,7 +181,7 @@ export class DropboxProvider implements CloudProvider {
       const txt = await res.text().catch(() => "");
       throw new Error(`Dropbox upload ${res.status}: ${txt}`);
     }
-    const data = await res.json();
+    const data = (await res.json()) as { path_display?: string };
     return { id: data.path_display || path, url: data.path_display };
   }
 
@@ -192,7 +203,10 @@ export class DropboxProvider implements CloudProvider {
 
   async getUserInfo(tokens: CloudTokens): Promise<{ name?: string; email?: string }> {
     const res = await this.authedFetch(tokens, `${DROPBOX_API}/users/get_current_account`);
-    const data = await res.json();
+    const data = (await res.json()) as {
+      name?: { display_name?: string };
+      email?: string;
+    };
     return {
       name: data.name?.display_name,
       email: data.email,
@@ -221,12 +235,14 @@ export class DropboxProvider implements CloudProvider {
       const txt = await res.text().catch(() => "");
       throw new Error(`Dropbox list_folder ${res.status}: ${txt}`);
     }
-    const data = await res.json();
+    const data = (await res.json()) as {
+      entries?: Array<{ [".tag"]?: string; name?: string; path_display?: string }>;
+    };
     return (data.entries || [])
-      .filter((e: any) => e[".tag"] === "folder")
-      .map((e: any) => ({
-        name: e.name,
-        path: e.path_display,
+      .filter((e) => e[".tag"] === "folder")
+      .map((e) => ({
+        name: e.name ?? "",
+        path: e.path_display ?? "",
         isFolder: true as const,
       }));
   }

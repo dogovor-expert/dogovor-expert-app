@@ -24,7 +24,7 @@ async function postHandler(req: Request) {
   //    чужого юзера изменить нельзя.
   const admin = createAdminClient();
 
-  const body = await req.json().catch(() => null);
+  const body = (await req.json().catch(() => null)) as { enabled?: unknown } | null;
   if (!body || typeof body.enabled !== "boolean") {
     return NextResponse.json({ error: "invalid_body" }, { status: 400 });
   }

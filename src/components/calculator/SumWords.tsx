@@ -20,7 +20,7 @@ export default function SumWords() {
 
   const copy = () => {
     if (!words) return;
-    navigator.clipboard?.writeText(words);
+    void navigator.clipboard?.writeText(words);
     setCopied(true);
     setTimeout(() => setCopied(false), 1500);
   };

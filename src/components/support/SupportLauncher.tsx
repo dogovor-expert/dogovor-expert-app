@@ -13,6 +13,7 @@ const FeedbackForm = dynamic(() => import("@/components/feedback/FeedbackForm"),
 
 const CHAT_ENABLED = process.env.NEXT_PUBLIC_CHAT_ENABLED === "1";
 const VISITOR_KEY = "support_visitor_id";
+const COLLAPSE_KEY = "support_launcher_collapsed";
 
 function getVisitorId(): string {
   try {
@@ -159,19 +160,64 @@ export function openChat() {
 
 export default function SupportLauncher() {
   const [open, setOpen] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
   const [tab, setTab] = useState<Tab>(CHAT_ENABLED ? "chat" : "problem");
   const [visitorId, setVisitorId] = useState<string>("");
   const [unread, setUnread] = useState(0);
   const triggerRef = useRef<HTMLButtonElement>(null);
+  const collapsedRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
-    resolveVisitorId().then(setVisitorId);
+    void resolveVisitorId().then(setVisitorId);
   }, []);
 
-  // Возвращаем фокус на trigger при закрытии панели (1.11).
+  // Свёрнутое состояние читаем из localStorage после гидратации (SSR рендерит развёрнутый вид).
   useEffect(() => {
-    if (!open) triggerRef.current?.focus();
-  }, [open]);
+    try {
+      setCollapsed(localStorage.getItem(COLLAPSE_KEY) === "1");
+    } catch {
+      /* localStorage недоступен */
+    }
+  }, []);
+
+  const collapse = () => {
+    setCollapsed(true);
+    try {
+      localStorage.setItem(COLLAPSE_KEY, "1");
+    } catch {
+      /* ignore */
+    }
+  };
+
+  const expand = () => {
+    setCollapsed(false);
+    try {
+      localStorage.setItem(COLLAPSE_KEY, "0");
+    } catch {
+      /* ignore */
+    }
+  };
+
+  // Возвращаем фокус на видимый триггер при закрытии панели (1.11).
+  const wasOpen = useRef(false);
+  useEffect(() => {
+    if (wasOpen.current && !open) {
+      if (collapsed) collapsedRef.current?.focus();
+      else triggerRef.current?.focus();
+    }
+    wasOpen.current = open;
+  }, [open, collapsed]);
+
+  // При сворачивании/разворачивании переводим фокус на актуальный элемент.
+  const mounted = useRef(false);
+  useEffect(() => {
+    if (!mounted.current) {
+      mounted.current = true;
+      return;
+    }
+    if (collapsed) collapsedRef.current?.focus();
+    else triggerRef.current?.focus();
+  }, [collapsed]);
 
   const closePanel = () => {
     setOpen(false);
@@ -198,7 +244,7 @@ export default function SupportLauncher() {
           cache: "no-store",
         });
         if (res.ok) {
-          const d = await res.json();
+          const d = (await res.json()) as { unread?: unknown };
           if (active) setUnread(Number(d.unread) || 0);
         }
       } catch {
@@ -222,18 +268,61 @@ export default function SupportLauncher() {
   return (
     <>
       {/* Плавающая кнопка поддержки (внизу справа) */}
-      {!open && (
+      {!open && !collapsed && (
+        <div className="fixed bottom-[calc(4.75rem+env(safe-area-inset-bottom))] lg:bottom-4 right-4 z-40 pb-safe">
+          <div className="relative group">
+            <button
+              ref={triggerRef}
+              type="button"
+              onClick={() => handleOpen(CHAT_ENABLED ? "chat" : "problem")}
+              className="relative inline-flex items-center gap-2.5 pl-4 pr-5 py-3 rounded-full text-white font-semibold shadow-lg shadow-brand-600/30 bg-gradient-to-br from-brand-500 to-brand-700 hover:from-brand-600 hover:to-brand-800 hover:shadow-xl hover:shadow-brand-600/40 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400 focus-visible:ring-offset-2"
+              aria-label="Поддержка"
+            >
+              {unread > 0 && (
+                <span
+                  className="absolute inset-0 rounded-full bg-brand-400/40 animate-ping"
+                  aria-hidden="true"
+                />
+              )}
+              <span className="relative inline-flex items-center justify-center w-8 h-8 rounded-full bg-white/15 ring-1 ring-white/25">
+                <Headphones className="w-5 h-5" />
+              </span>
+              <span className="relative text-sm hidden sm:inline">Поддержка</span>
+              {unread > 0 && (
+                <span className="relative ml-0.5 inline-flex items-center justify-center min-w-[20px] h-5 px-1 text-[11px] font-bold bg-red-500 text-white rounded-full ring-2 ring-white/80">
+                  {unread > 9 ? "9+" : unread}
+                </span>
+              )}
+            </button>
+            <button
+              type="button"
+              onClick={collapse}
+              className="absolute -top-1.5 -right-1.5 inline-flex items-center justify-center w-6 h-6 rounded-full bg-white text-slate-500 border border-slate-200 shadow-md opacity-90 transition hover:text-slate-800 hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400"
+              aria-label="Скрыть кнопку поддержки"
+              title="Скрыть"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Свёрнутая тонкая вкладка у правого края */}
+      {!open && collapsed && (
         <button
-          ref={triggerRef}
+          ref={collapsedRef}
           type="button"
-          onClick={() => handleOpen(CHAT_ENABLED ? "chat" : "problem")}
-          className="fixed bottom-[calc(4.75rem+env(safe-area-inset-bottom))] lg:bottom-4 right-4 z-40 inline-flex items-center gap-2 px-4 py-3 rounded-full bg-brand-600 text-white shadow-lg hover:bg-brand-700 transition-colors pb-safe"
-          aria-label="Поддержка"
+          onClick={expand}
+          className="fixed right-0 top-1/2 -translate-y-1/2 z-40 inline-flex flex-col items-center gap-2 px-2 py-4 rounded-l-2xl text-white shadow-lg shadow-brand-600/30 bg-gradient-to-b from-brand-500 to-brand-700 hover:from-brand-600 hover:to-brand-800 hover:pr-3 transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400"
+          aria-label="Развернуть кнопку поддержки"
+          title="Поддержка"
         >
           <Headphones className="w-5 h-5" />
-          <span className="text-sm font-semibold hidden sm:inline">Поддержка</span>
+          <span className="text-[11px] font-semibold tracking-wide [writing-mode:vertical-rl] rotate-180">
+            Поддержка
+          </span>
           {unread > 0 && (
-            <span className="ml-0.5 inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 text-[11px] font-bold bg-red-500 text-white rounded-full">
+            <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 text-[11px] font-bold bg-red-500 text-white rounded-full">
               {unread > 9 ? "9+" : unread}
             </span>
           )}

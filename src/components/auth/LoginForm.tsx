@@ -62,7 +62,7 @@ export function LoginForm({ onSuccess, initialEmail }: LoginFormProps) {
         body: JSON.stringify({ ...data, captchaToken }),
       });
 
-      const result = await response.json();
+      const result = (await response.json()) as { error?: string };
 
       if (!response.ok) {
         setServerError(result.error || 'Ошибка входа');
