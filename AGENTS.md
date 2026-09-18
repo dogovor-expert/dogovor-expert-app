@@ -31,7 +31,7 @@
 - Dev: `npm run dev`
 - Verify (typecheck+lint+test): `npm run verify`
 - Build: `npm run build`
-- Deploy: VDS/CapRover через Docker (см. `docs/DEPLOY.md`, актуальный флоу 2026-09)
+- Deploy: `git push origin master:production` → CapRover-вебхук сам собирает и деплоит прод (см. `docs/DEPLOY.md`)
 - Smoke (prod): `npm run check:smoke:prod`
 - Полный аудит: `npm run audit:full` (PSI + LHCI + Squirrelscan)
 
