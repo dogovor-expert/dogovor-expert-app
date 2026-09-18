@@ -10,10 +10,10 @@ export const dynamic = "force-static"; // P0: см. INVARIANTS.md
  * /utils — юридические и финансовые калькуляторы.
  *
  * Структура страницы (server-rendered для SEO):
- *  1. Header с заголовком H1 + краткое описание
+ *  1. Компактный header с заголовком H1 + мета-строкой
  *  2. Блок «Актуальные данные» (server-rendered, с реальной датой)
  *  3. UtilsTools (client island) — интерактивные калькуляторы
- *  4. SEO-блок: что можно рассчитать, правовые основания
+ *  4. SEO-блоки: как это работает, правовые основания, что можно рассчитать
  *  5. FAQ с schema.org/FAQPage (Structured Data для rich snippets)
  *  6. CTA на основной конструктор документов
  *
@@ -55,6 +55,21 @@ const FAQ_ITEMS = [
   },
 ];
 
+const HOW_STEPS = [
+  {
+    title: "Выберите инструмент",
+    text: "Найдите нужный калькулятор в списке слева — через поиск, категории (юридические, финансы и авто, справочники) или избранное. Например, «Госпошлина» или «395 ГК».",
+  },
+  {
+    title: "Заполните поля",
+    text: "Укажите сумму иска, период просрочки, регион или тип заявления — обязательные поля подписаны. Расчёт появится сразу, а рядом будет формула и правовое основание.",
+  },
+  {
+    title: "Проверьте и оформите",
+    text: "Сверьте расчёт с актуальной редакцией закона (ссылки в блоке «Правовые основания») и сразу перейдите в конструктор: выберите шаблон претензии или иска — данные подставятся автоматически. Для суда приложите распечатку с датой и источником ставок.",
+  },
+];
+
 export default function UtilsPage() {
   const today = new Date().toLocaleDateString("ru-RU", { day: "numeric", month: "long", year: "numeric" });
 
@@ -83,74 +98,105 @@ export default function UtilsPage() {
   };
 
   return (
-    <div className="p-6 max-w-4xl mx-auto space-y-6">
+    <div className="p-6 max-w-5xl mx-auto">
       {/* JSON-LD: FAQ + Breadcrumb */}
       <JsonLd data={faqJsonLd} />
       <JsonLd data={breadcrumbJsonLd} />
 
-      <header className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl bg-indigo-50 border border-indigo-200 flex items-center justify-center text-indigo-500">
-          <Calculator className="w-5 h-5" />
+      {/* ===== Header ===== */}
+      <header className="flex items-start gap-4">
+        <div className="w-12 h-12 rounded-2xl bg-white border border-brand-200 text-brand-600 shadow-soft grid place-items-center shrink-0">
+          <Calculator className="w-6 h-6" />
         </div>
-        <div>
-          <h1 className="text-xl font-bold text-gray-900">Калькуляторы и проверки — 2026</h1>
-          <p className="text-sm text-gray-600">22 юридических и финансовых калькулятора. Актуальные ставки, МРОТ, ключевая ставка ЦБ РФ.</p>
+        <div className="min-w-0">
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-gray-900">Калькуляторы и проверки — 2026</h1>
+          <p className="mt-1 text-sm text-gray-500">
+            22 юридических и финансовых калькулятора: актуальные ставки, МРОТ, ключевая ставка ЦБ РФ, НДС 22%, шкала НДФЛ 13–22%.
+          </p>
+          <p className="mt-2 text-[11px] font-mono uppercase tracking-wide text-gray-400">
+            22 инструмента · 3 категории · обновлено {today}
+          </p>
         </div>
       </header>
 
-      <div className="rounded-xl p-3 flex items-start gap-2.5 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs">
+      {/* ===== Актуальные данные ===== */}
+      <div className="mt-5 rounded-2xl bg-emerald-50 border border-emerald-200 px-4 py-3 flex items-start gap-2.5 text-emerald-800 text-[12.5px]">
         <ShieldCheck className="w-4 h-4 mt-0.5 flex-shrink-0 text-emerald-500" />
         <span>
           <b>Актуальные данные на {today}:</b> ключевая ставка ЦБ 14,00% (с 2025), взносы ИП 2026 — 57 390 ₽ (фиксированная часть) + 1% с дохода свыше 300 000 ₽, МРОТ 27 093 ₽, НДС 22% (с 1 января 2026), прогрессивная шкала НДФЛ 13–22%, ставки по НК/ТК/ЖК/СК РФ. Ставки обновляются автоматически при изменении законодательства.
         </span>
       </div>
 
-      {/* Клиентский island: интерактивные калькуляторы */}
-      <UtilsTools />
+      {/* ===== Клиентский island: интерактивные калькуляторы ===== */}
+      <div className="mt-5">
+        <UtilsTools />
+      </div>
 
-      {/* ===== SEO-БЛОК: правовые основания и описание категорий ===== */}
-      <section className="bg-white border border-gray-200 rounded-xl p-6 space-y-5" aria-labelledby="legal-basis">
-        <h2 id="legal-basis" className="text-base font-bold text-gray-900 flex items-center gap-2">
-          <BookOpen className="w-4 h-4 text-brand-500" />
-          Правовые основания расчётов
+      {/* ===== Как это работает ===== */}
+      <section className="mt-10" aria-labelledby="how-it-works">
+        <p className="text-[10.5px] font-bold tracking-[0.14em] uppercase text-brand-600">Как это работает</p>
+        <h2 id="how-it-works" className="mt-1 text-xl font-extrabold tracking-tight text-gray-900">Расчёт за три шага</h2>
+        <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3">
+          {HOW_STEPS.map((s, i) => (
+            <div key={s.title} className="rounded-2xl bg-white border border-gray-200 shadow-soft p-5">
+              <span className="w-7 h-7 rounded-full bg-brand-50 border border-brand-100 text-brand-700 grid place-items-center text-xs font-bold">
+                {i + 1}
+              </span>
+              <h3 className="mt-3 text-sm font-bold text-gray-900">{s.title}</h3>
+              <p className="mt-1 text-[12.5px] text-gray-600 leading-relaxed">{s.text}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ===== Правовые основания ===== */}
+      <section className="mt-10" aria-labelledby="legal-basis">
+        <p className="text-[10.5px] font-bold tracking-[0.14em] uppercase text-brand-600">Правовые основания</p>
+        <h2 id="legal-basis" className="mt-1 text-xl font-extrabold tracking-tight text-gray-900 flex items-center gap-2">
+          <BookOpen className="w-5 h-5 text-brand-500" />
+          Формулы и нормы расчётов
         </h2>
-        <p className="text-sm text-gray-700 leading-relaxed">
-          Все калькуляторы на этой странице используют формулы и ставки, закреплённые в действующих нормативных актах Российской Федерации. Источники пересматриваются ежеквартально и при публикации изменений в законодательстве. Ниже — основные правовые акты, на которые опираются расчёты.
+        <p className="mt-2 text-[13px] text-gray-600 leading-relaxed max-w-3xl">
+          Все калькуляторы на этой странице используют формулы и ставки, закреплённые в действующих нормативных актах Российской Федерации. Источники пересматриваются ежеквартально и при публикации изменений в законодательстве.
         </p>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-          <div className="bg-gray-50 rounded-lg p-3">
-            <p className="font-semibold text-gray-800 mb-1">Налоговый кодекс РФ</p>
-            <ul className="space-y-0.5 text-gray-700 list-disc list-inside">
-              <li>Ст. 333.19 — госпошлина в суды общей юрисдикции</li>
-              <li>Ст. 333.21 — госпошлина в арбитражные суды</li>
+        <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
+          <div className="rounded-2xl bg-white border border-gray-200 shadow-soft p-4">
+            <p className="text-[10px] font-mono uppercase tracking-wide text-brand-600">НК РФ</p>
+            <p className="mt-1 font-bold text-gray-800">Налоговый кодекс</p>
+            <ul className="mt-2 space-y-1 text-gray-600">
+              <li>Ст. 333.19 — госпошлина, суды общей юрисдикции</li>
+              <li>Ст. 333.21 — госпошлина, арбитражные суды</li>
               <li>Ст. 164, 166–172 — НДС (22% с 2026)</li>
               <li>Ст. 224 — шкала НДФЛ 13–22%</li>
               <li>Ст. 361–362 — транспортный налог</li>
               <li>Ст. 430 — страховые взносы ИП</li>
             </ul>
           </div>
-          <div className="bg-gray-50 rounded-lg p-3">
-            <p className="font-semibold text-gray-800 mb-1">Гражданский и Трудовой кодекс</p>
-            <ul className="space-y-0.5 text-gray-700 list-disc list-inside">
+          <div className="rounded-2xl bg-white border border-gray-200 shadow-soft p-4">
+            <p className="text-[10px] font-mono uppercase tracking-wide text-brand-600">ГК / ТК</p>
+            <p className="mt-1 font-bold text-gray-800">Гражданский и Трудовой кодекс</p>
+            <ul className="mt-2 space-y-1 text-gray-600">
               <li>Ст. 395 ГК РФ — проценты за пользование чужими деньгами</li>
               <li>Ст. 330–333 ГК РФ — неустойка</li>
               <li>Ст. 208 ГПК РФ — индексация присуждённых сумм</li>
               <li>Ст. 236 ТК РФ — компенсация за задержку зарплаты</li>
-              <li>Ст. 139 ТК РФ — расчёт отпускных (средний дневной заработок 29,3)</li>
+              <li>Ст. 139 ТК РФ — отпускные (средний дневной заработок 29,3)</li>
               <li>Ст. 81 СК РФ — алименты на детей</li>
             </ul>
           </div>
-          <div className="bg-gray-50 rounded-lg p-3">
-            <p className="font-semibold text-gray-800 mb-1">Жилищный кодекс и ЖКХ</p>
-            <ul className="space-y-0.5 text-gray-700 list-disc list-inside">
+          <div className="rounded-2xl bg-white border border-gray-200 shadow-soft p-4">
+            <p className="text-[10px] font-mono uppercase tracking-wide text-brand-600">ЖК РФ</p>
+            <p className="mt-1 font-bold text-gray-800">Жилищный кодекс и ЖКХ</p>
+            <ul className="mt-2 space-y-1 text-gray-600">
               <li>Ч. 14 ст. 155 ЖК РФ — пени за ЖКУ (1/300 ключевой ставки)</li>
               <li>Ч. 14.1 ст. 155 ЖК РФ — пени для капремонта</li>
               <li>Постановление Правительства № 354 — порядок начисления</li>
             </ul>
           </div>
-          <div className="bg-gray-50 rounded-lg p-3">
-            <p className="font-semibold text-gray-800 mb-1">Авто: пошлины и штрафы</p>
-            <ul className="space-y-0.5 text-gray-700 list-disc list-inside">
+          <div className="rounded-2xl bg-white border border-gray-200 shadow-soft p-4">
+            <p className="text-[10px] font-mono uppercase tracking-wide text-brand-600">КоАП / ЕЭК</p>
+            <p className="mt-1 font-bold text-gray-800">Авто: пошлины и штрафы</p>
+            <ul className="mt-2 space-y-1 text-gray-600">
               <li>Глава 12 КоАП РФ — штрафы ГИБДД (скидка 50% за 20 дней)</li>
               <li>ПП РФ № 1291 — утилизационный сбор</li>
               <li>Решения ЕЭК — пошлины на ввоз автомобилей</li>
@@ -160,59 +206,48 @@ export default function UtilsPage() {
         </div>
       </section>
 
-      <section className="bg-white border border-gray-200 rounded-xl p-6 space-y-3" aria-labelledby="what-can">
-        <h2 id="what-can" className="text-base font-bold text-gray-900 flex items-center gap-2">
-          <CalcIcon className="w-4 h-4 text-brand-500" />
+      {/* ===== Что можно рассчитать ===== */}
+      <section className="mt-10" aria-labelledby="what-can">
+        <p className="text-[10.5px] font-bold tracking-[0.14em] uppercase text-brand-600">Категории</p>
+        <h2 id="what-can" className="mt-1 text-xl font-extrabold tracking-tight text-gray-900 flex items-center gap-2">
+          <CalcIcon className="w-5 h-5 text-brand-500" />
           Что можно рассчитать
         </h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-          <article>
-            <h3 className="font-semibold text-gray-800 mb-1 flex items-center gap-1.5"><Scale className="w-3.5 h-3.5 text-indigo-500" /> Юридические</h3>
-            <p className="text-xs text-gray-700 leading-relaxed">
+        <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3">
+          <article className="rounded-2xl bg-white border border-gray-200 shadow-soft p-5">
+            <h3 className="text-sm font-bold text-gray-900 flex items-center gap-1.5"><Scale className="w-4 h-4 text-brand-500" /> Юридические</h3>
+            <p className="mt-1.5 text-[12.5px] text-gray-600 leading-relaxed">
               Госпошлина в суд по любой категории дела, проценты за пользование чужими деньгами (ст. 395 ГК РФ), договорная и законная неустойка, компенсация за задержку зарплаты (ст. 236 ТК РФ), пени за ЖКХ и капремонт (ст. 155 ЖК РФ), алименты на детей, индексация присуждённых сумм. Расчёт задолженности и неустойки для претензии или искового заявления.
             </p>
           </article>
-          <article>
-            <h3 className="font-semibold text-gray-800 mb-1 flex items-center gap-1.5"><TrendingUp className="w-3.5 h-3.5 text-emerald-500" /> Финансы</h3>
-            <p className="text-xs text-gray-700 leading-relaxed">
+          <article className="rounded-2xl bg-white border border-gray-200 shadow-soft p-5">
+            <h3 className="text-sm font-bold text-gray-900 flex items-center gap-1.5"><TrendingUp className="w-4 h-4 text-emerald-500" /> Финансы</h3>
+            <p className="mt-1.5 text-[12.5px] text-gray-600 leading-relaxed">
               НДС 22% (начислить или выделить), НДФЛ по прогрессивной шкале 13–22% с учётом стандартных, социальных и имущественных вычетов, страховые взносы ИП (фиксированная часть + 1% сверх 300 000 ₽), УСН «Доходы» 6% / «Доходы минус расходы» 15%, НПД (налог на профессиональный доход) 4–6%, отпускные по среднему заработку 29,3.
             </p>
           </article>
-          <article>
-            <h3 className="font-semibold text-gray-800 mb-1 flex items-center gap-1.5"><FileCheck className="w-3.5 h-3.5 text-amber-500" /> Авто и справочники</h3>
-            <p className="text-xs text-gray-700 leading-relaxed">
+          <article className="rounded-2xl bg-white border border-gray-200 shadow-soft p-5">
+            <h3 className="text-sm font-bold text-gray-900 flex items-center gap-1.5"><FileCheck className="w-4 h-4 text-amber-500" /> Авто и справочники</h3>
+            <p className="mt-1.5 text-[12.5px] text-gray-600 leading-relaxed">
               Транспортный налог по регионам и лошадиным силам, штрафы ГИБДД с проверкой скидки 50% (оплата в течение 20 дней), утилизационный сбор для физлиц и юрлиц, полная растаможка автомобиля (пошлина + акциз + НДС + утильсбор), КАСКО-квиз для оценки премии. Валидация ИНН, СНИЛС, ОГРН, БИК, номера банковской карты, контрольной суммы перевода. Сумма прописью для договоров и расписок.
             </p>
           </article>
         </div>
       </section>
 
-      <section className="bg-white border border-gray-200 rounded-xl p-6 space-y-3" aria-labelledby="how-to-use">
-        <h2 id="how-to-use" className="text-base font-bold text-gray-900">Как использовать расчёты</h2>
-        <ol className="text-sm text-gray-700 leading-relaxed space-y-2 list-decimal list-inside">
-          <li>Выберите нужный калькулятор из списка выше (например, «Госпошлина» или «395 ГК»).</li>
-          <li>Заполните обязательные поля — сумму иска, период просрочки, регион, тип заявления.</li>
-          <li>Получите расчёт и сверьте его с актуальной редакцией закона (ссылки в блоке «Правовые основания»).</li>
-          <li>Для досудебной претензии — сразу перейдите к конструктору: выберите шаблон «Претензия о взыскании» или «Исковое заявление», данные подставятся автоматически.</li>
-          <li>При подаче в суд — приложите распечатку расчёта с указанием даты и источника ставок.</li>
-        </ol>
-      </section>
-
       {/* ===== FAQ ===== */}
-      <section className="bg-white border border-gray-200 rounded-xl p-6 space-y-4" aria-labelledby="faq-heading">
-        <h2 id="faq-heading" className="text-base font-bold text-gray-900">Частые вопросы</h2>
-        <div className="space-y-3">
+      <section className="mt-10" aria-labelledby="faq-heading">
+        <p className="text-[10.5px] font-bold tracking-[0.14em] uppercase text-brand-600">Вопросы и ответы</p>
+        <h2 id="faq-heading" className="mt-1 text-xl font-extrabold tracking-tight text-gray-900">Частые вопросы</h2>
+        <div className="mt-4 rounded-2xl bg-white border border-gray-200 shadow-soft divide-y divide-gray-100 overflow-hidden">
           {FAQ_ITEMS.map((item, i) => (
-            <details
-              key={i}
-              className="group bg-gray-50 border border-gray-200 rounded-lg p-4 open:bg-white open:border-brand-200 transition-colors"
-            >
-              <summary className="cursor-pointer text-sm font-semibold text-gray-900 flex items-start gap-2 list-none">
+            <details key={i} className="group p-4 sm:p-5 open:bg-gray-50/60 transition-colors">
+              <summary className="cursor-pointer text-sm font-semibold text-gray-900 flex items-start gap-2.5 list-none">
                 <span className="flex-shrink-0 w-5 h-5 rounded-full bg-brand-100 text-brand-700 flex items-center justify-center text-xs font-bold">{i + 1}</span>
                 <span className="flex-1">{item.q}</span>
                 <span className="text-gray-400 group-open:rotate-180 transition-transform">▾</span>
               </summary>
-              <div className="mt-2 pl-7 text-sm text-gray-700 leading-relaxed">
+              <div className="mt-2 pl-[30px] text-[13px] text-gray-600 leading-relaxed">
                 {item.a}
               </div>
             </details>
@@ -221,20 +256,22 @@ export default function UtilsPage() {
       </section>
 
       {/* ===== CTA ===== */}
-      <section className="bg-gradient-to-br from-brand-50 to-emerald-50 border border-brand-200 rounded-xl p-6 text-center space-y-3">
-        <h2 className="text-base font-bold text-gray-900">Готовы составить документ по результатам расчёта?</h2>
-        <p className="text-sm text-gray-700 max-w-2xl mx-auto">
-          В конструкторе Договор-Эксперт доступны шаблоны претензий, исковых заявлений, досудебных уведомлений и расписок. Суммы, периоды и ставки из калькуляторов подставляются в шаблон автоматически.
-        </p>
+      <section className="mt-10 rounded-2xl bg-gradient-to-br from-brand-50 to-emerald-50 border border-brand-200 p-6 sm:p-7 flex flex-col md:flex-row md:items-center gap-4">
+        <div className="flex-1">
+          <h2 className="text-lg font-extrabold tracking-tight text-gray-900">Готовы составить документ по результатам расчёта?</h2>
+          <p className="mt-1.5 text-[13px] text-gray-600 leading-relaxed">
+            В конструкторе Договор-Эксперт доступны шаблоны претензий, исковых заявлений, досудебных уведомлений и расписок. Суммы, периоды и ставки из калькуляторов подставляются в шаблон автоматически.
+          </p>
+        </div>
         <a
           href="/builder"
-          className="inline-flex items-center gap-2 px-5 py-2.5 bg-brand-500 text-white rounded-xl hover:bg-brand-600 font-semibold text-sm transition"
+          className="inline-flex items-center justify-center gap-2 px-5 py-3 bg-brand-600 text-white rounded-xl hover:bg-brand-700 font-semibold text-sm transition shrink-0 shadow-sm"
         >
-          Перейти к конструктору документов →
+          Перейти к конструктору →
         </a>
       </section>
 
-      <p className="text-xs text-gray-500 text-center">
+      <p className="mt-6 text-xs text-gray-500 text-center">
         Расчёты носят справочный характер. Окончательные суммы определяет суд или уполномоченный орган.
       </p>
     </div>

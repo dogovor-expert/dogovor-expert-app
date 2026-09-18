@@ -2,12 +2,16 @@
 /**
  * Client-часть /utils: интерактивные калькуляторы и валидаторы.
  * Server-rendered обвязка (FAQ, SEO-текст, schema.org) — в page.tsx.
+ *
+ * Раскладка (Вариант D): слева — компактный список инструментов с поиском,
+ * сортировкой, категориями и избранным; справа — панель активного калькулятора.
  */
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Landmark, Check, X as XIcon, Hash,
   Scale, Percent, Banknote, Home, Baby, FileWarning, TrendingUp,
-  Briefcase, Wallet, Store, Plane, Car, CarFront, Fingerprint, Hash as HashIcon, CalendarDays, Recycle, Ship, CarTaxiFront, ShieldQuestion
+  Briefcase, Wallet, Store, Plane, Car, CarFront, Fingerprint, Hash as HashIcon, CalendarDays, Recycle, Ship, CarTaxiFront, ShieldQuestion,
+  Search, Star,
 } from "lucide-react";
 import CourtFee from "@/components/calculator/CourtFee";
 import Interest395 from "@/components/calculator/Interest395";
@@ -31,47 +35,67 @@ import CustomsDuty from "@/components/calculator/CustomsDuty";
 import NdflSale from "@/components/calculator/NdflSale";
 import KaskoQuote from "@/components/calculator/KaskoQuote";
 
-const GROUPS: { id: string; label: string; tools: { id: string; label: string; icon: React.ElementType; desc: string; comp: React.ElementType | null }[] }[] = [
+type Tool = {
+  id: string;
+  label: string;
+  icon: React.ElementType;
+  desc: string;
+  comp: React.ElementType | null;
+  /** популярный — выше при сортировке «Популярные» */
+  pop?: boolean;
+  /** новый инструмент */
+  neu?: boolean;
+};
+
+const GROUPS: { id: string; label: string; tools: Tool[] }[] = [
   {
     id: "law",
     label: "Юридические",
     tools: [
-      { id: "docs", label: "Быстрые", icon: Landmark, desc: "ИНН, реквизиты", comp: null },
-      { id: "nds", label: "НДС", icon: Percent, desc: "Начислить / выделить 22%", comp: Nds },
-      { id: "fee", label: "Госпошлина", icon: Scale, desc: "Ст. 333.19 НК", comp: CourtFee },
-      { id: "395", label: "395 ГК", icon: Percent, desc: "Пользование чужими деньгами", comp: Interest395 },
+      { id: "docs", label: "Быстрые проверки", icon: Landmark, desc: "ИНН, реквизиты", comp: null, pop: true },
+      { id: "nds", label: "НДС", icon: Percent, desc: "Начислить / выделить 22%", comp: Nds, pop: true },
+      { id: "fee", label: "Госпошлина", icon: Scale, desc: "Ст. 333.19 НК", comp: CourtFee, pop: true },
+      { id: "395", label: "395 ГК", icon: Percent, desc: "Пользование чужими деньгами", comp: Interest395, pop: true },
       { id: "236", label: "236 ТК", icon: Banknote, desc: "Задержка зарплаты", comp: SalaryDelay236 },
       { id: "zhkh", label: "Пени ЖКХ и капремонт", icon: Home, desc: "Ч. 14, 14.1 ст. 155 ЖК", comp: ZhkhPenalty },
       { id: "alimony", label: "Алименты", icon: Baby, desc: "Доли и пени (СК РФ)", comp: Alimony },
       { id: "penalty", label: "Неустойка", icon: FileWarning, desc: "Договорная и законная", comp: ContractPenalty },
-      { id: "index", label: "Индексация", icon: TrendingUp, desc: "Ст. 208 ГПК", comp: Indexation208 },
+      { id: "index", label: "Индексация", icon: TrendingUp, desc: "Ст. 208 ГПК", comp: Indexation208, neu: true },
     ],
   },
   {
     id: "fin",
     label: "Финансы и авто",
     tools: [
-      { id: "ipfees", label: "Взносы ИП", icon: Briefcase, desc: "Ст. 430 НК, 1% свыше 300 тыс.", comp: FeesIp },
-      { id: "ndfl", label: "НДФЛ", icon: Wallet, desc: "Шкала 13–22%, вычеты", comp: Ndfl },
+      { id: "ipfees", label: "Взносы ИП", icon: Briefcase, desc: "Ст. 430 НК, 1% свыше 300 тыс.", comp: FeesIp, pop: true },
+      { id: "ndfl", label: "НДФЛ", icon: Wallet, desc: "Шкала 13–22%, вычеты", comp: Ndfl, pop: true },
       { id: "ndflsale", label: "3-НДФЛ: продажа авто", icon: CarTaxiFront, desc: "Вычет 250 тыс., срок владения", comp: NdflSale },
       { id: "usnnpd", label: "УСН / НПД", icon: Store, desc: "Налоги ИП и самозанятых", comp: UsnNpd },
       { id: "vacation", label: "Отпускные", icon: Plane, desc: "29,3 — ст. 139 ТК", comp: Vacation },
       { id: "transport", label: "Транспортный налог", icon: Car, desc: "Ст. 361–362 НК", comp: TransportTax },
-      { id: "pdd", label: "Штрафы ГИБДД", icon: CarFront, desc: "Гл. 12 КоАП, скидка 50%", comp: PddFines },
-      { id: "utilsb", label: "Утильсбор", icon: Recycle, desc: "ПП № 1291, физлица и юрлица", comp: UtilSb },
-      { id: "customs", label: "Растаможка авто", icon: Ship, desc: "Пошлины, акциз, НДС, утильсбор", comp: CustomsDuty },
-      { id: "kasko", label: "КАСКО-квиз", icon: ShieldQuestion, desc: "Оценка премии за 30 секунд", comp: KaskoQuote },
+      { id: "pdd", label: "Штрафы ГИБДД", icon: CarFront, desc: "Гл. 12 КоАП, скидка 50%", comp: PddFines, pop: true },
+      { id: "utilsb", label: "Утильсбор", icon: Recycle, desc: "ПП № 1291, физлица и юрлица", comp: UtilSb, neu: true },
+      { id: "customs", label: "Растаможка авто", icon: Ship, desc: "Пошлины, акциз, НДС, утильсбор", comp: CustomsDuty, pop: true },
+      { id: "kasko", label: "КАСКО-квиз", icon: ShieldQuestion, desc: "Оценка премии за 30 секунд", comp: KaskoQuote, neu: true },
     ],
   },
   {
     id: "ref",
     label: "Справочники",
     tools: [
-      { id: "valid", label: "Проверка реквизитов", icon: Fingerprint, desc: "СНИЛС, ОГРН, БИК, счёт, карта", comp: Validators },
-      { id: "words", label: "Сумма прописью", icon: HashIcon, desc: "Для договоров и расписок", comp: SumWords },
-      { id: "days", label: "Сроки и дни", icon: CalendarDays, desc: "Календарные и рабочие дни", comp: DayCounter },
+      { id: "valid", label: "Проверка реквизитов", icon: Fingerprint, desc: "СНИЛС, ОГРН, БИК, счёт, карта", comp: Validators, pop: true },
+      { id: "words", label: "Сумма прописью", icon: HashIcon, desc: "Для договоров и расписок", comp: SumWords, neu: true },
+      { id: "days", label: "Сроки и дни", icon: CalendarDays, desc: "Календарные и рабочие дни", comp: DayCounter, neu: true },
     ],
   },
+];
+
+const LS_KEY = "utils_favorites_v1";
+const CATS: { id: string; label: string }[] = [
+  { id: "all", label: "Все" },
+  { id: "law", label: "Юридические" },
+  { id: "fin", label: "Финансы и авто" },
+  { id: "ref", label: "Справочники" },
 ];
 
 function DocsTools() {
@@ -92,83 +116,265 @@ function DocsTools() {
   };
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-      <div className="bg-white border border-gray-200 rounded-xl p-6 space-y-4">
-        <h3 className="text-xs font-bold text-gray-700 uppercase flex items-center gap-1.5">
-          <Hash {...{ className: "w-4 h-4 text-indigo-500" }} /> Валидатор ИНН
-        </h3>
-        <div className="flex gap-2">
-          <input type="text" placeholder="10 или 12 цифр" value={inn} maxLength={12}
-            onChange={(e) => { setInn(e.target.value.replace(/\D/g, "")); setInnResult(null); }}
-            className="flex-1 bg-gray-50 border border-gray-200 text-xs py-2.5 px-3 rounded-lg text-gray-900 outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 font-mono"
-          />
-          <button onClick={checkInn}
-            className="px-4 py-2.5 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 font-bold text-xs transition cursor-pointer">
-            Проверить
-          </button>
-        </div>
-        {innResult && (
-          <div className={`rounded-xl p-3 flex items-center gap-2.5 text-xs ${
-            innResult.valid ? "bg-emerald-50 border border-emerald-200 text-emerald-700"
-              : "bg-red-50 border border-red-200 text-red-700"
-          }`}>
-            {innResult.valid ? <Check className="w-4 h-4 text-emerald-500" /> : <XIcon className="w-4 h-4 text-red-500" />}
-            <span>{innResult.valid ? `ИНН корректен (${innResult.type})` : `ИНН некорректен — ${innResult.type}`}</span>
-          </div>
-        )}
+    <div>
+      <h3 className="text-xs font-bold text-gray-700 uppercase flex items-center gap-1.5">
+        <Hash className="w-4 h-4 text-brand-500" /> Валидатор ИНН
+      </h3>
+      <p className="mt-1 text-[11.5px] text-gray-500">Проверка контрольной суммы для ИНН юрлица (10 цифр) и ИП / физлица (12 цифр).</p>
+      <div className="mt-4 flex gap-2">
+        <input type="text" placeholder="10 или 12 цифр" value={inn} maxLength={12}
+          onChange={(e) => { setInn(e.target.value.replace(/\D/g, "")); setInnResult(null); }}
+          className="flex-1 bg-gray-50 border border-gray-200 text-sm py-2.5 px-3 rounded-xl text-gray-900 outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 font-mono"
+        />
+        <button onClick={checkInn}
+          className="px-4 py-2.5 bg-brand-600 text-white rounded-xl hover:bg-brand-700 font-bold text-xs transition cursor-pointer">
+          Проверить
+        </button>
       </div>
+      {innResult && (
+        <div className={`mt-4 rounded-xl p-3 flex items-center gap-2.5 text-xs ${
+          innResult.valid ? "bg-emerald-50 border border-emerald-200 text-emerald-700"
+            : "bg-red-50 border border-red-200 text-red-700"
+        }`}>
+          {innResult.valid ? <Check className="w-4 h-4 text-emerald-500" /> : <XIcon className="w-4 h-4 text-red-500" />}
+          <span>{innResult.valid ? `ИНН корректен (${innResult.type})` : `ИНН некорректен — ${innResult.type}`}</span>
+        </div>
+      )}
     </div>
   );
 }
 
+const FLAT = GROUPS.flatMap((g) => g.tools.map((t) => ({ tool: t, gid: g.id })));
+const ALL_TOOLS = GROUPS.flatMap((g) => g.tools);
+
 export default function UtilsTools() {
-  const [group, setGroup] = useState("law");
-  const [active, setActive] = useState("docs");
-  const currentGroup = GROUPS.find((g) => g.id === group) ?? GROUPS[0];
-  const current = currentGroup.tools.find((t) => t.id === active) ?? currentGroup.tools[0];
+  const [q, setQ] = useState("");
+  const [cat, setCat] = useState("all");
+  const [sort, setSort] = useState<"popular" | "az" | "new">("popular");
+  const [favOnly, setFavOnly] = useState(false);
+  const [favs, setFavs] = useState<Set<string>>(new Set());
+  const [active, setActive] = useState("nds");
+  const panelRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(LS_KEY);
+      if (!raw) return;
+      const parsed: unknown = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        setFavs(new Set(parsed.filter((x): x is string => typeof x === "string")));
+      }
+    } catch { /* ignore */ }
+  }, []);
+
+  const toggleFav = (id: string) => {
+    setFavs((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      try { localStorage.setItem(LS_KEY, JSON.stringify([...next])); } catch { /* ignore */ }
+      return next;
+    });
+  };
+
+  const matches = (t: Tool, gid: string) => {
+    if (cat !== "all" && gid !== cat) return false;
+    if (favOnly && !favs.has(t.id)) return false;
+    const query = q.trim().toLowerCase();
+    if (query && !`${t.label} ${t.desc}`.toLowerCase().includes(query)) return false;
+    return true;
+  };
+
+  const sortTools = (arr: Tool[]) => {
+    const a = [...arr];
+    if (sort === "az") a.sort((x, y) => x.label.localeCompare(y.label, "ru"));
+    else if (sort === "new") a.sort((x, y) => Number(Boolean(y.neu)) - Number(Boolean(x.neu)));
+    else a.sort((x, y) => Number(Boolean(y.pop)) - Number(Boolean(x.pop)));
+    return a;
+  };
+
+  const catCount = (id: string) => (id === "all" ? ALL_TOOLS.length : (GROUPS.find((g) => g.id === id)?.tools.length ?? 0));
+  const visibleCount = FLAT.filter((e) => matches(e.tool, e.gid)).length;
+
+  const currentEntry = FLAT.find((e) => e.tool.id === active) ?? FLAT[0];
+  const current = currentEntry.tool;
   const Icon = current.icon;
 
-  const selectTool = (gid: string, tid: string) => {
-    setGroup(gid);
-    setActive(tid);
+  const related = [
+    ...ALL_TOOLS.filter((t) => t.id !== current.id && FLAT.some((e) => e.tool.id === t.id && e.gid === currentEntry.gid)),
+    ...ALL_TOOLS.filter((t) => t.pop && t.id !== current.id),
+  ].filter((t, i, arr) => arr.findIndex((x) => x.id === t.id) === i).slice(0, 5);
+
+  const selectTool = (id: string) => {
+    setActive(id);
+    if (typeof window !== "undefined" && window.innerWidth < 1024) {
+      panelRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
   };
 
   return (
-    <div className="space-y-6">
-      {GROUPS.map((g) => (
-        <div key={g.id}>
-          <p className="text-[10px] font-mono text-gray-600 uppercase mb-2">{g.label}</p>
-          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 gap-2">
-            {g.tools.map((t) => {
-              const TIcon = t.icon;
-              const isActive = group === g.id && active === t.id;
+    <div className="rounded-2xl bg-white border border-gray-200 shadow-soft p-4 sm:p-5">
+      {/* Панель управления */}
+      <div className="flex flex-col gap-3 md:flex-row md:items-center">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <input
+            type="search"
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder="Поиск по 22 калькуляторам — НДС, алименты, госпошлина…"
+            className="w-full bg-gray-50 border border-gray-200 text-sm py-2.5 pl-9 pr-3 rounded-xl text-gray-900 outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500"
+          />
+        </div>
+        <div className="flex items-center gap-2">
+          <select
+            value={sort}
+            onChange={(e) => setSort(e.target.value as "popular" | "az" | "new")}
+            className="bg-gray-50 border border-gray-200 text-xs font-semibold text-gray-700 py-2.5 px-3 rounded-xl outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 cursor-pointer"
+          >
+            <option value="popular">Популярные</option>
+            <option value="az">По алфавиту</option>
+            <option value="new">Новые</option>
+          </select>
+          <button
+            type="button"
+            onClick={() => setFavOnly((v) => !v)}
+            aria-pressed={favOnly}
+            className={`inline-flex items-center gap-1.5 text-xs font-semibold py-2.5 px-3 rounded-xl border transition cursor-pointer ${
+              favOnly ? "border-brand-500 bg-brand-50 text-brand-700" : "border-gray-200 bg-white text-gray-600 hover:border-brand-300"
+            }`}
+          >
+            <Star className={`w-3.5 h-3.5 ${favOnly ? "fill-brand-500 text-brand-500" : "text-gray-400"}`} />
+            Избранное{favs.size > 0 ? ` · ${favs.size}` : ""}
+          </button>
+        </div>
+      </div>
+
+      {/* Категории */}
+      <div className="mt-3 flex flex-wrap items-center gap-1.5">
+        {CATS.map((c) => {
+          const is = cat === c.id;
+          return (
+            <button
+              key={c.id}
+              type="button"
+              onClick={() => setCat(c.id)}
+              className={`inline-flex items-center gap-1.5 text-[11.5px] font-semibold px-2.5 py-1.5 rounded-full border transition cursor-pointer ${
+                is ? "border-brand-500 bg-brand-50 text-brand-700" : "border-gray-200 bg-white text-gray-600 hover:border-brand-300"
+              }`}
+            >
+              {c.label}
+              <span className={`text-[10px] font-mono ${is ? "text-brand-500" : "text-gray-400"}`}>{catCount(c.id)}</span>
+            </button>
+          );
+        })}
+        <span className="ml-auto text-[11px] font-mono text-gray-400">{visibleCount} из {ALL_TOOLS.length}</span>
+      </div>
+
+      {/* Двухколоночная раскладка */}
+      <div className="mt-4 grid lg:grid-cols-5 gap-4 items-start">
+        {/* Список инструментов */}
+        <aside className="lg:col-span-2 lg:sticky lg:top-20">
+          <div className="rounded-2xl border border-gray-200 bg-gray-50/60 p-2 max-h-[70vh] overflow-y-auto scrollbar-thin">
+            {GROUPS.map((g) => {
+              const tools = sortTools(g.tools.filter((t) => matches(t, g.id)));
+              if (tools.length === 0) return null;
               return (
-                <button
-                  key={t.id}
-                  onClick={() => selectTool(g.id, t.id)}
-                  className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${
-                    isActive
-                      ? "border-brand-500 bg-brand-50 shadow-soft"
-                      : "border-gray-200 bg-white hover:border-brand-300 hover:bg-gray-50"
-                  }`}
-                >
-                  <TIcon className={`w-5 h-5 mb-2 ${isActive ? "text-brand-600" : "text-gray-600"}`} />
-                  <p className={`text-xs font-semibold ${isActive ? "text-brand-700" : "text-gray-800"}`}>{t.label}</p>
-                  <p className="text-[10px] text-gray-600 mt-0.5 leading-snug">{t.desc}</p>
-                </button>
+                <div key={g.id} className="mb-1.5 last:mb-0">
+                  <p className="px-2 py-1.5 text-[10px] font-mono uppercase tracking-wide text-gray-500">{g.label}</p>
+                  <div className="space-y-1">
+                    {tools.map((t) => {
+                      const TIcon = t.icon;
+                      const isActive = t.id === active;
+                      const fav = favs.has(t.id);
+                      return (
+                        <div
+                          key={t.id}
+                          className={`flex items-center gap-2 rounded-xl border px-2 py-1.5 transition ${
+                            isActive ? "border-brand-500 bg-brand-50 shadow-soft" : "border-transparent hover:border-gray-200 hover:bg-white"
+                          }`}
+                        >
+                          <button
+                            type="button"
+                            onClick={() => selectTool(t.id)}
+                            className="flex flex-1 min-w-0 items-center gap-2.5 text-left cursor-pointer"
+                          >
+                            <span className={`shrink-0 w-8 h-8 rounded-lg border grid place-items-center ${
+                              isActive ? "bg-brand-600 border-transparent text-white" : "bg-white border-gray-200 text-gray-500"
+                            }`}>
+                              <TIcon className="w-4 h-4" />
+                            </span>
+                            <span className="min-w-0 flex-1">
+                              <span className={`block text-xs font-semibold truncate ${isActive ? "text-brand-800" : "text-gray-800"}`}>{t.label}</span>
+                              <span className="block text-[10.5px] text-gray-500 truncate">{t.desc}</span>
+                            </span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => toggleFav(t.id)}
+                            aria-label={fav ? `Убрать «${t.label}» из избранного` : `Добавить «${t.label}» в избранное`}
+                            aria-pressed={fav}
+                            className="shrink-0 w-7 h-7 rounded-full grid place-items-center transition cursor-pointer hover:bg-brand-50"
+                          >
+                            <Star className={`w-3.5 h-3.5 ${fav ? "fill-brand-500 text-brand-500" : "text-gray-300"}`} />
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
               );
             })}
+            {visibleCount === 0 && (
+              <p className="p-6 text-center text-xs text-gray-500">Ничего не найдено. Измените запрос или категорию.</p>
+            )}
           </div>
-        </div>
-      ))}
+        </aside>
 
-      <div className="bg-white border border-gray-200 rounded-xl p-6">
-        <div className="flex items-center gap-2 mb-4">
-          <Icon className="w-4 h-4 text-brand-500" />
-          <h2 className="text-sm font-bold text-gray-900">{current.label}</h2>
-        </div>
-        {active === "docs" && <DocsTools />}
-        {current.comp && <current.comp />}
+        {/* Панель активного инструмента */}
+        <section ref={panelRef} className="lg:col-span-3 scroll-mt-20">
+          <div className="rounded-2xl bg-white border border-gray-200 shadow-soft overflow-hidden">
+            <div className="flex items-center gap-3 px-4 sm:px-5 py-4 border-b border-gray-100">
+              <span className="shrink-0 w-10 h-10 rounded-xl bg-brand-50 border border-brand-100 text-brand-600 grid place-items-center">
+                <Icon className="w-5 h-5" />
+              </span>
+              <div className="min-w-0 flex-1">
+                <h2 className="text-[15px] font-extrabold text-gray-900 truncate">{current.label}</h2>
+                <p className="text-[11.5px] text-gray-500 truncate">{current.desc}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => toggleFav(current.id)}
+                aria-label={favs.has(current.id) ? "Убрать из избранного" : "Добавить в избранное"}
+                aria-pressed={favs.has(current.id)}
+                className="shrink-0 w-8 h-8 rounded-full grid place-items-center transition cursor-pointer hover:bg-brand-50"
+              >
+                <Star className={`w-4 h-4 ${favs.has(current.id) ? "fill-brand-500 text-brand-500" : "text-gray-300"}`} />
+              </button>
+            </div>
+            <div className="p-4 sm:p-5">
+              {active === "docs" && <DocsTools />}
+              {current.comp && <current.comp />}
+            </div>
+            {related.length > 0 && (
+              <div className="px-4 sm:px-5 py-3.5 border-t border-gray-100 bg-gray-50/60">
+                <p className="text-[10px] font-mono uppercase tracking-wide text-gray-500 mb-2">С этим также считают</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {related.map((t) => (
+                    <button
+                      key={t.id}
+                      type="button"
+                      onClick={() => selectTool(t.id)}
+                      className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-gray-600 bg-white border border-gray-200 hover:border-brand-300 hover:text-brand-700 px-2.5 py-1.5 rounded-full transition cursor-pointer"
+                    >
+                      <t.icon className="w-3 h-3" />
+                      {t.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </section>
       </div>
     </div>
   );

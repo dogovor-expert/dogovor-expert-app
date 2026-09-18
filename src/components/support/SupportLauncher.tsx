@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
-import { X, MessageCircle, Bug, Headphones } from "lucide-react";
+import { X, MessageCircle, Bug, Headphones, ChevronLeft } from "lucide-react";
 import ChatPanel from "./ChatPanel";
 import { createClient } from "@/lib/supabase/client";
 
@@ -13,7 +13,7 @@ const FeedbackForm = dynamic(() => import("@/components/feedback/FeedbackForm"),
 
 const CHAT_ENABLED = process.env.NEXT_PUBLIC_CHAT_ENABLED === "1";
 const VISITOR_KEY = "support_visitor_id";
-const COLLAPSE_KEY = "support_launcher_collapsed";
+const HIDDEN_KEY = "support_launcher_hidden";
 
 function getVisitorId(): string {
   try {
@@ -160,39 +160,39 @@ export function openChat() {
 
 export default function SupportLauncher() {
   const [open, setOpen] = useState(false);
-  const [collapsed, setCollapsed] = useState(false);
+  const [hidden, setHidden] = useState(false);
   const [tab, setTab] = useState<Tab>(CHAT_ENABLED ? "chat" : "problem");
   const [visitorId, setVisitorId] = useState<string>("");
   const [unread, setUnread] = useState(0);
   const triggerRef = useRef<HTMLButtonElement>(null);
-  const collapsedRef = useRef<HTMLButtonElement>(null);
+  const hiddenRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     void resolveVisitorId().then(setVisitorId);
   }, []);
 
-  // Свёрнутое состояние читаем из localStorage после гидратации (SSR рендерит развёрнутый вид).
+  // «Скрытый» режим читаем из localStorage после гидратации (SSR рендерит видимую вкладку).
   useEffect(() => {
     try {
-      setCollapsed(localStorage.getItem(COLLAPSE_KEY) === "1");
+      setHidden(localStorage.getItem(HIDDEN_KEY) === "1");
     } catch {
       /* localStorage недоступен */
     }
   }, []);
 
-  const collapse = () => {
-    setCollapsed(true);
+  const hide = () => {
+    setHidden(true);
     try {
-      localStorage.setItem(COLLAPSE_KEY, "1");
+      localStorage.setItem(HIDDEN_KEY, "1");
     } catch {
       /* ignore */
     }
   };
 
-  const expand = () => {
-    setCollapsed(false);
+  const show = () => {
+    setHidden(false);
     try {
-      localStorage.setItem(COLLAPSE_KEY, "0");
+      localStorage.setItem(HIDDEN_KEY, "0");
     } catch {
       /* ignore */
     }
@@ -202,22 +202,22 @@ export default function SupportLauncher() {
   const wasOpen = useRef(false);
   useEffect(() => {
     if (wasOpen.current && !open) {
-      if (collapsed) collapsedRef.current?.focus();
+      if (hidden) hiddenRef.current?.focus();
       else triggerRef.current?.focus();
     }
     wasOpen.current = open;
-  }, [open, collapsed]);
+  }, [open, hidden]);
 
-  // При сворачивании/разворачивании переводим фокус на актуальный элемент.
+  // При скрытии/показе переводим фокус на актуальный элемент.
   const mounted = useRef(false);
   useEffect(() => {
     if (!mounted.current) {
       mounted.current = true;
       return;
     }
-    if (collapsed) collapsedRef.current?.focus();
+    if (hidden) hiddenRef.current?.focus();
     else triggerRef.current?.focus();
-  }, [collapsed]);
+  }, [hidden]);
 
   const closePanel = () => {
     setOpen(false);
@@ -267,65 +267,51 @@ export default function SupportLauncher() {
 
   return (
     <>
-      {/* Плавающая кнопка поддержки (внизу справа) */}
-      {!open && !collapsed && (
-        <div className="fixed bottom-[calc(4.75rem+env(safe-area-inset-bottom))] lg:bottom-4 right-4 z-40 pb-safe">
-          <div className="relative group">
-            <button
-              ref={triggerRef}
-              type="button"
-              onClick={() => handleOpen(CHAT_ENABLED ? "chat" : "problem")}
-              className="relative inline-flex items-center gap-2.5 pl-4 pr-5 py-3 rounded-full text-white font-semibold shadow-lg shadow-brand-600/30 bg-gradient-to-br from-brand-500 to-brand-700 hover:from-brand-600 hover:to-brand-800 hover:shadow-xl hover:shadow-brand-600/40 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400 focus-visible:ring-offset-2"
-              aria-label="Поддержка"
-            >
-              {unread > 0 && (
-                <span
-                  className="absolute inset-0 rounded-full bg-brand-400/40 animate-ping"
-                  aria-hidden="true"
-                />
-              )}
-              <span className="relative inline-flex items-center justify-center w-8 h-8 rounded-full bg-white/15 ring-1 ring-white/25">
-                <Headphones className="w-5 h-5" />
+      {/* Боковая вкладка поддержки — всегда у правого края */}
+      {!open && !hidden && (
+        <div className="fixed right-0 top-1/2 -translate-y-1/2 z-40">
+          <button
+            ref={triggerRef}
+            type="button"
+            onClick={() => handleOpen(CHAT_ENABLED ? "chat" : "problem")}
+            className="relative inline-flex flex-col items-center gap-2 pl-2.5 pr-3 py-4 rounded-l-2xl text-white shadow-lg shadow-brand-600/30 bg-gradient-to-b from-brand-500 to-brand-700 hover:from-brand-600 hover:to-brand-800 hover:pr-3.5 active:pr-2.5 transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400 focus-visible:ring-offset-1"
+            aria-label="Поддержка"
+          >
+            <span className="relative inline-flex items-center justify-center w-7 h-7 rounded-full bg-white/15 ring-1 ring-white/25">
+              <Headphones className="w-4 h-4" />
+            </span>
+            <span className="text-[11px] font-semibold tracking-wide [writing-mode:vertical-rl] rotate-180">
+              Поддержка
+            </span>
+            {unread > 0 && (
+              <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 text-[11px] font-bold bg-red-500 text-white rounded-full ring-2 ring-white/70">
+                {unread > 9 ? "9+" : unread}
               </span>
-              <span className="relative text-sm hidden sm:inline">Поддержка</span>
-              {unread > 0 && (
-                <span className="relative ml-0.5 inline-flex items-center justify-center min-w-[20px] h-5 px-1 text-[11px] font-bold bg-red-500 text-white rounded-full ring-2 ring-white/80">
-                  {unread > 9 ? "9+" : unread}
-                </span>
-              )}
-            </button>
-            <button
-              type="button"
-              onClick={collapse}
-              className="absolute -top-1.5 -right-1.5 inline-flex items-center justify-center w-6 h-6 rounded-full bg-white text-slate-500 border border-slate-200 shadow-md opacity-90 transition hover:text-slate-800 hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400"
-              aria-label="Скрыть кнопку поддержки"
-              title="Скрыть"
-            >
-              <X className="w-3.5 h-3.5" />
-            </button>
-          </div>
+            )}
+          </button>
+          <button
+            type="button"
+            onClick={hide}
+            className="absolute -top-1.5 -left-1.5 inline-flex items-center justify-center w-6 h-6 rounded-full bg-white text-slate-500 border border-slate-200 shadow-md transition hover:text-slate-800 hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400"
+            aria-label="Скрыть кнопку поддержки"
+            title="Скрыть"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
         </div>
       )}
 
-      {/* Свёрнутая тонкая вкладка у правого края */}
-      {!open && collapsed && (
+      {/* Узкая ручка на краю — вернуть кнопку обратно */}
+      {!open && hidden && (
         <button
-          ref={collapsedRef}
+          ref={hiddenRef}
           type="button"
-          onClick={expand}
-          className="fixed right-0 top-1/2 -translate-y-1/2 z-40 inline-flex flex-col items-center gap-2 px-2 py-4 rounded-l-2xl text-white shadow-lg shadow-brand-600/30 bg-gradient-to-b from-brand-500 to-brand-700 hover:from-brand-600 hover:to-brand-800 hover:pr-3 transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400"
-          aria-label="Развернуть кнопку поддержки"
-          title="Поддержка"
+          onClick={show}
+          className="fixed right-0 top-1/2 -translate-y-1/2 z-40 inline-flex items-center justify-center h-16 w-4 rounded-l-xl bg-brand-500/50 backdrop-blur-sm shadow-md hover:bg-brand-600/80 hover:w-5 transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400 focus-visible:ring-offset-1"
+          aria-label="Показать кнопку поддержки"
+          title="Показать поддержку"
         >
-          <Headphones className="w-5 h-5" />
-          <span className="text-[11px] font-semibold tracking-wide [writing-mode:vertical-rl] rotate-180">
-            Поддержка
-          </span>
-          {unread > 0 && (
-            <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 text-[11px] font-bold bg-red-500 text-white rounded-full">
-              {unread > 9 ? "9+" : unread}
-            </span>
-          )}
+          <ChevronLeft className="w-3 h-3 text-white" />
         </button>
       )}
 
