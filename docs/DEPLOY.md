@@ -14,21 +14,20 @@
 
 ### Как деплоить
 
-1. **Build:** `npm run build` (проверка локальной сборки) → сборка образа:
-   ```bash
-   docker build -t dogovor-expert-app:prod \
-     --build-arg NEXT_PUBLIC_SUPABASE_URL=https://supabase.vds.dogovor.expert \
-     --build-arg NEXT_PUBLIC_SUPABASE_ANON_KEY=<...> \
-     (и остальные NEXT_PUBLIC_* из Dockerfile) \
-     .
-   ```
-   `NEXT_PUBLIC_*` инлайнятся при БИЛДЕ (а не в рантайме) — значения обязаны быть те же, что в среде приложения CapRover.
-2. **Публикация образа** — любой из поддерживаемых путей:
-   - **CI (staging):** `.github/workflows/caprover-deploy.yml` (workflow_dispatch, GHCR `ghcr.io/dogovor-expert/dogovor-expert-app:staging`, `caprover/deploy-from-github@v1.1.2`).
-   - **Вручную:** загрузить образ в registry (GHCR/Docker Hub), затем в панели CapRover → Apps → приложение → **Deploy** → из image registry, либо `caprover deploy` (из папки с Dockerfile).
-3. **Проверка после деплоя:** см. «Пост-деплой проверка (VDS)» ниже и раздел «Проверка прода».
+**Прод обновляется автоматически через push-webhook CapRover.**
 
-> Точный способ, которым прод обновляется прямо сейчас (тег/registry/кнопка в панели), хранится вне репозитория — у владельца (пароль/токен CapRover не коммитим).
+Приложение `dogovor-prod` в CapRover подписано на GitHub-вебхук: репозиторий `dogovor-expert/dogovor-expert-app`, ветка **`production`**. Пуш в эту ветку → CapRover сам собирает Dockerfile из репозитория (образ `img-captain-dogovor-prod:<n>`) и перезапускает сервис. GitHub Actions для деплоя НЕ используются.
+
+```bash
+git push origin master:production
+```
+
+- `NEXT_PUBLIC_*` инлайнятся при **БИЛДЕ** (а не в рантайме). CapRover при сборке передаёт environment variables приложения как build-args, поэтому значения обязаны быть корректны в **environment variables приложения CapRover** (не в `.env*` файлах).
+- Локальная проверка перед пушем (опционально): `npm run build`.
+
+**Staging** — отдельное приложение CapRover `dogovor` (домен `https://test.dogovor.expert`); пуш-вебхук на нём не настроен, деплой вручную из панели (или включить вебхук на ветку `master`).
+
+**Ручной фолбэк** (если вебхук недоступен): панель CapRover → Apps → приложение → **Deploy** → сборка из репозитория (repo/branch), либо `caprover deploy` из папки с Dockerfile.
 
 ### Cron на VDS
 

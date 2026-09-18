@@ -35,4 +35,4 @@
 ### Помни
 - `npm run verify` перед коммитом
 - `git commit --no-verify` ТОЛЬКО для экстренных hotfix (задокументировать в CHANGELOG)
-- Деплой: VDS/CapRover на `82.146.35.220` через Docker — см. `docs/DEPLOY.md` (НЕ через Vercel; Vercel больше не используется)
+- Деплой: `git push origin master:production` → CapRover-вебхук собирает и деплоит прод (см. `docs/DEPLOY.md`; НЕ Vercel)
