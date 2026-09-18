@@ -35,14 +35,14 @@ export default function LeadsPanel() {
   const load = useCallback(async () => {
     const res = await fetch("/api/leads").catch(() => null);
     if (res?.ok) {
-      const { data } = await res.json();
+      const { data } = (await res.json()) as { data?: Lead[] };
       setLeads(Array.isArray(data) ? data : []);
     }
     setLoading(false);
   }, []);
 
   useEffect(() => {
-    load();
+    void load();
   }, [load]);
 
   const changeStatus = async (id: string, status: Lead["status"]) => {
@@ -63,7 +63,7 @@ export default function LeadsPanel() {
           Заявки на растаможку
           <Badge variant="blue" size="sm">{leads.length}</Badge>
         </h2>
-        <button onClick={load} className="text-xs text-brand-600 hover:underline">
+        <button onClick={() => { void load(); }} className="text-xs text-brand-600 hover:underline">
           Обновить
         </button>
       </div>
@@ -97,7 +97,7 @@ export default function LeadsPanel() {
                 </Badge>
                 <select
                   value={l.status}
-                  onChange={(e) => changeStatus(l.id, e.target.value as Lead["status"])}
+                  onChange={(e) => { void changeStatus(l.id, e.target.value as Lead["status"]); }}
                   className="text-xs bg-gray-50 border border-gray-200 rounded-lg px-2 py-1.5 text-gray-700 outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 cursor-pointer"
                 >
                   <option value="new">Новая</option>

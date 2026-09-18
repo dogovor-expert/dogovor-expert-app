@@ -14,6 +14,27 @@ import {
 
 const SHA256_HEX = "sha-256";
 
+interface SignatureRow {
+  id: string;
+  document_id: string;
+  user_id: string;
+  signature_path: string;
+  document_hash_sha256: string;
+  signature_algorithm: string | null;
+  created_at: string;
+  certificate_valid_to: string;
+  certificate_thumbprint: string | null;
+  certificate_subject: string | null;
+  certificate_issuer: string | null;
+  certificate_serial: string | null;
+  is_qualified: boolean | null;
+  crypto_verified: boolean | null;
+  chain_verified: boolean | null;
+  revocation_status: string | null;
+  chain_details: unknown;
+  tsa_info: unknown;
+}
+
 /**
  * Статус подписанного документа.
  *
@@ -113,11 +134,12 @@ async function inspectPAdES(pdfBytes: Uint8Array): Promise<PAdesInspection> {
     const structureFound = true;
 
     // 2. /Contents — CMS в hex
-    const contents = (sigDict as any).lookupMaybe(asPDFName("Contents"));
+    const contents = sigDict.get(asPDFName("Contents"));
     if (!contents) {
       return { ...empty, structureFound, error: "No /Contents in signature" };
     }
-    const cmsHex: string = (contents as unknown as { value: string }).value ?? "";
+    const contentsObj = contents as { value?: unknown };
+    const cmsHex: string = typeof contentsObj.value === "string" ? contentsObj.value : "";
     if (!/^[0-9A-Fa-f]+$/.test(cmsHex) || cmsHex.length < 100) {
       return { ...empty, structureFound, error: "/Contents is not a valid CMS hex blob" };
     }
@@ -169,9 +191,9 @@ async function inspectPAdES(pdfBytes: Uint8Array): Promise<PAdesInspection> {
     const byteRangeValid =
       contiguous && coversToEnd && gapBiggerThanMarkers && contentsInGap;
 
-    const nameVal = (sigDict as any).lookupMaybe(asPDFName("Name"));
-    const reasonVal = (sigDict as any).lookupMaybe(asPDFName("Reason"));
-    const mVal = (sigDict as any).lookupMaybe(asPDFName("M"));
+    const nameVal = sigDict.get(asPDFName("Name"));
+    const reasonVal = sigDict.get(asPDFName("Reason"));
+    const mVal = sigDict.get(asPDFName("M"));
 
     const readStr = (v: unknown): string | undefined => {
       const val = v as { value?: unknown } | undefined;
@@ -218,20 +240,22 @@ export async function GET(
 
   const admin = createAdminClient();
 
-  const { data: sig, error: sigError } = await admin
+  const sigResult = await admin
     .from("document_signatures")
     .select("*")
     .eq("id", id)
     .maybeSingle();
 
-  if (sigError || !sig) {
+  const sig = sigResult.data as SignatureRow | null;
+
+  if (sigResult.error || !sig) {
     return NextResponse.json({ error: "signature not found" }, { status: 404 });
   }
 
   // Владелец или админ
   if (sig.user_id !== user.id) {
-    const { data: isAdmin } = await admin.rpc("is_admin");
-    if (!isAdmin) {
+    const isAdminResult = await admin.rpc("is_admin");
+    if (!isAdminResult.data) {
       return NextResponse.json({ error: "forbidden" }, { status: 403 });
     }
   }

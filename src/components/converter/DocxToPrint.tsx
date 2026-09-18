@@ -22,7 +22,7 @@ export default function DocxToPrint() {
   const inputRef = useRef<HTMLInputElement>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
-  const onFile = async (list: FileList | null) => {
+  const onFile = (list: FileList | null) => {
     const f = list?.[0];
     if (!f) return;
     const isDocx = f.name.toLowerCase().endsWith(".docx");
@@ -109,7 +109,7 @@ export default function DocxToPrint() {
               <X className="w-4 h-4" />
             </button>
           </div>
-          <button onClick={convertAndPrint} disabled={busy}
+          <button onClick={() => { void convertAndPrint(); }} disabled={busy}
             className="w-full py-2.5 bg-brand-500 text-white rounded-xl hover:bg-brand-600 font-bold text-sm transition disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer">
             {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Printer className="w-4 h-4" />}
             {busy ? "Конвертация..." : "Открыть для печати / сохранить как PDF"}

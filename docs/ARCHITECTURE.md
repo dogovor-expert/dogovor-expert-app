@@ -15,7 +15,7 @@
 | OCR-сканер | tesseract.js, mrz, onnxruntime-web (client-side) |
 | Тесты | Vitest 4.1 (unit, integration), Playwright 1.62 (e2e, prod) |
 | Линт | ESLint 9 + eslint-config-next + Prettier |
-| CI/CD | GitHub Actions → Vercel |
+| CI/CD | GitHub Actions → GHCR / CapRover (VDS) |
 | Мониторинг | Sentry (@sentry/nextjs) |
 | Аналитика | Яндекс.Метрика |
 
@@ -34,7 +34,7 @@ src/
 │   │   ├── persons/                     # GET/POST/DELETE сохранённых физлиц
 │   │   ├── contractors/                 # GET/POST/DELETE сохранённых юрлиц
 │   │   ├── trash/                       # GET/POST/DELETE корзины (с soft-delete)
-│   │   ├── cron/                        # auto-renew, trash-cleanup (Vercel Cron)
+│   │   ├── cron/                        # tsl-refresh, daily-maintenance (внешний crontab, CRON_SECRET)
 │   │   ├── sign/                        # accept, prepare, status, download (УКЭП)
 │   │   ├── cloud/refresh-token/         # Google Drive / Yandex Disk / Dropbox токены
 │   │   ├── dadata/                      # Прокси для DaData (find-party, suggest-party, suggest-address, suggest-fms_unit)
@@ -274,22 +274,23 @@ PROTECTED_API_PREFIXES (по auth cookie) — все /api/* кроме /api/auth
 - AAL2 enforcement: если `aal !== "aal2"` и `requireMfa = true` → redirect на /settings/security.
 - Security headers (`withSecurityHeaders()`) применяются ко всем ответам.
 
-## 9. Фоновые задачи (Vercel Cron)
+## 9. Фоновые задачи (Cron)
 
-- `POST /api/cron/auto-renew` — ежедневно 03:00 MSK, продление PRO-подписок.
-- `POST /api/cron/trash-cleanup` — ежедневно 04:00 MSK, удаление старых записей из корзины.
+На VDS cron выполняется внешним crontab (не Vercel). Два эндпоинта, защищены `CRON_SECRET` (Bearer):
 
-Защита: проверка `CRON_SECRET` в заголовке.
+- `POST /api/cron/tsl-refresh` — ежедневно 03:00 MSK, синхронизация TSL Минцифры.
+- `POST /api/cron/daily-maintenance` — ежедневно 03:05 MSK; объединяет прежние `/api/cron/auto-renew` (продление PRO-подписок) и `/api/cron/trash-cleanup` (чистка корзины).
+
+Защита: проверка `CRON_SECRET` в заголовке (constant-time сравнение).
 
 ## 10. Окружения
 
-| Окружение | URL | Branch | Supabase project | Vercel alias |
-|-----------|-----|--------|------------------|--------------|
-| Local dev | `http://localhost:3100` (Playwright) / 3000 (Next) | feature/* | локальный или staging | – |
-| Preview | `https://dogovor-expert-*.vercel.app` | каждый PR | staging | preview |
-| Production | `https://dogovor.expert` | `master` | `xkakhztknlpzqarklewq.supabase.co` | production |
+| Окружение | URL | Branch | Supabase | Инфраструктура |
+|-----------|-----|--------|----------|----------------|
+| Local dev | `http://localhost:3100` (Playwright) / 3000 (Next) | feature/* | облачный `.env.local` (`xkakhztknlpzqarklewq.supabase.co`) | `next dev` |
+| Production | `https://dogovor.expert` | `master` | self-hosted `https://supabase.vds.dogovor.expert` (VDS 82.146.35.220) | VDS/CapRover (Docker standalone, порт 3000) |
 
-**Supabase project:** `xkakhztknlpzqarklewq.supabase.co`
+**Supabase:** self-hosted на VDS — `https://supabase.vds.dogovor.expert` (прод). Облачный проект `xkakhztknlpzqarklewq.supabase.co` — только локальный dev/.env`.
 
 **Стек .env:**
 - `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` — клиент + сервер.

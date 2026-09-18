@@ -159,7 +159,7 @@ export default function SplitPdf() {
         type="file"
         accept="application/pdf,.pdf"
         className="hidden"
-        onChange={(e) => { onFile(e.target.files); e.target.value = ""; }}
+        onChange={(e) => { void onFile(e.target.files); e.target.value = ""; }}
       />
 
       {!file ? (
@@ -214,7 +214,7 @@ export default function SplitPdf() {
           )}
 
           {mode === "range" ? (
-            <button onClick={split} disabled={busy}
+            <button onClick={() => { void split(); }} disabled={busy}
               className="w-full py-2.5 bg-brand-500 text-white rounded-xl hover:bg-brand-600 font-bold text-sm transition disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer">
               {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
               {busy
@@ -224,7 +224,7 @@ export default function SplitPdf() {
                 : "Скачать выделенные страницы"}
             </button>
           ) : (
-            <button onClick={splitAll} disabled={busy}
+            <button onClick={() => { void splitAll(); }} disabled={busy}
               className="w-full py-2.5 bg-brand-500 text-white rounded-xl hover:bg-brand-600 font-bold text-sm transition disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer">
               {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
               {busy

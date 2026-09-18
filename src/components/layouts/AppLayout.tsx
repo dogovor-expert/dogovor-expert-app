@@ -9,7 +9,7 @@ import { restoreSessionFromCookie } from "@/lib/auth/bootstrap";
 import {
   FileText, Activity, Calculator,
   FolderOpen, Files, Trash2, CreditCard,
-  Settings, HelpCircle, Menu, X, Bell, ChevronDown, Shield, Home, LogIn, Shuffle, Newspaper,
+  Settings, HelpCircle, Menu, X, ChevronDown, Shield, Home, LogIn, Shuffle, Newspaper,
   HardDrive, Download, Cookie
 } from "lucide-react";
 import HeaderSearch from "@/components/search/HeaderSearch";
@@ -114,11 +114,11 @@ export default function AppLayout({ children }: { children: ReactNode }) {
     const initialName = user.email || "Пользователь";
     setProfile({ name: initialName, initial: initialName.trim().charAt(0).toUpperCase() || "П", avatar: null });
 
-    (async () => {
+    void (async () => {
       try {
         const res = await fetch("/api/profile", { signal: controller.signal });
         if (!res.ok) return;
-        const { data: p } = await res.json();
+        const { data: p } = (await res.json()) as { data?: { full_name?: string; avatar_url?: string } };
         if (ignore) return;
         const name = p?.full_name || initialName;
         setProfile({
@@ -135,7 +135,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
       ignore = true;
       controller.abort();
     };
-  }, [user?.id, profileVersion]);
+  }, [user, profileVersion]);
 
   // Внешние события `dogovor:profile` (например, после смены имени в настройках)
   // заставляют перезапросить профиль.
@@ -365,6 +365,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
                   <Link href="/settings" className="flex items-center gap-2 p-2 hover:bg-gray-100 rounded-xl transition-colors" title={profile.name}>
                     <div className="w-7 h-7 rounded-full overflow-hidden bg-gradient-to-br from-brand-400 to-purple-500 flex items-center justify-center text-xs font-medium text-white">
                       {profile.avatar ? (
+                        // eslint-disable-next-line @next/next/no-img-element -- аватар приходит из Supabase Storage/Google/Yandex (внешний URL), remotePatterns уже настроены
                         <img src={profile.avatar} alt="" className="w-full h-full object-cover" />
                       ) : (
                         profile.initial

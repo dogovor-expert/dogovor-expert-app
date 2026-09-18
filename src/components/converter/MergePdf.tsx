@@ -139,7 +139,7 @@ export default function MergePdf() {
               className="px-4 py-2 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 font-medium text-sm transition cursor-pointer">
               + Добавить
             </button>
-            <button onClick={merge} disabled={busy || files.length < 2}
+            <button onClick={() => { void merge(); }} disabled={busy || files.length < 2}
               className="flex-1 py-2.5 bg-brand-500 text-white rounded-xl hover:bg-brand-600 font-bold text-sm transition disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer">
               {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
               {busy

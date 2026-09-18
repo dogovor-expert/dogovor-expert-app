@@ -1,5 +1,13 @@
 import type { DraftData, DraftVersion } from "@/lib/autosave";
 
+type DogovorWindow = Window & { __DOGOVOR_USER__?: boolean };
+
+interface ServerDocLite {
+  id: string;
+  template_id: string;
+  updated_at?: string;
+}
+
 let queue: Promise<unknown> = Promise.resolve();
 
 function enqueue<T>(fn: () => Promise<T>): Promise<T> {
@@ -10,7 +18,7 @@ function enqueue<T>(fn: () => Promise<T>): Promise<T> {
 
 export function canSync(): boolean {
   return typeof window !== "undefined" && Boolean(
-    (window as any).__DOGOVOR_USER__
+    (window as DogovorWindow).__DOGOVOR_USER__
   );
 }
 
@@ -44,9 +52,9 @@ export async function syncDraft(d: DraftData): Promise<boolean> {
         method: "GET",
       });
       if (!res.ok) return false;
-      const { data } = await res.json();
+      const { data } = (await res.json()) as { data?: ServerDocLite[] };
       // Берём самый свежий draft по этому шаблону (sort by updated_at DESC уже на сервере)
-      const existing = (data as any[]).find(
+      const existing = (data ?? []).find(
         (r) => r.template_id === d.templateId
       );
       if (existing) {
@@ -65,8 +73,10 @@ export async function syncDraft(d: DraftData): Promise<boolean> {
         });
         if (upd.status === 409) {
           // Конфликт версий: мержим локальные данные поверх сервера и пробуем ещё раз
-          const body = await upd.json().catch(() => null);
-          const serverFields = body?.current?.fields || {};
+          const body = (await upd.json().catch(() => null)) as {
+            current?: { fields?: Record<string, string>; updated_at?: string };
+          } | null;
+          const serverFields = body?.current?.fields ?? {};
           const merged = mergeFields(d.values, serverFields);
           const retry = await fetch(`/api/documents/${existing.id}`, {
             method: "PATCH",
@@ -101,8 +111,8 @@ export async function syncDelete(templateId: string): Promise<boolean> {
     try {
       const res = await fetch("/api/documents");
       if (!res.ok) return false;
-      const { data } = await res.json();
-      const existing = (data as any[]).find(
+      const { data } = (await res.json()) as { data?: ServerDocLite[] };
+      const existing = (data ?? []).find(
         (r) => r.template_id === templateId
       );
       if (!existing) return false;
@@ -117,5 +127,5 @@ export async function syncDelete(templateId: string): Promise<boolean> {
 }
 
 export function setUserFlag(userSet: boolean) {
-  (window as any).__DOGOVOR_USER__ = userSet;
+  (window as DogovorWindow).__DOGOVOR_USER__ = userSet;
 }

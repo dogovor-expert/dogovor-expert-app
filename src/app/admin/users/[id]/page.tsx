@@ -7,7 +7,7 @@ import { Card } from "@/components/ui/Card";
 import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from "@/components/ui/Table";
 import { updateProfile, setUserRole, updateSubscription, giftSubscriptionExtension } from "./actions";
 import { getUserEventTimeline } from "@/lib/userEventsQueries";
-import { EVENT_CATALOG, type EventName } from "@/lib/userEvents";
+import { EVENT_CATALOG } from "@/lib/userEvents";
 
 const fmt = (s?: string | null) =>
   s ? new Date(s).toLocaleString("ru-RU", { day: "2-digit", month: "2-digit", year: "2-digit", hour: "2-digit", minute: "2-digit" }) : "—";
@@ -18,6 +18,8 @@ const money = (amount: number, currency: string) =>
 type PaymentRow = { id: string; amount: number; currency: string; provider: string; status: string; created_at: string };
 type LeadRow = { id: string; service: string; brand: string | null; vin: string | null; status: string; created_at: string };
 type FeedbackRow = { id: string; ticket_no: string | null; type: string; message: string | null; status: string; created_at: string };
+type ProfileRow = { full_name: string | null; company: string | null; inn: string | null; phone: string | null; email: string | null; admin_role: string | null };
+type SubscriptionRow = { plan: string | null; status: string | null; period_start: string | null; period_end: string | null; auto_renewal: boolean | null };
 
 export const dynamic = "force-dynamic";
 
@@ -27,20 +29,26 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
   const { id } = await params;
   const sb = createAdminClient();
 
-  const [{ data: authUser }, { data: profile }] = await Promise.all([
+  const [authResult, profileResult] = await Promise.all([
     sb.auth.admin.getUserById(id),
     sb.from("profiles").select("*").eq("id", id).maybeSingle(),
   ]);
+  const authUser = authResult.data;
+  const profile = profileResult.data as ProfileRow | null;
 
   const email = authUser?.user?.email ?? profile?.email ?? "—";
 
-  const [{ data: sub }, { data: pays }, { data: leads }, { data: feedback }, events] = await Promise.all([
+  const [subResult, paysResult, leadsResult, feedbackResult, events] = await Promise.all([
     sb.from("subscriptions").select("*").eq("user_id", id).maybeSingle(),
     sb.from("payments").select("*").eq("user_id", id).order("created_at", { ascending: false }).limit(50),
     sb.from("leads").select("*").eq("user_id", id).order("created_at", { ascending: false }).limit(50),
     sb.from("feedback").select("*").eq("email", email).order("created_at", { ascending: false }).limit(50),
     getUserEventTimeline(id, 50),
   ]);
+  const sub = subResult.data as SubscriptionRow | null;
+  const pays = paysResult.data as PaymentRow[] | null;
+  const leads = leadsResult.data as LeadRow[] | null;
+  const feedback = feedbackResult.data as FeedbackRow[] | null;
 
   const targetRole = parseAdminRole(profile?.admin_role) ?? null;
   const canManageRoles = atLeast(admin.role, "superadmin");
@@ -280,9 +288,9 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
             {events.map((e) => (
               <TableRow key={e.id}>
                 <TableCell className="font-medium text-gray-800">
-                  {EVENT_CATALOG[e.event as EventName]?.label ?? e.event}
+                  {EVENT_CATALOG[e.event]?.label ?? e.event}
                   {e.meta?.template ? (
-                    <span className="text-gray-400 font-normal"> · {String(e.meta.template)}</span>
+                    <span className="text-gray-400 font-normal"> · {typeof e.meta.template === "string" ? e.meta.template : ""}</span>
                   ) : null}
                 </TableCell>
                 <TableCell className="text-gray-500 font-mono text-xs">{e.path || "—"}</TableCell>

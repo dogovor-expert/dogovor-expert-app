@@ -18,12 +18,12 @@
 ## Project overview
 
 - Стек: Next.js 15.5 + React 19 + TypeScript strict + Tailwind + lucide-react
-- БД: Supabase (PostgreSQL + RLS)
-- Деплой: Vercel (`team=alikmmmm`, прод https://dogovor.expert)
+- БД: Supabase self-hosted (PostgreSQL + RLS) — `https://supabase.vds.dogovor.expert` (VDS `82.146.35.220`)
+- Деплой: VDS (CapRover, `82.146.35.220`, панель `captain.vds.dogovor.expert`, прод https://dogovor.expert)
 - Шаблонов: 369, PRO-подписка через YooKassa (акция 299 ₽ до 2026-09-20)
 - Аналитика: Яндекс.Метрика (consent-gated), Sentry
 - Ветка: `master` (PR не используются)
-- Секреты: `.env.production` для локального `next start`, prod-окружение на Vercel
+- Секреты: `.env.production` (.env.production.local) для локального `next start`; prod-окружение — environment variables приложения CapRover (не коммитить `.env*`)
 
 ## Setup commands
 
@@ -31,7 +31,7 @@
 - Dev: `npm run dev`
 - Verify (typecheck+lint+test): `npm run verify`
 - Build: `npm run build`
-- Deploy: `npx vercel --prod --yes --cwd "D:\Мои сайты\site Dogovor"`
+- Deploy: VDS/CapRover через Docker (см. `docs/DEPLOY.md`, актуальный флоу 2026-09)
 - Smoke (prod): `npm run check:smoke:prod`
 - Полный аудит: `npm run audit:full` (PSI + LHCI + Squirrelscan)
 

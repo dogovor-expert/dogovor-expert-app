@@ -47,7 +47,14 @@ function withRole(tpl: string, role?: string): string {
 /** Достать значение свойства сущности. */
 function getPath(entity: ExtractedEntity, path: EntityPath): unknown {
   const rec = entity as Record<string, unknown>;
-  return rec[path] as unknown;
+  return rec[path];
+}
+
+/** Безопасно привести скалярное значение к строке (без [object Object]). */
+function scalarToString(v: unknown): string {
+  if (typeof v === "string") return v;
+  if (typeof v === "number" || typeof v === "boolean") return String(v);
+  return "";
 }
 
 /** Значение составного поля: склейка свойств пробелом. */
@@ -58,8 +65,8 @@ function combineValues(
   const parts: string[] = [];
   for (const p of combine.properties) {
     const raw = getPath(entity, p);
-    if (raw !== undefined && raw !== null && String(raw).trim() !== "") {
-      parts.push(String(raw));
+    if (raw !== undefined && raw !== null && scalarToString(raw).trim() !== "") {
+      parts.push(scalarToString(raw));
     }
   }
   return parts.length > 0 ? parts.join(" ") : undefined;
@@ -123,7 +130,7 @@ export function mapEntityToFields(
     // Обычное свойство.
     const raw = getPath(entity, rule.entityPath);
     if (raw === undefined || raw === null) continue;
-    const str = String(raw).trim();
+    const str = scalarToString(raw).trim();
     if (str === "") continue;
 
     for (const pat of rule.patterns) {

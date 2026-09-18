@@ -30,13 +30,18 @@ export default async function AdminUsersPage({
 
   const { users, emailById: _emailById } = await getDirectory();
   const admin = createAdminClient();
-  const { data: subs } = await admin
+  const subsResult = await admin
     .from("subscriptions")
     .select("user_id, plan, status, period_end")
     .order("created_at", { ascending: false });
 
+  const rawSubs: unknown = subsResult.data;
+  const subs = Array.isArray(rawSubs)
+    ? (rawSubs as { user_id: string; plan: string; status: string; period_end: string | null }[])
+    : [];
+
   const subMap = new Map<string, { user_id: string; plan: string; status: string; period_end: string | null }>();
-  for (const s of subs ?? []) {
+  for (const s of subs) {
     if (!subMap.has(s.user_id)) subMap.set(s.user_id, s);
   }
 

@@ -17,6 +17,25 @@ interface SubscriptionRow {
   period_end?: unknown;
 }
 
+interface PayBody {
+  vin?: unknown;
+  premium?: unknown;
+}
+
+interface YookassaPaymentResponse {
+  id: string;
+  status: string;
+  confirmation?: { confirmation_url?: string };
+}
+
+interface ReportRowLite {
+  id: string;
+}
+
+interface PayRowLite {
+  id: string;
+}
+
 async function isProUser(admin: SupabaseClient, userId: string): Promise<boolean> {
   const { data: subs } = await admin
     .from("subscriptions")
@@ -28,8 +47,8 @@ async function isProUser(admin: SupabaseClient, userId: string): Promise<boolean
   return (subs ?? []).some(
     (s: SubscriptionRow) =>
       s.status === "active" &&
-      s.period_end &&
-      new Date(String(s.period_end)) >= now
+      typeof s.period_end === "string" &&
+      new Date(s.period_end) >= now
   );
 }
 
@@ -47,8 +66,8 @@ async function postHandler(req: Request) {
   const rl = await checkRateLimit(limiters.authAction, user.id);
   if (!rl.ok) return rateLimitResponse(rl.retryAfter);
 
-  const body = await req.json().catch(() => null);
-  const vin = String(body?.vin ?? "").toUpperCase().trim();
+  const body = (await req.json().catch(() => null)) as PayBody | null;
+  const vin = typeof body?.vin === "string" ? body.vin.toUpperCase().trim() : "";
   if (!VIN_RE.test(vin)) {
     return NextResponse.json({ error: "invalid_vin" }, { status: 400 });
   }
@@ -67,13 +86,14 @@ async function postHandler(req: Request) {
     return NextResponse.json({ error: "config_error", detail: "SUPABASE_SERVICE_ROLE_KEY не задан на сервере" }, { status: 503 });
   }
   const admin = createAdminClient();
-  const { data: existing } = await admin
+  const existingResult = await admin
     .from("reports")
     .select("id")
     .eq("user_id", user.id)
     .eq("vin", vin)
     .eq("status", "ready")
     .limit(1);
+  const existing = existingResult.data;
   if (existing && existing.length > 0) {
     return NextResponse.json({ error: "already_purchased" }, { status: 409 });
   }
@@ -83,12 +103,13 @@ async function postHandler(req: Request) {
     const pro = await isProUser(admin, user.id);
     if (pro) {
       const ym = new Date().toISOString().slice(0, 7); // YYYY-MM
-      const { data: usageRow } = await admin
+      const usageResult = await admin
         .from("autoteka_usage")
         .select("used")
         .eq("user_id", user.id)
         .eq("ym", ym)
         .single();
+      const usageRow = usageResult.data as { used?: number } | null;
       const used = Number(usageRow?.used ?? 0);
       if (used < PRO_MONTHLY_FREE) {
         const { collectReport } = await import("@/lib/tronk");
@@ -108,6 +129,7 @@ async function postHandler(req: Request) {
         if (reportRow.error) {
           return NextResponse.json({ error: reportRow.error.message }, { status: 500 });
         }
+        const insertedReport = reportRow.data as { id: string } | null;
         await admin
           .from("autoteka_usage")
           .upsert(
@@ -116,7 +138,7 @@ async function postHandler(req: Request) {
           );
         return NextResponse.json({
           free: true,
-          report_id: reportRow.data.id,
+          report_id: insertedReport?.id ?? "",
           status: ready ? "ready" : "pending",
         });
       }
@@ -159,13 +181,13 @@ async function postHandler(req: Request) {
     try { const j: unknown = JSON.parse(detail); const desc = (j as { description?: unknown }).description; const code = (j as { code?: unknown }).code; providerDetail = (typeof desc === "string" && desc) || (typeof code === "string" && code) || detail; } catch { providerDetail = detail; }
     return NextResponse.json({ error: "provider_error", yookassa_status: res.status, detail: providerDetail }, { status: 502 });
   }
-  const payment = await res.json();
+  const payment = (await res.json()) as YookassaPaymentResponse;
   if (payment.status !== "pending" || !payment.confirmation?.confirmation_url) {
     console.error("[autoteka/pay] YooKassa unexpected payment state", JSON.stringify(payment));
     return NextResponse.json({ error: "provider_unexpected" }, { status: 502 });
   }
 
-  const { data: payRow, error: payErr } = await admin
+  const payInsertResult = await admin
     .from("payments")
     .insert({
       user_id: user.id,
@@ -178,26 +200,38 @@ async function postHandler(req: Request) {
     .select()
     .single();
 
-  if (payErr) return NextResponse.json({ error: payErr.message, detail: payErr.message }, { status: 500 });
+  if (payInsertResult.error) {
+    return NextResponse.json(
+      { error: payInsertResult.error.message, detail: payInsertResult.error.message },
+      { status: 500 }
+    );
+  }
+  const payRow = payInsertResult.data as PayRowLite | null;
 
-  const { data: reportRow, error: reportErr } = await admin
+  const reportInsertResult = await admin
     .from("reports")
     .insert({
       user_id: user.id,
       vin,
-      payment_id: payRow.id,
+      payment_id: payRow?.id ?? "",
       status: "pending",
       payload: { premium },
     })
     .select()
     .single();
 
-  if (reportErr) return NextResponse.json({ error: reportErr.message, detail: reportErr.message }, { status: 500 });
+  if (reportInsertResult.error) {
+    return NextResponse.json(
+      { error: reportInsertResult.error.message, detail: reportInsertResult.error.message },
+      { status: 500 }
+    );
+  }
+  const insertedReportRow = reportInsertResult.data as ReportRowLite | null;
 
   return NextResponse.json({
-    confirmation_url: payment.confirmation.confirmation_url,
-    payment_id: payRow.id,
-    report_id: reportRow.id,
+    confirmation_url: payment.confirmation?.confirmation_url ?? "",
+    payment_id: payRow?.id ?? "",
+    report_id: insertedReportRow?.id ?? "",
   });
 }
 

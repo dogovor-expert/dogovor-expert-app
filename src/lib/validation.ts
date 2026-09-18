@@ -540,7 +540,7 @@ export function runLegalAudit(
     if (field.type !== "repeating" || !field.repeatingFields || !isVisible(field)) continue;
     let items: Record<string, string>[] = [];
     try {
-      items = JSON.parse(values[field.id] || "[]");
+      items = JSON.parse(values[field.id] || "[]") as Record<string, string>[];
     } catch {
       items = [];
     }

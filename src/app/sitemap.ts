@@ -45,7 +45,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     url: `${SITE_URL}/documents/${t.id}`,
     // 8.5 (аудит): популярные шаблоны — приоритет 0.8 и недельный crawl,
     // остальные — 0.6 / monthly. Список популярных общий с /blanks (data/popular.ts).
-    changeFrequency: (POPULAR.has(t.id) ? "weekly" : "monthly") as "weekly" | "monthly",
+    changeFrequency: (POPULAR.has(t.id) ? "weekly" : "monthly"),
     priority: POPULAR.has(t.id) ? 0.8 : 0.6,
     lastModified: parseLastUpdated(t.lastUpdated),
   }));

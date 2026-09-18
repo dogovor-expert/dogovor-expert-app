@@ -1,7 +1,6 @@
 'use client';
 import { useState, useEffect, useCallback } from 'react';
 import type { CertValidationResult, CadesPlugin } from '@/lib/signCryptoPro';
-import { resolveTsaUrl } from '@/lib/tsa';
 
 declare global {
   interface Window {
@@ -63,8 +62,8 @@ export function useCryptoPro() {
       await window.cadesplugin;
       setReady(true);
       setError(null);
-    } catch (e: any) {
-      setError('Ошибка инициализации КриптоПро: ' + (e.message || String(e)));
+    } catch (e: unknown) {
+      setError('Ошибка инициализации КриптоПро: ' + (e instanceof Error ? e.message : String(e)));
       setReady(false);
     }
   }, []);
@@ -145,15 +144,15 @@ export function useCryptoPro() {
               checkChain: true,
             });
             return { ...c, validation };
-          } catch (e: any) {
-            return { ...c, validation: emptyValidation('Ошибка валидации: ' + (e?.message || String(e))) };
+          } catch (e: unknown) {
+            return { ...c, validation: emptyValidation('Ошибка валидации: ' + (e instanceof Error ? e.message : String(e))) };
           }
         })
       );
 
       setCertificates(validated.filter(c => c.isQualified || c.validation?.isQualified));
-    } catch (e: any) {
-      setError('Ошибка чтения сертификатов: ' + (e.message || String(e)));
+    } catch (e: unknown) {
+      setError('Ошибка чтения сертификатов: ' + (e instanceof Error ? e.message : String(e)));
       setCertificates([]);
     } finally {
       setLoading(false);
@@ -169,8 +168,8 @@ export function useCryptoPro() {
         c.thumbprint === thumbprint ? { ...c, validation: result } : c
       ));
       return result;
-    } catch (e: any) {
-      const failed = emptyValidation('Ошибка валидации: ' + (e?.message || String(e)));
+    } catch (e: unknown) {
+      const failed = emptyValidation('Ошибка валидации: ' + (e instanceof Error ? e.message : String(e)));
       setCertificates(prev => prev.map(c => 
         c.thumbprint === thumbprint ? { ...c, validation: failed } : c
       ));
@@ -194,8 +193,6 @@ export function useCryptoPro() {
 
     const cadesplugin = await window.cadesplugin;
 
-    const base64 = btoa(String.fromCharCode(...data));
-
     const signer = await cadesplugin.CreateObjectAsync('CAdESCOM.CPSigner');
     await signer.propset_Certificate(thumbprint);
     await signer.propset_Options(cadesplugin.CAPICOM_CERTIFICATE_INCLUDE_WHOLE_CHAIN);
@@ -214,7 +211,6 @@ export function useCryptoPro() {
     const encodingType = options?.encodingType ?? cadesplugin.CADESCOM_ENCODE_BASE64;
     const detached = options?.detached ?? false;
     const addTimestamp = options?.addTimestamp ?? false;
-    const tsaUrl = resolveTsaUrl(options?.tsaUrl);
 
     const cadesType = addTimestamp
       ? cadesplugin.CADESCOM_CADES_X_LONG_TYPE_1

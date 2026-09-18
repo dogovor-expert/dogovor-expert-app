@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/Button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/Table";
 import { useCallback, useEffect, useState } from "react";
 import {
-  Banknote,
   CreditCard,
   CheckCircle2,
   Clock,
@@ -17,13 +16,8 @@ import {
   Flame,
   Sparkles,
   FileSearch,
-  History,
-  Users,
-  Stamp,
-  Package,
 } from "lucide-react";
-import { currentProPrice, PRO_PRICE_OLD, PRO_PRICE, PROMO_LABEL, isPromoActive, promoCountdownTarget, formatRub } from "@/lib/pricing";
-import CountdownTimer from "@/components/billing/CountdownTimer";
+import { currentProPrice, PRO_PRICE_OLD, PRO_PRICE, PROMO_LABEL, isPromoActive, formatRub } from "@/lib/pricing";
 import { track, trackMetrikaOnly, goals } from "@/lib/analytics";
 
 interface PaymentRow {
@@ -130,7 +124,13 @@ export default function BillingPage() {
   const load = useCallback(async () => {
     const sRes = await fetch("/api/subscription-status").catch(() => null);
     if (sRes?.ok) {
-      const s = await sRes.json();
+      const s = (await sRes.json()) as {
+        plan?: string;
+        subscription_active?: boolean;
+        period_end?: string | null;
+        auto_renewal?: boolean;
+        has_payment_method?: boolean;
+      };
       setPlan(s.plan ?? "free");
       setActive(!!s.subscription_active);
       setPeriodEnd(s.period_end ?? null);
@@ -143,7 +143,11 @@ export default function BillingPage() {
     }
     const hRes = await fetch(`/api/billing/history?${params.toString()}`).catch(() => null);
     if (hRes?.ok) {
-      const json = await hRes.json();
+      const json = (await hRes.json()) as {
+        data?: PaymentRow[];
+        hasMore?: boolean;
+        nextCursor?: string | null;
+      };
       setPayments(Array.isArray(json.data) ? json.data : []);
       setHasMorePayments(!!json.hasMore);
       setNextCursor(json.nextCursor ?? null);
@@ -162,9 +166,14 @@ export default function BillingPage() {
       if (nextCursor) params.set("cursor", nextCursor);
       const hRes = await fetch(`/api/billing/history?${params.toString()}`).catch(() => null);
       if (hRes?.ok) {
-        const json = await hRes.json();
-        if (Array.isArray(json.data)) {
-          setPayments((prev) => [...prev, ...json.data]);
+        const json = (await hRes.json()) as {
+          data?: PaymentRow[];
+          hasMore?: boolean;
+          nextCursor?: string | null;
+        };
+        const data = json.data;
+        if (Array.isArray(data)) {
+          setPayments((prev) => [...prev, ...data]);
         }
         setHasMorePayments(!!json.hasMore);
         setNextCursor(json.nextCursor ?? null);
@@ -175,7 +184,7 @@ export default function BillingPage() {
   }, [nextCursor, loadingMore, periodFilter]);
 
   useEffect(() => {
-    load();
+    void load();
     const q = new URLSearchParams(window.location.search);
     if (q.get("success")) {
       setJustPaid(true);
@@ -199,14 +208,18 @@ export default function BillingPage() {
         setPaying(false);
         return;
       }
-      const json = await res.json().catch(() => null);
+      const json = (await res.json().catch(() => null)) as {
+        error?: string;
+        detail?: string;
+        confirmation_url?: string;
+      } | null;
       if (!res.ok) {
         showToast(json?.error === "unauthorized" ? "Войдите в аккаунт, чтобы оформить подписку" : (json?.detail ? `Ошибка оплаты: ${json.detail}` : "Не удалось создать платёж. Попробуйте позже"));
         setPaying(false);
         return;
       }
       trackMetrikaOnly(goals.paymentCreated);
-      window.location.href = json.confirmation_url;
+      if (json?.confirmation_url) window.location.href = json.confirmation_url;
     } catch {
       showToast("Сервис временно недоступен. Попробуйте ещё раз");
       setPaying(false);
@@ -221,14 +234,17 @@ export default function BillingPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ enabled: !autoRenewal }),
       });
-      const json = await res.json().catch(() => null);
+      const json = (await res.json().catch(() => null)) as {
+        message?: string;
+        auto_renewal?: boolean;
+      } | null;
       if (!res.ok) {
         showToast(json?.message ?? "Не удалось изменить автопродление");
         return;
       }
-      setAutoRenewal(!!json.auto_renewal);
-      showToast(json.auto_renewal ? "Автопродление включено" : "Автопродление отключено");
-      track(goals.billingAutorenewToggle, { enabled: json.auto_renewal });
+      setAutoRenewal(!!json?.auto_renewal);
+      showToast(json?.auto_renewal ? "Автопродление включено" : "Автопродление отключено");
+      track(goals.billingAutorenewToggle, { enabled: json?.auto_renewal });
     } finally {
       setTogglingAuto(false);
     }
@@ -238,7 +254,10 @@ export default function BillingPage() {
     setRenewing(true);
     try {
       const res = await fetch("/api/billing/auto-renew", { method: "POST" });
-      const json = await res.json().catch(() => null);
+      const json = (await res.json().catch(() => null)) as {
+        error?: string;
+        status?: string;
+      } | null;
       if (!res.ok) {
         showToast(
           json?.error === "no_saved_payment_method"
@@ -247,9 +266,9 @@ export default function BillingPage() {
         );
         return;
       }
-      if (json.status === "succeeded") {
+      if (json?.status === "succeeded") {
         showToast("Подписка продлена");
-        load();
+        void load();
       } else {
         showToast("Ожидается списание средств — подтверждение обычно занимает пару минут");
       }
@@ -379,7 +398,7 @@ export default function BillingPage() {
                       Автопродление
                     </div>
                     <button
-                      onClick={toggleAutoRenewal}
+                      onClick={() => { void toggleAutoRenewal(); }}
                       disabled={togglingAuto}
                       className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${autoRenewal ? "bg-emerald-500" : "bg-gray-300"} disabled:opacity-50`}
                       title={autoRenewal ? "Выключить автопродление" : "Включить автопродление"}
@@ -389,7 +408,7 @@ export default function BillingPage() {
                   </div>
                   {autoRenewal && hasPaymentMethod && (
                     <button
-                      onClick={renewNow}
+                      onClick={() => { void renewNow(); }}
                       disabled={renewing}
                       className="w-full inline-flex items-center justify-center gap-2 px-3 py-2 text-xs font-medium rounded-lg border border-gray-200 bg-white hover:bg-gray-50 transition-colors disabled:opacity-50"
                     >
@@ -412,7 +431,7 @@ export default function BillingPage() {
                   </p>
                 </div>
               ) : (
-                <Button variant="primary" size="lg" className="w-full mt-6" onClick={pay} disabled={paying}>
+                <Button variant="primary" size="lg" className="w-full mt-6" onClick={() => { void pay(); }} disabled={paying}>
                   <Sparkles className="w-4 h-4" />
                   {paying ? "Создаём платёж…" : `Оформить PRO за ${formatRub(price)}`}
                 </Button>
@@ -529,7 +548,7 @@ export default function BillingPage() {
               <span className="text-xs text-gray-600">Всего: {payments.length}</span>
             </div>
             {payments.length === 0 ? (
-              <p className="text-sm text-gray-600 py-8 text-center">Платежей пока нет — офорmite PRO, и история появится здесь</p>
+              <p className="text-sm text-gray-600 py-8 text-center">Платежей пока нет — оформите PRO, и история появится здесь</p>
             ) : (
               <>
                 <div className="hidden sm:block">
@@ -592,7 +611,7 @@ export default function BillingPage() {
                   <div className="px-6 py-3 border-t border-gray-100 text-center">
                     <button
                       type="button"
-                      onClick={loadMore}
+                      onClick={() => { void loadMore(); }}
                       disabled={loadingMore}
                       className="px-4 py-2 text-sm font-medium text-brand-700 bg-brand-50 rounded-xl hover:bg-brand-100 transition disabled:opacity-50 cursor-pointer"
                     >

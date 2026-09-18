@@ -96,6 +96,7 @@ async function handleRefresh(req: Request): Promise<NextResponse> {
   }
 
   const startTime = Date.now();
+  // eslint-disable-next-line no-console -- cron-задача: лог для внешнего планировщика
   console.log("[tsl-refresh] Starting TSL refresh...");
 
   try {
@@ -139,6 +140,7 @@ async function handleRefresh(req: Request): Promise<NextResponse> {
     });
 
     const duration = Date.now() - startTime;
+    // eslint-disable-next-line no-console -- cron-задача: лог для внешнего планировщика
     console.log(
       `[tsl-refresh] Completed in ${duration}ms: v${result.data.metadata.version}, ${result.data.authorities.length} CAs, ${syncResult.totalCount} certs in DB (${syncResult.rootCount} root), remote=${refreshedFromRemote}`
     );

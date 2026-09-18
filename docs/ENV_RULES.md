@@ -25,10 +25,11 @@
 - `core.autocrlf=false`, `core.eol=lf` — НЕ глобально (не трогаем другие репозитории пользователя).
 - Проверить: `git config --local --get core.autocrlf` → `false`, `git config --local --get core.eol` → `lf`.
 
-## 5. Служебные конфиги не должны попасть в Vercel-деплой
+## 5. Служебные конфиги не должны попасть в Docker-деплой
 
-- `.vercelignore` исключает `.lighthouserc.json`, `.commitlintrc*`, `commitlint.config.*`, `release-please-config.json`, `.gitleaks.toml`, `.semgrep.yml`, IDE-правила, `.opencode/`, `.storybook/`, `docs/`, `audit/`, `stories/`, `playwright*`, тестовые артефакты.
+- `.dockerignore` исключает: `node_modules`, `.next`, `.git`, `.vercel`, `playwright-report`, `test-results`, `visual-report`, `audit-shots`, `audit`, `reports`, `.lighthouseci`, `coverage`, `.env*`, `*.log`, `.nx`, `.storybook`. Если в образ случайно попадают `docs/`, IDE-правила (`.clinerules`, `.windsurfrules`, `.github/copilot-instructions.md`) и т.п. — дополнить `.dockerignore` (билд-контекст должен быть минимальным).
 - `.gitattributes` и `.editorconfig` — НЕ исключаем: они служат Git и редакторам, в bundle Next.js не попадают.
+- `.vercelignore` — легаси-артефакт (актуальный деплой — Docker на CapRover); можно удалить вместе с `vercel.json` и `.vercel/`.
 
 ## 6. OpenCode shell — PowerShell (НЕ переключаем на Git Bash)
 

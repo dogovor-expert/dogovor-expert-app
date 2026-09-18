@@ -47,7 +47,7 @@ async function postHandler(req: NextRequest) {
   const rl = await checkRateLimit(limiters.crudMutation, user.id);
   if (!rl.ok) return rateLimitResponse(rl.retryAfter);
 
-  const body = await req.json().catch(() => null);
+  const body = (await req.json().catch(() => null)) as Record<string, unknown> | null;
   if (!body || typeof body !== "object") {
     return NextResponse.json({ error: "bad body" }, { status: 400 });
   }

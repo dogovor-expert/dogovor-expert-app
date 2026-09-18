@@ -19,25 +19,37 @@ export async function GET() {
       .select("*")
       .eq("id", user.id)
       .single()
-      .then((r) => r.data ?? null),
+      .then((r) => {
+        const d: unknown = r.data;
+        return d ?? null;
+      }),
     supabase
       .from("documents")
       .select("*")
       .eq("user_id", user.id)
       .order("updated_at", { ascending: false })
-      .then((r) => r.data ?? []),
+      .then((r) => {
+        const d: unknown = r.data;
+        return d ?? [];
+      }),
     supabase
       .from("subscriptions")
       .select("*")
       .eq("user_id", user.id)
       .order("created_at", { ascending: false })
-      .then((r) => r.data ?? []),
+      .then((r) => {
+        const d: unknown = r.data;
+        return d ?? [];
+      }),
     supabase
       .from("payments")
       .select("*")
       .eq("user_id", user.id)
       .order("created_at", { ascending: false })
-      .then((r) => r.data ?? []),
+      .then((r) => {
+        const d: unknown = r.data;
+        return d ?? [];
+      }),
   ]);
 
   const payload = {

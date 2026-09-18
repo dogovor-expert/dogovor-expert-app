@@ -1,9 +1,8 @@
 "use client";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
-import { Button } from "@/components/ui/Button";
 import { useState } from "react";
-import { Search, ChevronDown, ChevronRight, MessageCircle, Mail, HelpCircle, Star, FileText, Car, Shield, FileCheck, CreditCard, BookOpen } from "lucide-react";
+import { Search, ChevronDown, ChevronRight, MessageCircle, Mail, HelpCircle, Star, FileText, Car, Shield, FileCheck, CreditCard } from "lucide-react";
 import { tokenGroups, textMatchesTokens } from "@/lib/search";
 import { openChat } from "@/components/support/ChatWidget";
 import { SUPPORT_EMAIL } from "@/lib/site";

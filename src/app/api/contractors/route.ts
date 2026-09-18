@@ -6,8 +6,6 @@ import { limiters, checkRateLimit, rateLimitResponse } from "@/lib/ratelimit";
 import { isInn } from "@/lib/legal/validators";
 import { z } from "zod";
 
-const FIELDS = ["name", "inn", "kpp", "ogrn", "address", "email", "phone", "note"];
-
 const contractorSchema = z.object({
   name: z.string().trim().max(500).optional().default(""),
   inn: z.string().trim().max(20).optional().default(""),
@@ -50,7 +48,7 @@ async function postHandler(req: NextRequest) {
   const rl = await checkRateLimit(limiters.crudMutation, user.id);
   if (!rl.ok) return rateLimitResponse(rl.retryAfter);
 
-  const raw = await req.json().catch(() => null);
+  const raw: unknown = await req.json().catch(() => null);
   if (!raw || typeof raw !== "object") {
     return NextResponse.json({ error: "bad body" }, { status: 400 });
   }

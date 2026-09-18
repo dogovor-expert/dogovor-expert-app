@@ -84,7 +84,7 @@ function ForgotForm() {
               autoComplete="email"
             />
             {error && <p className="text-sm text-red-600 mt-2">{error}</p>}
-            <Button className="w-full mt-4" onClick={sendReset} disabled={loading}>
+            <Button className="w-full mt-4" onClick={() => { void sendReset(); }} disabled={loading}>
               {loading ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
               ) : (

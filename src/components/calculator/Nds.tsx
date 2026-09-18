@@ -3,7 +3,6 @@ import { useState } from "react";
 import { Check, BadgePercent } from "lucide-react";
 import { ndsCalc, NDS_RATES, type NdsMode } from "@/lib/legal/nds";
 import { rublesInWords } from "@/lib/legal/numberWords";
-import { fmtMoney } from "@/lib/legal/calc";
 
 const MODES: { id: NdsMode; label: string }[] = [
   { id: "add", label: "Начислить" },

@@ -16,11 +16,19 @@ const TYPE_LABELS: Record<string, string> = {
   other: "Другое",
 };
 
-const esc = (s: unknown) =>
-  String(typeof s === "object" && s !== null ? JSON.stringify(s) : (s ?? "")).replace(
+const esc = (s: unknown): string => {
+  const raw = typeof s === "object" && s !== null ? JSON.stringify(s) : s;
+  const text =
+    typeof raw === "string"
+      ? raw
+      : typeof raw === "number" || typeof raw === "boolean"
+        ? String(raw)
+        : "";
+  return text.replace(
     /[&<>"]/g,
     (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c] as string)
   );
+};
 
 async function sendNotification(p: {
   ticketNo: string; type: string; docName: string | null; tool: string | null;
@@ -95,7 +103,7 @@ async function postHandler(req: Request) {
   const rl = await checkRateLimit(limiters.feedbackForm, clientIp(req));
   if (!rl.ok) return rateLimitResponse(rl.retryAfter);
 
-  const rawBody = await req.json().catch(() => null);
+  const rawBody = (await req.json().catch(() => null)) as Record<string, unknown> | null;
   if (!rawBody) {
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
   }
@@ -121,13 +129,15 @@ async function postHandler(req: Request) {
   const ticketNo = "F-" + randomUUID().split("-")[0].toUpperCase();
 
   // Скриншоты: читаем как base64 (data-URL). Лимит 5 файлов, 5 МБ каждый.
-  const files = Array.isArray(rawBody.screenshots) ? rawBody.screenshots : [];
+  const files: unknown[] = Array.isArray(rawBody.screenshots) ? rawBody.screenshots : [];
   const supabase = createAdminClient();
   const screenshotPaths: string[] = [];
   for (let i = 0; i < files.length && i < 5; i++) {
     const f = files[i];
-    if (!f || typeof f !== "object" || typeof f.dataUrl !== "string" || typeof f.name !== "string") continue;
-    const m = /^data:([a-z0-9+/.-]+);base64,(.+)$/i.exec(f.dataUrl);
+    if (!f || typeof f !== "object") continue;
+    const file = f as { dataUrl?: unknown; name?: unknown };
+    if (typeof file.dataUrl !== "string" || typeof file.name !== "string") continue;
+    const m = /^data:([a-z0-9+/.-]+);base64,(.+)$/i.exec(file.dataUrl);
     if (!m) continue;
     const mime = m[1];
     if (!["image/png", "image/jpeg", "image/webp"].includes(mime)) continue;
@@ -220,10 +230,10 @@ async function patchHandler(req: Request) {
   const admin = await getAdminUser();
   if (!admin) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
 
-  const body = await req.json().catch(() => null);
+  const body = (await req.json().catch(() => null)) as { id?: unknown; status?: unknown } | null;
   const id = typeof body?.id === "string" ? body.id : null;
   const status = typeof body?.status === "string" ? body.status : null;
-  if (!id || !["new", "done", "spam"].includes(status)) {
+  if (!id || status === null || !["new", "done", "spam"].includes(status)) {
     return NextResponse.json({ error: "invalid" }, { status: 400 });
   }
 

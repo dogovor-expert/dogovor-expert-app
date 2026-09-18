@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react';
 import { Modal } from './Modal';
-import { useState } from 'react';
+import { useState, type ComponentProps } from 'react';
 import { Button } from './Button';
 import { fn } from 'storybook/test';
 
@@ -33,7 +33,7 @@ const meta: Meta<typeof Modal> = {
 export default meta;
 type Story = StoryObj<typeof Modal>;
 
-const ModalWithState = (args: any) => {
+const ModalWithState = (args: ComponentProps<typeof Modal>) => {
   const [isOpen, setIsOpen] = useState(false);
   return (
     <>

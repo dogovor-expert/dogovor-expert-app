@@ -18,7 +18,7 @@ export const POST = withCsrf(async (req: NextRequest) => {
   const rl = await checkRateLimit(limiters.adminAction, "admin-search");
   if (!rl.ok) return rateLimitResponse(rl.retryAfter);
 
-  const body = await req.json().catch(() => null);
+  const body: unknown = await req.json().catch(() => null);
   const parsed = searchSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json({ error: "validation", details: parsed.error.flatten() }, { status: 400 });

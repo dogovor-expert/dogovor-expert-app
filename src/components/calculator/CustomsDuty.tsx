@@ -4,7 +4,6 @@ import Link from "next/link";
 import dynamic from "next/dynamic";
 import { Check, Ship, PhoneCall, ShieldCheck, RefreshCw } from "lucide-react";
 import { calcImportCosts, FX_RATES, type ImportScenario, type TaxDutyRow } from "@/lib/legal/autoDuty";
-import { fmtMoney } from "@/lib/legal/calc";
 import { formatPhoneRu } from "@/lib/format";
 import SaveCalcButton from "@/components/calculator/SaveCalcButton";
 import { track, goals } from "@/lib/analytics";
@@ -70,8 +69,12 @@ export default function CustomsDuty() {
     try {
       const r = await fetch(`/api/customs-rate?date=${encodeURIComponent(iso)}`);
       if (!r.ok) throw new Error("bad status");
-      const json = await r.json();
-      setRate({ rates: json.rates, source: json.source, actualDate: json.actualDate });
+      const json = (await r.json()) as {
+        rates?: Record<string, number>;
+        source?: "cbr" | "fallback";
+        actualDate?: string;
+      };
+      setRate({ rates: json.rates ?? {}, source: json.source ?? "fallback", actualDate: json.actualDate });
     } catch {
       setRate({ rates: { ...FX_RATES }, source: "fallback" });
     } finally {
@@ -79,7 +82,7 @@ export default function CustomsDuty() {
     }
   }, []);
 
-  useEffect(() => { loadRate(regDate); }, [regDate, loadRate]);
+  useEffect(() => { void loadRate(regDate); }, [regDate, loadRate]);
 
   const eur = rate?.rates?.EUR ?? FX_RATES.EUR;
   const usd = rate?.rates?.USD ?? FX_RATES.USD;
@@ -122,7 +125,7 @@ export default function CustomsDuty() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ service, brand, phone, captchaToken }),
       });
-      const json = await res.json().catch(() => null);
+      const json = (await res.json().catch(() => null)) as { error?: string } | null;
       if (!res.ok) {
         const msg =
           json?.error === "phone is required" ? "Укажите корректный номер телефона"
@@ -220,7 +223,7 @@ export default function CustomsDuty() {
             className="flex-1 py-2.5 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 font-bold text-xs transition cursor-pointer">
             Рассчитать таможенные платежи
           </button>
-          <button onClick={() => loadRate(regDate)} disabled={rateLoading}
+          <button onClick={() => { void loadRate(regDate); }} disabled={rateLoading}
             title="Обновить курс ЦБ"
             aria-label="Обновить курс ЦБ"
             className="p-2.5 rounded-xl border border-gray-200 bg-white text-gray-600 hover:border-brand-300 hover:text-brand-600 transition cursor-pointer disabled:opacity-50">
@@ -327,7 +330,7 @@ export default function CustomsDuty() {
               {captchaRequired && (
                 <SmartCaptchaWidget key={captchaNonce} onToken={setCaptchaToken} />
               )}
-              <button onClick={sendLead} disabled={sending || !consent || (captchaRequired && !captchaToken)}
+              <button onClick={() => { void sendLead(); }} disabled={sending || !consent || (captchaRequired && !captchaToken)}
                 className="w-full py-2.5 bg-brand-600 text-white rounded-xl hover:bg-brand-700 font-bold text-xs transition cursor-pointer disabled:opacity-60 flex items-center justify-center gap-1.5">
                 <PhoneCall className="w-3.5 h-3.5" /> {sending ? "Отправка…" : captchaRequired && !captchaToken ? "Подтвердите капчу" : "Оставить заявку"}
               </button>

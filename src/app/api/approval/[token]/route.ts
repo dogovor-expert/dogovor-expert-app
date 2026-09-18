@@ -10,6 +10,16 @@ import { LEGAL_TEMPLATES } from "@/data/legalTemplates";
 
 const UNLOCK_SESSION_MS = 60 * 60 * 1000; // 1 час — сессия доступа после ввода пароля
 
+interface UnlockBody {
+  password?: unknown;
+}
+
+interface PutBody {
+  values?: unknown;
+  checklist?: unknown;
+  accessToken?: unknown;
+}
+
 interface ClientProjection {
   id: string;
   token: string;
@@ -38,8 +48,10 @@ async function hasValidAccess(
     .eq("token_hash", tokenHash)
     .limit(1)
     .maybeSingle();
-  if (error || !data) return false;
-  return new Date(data.expires_at).getTime() > Date.now();
+  const raw: unknown = data;
+  if (error || !raw || typeof raw !== "object") return false;
+  const expiresAt = (raw as Record<string, unknown>).expires_at;
+  return typeof expiresAt === "string" && new Date(expiresAt).getTime() > Date.now();
 }
 
 /** Публичный срез для клиента — ПДн отдаём только после разблокировки. */
@@ -92,7 +104,7 @@ async function loadApproval(
     .single();
 
   if (error || !data) return { approval: null, notFound: true };
-  return { approval: data as ClientProjection, notFound: false };
+  return { approval: data, notFound: false };
 }
 
 export async function GET(
@@ -140,7 +152,7 @@ async function unlockHandler(
   const rl = await checkRateLimit(limiters.authAction, clientIp(req) + ":" + token);
   if (!rl.ok) return rateLimitResponse(rl.retryAfter);
 
-  const body = await req.json().catch(() => null);
+  const body = (await req.json().catch(() => null)) as UnlockBody | null;
   if (!body || typeof body !== "object") {
     return NextResponse.json({ error: "bad body" }, { status: 400 });
   }
@@ -273,12 +285,18 @@ async function putHandler(
   const rl = await checkRateLimit(limiters.publicForm, clientIp(req) + ":" + token);
   if (!rl.ok) return rateLimitResponse(rl.retryAfter);
 
-  const body = await req.json().catch(() => null);
+  const body = (await req.json().catch(() => null)) as PutBody | null;
   if (!body || typeof body !== "object") {
     return NextResponse.json({ error: "bad body" }, { status: 400 });
   }
-  const values = body.values && typeof body.values === "object" ? body.values : {};
-  const checklist = body.checklist && typeof body.checklist === "object" ? body.checklist : {};
+  const values =
+    body.values && typeof body.values === "object"
+      ? (body.values as Record<string, string>)
+      : {};
+  const checklist =
+    body.checklist && typeof body.checklist === "object"
+      ? (body.checklist as Record<string, boolean>)
+      : {};
 
   const admin = createAdminClient();
   const { approval, notFound } = await loadApproval(admin, token);

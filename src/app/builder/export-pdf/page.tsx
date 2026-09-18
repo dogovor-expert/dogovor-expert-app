@@ -18,7 +18,7 @@ function ExportPdfInner() {
   const [packTemplates, setPackTemplates] = useState<LegalTemplate[]>([]);
   const [design, setDesign] = useState<string>("classic");
   useEffect(() => {
-    async function init() {
+    function init() {
       try {
         const templateParam = searchParams.get("template");
         const packParam = searchParams.get("pack");
@@ -159,7 +159,7 @@ function ExportPdfInner() {
           </div>
 
           <button
-            onClick={handleExport}
+            onClick={() => { void handleExport(); }}
             disabled={loading}
             className="w-full px-6 py-3.5 bg-brand-600 text-white rounded-xl font-semibold text-base hover:bg-brand-700 disabled:opacity-50 transition flex items-center justify-center gap-2"
           >

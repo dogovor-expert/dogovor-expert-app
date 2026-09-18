@@ -76,7 +76,7 @@ export async function buildRealTsaToken(
   genTime: Date = new Date()
 ): Promise<Uint8Array> {
   const imprint = new Uint8Array(createHash("sha256").update(mainSignature).digest());
-  const imprintAb = imprint.buffer.slice(imprint.byteOffset, imprint.byteOffset + imprint.byteLength) as ArrayBuffer;
+  const imprintAb = imprint.buffer.slice(imprint.byteOffset, imprint.byteOffset + imprint.byteLength);
 
   const tstInfo = new pkijs.TSTInfo({
     version: 1,
@@ -185,7 +185,8 @@ export async function attachTsaTimestampToCms(cmsDer: Uint8Array, needTsa = true
     });
     signerInfo.unsignedAttrs = new pkijs.SignedAndUnsignedAttributes({ type: 1, attributes: [attr] });
   }
-  contentInfo.content = signedData.toSchema();
+  const schema: unknown = signedData.toSchema();
+  contentInfo.content = schema;
   return new Uint8Array(contentInfo.toSchema().toBER(false));
 }
 
@@ -194,7 +195,7 @@ type CallRecord = { method: string; args: unknown[] };
 function makeHandle(name: string): Record<string, unknown> {
   const calls: CallRecord[] = [];
   const store: Record<string | symbol, unknown> = { __calls: calls, __name: name };
-  const proxy = new Proxy({} as Record<string, unknown>, {
+  const proxy = new Proxy({}, {
     get(_t, prop) {
       if (typeof prop === "string") {
         if (prop === "__calls") return calls;
@@ -394,13 +395,13 @@ export function createCadesPlugin(pki: VirtualGostPki): VirtualCadesPluginResult
       };
       handle.SignCades = async (_signer: unknown, cadesType: number) => {
         const contentBytes = Buffer.from(contentBase64, "base64");
-        const contentAb = contentBytes.buffer.slice(contentBytes.byteOffset, contentBytes.byteOffset + contentBytes.byteLength) as ArrayBuffer;
+        const contentAb = contentBytes.buffer.slice(contentBytes.byteOffset, contentBytes.byteOffset + contentBytes.byteLength);
         const cms = new gostCrypto.cms.SignedDataContentInfo();
         cms.setEnclosed({ contentType: "data", content: contentAb });
         gostCrypto.cms.options.autoAddCert = true;
         await cms.addSignature(pki.privateKey, pki.cert, true);
         let der: Uint8Array<ArrayBufferLike> = new Uint8Array(cms.encode("DER"));
-        const signer = createdProxies.get("CAdESCOM.CPSigner") as Record<string, unknown> | undefined;
+        const signer = createdProxies.get("CAdESCOM.CPSigner");
         const tsaSet = (signer?.__getTsaAddress as (() => string) | undefined)?.() !== "";
         // PAdES: CMS обязана быть ОТКРЕПЛЁННОЙ (тело документа не дублируется в eContent).
         // TSA-штамп добавляется при tsaSet или cadesType=99 (X-Long).
@@ -426,7 +427,7 @@ export function installVirtualCadesPlugin(pki: VirtualGostPki): { plugin: Record
   const { plugin, created } = createCadesPlugin(pki);
   const globalObj = globalThis as unknown as { window?: Record<string, unknown> };
   if (!globalObj.window) globalObj.window = {};
-  (globalObj.window as Record<string, unknown>).cadesplugin = Promise.resolve(plugin);
+  (globalObj.window).cadesplugin = Promise.resolve(plugin);
   return {
     plugin,
     created,

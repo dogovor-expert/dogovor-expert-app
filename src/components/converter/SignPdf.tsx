@@ -52,7 +52,7 @@ export default function SignPdf() {
         accept="application/pdf,.pdf"
         className="hidden"
         onChange={(e) => {
-          onPdf(e.target.files);
+          void onPdf(e.target.files);
           e.target.value = "";
         }}
       />

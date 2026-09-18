@@ -137,9 +137,10 @@ export function ndflSaleCalc(input: NdflSaleInput): NdflSaleResult {
   }
 
   // 4) Вычет: фиксированный (нормативный) ИЛИ фактические расходы
-  const hasExpenses = !!input.buyPrice && input.buyPrice > 0;
+  const buyPrice = input.buyPrice ?? 0;
+  const hasExpenses = buyPrice > 0;
   const fixed = Math.min(effectiveSell, fixedNorm);
-  const expenses = hasExpenses ? Math.min(effectiveSell, input.buyPrice!) : 0;
+  const expenses = hasExpenses ? Math.min(effectiveSell, buyPrice) : 0;
   const useExpenses = expenses > fixed && expenses > 0;
   const deduction = useExpenses ? expenses : fixed;
   const base = Math.max(0, effectiveSell - deduction);

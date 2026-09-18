@@ -61,7 +61,7 @@ export async function GET(request: NextRequest) {
 
   return NextResponse.json(
     {
-      sub: String(id),
+      sub: typeof id === "string" ? id : typeof id === "number" ? String(id) : "",
       email,
       email_verified: true, // Яндекс отдаёт только подтверждённые адреса
       name,

@@ -114,5 +114,6 @@ export function parseForm<T extends z.ZodTypeAny>(
       .join("; ");
     throw new Error(`bad_input: ${summary}`);
   }
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-return -- z.infer<T> для generic ZodTypeAny резолвится в any
   return result.data;
 }

@@ -101,9 +101,10 @@ export function parseTokenFromFragment(
   const params = new URLSearchParams(fragment.startsWith("#") ? fragment.slice(1) : fragment);
   const accessToken = params.get("access_token");
   if (!accessToken) return null;
+  const expiresRaw = params.get("expires_in");
   return {
     accessToken,
-    expiresIn: params.get("expires_in") ? parseInt(params.get("expires_in")!, 10) : undefined,
+    expiresIn: expiresRaw ? parseInt(expiresRaw, 10) : undefined,
     tokenType: params.get("token_type") || undefined,
   };
 }

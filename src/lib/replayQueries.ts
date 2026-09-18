@@ -28,7 +28,7 @@ export async function listReplaySessions(days = 30, limit = 200): Promise<Replay
     .order("last_seen_at", { ascending: false })
     .limit(limit);
   if (error) throw new Error(error.message);
-  return (data ?? []) as ReplaySessionRow[];
+  return (data ?? []);
 }
 
 export async function getReplaySession(sessionId: string): Promise<ReplaySessionRow | null> {
@@ -39,7 +39,7 @@ export async function getReplaySession(sessionId: string): Promise<ReplaySession
     .eq("session_id", sessionId)
     .maybeSingle();
   if (error) throw new Error(error.message);
-  return (data as ReplaySessionRow | null) ?? null;
+  return (data) ?? null;
 }
 
 /**
@@ -62,7 +62,7 @@ export async function getReplayEvents(sessionId: string): Promise<unknown[]> {
     try {
       const json = gunzipSync(Buffer.from(row.data, "base64")).toString("utf-8");
       const parsed: unknown = JSON.parse(json);
-      if (Array.isArray(parsed)) events.push(...parsed);
+      if (Array.isArray(parsed)) events.push(...(parsed as unknown[]));
     } catch {
       console.warn(`[replay] повреждённый чанк seq=${row.seq} session=${sessionId}`);
     }

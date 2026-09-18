@@ -39,7 +39,7 @@ export default function ConverterPage() {
     window.history.replaceState(null, "", url.pathname + "?" + url.searchParams.toString());
   };
 
-  const current = tools.find((t) => t.id === active)!;
+  const current = tools.find((t) => t.id === active) ?? tools[0];
   const Component = current.comp;
   const Icon = current.icon;
 

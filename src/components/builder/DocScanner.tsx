@@ -91,6 +91,11 @@ interface ScanResult {
   slotId: string;
 }
 
+type OcrWorkerMessage =
+  | { type: "result"; text: string; confidence?: number; words?: OcrWord[] }
+  | { type: "error"; message?: string }
+  | { type: "progress"; status: string; progress: number };
+
 /**
  * Конвертирует dataURL (PNG) в JPEG Blob для экономии трафика
  * при отправке на серверный OCR (2-5 MB PNG → 200-600 KB JPEG).
@@ -193,7 +198,8 @@ export default function DocScanner({
       );
       w.postMessage({ type: "warmup" });
       w.onmessage = (e: MessageEvent) => {
-        if (e.data?.type === "ready-warm" || e.data?.type === "error") {
+        const data = e.data as { type?: string };
+        if (data.type === "ready-warm" || data.type === "error") {
           w.terminate();
         }
       };
@@ -314,14 +320,14 @@ export default function DocScanner({
       }, 240000);
 
       worker.onmessage = (e: MessageEvent) => {
-        const msg = e.data;
+        const msg = e.data as OcrWorkerMessage;
         if (msg.type === "result") {
           clearTimeout(timeout);
           worker.terminate();
           resolve({
             text: msg.text,
             confidence: msg.confidence ?? 0,
-            words: (msg.words ?? []) as OcrWord[],
+            words: msg.words ?? [],
           });
         } else if (msg.type === "error") {
           clearTimeout(timeout);

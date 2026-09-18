@@ -34,7 +34,7 @@ export default function DataTab() {
         await supabase.auth.signOut();
         window.location.href = "/";
       } else {
-        const { error: msg } = await res.json().catch(() => ({}));
+        const { error: msg } = (await res.json().catch(() => ({}))) as { error?: string };
         setError(msg || "Не удалось удалить аккаунт");
       }
     } finally {
@@ -104,7 +104,7 @@ export default function DataTab() {
             </span>
           </label>
           {error && <p className="text-xs text-red-500">{error}</p>}
-          <Button type="button" variant="danger" onClick={handleDelete} disabled={busy}>
+          <Button type="button" variant="danger" onClick={() => { void handleDelete(); }} disabled={busy}>
             {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
             {busy ? "Удаление…" : "Удалить аккаунт навсегда"}
           </Button>

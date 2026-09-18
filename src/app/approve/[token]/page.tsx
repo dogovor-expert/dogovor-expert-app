@@ -67,10 +67,10 @@ export default function ApprovePage() {
         const qs = access ? `?access=${encodeURIComponent(access)}` : "";
         const r = await fetch(`/api/approval/${token}${qs}`);
         if (!r.ok) {
-          const j = await r.json().catch(() => ({}));
+          const j = (await r.json().catch(() => ({}))) as { error?: string };
           throw new Error(j.error || "Ошибка загрузки");
         }
-        const d: ApprovalData = await r.json();
+        const d = (await r.json()) as ApprovalData;
         setData(d);
 
         if (!d.locked) {
@@ -111,10 +111,10 @@ export default function ApprovePage() {
         body: JSON.stringify({ password: password.trim() }),
       });
       if (!r.ok) {
-        const j = await r.json().catch(() => ({}));
+        const j = (await r.json().catch(() => ({}))) as { error?: string };
         throw new Error(j.error || "Неверный пароль");
       }
-      const d: UnlockedData = await r.json();
+      const d = (await r.json()) as UnlockedData;
       setData(d);
       setValues(d.values || {});
       setChecklist(d.checklist || {});

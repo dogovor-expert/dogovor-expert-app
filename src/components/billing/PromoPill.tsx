@@ -12,7 +12,7 @@ export default function PromoPill() {
   useEffect(() => {
     if (!promo) return;
     fetch("/api/subscription-status")
-      .then((r) => (r.ok ? r.json() : null))
+      .then((r) => (r.ok ? (r.json() as Promise<{ subscription_active?: boolean }>) : null))
       .then((s) => setActive(!!s?.subscription_active))
       .catch(() => setActive(false));
   }, [promo]);

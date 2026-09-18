@@ -7,6 +7,20 @@ import { isSameOrigin } from "@/lib/admin-auth";
 import { limiters, checkRateLimit, rateLimitResponse } from "@/lib/ratelimit";
 import { autotekaCheckSchema, validateBody } from "@/lib/validations/api";
 
+interface ReportRow {
+  id: string;
+  vin: string;
+  status: string;
+  payload: unknown;
+  created_at: string;
+}
+
+function readStringField(obj: unknown, key: string): string | undefined {
+  if (typeof obj !== "object" || obj === null) return undefined;
+  const value = (obj as Record<string, unknown>)[key];
+  return typeof value === "string" ? value : undefined;
+}
+
 async function postHandler(req: Request) {
   if (!isSameOrigin(req)) {
     return NextResponse.json({ error: "forbidden" }, { status: 403 });
@@ -22,13 +36,13 @@ async function postHandler(req: Request) {
   if (!rl.ok) return rateLimitResponse(rl.retryAfter);
 
   // P1: Zod-валидация (vin обязательный, plate опциональный госномер РФ)
-  const parsed = await req.json().catch(() => null);
+  const parsed: unknown = await req.json().catch(() => null);
   const validated = validateBody(autotekaCheckSchema, parsed);
   if (!validated.success) return validated.error;
-  const { vin, plate } = validated.data;
+  const { vin } = validated.data;
 
   const admin = createAdminClient();
-  const { data: rows } = await admin
+  const reportResult = await admin
     .from("reports")
     .select("id, vin, status, payload, created_at")
     .eq("user_id", user.id)
@@ -36,7 +50,9 @@ async function postHandler(req: Request) {
     .order("created_at", { ascending: false })
     .limit(1);
 
-  const report = (rows ?? [])[0] ?? null;
+  const rawRows: unknown = reportResult.data;
+  const rows = Array.isArray(rawRows) ? (rawRows as ReportRow[]) : [];
+  const report = rows[0] ?? null;
 
   if (report && report.status === "ready") {
     return NextResponse.json({
@@ -52,8 +68,12 @@ async function postHandler(req: Request) {
   }
 
   // Отчёт в генерации (async reportjson): доводим до конца и сохраняем.
-  if (report && report.status === "pending" && (report.payload)?.tronk_task_id) {
-    const taskId = String((report.payload).tronk_task_id);
+  const tronkTaskId =
+    report && report.status === "pending"
+      ? readStringField(report.payload, "tronk_task_id")
+      : undefined;
+  if (tronkTaskId) {
+    const taskId = tronkTaskId;
     try {
       const peek = await peekReportTask(taskId);
       if (peek.status === "ready" && peek.report) {

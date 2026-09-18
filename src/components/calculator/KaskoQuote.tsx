@@ -3,7 +3,6 @@ import { useState } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { Check, ShieldQuestion, PhoneCall } from "lucide-react";
-import { fmtMoney } from "@/lib/legal/calc";
 import { formatPhoneRu } from "@/lib/format";
 import SaveCalcButton from "@/components/calculator/SaveCalcButton";
 import { track, goals } from "@/lib/analytics";
@@ -15,6 +14,12 @@ const SmartCaptchaWidget = dynamic(() => import("@/components/auth/SmartCaptcha"
 
 function labelOf<T extends { id: string; label: string }>(arr: readonly T[], id: string): string {
   return arr.find((x) => x.id === id)?.label ?? id;
+}
+
+function pickOf<T extends { id: string }>(arr: readonly T[], id: string): T {
+  const found = arr.find((x) => x.id === id);
+  if (!found) throw new Error(`Неизвестная опция: ${id}`);
+  return found;
 }
 
 const KASKO_READY = false;
@@ -70,16 +75,16 @@ export default function KaskoQuote() {
   const [consent, setConsent] = useState(false);
 
   const calc = () => {
-    const p = PRICES.find((x) => x.id === price)!;
+    const p = pickOf(PRICES, price);
     const adj =
-      AGES.find((x) => x.id === age)!.adj +
-      EXPERIENCES.find((x) => x.id === exp)!.adj +
-      CITIES.find((x) => x.id === city)!.adj +
-      FRANCHISES.find((x) => x.id === fran)!.adj;
+      pickOf(AGES, age).adj +
+      pickOf(EXPERIENCES, exp).adj +
+      pickOf(CITIES, city).adj +
+      pickOf(FRANCHISES, fran).adj;
     const rate = Math.min(11, Math.max(2.5, 6.5 + adj));
     const min = Math.round(p.value * (rate - 0.8) / 100);
     const max = Math.round(p.value * (rate + 0.8) / 100);
-    const franObj = FRANCHISES.find((x) => x.id === fran)!;
+    const franObj = pickOf(FRANCHISES, fran);
     setResult({ min, max, rate: Math.round(rate * 10) / 10, franLabel: franObj.id === "none" ? null : franObj.label });
   };
 
@@ -97,7 +102,7 @@ export default function KaskoQuote() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ service: "kasko", brand, phone, captchaToken }),
       });
-      const json = await res.json().catch(() => null);
+      const json = (await res.json().catch(() => null)) as { error?: string } | null;
       if (!res.ok) {
         const msg =
           json?.error === "phone is required" ? "Укажите корректный номер телефона"
@@ -209,7 +214,7 @@ export default function KaskoQuote() {
               {captchaRequired && (
                 <SmartCaptchaWidget key={captchaNonce} onToken={setCaptchaToken} />
               )}
-              <button onClick={sendLead} disabled={sending || !consent || (captchaRequired && !captchaToken)}
+              <button onClick={() => { void sendLead(); }} disabled={sending || !consent || (captchaRequired && !captchaToken)}
                 className="w-full py-2.5 bg-brand-600 text-white rounded-xl hover:bg-brand-700 font-bold text-xs transition cursor-pointer disabled:opacity-60 flex items-center justify-center gap-1.5">
                 <PhoneCall className="w-3.5 h-3.5" /> {sending ? "Отправка…" : captchaRequired && !captchaToken ? "Подтвердите капчу" : "Подобрать КАСКО"}
               </button>

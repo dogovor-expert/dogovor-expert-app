@@ -6,7 +6,7 @@ import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from "@
 import { DailyBarChart } from "@/components/admin/analytics/DailyBarChart";
 import { FunnelChart } from "@/components/admin/analytics/FunnelChart";
 import { getEventSummaries, getFunnel, getTopTemplates, getKpiTotals } from "@/lib/userEventsQueries";
-import { EVENT_CATALOG, type EventName } from "@/lib/userEvents";
+import { EVENT_CATALOG } from "@/lib/userEvents";
 import { Eye, Users, TrendingUp, Percent } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -48,7 +48,7 @@ export default async function AdminAnalyticsPage({
   for (const s of summaries) {
     const group = EVENT_CATALOG[s.event].group;
     if (!byGroup.has(group)) byGroup.set(group, []);
-    byGroup.get(group)!.push(s);
+    byGroup.get(group)?.push(s);
   }
 
   const kpiCards = [
@@ -172,7 +172,7 @@ export default async function AdminAnalyticsPage({
                   <TableCell className="font-medium text-gray-800">{s.label}</TableCell>
                   <TableCell>
                     <Badge variant="gray" size="sm">
-                      {GROUP_LABELS[EVENT_CATALOG[s.event as EventName].group]}
+                      {GROUP_LABELS[EVENT_CATALOG[s.event].group]}
                     </Badge>
                   </TableCell>
                   <TableCell className="tabular-nums">{s.total.toLocaleString("ru-RU")}</TableCell>

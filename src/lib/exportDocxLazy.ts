@@ -12,59 +12,31 @@ import {
   type DesignId,
   type DesignTokens,
 } from '@/lib/docDesign';
-import {
-  loadDocx,
-  loadDocxPacker,
-  loadDocxDocument,
-  loadDocxHeader,
-  loadDocxFooter,
-  loadDocxParagraph,
-  loadDocxTextRun,
-  loadDocxImageRun,
-  loadDocxTable,
-  loadDocxTableRow,
-  loadDocxTableCell,
-  loadDocxAlignmentType,
-  loadDocxBorderStyle,
-  loadDocxShadingType,
-  loadDocxTabStopType,
-  loadDocxWidthType,
-  loadDocxUnderlineType,
-  loadDocxPageNumber,
-  loadDocxTableBorders,
-} from './docx-loader';
-import type {
-  AlignmentType,
-  BorderStyle,
-  Document,
-  Footer,
-  Header,
-  ImageRun,
-  Packer,
-  PageNumber,
-  Paragraph,
-  ShadingType,
-  Table,
-  TableBorders,
-  TableCell,
-  TableRow,
-  TabStopType,
-  TextRun,
-  UnderlineType,
-  WidthType,
-} from 'docx';
+import { loadDocx } from './docx-loader';
+import type { AlignmentType, Document } from 'docx';
 
-// Type aliases for constructor functions to avoid naming conflicts
-type HeaderClass = typeof Header;
-type FooterClass = typeof Footer;
-type ParagraphClass = typeof Paragraph;
-type TextRunClass = typeof TextRun;
-type AlignmentTypeClass = typeof AlignmentType;
-type BorderStyleClass = typeof BorderStyle;
-type PageNumberClass = typeof PageNumber;
-type TabStopTypeClass = typeof TabStopType;
+/** Тип динамически загружаемого модуля docx (см. loadDocx). */
+type DocxModule = Awaited<ReturnType<typeof loadDocx>>;
 
-type Align = AlignmentTypeClass | undefined;
+// Type aliases для конструкторов/констант docx — избегаем `any` при ленивой
+// загрузке модуля и коллизий с именами параметров функций.
+type HeaderClass = DocxModule["Header"];
+type FooterClass = DocxModule["Footer"];
+type ParagraphClass = DocxModule["Paragraph"];
+type TextRunClass = DocxModule["TextRun"];
+type AlignmentTypeClass = DocxModule["AlignmentType"];
+type BorderStyleClass = DocxModule["BorderStyle"];
+type PageNumberClass = DocxModule["PageNumber"];
+type TabStopTypeClass = DocxModule["TabStopType"];
+type ImageRunClass = DocxModule["ImageRun"];
+type UnderlineTypeClass = DocxModule["UnderlineType"];
+type TableClass = DocxModule["Table"];
+type TableRowClass = DocxModule["TableRow"];
+type TableCellClass = DocxModule["TableCell"];
+type ShadingTypeClass = DocxModule["ShadingType"];
+type WidthTypeClass = DocxModule["WidthType"];
+
+type Align = (typeof AlignmentType)[keyof typeof AlignmentType] | undefined;
 
 const BLOCK_TAGS = new Set([
   'div', 'p', 'li', 'h1', 'h2', 'h3', 'h4', 'section', 'article',
@@ -89,11 +61,6 @@ function halfPoints(pt: number): number {
 
 function lineUnits(design: DesignTokens, lh: number): number {
   return Math.round(240 * lh);
-}
-
-function alignFrom(el: HTMLElement): Align | undefined {
-  // AlignmentType будет загружен динамически
-  return undefined;
 }
 
 function collectInline(node: Node, bold = false, italic = false): InlineItem[] {
@@ -142,10 +109,10 @@ function toRuns(
   items: InlineItem[],
   design: DesignTokens,
   opts: { size?: number; boldAll?: boolean; brand?: boolean; caps?: boolean } = {},
-  TextRun: any,
-  ImageRun: any,
-  UnderlineType: any
-): (any)[] {
+  TextRun: TextRunClass,
+  ImageRun: ImageRunClass,
+  UnderlineType: UnderlineTypeClass
+): (InstanceType<TextRunClass> | InstanceType<ImageRunClass>)[] {
   return items.map((it) => {
     if (it.img) {
       return new ImageRun({
@@ -182,8 +149,8 @@ function hasBlockDescendant(el: HTMLElement): boolean {
   });
 }
 
-async function buildTable(el: HTMLTableElement, design: DesignTokens, Table: any, TableRow: any, TableCell: any, TableBorders: any, BorderStyle: any, ShadingType: any, WidthType: any, Paragraph: any, TextRun: any): Promise<any> {
-  const rows: any[] = [];
+function buildTable(el: HTMLTableElement, design: DesignTokens, Table: TableClass, TableRow: TableRowClass, TableCell: TableCellClass, BorderStyle: BorderStyleClass, ShadingType: ShadingTypeClass, WidthType: WidthTypeClass, Paragraph: ParagraphClass, TextRun: TextRunClass, ImageRun: ImageRunClass, UnderlineType: UnderlineTypeClass): InstanceType<TableClass> {
+  const rows: InstanceType<TableRowClass>[] = [];
   const borderColor = design.tableBorderColor;
   const borders = design.tableBorders;
   const accent = design.accent;
@@ -211,7 +178,7 @@ async function buildTable(el: HTMLTableElement, design: DesignTokens, Table: any
 
   const rowsArray = el.querySelectorAll('tr');
   for (const tr of Array.from(rowsArray)) {
-    const cells: any[] = [];
+    const cells: InstanceType<TableCellClass>[] = [];
     const tdElements = tr.querySelectorAll('td, th');
     for (const td of Array.from(tdElements)) {
       const isHead = td.tagName === 'TH';
@@ -226,7 +193,7 @@ async function buildTable(el: HTMLTableElement, design: DesignTokens, Table: any
               children: toRuns(items, design, {
                 size: halfPoints(design.bodyFontSize),
                 boldAll: isHead,
-              }, TextRun, null, null),
+              }, TextRun, ImageRun, UnderlineType),
               spacing: { line: lineUnits(design, 1.15) },
             }),
           ],
@@ -253,12 +220,14 @@ async function buildTable(el: HTMLTableElement, design: DesignTokens, Table: any
 function buildParagraph(
   items: InlineItem[],
   design: DesignTokens,
-  Paragraph: any,
-  TextRun: any,
-  AlignmentType: any,
-  TabStopType: any,
-  BorderStyle: any,
-  ShadingType: any,
+  Paragraph: ParagraphClass,
+  TextRun: TextRunClass,
+  AlignmentType: AlignmentTypeClass,
+  TabStopType: TabStopTypeClass,
+  BorderStyle: BorderStyleClass,
+  ShadingType: ShadingTypeClass,
+  ImageRun: ImageRunClass,
+  UnderlineType: UnderlineTypeClass,
   opts: {
     align?: Align;
     size?: number;
@@ -274,10 +243,10 @@ function buildParagraph(
     spaceAfter?: number;
     lh?: number;
   } = {}
-): any {
+): InstanceType<ParagraphClass> {
   const line = opts.lh ?? design.lineHeight;
   return new Paragraph({
-    children: toRuns(items, design, opts, TextRun, null, null),
+    children: toRuns(items, design, opts, TextRun, ImageRun, UnderlineType),
     alignment: opts.align,
     spacing: {
       before: opts.spaceBefore ?? 40,
@@ -326,24 +295,27 @@ function contentWidthTwips(design: DesignTokens): number {
 async function parseHtmlToDocx(
   html: string,
   design: DesignTokens,
-  docxModule: any
-): Promise<any[]> {
+  docxModule: DocxModule
+): Promise<(InstanceType<ParagraphClass> | InstanceType<TableClass>)[]> {
   const {
-    Document, Header, Footer, Paragraph, Table, TableRow, TableCell,
-    TextRun, ImageRun, Packer, AlignmentType, BorderStyle, ShadingType,
-    TabStopType, WidthType, PageNumber, UnderlineType, TableBorders,
+    Paragraph, Table, TableRow, TableCell,
+    TextRun, ImageRun, AlignmentType, BorderStyle, ShadingType,
+    TabStopType, WidthType, TableBorders, UnderlineType,
   } = docxModule;
 
-  const elements: any[] = [];
+  const elements: (InstanceType<ParagraphClass> | InstanceType<TableClass>)[] = [];
   const tempDiv = document.createElement('div');
   tempDiv.innerHTML = html;
 
-  const walk = async (el: HTMLElement, target: any[]) => {
+  const walk = async (
+    el: HTMLElement,
+    target: (InstanceType<ParagraphClass> | InstanceType<TableClass>)[]
+  ) => {
     const tag = el.tagName.toLowerCase();
     if (tag === 'script' || tag === 'style') return;
 
     if (tag === 'table') {
-      const table = await buildTable(el as HTMLTableElement, design, Table, TableRow, TableCell, TableBorders, BorderStyle, ShadingType, WidthType, Paragraph, TextRun);
+      const table = buildTable(el as HTMLTableElement, design, Table, TableRow, TableCell, BorderStyle, ShadingType, WidthType, Paragraph, TextRun, ImageRun, UnderlineType);
       target.push(table);
       target.push(new Paragraph({ children: [], spacing: { after: 80 } }));
       return;
@@ -357,7 +329,7 @@ async function parseHtmlToDocx(
           ...collectInline(li),
         ];
         target.push(
-          buildParagraph(inlineItems, design, Paragraph, TextRun, AlignmentType, TabStopType, BorderStyle, ShadingType, {
+          buildParagraph(inlineItems, design, Paragraph, TextRun, AlignmentType, TabStopType, BorderStyle, ShadingType, ImageRun, UnderlineType, {
             align: AlignmentType.LEFT,
             size: halfPoints(design.bodyFontSize),
           })
@@ -375,7 +347,7 @@ async function parseHtmlToDocx(
 
     if (hasClass(el, 'border-b') && !el.textContent?.trim()) {
       target.push(
-        buildParagraph([], design, Paragraph, TextRun, AlignmentType, TabStopType, BorderStyle, ShadingType, {
+        buildParagraph([], design, Paragraph, TextRun, AlignmentType, TabStopType, BorderStyle, ShadingType, ImageRun, UnderlineType, {
           size: halfPoints(design.tinyFontSize),
           borderBottom: true,
           spaceBefore: 0,
@@ -388,16 +360,16 @@ async function parseHtmlToDocx(
     if (hasClass(el, 'doc-sides')) {
       const style = design.sideTitleStyle;
       const colWidths = Array.from(el.children).map(() => 50);
-      const cells = [];
+      const cells: InstanceType<ParagraphClass>[][] = [];
       for (const child of Array.from(el.children)) {
         const c = child as HTMLElement;
         const titleEl = c.querySelector('.doc-sides-title');
         const body = c.cloneNode(true) as HTMLElement;
         body.querySelectorAll('.doc-sides-title').forEach((n) => n.remove());
-        const cellChildren: Paragraph[] = [];
+        const cellChildren: InstanceType<ParagraphClass>[] = [];
         if (titleEl) {
           cellChildren.push(
-            buildParagraph(collectInline(titleEl), design, Paragraph, TextRun, AlignmentType, TabStopType, BorderStyle, ShadingType, {
+            buildParagraph(collectInline(titleEl), design, Paragraph, TextRun, AlignmentType, TabStopType, BorderStyle, ShadingType, ImageRun, UnderlineType, {
               align: AlignmentType.LEFT,
               size: halfPoints(design.subheadingFontSize),
               boldAll: true,
@@ -412,7 +384,7 @@ async function parseHtmlToDocx(
           );
         }
         if (body.textContent?.trim()) {
-          const sub: Paragraph[] = [];
+          const sub: InstanceType<ParagraphClass>[] = [];
           await walk(body, sub);
           cellChildren.push(...sub.filter((x) => x instanceof Paragraph));
         }
@@ -443,7 +415,7 @@ async function parseHtmlToDocx(
       const items = collectInline(el);
       if (items.length) {
         target.push(
-          buildParagraph(items, design, Paragraph, TextRun, AlignmentType, TabStopType, BorderStyle, ShadingType, {
+          buildParagraph(items, design, Paragraph, TextRun, AlignmentType, TabStopType, BorderStyle, ShadingType, ImageRun, UnderlineType, {
             align: AlignmentType.CENTER,
             size: halfPoints(design.bodyFontSize),
             boldAll: true,
@@ -470,7 +442,7 @@ async function parseHtmlToDocx(
           items.push(...collectInline(p));
         });
         target.push(
-          buildParagraph(items, design, Paragraph, TextRun, AlignmentType, TabStopType, BorderStyle, ShadingType, {
+          buildParagraph(items, design, Paragraph, TextRun, AlignmentType, TabStopType, BorderStyle, ShadingType, ImageRun, UnderlineType, {
             align: AlignmentType.LEFT,
             size: halfPoints(design.smallFontSize),
             tabRight: true,
@@ -497,7 +469,7 @@ async function parseHtmlToDocx(
 
     if (items.length || (el.textContent || '').trim()) {
       target.push(
-        buildParagraph(items, design, Paragraph, TextRun, AlignmentType, TabStopType, BorderStyle, ShadingType, {
+        buildParagraph(items, design, Paragraph, TextRun, AlignmentType, TabStopType, BorderStyle, ShadingType, ImageRun, UnderlineType, {
           align: AlignmentType.LEFT,
           size: isDocTitle
             ? halfPoints(design.titleFontSize)

@@ -4,6 +4,7 @@ import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { useVault } from "@/lib/vault/VaultProvider";
+import type { VaultBackup } from "@/lib/vault/keyManager";
 import {
   Lock,
   Unlock,
@@ -14,10 +15,7 @@ import {
   AlertTriangle,
   CheckCircle,
   Info,
-  Shield,
   Clock,
-  Eye,
-  EyeOff,
 } from "lucide-react";
 import { saveAs } from "file-saver";
 
@@ -35,10 +33,8 @@ export default function VaultTab() {
     exportBackup,
     importBackup,
     setAutoLock,
-    refresh,
   } = useVault();
 
-  const [mode, setMode] = useState<"lock" | "passphrase" | "backup" | "auto-lock">("lock");
   const [passphrase, setPassphraseState] = useState("");
   const [confirmPassphrase, setConfirmPassphrase] = useState("");
   const [oldPassphrase, setOldPassphrase] = useState("");
@@ -160,7 +156,7 @@ export default function VaultTab() {
     setBusy(true);
     try {
       const text = await importFile.text();
-      const backup = JSON.parse(text);
+      const backup = JSON.parse(text) as VaultBackup;
       await importBackup(backup, pw);
       setImportFile(null);
       setPassphraseState("");
@@ -234,7 +230,7 @@ export default function VaultTab() {
             </label>
             {error && <p className="text-xs text-red-500">{error}</p>}
             <Button
-              onClick={handleUnlock}
+              onClick={() => { void handleUnlock(); }}
               disabled={busy || !passphrase}
               className="w-full"
             >
@@ -300,7 +296,7 @@ export default function VaultTab() {
               Показать пароль
             </label>
             {error && <p className="text-xs text-red-500">{error}</p>}
-            <Button onClick={handleSetPassphrase} disabled={busy} className="w-full">
+            <Button onClick={() => { void handleSetPassphrase(); }} disabled={busy} className="w-full">
               {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Key className="w-4 h-4 mr-2" />}
               {busy ? "Установка…" : "Установить пароль"}
             </Button>
@@ -337,7 +333,7 @@ export default function VaultTab() {
                 placeholder="Подтвердите новый пароль"
               />
               {error && <p className="text-xs text-red-500">{error}</p>}
-              <Button onClick={handleChangePassphrase} disabled={busy} variant="outline">
+              <Button onClick={() => { void handleChangePassphrase(); }} disabled={busy} variant="outline">
                 {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Key className="w-4 h-4 mr-2" />}
                 {busy ? "Изменение…" : "Сменить пароль"}
               </Button>
@@ -357,7 +353,7 @@ export default function VaultTab() {
               />
               {error && <p className="text-xs text-red-500">{error}</p>}
               <Button
-                onClick={handleRemovePassphrase}
+                onClick={() => { void handleRemovePassphrase(); }}
                 disabled={busy}
                 variant="ghost"
                 className="text-red-600 hover:bg-red-50"
@@ -401,7 +397,7 @@ export default function VaultTab() {
             <span className="text-sm text-gray-600">минут (0 = отключить)</span>
           </div>
           {error && <p className="text-xs text-red-500">{error}</p>}
-          <Button onClick={handleAutoLockChange} disabled={busy} variant="outline">
+          <Button onClick={() => { void handleAutoLockChange(); }} disabled={busy} variant="outline">
             {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Clock className="w-4 h-4 mr-2" />}
             {busy ? "Сохранение…" : "Применить"}
           </Button>
@@ -427,7 +423,7 @@ export default function VaultTab() {
         </div>
 
         <div className="flex flex-col sm:flex-row gap-3">
-          <Button onClick={handleExportBackup} disabled={busy || !unlocked}>
+          <Button onClick={() => { void handleExportBackup(); }} disabled={busy || !unlocked}>
             {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4 mr-2" />}
             {busy ? "Скачивание…" : "Скачать бэкап (.json)"}
           </Button>
@@ -447,7 +443,7 @@ export default function VaultTab() {
               Восстановить из файла
             </label>
             <Button
-              onClick={handleImportBackup}
+              onClick={() => { void handleImportBackup(); }}
               disabled={busy || !importFile}
               variant="outline"
             >

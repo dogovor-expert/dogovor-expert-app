@@ -43,7 +43,7 @@ export default function ReplayPlayer({ events }: { events: unknown[] }) {
       } catch {
         /* плеер мог не успеть создаться */
       }
-      if (hostRef.current) hostRef.current.innerHTML = "";
+      if (host) host.innerHTML = "";
     };
   }, [events]);
 

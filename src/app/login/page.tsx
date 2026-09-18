@@ -7,7 +7,6 @@ import { Input } from "@/components/ui/Input";
 import { Card } from "@/components/ui/Card";
 import { CheckCircle2, Loader2, Mail, ShieldCheck, Smartphone, Flame } from "lucide-react";
 import Link from "next/link";
-import type { Provider } from "@supabase/supabase-js";
 import dynamic from "next/dynamic";
 const SmartCaptchaWidget = dynamic(() => import("@/components/auth/SmartCaptcha"), { ssr: false });
 const CountdownTimer = dynamic(() => import("@/components/billing/CountdownTimer"), { ssr: false });
@@ -107,7 +106,7 @@ function LoginForm() {
     let cancelled = false;
     setMfaChecking(true);
     setError(null);
-    (async () => {
+    void (async () => {
       try {
         const { data } = await supabase.auth.mfa.listFactors();
         let factorId = data?.totp?.find((f) => f.status === "verified")?.id ?? null;
@@ -374,7 +373,7 @@ function LoginForm() {
           <>
             <div className="grid grid-cols-2 gap-3 mb-6">
               <button
-                onClick={() => signInWithOAuth("google")}
+                onClick={() => { void signInWithOAuth("google"); }}
                 disabled={!!oauthBusy}
                 className={`${oauthBtnClass} border-gray-200 text-gray-700 disabled:opacity-60`}
               >
@@ -391,7 +390,7 @@ function LoginForm() {
                 Google
               </button>
               <button
-                onClick={() => signInWithOAuth("custom:yandex")}
+                onClick={() => { void signInWithOAuth("custom:yandex"); }}
                 disabled={!!oauthBusy}
                 className={`${oauthBtnClass} border-gray-200 text-gray-700 disabled:opacity-60`}
               >
@@ -510,7 +509,7 @@ function LoginForm() {
                 <div className="mt-4">
                   <RegisterPromo />
                 </div>
-                <Button className="w-full mt-4" onClick={registerUser} disabled={loading}>
+                <Button className="w-full mt-4" onClick={() => { void registerUser(); }} disabled={loading}>
                   {loading ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
                   ) : (
@@ -572,7 +571,7 @@ function LoginForm() {
               />
               <span>Запомнить это устройство на 30 дней</span>
             </label>
-            <Button className="w-full mt-4" onClick={verifyMfa} disabled={loading}>
+            <Button className="w-full mt-4" onClick={() => { void verifyMfa(); }} disabled={loading}>
               {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Подтвердить и войти"}
             </Button>
             <p className="text-xs text-gray-600 text-center mt-3">

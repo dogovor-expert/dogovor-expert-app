@@ -1,6 +1,6 @@
 import { Calculator, Shield } from "lucide-react";
 import InssmartWidget from "@/components/osago/InssmartWidget";
-import KbmChecker from "@/components/osago/KbmFrame";
+import KbmInfo from "@/components/osago/KbmFrame";
 
 // E4 (аудит): страница была целиком 'use client' — поисковики получали пустой
 // HTML (thin content). Теперь это серверный компонент с SEO-контентом, а виджет
@@ -37,7 +37,7 @@ export default function OsagoPage() {
         </div>
       </div>
 
-      <KbmChecker />
+      <KbmInfo />
 
       <section className="prose-sm space-y-4 text-gray-700 leading-relaxed">
         <h2 className="text-xl font-bold text-gray-900">Что такое ОСАГО и почему без него нельзя</h2>

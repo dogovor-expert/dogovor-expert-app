@@ -9,8 +9,12 @@
 //
 // Для ГОСТ-CRL: pkijs сам не проверит подпись CRL, но проверить «сертификат
 // в списке revoked?» можно без верификации подписи CRL — pkijs всё равно
-// парсит revokedCertificates. Подпись CRL — отдельный шаг (TODO: верифицировать
-// через node-gost-crypto, если потребуется).
+// парсит revokedCertificates.
+//
+// Осознанное решение: подпись CRL НЕ верифицируется. CRL загружается по HTTPS
+// с официального Distribution Point CA, поэтому целостность защищена TLS.
+// Полная верификация ГОСТ-подписи CRL (34.10-2012) требует node-gost-crypto и
+// публичного ключа CA — внедрять только при смене модели угроз (offline-CRL).
 
 import * as pkijs from "pkijs";
 import type { Certificate, Time as PkijsTime } from "pkijs";
@@ -111,7 +115,7 @@ async function fetchCrl(
   timeoutMs: number,
   fetchImpl: typeof fetch | undefined,
 ): Promise<ArrayBuffer> {
-  const f = fetchImpl ?? (globalThis.fetch as typeof fetch);
+  const f = fetchImpl ?? (globalThis.fetch);
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   let resp: Response;
@@ -134,7 +138,7 @@ function parseCrl(crlDer: ArrayBuffer): pkijs.CertificateRevocationList {
   // pkijs не принимает сырой ArrayBuffer прямо в { schema } — нужен fromBER
   // (иначе "Cannot read properties of undefined (reading 'tagClass')").
   const u8 = new Uint8Array(crlDer);
-  const asn1 = fromBER(u8.buffer.slice(u8.byteOffset, u8.byteOffset + u8.byteLength) as ArrayBuffer);
+  const asn1 = fromBER(u8.buffer.slice(u8.byteOffset, u8.byteOffset + u8.byteLength));
   const parseError = (asn1 as { error?: string }).error;
   if (parseError) throw new Error(parseError);
   return new pkijs.CertificateRevocationList({ schema: asn1.result });

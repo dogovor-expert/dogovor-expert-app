@@ -11,7 +11,7 @@ interface CheckPluginProps {
 
 export function CheckPlugin({ onReady, children }: CheckPluginProps) {
   const [status, setStatus] = useState<"checking" | "ok" | "missing" | "error">("checking");
-  const [plugin, setPlugin] = useState<CadesPlugin | null>(null);
+  const [, setPlugin] = useState<CadesPlugin | null>(null);
 
   useEffect(() => {
     const abortController = new AbortController();
@@ -69,7 +69,7 @@ export function CheckPlugin({ onReady, children }: CheckPluginProps) {
       }
     }
 
-    check();
+    void check();
 
     return () => {
       mounted = false;

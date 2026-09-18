@@ -74,7 +74,7 @@ export default function FeedbackAdminTable({ canDelete = false }: { canDelete?: 
     if (status) params.set("status", status);
     const res = await fetch(`/api/feedback?${params.toString()}`).catch(() => null);
     if (res?.ok) {
-      const json = await res.json();
+      const json = (await res.json()) as { data?: Feedback[] };
       setData(Array.isArray(json.data) ? json.data : []);
     }
     setLoading(false);

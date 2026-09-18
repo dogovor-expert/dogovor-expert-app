@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ChevronRight, CalendarDays, FileText, Check, Sparkles } from "lucide-react";
+import { ChevronRight, CalendarDays, FileText, Sparkles } from "lucide-react";
 import { BLOG_POSTS, getBlogPost, getRelatedPosts } from "@/data/blog/posts";
 import { LEGAL_TEMPLATES } from "@/data/templates";
 import type { LegalTemplate } from "@/data/types";
@@ -19,7 +19,7 @@ export function generateStaticParams() {
 }
 
 export function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
-  return params.then(async ({ slug }) => {
+  return params.then(({ slug }) => {
     const post = getBlogPost(slug);
     if (!post) return {};
     return withSeo({

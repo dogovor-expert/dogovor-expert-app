@@ -297,7 +297,7 @@ export default function FormField({
     const repeatingFields = field.repeatingFields;
     let items: Record<string, string>[] = [];
     try {
-      items = JSON.parse(value || "[]");
+      items = JSON.parse(value || "[]") as Record<string, string>[];
     } catch {
       items = [];
     }

@@ -275,7 +275,7 @@ export const DOC_PROFILES: DocProfile[] = [
       if (m) {
         const num = m[3]
           ? `${m[1]} ${m[2]} ${m[3]}`
-          : `${(m[1] as string).slice(0, 2)} ${(m[1] as string).slice(2, 4)} ${(m[1] as string).slice(4, 10)}`;
+          : `${(m[1]).slice(0, 2)} ${(m[1]).slice(2, 4)} ${(m[1]).slice(4, 10)}`;
         out.push({ fieldId: `${role}_vuc_number`, value: num });
       }
       const fio = text.match(

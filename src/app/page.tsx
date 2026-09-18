@@ -161,7 +161,7 @@ export default function HomePage() {
                 ["ПТС/СТС — VIN, номер, марка", Car],
                 ["Обработка только на вашем устройстве", Shield],
                 ["Работает без интернета", FileLock],
-              ] as [string, typeof Camera][]).map(([text, Icon]) => (
+              ] as [string, typeof Camera][]).map(([text, _Icon]) => (
                 <li key={text} className="flex items-start gap-3 text-sm text-gray-700">
                   <span className="w-5 h-5 rounded-md bg-emerald-50 text-emerald-600 flex items-center justify-center flex-shrink-0 mt-0.5">
                     <FileCheck className="w-3.5 h-3.5" />

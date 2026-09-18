@@ -9,8 +9,8 @@
 
 ## Стек
 - Next.js 15.5 App Router + React 19 + TypeScript strict
-- Supabase (PostgreSQL + RLS)
-- Vercel deployment
+- Supabase (PostgreSQL + RLS, self-hosted на VDS)
+- VDS/CapRover deployment (док. — docs/DEPLOY.md)
 - Sentry для мониторинга
 - Яндекс.Метрика (consent-gated)
 

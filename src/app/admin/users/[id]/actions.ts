@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { getAdminUser } from "@/lib/admin-auth";
-import { atLeast, ROLE_LABELS, type AdminRole } from "@/lib/admin-rbac";
+import { atLeast, type AdminRole } from "@/lib/admin-rbac";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { logAdminAction } from "@/lib/audit";
 import {
@@ -235,7 +235,7 @@ export async function giftSubscriptionExtension(formData: FormData) {
       const { data: authUser } = await sb.auth.admin.getUserById(data.user_id);
       const email = authUser?.user?.email;
       if (email) {
-        await sendSubscriptionGiftEmail(email, prof?.full_name ?? "", data.months, newEnd, data.reason);
+        await sendSubscriptionGiftEmail(email, typeof prof?.full_name === "string" ? prof.full_name : "", data.months, newEnd, data.reason);
       }
     } catch (e) {
       console.warn("[gift] notify email failed", e);

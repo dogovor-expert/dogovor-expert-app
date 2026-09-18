@@ -7,12 +7,34 @@ export function getTronkToken(): string {
   return process.env.TRONK_API_KEY?.trim() || "";
 }
 
-type Json = Record<string, any>;
+type Json = Record<string, unknown>;
+
+interface TronkService {
+  IsComplete?: unknown;
+  IsCancel?: unknown;
+}
+
+interface TronkTask {
+  id?: unknown;
+  ID?: unknown;
+  Id?: unknown;
+  Status?: unknown;
+  StatusServices?: TronkService[];
+}
+
+type TronkResponse = Json & {
+  __error?: boolean;
+  __msg?: string;
+  id?: unknown;
+  ID?: unknown;
+  Id?: unknown;
+  Task?: TronkTask;
+};
 
 async function tronkGet(
   method: string,
   params: Record<string, string | number | null>
-): Promise<Json & { __error?: boolean; __msg?: string }> {
+): Promise<TronkResponse> {
   const token = getTronkToken();
   if (!token) throw new Error("TRONK_API_KEY not configured");
 
@@ -32,13 +54,14 @@ async function tronkGet(
   if (!json) throw new Error(`tronk ${method}: empty response`);
 
   if (json.Error === true || json.error === true) {
-    const msg = String(json.ErrorMsg ?? json.error_msg ?? "Нет доступа");
+    const rawMsg = json.ErrorMsg ?? json.error_msg;
+    const msg = typeof rawMsg === "string" ? rawMsg : typeof rawMsg === "number" ? String(rawMsg) : "Нет доступа";
     return { __error: true, __msg: msg };
   }
   return json;
 }
 
-function extractTaskId(createResp: Json | null): string | null {
+function extractTaskId(createResp: TronkResponse | null): string | null {
   if (!createResp) return null;
   const id =
     createResp.id ??
@@ -46,17 +69,20 @@ function extractTaskId(createResp: Json | null): string | null {
     createResp.Id ??
     createResp.Task?.id ??
     createResp.Task?.ID;
-  return id === null || id === undefined ? null : String(id);
+  if (id === null || id === undefined) return null;
+  if (typeof id === "string") return id;
+  if (typeof id === "number") return String(id);
+  return null;
 }
 
-function servicesReady(task: Json): boolean {
-  const services: any[] = task?.StatusServices ?? [];
+function servicesReady(task: TronkTask): boolean {
+  const services = task.StatusServices ?? [];
   if (services.length === 0) return false;
   return services.every((s) => s?.IsComplete === true);
 }
 
-function servicesFailed(task: Json): boolean {
-  const services: any[] = task?.StatusServices ?? [];
+function servicesFailed(task: TronkTask): boolean {
+  const services = task.StatusServices ?? [];
   return services.some((s) => s?.IsCancel === true);
 }
 
@@ -65,7 +91,7 @@ async function fetchResultIfReady(
 ): Promise<{ status: "ready" | "pending" | "failed"; report?: Json }> {
   const check = await tronkGet("reportjson", { mode: "check", id });
   if (check.__error) return { status: "failed" };
-  const task = check.Task ?? {};
+  const task: TronkTask = check.Task ?? {};
   if (task.Status === 1 || servicesReady(task)) {
     const result = await tronkGet("reportjson", { mode: "result", id });
     if (result.__error) return { status: "failed" };

@@ -16,7 +16,7 @@ export function usePaywall() {
   useEffect(() => {
     let alive = true;
     fetch("/api/subscription-status")
-      .then((r) => r.json())
+      .then((r) => r.json() as Promise<{ subscription_active?: boolean }>)
       .then((j) => {
         if (alive) setSubscriptionActive(!!j?.subscription_active);
       })

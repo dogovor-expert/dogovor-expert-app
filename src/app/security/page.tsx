@@ -248,7 +248,7 @@ export default function SecurityPage() {
                 autoComplete="new-password"
               />
             </div>
-            <Button variant="primary" size="sm" onClick={handlePasswordChange} disabled={passwordBusy}>
+            <Button variant="primary" size="sm" onClick={() => { void handlePasswordChange(); }} disabled={passwordBusy}>
               {passwordBusy ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
               Сохранить пароль
             </Button>
@@ -315,11 +315,11 @@ export default function SecurityPage() {
               )}
               {enrollError && <p className="text-sm text-red-600">{enrollError}</p>}
               <div className="flex gap-2">
-                <Button variant="ghost" size="sm" onClick={handleEnable} disabled={enrollBusy}>
+                <Button variant="ghost" size="sm" onClick={() => { void handleEnable(); }} disabled={enrollBusy}>
                   {enrollBusy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Smartphone className="w-4 h-4" />}
                   Добавить устройство
                 </Button>
-                <Button variant="danger" size="sm" onClick={handleDisable} disabled={enrollBusy}>
+                <Button variant="danger" size="sm" onClick={() => { void handleDisable(); }} disabled={enrollBusy}>
                   {!enrollBusy && <ShieldOff className="w-4 h-4" />}
                   Отключить 2FA
                 </Button>
@@ -345,7 +345,7 @@ export default function SecurityPage() {
               <div className="flex items-center justify-between p-3 rounded-xl bg-gray-50 border border-gray-100">
                 <span className="font-mono text-sm text-gray-700 break-all pr-2">{secret}</span>
                 <button
-                  onClick={copySecret}
+                  onClick={() => { void copySecret(); }}
                   className="shrink-0 inline-flex items-center gap-1 text-sm text-brand-600 hover:text-brand-700"
                 >
                   {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
@@ -367,7 +367,7 @@ export default function SecurityPage() {
               </div>
               {enrollError && <p className="text-sm text-red-600">{enrollError}</p>}
               <div className="flex gap-2">
-                <Button variant="primary" size="sm" onClick={handleConfirmEnroll} disabled={enrollBusy}>
+                <Button variant="primary" size="sm" onClick={() => { void handleConfirmEnroll(); }} disabled={enrollBusy}>
                   {enrollBusy ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
                   {factorId ? "Подтвердить и добавить" : "Подтвердить и включить"}
                 </Button>
@@ -392,7 +392,7 @@ export default function SecurityPage() {
                 Двухфакторная аутентификация защищает аккаунт: даже если пароль или код из письма станут известны,
                 войти без кода из вашего приложения не получится.
               </p>
-              <Button variant="primary" size="sm" onClick={handleEnable} disabled={enrollBusy}>
+              <Button variant="primary" size="sm" onClick={() => { void handleEnable(); }} disabled={enrollBusy}>
                 {enrollBusy ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShieldCheck className="w-4 h-4" />}
                 Включить 2FA
               </Button>
@@ -407,7 +407,7 @@ export default function SecurityPage() {
             <LogOut className="w-5 h-5 text-brand-600" />
             Сеансы
           </h2>
-          <Button variant="ghost" size="sm" onClick={handleSignOutAll}>
+          <Button variant="ghost" size="sm" onClick={() => { void handleSignOutAll(); }}>
             <LogOut className="w-4 h-4" />
             Выйти на всех устройствах
           </Button>

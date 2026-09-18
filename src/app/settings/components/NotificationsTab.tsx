@@ -42,14 +42,14 @@ export default function NotificationsTab() {
   const [consentMsg, setConsentMsg] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch("/api/profile")
-      .then((r) => (r.ok ? r.json() : null))
-      .then(({ data }) => {
-        if (data) setNotifyEmail(data.notify_email);
+    void fetch("/api/profile")
+      .then((r) => (r.ok ? (r.json() as Promise<{ data?: { notify_email?: boolean } }>) : null))
+      .then((res) => {
+        if (res?.data) setNotifyEmail(!!res.data.notify_email);
       })
       .finally(() => setLoading(false));
     fetch("/api/marketing-consent", { cache: "no-store" })
-      .then((r) => (r.ok ? r.json() : null))
+      .then((r) => (r.ok ? (r.json() as Promise<{ pd_consent?: boolean; ad_consent?: boolean }>) : null))
       .then((j) => {
         if (j) {
           setPdConsent(!!j.pd_consent);
@@ -125,7 +125,7 @@ export default function NotificationsTab() {
               </div>
               <div className="flex items-center gap-2 flex-shrink-0">
                 {saving && <Loader2 className="w-4 h-4 animate-spin text-gray-600" />}
-                <Toggle checked={notifyEmail} onChange={handleToggle} />
+                <Toggle checked={notifyEmail} onChange={(v) => { void handleToggle(v); }} />
               </div>
             </div>
 
@@ -139,7 +139,7 @@ export default function NotificationsTab() {
                   type="checkbox"
                   checked={pdConsent}
                   disabled={consentSaving}
-                  onChange={(e) => handleConsent("pd", e.target.checked)}
+                  onChange={(e) => { void handleConsent("pd", e.target.checked); }}
                   className="mt-0.5 w-4 h-4 accent-brand-600"
                 />
                 <span className="text-xs text-gray-600 leading-relaxed">
@@ -152,7 +152,7 @@ export default function NotificationsTab() {
                   type="checkbox"
                   checked={adConsent}
                   disabled={consentSaving}
-                  onChange={(e) => handleConsent("ad", e.target.checked)}
+                  onChange={(e) => { void handleConsent("ad", e.target.checked); }}
                   className="mt-0.5 w-4 h-4 accent-brand-600"
                 />
                 <span className="text-xs text-gray-600 leading-relaxed">

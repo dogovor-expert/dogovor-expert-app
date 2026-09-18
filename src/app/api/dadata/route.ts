@@ -61,50 +61,59 @@ interface DadataSuggestion {
   };
 }
 
+// Безопасное приведение значения Dadata к строке. Поля приходят как `unknown`
+// (могут быть объектом/числом/null), поэтому нельзя вызывать String() на объекте —
+// иначе получится "[object Object]". Возвращаем "" для всего, кроме скаляров.
+function str(v: unknown): string {
+  if (typeof v === "string") return v;
+  if (typeof v === "number" || typeof v === "boolean") return String(v);
+  return "";
+}
+
 function sanitizeParty(data: DadataSuggestion): Record<string, unknown> {
   const nameObj = data.data?.name;
   const isNameObj = typeof nameObj === "object" && nameObj !== null;
   return {
-    value: String(data.value ?? ""),
-    inn: String(data.data?.inn ?? ""),
-    kpp: String(data.data?.kpp ?? ""),
-    ogrn: String(data.data?.ogrn ?? ""),
-    type: String(data.data?.type ?? ""),
-    status: String(data.data?.state?.status ?? ""),
-    name_short_with_opf: String((isNameObj ? nameObj.short_with_opf : undefined) ?? ""),
-    name_full_with_opf: String((isNameObj ? nameObj.full_with_opf : undefined) ?? ""),
-    address_value: String(data.data?.address?.value ?? ""),
-    address_unrestricted: String(data.data?.address?.unrestricted_value ?? ""),
-    management_name: String(data.data?.management?.name ?? ""),
-    management_post: String(data.data?.management?.post ?? ""),
-    okved: String(data.data?.okved ?? ""),
+    value: str(data.value),
+    inn: str(data.data?.inn),
+    kpp: str(data.data?.kpp),
+    ogrn: str(data.data?.ogrn),
+    type: str(data.data?.type),
+    status: str(data.data?.state?.status),
+    name_short_with_opf: str(isNameObj ? nameObj.short_with_opf : undefined),
+    name_full_with_opf: str(isNameObj ? nameObj.full_with_opf : undefined),
+    address_value: str(data.data?.address?.value),
+    address_unrestricted: str(data.data?.address?.unrestricted_value),
+    management_name: str(data.data?.management?.name),
+    management_post: str(data.data?.management?.post),
+    okved: str(data.data?.okved),
   };
 }
 
 function sanitizeFmsUnit(data: DadataSuggestion): Record<string, unknown> {
   return {
-    value: String(data.value ?? ""),
-    code: String(data.data?.code ?? ""),
-    name: String(data.data?.name ?? ""),
-    region_code: String(data.data?.region_code ?? ""),
+    value: str(data.value),
+    code: str(data.data?.code),
+    name: str(data.data?.name),
+    region_code: str(data.data?.region_code),
   };
 }
 
 function sanitizeFio(data: DadataSuggestion): Record<string, unknown> {
   return {
-    value: String(data.value ?? ""),
-    surname: String(data.data?.surname ?? ""),
-    name: String(data.data?.name ?? ""),
-    patronymic: String(data.data?.patronymic ?? ""),
-    gender: String(data.data?.gender ?? ""),
-    birthdate: String(data.data?.birthdate ?? ""),
-    passport_series: String(data.data?.passport_series ?? ""),
-    passport_number: String(data.data?.passport_number ?? ""),
-    passport_issue_date: String(data.data?.passport_issue_date ?? ""),
-    passport_issued_by: String(data.data?.passport_issued_by ?? ""),
-    passport_code: String(data.data?.passport_code ?? ""),
-    snils: String(data.data?.snils ?? ""),
-    inn: String(data.data?.inn ?? ""),
+    value: str(data.value),
+    surname: str(data.data?.surname),
+    name: str(data.data?.name),
+    patronymic: str(data.data?.patronymic),
+    gender: str(data.data?.gender),
+    birthdate: str(data.data?.birthdate),
+    passport_series: str(data.data?.passport_series),
+    passport_number: str(data.data?.passport_number),
+    passport_issue_date: str(data.data?.passport_issue_date),
+    passport_issued_by: str(data.data?.passport_issued_by),
+    passport_code: str(data.data?.passport_code),
+    snils: str(data.data?.snils),
+    inn: str(data.data?.inn),
   };
 }
 
@@ -114,7 +123,7 @@ async function postHandler(req: NextRequest) {
   }
 
   // P1: Zod-валидация входящего body (best practice 2026: safeParse + structured error)
-  const parsed = await req.json().catch(() => null);
+  const parsed: unknown = await req.json().catch(() => null);
   const validated = validateBody(dadataSchema, parsed);
   if (!validated.success) return validated.error;
   const { op, query, count } = validated.data;

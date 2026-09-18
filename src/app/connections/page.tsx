@@ -25,7 +25,7 @@ import {
   importVaultFromCloud,
   isProviderConfigured,
 } from "@/lib/cloud/manager";
-import { exportVaultBackup, initVault, isUnlocked } from "@/lib/vault/keyManager";
+import { exportVaultBackup, initVault } from "@/lib/vault/keyManager";
 import type { CloudProviderId } from "@/lib/cloud/types";
 import FolderPicker from "@/components/FolderPicker";
 import SetupGuide from "@/components/cloud/SetupGuide";
@@ -62,7 +62,7 @@ export default function ConnectionsPage() {
       setVaultReady(true);
       await refresh();
     }
-    init();
+    void init();
   }, []);
 
   const refresh = async () => {
@@ -112,32 +112,36 @@ export default function ConnectionsPage() {
     await refresh();
   };
 
-  const handleExportAll = async (id: CloudProviderId) => {
+  const runExportAll = async (id: CloudProviderId, folderPath: string) => {
+    setExporting(id);
+    setExportResult(null);
+    try {
+      // Цельный бэкап хранилища (ключи + документы + токены) — совместим с importVaultFromCloud.
+      const backup = await exportVaultBackup();
+      const blob = new Blob([JSON.stringify(backup)], { type: "application/json" });
+      const fileName = `vault-backup-${new Date().toISOString().slice(0, 10)}`;
+      await exportDocument(
+        id,
+        { vaultBlob: blob },
+        { format: "vault-backup", fileName, remotePath: folderPath }
+      );
+      setExportResult({
+        success: backup.documents.length,
+        failed: [],
+      });
+    } catch (e) {
+      setExportResult({ success: 0, failed: [(e as Error).message] });
+    } finally {
+      setExporting(null);
+    }
+  };
+
+  const handleExportAll = (id: CloudProviderId) => {
     if (!guard()) return;
     setFolderPicker({
       providerId: id,
-      onConfirm: async (folderPath) => {
-        setExporting(id);
-        setExportResult(null);
-        try {
-          // Цельный бэкап хранилища (ключи + документы + токены) — совместим с importVaultFromCloud.
-          const backup = await exportVaultBackup();
-          const blob = new Blob([JSON.stringify(backup)], { type: "application/json" });
-          const fileName = `vault-backup-${new Date().toISOString().slice(0, 10)}`;
-          await exportDocument(
-            id,
-            { vaultBlob: blob },
-            { format: "vault-backup", fileName, remotePath: folderPath }
-          );
-          setExportResult({
-            success: backup.documents.length,
-            failed: [],
-          });
-        } catch (e) {
-          setExportResult({ success: 0, failed: [(e as Error).message] });
-        } finally {
-          setExporting(null);
-        }
+      onConfirm: (folderPath) => {
+        void runExportAll(id, folderPath);
       },
     });
   };
@@ -252,7 +256,7 @@ export default function ConnectionsPage() {
                   <SetupGuide providerId={st.id} clientIdFilled={!!st.clientId} error={st.error} />
 
                   <Button
-                  onClick={() => handleConnect(st.id)}
+                  onClick={() => { void handleConnect(st.id); }}
                   disabled={!st.clientId || st.connecting}
                   className="w-full"
                 >
@@ -305,7 +309,7 @@ export default function ConnectionsPage() {
                   </Button>
                   <Button
                     variant="outline"
-                    onClick={() => handleListImportFiles(st.id)}
+                    onClick={() => { void handleListImportFiles(st.id); }}
                     disabled={importing === st.id || !vaultReady}
                     className="flex-1"
                   >
@@ -323,7 +327,7 @@ export default function ConnectionsPage() {
                   </Button>
                   <Button
                     variant="ghost"
-                    onClick={() => handleDisconnect(st.id)}
+                    onClick={() => { void handleDisconnect(st.id); }}
                     className="text-red-600 hover:bg-red-50"
                   >
                     Отключить
@@ -378,7 +382,7 @@ export default function ConnectionsPage() {
                     {importFiles.map((f) => (
                       <button
                         key={f.path}
-                        onClick={() => handleImportFile(st.id, f.path)}
+                        onClick={() => { void handleImportFile(st.id, f.path); }}
                         disabled={!!importPassphrase && importPassphrase.length < 8}
                         className="w-full text-left p-3 rounded-xl border hover:bg-gray-50 transition-colors disabled:opacity-50"
                       >

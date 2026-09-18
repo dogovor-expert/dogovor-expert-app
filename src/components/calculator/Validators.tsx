@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
-import { Check, X, Fingerprint, ShieldCheck, ExternalLink } from "lucide-react";
-import { isSnils, isOgrn, isOgrnip, isKpp, isBik, isBankAccount, luhn, isInn, isDriverLicense, type ValidateResult } from "@/lib/legal/validators";
+import { Check, X, Fingerprint } from "lucide-react";
+import { isSnils, isOgrn, isKpp, isBik, isBankAccount, luhn, isInn, isDriverLicense, type ValidateResult } from "@/lib/legal/validators";
 
 type Tool = "snils" | "ogrn" | "inn" | "kpp" | "bik" | "account" | "card" | "dl";
 
@@ -13,11 +13,8 @@ const TOOLS: { id: Tool; label: string; placeholder: string; needBik?: boolean }
   { id: "bik", label: "БИК", placeholder: "9 цифр" },
   { id: "account", label: "Расчётный счёт", placeholder: "20 цифр", needBik: true },
   { id: "card", label: "Банковская карта", placeholder: "16 цифр" },
-  { id: "dl", label: "ВУ / КБМ", placeholder: "0011 223344" },
+  { id: "dl", label: "ВУ", placeholder: "0011 223344" },
 ];
-
-/** Официальный сервис проверки КБМ (оператор АИС страховщиков — АО «НСИС»). */
-const NSIS_KBM_URL = "https://dkbm-web.autoins.ru/dkbm-web-1.0/kbm/kbm.htm";
 
 export default function Validators() {
   const [tool, setTool] = useState<Tool>("snils");
@@ -38,7 +35,7 @@ export default function Validators() {
     }
   };
 
-  const current = TOOLS.find((t) => t.id === tool)!;
+  const current = TOOLS.find((t) => t.id === tool) ?? TOOLS[0];
 
   return (
     <div className="space-y-4">
@@ -80,36 +77,6 @@ export default function Validators() {
         }`}>
           {result.valid ? <Check className="w-4 h-4 text-emerald-500 flex-shrink-0" /> : <X className="w-4 h-4 text-red-500 flex-shrink-0" />}
           <span>{result.message}</span>
-        </div>
-      )}
-
-      {tool === "dl" && (
-        <div className="rounded-xl border border-gray-200 bg-gray-50 p-4 space-y-3">
-          <div className="flex items-start gap-2.5">
-            <ShieldCheck className="w-4 h-4 text-brand-600 mt-0.5 flex-shrink-0" />
-            <div className="text-[11px] text-gray-700 leading-relaxed">
-              <p className="font-semibold text-gray-900">Проверка КБМ по ОСАГО</p>
-              <p className="mt-1">
-                Проверить свой коэффициент бонус-малус можно бесплатно в официальной базе
-                АИС страховщиков (оператор — АО «НСИС», с 01.10.2024). Потребуются ФИО,
-                дата рождения и серия/номер водительского удостоверения.
-                Остерегайтесь платных посредников — проверка бесплатна.
-              </p>
-            </div>
-          </div>
-          <a
-            href={NSIS_KBM_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            className={`inline-flex w-full items-center justify-center gap-2 py-2.5 rounded-xl font-bold text-xs transition ${
-              result?.valid
-                ? "bg-indigo-600 text-white hover:bg-indigo-700"
-                : "bg-white text-indigo-600 border border-indigo-200 hover:bg-indigo-50"
-            }`}
-          >
-            <ExternalLink className="w-3.5 h-3.5" />
-            Проверить КБМ на сайте НСИС
-          </a>
         </div>
       )}
 

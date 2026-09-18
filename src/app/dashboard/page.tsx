@@ -40,18 +40,18 @@ export default function DashboardPage() {
       setEmail(data.user.email ?? "");
       const pRes = await fetch("/api/profile").catch(() => null);
       if (pRes?.ok) {
-        const { data: p } = await pRes.json();
-        setProfile(p);
+        const { data: p } = (await pRes.json()) as { data?: ProfileData | null };
+        setProfile(p ?? null);
       }
       const dRes = await fetch("/api/documents").catch(() => null);
       if (dRes?.ok) {
-        const { data } = await dRes.json();
+        const { data } = (await dRes.json()) as { data?: { template_id: string; updated_at: string }[] };
         setServerDocs(Array.isArray(data) ? data : []);
       }
       setLocalCount(getAllDrafts().length);
       const sRes = await fetch("/api/subscription-status").catch(() => null);
       if (sRes?.ok) {
-        const s = await sRes.json();
+        const s = (await sRes.json()) as { subscription_active?: boolean; plan?: string };
         setSub({ subscription_active: !!s.subscription_active, plan: s.plan ?? "free" });
       }
     } catch {
@@ -63,7 +63,7 @@ export default function DashboardPage() {
   }, [router]);
 
   useEffect(() => {
-    load();
+    void load();
   }, [load]);
 
   if (loading) {

@@ -1,5 +1,5 @@
 import { parseHTML } from "linkedom";
-import createDOMPurify, { type WindowLike } from "dompurify";
+import createDOMPurify from "dompurify";
 
 function createLinkedomDOMPurify() {
   const { window } = parseHTML("<!doctype html><html><body></body></html>");

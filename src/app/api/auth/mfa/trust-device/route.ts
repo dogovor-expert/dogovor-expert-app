@@ -22,7 +22,8 @@ function cookieOptions(maxAge: number) {
 async function trustDeviceHandler(request: NextRequest) {
   let remember = true;
   try {
-    const body = await request.json();
+    const rawBody: unknown = await request.json();
+    const body = rawBody as { remember?: unknown } | null;
     remember = body?.remember !== false;
   } catch {
     // пустое тело — считаем remember=true

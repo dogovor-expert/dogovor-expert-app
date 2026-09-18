@@ -1,10 +1,13 @@
 "use client";
 import { useState } from "react";
-import { ShieldCheck, ExternalLink, Check, X, Info } from "lucide-react";
-import { isDriverLicense, type ValidateResult } from "@/lib/legal/validators";
+import { ShieldCheck, ExternalLink, Info } from "lucide-react";
 
-/** Официальный сервис проверки КБМ (оператор АИС страховщиков — АО «НСИС»). */
-const NSIS_KBM_URL = "https://dkbm-web.autoins.ru/dkbm-web-1.0/kbm/kbm.htm";
+/**
+ * Личный кабинет НСИС — официальный сервис проверки КБМ.
+ * С 01.10.2024 оператор базы КБМ — АО «НСИС» (не РСА). Проверка выполняется
+ * в личном кабинете по ФИО, дате рождения и серии/номеру ВУ.
+ */
+const NSIS_KBM_URL = "https://lk.nsis.ru/";
 
 /**
  * Официальная шкала КБМ (Указание Банка России, приложение 2 к Правилам
@@ -30,12 +33,8 @@ export const KBM_SCALE: { cls: string; kbm: number }[] = [
   { cls: "13", kbm: 0.46 },
 ];
 
-export default function KbmChecker() {
-  const [vuc, setVuc] = useState("");
-  const [result, setResult] = useState<ValidateResult | null>(null);
+export default function KbmInfo() {
   const [showScale, setShowScale] = useState(false);
-
-  const check = () => setResult(isDriverLicense(vuc));
 
   return (
     <div className="bg-white border border-gray-200 rounded-2xl p-6 sm:p-8 shadow-md shadow-gray-200/60">
@@ -53,50 +52,11 @@ export default function KbmChecker() {
       </div>
 
       <div className="mt-6 space-y-3">
-        <div className="space-y-1">
-          <label htmlFor="kbm-vuc" className="text-[10px] font-mono text-gray-600">
-            Серия и номер водительского удостоверения
-          </label>
-          <div className="flex gap-2">
-            <input
-              id="kbm-vuc"
-              type="text"
-              inputMode="numeric"
-              value={vuc}
-              onChange={(e) => { setVuc(e.target.value); setResult(null); }}
-              onKeyDown={(e) => { if (e.key === "Enter") check(); }}
-              placeholder="0011 223344"
-              className="flex-1 bg-gray-50 border border-gray-200 text-sm py-2.5 px-3 rounded-lg text-gray-900 outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 font-mono"
-            />
-            <button
-              onClick={check}
-              className="px-4 py-2.5 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 font-bold text-xs transition cursor-pointer whitespace-nowrap"
-            >
-              Проверить
-            </button>
-          </div>
-        </div>
-
-        {result && (
-          <div className={`rounded-xl p-3 flex items-center gap-2.5 text-xs ${
-            result.valid ? "bg-emerald-50 border border-emerald-200 text-emerald-700" : "bg-red-50 border border-red-200 text-red-700"
-          }`} role="status">
-            {result.valid
-              ? <Check className="w-4 h-4 text-emerald-500 flex-shrink-0" />
-              : <X className="w-4 h-4 text-red-500 flex-shrink-0" />}
-            <span>{result.message}</span>
-          </div>
-        )}
-
         <a
           href={NSIS_KBM_URL}
           target="_blank"
           rel="noopener noreferrer"
-          className={`inline-flex w-full items-center justify-center gap-2 py-2.5 rounded-xl font-bold text-xs transition ${
-            result?.valid
-              ? "bg-emerald-600 text-white hover:bg-emerald-700"
-              : "bg-white text-emerald-700 border border-emerald-200 hover:bg-emerald-50"
-          }`}
+          className="inline-flex w-full items-center justify-center gap-2 py-2.5 rounded-xl font-bold text-xs transition bg-emerald-600 text-white hover:bg-emerald-700"
         >
           <ExternalLink className="w-3.5 h-3.5" />
           Узнать свой КБМ в официальной базе НСИС
@@ -104,9 +64,11 @@ export default function KbmChecker() {
 
         <p className="text-[11px] text-gray-600 leading-relaxed flex items-start gap-1.5">
           <Info className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
-          С 01.10.2024 оператором базы КБМ является АО «НСИС» (не РСА). Проверка бесплатна:
-          потребуются ФИО, дата рождения и серия/номер ВУ. Если КБМ не соответствует истории
-          вождения — его можно восстановить через страховую или запрос в НСИС.
+          С 01.10.2024 оператором базы КБМ является АО «НСИС» (не РСА). Проверка бесплатна
+          и выполняется в личном кабинете НСИС: потребуются ФИО, дата рождения и серия/номер ВУ.
+          КБМ рассчитывается по базе АИС страхования — его нельзя узнать по одному номеру ВУ.
+          Если КБМ не соответствует истории вождения — его можно восстановить через страховую
+          или запрос в НСИС.
         </p>
 
         <button

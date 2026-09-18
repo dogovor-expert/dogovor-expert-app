@@ -22,15 +22,17 @@ async function postHandler(req: Request) {
   const rl = await checkRateLimit(limiters.crudMutation, user.id);
   if (!rl.ok) return rateLimitResponse(rl.retryAfter);
 
-  const body = await req.json().catch(() => null);
+  const body = (await req.json().catch(() => null)) as Record<string, unknown> | null;
   if (!body || typeof body !== "object") {
     return NextResponse.json({ error: "bad body" }, { status: 400 });
   }
-  const templateId = String(body.templateId ?? "").trim();
+  const templateId = typeof body.templateId === "string" ? body.templateId.trim() : "";
   const mode = body.mode === "edit" ? "edit" : "fill";
   if (!templateId) return NextResponse.json({ error: "templateId is required" }, { status: 400 });
-  const values = body.values && typeof body.values === "object" ? body.values : {};
-  const checklist = body.checklist && typeof body.checklist === "object" ? body.checklist : {};
+  const values =
+    body.values && typeof body.values === "object" ? (body.values as Record<string, unknown>) : {};
+  const checklist =
+    body.checklist && typeof body.checklist === "object" ? (body.checklist as Record<string, unknown>) : {};
   // Опциональная парольная защита ссылки: контрагент вводит пароль перед просмотром ПДн.
   const password = typeof body.password === "string" ? body.password : "";
   if (password.length > 64) {

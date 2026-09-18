@@ -7,7 +7,7 @@ import { limiters, checkRateLimit, rateLimitResponse } from "@/lib/ratelimit";
 import { logSignAction } from "@/lib/sign-audit";
 import { renderTemplateDocument } from "@/lib/renderDocument";
 import { buildPdf } from "@/lib/exportPdf";
-import { preparePAdESPlaceholder, hexLengthOfCms } from "@/lib/embedPades";
+import { preparePAdESPlaceholder } from "@/lib/embedPades";
 import type { LegalTemplate } from "@/data/types";
 
 const SHA256_HEX = "sha-256";
@@ -35,7 +35,7 @@ async function postHandler(req: Request) {
 
   let body: { documentId?: string; designId?: string };
   try {
-    body = await req.json();
+    body = (await req.json()) as { documentId?: string; designId?: string };
   } catch {
     return NextResponse.json({ error: "bad body" }, { status: 400 });
   }
@@ -45,32 +45,43 @@ async function postHandler(req: Request) {
 
   // Загружаем документ и проверяем владение
   const admin = createAdminClient();
-  const { data: doc, error: docError } = await admin
+  const docResult = await admin
     .from("documents")
     .select("id, user_id, title, html, data, template_id")
     .eq("id", documentId)
     .single();
 
-  if (docError || !doc) {
+  if (docResult.error || !docResult.data) {
     return NextResponse.json({ error: "document not found" }, { status: 404 });
   }
+  const rawDoc: unknown = docResult.data;
+  const doc = rawDoc as {
+    id: string;
+    user_id: string;
+    title: string;
+    html: string | null;
+    data: Record<string, string> | null;
+    template_id: string;
+  };
   if (doc.user_id !== user.id) {
     return NextResponse.json({ error: "forbidden" }, { status: 403 });
   }
 
   // Загружаем шаблон для рендера через единый движок
-  const { data: template, error: tmplError } = await admin
+  const tmplResult = await admin
     .from("templates")
     .select("*")
     .eq("id", doc.template_id)
     .single();
 
-  if (tmplError || !template) {
+  if (tmplResult.error || !tmplResult.data) {
     return NextResponse.json({ error: "template not found" }, { status: 404 });
   }
+  const rawTemplate: unknown = tmplResult.data;
+  const template = rawTemplate as LegalTemplate;
 
   // Рендерим HTML документа через единый движок (server-side для гарантии идентичности)
-  const html = renderTemplateDocument(template as LegalTemplate, doc.data ?? {});
+  const html = renderTemplateDocument(template, doc.data ?? {});
 
   // Генерируем PDF на сервере через единый рендерер (с дизайном)
   const { blob } = await buildPdf(html, {

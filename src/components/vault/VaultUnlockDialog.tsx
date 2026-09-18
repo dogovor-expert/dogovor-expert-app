@@ -89,7 +89,7 @@ export default function VaultUnlockDialog({
           </p>
         )}
 
-        <Button onClick={submit} disabled={busy || !passphrase} className="w-full mt-4">
+        <Button onClick={() => { void submit(); }} disabled={busy || !passphrase} className="w-full mt-4">
           {busy ? (
             <Loader2 className="w-4 h-4 animate-spin" />
           ) : (

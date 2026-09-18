@@ -1,5 +1,5 @@
 import crypto from "node:crypto";
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { collectReport } from "@/lib/tronk";
 import { limiters, checkRateLimit, rateLimitResponse } from "@/lib/ratelimit";
@@ -7,10 +7,21 @@ import { yookassaWebhookSchema, validateBody } from "@/lib/validations/api";
 import { logUserEvent, SERVER_SESSION_PREFIX } from "@/lib/userEvents";
 
 // Увеличенный таймаут для этого роута — collectReport может выполняться
-// до ~45 секунд. Полноценный фикс — вынос в фоновую очередь (TODO).
+// до ~45 секунд. Генерация отчёта вынесена в after(): ответ ЮKassa
+// отправляется немедленно, а сборка отчёта продолжается в фоне в рамках
+// этого же инвокейшена (maxDuration).
 export const maxDuration = 60;
 
 const DAY_MS = 86400000;
+
+interface PaymentRow {
+  id: string;
+  user_id: string;
+  status: string;
+  amount: string | number | null;
+  currency: string | null;
+  meta: Record<string, unknown> | null;
+}
 
 // Заголовок, в котором ЮKassa передаёт HMAC-SHA256 подпись (hex) для
 // входящего уведомления. Формат подписи согласовывается при подключении
@@ -159,12 +170,16 @@ async function verifyPayment(
     if (res.status === 404) return { ok: false, reason: "payment_not_found" };
     if (!res.ok) return { ok: false, reason: "provider_error" };
 
-    const payment = await res.json();
+    const payment = (await res.json()) as {
+      amount?: { value?: string | number; currency?: string };
+      status?: string;
+    };
     const amount = payment.amount;
     if (!amount) return { ok: false, reason: "no_amount" };
     if (Number(amount.value) !== expectedAmount || amount.currency !== expectedCurrency) {
       return { ok: false, reason: "amount_mismatch" };
     }
+    if (typeof payment.status !== "string") return { ok: false, reason: "no_status" };
     return { ok: true, status: payment.status };
   } catch {
     return { ok: false, reason: "provider_unreachable" };
@@ -230,12 +245,14 @@ export async function POST(req: Request) {
   if (!payment?.id) return NextResponse.json({ ok: true });
 
   const admin = createAdminClient();
-  const { data: rows } = await admin
+  const rowsResult = await admin
     .from("payments")
     .select("id, user_id, status, amount, currency, meta")
     .eq("provider_id", payment.id)
     .limit(1);
 
+  const rawRows: unknown = rowsResult.data;
+  const rows = rawRows as PaymentRow[] | null;
   if (!rows || rows.length === 0) return NextResponse.json({ ok: true });
   const row = rows[0];
   const paymentMethodId = payment.payment_method?.id ?? null;
@@ -289,52 +306,59 @@ export async function POST(req: Request) {
 
     if (meta.type === "report" && typeof meta.vin === "string") {
       const vin = meta.vin.toUpperCase();
-      const { data: dup } = await admin
-        .from("reports")
-        .select("payload")
-        .eq("vin", vin)
-        .eq("status", "ready")
-        .not("payload", "is", null)
-        .limit(1);
+      // Сборка отчёта может занимать до ~45с — выносим в after(), чтобы
+      // ответить ЮKassa немедленно (иначе webhook рискует таймаутом и
+      // повторной доставкой). Идемпотентность платежа обеспечена выше.
+      after(async () => {
+        const dupResult = await admin
+          .from("reports")
+          .select("payload")
+          .eq("vin", vin)
+          .eq("status", "ready")
+          .not("payload", "is", null)
+          .limit(1);
+        const rawDup: unknown = dupResult.data;
+        const dup = rawDup as Array<{ payload: Record<string, unknown> | null }> | null;
 
-      let payload: Record<string, unknown> | null = null;
-      if (dup && dup.length > 0 && dup[0].payload && Object.keys(dup[0].payload).length > 0) {
-        payload = dup[0].payload;
-      } else {
-        try {
-          payload = (await collectReport(vin, meta.premium === true)).sources;
-        } catch {
-          payload = null;
+        let payload: Record<string, unknown> | null = null;
+        if (dup && dup.length > 0 && dup[0].payload && Object.keys(dup[0].payload).length > 0) {
+          payload = dup[0].payload;
+        } else {
+          try {
+            payload = (await collectReport(vin, meta.premium === true)).sources;
+          } catch {
+            payload = null;
+          }
         }
-      }
 
-      if (payload && payload.error) {
-        // Источник недоступен (нет доступа / баланс / сбой генерации).
-        await admin
-          .from("reports")
-          .update({ status: "failed", payload: { error: "provider_unavailable" } })
-          .eq("user_id", row.user_id)
-          .eq("vin", vin);
-      } else if (payload && payload.tronk_task_id) {
-        // Генерация ещё идёт — оставляем pending, финал доведёт /api/autoteka/check.
-        await admin
-          .from("reports")
-          .update({ status: "pending", payload })
-          .eq("user_id", row.user_id)
-          .eq("vin", vin);
-      } else if (payload && Object.keys(payload).length > 0) {
-        await admin
-          .from("reports")
-          .update({ status: "ready", payload })
-          .eq("user_id", row.user_id)
-          .eq("vin", vin);
-      } else {
-        await admin
-          .from("reports")
-          .update({ status: "failed", payload: { error: "provider_unavailable" } })
-          .eq("user_id", row.user_id)
-          .eq("vin", vin);
-      }
+        if (payload && payload.error) {
+          // Источник недоступен (нет доступа / баланс / сбой генерации).
+          await admin
+            .from("reports")
+            .update({ status: "failed", payload: { error: "provider_unavailable" } })
+            .eq("user_id", row.user_id)
+            .eq("vin", vin);
+        } else if (payload && payload.tronk_task_id) {
+          // Генерация ещё идёт — оставляем pending, финал доведёт /api/autoteka/check.
+          await admin
+            .from("reports")
+            .update({ status: "pending", payload })
+            .eq("user_id", row.user_id)
+            .eq("vin", vin);
+        } else if (payload && Object.keys(payload).length > 0) {
+          await admin
+            .from("reports")
+            .update({ status: "ready", payload })
+            .eq("user_id", row.user_id)
+            .eq("vin", vin);
+        } else {
+          await admin
+            .from("reports")
+            .update({ status: "failed", payload: { error: "provider_unavailable" } })
+            .eq("user_id", row.user_id)
+            .eq("vin", vin);
+        }
+      });
       return NextResponse.json({ ok: true });
     }
 

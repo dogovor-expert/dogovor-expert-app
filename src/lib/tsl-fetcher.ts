@@ -75,16 +75,18 @@ export async function loadTslFromDb(
       return null;
     }
     const admin = createAdminClient();
-    const { data, error } = await admin
+    const cacheResult = await admin
       .from("tsl_raw_cache")
       .select("raw_xml, tsl_version, tsl_date")
       .eq("id", 1)
       .maybeSingle();
 
-    if (error || !data) return null;
+    if (cacheResult.error || !cacheResult.data) return null;
 
-    const parsed = await parseTslXml(data.raw_xml, { ...options, source: "db" });
-    return { data: parsed, rawXml: data.raw_xml };
+    const rawRow: unknown = cacheResult.data;
+    const row = rawRow as { raw_xml: string };
+    const parsed = await parseTslXml(row.raw_xml, { ...options, source: "db" });
+    return { data: parsed, rawXml: row.raw_xml };
   } catch (e) {
     console.warn("[tsl-fetcher] DB cache read failed:", e instanceof Error ? e.message : e);
     return null;

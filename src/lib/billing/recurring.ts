@@ -66,7 +66,7 @@ export async function initiateRecurringRenewal(
       await admin.from("subscriptions").update({ auto_renewal: false }).eq("id", sub.id);
       return "provider_error";
     }
-    const payment = await res.json();
+    const payment = (await res.json()) as { id: string };
     await admin.from("payments").insert({
       user_id: sub.user_id,
       amount: price,

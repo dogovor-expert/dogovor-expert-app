@@ -56,12 +56,19 @@ function tryExtractSession(text: string): CookieSession | null {
 
   for (const s of jsonStrings) {
     try {
-      let obj = JSON.parse(s);
+      let obj: unknown = JSON.parse(s);
       if (typeof obj === "string") obj = JSON.parse(obj);
-      let cur = obj?.currentSession ?? obj?.session ?? obj;
+      const rec =
+        typeof obj === "object" && obj !== null
+          ? (obj as Record<string, unknown>)
+          : null;
+      let cur: unknown = rec?.currentSession ?? rec?.session ?? obj;
       if (typeof cur === "string") cur = JSON.parse(cur);
-      if (cur?.access_token && cur?.refresh_token) {
-        return { access_token: cur.access_token, refresh_token: cur.refresh_token };
+      if (typeof cur === "object" && cur !== null) {
+        const c = cur as { access_token?: unknown; refresh_token?: unknown };
+        if (typeof c.access_token === "string" && typeof c.refresh_token === "string") {
+          return { access_token: c.access_token, refresh_token: c.refresh_token };
+        }
       }
     } catch {
       /* перебираем форматы */

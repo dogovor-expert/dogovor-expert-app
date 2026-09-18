@@ -2,6 +2,7 @@
 import { useRef, useState, useCallback } from "react";
 import { ScanText, Loader2, Copy, Check, AlertTriangle, X, FileText } from "lucide-react";
 import { formatBytes } from "@/lib/converter/download";
+import type { Worker as TesseractWorker } from "tesseract.js";
 
 let pdfjsReady = false;
 
@@ -14,7 +15,7 @@ async function getPdfjs() {
   return pdfjs;
 }
 
-let workerPromise: Promise<any> | null = null;
+let workerPromise: Promise<TesseractWorker> | null = null;
 
 function getWorker() {
   if (!workerPromise) {
@@ -92,17 +93,25 @@ export default function OcrTool() {
     const started = performance.now();
     try {
       const worker = await getWorker();
-      let img: HTMLImageElement | CanvasImageSource;
+      let img: HTMLCanvasElement;
       if (file.type.startsWith("image/")) {
         setProgress("Подготовка изображения...");
-        img = await createImageBitmap(file);
+        const bitmap = await createImageBitmap(file);
+        const prep = document.createElement("canvas");
+        prep.width = bitmap.width;
+        prep.height = bitmap.height;
+        const pctx = prep.getContext("2d");
+        if (!pctx) throw new Error("Canvas 2D не поддерживается");
+        pctx.drawImage(bitmap, 0, 0);
+        img = prep;
       } else {
         const pdfjs = await getPdfjs();
         setProgress("Рендер страниц PDF...");
         const task = pdfjs.getDocument({ data: await file.arrayBuffer() });
         const doc = await task.promise;
         const canvas = document.createElement("canvas");
-        const ctx = canvas.getContext("2d")!;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) throw new Error("Canvas 2D не поддерживается");
         const parts: string[] = [];
         for (let i = 1; i <= doc.numPages; i++) {
           if (!pages.includes(i)) continue;
@@ -168,7 +177,7 @@ export default function OcrTool() {
         type="file"
         accept="application/pdf,.pdf,image/jpeg,image/png,image/webp,image/bmp,.jpg,.jpeg,.png,.webp,.bmp"
         className="hidden"
-        onChange={(e) => { onFile(e.target.files); e.target.value = ""; }}
+        onChange={(e) => { void onFile(e.target.files); e.target.value = ""; }}
       />
 
       {!file ? (
@@ -216,7 +225,7 @@ export default function OcrTool() {
             </div>
           )}
 
-          <button onClick={recognize} disabled={busy || !pages.length}
+          <button onClick={() => { void recognize(); }} disabled={busy || !pages.length}
             className="w-full py-2.5 bg-brand-500 text-white rounded-xl hover:bg-brand-600 font-bold text-sm transition disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer">
             {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <ScanText className="w-4 h-4" />}
             {busy ? progress || "Распознавание..." : "Распознать текст"}
@@ -242,7 +251,7 @@ export default function OcrTool() {
             className="w-full h-64 bg-gray-50 border border-gray-200 rounded-xl p-3 text-xs text-gray-900 outline-none font-mono resize-y focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500"
           />
           <div className="flex gap-2">
-            <button onClick={copyText}
+            <button onClick={() => { void copyText(); }}
               className="flex-1 py-2.5 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 font-medium text-sm transition flex items-center justify-center gap-2 cursor-pointer">
               {copied ? <Check className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4" />}
               {copied ? "Скопировано" : "Копировать"}

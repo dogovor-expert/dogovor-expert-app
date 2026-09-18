@@ -45,7 +45,7 @@ export default function SaveCalcButton({ kind, title, lines, className }: Props)
     <span className={`inline-flex items-center gap-2 ${className ?? ""}`}>
       <button
         type="button"
-        onClick={onClick}
+        onClick={() => { void onClick(); }}
         disabled={state === "saving"}
         aria-live="polite"
         className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-[11px] font-semibold transition-colors cursor-pointer disabled:opacity-50 ${

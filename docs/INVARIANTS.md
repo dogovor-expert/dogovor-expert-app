@@ -25,7 +25,7 @@
 - Каждая публичная страница (`page.tsx` в публичных сегментах) обязана экспортировать `generateMetadata` или `metadata`, сформированные через `withSeo(...)` из `@/lib/seo/withSeo`.
 - Запрещено прописывать `canonical` на главную страницу (`/`) для внутренних страниц и страниц ошибок 404. Корневой `layout.tsx` НЕ должен иметь `alternates.canonical` — canonical задаётся **только** на уровне page.
 - `not-found.tsx` не должен наследовать канонические ссылки родительских макетов. Обязательно указывать `robots: { index: false, follow: false }` явно.
-- Публичные каталожные страницы (`/templates`, `/blanks`, `/utils`, `/blog`) кешируются через `export const revalidate = N` (ISR на Vercel Edge). Приватные страницы (`/dashboard`, `/billing`, `/settings`, `/trash`, `/admin`, `/security`, `/connections`, `/builder`, `/documents`, `/login*`) **никогда** не должны получать заголовки `public, s-maxage`.
+- Публичные каталожные страницы (`/templates`, `/blanks`, `/utils`, `/blog`) кешируются через `export const revalidate = N` (ISR; на VDS — standalone-режим Next, кеш в рантайме контейнера). Приватные страницы (`/dashboard`, `/billing`, `/settings`, `/trash`, `/admin`, `/security`, `/connections`, `/builder`, `/documents`, `/login*`) **никогда** не должны получать заголовки `public, s-maxage`.
 - В `robots.txt` **обязательно** сохранять:
   - блок `User-agent: Yandex` с `Clean-param` для фильтров;
   - параметр `page` в `Clean-param` НЕ допускается (иначе Яндекс не индексирует 2+ страницу пагинации);
@@ -59,8 +59,8 @@
 ## 7. Деплой и инфраструктура
 
 - Запрещено коммитить `.env`, `.env.local`, `.env.production`, `.env.development`, `*.pem`, `*.key`, секреты Vercel/Supabase/Upstash/YooKassa/DaData/Telegram в git. `.gitignore` покрывает это.
-- Запрещено заливать в деплой папки `.vercel`, `.vercel/output`, `.next/cache` (см. AGENTS.md, "Деплой (Vercel)").
-- `og-image.png` (1200×630) и `apple-icon.png` (180×180) обязаны присутствовать в `public/` — `*.png` НЕЛЬЗЯ исключать из robocopy.
+- Запрещено заливать в деплой папки `.vercel`, `.vercel/output`, `.next/cache` (см. AGENTS.md, "Деплой"): в Docker-деплое это контролируется `.dockerignore` и штатной сборкой `next build` (не robocopy).
+- `og-image.png` (1200×630) и `apple-icon.png` (180×180) обязаны присутствовать в `public/` — они попадают в Docker-образ вместе с `public/` (в standalone рантайм `public/` копируется явно).
 - Версия Next.js: 15.x. **Не обновлять до 16** без согласования (ломает middleware → proxy, Turbopack).
 
 ## 8. Запрещённые операции

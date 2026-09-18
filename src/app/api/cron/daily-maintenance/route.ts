@@ -37,6 +37,16 @@ function authOk(req: Request): boolean {
   }
 }
 
+interface SubRow {
+  id: string;
+  user_id: string;
+  plan: string | null;
+  status: string;
+  period_end: string | null;
+  auto_renewal: boolean | null;
+  yookassa_payment_method_id: string;
+}
+
 async function renewSubscriptions(): Promise<{
   processed: number;
   results?: { subscription_id: string; user_id: string; status: RenewResult }[];
@@ -45,7 +55,7 @@ async function renewSubscriptions(): Promise<{
   const admin = createAdminClient();
   const windowEnd = new Date(Date.now() + RENEW_WINDOW_DAYS * DAY_MS).toISOString();
 
-  const { data: subs, error } = await admin
+  const listResult = await admin
     .from("subscriptions")
     .select("id, user_id, plan, status, period_end, auto_renewal, yookassa_payment_method_id")
     .eq("status", "active")
@@ -53,8 +63,10 @@ async function renewSubscriptions(): Promise<{
     .not("yookassa_payment_method_id", "is", null)
     .lte("period_end", windowEnd);
 
-  if (error) return { processed: 0, error: error.message };
-  if (!subs || subs.length === 0) return { processed: 0 };
+  if (listResult.error) return { processed: 0, error: listResult.error.message };
+  const subsRaw: unknown = listResult.data;
+  const subs = Array.isArray(subsRaw) ? (subsRaw as SubRow[]) : [];
+  if (subs.length === 0) return { processed: 0 };
 
   const results: { subscription_id: string; user_id: string; status: RenewResult }[] = [];
   for (const sub of subs) {

@@ -110,7 +110,7 @@ export async function computeHash(algorithm: string, data: Uint8Array): Promise<
   const gostAlgorithm = algorithm.startsWith("GOST R 34.11-");
   const cryptoImpl = gostAlgorithm ? gostCrypto.subtle : crypto.subtle;
   const input = new Uint8Array(data);
-  const hashBuf = await cryptoImpl.digest(algorithm, input as BufferSource);
+  const hashBuf = await cryptoImpl.digest(algorithm, input);
   return Buffer.from(hashBuf).toString("hex");
 }
 
@@ -398,7 +398,7 @@ export async function verifyPAdESCrypto(
     }
   };
   const sidMatch = signedData.certificates.find(
-    (c) => c instanceof pkijs.Certificate && matchCert(c as pkijs.Certificate),
+    (c) => c instanceof pkijs.Certificate && matchCert(c),
   ) as pkijs.Certificate | undefined;
   if (sidMatch) {
     if (sidMatch !== signedData.certificates[0]) {
@@ -411,7 +411,7 @@ export async function verifyPAdESCrypto(
   const subject = parseSubject(signerCert);
   const issuer = parseIssuer(signerCert);
   const { notBefore, notAfter } = getValidity(signerCert);
-  const { keyUsage, extKeyUsage, authorityKeyId, subjectKeyId, crlDistributionPoints, ocspUrls, caIssuersUrls } = getExtensions(signerCert);
+  const { keyUsage, extKeyUsage, crlDistributionPoints, ocspUrls } = getExtensions(signerCert);
   const { sha1, sha256 } = await getThumbprints(signerCert);
   const isQualified = isQualifiedCertificate(extKeyUsage);
 

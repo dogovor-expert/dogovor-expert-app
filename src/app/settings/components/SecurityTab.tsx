@@ -89,7 +89,7 @@ export default function SecurityTab() {
           </div>
         </div>
 
-        <form onSubmit={handlePasswordChange} className="space-y-4">
+        <form onSubmit={(e) => { void handlePasswordChange(e); }} className="space-y-4">
           <Input
             label="Текущий пароль"
             id="current-password"
@@ -146,7 +146,7 @@ export default function SecurityTab() {
             <p className="text-sm text-gray-600">Завершите текущий сеанс на этом устройстве</p>
           </div>
         </div>
-        <Button type="button" variant="secondary" onClick={handleSignOut}>
+        <Button type="button" variant="secondary" onClick={() => { void handleSignOut(); }}>
           <LogOut className="w-4 h-4" />
           Выйти из аккаунта
         </Button>

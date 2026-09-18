@@ -4,8 +4,9 @@ import {
   StandardFonts,
   PageSizes,
   degrees,
+  type PDFFont,
 } from "pdf-lib";
-import { getDesign, type DesignTokens, type DesignId } from "./docDesign";
+import { getDesign, type DesignId } from "./docDesign";
 
 interface RenderPdfOptions {
   title: string;
@@ -20,7 +21,7 @@ function mmToPt(mm: number): number {
 }
 
 function splitTextIntoLines(
-  font: any,
+  font: PDFFont,
   text: string,
   maxWidth: number,
   fontSize: number
@@ -53,8 +54,6 @@ export async function renderDocumentToPdf(
   // Регистрируем шрифты
   const fontRegular = await pdfDoc.embedFont(StandardFonts.Helvetica);
   const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
-  const fontOblique = await pdfDoc.embedFont(StandardFonts.HelveticaOblique);
-  const fontBoldOblique = await pdfDoc.embedFont(StandardFonts.HelveticaBoldOblique);
 
   // Парсим HTML в структурированные блоки (упрощённый парсер для MVP)
   const blocks = parseHtmlToBlocks(html);

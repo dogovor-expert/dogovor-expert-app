@@ -143,13 +143,15 @@ async function handleImagesToPdf(
   }
 }
 
-ctx.addEventListener("message", async (ev: MessageEvent<PdfWorkerRequest>) => {
+ctx.addEventListener("message", (ev: MessageEvent<PdfWorkerRequest>) => {
   const msg = ev.data;
-  if (msg.type === "merge") {
-    await handleMerge(msg.jobId, msg.files);
-  } else if (msg.type === "split") {
-    await handleSplit(msg.jobId, msg.bytes, msg.ranges);
-  } else if (msg.type === "imagesToPdf") {
-    await handleImagesToPdf(msg.jobId, msg.images, msg.orientation, msg.marginMm);
-  }
+  void (async () => {
+    if (msg.type === "merge") {
+      await handleMerge(msg.jobId, msg.files);
+    } else if (msg.type === "split") {
+      await handleSplit(msg.jobId, msg.bytes, msg.ranges);
+    } else if (msg.type === "imagesToPdf") {
+      await handleImagesToPdf(msg.jobId, msg.images, msg.orientation, msg.marginMm);
+    }
+  })();
 });

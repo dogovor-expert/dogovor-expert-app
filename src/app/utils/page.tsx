@@ -1,6 +1,7 @@
 import { Calculator, ShieldCheck, Scale, BookOpen, TrendingUp, FileCheck, Calculator as CalcIcon } from "lucide-react";
 import { SITE_URL } from "@/lib/site";
 import UtilsTools from "@/components/utils/UtilsTools";
+import { JsonLd } from "@/components/seo/JsonLd";
 
 export const revalidate = 3600;
 export const dynamic = "force-static"; // P0: см. INVARIANTS.md
@@ -84,14 +85,8 @@ export default function UtilsPage() {
   return (
     <div className="p-6 max-w-4xl mx-auto space-y-6">
       {/* JSON-LD: FAQ + Breadcrumb */}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
-      />
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
-      />
+      <JsonLd data={faqJsonLd} />
+      <JsonLd data={breadcrumbJsonLd} />
 
       <header className="flex items-center gap-3">
         <div className="w-10 h-10 rounded-xl bg-indigo-50 border border-indigo-200 flex items-center justify-center text-indigo-500">

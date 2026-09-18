@@ -47,10 +47,10 @@
     "audit:full": "node scripts/run-full-audit.mjs",
     "audit:quick": "node scripts/run-full-audit.mjs --quick",
     "audit:site": "node scripts/run-full-audit.mjs --site-only",
-    "deploy:tsl": "node scripts/deploy-tsl.mjs",
+    "deploy:tsl": "node -e \"console.log('[deprecated] deploy:tsl деплоил на Vercel. Теперь прод на VDS/CapRover: см. docs/DEPLOY.md и DEPLOY_TSL.md')\"",
     "migrate:tsl": "node scripts/apply-migration.mjs 20260907_tsl_certificates.sql",
-    "tsl:status": "curl -sS -H \"Authorization: Bearer $CRON_SECRET\" \"$VERCEL_URL/api/cron/tsl-refresh?action=status\" || echo \"Set VERCEL_URL and CRON_SECRET\"",
-    "tsl:refresh": "curl -sS -X POST -H \"Authorization: Bearer $CRON_SECRET\" \"$VERCEL_URL/api/cron/tsl-refresh\" || echo \"Set VERCEL_URL and CRON_SECRET\""
+    "tsl:status": "curl -sS -H \"Authorization: Bearer $CRON_SECRET\" \"https://dogovor.expert/api/cron/tsl-refresh?action=status\" || echo \"Set CRON_SECRET\"",
+    "tsl:refresh": "curl -sS -X POST -H \"Authorization: Bearer $CRON_SECRET\" \"https://dogovor.expert/api/cron/tsl-refresh\" || echo \"Set CRON_SECRET\""
   },
   "dependencies": {
     "@hookform/resolvers": "^5.9.1",
@@ -76,7 +76,7 @@
     "mammoth": "^1.12.1",
     "mrz": "^5.0.2",
     "mustache": "^4.2.0",
-    "next": "^15.5.23",
+    "next": "^15.5.25",
     "node-gost-crypto": "^1.0.2",
     "onnxruntime-web": "^1.29.0",
     "pdf-lib": "^1.17.1",
@@ -145,7 +145,7 @@
   "overrides": {
     "next": {
       "postcss": "8.5.26",
-      "sharp": "0.35.3"
+      "sharp": "0.35.4"
     },
     "@huggingface/transformers": {
       "sharp": "0.35.4"
