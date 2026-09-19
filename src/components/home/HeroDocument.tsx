@@ -34,10 +34,11 @@ export default function HeroDocument() {
         </div>
 
         <div className="flex flex-col gap-2">
-          {fields.map(([label, value, ok]) => (
+          {fields.map(([label, value, ok], i) => (
             <div
               key={label}
-              className="flex items-center justify-between gap-3 rounded-[10px] border border-gray-200 bg-[#fbfdff] px-3 py-2"
+              className="hero-field flex items-center justify-between gap-3 rounded-[10px] border border-gray-200 bg-[#fbfdff] px-3 py-2"
+              style={{ animationDelay: `${0.15 + i * 0.12}s` }}
             >
               <span className="text-[10.5px] font-semibold text-gray-500">{label}</span>
               <span
@@ -70,6 +71,8 @@ export default function HeroDocument() {
             <small className="mt-1 block text-[9.5px] text-gray-400">Заёмщик</small>
           </div>
         </div>
+
+        <span className="hero-scan" aria-hidden />
 
         <div className="hero-stamp absolute bottom-3.5 right-4 grid h-[74px] w-[74px] rotate-[14deg] place-items-center rounded-full border-2 border-emerald-500 bg-emerald-50/50 text-center text-[8.5px] font-black uppercase leading-tight tracking-wide text-emerald-600">
           готово

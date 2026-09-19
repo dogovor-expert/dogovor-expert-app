@@ -749,13 +749,78 @@
   animation: stickyUp 0.3s cubic-bezier(0.2, 0.7, 0.3, 1);
 }
 
+/* --- поля документа: появление по очереди --- */
+@keyframes heroFieldIn {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.hero-field {
+  animation: heroFieldIn 0.5s cubic-bezier(0.2, 0.8, 0.3, 1) backwards;
+}
+
+/* --- сканирующая линия, проходящая по документу --- */
+@keyframes heroScan {
+  0% {
+    top: 8%;
+    opacity: 0;
+  }
+  6% {
+    opacity: 1;
+  }
+  40% {
+    top: 86%;
+    opacity: 1;
+  }
+  48% {
+    top: 86%;
+    opacity: 0;
+  }
+  100% {
+    top: 86%;
+    opacity: 0;
+  }
+}
+.hero-scan {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(37, 99, 235, 0.5), transparent);
+  box-shadow: 0 0 14px rgba(37, 99, 235, 0.45);
+  animation: heroScan 6.5s ease-in-out infinite;
+  pointer-events: none;
+}
+
+/* --- «Скачать пример PDF»: лёгкое покачивание иконки --- */
+@keyframes sampleBob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-2.5px);
+  }
+}
+.sample-link svg {
+  animation: sampleBob 2.4s ease-in-out infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .hero-doc,
   .hero-doc::after,
   .hero-stamp,
   .hero-check i,
+  .hero-field,
+  .hero-scan,
   .hero-pill,
   .hero-ring,
+  .sample-link svg,
   .live-dot,
   .ticker-item,
   .sticky-cta {
