@@ -3,6 +3,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { Table, TableHead, TableHeader, TableBody, TableRow, TableCell } from "@/components/ui/Table";
 import { useState, useEffect, useCallback } from "react";
 import {
@@ -506,7 +507,7 @@ export default function DocumentsPage() {
           <h1 className="text-2xl font-bold text-gray-900">Мои документы</h1>
           <p className="text-gray-600 mt-1">
             {docs.length === 0
-              ? "Пока нет документов — создайте первый"
+              ? "Здесь появятся ваши документы"
               : `${docs.length} документов в ${docs.length === 1 ? "черновике" : "черновиках"}`}
           </p>
         </div>
@@ -579,23 +580,14 @@ export default function DocumentsPage() {
       )}
 
       {docs.length === 0 ? (
-        <div className="text-center py-20 bg-white rounded-2xl border border-gray-200">
-          <div className="w-16 h-16 rounded-2xl bg-brand-50 flex items-center justify-center mx-auto mb-4">
-            <FileText className="w-8 h-8 text-brand-400" />
-          </div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">
-            Нет сохранённых документов
-          </h3>
-          <p className="text-sm text-gray-600 mb-6 max-w-sm mx-auto">
-            Начните заполнять форму в разделе «Создать документ» — документы автоматически сохраняются в черновики
-          </p>
-          <Link href="/builder">
-            <Button variant="primary" size="md">
-              <Plus className="w-4 h-4" />
-              Создать первый документ
-            </Button>
-          </Link>
-        </div>
+        <EmptyState
+          icon={FileText}
+          title="Нет сохранённых документов"
+          description="Начните заполнять форму в разделе «Создать документ» — черновики сохраняются автоматически и будут доступны с любого устройства."
+          steps={["Выберите шаблон", "Заполните поля", "Скачайте PDF или Word"]}
+          action={{ label: "Создать документ", href: "/builder" }}
+          secondary={{ label: "Смотреть шаблоны", href: "/templates" }}
+        />
       ) : (
         <div className="bg-white rounded-xl border border-gray-200 shadow-soft">
           <div className="p-5 border-b border-gray-100 space-y-4">
