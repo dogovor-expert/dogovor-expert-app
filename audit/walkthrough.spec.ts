@@ -1,10 +1,20 @@
 import { test, expect, type Page } from "@playwright/test";
 import fs from "fs";
 import path from "path";
+import { execFileSync } from "node:child_process";
 
-const FIX = path.join(process.env.LOCALAPPDATA || "", "Temp", "opencode", "audit-fixtures");
+// Переносимый путь к фикстурам (без жёсткого LOCALAPPDATA\temp). Переопределяется AUDIT_FIXTURES_DIR.
+const FIX = process.env.AUDIT_FIXTURES_DIR || path.join(process.cwd(), "audit", "fixtures");
 const OUT = path.join(process.cwd(), "test-results", "audit");
 fs.mkdirSync(OUT, { recursive: true });
+
+// Генерируем фикстуры перед прогоном, если их нет (см. scripts/gen-audit-fixtures.mjs).
+test.beforeAll(() => {
+  const gen = path.join(process.cwd(), "scripts", "gen-audit-fixtures.mjs");
+  if (fs.existsSync(gen)) {
+    execFileSync(process.execPath, [gen], { stdio: "inherit" });
+  }
+});
 
 const SMALL_PDF = path.join(FIX, "small.pdf");
 const SMALL_PNG = path.join(FIX, "small.png");

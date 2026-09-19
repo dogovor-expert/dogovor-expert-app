@@ -13,6 +13,7 @@
 import * as pkijs from "pkijs";
 import type { Certificate } from "pkijs";
 import { fromBER } from "asn1js";
+import { assertSafeRevocationUrl, MAX_REVOCATION_RESPONSE_BYTES } from "@/lib/revocation-url";
 
 export type OcspStatus = "good" | "revoked" | "unknown";
 
@@ -25,6 +26,8 @@ export interface OcspCheckResult {
   producedAt?: Date;
   thisUpdate?: Date;
   nextUpdate?: Date;
+  /** Подпись BasicOCSPResponse проверена (для ГОСТ — false, fail-closed). */
+  signatureVerified?: boolean;
 }
 
 // Кэш результатов: ключ — SHA-256 от (ocspUrl|issuerNameHash|issuerKeyHash|serial|issuerKey)
@@ -67,6 +70,27 @@ export interface OcspCheckOptions {
   useCache?: boolean;
   /** fetcher для тестов; по умолчанию — глобальный fetch. */
   fetchImpl?: typeof fetch;
+  /** Пропустить проверку подписи ответа (только для юнит-тестов разбора). */
+  skipSignatureCheck?: boolean;
+  /** Разрешить http:// (только тесты/локальная разработка). */
+  allowInsecure?: boolean;
+}
+
+/** Проверка подписи BasicOCSPResponse (best-effort; ГОСТ → false). */
+async function verifyOcspSignature(
+  basic: pkijs.BasicOCSPResponse,
+  issuerCert: Certificate | null | undefined,
+): Promise<boolean> {
+  try {
+    const embedded = basic.certs ?? [];
+    const signer = issuerCert ?? embedded[0];
+    if (!signer) return false;
+    const ok = await basic.verify({ trustedCerts: [signer] });
+    return ok === true;
+  } catch {
+    // ГОСТ-алгоритмы не поддержаны WebCrypto — подпись проверить нельзя.
+    return false;
+  }
 }
 
 export async function buildOcspRequestDer(
@@ -158,6 +182,21 @@ export async function checkOcsp(
   }
 
   const checkedAt = new Date(now);
+
+  // SSRF/HTTPS-guard: отклоняем небезопасные схемы и внутренние адреса.
+  let safeUrl: URL;
+  try {
+    safeUrl = assertSafeRevocationUrl(ocspUrl, { allowInsecure: options.allowInsecure === true });
+  } catch (e) {
+    return {
+      status: "offline",
+      method: "OCSP",
+      ocspUrl,
+      checkedAt,
+      details: `OCSP URL rejected: ${e instanceof Error ? e.message : String(e)}`,
+    };
+  }
+
   const reqDer = await buildOcspRequestDer(cert, issuer);
   const reqBase64 = Buffer.from(reqDer).toString("base64");
 
@@ -167,13 +206,14 @@ export async function checkOcsp(
   try {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), timeoutMs);
-    resp = await f(ocspUrl, {
+    resp = await f(safeUrl.toString(), {
       method: "POST",
       headers: {
         "Content-Type": "application/ocsp-request",
         Accept: "application/ocsp-response",
       },
       body: reqBase64,
+      redirect: "error",
       signal: controller.signal,
     });
     clearTimeout(timer);
@@ -198,6 +238,15 @@ export async function checkOcsp(
   }
 
   const respBody = new Uint8Array(await resp.arrayBuffer());
+  if (respBody.byteLength > MAX_REVOCATION_RESPONSE_BYTES) {
+    return {
+      status: "offline",
+      method: "OCSP",
+      ocspUrl,
+      checkedAt,
+      details: "OCSP response too large",
+    };
+  }
   let ocspResponse: pkijs.OCSPResponse;
   try {
     const respAsn1 = fromBER(
@@ -270,14 +319,28 @@ export async function checkOcsp(
   const status = fromResponseData(basic, serial);
   const singleResp = basic.tbsResponseData.responses[0];
 
+  // Fail-closed: без проверенной подписи ответа статус "valid" не принимаем.
+  const signatureVerified = options.skipSignatureCheck
+    ? true
+    : await verifyOcspSignature(basic, issuer);
+  let mappedStatus: OcspCheckResult["status"] =
+    status === "good" ? "valid" : status === "revoked" ? "revoked" : "unknown";
+  if (mappedStatus === "valid" && !signatureVerified) {
+    mappedStatus = "unknown";
+  }
+
   const result: OcspCheckResult = {
-    status: status === "good" ? "valid" : status === "revoked" ? "revoked" : "unknown",
+    status: mappedStatus,
     method: "OCSP",
     ocspUrl,
     checkedAt,
     producedAt: basic.tbsResponseData.producedAt,
     thisUpdate: singleResp?.thisUpdate,
     nextUpdate: singleResp?.nextUpdate,
+    signatureVerified,
+    details: signatureVerified
+      ? undefined
+      : "OCSP signature not verified (algorithm unsupported or invalid) — status not trusted",
   };
 
   if (options.useCache !== false) {

@@ -185,7 +185,7 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
 
   const csp = [
     `default-src 'self'`,
-    `script-src 'self' 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval' https://widgets.inssmart.ru https://smartcaptcha.yandexcloud.net https://mc.yandex.ru https://mc.yandex.md https://www.cryptopro.ru https://download.rutoken.ru https://accounts.google.com`,
+    `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""} 'wasm-unsafe-eval' https://widgets.inssmart.ru https://smartcaptcha.yandexcloud.net https://mc.yandex.ru https://mc.yandex.md https://www.cryptopro.ru https://download.rutoken.ru https://accounts.google.com`,
     `worker-src 'self' blob:`,
     `style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://smartcaptcha.yandexcloud.net`,
     `img-src 'self' data: blob: https://widgets.inssmart.ru https://xkakhztknlpzqarklewq.supabase.co${supabaseCspHost ? ` ${supabaseCspHost.startsWith('http') ? supabaseCspHost : `https://${supabaseCspHost}`} http://${supabaseCspHost}` : ''} https://lh3.googleusercontent.com https://avatars.yandex.net https://avatars.mds.yandex.net https://smartcaptcha.yandexcloud.net https://mc.yandex.ru https://mc.yandex.md https://mc.yandex.com`,

@@ -181,11 +181,14 @@ function HomeContent() {
     setTimeout(() => setToast(null), 4000);
   };
   const designId: DesignId = "classic";
+  // Локальный признак авторизации — чтобы не дёргать приватные API у гостей.
+  const [authed, setAuthed] = useState(false);
 
   useEffect(() => {
     const supabase = createClient();
     supabase.auth.getUser().then(({ data }) => {
       setUserFlag(Boolean(data.user));
+      setAuthed(Boolean(data.user));
     }).catch(() => {});
   }, []);
 
@@ -208,6 +211,8 @@ function HomeContent() {
   // объявления useEffect. Удалён как второй источник истины.
 
   useEffect(() => {
+    // Гостям /api/profile не нужен — запрос без сессии даёт 401 и шум в логах.
+    if (!authed) return;
     fetch("/api/profile")
       .then((r) => (r.ok ? (r.json() as Promise<{ data?: { full_name?: string } }>) : null))
       .then((res) => {
@@ -218,7 +223,7 @@ function HomeContent() {
         }
       })
       .catch((e) => console.warn("[builder] profile load failed", e));
-  }, []);
+  }, [authed]);
 
 
   const [dadataKey, setDadataKey] = useState<string>("");
@@ -1438,8 +1443,10 @@ function HomeContent() {
   };
 
   useEffect(() => {
+    // Список согласований доступен только авторизованным — иначе 401.
+    if (!authed) return;
     loadMyApprovals();
-  }, []);
+  }, [authed]);
 
   const createApproval = async () => {
     setApprovalBusy(true);

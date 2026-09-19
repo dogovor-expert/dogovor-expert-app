@@ -149,9 +149,17 @@ const sentryWebpackPluginOptions = {
   project: process.env.SENTRY_PROJECT,
   authToken: process.env.SENTRY_AUTH_TOKEN,
   widenClientFileUpload: true,
-  hideSourceMaps: true,
-  disableLogger: true,
-  automaticVercelMonitors: true,
+  // v10: sourcemaps удаляются после загрузки (hideSourceMaps как отдельная опция убран).
+  sourcemaps: {
+    deleteSourcemapsAfterUpload: true,
+  },
+  // v10: прежние top-level disableLogger/automaticVercelMonitors переехали под webpack.
+  webpack: {
+    automaticVercelMonitors: true,
+    treeshake: {
+      removeDebugLogging: true,
+    },
+  },
 };
 
 export default withBundleAnalyzer(withSentryConfig(nextConfig, sentryWebpackPluginOptions));

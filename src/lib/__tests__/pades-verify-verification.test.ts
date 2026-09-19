@@ -15,11 +15,15 @@
 // 4. Для штатного E2E-кейса (pades-verify-e2e.test.ts) revocation
 //    должна быть { status:'unknown', method:'none' }, а не что-то ещё.
 
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { readFileSync } from "node:fs";
 import { gostCrypto } from "node-gost-crypto";
 import { verifyPAdESCrypto } from "@/lib/pades-verify";
 import { getExtensions } from "@/lib/cert-parser";
+
+// verifyPAdESCrypto выполняет тяжёлую ГОСТ-криптографию (CMS + цепочка) в чистом
+// JS — на части машин это дольше дефолтных 5 с. Поднимаем таймаут для файла.
+vi.setConfig({ testTimeout: 30_000 });
 
 function toHex(bytes: Uint8Array): string {
   let s = "";

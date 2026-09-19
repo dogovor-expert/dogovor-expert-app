@@ -30,5 +30,12 @@ if (prod) {
   args.push(`--config=playwright.config.ts`);
 }
 
-const proc = spawn("npx", args, { stdio: "inherit", cwd: ROOT, env: process.env });
+// На Windows npx — это npx.cmd, spawn("npx") без shell падает с ENOENT.
+const isWin = process.platform === "win32";
+const proc = spawn(isWin ? "npx.cmd" : "npx", args, {
+  stdio: "inherit",
+  cwd: ROOT,
+  env: process.env,
+  shell: isWin,
+});
 proc.on("exit", (code) => process.exit(code ?? 1));

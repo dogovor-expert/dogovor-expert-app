@@ -10,6 +10,7 @@ import * as p from "pkijs";
 import * as a from "asn1js";
 import { checkOcsp, _clearOcspCache } from "@/lib/ocsp";
 import { checkCrl, _clearCrlCache } from "@/lib/crl";
+import { assertSafeRevocationUrl } from "@/lib/revocation-url";
 
 // ---------- фикстуры ----------
 
@@ -122,11 +123,11 @@ describe("checkOcsp (UKEP: OCSP через fetchImpl)", () => {
     const cert = makeCert("0A0B0C0D");
     const fetchImpl = vi.fn(async () => new Response(buildOcspResponseDer("0A0B0C0D", "good")));
 
-    const result = await checkOcsp(cert, "http://ocsp.test/ocsp", { fetchImpl: fetchImpl as typeof fetch });
+    const result = await checkOcsp(cert, "https://ocsp.test/ocsp", { fetchImpl: fetchImpl as typeof fetch, skipSignatureCheck: true });
 
     expect(result.status).toBe("valid");
     expect(result.method).toBe("OCSP");
-    expect(result.ocspUrl).toBe("http://ocsp.test/ocsp");
+    expect(result.ocspUrl).toBe("https://ocsp.test/ocsp");
     expect(fetchImpl).toHaveBeenCalledTimes(1);
     expect((fetchImpl.mock.calls[0] as unknown as [string, RequestInit])[1].method).toBe("POST");
   });
@@ -135,7 +136,7 @@ describe("checkOcsp (UKEP: OCSP через fetchImpl)", () => {
     const cert = makeCert("0A0B0C0D");
     const fetchImpl = vi.fn(async () => new Response(buildOcspResponseDer("0A0B0C0D", "revoked")));
 
-    const result = await checkOcsp(cert, "http://ocsp.test/ocsp", { fetchImpl: fetchImpl as typeof fetch });
+    const result = await checkOcsp(cert, "https://ocsp.test/ocsp", { fetchImpl: fetchImpl as typeof fetch, skipSignatureCheck: true });
 
     expect(result.status).toBe("revoked");
   });
@@ -146,7 +147,7 @@ describe("checkOcsp (UKEP: OCSP через fetchImpl)", () => {
       throw new Error("ECONNREFUSED");
     });
 
-    const result = await checkOcsp(cert, "http://ocsp.test/ocsp", { fetchImpl: fetchImpl as typeof fetch });
+    const result = await checkOcsp(cert, "https://ocsp.test/ocsp", { fetchImpl: fetchImpl as typeof fetch, skipSignatureCheck: true });
 
     expect(result.status).toBe("offline");
     expect(result.details).toMatch(/ECONNREFUSED/);
@@ -156,7 +157,7 @@ describe("checkOcsp (UKEP: OCSP через fetchImpl)", () => {
     const cert = makeCert("0A0B0C0D");
     const fetchImpl = vi.fn(async () => new Response("boom", { status: 500 }));
 
-    const result = await checkOcsp(cert, "http://ocsp.test/ocsp", { fetchImpl: fetchImpl as typeof fetch });
+    const result = await checkOcsp(cert, "https://ocsp.test/ocsp", { fetchImpl: fetchImpl as typeof fetch, skipSignatureCheck: true });
 
     expect(result.status).toBe("offline");
     expect(result.details).toMatch(/HTTP status: 500/);
@@ -165,10 +166,10 @@ describe("checkOcsp (UKEP: OCSP через fetchImpl)", () => {
   it("Кэш: повторный вызов не делает второй fetch", async () => {
     const cert = makeCert("0A0B0C0D");
     const fetchImpl = vi.fn(async () => new Response(buildOcspResponseDer("0A0B0C0D", "good")));
-    const opts = { fetchImpl: fetchImpl as typeof fetch };
+    const opts = { fetchImpl: fetchImpl as typeof fetch, skipSignatureCheck: true };
 
-    const first = await checkOcsp(cert, "http://ocsp.test/ocsp", opts);
-    const second = await checkOcsp(cert, "http://ocsp.test/ocsp", opts);
+    const first = await checkOcsp(cert, "https://ocsp.test/ocsp", opts);
+    const second = await checkOcsp(cert, "https://ocsp.test/ocsp", opts);
 
     expect(first.status).toBe("valid");
     expect(second.status).toBe("valid");
@@ -187,8 +188,9 @@ describe("checkCrl (UKEP: CRL через fetchImpl)", () => {
       headers: { "Content-Type": "application/pkix-crl" },
     }));
 
-    const result = await checkCrl(cert as unknown as p.Certificate, "http://crl.test/dp.crl", {
+    const result = await checkCrl(cert as unknown as p.Certificate, "https://crl.test/dp.crl", {
       fetchImpl: fetchImpl as typeof fetch,
+      skipSignatureCheck: true,
     });
 
     expect(result.status).toBe("revoked");
@@ -202,8 +204,9 @@ describe("checkCrl (UKEP: CRL через fetchImpl)", () => {
       headers: { "Content-Type": "application/pkix-crl" },
     }));
 
-    const result = await checkCrl(cert as unknown as p.Certificate, "http://crl.test/dp.crl", {
+    const result = await checkCrl(cert as unknown as p.Certificate, "https://crl.test/dp.crl", {
       fetchImpl: fetchImpl as typeof fetch,
+      skipSignatureCheck: true,
     });
 
     expect(result.status).toBe("valid");
@@ -218,7 +221,7 @@ describe("checkCrl (UKEP: CRL через fetchImpl)", () => {
         }),
     );
 
-    const result = await checkCrl(cert as unknown as p.Certificate, "http://crl.test/dp.crl", {
+    const result = await checkCrl(cert as unknown as p.Certificate, "https://crl.test/dp.crl", {
       fetchImpl: fetchImpl as unknown as typeof fetch,
       timeoutMs: 50,
     });
@@ -231,8 +234,9 @@ describe("checkCrl (UKEP: CRL через fetchImpl)", () => {
     const cert = makeCert("0A0B0C0D");
     const fetchImpl = vi.fn(async () => new Response("boom", { status: 500 }));
 
-    const result = await checkCrl(cert as unknown as p.Certificate, "http://crl.test/dp.crl", {
+    const result = await checkCrl(cert as unknown as p.Certificate, "https://crl.test/dp.crl", {
       fetchImpl: fetchImpl as typeof fetch,
+      skipSignatureCheck: true,
     });
 
     expect(result.status).toBe("offline");
@@ -244,13 +248,103 @@ describe("checkCrl (UKEP: CRL через fetchImpl)", () => {
     const fetchImpl = vi.fn(async () => new Response(buildCrlDer("0A0B0C0D"), {
       headers: { "Content-Type": "application/pkix-crl" },
     }));
-    const opts = { fetchImpl: fetchImpl as typeof fetch };
+    const opts = { fetchImpl: fetchImpl as typeof fetch, skipSignatureCheck: true };
 
-    const first = await checkCrl(cert as unknown as p.Certificate, "http://crl.test/dp.crl", opts);
-    const second = await checkCrl(cert as unknown as p.Certificate, "http://crl.test/dp.crl", opts);
+    const first = await checkCrl(cert as unknown as p.Certificate, "https://crl.test/dp.crl", opts);
+    const second = await checkCrl(cert as unknown as p.Certificate, "https://crl.test/dp.crl", opts);
 
     expect(first.status).toBe("revoked");
     expect(second.status).toBe("revoked");
     expect(fetchImpl).toHaveBeenCalledTimes(1);
+  });
+});
+
+// ---------- безопасность: fail-closed и SSRF-guard ----------
+
+describe("fail-closed: непроверенная подпись не даёт статус valid", () => {
+  beforeEach(() => {
+    _clearOcspCache();
+    _clearCrlCache();
+  });
+
+  it("OCSP good без проверки подписи → 'unknown' (не 'valid')", async () => {
+    const cert = makeCert("0A0B0C0D");
+    const fetchImpl = vi.fn(async () => new Response(buildOcspResponseDer("0A0B0C0D", "good")));
+
+    const result = await checkOcsp(cert, "https://ocsp.test/ocsp", {
+      fetchImpl: fetchImpl as typeof fetch,
+    });
+
+    expect(result.status).toBe("unknown");
+    expect(result.signatureVerified).toBe(false);
+    expect(result.details).toMatch(/not verified/i);
+  });
+
+  it("CRL good без проверки подписи → 'unknown' (не 'valid')", async () => {
+    const cert = makeCert("0A0B0C0D");
+    const fetchImpl = vi.fn(async () => new Response(buildCrlDer("DEADBEEF", { includeSerial: false }), {
+      headers: { "Content-Type": "application/pkix-crl" },
+    }));
+
+    const result = await checkCrl(cert as unknown as p.Certificate, "https://crl.test/dp.crl", {
+      fetchImpl: fetchImpl as typeof fetch,
+    });
+
+    expect(result.status).toBe("unknown");
+    expect(result.signatureVerified).toBe(false);
+  });
+
+  it("CRL revoked остаётся 'revoked' даже без проверки подписи (fail-safe)", async () => {
+    const cert = makeCert("0A0B0C0D");
+    const fetchImpl = vi.fn(async () => new Response(buildCrlDer("0A0B0C0D"), {
+      headers: { "Content-Type": "application/pkix-crl" },
+    }));
+
+    const result = await checkCrl(cert as unknown as p.Certificate, "https://crl.test/dp.crl", {
+      fetchImpl: fetchImpl as typeof fetch,
+    });
+
+    expect(result.status).toBe("revoked");
+  });
+});
+
+describe("assertSafeRevocationUrl (SSRF / HTTPS guard)", () => {
+  it("принимает https с публичным хостом", () => {
+    expect(assertSafeRevocationUrl("https://ocsp.example.com/ocsp").hostname).toBe("ocsp.example.com");
+  });
+
+  it("отклоняет http://", () => {
+    expect(() => assertSafeRevocationUrl("http://ocsp.example.com")).toThrow(/insecure_scheme/);
+  });
+
+  it("отклоняет file:// и прочие схемы", () => {
+    expect(() => assertSafeRevocationUrl("file:///etc/passwd")).toThrow(/insecure_scheme/);
+  });
+
+  it("отклоняет loopback / приватные / link-local адреса", () => {
+    expect(() => assertSafeRevocationUrl("https://127.0.0.1/ocsp")).toThrow(/blocked_host/);
+    expect(() => assertSafeRevocationUrl("https://10.0.0.5/ocsp")).toThrow(/blocked_host/);
+    expect(() => assertSafeRevocationUrl("https://192.168.1.1/ocsp")).toThrow(/blocked_host/);
+    expect(() => assertSafeRevocationUrl("https://169.254.1.1/ocsp")).toThrow(/blocked_host/);
+    expect(() => assertSafeRevocationUrl("https://[::1]/ocsp")).toThrow(/blocked_host/);
+    expect(() => assertSafeRevocationUrl("https://localhost/ocsp")).toThrow(/blocked_host/);
+  });
+
+  it("отклоняет внутренние имена (*.local, *.internal)", () => {
+    expect(() => assertSafeRevocationUrl("https://ca.internal/ocsp")).toThrow(/blocked_host/);
+    expect(() => assertSafeRevocationUrl("https://ocsp.local/ocsp")).toThrow(/blocked_host/);
+  });
+
+  it("allowInsecure пропускает http (только для тестов)", () => {
+    expect(assertSafeRevocationUrl("http://ocsp.test", { allowInsecure: true }).protocol).toBe("http:");
+  });
+
+  it("allowlist ограничивает хосты", () => {
+    expect(() => assertSafeRevocationUrl("https://evil.com/ocsp", { allowedHosts: ["ca.gov.ru"] })).toThrow(
+      /host_not_allowed/,
+    );
+    expect(
+      assertSafeRevocationUrl("https://ocsp.ca.gov.ru/ocsp", { allowedHosts: ["ca.gov.ru"] }).hostname,
+    ).toBe("ocsp.ca.gov.ru");
   });
 });
