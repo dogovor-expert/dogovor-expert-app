@@ -1,0 +1,1550 @@
+diff --git a/src/app/admin/analytics/page.tsx b/src/app/admin/analytics/page.tsx
+new file mode 100644
+index 0000000..6fde4a4
+--- /dev/null
++++ b/src/app/admin/analytics/page.tsx
+@@ -0,0 +1,195 @@
++import Link from "next/link";
++import { requireAdminPage } from "@/lib/admin-auth";
++import { Card } from "@/components/ui/Card";
++import { Badge } from "@/components/ui/Badge";
++import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from "@/components/ui/Table";
++import { DailyBarChart } from "@/components/admin/analytics/DailyBarChart";
++import { FunnelChart } from "@/components/admin/analytics/FunnelChart";
++import { getEventSummaries, getFunnel, getTopTemplates, getKpiTotals } from "@/lib/userEventsQueries";
++import { EVENT_CATALOG, type EventName } from "@/lib/userEvents";
++import { Eye, Users, TrendingUp, Percent } from "lucide-react";
++
++export const dynamic = "force-dynamic";
++
++const GROUP_LABELS: Record<string, string> = {
++  traffic: "Трафик",
++  builder: "Конструктор",
++  export: "Экспорт",
++  signing: "Подписание",
++  billing: "Монетизация",
++  support: "Поддержка",
++};
++
++const PERIODS = [7, 30, 90] as const;
++
++export default async function AdminAnalyticsPage({
++  searchParams,
++}: {
++  searchParams: Promise<Record<string, string | string[] | undefined>>;
++}) {
++  // Агрегаты по всем пользователям — данные обезличены (event/day/count),
++  // но раздел логически «финансово-поведенческий», поэтому тот же уровень
++  // доступа, что и у платежей/подписок (6.5 RBAC).
++  await requireAdminPage("admin");
++  const sp = await searchParams;
++  const daysParam = Number(Array.isArray(sp.days) ? sp.days[0] : sp.days);
++  const days = (PERIODS as readonly number[]).includes(daysParam) ? daysParam : 30;
++
++  const [summaries, funnel, topTemplates, kpi] = await Promise.all([
++    getEventSummaries(days),
++    getFunnel(days),
++    getTopTemplates(days),
++    getKpiTotals(),
++  ]);
++
++  const pageViews = summaries.find((s) => s.event === "page_view");
++  const byGroup = new Map<string, typeof summaries>();
++  for (const s of summaries) {
++    const group = EVENT_CATALOG[s.event].group;
++    if (!byGroup.has(group)) byGroup.set(group, []);
++    byGroup.get(group)!.push(s);
++  }
++
++  const kpiCards = [
++    { label: "Визитов сегодня", value: kpi.visitsToday, icon: Eye },
++    { label: "Визитов за 7 дней", value: kpi.visits7d, icon: TrendingUp },
++    { label: "Уникальных визитов за 7 дней", value: kpi.uniqueSessions7d, icon: Users },
++    {
++      label: "Конверсия в оплату",
++      value: `${Math.round(kpi.conversionRate * 100)}%`,
++      icon: Percent,
++      hint: "payment_success / builder_start",
++    },
++  ];
++
++  return (
++    <div className="space-y-6 max-w-6xl mx-auto">
++      <div className="flex items-center justify-between gap-4 flex-wrap">
++        <div>
++          <h1 className="text-2xl font-bold text-gray-900">Аналитика</h1>
++          <p className="text-gray-600 text-sm">
++            Собственный журнал действий пользователей — данные не покидают инфраструктуру
++          </p>
++        </div>
++        <div className="flex items-center gap-1.5">
++          {PERIODS.map((p) => (
++            <Link
++              key={p}
++              href={`/admin/analytics?days=${p}`}
++              className={`px-3 py-1.5 text-sm rounded-lg border ${
++                p === days
++                  ? "bg-brand-600 border-brand-600 text-white"
++                  : "bg-white border-gray-200 text-gray-600 hover:bg-gray-50"
++              }`}
++            >
++              {p} дн.
++            </Link>
++          ))}
++        </div>
++      </div>
++
++      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
++        {kpiCards.map((k) => {
++          const Icon = k.icon;
++          return (
++            <Card key={k.label} className="p-5">
++              <div className="flex items-center gap-3">
++                <div className="w-10 h-10 rounded-xl bg-brand-50 flex items-center justify-center shrink-0">
++                  <Icon className="w-5 h-5 text-brand-600" />
++                </div>
++                <div>
++                  <p className="text-2xl font-bold text-gray-900 tabular-nums">{k.value}</p>
++                  <p className="text-xs text-gray-600">{k.label}</p>
++                </div>
++              </div>
++            </Card>
++          );
++        })}
++      </div>
++
++      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
++        <Card padding="md">
++          <h2 className="font-semibold text-gray-900 mb-1">Воронка конверсии</h2>
++          <p className="text-xs text-gray-500 mb-4">За последние {days} дней, по всем пользователям</p>
++          <FunnelChart steps={funnel} />
++        </Card>
++
++        <Card padding="md">
++          <h2 className="font-semibold text-gray-900 mb-1">Просмотры страниц</h2>
++          <p className="text-xs text-gray-500 mb-4">
++            {pageViews?.total.toLocaleString("ru-RU") ?? 0} за {days} дней
++          </p>
++          <DailyBarChart data={pageViews?.series ?? []} />
++        </Card>
++      </div>
++
++      <Card padding="md">
++        <h2 className="font-semibold text-gray-900 mb-1">Популярные шаблоны</h2>
++        <p className="text-xs text-gray-500 mb-4">По открытиям конструктора за {days} дней</p>
++        {topTemplates.length === 0 ? (
++          <p className="text-sm text-gray-400">Нет данных за период</p>
++        ) : (
++          <div className="space-y-2">
++            {topTemplates.map((t) => {
++              const max = topTemplates[0]?.count ?? 1;
++              return (
++                <div key={t.template} className="flex items-center gap-3">
++                  <span className="text-sm text-gray-700 w-40 truncate shrink-0" title={t.template}>
++                    {t.template}
++                  </span>
++                  <div className="flex-1 h-4 rounded bg-gray-100 overflow-hidden">
++                    <div
++                      className="h-full rounded bg-brand-400"
++                      style={{ width: `${Math.max((t.count / max) * 100, 3)}%` }}
++                    />
++                  </div>
++                  <span className="text-xs text-gray-500 tabular-nums w-10 text-right">{t.count}</span>
++                </div>
++              );
++            })}
++          </div>
++        )}
++      </Card>
++
++      <Card padding="none">
++        <h2 className="font-semibold text-gray-900 p-4 pb-2">Все события за {days} дней</h2>
++        <Table variant="minimal">
++          <TableHead>
++            <TableRow>
++              <TableHeader>Событие</TableHeader>
++              <TableHeader>Группа</TableHeader>
++              <TableHeader>Всего</TableHeader>
++              <TableHeader>Динамика</TableHeader>
++            </TableRow>
++          </TableHead>
++          <TableBody>
++            {summaries
++              .filter((s) => s.total > 0)
++              .sort((a, b) => b.total - a.total)
++              .map((s) => (
++                <TableRow key={s.event}>
++                  <TableCell className="font-medium text-gray-800">{s.label}</TableCell>
++                  <TableCell>
++                    <Badge variant="gray" size="sm">
++                      {GROUP_LABELS[EVENT_CATALOG[s.event as EventName].group]}
++                    </Badge>
++                  </TableCell>
++                  <TableCell className="tabular-nums">{s.total.toLocaleString("ru-RU")}</TableCell>
++                  <TableCell className="w-40">
++                    <DailyBarChart data={s.series} height={28} color="#9ca3af" />
++                  </TableCell>
++                </TableRow>
++              ))}
++            {summaries.every((s) => s.total === 0) && (
++              <TableRow>
++                <TableCell colSpan={4} className="text-center text-gray-400 py-6">
++                  Событий за период нет
++                </TableCell>
++              </TableRow>
++            )}
++          </TableBody>
++        </Table>
++      </Card>
++    </div>
++  );
++}
+diff --git a/src/app/admin/users/[id]/page.tsx b/src/app/admin/users/[id]/page.tsx
+index a4b4a2b..3708712 100644
+--- a/src/app/admin/users/[id]/page.tsx
++++ b/src/app/admin/users/[id]/page.tsx
+@@ -6,6 +6,8 @@ import { Badge } from "@/components/ui/Badge";
+ import { Card } from "@/components/ui/Card";
+ import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from "@/components/ui/Table";
+ import { updateProfile, setUserRole, updateSubscription, giftSubscriptionExtension } from "./actions";
++import { getUserEventTimeline } from "@/lib/userEventsQueries";
++import { EVENT_CATALOG, type EventName } from "@/lib/userEvents";
+ 
+ const fmt = (s?: string | null) =>
+   s ? new Date(s).toLocaleString("ru-RU", { day: "2-digit", month: "2-digit", year: "2-digit", hour: "2-digit", minute: "2-digit" }) : "—";
+@@ -32,11 +34,12 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
+ 
+   const email = authUser?.user?.email ?? profile?.email ?? "—";
+ 
+-  const [{ data: sub }, { data: pays }, { data: leads }, { data: feedback }] = await Promise.all([
++  const [{ data: sub }, { data: pays }, { data: leads }, { data: feedback }, events] = await Promise.all([
+     sb.from("subscriptions").select("*").eq("user_id", id).maybeSingle(),
+     sb.from("payments").select("*").eq("user_id", id).order("created_at", { ascending: false }).limit(50),
+     sb.from("leads").select("*").eq("user_id", id).order("created_at", { ascending: false }).limit(50),
+     sb.from("feedback").select("*").eq("email", email).order("created_at", { ascending: false }).limit(50),
++    getUserEventTimeline(id, 50),
+   ]);
+ 
+   const targetRole = parseAdminRole(profile?.admin_role) ?? null;
+@@ -255,6 +258,48 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
+           </TableBody>
+         </Table>
+       </Card>
++
++      <Card padding="none">
++        <h2 className="font-semibold text-gray-900 p-4 pb-2">
++          Активность на сайте ({events.length})
++        </h2>
++        <p className="text-xs text-gray-500 px-4 pb-2">
++          Лента для саппорта: что пользователь делал перед обращением. Без содержимого полей форм —
++          только тип действия и шаблон.
++        </p>
++        <Table variant="minimal">
++          <TableHead>
++            <TableRow>
++              <TableHeader>Действие</TableHeader>
++              <TableHeader>Страница</TableHeader>
++              <TableHeader>Устройство</TableHeader>
++              <TableHeader>Когда</TableHeader>
++            </TableRow>
++          </TableHead>
++          <TableBody>
++            {events.map((e) => (
++              <TableRow key={e.id}>
++                <TableCell className="font-medium text-gray-800">
++                  {EVENT_CATALOG[e.event as EventName]?.label ?? e.event}
++                  {e.meta?.template ? (
++                    <span className="text-gray-400 font-normal"> · {String(e.meta.template)}</span>
++                  ) : null}
++                </TableCell>
++                <TableCell className="text-gray-500 font-mono text-xs">{e.path || "—"}</TableCell>
++                <TableCell className="text-gray-500">{e.device || "—"}</TableCell>
++                <TableCell className="text-gray-600">{fmt(e.created_at)}</TableCell>
++              </TableRow>
++            ))}
++            {!events.length && (
++              <TableRow>
++                <TableCell colSpan={4} className="text-center text-gray-600 py-6">
++                  Пока нет событий
++                </TableCell>
++              </TableRow>
++            )}
++          </TableBody>
++        </Table>
++      </Card>
+     </div>
+   );
+ }
+diff --git a/src/app/api/cron/daily-maintenance/route.ts b/src/app/api/cron/daily-maintenance/route.ts
+index cdc2a96..8475c1c 100644
+--- a/src/app/api/cron/daily-maintenance/route.ts
++++ b/src/app/api/cron/daily-maintenance/route.ts
+@@ -83,6 +83,13 @@ async function cleanupTrash(): Promise<{ deleted: number; error?: string }> {
+   return { deleted: data?.length ?? 0 };
+ }
+ 
++/** 152-ФЗ: не хранить поведенческую аналитику дольше необходимого (12 мес). */
++async function purgeOldEvents(): Promise<{ ok: boolean; error?: string }> {
++  const admin = createAdminClient();
++  const { error } = await admin.rpc("purge_old_user_events");
++  return error ? { ok: false, error: error.message } : { ok: true };
++}
++
+ /**
+  * Ежедневное обслуживание: автосписание подписок + очистка корзины.
+  * Объединяет прежние /api/cron/auto-renew и /api/cron/trash-cleanup
+@@ -96,10 +103,11 @@ export async function GET(req: Request) {
+ 
+   const renew = await renewSubscriptions();
+   const trash = await cleanupTrash();
++  const events = await purgeOldEvents();
+ 
+-  const ok = !renew.error && !trash.error;
++  const ok = !renew.error && !trash.error && events.ok;
+   return NextResponse.json(
+-    { ok, renew: { processed: renew.processed, results: renew.results, error: renew.error }, trash },
++    { ok, renew: { processed: renew.processed, results: renew.results, error: renew.error }, trash, events },
+     { status: ok ? 200 : 500 },
+   );
+ }
+diff --git a/src/app/api/events/route.ts b/src/app/api/events/route.ts
+new file mode 100644
+index 0000000..1d78cb9
+--- /dev/null
++++ b/src/app/api/events/route.ts
+@@ -0,0 +1,73 @@
++import { NextResponse, type NextRequest } from "next/server";
++import { createClient } from "@/lib/supabase/server";
++import { withCsrf } from "@/lib/csrf";
++import { isSameOrigin } from "@/lib/admin-auth";
++import { limiters, checkRateLimit, rateLimitResponse, clientIp } from "@/lib/ratelimit";
++import { logUserEvent, isKnownEvent, deviceFromUserAgent } from "@/lib/userEvents";
++
++/**
++ * Приём событий внутренней аналитики (см. src/lib/userEvents.ts).
++ *
++ * Осознанно НЕ требует авторизации: события нужны и от анонимных
++ * посетителей (воронка "зашёл на сайт → начал → зарегистрировался"),
++ * поэтому auth здесь опциональный — user_id пишется, если сессия есть.
++ *
++ * Именно поэтому same-origin — обязателен (иначе чужой сайт может засорять
++ * вашу аналитику руками ваших же посетителей), а rate-limit — по IP, а не
++ * по user.id (у анонимов user.id нет).
++ */
++async function postHandler(req: NextRequest) {
++  if (!isSameOrigin(req)) {
++    return NextResponse.json({ error: "forbidden" }, { status: 403 });
++  }
++
++  const rl = await checkRateLimit(limiters.events, clientIp(req));
++  if (!rl.ok) return rateLimitResponse(rl.retryAfter);
++
++  const body = await req.json().catch(() => null);
++  if (!body || typeof body !== "object") {
++    return NextResponse.json({ error: "bad body" }, { status: 400 });
++  }
++
++  const { event, sessionId, path, meta } = body as Record<string, unknown>;
++  if (typeof event !== "string" || !isKnownEvent(event)) {
++    // Неизвестное событие — не считаем ошибкой клиента (например, старая
++    // вкладка со старой версией фронта), просто молча игнорируем.
++    return NextResponse.json({ ok: true, ignored: true });
++  }
++  if (typeof sessionId !== "string" || sessionId.length < 8 || sessionId.length > 64) {
++    return NextResponse.json({ error: "bad session id" }, { status: 400 });
++  }
++
++  // Пользователь опционален: /api/events должен работать и для анонимов.
++  const supabase = await createClient();
++  const {
++    data: { user },
++  } = await supabase.auth.getUser();
++
++  let referrerHost: string | null = null;
++  const referer = req.headers.get("referer");
++  if (referer) {
++    try {
++      referrerHost = new URL(referer).host;
++    } catch {
++      referrerHost = null;
++    }
++  }
++
++  await logUserEvent({
++    event,
++    userId: user?.id ?? null,
++    sessionId,
++    path: typeof path === "string" ? path : null,
++    referrerHost,
++    device: deviceFromUserAgent(req.headers.get("user-agent")),
++    meta,
++  });
++
++  // 202: событие принято к обработке, без гарантии и без данных в ответе —
++  // клиенту не нужно ничего из ответа, лишний JSON только замедляет запрос.
++  return new NextResponse(null, { status: 202 });
++}
++
++export const POST = withCsrf(postHandler);
+diff --git a/src/app/builder/page.tsx b/src/app/builder/page.tsx
+index 909fc10..84e699d 100644
+--- a/src/app/builder/page.tsx
++++ b/src/app/builder/page.tsx
+@@ -897,6 +897,7 @@ function HomeContent() {
+     }
+     pendingMergeRef.current = merged;
+     setSelectedTemplateId(templateId);
++    track(goals.builderTemplateSwitch, { from: prevTemplate.id, to: templateId });
+     setMigrationInfo({
+       migratedCount: migration.migratedIds.length,
+       totalFields: migration.totalNextFields,
+@@ -982,7 +983,12 @@ function HomeContent() {
+   };
+ 
+   const handleAudit = () => {
+-    setAuditResults(runLegalAudit(template, formValues));
++    const res = runLegalAudit(template, formValues);
++    setAuditResults(res);
++    track(goals.auditRun, {
++      template: template.id,
++      errors: res.filter((r) => r.type === "error").length,
++    });
+     setAuditTimestamp(new Date());
+     setShowAudit(true);
+     setSidebarTab("preview");
+@@ -1013,6 +1019,7 @@ function HomeContent() {
+     }
+     setPreviewBlocked(null);
+     setViewMode("preview");
++    track(goals.previewOpened, { template: template.id });
+     window.scrollTo(0, 0);
+   };
+ 
+@@ -1466,6 +1473,7 @@ function HomeContent() {
+         throw new Error(j?.error === "unauthorized" ? "Войдите в аккаунт, чтобы создавать ссылки" : "Не удалось создать ссылку");
+       }
+       setApprovalMsg("Ссылка создана");
++      track(goals.approvalCreated, { template: template.id });
+       loadMyApprovals();
+     } catch (e) {
+       setApprovalMsg(e instanceof Error ? e.message : "Не удалось создать ссылку");
+diff --git a/src/app/layout.tsx b/src/app/layout.tsx
+index b003624..94bf3b5 100644
+--- a/src/app/layout.tsx
++++ b/src/app/layout.tsx
+@@ -4,6 +4,7 @@ import AppLayout from "@/components/layouts/AppLayout";
+ import { JsonLd } from "@/components/seo/JsonLd";
+ import { YandexMetrika } from "@/components/analytics/YandexMetrika";
+ import { YandexMetrikaPageView } from "@/components/analytics/YandexMetrikaPageView";
++import { UserEventsPageView } from "@/components/analytics/UserEventsPageView";
+ import { SITE_URL, SITE_NAME, SITE_DESCRIPTION, SITE_KEYWORDS, SITE_CONTACT_EMAIL } from "@/lib/site";
+ import { Inter, Playfair_Display, JetBrains_Mono } from "next/font/google";
+ import VaultWrapper from "@/components/VaultWrapper";
+@@ -149,6 +150,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
+         </VaultWrapper>
+         <YandexMetrika />
+         <YandexMetrikaPageView />
++        <UserEventsPageView />
+       </body>
+     </html>
+   );
+diff --git a/src/components/admin/AdminShell.tsx b/src/components/admin/AdminShell.tsx
+index b0ff34f..4c6ad79 100644
+--- a/src/components/admin/AdminShell.tsx
++++ b/src/components/admin/AdminShell.tsx
+@@ -18,6 +18,7 @@ import {
+   ScrollText,
+   Search,
+   Headphones,
++  BarChart3,
+ } from "lucide-react";
+ import { cn } from "@/lib/utils";
+ import { atLeast, ROLE_LABELS, type AdminRole } from "@/lib/admin-rbac";
+@@ -27,6 +28,7 @@ const NAV: { href: string; label: string; icon: typeof LayoutDashboard; exact?:
+   { href: "/admin/users", label: "Пользователи", icon: Users, minRole: "admin" },
+   { href: "/admin/subscriptions", label: "Подписки", icon: CreditCard, minRole: "admin" },
+   { href: "/admin/payments", label: "Платежи", icon: Receipt, minRole: "admin" },
++  { href: "/admin/analytics", label: "Аналитика", icon: BarChart3, minRole: "admin" },
+   { href: "/admin/leads", label: "Лиды (растаможка)", icon: Package },
+   { href: "/admin/feedback", label: "Обратная связь", icon: MessageSquare },
+   { href: "/admin/chat", label: "Чат поддержки", icon: Headphones },
+diff --git a/src/components/admin/analytics/DailyBarChart.tsx b/src/components/admin/analytics/DailyBarChart.tsx
+new file mode 100644
+index 0000000..0b3c706
+--- /dev/null
++++ b/src/components/admin/analytics/DailyBarChart.tsx
+@@ -0,0 +1,67 @@
++/**
++ * Минималистичный столбчатый график по дням — без внешних библиотек
++ * (в проекте сознательно нет recharts/chart.js, см. package.json), чистый
++ * SVG + Tailwind, в духе остальной админки. Подписи дат — через <title>
++ * (нативный tooltip браузера), без JS-обработчиков наведения.
++ */
++interface Point {
++  day: string; // YYYY-MM-DD
++  count: number;
++}
++
++const fmtDay = (iso: string) => {
++  const d = new Date(iso + "T00:00:00");
++  return d.toLocaleDateString("ru-RU", { day: "2-digit", month: "2-digit" });
++};
++
++export function DailyBarChart({
++  data,
++  height = 96,
++  color = "#7c3aed",
++}: {
++  data: Point[];
++  height?: number;
++  color?: string;
++}) {
++  const max = Math.max(1, ...data.map((p) => p.count));
++  const width = Math.max(data.length * 10, 100);
++  const barW = width / data.length;
++
++  return (
++    <div className="w-full overflow-x-auto">
++      <svg
++        viewBox={`0 0 ${width} ${height}`}
++        width="100%"
++        height={height}
++        preserveAspectRatio="none"
++        className="min-w-[280px]"
++        role="img"
++        aria-label="График событий по дням"
++      >
++        {data.map((p, i) => {
++          const h = (p.count / max) * (height - 4);
++          return (
++            <rect
++              key={p.day}
++              x={i * barW + 1}
++              y={height - h}
++              width={Math.max(barW - 2, 1)}
++              height={h}
++              rx={1.5}
++              fill={color}
++              opacity={p.count === 0 ? 0.12 : 0.85}
++            >
++              <title>
++                {fmtDay(p.day)}: {p.count}
++              </title>
++            </rect>
++          );
++        })}
++      </svg>
++      <div className="flex justify-between text-[10px] text-gray-400 mt-1 px-0.5">
++        <span>{fmtDay(data[0]?.day ?? "")}</span>
++        <span>{fmtDay(data[data.length - 1]?.day ?? "")}</span>
++      </div>
++    </div>
++  );
++}
+diff --git a/src/components/admin/analytics/FunnelChart.tsx b/src/components/admin/analytics/FunnelChart.tsx
+new file mode 100644
+index 0000000..a7e066a
+--- /dev/null
++++ b/src/components/admin/analytics/FunnelChart.tsx
+@@ -0,0 +1,39 @@
++import type { FunnelStep } from "@/lib/userEventsQueries";
++
++const pct = (v: number) => `${Math.round(v * 100)}%`;
++
++export function FunnelChart({ steps }: { steps: FunnelStep[] }) {
++  const maxCount = Math.max(1, ...steps.map((s) => s.count));
++  return (
++    <div className="space-y-3">
++      {steps.map((s, i) => (
++        <div key={s.event}>
++          <div className="flex items-center justify-between text-sm mb-1">
++            <span className="font-medium text-gray-800">
++              {i + 1}. {s.label}
++            </span>
++            <span className="text-gray-500 tabular-nums">
++              {s.count.toLocaleString("ru-RU")}
++              {i > 0 && (
++                <span className="text-gray-400"> · {pct(s.ratioFromStart)} от старта</span>
++              )}
++            </span>
++          </div>
++          <div className="h-6 rounded-lg bg-gray-100 overflow-hidden">
++            <div
++              className="h-full rounded-lg bg-gradient-to-r from-brand-500 to-purple-500 transition-all"
++              style={{ width: `${Math.max((s.count / maxCount) * 100, s.count > 0 ? 2 : 0)}%` }}
++            />
++          </div>
++          {i > 0 && s.ratioFromPrev !== null && (
++            <p className="text-[11px] text-gray-400 mt-0.5">
++              {s.ratioFromPrev < 1
++                ? `−${pct(1 - s.ratioFromPrev)} отвалилось на этом шаге`
++                : "без потерь"}
++            </p>
++          )}
++        </div>
++      ))}
++    </div>
++  );
++}
+diff --git a/src/components/analytics/UserEventsPageView.tsx b/src/components/analytics/UserEventsPageView.tsx
+new file mode 100644
+index 0000000..b8ea0a6
+--- /dev/null
++++ b/src/components/analytics/UserEventsPageView.tsx
+@@ -0,0 +1,37 @@
++"use client";
++
++/**
++ * Просмотры страниц в собственный журнал (/api/events → user_events).
++ * Гейтится тем же cookie-consent (categories.analytics), что и Метрика —
++ * хотя это first-party аналитика, а не сторонний счётчик, поведенчески
++ * это тот же тип данных, который политика конфиденциальности описывает
++ * как «аналитика», поэтому отказ пользователя должен отключать оба канала
++ * одинаково (не создавать несоответствие между политикой и кодом).
++ */
++import { Suspense, useEffect } from "react";
++import { usePathname, useSearchParams } from "next/navigation";
++import { useCookieConsent } from "@/hooks/useCookieConsent";
++import { trackOwnOnly, goals } from "@/lib/analytics";
++
++export function UserEventsPageView() {
++  return (
++    <Suspense fallback={null}>
++      <UserEventsPageViewInner />
++    </Suspense>
++  );
++}
++
++function UserEventsPageViewInner() {
++  const pathname = usePathname();
++  const searchParams = useSearchParams();
++  const { isReady, categories } = useCookieConsent();
++
++  useEffect(() => {
++    if (!isReady || !categories.analytics) return;
++    trackOwnOnly(goals.pageView);
++    // searchParams намеренно в зависимостях (как в YandexMetrikaPageView) —
++    // чтобы фиксировать и переходы, меняющие только query.
++  }, [pathname, searchParams, isReady, categories.analytics]);
++
++  return null;
++}
+diff --git a/src/components/builder/DocScanner.tsx b/src/components/builder/DocScanner.tsx
+index 74e4de1..4cc18db 100644
+--- a/src/components/builder/DocScanner.tsx
++++ b/src/components/builder/DocScanner.tsx
+@@ -30,6 +30,7 @@ import {
+   applyVucToRole,
+   expectedFields,
+ } from "@/lib/docOcr";
++import { track, goals } from "@/lib/analytics";
+ import { planFromScan } from "@/lib/docPlanner";
+ import { prepareDocumentImage, type ImageQuality } from "@/lib/docImage";
+ import { paddleRecognize, paddleWarmup } from "@/lib/paddleOcr";
+@@ -564,6 +565,10 @@ export default function DocScanner({
+         if (res.ok && res.filledFields.length > 0) {
+           focusFilledFields(res.filledFields.map((f) => f.id));
+         }
++        track(goals.scannerUsed, {
++          doc_type: slot.ocrKind,
++          server_ocr: String(shouldUseServerOcr(ocularStatus, ocrConsent)),
++        });
+       } else {
+         setResults((r) => ({
+           ...r,
+diff --git a/src/components/builder/UKEPSigner.tsx b/src/components/builder/UKEPSigner.tsx
+index 16b9554..2a3969f 100644
+--- a/src/components/builder/UKEPSigner.tsx
++++ b/src/components/builder/UKEPSigner.tsx
+@@ -6,6 +6,7 @@ import { CryptoProCertSelector } from './CryptoProCertSelector';
+ import { signPdfWithCryptoPro } from '@/lib/signCryptoPro';
+ import { preparePAdESPlaceholder, embedCms, hexLengthOfCms, uint8ArrayToHex } from '@/lib/embedPades';
+ import { downloadBytes } from '@/lib/converter/download';
++import { track, goals } from '@/lib/analytics';
+ 
+ // Длина CMS детерминирована для конкретного сертификата (detached) → кэшируем, чтобы не запрашивать PIN дважды
+ const cmsLengthCache = new Map<string, number>();
+@@ -52,6 +53,7 @@ export function UKEPSigner({ pdfBytes, fileName = 'document', onClose, onBack, s
+     signingRef.current = true;
+ 
+     setError(null);
++    track(goals.signingStarted);
+ 
+     try {
+       const opts = {
+@@ -101,6 +103,7 @@ export function UKEPSigner({ pdfBytes, fileName = 'document', onClose, onBack, s
+       downloadBytes(signedPdf, downloadName);
+ 
+       setStep('done');
++      track(goals.signingCompleted);
+     } catch (e: any) {
+       console.error('UKEP signing error:', e);
+       signingRef.current = false;
+diff --git a/src/components/calculator/CustomsDuty.tsx b/src/components/calculator/CustomsDuty.tsx
+index 1f20fc0..7fabb3b 100644
+--- a/src/components/calculator/CustomsDuty.tsx
++++ b/src/components/calculator/CustomsDuty.tsx
+@@ -7,6 +7,7 @@ import { calcImportCosts, FX_RATES, type ImportScenario, type TaxDutyRow } from
+ import { fmtMoney } from "@/lib/legal/calc";
+ import { formatPhoneRu } from "@/lib/format";
+ import SaveCalcButton from "@/components/calculator/SaveCalcButton";
++import { track, goals } from "@/lib/analytics";
+ 
+ const CAPTCHA_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
+ const TurnstileCaptcha = dynamic(() => import("@/components/auth/TurnstileCaptcha"), {
+@@ -136,6 +137,7 @@ export default function CustomsDuty() {
+       }
+       setSent(true);
+       setSending(false);
++      track(goals.leadSubmitted, { service });
+     } catch {
+       setLeadErr("Сервис временно недоступен. Попробуйте ещё раз");
+       setSending(false);
+diff --git a/src/components/calculator/KaskoQuote.tsx b/src/components/calculator/KaskoQuote.tsx
+index 48da0cf..675e74f 100644
+--- a/src/components/calculator/KaskoQuote.tsx
++++ b/src/components/calculator/KaskoQuote.tsx
+@@ -6,6 +6,7 @@ import { Check, ShieldQuestion, PhoneCall } from "lucide-react";
+ import { fmtMoney } from "@/lib/legal/calc";
+ import { formatPhoneRu } from "@/lib/format";
+ import SaveCalcButton from "@/components/calculator/SaveCalcButton";
++import { track, goals } from "@/lib/analytics";
+ 
+ const CAPTCHA_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
+ const TurnstileCaptcha = dynamic(() => import("@/components/auth/TurnstileCaptcha"), {
+@@ -110,6 +111,7 @@ export default function KaskoQuote() {
+       }
+       setSent(true);
+       setSending(false);
++      track(goals.leadSubmitted, { service: "kasko" });
+     } catch {
+       setLeadErr("Сервис временно недоступен. Попробуйте ещё раз");
+       setSending(false);
+diff --git a/src/components/feedback/FeedbackForm.tsx b/src/components/feedback/FeedbackForm.tsx
+index 86c91d2..5202a2b 100644
+--- a/src/components/feedback/FeedbackForm.tsx
++++ b/src/components/feedback/FeedbackForm.tsx
+@@ -5,6 +5,7 @@ import {
+   AlertCircle, CheckCircle2, Upload, X, Loader2, ShieldCheck, Bug, Lightbulb, FileText, HelpCircle,
+ } from "lucide-react";
+ import { createClient } from "@/lib/supabase/client";
++import { track, goals } from "@/lib/analytics";
+ 
+ interface TemplateSummary {
+   id: string;
+@@ -183,6 +184,7 @@ export default function FeedbackForm({ defaultDocSlug, onSuccess, compact }: Pro
+       if (!res.ok) throw new Error(data?.error || "request_failed");
+       setTicketNo(data.ticket_no || "");
+       setStatus("success");
++      track(goals.feedbackSubmitted, { type });
+       onSuccess?.(data.ticket_no || "");
+     } catch {
+       setStatus("error");
+diff --git a/src/lib/__tests__/userEvents.test.ts b/src/lib/__tests__/userEvents.test.ts
+new file mode 100644
+index 0000000..24485b1
+--- /dev/null
++++ b/src/lib/__tests__/userEvents.test.ts
+@@ -0,0 +1,134 @@
++import { describe, it, expect, vi, beforeEach } from "vitest";
++
++vi.mock("@/lib/supabase/admin", () => ({
++  createAdminClient: () => ({
++    from: () => ({ insert: insertMock }),
++  }),
++}));
++
++const insertMock = vi.fn().mockResolvedValue({ data: null, error: null });
++
++import { logUserEvent, isKnownEvent, deviceFromUserAgent } from "@/lib/userEvents";
++
++describe("userEvents / isKnownEvent", () => {
++  it("принимает события из каталога", () => {
++    expect(isKnownEvent("builder_start")).toBe(true);
++    expect(isKnownEvent("export_pdf")).toBe(true);
++  });
++
++  it("отклоняет произвольные строки", () => {
++    expect(isKnownEvent("drop_table_users")).toBe(false);
++    expect(isKnownEvent("")).toBe(false);
++    // Object.prototype-геттеры не должны давать false positive.
++    expect(isKnownEvent("hasOwnProperty")).toBe(false);
++    expect(isKnownEvent("toString")).toBe(false);
++  });
++});
++
++describe("userEvents / deviceFromUserAgent", () => {
++  it("определяет мобильные устройства", () => {
++    expect(deviceFromUserAgent("Mozilla/5.0 (iPhone; CPU iPhone OS 17_0)")).toBe("mobile");
++    expect(deviceFromUserAgent("Mozilla/5.0 (Linux; Android 14)")).toBe("mobile");
++  });
++
++  it("определяет планшеты", () => {
++    expect(deviceFromUserAgent("Mozilla/5.0 (iPad; CPU OS 17_0)")).toBe("tablet");
++  });
++
++  it("по умолчанию — desktop", () => {
++    expect(deviceFromUserAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64)")).toBe("desktop");
++    expect(deviceFromUserAgent(null)).toBe("desktop");
++  });
++});
++
++describe("userEvents / logUserEvent meta-санитизация (главная защита от утечки ПДн)", () => {
++  beforeEach(() => {
++    insertMock.mockClear();
++  });
++
++  it("пропускает разрешённые ключи из каталога события", async () => {
++    await logUserEvent({
++      event: "builder_start",
++      sessionId: "session-1234567890",
++      meta: { template: "dkp-auto", source: "url" },
++    });
++    const inserted = insertMock.mock.calls[0][0];
++    expect(inserted.meta).toEqual({ template: "dkp-auto", source: "url" });
++  });
++
++  it("отбрасывает значение вне enum, но сохраняет остальные валидные ключи", async () => {
++    await logUserEvent({
++      event: "builder_start",
++      sessionId: "session-1234567890",
++      meta: { template: "dkp-auto", source: "hacked_source" },
++    });
++    const inserted = insertMock.mock.calls[0][0];
++    expect(inserted.meta).toEqual({ template: "dkp-auto" });
++  });
++
++  it("НИКОГДА не пропускает ключи, не описанные в каталоге события — главный тест-инвариант", async () => {
++    await logUserEvent({
++      event: "builder_start",
++      sessionId: "session-1234567890",
++      meta: {
++        template: "dkp-auto",
++        // Попытка протащить ПДн через произвольный ключ — должна быть отброшена.
++        seller_fio: "Иванов Иван Иванович",
++        seller_passport: "4510 123456",
++        seller_inn: "770123456789",
++        email: "victim@example.com",
++      },
++    });
++    const inserted = insertMock.mock.calls[0][0];
++    expect(inserted.meta).toEqual({ template: "dkp-auto" });
++    expect(inserted.meta).not.toHaveProperty("seller_fio");
++    expect(inserted.meta).not.toHaveProperty("seller_passport");
++    expect(inserted.meta).not.toHaveProperty("seller_inn");
++    expect(inserted.meta).not.toHaveProperty("email");
++  });
++
++  it("для события без описанной схемы meta — meta всегда null, что бы ни прислали", async () => {
++    await logUserEvent({
++      event: "page_view", // в каталоге у page_view нет ключа meta вообще
++      sessionId: "session-1234567890",
++      meta: { anything: "should be dropped", fio: "Петров Пётр" },
++    });
++    const inserted = insertMock.mock.calls[0][0];
++    expect(inserted.meta).toBeNull();
++  });
++
++  it("обрезает длинные строковые значения", async () => {
++    await logUserEvent({
++      event: "builder_start",
++      sessionId: "session-1234567890",
++      meta: { template: "x".repeat(500) },
++    });
++    const inserted = insertMock.mock.calls[0][0];
++    expect((inserted.meta.template as string).length).toBe(200);
++  });
++
++  it("ограничивает число ключей в meta", async () => {
++    // audit_run разрешает только template/errors — лишние поля не считаются,
++    // но проверяем, что общий лимит ключей защищает и произвольно большие payload.
++    const bigMeta: Record<string, string> = {};
++    for (let i = 0; i < 50; i++) bigMeta[`key${i}`] = "v";
++    await logUserEvent({ event: "audit_run", sessionId: "session-1234567890", meta: bigMeta });
++    const inserted = insertMock.mock.calls[0][0];
++    expect(inserted.meta).toBeNull(); // ни один ключ не входит в разрешённые для audit_run
++  });
++
++  it("никогда не бросает, даже если insert падает", async () => {
++    insertMock.mockRejectedValueOnce(new Error("db down"));
++    await expect(
++      logUserEvent({ event: "page_view", sessionId: "s" })
++    ).resolves.toBeUndefined();
++  });
++
++  it("не падает на meta не-объекте (строка/число/массив)", async () => {
++    await expect(
++      logUserEvent({ event: "builder_start", sessionId: "s", meta: "не объект" })
++    ).resolves.toBeUndefined();
++    const inserted = insertMock.mock.calls[0][0];
++    expect(inserted.meta).toBeNull();
++  });
++});
+diff --git a/src/lib/analytics.ts b/src/lib/analytics.ts
+index d7a3573..83d1a49 100644
+--- a/src/lib/analytics.ts
++++ b/src/lib/analytics.ts
+@@ -1,13 +1,20 @@
+ /**
+- * Центральный хелпер событий Яндекс.Метрики (reachGoal).
+- *
+- * Consent-гейт автоматический: счётчик Метрики монтируется только при
+- * categories.analytics === true (см. YandexMetrika.tsx), поэтому при
+- * отказе от аналитики window.ym не определён — трекинг безопасно no-op.
++ * Центральный хелпер трекинга событий сайта — единая точка вызова track(),
++ * два независимых получателя:
++ *  1) Яндекс.Метрика (reachGoal) — как и раньше, гейтится cookie-consent
++ *     (см. YandexMetrika.tsx: счётчик не монтируется без согласия).
++ *  2) /api/events → таблица user_events (см. src/lib/userEvents.ts) —
++ *     собственный журнал для /admin/analytics. НЕ зависит от согласия на
++ *     сторонние счётчики (это первая сторона, не третья), но по тем же
++ *     причинам, что и Метрика, не пишет содержимое полей форм — см.
++ *     EVENT_CATALOG в userEvents.ts, где перечислено, что вообще разрешено
++ *     передавать в meta для каждого события.
+  *
+  * Имена целей — латиница/цифры/подчёркивания (требование Метрики:
+  * запрещены / \ & # ? = ", + экранируется). Каждая цель должна быть
+- * создана в UI Метрики — см. docs/analytics-goals.md.
++ * создана в UI Метрики — см. docs/analytics-goals.md — и совпадать с
++ * ключом EVENT_CATALOG в userEvents.ts, чтобы одно и то же имя события
++ * попадало в оба места без дублирования вызовов track() по коду.
+  */
+ 
+ import { YANDEX_METRIKA_ID } from "@/lib/site";
+@@ -22,30 +29,111 @@ function ym(): YmFn | null {
+   return typeof fn === "function" ? fn : null;
+ }
+ 
+-/** Отправка цели «Целевое событие» в Метрику. Fail-safe: никогда не бросает. */
++const SESSION_KEY = "dogovor_eid";
++const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 дней
++
++/**
++ * Анонимный id визита — случайная строка, НЕ производная от каких-либо
++ * личных данных, живёт в localStorage и сама «протухает» через 30 дней
++ * неактивности (не бессрочный идентификатор пользователя).
++ */
++export function getEventSessionId(): string {
++  if (typeof window === "undefined") return "ssr";
++  try {
++    const raw = window.localStorage.getItem(SESSION_KEY);
++    if (raw) {
++      const parsed = JSON.parse(raw) as { id: string; exp: number };
++      if (parsed.exp > Date.now()) {
++        // Продлеваем TTL при активности — «скользящее окно».
++        window.localStorage.setItem(
++          SESSION_KEY,
++          JSON.stringify({ id: parsed.id, exp: Date.now() + SESSION_TTL_MS })
++        );
++        return parsed.id;
++      }
++    }
++  } catch {
++    /* localStorage недоступен — используем разовый id на этот вызов */
++  }
++  const id =
++    typeof crypto !== "undefined" && "randomUUID" in crypto
++      ? crypto.randomUUID()
++      : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
++  try {
++    window.localStorage.setItem(SESSION_KEY, JSON.stringify({ id, exp: Date.now() + SESSION_TTL_MS }));
++  } catch {
++    /* ignore */
++  }
++  return id;
++}
++
++/** Отправка события в /api/events. Fail-safe, не блокирует UI. */
++function sendToOwnBackend(event: string, params?: GoalParams): void {
++  if (typeof window === "undefined") return;
++  try {
++    void fetch("/api/events", {
++      method: "POST",
++      headers: { "Content-Type": "application/json" },
++      keepalive: true, // запрос переживёт переход на другую страницу
++      body: JSON.stringify({
++        event,
++        sessionId: getEventSessionId(),
++        path: window.location.pathname,
++        meta: params ?? undefined,
++      }),
++    }).catch(() => {
++      /* сеть недоступна — аналитика не должна ничего ломать */
++    });
++  } catch {
++    /* ignore */
++  }
++}
++
++/**
++ * Событие только в свой журнал (без reachGoal в Метрику). Используется для
++ * page_view: просмотры страниц Метрика и так считает через ym(...,'hit',...)
++ * в YandexMetrikaPageView — дублировать их как «цель» не нужно.
++ */
++export function trackOwnOnly(event: string, params?: GoalParams): void {
++  sendToOwnBackend(event, params);
++}
++
++/** Отправка цели «Целевое событие» в Метрику + событие в свой журнал. Fail-safe: никогда не бросает. */
+ export function track(goal: string, params?: GoalParams): void {
+   try {
+     const fn = ym();
+-    if (!fn) return;
+-    const counterId = Number(YANDEX_METRIKA_ID);
+-    if (params) {
+-      fn(counterId, "reachGoal", goal, params);
+-    } else {
+-      fn(counterId, "reachGoal", goal);
++    if (fn) {
++      const counterId = Number(YANDEX_METRIKA_ID);
++      if (params) {
++        fn(counterId, "reachGoal", goal, params);
++      } else {
++        fn(counterId, "reachGoal", goal);
++      }
+     }
+   } catch {
+     // Аналитика не должна ломать пользовательский сценарий.
+   }
++  sendToOwnBackend(goal, params);
+ }
+ 
+ export const goals = {
++  pageView: "page_view",
+   builderStart: "builder_start",
++  builderTemplateSwitch: "builder_template_switch",
++  scannerUsed: "scanner_used",
++  auditRun: "audit_run",
++  previewOpened: "preview_opened",
+   exportPdf: "export_pdf",
+   exportDocx: "export_docx",
+   exportEmail: "export_email",
++  approvalCreated: "approval_created",
++  signingStarted: "signing_started",
++  signingCompleted: "signing_completed",
+   paywallShown: "paywall_shown",
+   paymentCreated: "payment_created",
+   paymentSuccess: "payment_success",
+   billingAutorenewToggle: "billing_autorenew_toggle",
+   autotekaOrderStart: "autoteka_order_start",
++  feedbackSubmitted: "feedback_submitted",
++  leadSubmitted: "lead_submitted",
+ } as const;
+diff --git a/src/lib/ratelimit.ts b/src/lib/ratelimit.ts
+index 3b91b6a..5712435 100644
+--- a/src/lib/ratelimit.ts
++++ b/src/lib/ratelimit.ts
+@@ -43,6 +43,8 @@ export const limiters = {
+   feedbackForm: mk("rl:feedback-form", 10, "60 s"),
+   /** Админ-мутации (смена статусов, прав) — 30/мин на IP. */
+   adminAction: mk("rl:admin-action", 30, "60 s"),
++  /** Приём событий аналитики (/api/events) — щедро, шлётся часто с фронта. */
++  events: mk("rl:events", 120, "60 s"),
+   /** Админ-экспорт чувствительных данных (CSV) — 5/мин на admin.id. */
+   adminExport: mk("rl:admin-export", 5, "60 s"),
+   /** Auth-чувствительные операции (refresh-token, login) — 5/мин на user.id. */
+diff --git a/src/lib/userEvents.ts b/src/lib/userEvents.ts
+new file mode 100644
+index 0000000..95c094f
+--- /dev/null
++++ b/src/lib/userEvents.ts
+@@ -0,0 +1,215 @@
++import { createAdminClient } from "@/lib/supabase/admin";
++
++/**
++ * Внутренний журнал действий пользователей (см. supabase/migrations/20260913_user_events.sql).
++ *
++ * ЕДИНСТВЕННЫЙ вход для записи — logUserEvent(). Не вставляйте в user_events
++ * напрямую из других мест: тогда теряется гарантия схемы meta ниже.
++ *
++ * ГЛАВНОЕ ПРАВИЛО ЭТОГО ФАЙЛА: meta — это ТОЛЬКО идентификаторы, булевы
++ * флаги, числа и значения из заранее известного набора (enum). Никогда —
++ * содержимое полей формы (ФИО, паспорт, ИНН, адрес, телефон, email, суммы
++ * с реквизитами). Если разработчику нужно передать что-то за пределами
++ * EVENT_CATALOG[event].meta — это сигнал остановиться и подумать, а не
++ * расширять тип на `Record<string, unknown>`.
++ */
++
++export type EventName = keyof typeof EVENT_CATALOG;
++
++/** Разрешённый тип значения в meta — то, что заведомо не может быть ПДн. */
++type MetaPrimitive = string | number | boolean;
++
++interface EventSpec {
++  /** Человекочитаемое название — для дашборда и docs. */
++  label: string;
++  /** Группа для воронки/фильтров в /admin/analytics. */
++  group: "traffic" | "builder" | "export" | "billing" | "signing" | "support";
++  /**
++   * Разрешённые ключи meta и опциональный enum допустимых значений
++   * (для строк). Если поле не строковый enum — просто перечисляем ключ
++   * без списка значений (тогда проверяется только тип и длина).
++   */
++  meta?: Record<string, readonly string[] | null>;
++}
++
++/**
++ * Единый каталог событий сайта. Событие, которого нет в этом объекте,
++ * /api/events молча отклоняет (400) — это осознанное ограничение:
++ * список того, что мы измеряем, должен быть виден целиком в одном месте,
++ * а не размазан по компонентам как произвольные строки.
++ */
++export const EVENT_CATALOG = {
++  page_view: {
++    label: "Просмотр страницы",
++    group: "traffic",
++  },
++  builder_start: {
++    label: "Открытие конструктора",
++    group: "builder",
++    meta: { template: null, source: ["url", "catalog", "related", "favorite"] as const },
++  },
++  builder_template_switch: {
++    label: "Смена шаблона в конструкторе",
++    group: "builder",
++    meta: { from: null, to: null },
++  },
++  scanner_used: {
++    label: "Использован сканер документов",
++    group: "builder",
++    meta: { doc_type: null, server_ocr: ["true", "false"] as const },
++  },
++  audit_run: {
++    label: "Запущена проверка документа",
++    group: "builder",
++    meta: { template: null, errors: null },
++  },
++  preview_opened: {
++    label: "Открыт предпросмотр",
++    group: "builder",
++    meta: { template: null },
++  },
++  export_pdf: {
++    label: "Экспорт PDF",
++    group: "export",
++    meta: { template: null, pack: ["true", "false"] as const },
++  },
++  export_docx: {
++    label: "Экспорт DOCX",
++    group: "export",
++    meta: { template: null, pack: ["true", "false"] as const },
++  },
++  export_email: {
++    label: "Отправка на email",
++    group: "export",
++    meta: { template: null },
++  },
++  approval_created: {
++    label: "Создана ссылка согласования",
++    group: "export",
++    meta: { template: null },
++  },
++  signing_started: {
++    label: "Начато подписание УКЭП",
++    group: "signing",
++    meta: { template: null },
++  },
++  signing_completed: {
++    label: "Документ подписан УКЭП",
++    group: "signing",
++    meta: { template: null },
++  },
++  paywall_shown: {
++    label: "Показан пейволл",
++    group: "billing",
++    meta: { reason: null },
++  },
++  payment_created: {
++    label: "Создан платёж",
++    group: "billing",
++    meta: { plan: null },
++  },
++  payment_success: {
++    label: "Успешная оплата",
++    group: "billing",
++    meta: { plan: null },
++  },
++  billing_autorenew_toggle: {
++    label: "Переключено автопродление",
++    group: "billing",
++    meta: { enabled: ["true", "false"] as const },
++  },
++  autoteka_order_start: {
++    label: "Заказ отчёта Автотеки",
++    group: "billing",
++    meta: { tariff: ["std", "prem"] as const },
++  },
++  feedback_submitted: {
++    label: "Отправлена обратная связь",
++    group: "support",
++    meta: { type: null },
++  },
++  lead_submitted: {
++    label: "Отправлена заявка (лид)",
++    group: "support",
++    meta: { service: null },
++  },
++} as const satisfies Record<string, EventSpec>;
++
++export type EventMeta = Record<string, MetaPrimitive>;
++
++const MAX_META_KEYS = 10;
++const MAX_STRING_LEN = 200;
++
++/**
++ * Строгая санитизация meta по каталогу события: неизвестные ключи —
++ * отбрасываются, значения вне enum — отбрасываются, длинные строки —
++ * обрезаются. Никогда не бросает — на невалидном входе просто уменьшает
++ * meta, чтобы битый event на клиенте не терял всю запись целиком.
++ */
++function sanitizeMeta(event: EventName, meta: unknown): EventMeta | null {
++  const spec = EVENT_CATALOG[event] as EventSpec;
++  if (!spec.meta || !meta || typeof meta !== "object") return null;
++  const allowed = spec.meta;
++  const out: EventMeta = {};
++  let count = 0;
++  for (const [key, rawValue] of Object.entries(meta as Record<string, unknown>)) {
++    if (count >= MAX_META_KEYS) break;
++    if (!(key in allowed)) continue; // неизвестный ключ — молча отбрасываем
++    const enumValues = allowed[key];
++    if (typeof rawValue === "boolean" || typeof rawValue === "number") {
++      out[key] = rawValue;
++      count++;
++      continue;
++    }
++    if (typeof rawValue === "string") {
++      const v = rawValue.slice(0, MAX_STRING_LEN);
++      if (enumValues && !enumValues.includes(v)) continue;
++      out[key] = v;
++      count++;
++    }
++  }
++  return count > 0 ? out : null;
++}
++
++export function isKnownEvent(event: string): event is EventName {
++  return Object.prototype.hasOwnProperty.call(EVENT_CATALOG, event);
++}
++
++export type DeviceType = "mobile" | "tablet" | "desktop";
++
++export function deviceFromUserAgent(ua: string | null): DeviceType {
++  if (!ua) return "desktop";
++  if (/ipad|tablet/i.test(ua)) return "tablet";
++  if (/mobi|android|iphone/i.test(ua)) return "mobile";
++  return "desktop";
++}
++
++/**
++ * Записывает одно событие. Fail-safe: сбой записи никогда не должен
++ * ломать пользовательский сценарий (тот же паттерн, что и logAdminAction
++ * в src/lib/audit.ts).
++ */
++export async function logUserEvent(params: {
++  event: EventName;
++  userId?: string | null;
++  sessionId: string;
++  path?: string | null;
++  referrerHost?: string | null;
++  device?: DeviceType;
++  meta?: unknown;
++}): Promise<void> {
++  try {
++    const supabase = createAdminClient();
++    await supabase.from("user_events").insert({
++      event: params.event,
++      user_id: params.userId ?? null,
++      session_id: params.sessionId,
++      path: params.path?.slice(0, 300) ?? null,
++      referrer_host: params.referrerHost?.slice(0, 200) ?? null,
++      device: params.device ?? null,
++      meta: sanitizeMeta(params.event, params.meta),
++    });
++  } catch {
++    /* аналитика не должна блокировать основной сценарий */
++  }
++}
+diff --git a/src/lib/userEventsQueries.ts b/src/lib/userEventsQueries.ts
+new file mode 100644
+index 0000000..77db1dc
+--- /dev/null
++++ b/src/lib/userEventsQueries.ts
+@@ -0,0 +1,181 @@
++import { createAdminClient } from "@/lib/supabase/admin";
++import { EVENT_CATALOG, type EventName } from "@/lib/userEvents";
++
++export interface DailyPoint {
++  day: string; // YYYY-MM-DD
++  count: number;
++}
++
++export interface EventSummary {
++  event: EventName;
++  label: string;
++  total: number;
++  series: DailyPoint[]; // по дням за весь запрошенный период, с нулями в пропусках
++}
++
++/** Список дат YYYY-MM-DD за последние `days` дней, включая сегодня. */
++function dateRange(days: number): string[] {
++  const out: string[] = [];
++  for (let i = days - 1; i >= 0; i--) {
++    const d = new Date();
++    d.setDate(d.getDate() - i);
++    out.push(d.toISOString().slice(0, 10));
++  }
++  return out;
++}
++
++/**
++ * Сводка по всем событиям каталога за последние `days` дней: суммарно и
++ * по дням (с нулями там, где событий не было — иначе график «прыгает»).
++ */
++export async function getEventSummaries(days = 30): Promise<EventSummary[]> {
++  const admin = createAdminClient();
++  const { data, error } = (await admin.rpc("user_events_daily", { p_days: days })) as {
++    data: { event: string; day: string; count: number }[] | null;
++    error: { message: string } | null;
++  };
++  if (error || !data) return [];
++
++  const range = dateRange(days);
++  const byEvent = new Map<string, Map<string, number>>();
++  for (const row of data) {
++    const perDay = byEvent.get(row.event) ?? new Map<string, number>();
++    perDay.set(row.day, Number(row.count));
++    byEvent.set(row.event, perDay);
++  }
++
++  return (Object.keys(EVENT_CATALOG) as EventName[]).map((event): EventSummary => {
++    const perDay = byEvent.get(event) ?? new Map<string, number>();
++    const series = range.map((day) => ({ day, count: perDay.get(day) ?? 0 }));
++    return {
++      event,
++      label: EVENT_CATALOG[event].label,
++      total: series.reduce((s, p) => s + p.count, 0),
++      series,
++    };
++  });
++}
++
++export interface FunnelStep {
++  event: EventName;
++  label: string;
++  count: number;
++  /** Доля от первого шага воронки, 0..1. */
++  ratioFromStart: number;
++  /** Доля от предыдущего шага, 0..1 (null для первого шага). */
++  ratioFromPrev: number | null;
++}
++
++/** Стандартная воронка «зашёл → начал → скачал/подписал → оплатил». */
++const FUNNEL: EventName[] = ["builder_start", "export_pdf", "payment_created", "payment_success"];
++
++export async function getFunnel(days = 30): Promise<FunnelStep[]> {
++  const summaries = await getEventSummaries(days);
++  const totalsByEvent = new Map(summaries.map((s) => [s.event, s.total]));
++  const startTotal = totalsByEvent.get(FUNNEL[0]) ?? 0;
++  let prev: number | null = null;
++  return FUNNEL.map((event) => {
++    const count = totalsByEvent.get(event) ?? 0;
++    const step: FunnelStep = {
++      event,
++      label: EVENT_CATALOG[event].label,
++      count,
++      ratioFromStart: startTotal > 0 ? count / startTotal : 0,
++      ratioFromPrev: prev !== null && prev > 0 ? count / prev : null,
++    };
++    prev = count;
++    return step;
++  });
++}
++
++export interface TopTemplateRow {
++  template: string;
++  count: number;
++}
++
++/** Топ шаблонов по открытиям конструктора за период (для карточки «популярное»). */
++export async function getTopTemplates(days = 30, limit = 8): Promise<TopTemplateRow[]> {
++  const admin = createAdminClient();
++  const since = new Date(Date.now() - days * 86400000).toISOString();
++  const { data, error } = await admin
++    .from("user_events")
++    .select("meta")
++    .eq("event", "builder_start")
++    .gte("created_at", since)
++    .limit(5000);
++  if (error || !data) return [];
++
++  const counts = new Map<string, number>();
++  for (const row of data as { meta: { template?: string } | null }[]) {
++    const t = row.meta?.template;
++    if (!t) continue;
++    counts.set(t, (counts.get(t) ?? 0) + 1);
++  }
++  return Array.from(counts.entries())
++    .map(([template, count]) => ({ template, count }))
++    .sort((a, b) => b.count - a.count)
++    .slice(0, limit);
++}
++
++export interface UserEventRow {
++  id: string;
++  event: EventName;
++  path: string | null;
++  device: string | null;
++  meta: Record<string, unknown> | null;
++  created_at: string;
++}
++
++/** Лента событий одного пользователя — для карточки в /admin/users/[id]. */
++export async function getUserEventTimeline(userId: string, limit = 100): Promise<UserEventRow[]> {
++  const admin = createAdminClient();
++  const { data, error } = await admin
++    .from("user_events")
++    .select("id, event, path, device, meta, created_at")
++    .eq("user_id", userId)
++    .order("created_at", { ascending: false })
++    .limit(limit);
++  if (error || !data) return [];
++  return data;
++}
++
++export interface KpiTotals {
++  visitsToday: number;
++  visits7d: number;
++  uniqueSessions7d: number;
++  conversionRate: number; // payment_success / builder_start за период, 0..1
++}
++
++export async function getKpiTotals(): Promise<KpiTotals> {
++  const admin = createAdminClient();
++  const startOfToday = new Date();
++  startOfToday.setHours(0, 0, 0, 0);
++  const sevenDaysAgo = new Date(Date.now() - 7 * 86400000).toISOString();
++
++  const [{ count: visitsToday }, { data: last7 }] = await Promise.all([
++    admin
++      .from("user_events")
++      .select("id", { count: "exact", head: true })
++      .eq("event", "page_view")
++      .gte("created_at", startOfToday.toISOString()),
++    admin
++      .from("user_events")
++      .select("event, session_id")
++      .in("event", ["page_view", "builder_start", "payment_success"])
++      .gte("created_at", sevenDaysAgo)
++      .limit(20000),
++  ]);
++
++  const rows = (last7 ?? []) as { event: string; session_id: string }[];
++  const visits7d = rows.filter((r) => r.event === "page_view").length;
++  const uniqueSessions7d = new Set(rows.map((r) => r.session_id)).size;
++  const starts = rows.filter((r) => r.event === "builder_start").length;
++  const success = rows.filter((r) => r.event === "payment_success").length;
++
++  return {
++    visitsToday: visitsToday ?? 0,
++    visits7d,
++    uniqueSessions7d,
++    conversionRate: starts > 0 ? success / starts : 0,
++  };
++}
+diff --git a/supabase/migrations/20260913_user_events.sql b/supabase/migrations/20260913_user_events.sql
+new file mode 100644
+index 0000000..b449442
+--- /dev/null
++++ b/supabase/migrations/20260913_user_events.sql
+@@ -0,0 +1,91 @@
++-- Внутренняя аналитика действий пользователей (админ-панель /admin/analytics).
++--
++-- Зачем отдельная таблица, а не только Яндекс.Метрика:
++--  1) свои данные не покидают инфраструктуру (152-ФЗ, self-hosted VDS);
++--  2) можно построить карточку конкретного пользователя для саппорта
++--     («что он делал перед тем как написать в поддержку»);
++--  3) не зависит от cookie-consent конкретного стороннего счётчика.
++--
++-- ЖЁСТКОЕ ПРАВИЛО (см. src/lib/userEvents.ts): в meta НИКОГДА не пишется
++-- содержимое полей форм (ФИО, паспорт, ИНН, адрес и т.п.) — только
++-- идентификаторы (template_id), булевы флаги, статусы, суммы без реквизитов.
++-- Таблица не предназначена для персональных данных сверх user_id.
++
++create table if not exists public.user_events (
++  id uuid primary key default gen_random_uuid(),
++  -- NULL для анонимных событий (посетитель ещё не вошёл в аккаунт).
++  user_id uuid references auth.users(id) on delete set null,
++  -- Анонимный идентификатор визита (случайная строка на клиенте, НЕ ПДн),
++  -- связывает события одного визита до и после логина.
++  session_id text not null,
++  event text not null,
++  -- Только путь, без query-строки (в query могут быть чувствительные параметры).
++  path text,
++  referrer_host text,
++  -- 'mobile' | 'desktop' | 'tablet' — не полный User-Agent (fingerprinting).
++  device text,
++  meta jsonb,
++  created_at timestamptz not null default now()
++);
++
++comment on table public.user_events is
++  'Внутренний журнал действий пользователей для /admin/analytics. Не хранить в meta содержимое полей форм — см. src/lib/userEvents.ts (EVENT_META_SCHEMA).';
++comment on column public.user_events.session_id is
++  'Анонимный client-side id визита (localStorage), не ПДн, ротируется раз в 30 дней.';
++
++-- Частые запросы дашборда: воронка/динамика по event+дате, лента конкретного
++-- пользователя, склейка анонимных событий визита с событиями после логина.
++create index if not exists user_events_event_created_idx
++  on public.user_events (event, created_at desc);
++create index if not exists user_events_user_created_idx
++  on public.user_events (user_id, created_at desc);
++create index if not exists user_events_session_created_idx
++  on public.user_events (session_id, created_at desc);
++create index if not exists user_events_created_idx
++  on public.user_events (created_at desc);
++
++-- RLS: таблица недоступна напрямую ни anon, ни authenticated — запись и
++-- чтение только через service_role (см. src/lib/userEvents.ts,
++-- src/app/api/events/route.ts, admin-страницы используют createAdminClient()).
++-- Так проще и безопаснее, чем городить RLS-политику на смешанный
++-- анонимный+авторизованный insert.
++alter table public.user_events enable row level security;
++
++-- Автоочистка: 152-ФЗ требует не хранить ПДн дольше необходимого для цели.
++-- session_id/user_id сами по себе не «избыточные» ПДн, но 12 месяцев —
++-- разумный потолок для поведенческой аналитики; переопределяемо позже.
++create or replace function public.purge_old_user_events() returns void
++language sql as $$
++  delete from public.user_events where created_at < now() - interval '12 months';
++$$;
++
++comment on function public.purge_old_user_events is
++  'Вызывать по расписанию (см. /api/cron/daily-maintenance) — удаляет события старше 12 месяцев.';
++
++-- Агрегация на стороне БД для дашборда /admin/analytics — тянуть все сырые
++-- строки в JS и группировать там же не масштабируется. security definer,
++-- потому что RLS на user_events закрыт для всех ролей (см. выше); функция
++-- сама ничего не принимает от клиента, кроме числа дней, и не возвращает
++-- ничего, кроме агрегатов (event/day/count) — ни user_id, ни meta наружу
++-- не идёт.
++create or replace function public.user_events_daily(p_days int default 30)
++returns table (event text, day date, count bigint)
++language sql
++security definer
++set search_path = public
++as $$
++  select event, created_at::date as day, count(*)::bigint
++  from public.user_events
++  where created_at >= now() - (p_days || ' days')::interval
++  group by event, created_at::date
++  order by day asc;
++$$;
++
++comment on function public.user_events_daily is
++  'Агрегат событий по дням за p_days для дашборда /admin/analytics. Возвращает только (event, day, count) — без user_id/meta.';
++
++revoke all on function public.user_events_daily(int) from public, anon, authenticated;
++grant execute on function public.user_events_daily(int) to service_role;
++
++revoke all on function public.purge_old_user_events() from public, anon, authenticated;
++grant execute on function public.purge_old_user_events() to service_role;
