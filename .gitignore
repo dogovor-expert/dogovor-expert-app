@@ -83,3 +83,5 @@ supabase/.temp/
 .lighthouseci/
 .squirrel*
 /reports/audit-*.md
+
+audit/fixtures/

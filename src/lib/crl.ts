@@ -11,14 +11,17 @@
 // в списке revoked?» можно без верификации подписи CRL — pkijs всё равно
 // парсит revokedCertificates.
 //
-// Осознанное решение: подпись CRL НЕ верифицируется. CRL загружается по HTTPS
-// с официального Distribution Point CA, поэтому целостность защищена TLS.
-// Полная верификация ГОСТ-подписи CRL (34.10-2012) требует node-gost-crypto и
-// публичного ключа CA — внедрять только при смене модели угроз (offline-CRL).
+// Осознанное решение: подпись CRL верифицируется best-effort. Для алгоритмов,
+// поддержанных WebCrypto (RSA/ECDSA), подпись проверяется ключом CA. Для
+// ГОСТ-подписи (34.10-2012) pkijs/WebCrypto не поддерживают проверку — такой
+// ответ НЕ считается доверенным: статус "valid" понижается до "unknown"
+// (fail-closed), чтобы нельзя было принять подменённый ответ за действительный.
+// CRL загружается только по https (см. revocation-url.ts).
 
 import * as pkijs from "pkijs";
 import type { Certificate, Time as PkijsTime } from "pkijs";
 import { fromBER } from "asn1js";
+import { assertSafeRevocationUrl, MAX_REVOCATION_RESPONSE_BYTES } from "@/lib/revocation-url";
 
 export type CrlStatus = "good" | "revoked" | "unknown";
 
@@ -84,6 +87,8 @@ export interface CrlCheckResult {
   nextUpdate?: Date;
   issuer?: string;
   revokedCount?: number;
+  /** Подпись CRL успешно проверена ключом CA (для ГОСТ — всегда false). */
+  signatureVerified?: boolean;
 }
 
 const CRL_CACHE_TTL_MS = 30 * 60 * 1000;
@@ -108,21 +113,46 @@ export interface CrlCheckOptions {
   useCache?: boolean;
   /** fetcher для тестов; по умолчанию — глобальный fetch. */
   fetchImpl?: typeof fetch;
+  /** Издательский сертификат CA — для проверки подписи CRL. */
+  issuerCert?: Certificate | null;
+  /** Пропустить проверку подписи CRL (только для юнит-тестов разбора). */
+  skipSignatureCheck?: boolean;
+  /** Разрешить http:// (только тесты/локальная разработка). */
+  allowInsecure?: boolean;
+}
+
+/** Проверка подписи CRL ключом CA (best-effort; ГОСТ → false). */
+async function verifyCrlSignature(
+  crl: pkijs.CertificateRevocationList,
+  issuerCert: Certificate | null | undefined,
+): Promise<boolean> {
+  if (!issuerCert) return false;
+  try {
+    const ok = await crl.verify({ issuerCertificate: issuerCert });
+    return ok === true;
+  } catch {
+    // ГОСТ-алгоритмы не поддержаны WebCrypto — подпись проверить нельзя.
+    return false;
+  }
 }
 
 async function fetchCrl(
   crlUrl: string,
   timeoutMs: number,
   fetchImpl: typeof fetch | undefined,
+  allowInsecure: boolean,
 ): Promise<ArrayBuffer> {
+  // SSRF/HTTPS-guard: отклоняем небезопасные схемы и внутренние адреса.
+  const safeUrl = assertSafeRevocationUrl(crlUrl, { allowInsecure });
   const f = fetchImpl ?? (globalThis.fetch);
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   let resp: Response;
   try {
-    resp = await f(crlUrl, {
+    resp = await f(safeUrl.toString(), {
       method: "GET",
       headers: { Accept: "application/pkix-crl" },
+      redirect: "error",
       signal: controller.signal,
     });
   } finally {
@@ -131,7 +161,11 @@ async function fetchCrl(
   if (!resp.ok) {
     throw new Error(`CRL HTTP status: ${resp.status}`);
   }
-  return await resp.arrayBuffer();
+  const buf = await resp.arrayBuffer();
+  if (buf.byteLength > MAX_REVOCATION_RESPONSE_BYTES) {
+    throw new Error("CRL response too large");
+  }
+  return buf;
 }
 
 function parseCrl(crlDer: ArrayBuffer): pkijs.CertificateRevocationList {
@@ -171,9 +205,12 @@ export async function checkCrl(
     if (hit && hit.expires > now) {
       const crl = parseCrl(hit.raw);
       const status = findSerial(crl, getSerialBytes(cert));
+      let mapped: CrlCheckResult["status"] =
+        status === "good" ? "valid" : status === "revoked" ? "revoked" : "unknown";
+      if (mapped === "valid" && hit.result.signatureVerified === false) mapped = "unknown";
       return {
         ...hit.result,
-        status: status === "good" ? "valid" : status === "revoked" ? "revoked" : "unknown",
+        status: mapped,
         checkedAt: new Date(now),
       };
     }
@@ -183,7 +220,7 @@ export async function checkCrl(
   const timeoutMs = options.timeoutMs ?? 5000;
   let crlDer: ArrayBuffer;
   try {
-    crlDer = await fetchCrl(crlUrl, timeoutMs, options.fetchImpl);
+    crlDer = await fetchCrl(crlUrl, timeoutMs, options.fetchImpl, options.allowInsecure === true);
   } catch (e) {
     return {
       status: "offline",
@@ -238,8 +275,18 @@ export async function checkCrl(
     ? (crl.issuer.toString?.() ?? "")
     : undefined;
 
+  // Fail-closed: без проверенной подписи CRL статус "valid" не принимаем.
+  const signatureVerified = options.skipSignatureCheck
+    ? true
+    : await verifyCrlSignature(crl, options.issuerCert);
+  let mappedStatus: CrlCheckResult["status"] =
+    status === "good" ? "valid" : status === "revoked" ? "revoked" : "unknown";
+  if (mappedStatus === "valid" && !signatureVerified) {
+    mappedStatus = "unknown";
+  }
+
   const result: CrlCheckResult = {
-    status: status === "good" ? "valid" : status === "revoked" ? "revoked" : "unknown",
+    status: mappedStatus,
     method: "CRL",
     crlUrl,
     checkedAt,
@@ -247,6 +294,10 @@ export async function checkCrl(
     nextUpdate,
     issuer: issuerName,
     revokedCount: crl.revokedCertificates?.length ?? 0,
+    signatureVerified,
+    details: signatureVerified
+      ? undefined
+      : "CRL signature not verified (algorithm unsupported or invalid) — status not trusted",
   };
 
   if (options.useCache !== false) {

@@ -106,31 +106,41 @@ export async function POST(req: NextRequest) {
     );
   }
   // MIME-allowlist: прокси пересылает файл во внутреннюю сеть (Tailscale) —
-  // пропускаем только изображения и PDF. Если клиент не прислал MIME
-  // (blob без type) — проверяем magic bytes (JPEG/PNG/WEBP/PDF).
+  // пропускаем только известные растровые изображения и PDF. SVG и прочие
+  // «image/*» запрещены (SVG может содержать скрипты/внешние ссылки).
+  // Magic bytes проверяются ВСЕГДА, независимо от присланного MIME.
   const mime = (blob.type || '').toLowerCase();
-  const isAllowedMime = mime.startsWith('image/') || mime === 'application/pdf';
   const isOpaqueMime = mime === '' || mime === 'application/octet-stream';
-  if (!isAllowedMime) {
-    if (!isOpaqueMime) {
-      return NextResponse.json(
-        { ok: false, error: 'unsupported_file_type', mime },
-        { status: 415 }
-      );
-    }
-    const head = new Uint8Array(await blob.slice(0, 12).arrayBuffer());
-    const startsWith = (sig: number[]) => sig.every((b, i) => head[i] === b);
-    const looksLikeOcrInput =
-      startsWith([0xff, 0xd8, 0xff]) ||            // JPEG
-      startsWith([0x89, 0x50, 0x4e, 0x47]) ||      // PNG
-      startsWith([0x52, 0x49, 0x46, 0x46]) ||      // WEBP (RIFF)
-      startsWith([0x25, 0x50, 0x44, 0x46]);        // PDF (%PDF)
-    if (!looksLikeOcrInput) {
-      return NextResponse.json(
-        { ok: false, error: 'unsupported_file_type', mime: mime || 'unknown' },
-        { status: 415 }
-      );
-    }
+  const ALLOWED_MIME = new Set([
+    'image/jpeg',
+    'image/jpg',
+    'image/png',
+    'image/webp',
+    'image/bmp',
+    'image/tiff',
+    'application/pdf',
+  ]);
+  if (!isOpaqueMime && !ALLOWED_MIME.has(mime)) {
+    return NextResponse.json(
+      { ok: false, error: 'unsupported_file_type', mime },
+      { status: 415 }
+    );
+  }
+  const head = new Uint8Array(await blob.slice(0, 12).arrayBuffer());
+  const startsWith = (sig: number[]) => sig.every((b, i) => head[i] === b);
+  const looksLikeOcrInput =
+    startsWith([0xff, 0xd8, 0xff]) || // JPEG
+    startsWith([0x89, 0x50, 0x4e, 0x47]) || // PNG
+    startsWith([0x52, 0x49, 0x46, 0x46]) || // WEBP (RIFF)
+    startsWith([0x25, 0x50, 0x44, 0x46]) || // PDF (%PDF)
+    startsWith([0x42, 0x4d]) || // BMP
+    startsWith([0x49, 0x49, 0x2a, 0x00]) || // TIFF little-endian
+    startsWith([0x4d, 0x4d, 0x00, 0x2a]); // TIFF big-endian
+  if (!looksLikeOcrInput) {
+    return NextResponse.json(
+      { ok: false, error: 'unsupported_file_type', mime: mime || 'unknown' },
+      { status: 415 }
+    );
   }
 
   // 3) Адрес и ключ occular-сервера
