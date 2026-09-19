@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
-import { X, MessageCircle, Bug, Headphones, ChevronLeft } from "lucide-react";
+import { X, MessageCircle, Bug, Headphones } from "lucide-react";
 import ChatPanel from "./ChatPanel";
 import { createClient } from "@/lib/supabase/client";
 
@@ -94,7 +94,7 @@ function SupportPanel({
       role="dialog"
       aria-modal="true"
       aria-labelledby="support-panel-title"
-      className="fixed bottom-[calc(4.75rem+env(safe-area-inset-bottom))] lg:bottom-4 right-4 z-50 w-[min(92vw,380px)] bg-white rounded-3xl shadow-2xl overflow-hidden border border-slate-100 pb-safe"
+      className="fixed bottom-[calc(4.75rem+3.5rem+0.75rem+env(safe-area-inset-bottom))] lg:bottom-[calc(1rem+3.5rem+0.75rem)] right-4 z-50 w-[min(92vw,380px)] bg-white rounded-3xl shadow-2xl overflow-hidden border border-slate-100 pb-safe support-panel-grow"
       onKeyDown={(e) => {
         if (e.key === "Escape") onClose();
       }}
@@ -171,7 +171,7 @@ export default function SupportLauncher() {
     void resolveVisitorId().then(setVisitorId);
   }, []);
 
-  // «Скрытый» режим читаем из localStorage после гидратации (SSR рендерит видимую вкладку).
+  // «Скрытый» режим читаем из localStorage после гидратации (SSR рендерит видимую кнопку).
   useEffect(() => {
     try {
       setHidden(localStorage.getItem(HIDDEN_KEY) === "1");
@@ -182,6 +182,7 @@ export default function SupportLauncher() {
 
   const hide = () => {
     setHidden(true);
+    setOpen(false);
     try {
       localStorage.setItem(HIDDEN_KEY, "1");
     } catch {
@@ -190,7 +191,7 @@ export default function SupportLauncher() {
   };
 
   const show = () => {
-    setHidden(false);
+    if (hidden) setHidden(false);
     try {
       localStorage.setItem(HIDDEN_KEY, "0");
     } catch {
@@ -228,6 +229,7 @@ export default function SupportLauncher() {
   useEffect(() => {
     const handler = () => {
       setTab(CHAT_ENABLED ? "chat" : "problem");
+      setHidden(false);
       setOpen(true);
     };
     window.addEventListener("open-support-chat", handler);
@@ -265,53 +267,59 @@ export default function SupportLauncher() {
     setUnread(0);
   };
 
+  const basePos = "bottom-[calc(4.75rem+env(safe-area-inset-bottom))] lg:bottom-4";
+  const showFab = !hidden;
+
   return (
     <>
-      {/* Боковая вкладка поддержки — всегда у правого края */}
-      {!open && !hidden && (
-        <div className="fixed right-0 top-1/2 -translate-y-1/2 z-40">
+      {/* FAB-кнопка поддержки — правый нижний угол (над MobileTabBar на мобиле).
+          Панель позиционируется выше кнопки — «растёт» из неё. */}
+      {showFab && (
+        <div className={`fixed right-4 z-40 ${basePos}`}>
           <button
             ref={triggerRef}
             type="button"
             onClick={() => handleOpen(CHAT_ENABLED ? "chat" : "problem")}
-            className="relative inline-flex flex-col items-center gap-2 pl-2.5 pr-3 py-4 rounded-l-2xl text-white shadow-lg shadow-brand-600/30 bg-gradient-to-b from-brand-500 to-brand-700 hover:from-brand-600 hover:to-brand-800 hover:pr-3.5 active:pr-2.5 transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400 focus-visible:ring-offset-1"
-            aria-label="Поддержка"
+            className="relative inline-flex items-center justify-center w-14 h-14 rounded-full text-white shadow-lg shadow-brand-600/30 bg-gradient-to-b from-brand-500 to-brand-700 hover:from-brand-600 hover:to-brand-800 hover:scale-105 active:scale-95 transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400 focus-visible:ring-offset-1"
+            aria-label="Открыть чат поддержки"
           >
-            <span className="relative inline-flex items-center justify-center w-7 h-7 rounded-full bg-white/15 ring-1 ring-white/25">
-              <Headphones className="w-4 h-4" />
-            </span>
-            <span className="text-[11px] font-semibold tracking-wide [writing-mode:vertical-rl] rotate-180">
-              Поддержка
-            </span>
-            {unread > 0 && (
-              <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 text-[11px] font-bold bg-red-500 text-white rounded-full ring-2 ring-white/70">
-                {unread > 9 ? "9+" : unread}
-              </span>
+            <Headphones className="w-6 h-6" aria-hidden />
+            {unread > 0 && !open && (
+              <>
+                <span className="absolute inset-0 rounded-full support-fab-pulse" aria-hidden />
+                <span className="inline-flex items-center justify-center min-w-[20px] h-[20px] px-1 text-[11px] font-bold bg-red-500 text-white rounded-full ring-2 ring-white/70 absolute -top-1 -right-1">
+                  {unread > 9 ? "9+" : unread}
+                </span>
+              </>
             )}
           </button>
           <button
             type="button"
             onClick={hide}
-            className="absolute -top-1.5 -left-1.5 inline-flex items-center justify-center w-6 h-6 rounded-full bg-white text-slate-500 border border-slate-200 shadow-md transition hover:text-slate-800 hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400"
+            className="absolute -top-1.5 -left-1.5 inline-flex items-center justify-center w-7 h-7 rounded-full bg-white text-slate-500 border border-slate-200 shadow-md transition hover:text-slate-800 hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400"
             aria-label="Скрыть кнопку поддержки"
             title="Скрыть"
           >
-            <X className="w-3.5 h-3.5" />
+            <X className="w-4 h-4" />
           </button>
         </div>
       )}
 
-      {/* Узкая ручка на краю — вернуть кнопку обратно */}
-      {!open && hidden && (
+      {/* Точка на краю — когда поддержку свернули: лёгкий доступ, бейдж не теряется */}
+      {!showFab && (
         <button
           ref={hiddenRef}
           type="button"
           onClick={show}
-          className="fixed right-0 top-1/2 -translate-y-1/2 z-40 inline-flex items-center justify-center h-16 w-4 rounded-l-xl bg-brand-500/50 backdrop-blur-sm shadow-md hover:bg-brand-600/80 hover:w-5 transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400 focus-visible:ring-offset-1"
+          className={`fixed right-3 z-40 inline-flex items-center justify-center w-7 h-7 rounded-full bg-brand-500/70 backdrop-blur-sm shadow-md hover:bg-brand-600/90 hover:scale-110 transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400 focus-visible:ring-offset-1 ${basePos}`}
           aria-label="Показать кнопку поддержки"
           title="Показать поддержку"
         >
-          <ChevronLeft className="w-3 h-3 text-white" />
+          {unread > 0 && (
+            <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 text-[10px] font-bold bg-red-500 text-white rounded-full ring-2 ring-white/70 absolute -top-2 -right-2">
+              {unread > 9 ? "9+" : unread}
+            </span>
+          )}
         </button>
       )}
 
