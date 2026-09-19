@@ -3,10 +3,17 @@ import type { Metadata } from "next";
 import {
   Shield, FileText, Camera, Car, Coins, Home as HomeIcon, Briefcase, Users, FileStack,
   ArrowRight, Sparkles, FileCheck, FileLock, ShieldCheck, Download, ChevronRight,
-  Clock, Lock, Star, HelpCircle, ScanLine, BadgeCheck,
+  Clock, Lock, HelpCircle, ScanLine, BadgeCheck,
 } from "lucide-react";
 import HomeTemplateGrid from "@/components/HomeTemplateGrid";
 import MarketWeatherStrip from "@/components/home/MarketWeatherStrip";
+import HeroDocument from "@/components/home/HeroDocument";
+import LiveActivity from "@/components/home/LiveActivity";
+import QuickPick from "@/components/home/QuickPick";
+import TrustStrip from "@/components/home/TrustStrip";
+import AutoFillDemo from "@/components/home/AutoFillDemo";
+import StickyCta from "@/components/home/StickyCta";
+import ResumeDraft from "@/components/home/ResumeDraft";
 import { TEMPLATE_META_LITE } from "@/data/templatesMetaLite";
 
 export const revalidate = 3600;
@@ -79,6 +86,7 @@ export default function HomePage() {
       <section className="relative overflow-hidden">
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(500px_260px_at_10%_0%,rgba(37,99,235,0.10),transparent_60%),radial-gradient(460px_280px_at_92%_10%,rgba(124,58,237,0.10),transparent_60%)]" />
         <div className="relative mx-auto max-w-7xl px-4 pt-10 sm:px-6 sm:pt-14">
+          <ResumeDraft />
           <div className="grid items-center gap-10 lg:grid-cols-[1fr_400px] lg:gap-11">
             <div>
               <span className="inline-flex items-center gap-2 rounded-full border border-brand-100 bg-white px-3.5 py-1.5 text-xs font-semibold text-slate-700 shadow-soft">
@@ -109,53 +117,41 @@ export default function HomePage() {
                   Смотреть шаблоны
                 </Link>
               </div>
-              <p className="mt-4 text-xs text-gray-500">
-                Без карты · без подписок · данные не покидают браузер
-              </p>
+              <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2">
+                <a
+                  href="/samples/primernaya-raspiska.pdf"
+                  download
+                  className="inline-flex items-center gap-1.5 text-sm font-semibold text-brand-700 transition-colors hover:text-brand-800"
+                >
+                  <Download className="h-4 w-4" />
+                  Скачать пример PDF
+                </a>
+                <p className="text-xs text-gray-500">
+                  Без карты · без подписок · данные не покидают браузер
+                </p>
+              </div>
+              <div className="mt-5">
+                <QuickPick />
+              </div>
             </div>
 
-            {/* Social proof card */}
-            <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-dark-900 to-dark-800 p-6 text-white shadow-elevated">
-              <div className="pointer-events-none absolute -right-14 -top-16 h-52 w-52 rounded-full bg-[radial-gradient(circle,rgba(124,58,237,0.5),transparent_70%)]" />
-              <div className="relative">
-                <div className="mb-3 flex gap-0.5 text-amber-400" aria-label="Оценка 5 из 5">
-                  {[0, 1, 2, 3, 4].map((i) => (
-                    <Star key={i} className="h-4 w-4 fill-current" />
-                  ))}
-                </div>
-                <h2 className="text-base font-bold">«Сделал расписку за 2 минуты»</h2>
-                <p className="mt-0.5 text-[13px] text-slate-400">Алексей, Москва</p>
-                <blockquote className="mt-4 border-l-2 border-purple-500 pl-3 text-[13.5px] leading-relaxed text-slate-200">
-                  Обычно тратил вечер на поиск шаблона. Здесь просто выбрал, заполнил — и файл готов. Без регистрации.
-                </blockquote>
-                <div className="mt-4 flex items-center gap-3 border-t border-white/10 pt-4 text-xs text-slate-400">
-                  <div className="flex">
-                    {[
-                      ["М", "#2563eb"],
-                      ["А", "#7c3aed"],
-                      ["К", "#059669"],
-                      ["+", "#f59e0b"],
-                    ].map(([ch, bg], i) => (
-                      <span
-                        key={ch}
-                        className="grid h-6 w-6 place-items-center rounded-full border-2 border-dark-900 text-[10px] font-bold text-white"
-                        style={{ background: bg, marginLeft: i === 0 ? 0 : -8 }}
-                      >
-                        {ch}
-                      </span>
-                    ))}
-                  </div>
-                  <span>
-                    <b className="text-white">12 480</b> документов создано за месяц
-                  </span>
-                </div>
-              </div>
+            {/* Анимированный документ вместо карточки-отзыва */}
+            <div className="flex justify-center lg:justify-end">
+              <HeroDocument />
             </div>
           </div>
 
           {/* ============ WIDGET STRIP (погода + курсы + конвертер) ============ */}
           <div className="mt-6">
             <MarketWeatherStrip />
+          </div>
+
+          {/* ============ ЖИВАЯ ЛЕНТА + TRUST ============ */}
+          <div className="mt-4">
+            <LiveActivity />
+          </div>
+          <div className="mt-4">
+            <TrustStrip />
           </div>
         </div>
       </section>
@@ -241,6 +237,46 @@ export default function HomePage() {
 
       {/* ======================= TEMPLATES ======================= */}
       <HomeTemplateGrid />
+
+      {/* ======================= MINI DEMO ======================= */}
+      <section className="mx-auto max-w-7xl px-4 pt-14 sm:px-6 sm:pt-16">
+        <div className="grid items-center gap-10 overflow-hidden rounded-3xl border border-gray-100 bg-white p-6 shadow-soft sm:p-10 lg:grid-cols-2">
+          <div>
+            <span className="text-[11px] font-bold uppercase tracking-[0.12em] text-brand-600">Наглядно</span>
+            <h2 className="mt-1 text-3xl font-extrabold leading-tight tracking-tight text-gray-900">
+              Заполнение за 30 секунд
+            </h2>
+            <p className="mt-3 text-sm leading-relaxed text-gray-600">
+              Отвечаете на понятные вопросы — документ собирается на глазах. Никаких юридических
+              формулировок, только то, что вы знаете.
+            </p>
+            <ul className="mt-6 space-y-3">
+              {[
+                "Поля с подсказками и автозаполнением",
+                "Проверка обязательных данных перед печатью",
+                "Готовый файл в PDF или Word сразу",
+              ].map((t) => (
+                <li key={t} className="flex items-start gap-2.5 text-sm text-gray-700">
+                  <span className="mt-0.5 grid h-5 w-5 flex-none place-items-center rounded-md bg-emerald-50 text-emerald-600">
+                    <FileCheck className="h-3.5 w-3.5" />
+                  </span>
+                  {t}
+                </li>
+              ))}
+            </ul>
+            <Link
+              href="/builder"
+              className="mt-7 inline-flex items-center gap-2 rounded-xl bg-brand-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition-all hover:-translate-y-0.5 hover:bg-brand-700 active:scale-[0.98]"
+            >
+              Попробовать сейчас
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+          </div>
+          <div className="rounded-2xl bg-gradient-to-br from-slate-50 to-brand-50/40 p-6 sm:p-8">
+            <AutoFillDemo />
+          </div>
+        </div>
+      </section>
 
       {/* ======================= HOW IT WORKS (timeline) ======================= */}
       <section className="mx-auto max-w-7xl px-4 pt-14 sm:px-6 sm:pt-16">
@@ -465,6 +501,8 @@ export default function HomePage() {
           </div>
         </div>
       </footer>
+
+      <StickyCta />
     </div>
   );
 }
