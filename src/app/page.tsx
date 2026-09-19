@@ -121,7 +121,7 @@ export default function HomePage() {
                 <a
                   href="/samples/primernaya-raspiska.pdf"
                   download
-                  className="inline-flex items-center gap-1.5 text-sm font-semibold text-brand-700 transition-colors hover:text-brand-800"
+                  className="sample-link inline-flex items-center gap-1.5 rounded-lg border border-brand-100 bg-brand-50/60 px-3 py-1.5 text-sm font-semibold text-brand-700 transition-all hover:-translate-y-0.5 hover:border-brand-300 hover:bg-brand-50 hover:text-brand-800 hover:shadow-sm"
                 >
                   <Download className="h-4 w-4" />
                   Скачать пример PDF

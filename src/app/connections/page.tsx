@@ -38,6 +38,7 @@ interface ProviderStatus {
   connected: boolean;
   userInfo?: { name?: string; email?: string };
   clientId: string;
+  configured?: boolean;
   connecting?: boolean;
   error?: string;
 }
@@ -48,7 +49,7 @@ export default function ConnectionsPage() {
   const [loading, setLoading] = useState(true);
   const [vaultReady, setVaultReady] = useState(false);
   const [exporting, setExporting] = useState<CloudProviderId | null>(null);
-  const [exportResult, setExportResult] = useState<{ success: number; failed: string[] } | null>(null);
+  const [exportResult, setExportResult] = useState<{ providerId: CloudProviderId; success: number; failed: string[] } | null>(null);
   const [importing, setImporting] = useState<CloudProviderId | null>(null);
   const [importFiles, setImportFiles] = useState<Array<{ name: string; path: string; size: number; modified: string }> | null>(null);
   const [importPassphrase, setImportPassphrase] = useState("");
@@ -71,10 +72,10 @@ export default function ConnectionsPage() {
     const connected = await getConnectedProviders();
     const connectedMap = new Map(connected.map((c) => [c.id, c]));
     const newStatuses: ProviderStatus[] = providers
-      // Скрываем провайдеров без NEXT_PUBLIC_*_CLIENT_ID: они не смогут
-      // пройти OAuth и оставят пользователя с ошибкой «app not configured»
-      // от провайдера, что выглядит как баг сайта.
-      .filter((p) => isProviderConfigured(p.id) || connectedMap.has(p.id))
+      // Показываем ВСЕ провайдеры. Раньше список скрывал провайдеров без
+      // NEXT_PUBLIC_*_CLIENT_ID, из-за чего на проде без env-переменных
+      // страница была полностью пустой. Пользователь может ввести свой
+      // Client ID прямо здесь (localStorage) и подключиться — env не обязателен.
       .map((p) => {
         const cfg = getConfig(p.id);
         const conn = connectedMap.get(p.id);
@@ -85,6 +86,7 @@ export default function ConnectionsPage() {
           connected: !!conn,
           userInfo: conn?.userInfo,
           clientId: cfg.clientId,
+          configured: isProviderConfigured(p.id),
         };
       });
     setStatuses(newStatuses);
@@ -126,11 +128,12 @@ export default function ConnectionsPage() {
         { format: "vault-backup", fileName, remotePath: folderPath }
       );
       setExportResult({
+        providerId: id,
         success: backup.documents.length,
         failed: [],
       });
     } catch (e) {
-      setExportResult({ success: 0, failed: [(e as Error).message] });
+      setExportResult({ providerId: id, success: 0, failed: [(e as Error).message] });
     } finally {
       setExporting(null);
     }
@@ -253,6 +256,13 @@ export default function ConnectionsPage() {
                     </div>
                   </div>
 
+                  {!st.configured && (
+                    <p className="rounded-lg border border-amber-100 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+                      Провайдер не настроен на сервере, но вы можете ввести свой Client ID ниже —
+                      подключение работает и без серверной настройки.
+                    </p>
+                  )}
+
                   <SetupGuide providerId={st.id} clientIdFilled={!!st.clientId} error={st.error} />
 
                   <Button
@@ -337,7 +347,7 @@ export default function ConnectionsPage() {
             )}
           </div>
 
-          {exportResult && st.id === statuses.find((s) => s.connected)?.id && (
+          {exportResult && exportResult.providerId === st.id && (
             <div className="p-4 bg-gray-50 border-t border-gray-100">
               <div className="flex items-center gap-2 text-sm">
                 <CheckCircle className="w-4 h-4 text-emerald-500" />
