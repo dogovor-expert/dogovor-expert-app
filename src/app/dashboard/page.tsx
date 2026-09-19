@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { Badge } from "@/components/ui/Badge";
 import { createClient } from "@/lib/supabase/client";
 import { getAllDrafts } from "@/lib/autosave";
@@ -151,21 +152,15 @@ export default function DashboardPage() {
         </div>
 
         {serverDocs.length === 0 ? (
-          <div className="text-center py-10">
-            <div className="w-14 h-14 rounded-2xl bg-gray-50 flex items-center justify-center mx-auto mb-3">
-              <FolderOpen className="w-7 h-7 text-gray-300" />
-            </div>
-            <p className="text-sm font-medium text-gray-800 mb-1">Здесь будут ваши договоры</p>
-            <p className="text-xs text-gray-600 mb-4 max-w-sm mx-auto">
-              Создайте договор в конструкторе — он сразу появится в списке и будет сохранён в аккаунте
-            </p>
-            <Link href="/builder">
-              <Button variant="outline" size="sm">
-                <Plus className="w-3.5 h-3.5" />
-                Создать первый документ
-              </Button>
-            </Link>
-          </div>
+          <EmptyState
+            bare
+            compact
+            icon={FolderOpen}
+            title="Здесь будут ваши договоры"
+            description="Создайте документ в конструкторе — он сразу появится в списке и сохранится в аккаунте."
+            steps={["Выберите шаблон", "Заполните поля", "Скачайте PDF"]}
+            action={{ label: "Создать документ", href: "/builder" }}
+          />
         ) : (
           <div className="divide-y divide-gray-50">
             {serverDocs.slice(0, 5).map((d) => (

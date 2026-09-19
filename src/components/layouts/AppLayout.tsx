@@ -10,11 +10,12 @@ import {
   FileText, Activity, Calculator,
   FolderOpen, Files, Trash2, CreditCard,
   Settings, HelpCircle, Menu, X, ChevronDown, Shield, Home, LogIn, Shuffle, Newspaper,
-  HardDrive, Download, Cookie
+  HardDrive, Download, Cookie, Moon, Sun
 } from "lucide-react";
 import HeaderSearch from "@/components/search/HeaderSearch";
 import { CookieBanner } from "@/components/cookie/CookieBanner";
 import { useCookieConsent } from "@/hooks/useCookieConsent";
+import { useSidebarTheme } from "@/lib/hooks/useSidebarTheme";
 import PromoPill from "@/components/billing/PromoPill";
 import SupportLauncher from "@/components/support/SupportLauncher";
 import NotificationBell from "@/components/layout/NotificationBell";
@@ -64,6 +65,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   // (до этого есть first-visit баннер снизу).
   const { isReady: cookieReady } = useCookieConsent();
   const showCookieIcon = cookieReady;
+  const { isDark: sidebarDark, toggle: toggleSidebarTheme } = useSidebarTheme();
   const pathname = usePathname();
   // Cookies-баннер вынесен в <CookieBanner/>: использует useSyncExternalStore,
   // не зависит от pathname, не пересоздаётся при навигации, не дёргает setState
@@ -204,7 +206,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
 
   const renderNav = (items: NavItem[], title?: string) => (
     <div className="mb-4">
-      {title && <p className="text-[10px] font-bold text-slate-600 uppercase tracking-widest px-3 mb-2">{title}</p>}
+      {title && <p className={`text-[10px] font-bold uppercase tracking-widest px-3 mb-2 ${sidebarDark ? "text-slate-500" : "text-slate-600"}`}>{title}</p>}
       {items.map((item, i) => {
         const active = isActive(item.href);
         return (
@@ -214,14 +216,18 @@ export default function AppLayout({ children }: { children: ReactNode }) {
             onClick={() => setOpen(false)}
             className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 mb-0.5 ${
               active
-                ? "bg-brand-50 text-brand-700"
-                : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                ? sidebarDark
+                  ? "bg-brand-500/20 text-brand-300"
+                  : "bg-brand-50 text-brand-700"
+                : sidebarDark
+                  ? "text-slate-400 hover:bg-white/5 hover:text-white"
+                  : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
             }`}
           >
             <span className="w-5 h-5 flex items-center justify-center">{item.icon}</span>
             <span>{item.label}</span>
             {item.badge && (
-              <span className="ml-auto px-2 py-0.5 text-xs rounded-full font-medium bg-brand-100 text-brand-700">
+              <span className={`ml-auto px-2 py-0.5 text-xs rounded-full font-medium ${sidebarDark ? "bg-brand-500/25 text-brand-200" : "bg-brand-100 text-brand-700"}`}>
                 {item.badge}
               </span>
             )}
@@ -239,20 +245,22 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   return (
     <div className="flex h-screen overflow-hidden bg-gray-50">
       {/* Sidebar: on mobile it is removed from DOM when closed (hidden) to avoid horizontal overflow; on desktop it is always in flow */}
-      <aside className={`z-30 w-64 bg-white border-r border-gray-100 flex flex-col ${
+      <aside className={`z-30 w-64 flex flex-col border-r ${
+        sidebarDark ? "bg-dark-900 border-dark-800" : "bg-white border-gray-100"
+      } ${
         open
           ? "fixed inset-y-0 left-0 shadow-xl lg:static lg:shadow-none"
           : "hidden lg:flex lg:static"
       }`}>
-        <div className="flex items-center justify-between h-16 px-6 border-b border-gray-100 flex-shrink-0">
+        <div className={`flex items-center justify-between h-16 px-6 border-b flex-shrink-0 ${sidebarDark ? "border-dark-800" : "border-gray-100"}`}>
           <Link href="/" className="flex items-center gap-2.5 group">
             <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-brand-500 to-purple-600 flex items-center justify-center text-white text-sm font-bold shadow-sm">
               D
             </div>
-            <span className="font-semibold text-gray-900 group-hover:text-brand-600 transition-colors">Dogovor.expert</span>
+            <span className={`font-semibold group-hover:text-brand-500 transition-colors ${sidebarDark ? "text-white" : "text-gray-900"}`}>Dogovor.expert</span>
           </Link>
-          <button onClick={() => setOpen(false)} className="lg:hidden p-2.5 hover:bg-gray-100 rounded-lg" aria-label="Закрыть меню навигации">
-            <X className="w-5 h-5 text-gray-600" />
+          <button onClick={() => setOpen(false)} className={`lg:hidden p-2.5 rounded-lg ${sidebarDark ? "hover:bg-white/10" : "hover:bg-gray-100"}`} aria-label="Закрыть меню навигации">
+            <X className={`w-5 h-5 ${sidebarDark ? "text-slate-300" : "text-gray-600"}`} />
           </button>
         </div>
 
@@ -262,8 +270,8 @@ export default function AppLayout({ children }: { children: ReactNode }) {
             onClick={() => setOpen(false)}
             className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 mb-0.5 ${
               isActive("/") && pathname === "/"
-                ? "bg-brand-50 text-brand-700"
-                : "text-gray-800 hover:bg-gray-50 hover:text-gray-900"
+                ? sidebarDark ? "bg-brand-500/20 text-brand-300" : "bg-brand-50 text-brand-700"
+                : sidebarDark ? "text-slate-300 hover:bg-white/5 hover:text-white" : "text-gray-800 hover:bg-gray-50 hover:text-gray-900"
             }`}
           >
             <span className="w-5 h-5 flex items-center justify-center"><Home className="w-5 h-5" /></span>
@@ -274,8 +282,8 @@ export default function AppLayout({ children }: { children: ReactNode }) {
             onClick={() => setOpen(false)}
             className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 mb-3 ${
               isActive("/builder")
-                ? "bg-brand-50 text-brand-700"
-                : "text-gray-800 hover:bg-gray-50 hover:text-gray-900"
+                ? sidebarDark ? "bg-brand-500/20 text-brand-300" : "bg-brand-50 text-brand-700"
+                : sidebarDark ? "text-slate-300 hover:bg-white/5 hover:text-white" : "text-gray-800 hover:bg-gray-50 hover:text-gray-900"
             }`}
           >
             <span className="w-5 h-5 flex items-center justify-center"><FileText className="w-5 h-5" /></span>
@@ -286,48 +294,83 @@ export default function AppLayout({ children }: { children: ReactNode }) {
             onClick={() => setOpen(false)}
             className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 mb-3 ${
               isActive("/blog")
-                ? "bg-brand-50 text-brand-700"
-                : "text-gray-800 hover:bg-gray-50 hover:text-gray-900"
+                ? sidebarDark ? "bg-brand-500/20 text-brand-300" : "bg-brand-50 text-brand-700"
+                : sidebarDark ? "text-slate-300 hover:bg-white/5 hover:text-white" : "text-gray-800 hover:bg-gray-50 hover:text-gray-900"
             }`}
           >
             <span className="w-5 h-5 flex items-center justify-center"><Newspaper className="w-5 h-5" /></span>
             <span>Блог</span>
           </Link>
-          <div className="border-t border-gray-100 pt-4" />
+          <div className={`border-t pt-4 ${sidebarDark ? "border-dark-800" : "border-gray-100"}`} />
           {renderNav(toolNav, "Инструменты")}
-          <div className="border-t border-gray-100 pt-4 mb-4" />
+          <div className={`border-t pt-4 mb-4 ${sidebarDark ? "border-dark-800" : "border-gray-100"}`} />
           {renderNav(docNav, "Документы")}
-          <div className="border-t border-gray-100 pt-4 mb-4" />
+          <div className={`border-t pt-4 mb-4 ${sidebarDark ? "border-dark-800" : "border-gray-100"}`} />
           {renderNav(accountNav, "Аккаунт")}
         </nav>
 
-        <div className="flex-shrink-0 border-t border-gray-100 p-4">
+        <div className={`flex-shrink-0 border-t p-4 ${sidebarDark ? "border-dark-800" : "border-gray-100"}`}>
+          <button
+            type="button"
+            onClick={toggleSidebarTheme}
+            aria-label={sidebarDark ? "Светлая тема меню" : "Тёмная тема меню"}
+            title={sidebarDark ? "Светлая тема меню" : "Тёмная тема меню"}
+            className={`w-full flex items-center justify-between px-3 py-2.5 mb-2 rounded-xl text-xs font-medium transition-colors ${
+              sidebarDark
+                ? "bg-white/5 text-slate-300 hover:bg-white/10"
+                : "bg-gray-50 text-gray-600 hover:bg-gray-100"
+            }`}
+          >
+            <span className="flex items-center gap-2">
+              {sidebarDark ? <Sun className="w-3.5 h-3.5" /> : <Moon className="w-3.5 h-3.5" />}
+              {sidebarDark ? "Светлое меню" : "Тёмное меню"}
+            </span>
+            <span className={`relative inline-flex h-4 w-7 items-center rounded-full transition-colors ${sidebarDark ? "bg-brand-500" : "bg-gray-300"}`}>
+              <span className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${sidebarDark ? "translate-x-3.5" : "translate-x-0.5"}`} />
+            </span>
+          </button>
           <Link
             href="/billing"
-            className="flex items-center justify-between px-3 py-2.5 mb-2 rounded-xl bg-gradient-to-r from-brand-50 to-purple-50 hover:from-brand-100 transition-colors"
+            className={`flex items-center justify-between px-3 py-2.5 mb-2 rounded-xl transition-colors ${
+              sidebarDark
+                ? "bg-gradient-to-r from-brand-500/15 to-purple-500/15 hover:from-brand-500/25"
+                : "bg-gradient-to-r from-brand-50 to-purple-50 hover:from-brand-100"
+            }`}
           >
             <div className="flex items-center gap-2">
-              <CreditCard className="w-3.5 h-3.5 text-brand-600" />
-              <span className="text-xs font-medium text-brand-700">Бесплатный план</span>
+              <CreditCard className={`w-3.5 h-3.5 ${sidebarDark ? "text-brand-300" : "text-brand-600"}`} />
+              <span className={`text-xs font-medium ${sidebarDark ? "text-brand-200" : "text-brand-700"}`}>Бесплатный план</span>
             </div>
             {draftCount > 0 && (
-              <span className="text-[10px] text-brand-500">{draftCount} док.</span>
+              <span className={`text-[10px] ${sidebarDark ? "text-brand-300" : "text-brand-500"}`}>{draftCount} док.</span>
             )}
           </Link>
-          <div className="mt-3 px-3 py-2 bg-gradient-to-r from-brand-50 to-purple-50 rounded-xl">
+          <div className={`mt-3 px-3 py-2 rounded-xl bg-gradient-to-r ${sidebarDark ? "from-brand-500/15 to-purple-500/15" : "from-brand-50 to-purple-50"}`}>
             <div className="flex items-center gap-2">
-              <Shield className="w-3.5 h-3.5 text-brand-600" />
-              <span className="text-[10px] font-medium text-brand-700">152-ФЗ · документы в браузере, OCR — по согласию</span>
+              <Shield className={`w-3.5 h-3.5 ${sidebarDark ? "text-brand-300" : "text-brand-600"}`} />
+              <span className={`text-[10px] font-medium ${sidebarDark ? "text-brand-200" : "text-brand-700"}`}>152-ФЗ · документы в браузере, OCR — по согласию</span>
             </div>
           </div>
           <div className="mt-3 flex flex-wrap gap-x-3 gap-y-2 px-1">
-            <Link href="/privacy" className="text-[11px] leading-6 text-gray-600 hover:text-brand-600 transition-colors underline underline-offset-2 hover:no-underline">Политика</Link>
-            <Link href="/terms" className="text-[11px] leading-6 text-gray-600 hover:text-brand-600 transition-colors underline underline-offset-2 hover:no-underline">Соглашение</Link>
-            <Link href="/about" className="text-[11px] leading-6 text-gray-600 hover:text-brand-600 transition-colors underline underline-offset-2 hover:no-underline">О сервисе</Link>
-            <Link href="/legal/trademark" className="text-[11px] leading-6 text-gray-600 hover:text-brand-600 transition-colors underline underline-offset-2 hover:no-underline">Товарный знак</Link>
-            <Link href="/contacts" className="text-[11px] leading-6 text-gray-600 hover:text-brand-600 transition-colors underline underline-offset-2 hover:no-underline">Контакты</Link>
+            {[
+              ["/privacy", "Политика"],
+              ["/terms", "Соглашение"],
+              ["/about", "О сервисе"],
+              ["/legal/trademark", "Товарный знак"],
+              ["/contacts", "Контакты"],
+            ].map(([href, label]) => (
+              <Link
+                key={href}
+                href={href}
+                className={`text-[11px] leading-6 underline underline-offset-2 hover:no-underline transition-colors ${
+                  sidebarDark ? "text-slate-400 hover:text-white" : "text-gray-600 hover:text-brand-600"
+                }`}
+              >
+                {label}
+              </Link>
+            ))}
           </div>
-          <p className="mt-2 px-1 text-[10px] leading-4 text-gray-500">
+          <p className={`mt-2 px-1 text-[10px] leading-4 ${sidebarDark ? "text-slate-500" : "text-gray-500"}`}>
             © 2024–{new Date().getFullYear()} Dogovor-Эксперт™. Все права защищены.
           </p>
         </div>
