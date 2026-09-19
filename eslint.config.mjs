@@ -15,6 +15,8 @@ export default [
       'coverage/**',
       'audit/**',
       'e2e/**',
+      'test-results/**',
+      'playwright-report/**',
       '.opencode/**',
       'next-env.d.ts',
       'fix-escape.js',
