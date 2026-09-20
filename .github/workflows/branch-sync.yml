@@ -1,0 +1,46 @@
+name: Branch sync (master ← production)
+
+# Инвариант: `production` — это только деплой-ветка, она должна быть fast-forward от `master`.
+# Если кто-то (или инструмент) закоммитил напрямую в `production`, этот workflow
+# автоматически подтягивает `master` до `production`, чтобы default-ветка не отставала.
+#
+# Внимание: workflow срабатывает от файла, лежащего в ветке, куда идёт push. То есть
+# после первого деплоя (push в production) он становится активным.
+
+on:
+  push:
+    branches: [production]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: branch-sync
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Fast-forward master to production
+        run: |
+          set -e
+          git fetch origin master production
+          echo "master:    $(git rev-parse --short origin/master)"
+          echo "production:$(git rev-parse --short origin/production)"
+          if [ "$(git rev-parse origin/master)" = "$(git rev-parse origin/production)" ]; then
+            echo "✅ master и production уже синхронизированы."
+            exit 0
+          fi
+          if git merge-base --is-ancestor origin/master origin/production; then
+            echo "→ production впереди master: fast-forward master."
+            git push origin origin/production:refs/heads/master
+            echo "✅ master обновлён до $(git rev-parse --short origin/production)."
+          else
+            echo "::error::master и production разошлись (не fast-forward). Внесите правки в master и запушьте master:production, либо слейте production в master вручную."
+            exit 1
+          fi

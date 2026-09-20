@@ -2,6 +2,29 @@
 
 > Вынесено из AGENTS.md (19.08.2026). Актуализировано под VDS 2026-09-18: прод переехал с Vercel на VDS/CapRover.
 
+## ⚠️ Инвариант веток (master ↔ production)
+
+Деплой идёт из ветки `production`, но **источник правды — `master`**. Соблюдайте правило:
+
+- Все правки вносите в **`master`**; PR не используются.
+- Деплой — только fast-forward: `git push origin master:production`.
+- Ветка `production` **никогда не должна опережать `master`**. Если `production` ушла вперёд — значит кто-то коммитил напрямую в `production`; это ошибка.
+- Проверка: `git fetch && git rev-list --left-right --count origin/master...origin/production` → должно быть `0  N` (master не позади; `master` впереди — это нормально, «деплой ещё не выкачен»).
+
+Если ветки разошлись:
+
+```bash
+git fetch origin
+# master — предок production → безопасный fast-forward default-ветки:
+git push origin origin/production:master
+# если у master есть уникальные коммиты — слить production в master:
+# git checkout master && git merge origin/production
+```
+
+Автоматически это чинит workflow **`.github/workflows/branch-sync.yml`**: на каждый push в `production` он fast-forward-ит `master`, а при реальном расхождении падает с понятной ошибкой.
+
+**Важно для агентов и инструментов:** резюме и другие новые разделы живут в `production`; если работаете из `master`, сначала синхронизируйте его (`git pull`), иначе файлов не увидите.
+
 ## Актуальный флоу (2026-09)
 
 **Прод живёт на VDS:**

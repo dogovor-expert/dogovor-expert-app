@@ -22,7 +22,7 @@
 - Деплой: VDS (CapRover, `82.146.35.220`, панель `captain.vds.dogovor.expert`, прод https://dogovor.expert)
 - Шаблонов: 369, PRO-подписка через YooKassa (акция 299 ₽ до 2026-09-20)
 - Аналитика: Яндекс.Метрика (consent-gated), Sentry
-- Ветка: `master` (PR не используются)
+- Ветка: `master` — источник правды (PR не используются). Ветка `production` — только деплой: она обязана быть fast-forward от `master` и не должна опережать её; авто-синхронизация — `.github/workflows/branch-sync.yml`, подробности — `docs/DEPLOY.md` → «Инвариант веток»
 - Секреты: `.env.production` (.env.production.local) для локального `next start`; prod-окружение — environment variables приложения CapRover (не коммитить `.env*`)
 
 ## Setup commands
