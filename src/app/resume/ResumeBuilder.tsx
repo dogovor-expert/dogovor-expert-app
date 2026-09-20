@@ -16,6 +16,9 @@ import {
   Maximize2,
   Check,
   Printer,
+  ChevronRight,
+  GripVertical,
+  ImageIcon,
 } from "lucide-react";
 import { RESUME_CSS } from "@/lib/resume/resumeCss";
 import { BUILDER_CSS } from "@/lib/resume/builderCss";
@@ -73,9 +76,9 @@ export default function ResumeBuilder() {
   const [data, setData] = useState<ResumeData>(SAMPLE_RESUME);
   const [tpl, setTpl] = useState<TemplateId>("classic");
   const [presetKey, setPresetKey] = useState("");
-  const [open, setOpen] = useState<Record<SectionId, boolean>>({
-    prof: true, user: false, sum: false, exp: false, edu: false, sk: false, lg: false,
-  });
+  const [openSec, setOpenSec] = useState<SectionId | null>("user");
+  const [undo, setUndo] = useState<{ label: string; restore: () => void } | null>(null);
+  const undoTimer = useRef<number | null>(null);
   const [drawer, setDrawer] = useState(false);
   const [filter, setFilter] = useState("all");
   const [qOpen, setQOpen] = useState(false);
@@ -283,6 +286,33 @@ export default function ResumeBuilder() {
     }, 500);
   };
 
+  const showUndo = (label: string, restore: () => void) => {
+    setUndo({ label, restore });
+    if (undoTimer.current) window.clearTimeout(undoTimer.current);
+    undoTimer.current = window.setTimeout(() => setUndo(null), 6000);
+  };
+  const deleteExp = (i: number) => {
+    const item = data.experience[i];
+    setData((d) => ({ ...d, experience: d.experience.filter((_, idx) => idx !== i) }));
+    showUndo("Запись об опыте удалена", () =>
+      setData((d) => { const a = [...d.experience]; a.splice(i, 0, item); return { ...d, experience: a }; })
+    );
+  };
+  const deleteEdu = (i: number) => {
+    const item = data.education[i];
+    setData((d) => ({ ...d, education: d.education.filter((_, idx) => idx !== i) }));
+    showUndo("Запись об образовании удалена", () =>
+      setData((d) => { const a = [...d.education]; a.splice(i, 0, item); return { ...d, education: a }; })
+    );
+  };
+  const deleteLang = (i: number) => {
+    const item = data.languages[i];
+    setData((d) => ({ ...d, languages: d.languages.filter((_, idx) => idx !== i) }));
+    showUndo("Язык удалён", () =>
+      setData((d) => { const a = [...d.languages]; a.splice(i, 0, item); return { ...d, languages: a }; })
+    );
+  };
+
   // Скачивание в DOC (Word-совместимый HTML): редактируемый документ.
   const exportDoc = () => {
     const html = buildResumeDocHtml(data, tpl);
@@ -366,16 +396,21 @@ export default function ResumeBuilder() {
       <div className="rvb-app" ref={appRef} style={appH ? { height: appH } : undefined}>
         {/* Форма */}
         <aside className={`rvb-panel ${tab === "edit" ? "mobile-on" : ""}`}>
+          <div className="rvb-panel-head">
+            <h2>Заполните резюме</h2>
+            <p>Готовность {qPct}% · данные сохраняются в браузере</p>
+            <div className="rvb-progress"><i style={{ width: `${qPct}%` }} /></div>
+          </div>
           <nav className="rvb-nav">
             {ACCORDION.map(({ id, title, icon: Icon }) => {
               const state = doneState(id);
-              const isOpen = open[id];
+              const isOpen = openSec === id;
               return (
                 <div className="rvb-acc" key={id}>
                   <button
                     type="button"
                     className={`rvb-acc-h ${isOpen ? "on" : ""}`}
-                    onClick={() => setOpen((o) => ({ ...o, [id]: !o[id] }))}
+                    onClick={() => setOpenSec(isOpen ? null : id)}
                     aria-expanded={isOpen}
                   >
                     <span className="rvb-ic"><Icon className="h-4 w-4" aria-hidden /></span>
@@ -384,6 +419,7 @@ export default function ResumeBuilder() {
                       <small>{subtitle(id)}</small>
                     </span>
                     <span className={`rvb-st ${state}`}>{state === "done" ? "✓" : ""}</span>
+                    <ChevronRight className="rvb-chev h-4 w-4" aria-hidden />
                   </button>
                   {isOpen && <div className="rvb-acc-b">{renderSection(id)}</div>}
                 </div>
@@ -521,6 +557,13 @@ export default function ResumeBuilder() {
             ))}
         </div>
       </aside>
+
+      {undo && (
+        <div className="rvb-undo on" role="status">
+          <span>{undo.label}</span>
+          <button type="button" onClick={() => { undo.restore(); setUndo(null); }}>Отменить</button>
+        </div>
+      )}
     </div>
   );
 
@@ -552,7 +595,19 @@ export default function ResumeBuilder() {
             </div>
             <div className="rvb-fld"><label>Желаемая должность<input value={p.role} onChange={(e) => patchPersonal("role", e.target.value)} /></label></div>
             <div className="rvb-fld">
-              <label>Фото <span className="hint">необязательно</span><input type="file" accept="image/*" onChange={onPhoto} /></label>
+              <label>Фото <span className="hint">необязательно</span></label>
+              <div className="rvb-photo-row">
+                <span className="rvb-photo-thumb" style={p.photo ? { backgroundImage: `url(${p.photo})` } : undefined}>
+                  {p.photo ? null : <ImageIcon className="h-5 w-5" aria-hidden />}
+                </span>
+                <label className="rvb-btn-chip" style={{ cursor: "pointer" }}>
+                  Загрузить
+                  <input type="file" accept="image/*" onChange={onPhoto} className="sr-only" />
+                </label>
+                {p.photo ? (
+                  <button type="button" className="rvb-btn-chip danger" onClick={() => patchPersonal("photo", "")}>Убрать</button>
+                ) : null}
+              </div>
               <label className="flex items-center gap-2 mt-2 text-[12.5px] font-medium cursor-pointer">
                 <input type="checkbox" className="w-auto" checked={p.showPhoto !== false} onChange={(e) => patchPersonal("showPhoto", e.target.checked)} />
                 Показывать фото в резюме
@@ -586,19 +641,22 @@ export default function ResumeBuilder() {
           <>
             {data.experience.map((e, i) => (
               <div className="rvb-rep" key={i}>
-                <div className="rvb-rep-h">
-                  <b>Опыт {i + 1}</b>
-                  <button type="button" className="rvb-del" onClick={() => setData((d) => ({ ...d, experience: d.experience.filter((_, idx) => idx !== i) }))}>Удалить</button>
-                </div>
-                <div className="rvb-fld"><label>Должность<input value={e.position} onChange={(ev) => updateExp(i, "position", ev.target.value)} /></label></div>
-                <div className="rvb-row">
-                  <div className="rvb-fld"><label>Компания<input value={e.company} onChange={(ev) => updateExp(i, "company", ev.target.value)} /></label></div>
-                  <div className="rvb-fld"><label>Период<input value={e.period} onChange={(ev) => updateExp(i, "period", ev.target.value)} placeholder="03.2021 — н.в." /></label></div>
-                </div>
-                <div className="rvb-fld">
-                  <label>Обязанности и достижения <span className="hint">— по одному в строке</span></label>
-                  <textarea value={e.bullets.join("\n")} onChange={(ev) => updateBullets(i, ev.target.value)} />
-                  {baTip}
+                <span className="rvb-rep-drag" aria-hidden><GripVertical className="h-4 w-4" /></span>
+                <div className="rvb-rep-body">
+                  <div className="rvb-rep-h">
+                    <b>Опыт {i + 1}</b>
+                    <button type="button" className="rvb-del" onClick={() => deleteExp(i)}>Удалить</button>
+                  </div>
+                  <div className="rvb-fld"><label>Должность<input value={e.position} onChange={(ev) => updateExp(i, "position", ev.target.value)} /></label></div>
+                  <div className="rvb-row">
+                    <div className="rvb-fld"><label>Компания<input value={e.company} onChange={(ev) => updateExp(i, "company", ev.target.value)} /></label></div>
+                    <div className="rvb-fld"><label>Период<input value={e.period} onChange={(ev) => updateExp(i, "period", ev.target.value)} placeholder="03.2021 — н.в." /></label></div>
+                  </div>
+                  <div className="rvb-fld">
+                    <label>Обязанности и достижения <span className="hint">— по одному в строке</span></label>
+                    <textarea value={e.bullets.join("\n")} onChange={(ev) => updateBullets(i, ev.target.value)} />
+                    {baTip}
+                  </div>
                 </div>
               </div>
             ))}
@@ -612,18 +670,21 @@ export default function ResumeBuilder() {
           <>
             {data.education.map((e, i) => (
               <div className="rvb-rep" key={i}>
-                <div className="rvb-rep-h">
-                  <b>Образование {i + 1}</b>
-                  <button type="button" className="rvb-del" onClick={() => setData((d) => ({ ...d, education: d.education.filter((_, idx) => idx !== i) }))}>Удалить</button>
-                </div>
-                <div className="rvb-fld"><label>Учебное заведение<input value={e.institution} onChange={(ev) => updateEdu(i, "institution", ev.target.value)} /></label></div>
-                <div className="rvb-row">
-                  <div className="rvb-fld"><label>Специальность<input value={e.field} onChange={(ev) => updateEdu(i, "field", ev.target.value)} /></label></div>
-                  <div className="rvb-fld"><label>Степень<input value={e.degree} onChange={(ev) => updateEdu(i, "degree", ev.target.value)} /></label></div>
-                </div>
-                <div className="rvb-row">
-                  <div className="rvb-fld"><label>Год начала<input value={e.start} onChange={(ev) => updateEdu(i, "start", ev.target.value)} /></label></div>
-                  <div className="rvb-fld"><label>Год окончания<input value={e.end} onChange={(ev) => updateEdu(i, "end", ev.target.value)} /></label></div>
+                <span className="rvb-rep-drag" aria-hidden><GripVertical className="h-4 w-4" /></span>
+                <div className="rvb-rep-body">
+                  <div className="rvb-rep-h">
+                    <b>Образование {i + 1}</b>
+                    <button type="button" className="rvb-del" onClick={() => deleteEdu(i)}>Удалить</button>
+                  </div>
+                  <div className="rvb-fld"><label>Учебное заведение<input value={e.institution} onChange={(ev) => updateEdu(i, "institution", ev.target.value)} /></label></div>
+                  <div className="rvb-row">
+                    <div className="rvb-fld"><label>Специальность<input value={e.field} onChange={(ev) => updateEdu(i, "field", ev.target.value)} /></label></div>
+                    <div className="rvb-fld"><label>Степень<input value={e.degree} onChange={(ev) => updateEdu(i, "degree", ev.target.value)} /></label></div>
+                  </div>
+                  <div className="rvb-row">
+                    <div className="rvb-fld"><label>Год начала<input value={e.start} onChange={(ev) => updateEdu(i, "start", ev.target.value)} /></label></div>
+                    <div className="rvb-fld"><label>Год окончания<input value={e.end} onChange={(ev) => updateEdu(i, "end", ev.target.value)} /></label></div>
+                  </div>
                 </div>
               </div>
             ))}
@@ -671,19 +732,22 @@ export default function ResumeBuilder() {
           <>
             {data.languages.map((l, i) => (
               <div className="rvb-rep" key={i}>
-                <div className="rvb-rep-h">
-                  <b>Язык {i + 1}</b>
-                  <button type="button" className="rvb-del" onClick={() => setData((d) => ({ ...d, languages: d.languages.filter((_, idx) => idx !== i) }))}>Удалить</button>
-                </div>
-                <div className="rvb-row">
-                  <div className="rvb-fld"><label>Язык<input value={l.name} onChange={(ev) => updateLang(i, "name", ev.target.value)} /></label></div>
-                  <div className="rvb-fld">
-                    <label>
-                      Уровень
-                      <select value={l.level} onChange={(ev) => updateLang(i, "level", ev.target.value)}>
-                        {LEVELS.map((x) => (<option key={x} value={x}>{x}</option>))}
-                      </select>
-                    </label>
+                <span className="rvb-rep-drag" aria-hidden><GripVertical className="h-4 w-4" /></span>
+                <div className="rvb-rep-body">
+                  <div className="rvb-rep-h">
+                    <b>Язык {i + 1}</b>
+                    <button type="button" className="rvb-del" onClick={() => deleteLang(i)}>Удалить</button>
+                  </div>
+                  <div className="rvb-row">
+                    <div className="rvb-fld"><label>Язык<input value={l.name} onChange={(ev) => updateLang(i, "name", ev.target.value)} /></label></div>
+                    <div className="rvb-fld">
+                      <label>
+                        Уровень
+                        <select value={l.level} onChange={(ev) => updateLang(i, "level", ev.target.value)}>
+                          {LEVELS.map((x) => (<option key={x} value={x}>{x}</option>))}
+                        </select>
+                      </label>
+                    </div>
                   </div>
                 </div>
               </div>
