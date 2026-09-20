@@ -95,9 +95,17 @@ export type DadataInput = z.infer<typeof dadataSchema>;
 // Анонимный пользователь может отправить сообщение; visitorId — анонимный ID из cookie,
 // text — сообщение (до 4000 символов), consent — обязательное согласие, name/email — контактные данные.
 // ctx — опциональный контекст браузера (для отладки и помощи пользователю).
+const chatFileSchema = z.object({
+  url: z.string().url().max(2000),
+  name: z.string().min(1).max(200),
+  mime: z.string().min(1).max(120),
+  kind: z.enum(['image', 'file']),
+  size: z.number().int().nonnegative().max(10 * 1024 * 1024).optional(),
+}).strict();
+
 export const chatSchema = z.object({
   visitorId: z.string().min(1, 'visitorId обязателен').max(64),
-  text: z.string().min(1, 'Сообщение не может быть пустым').max(4000, 'Слишком длинное сообщение'),
+  text: z.string().max(4000, 'Слишком длинное сообщение').default(''),
   consent: z.literal(true, { errorMap: () => ({ message: 'Необходимо согласие на обработку данных' }) }),
   name: z.string().min(1, 'Имя обязательно').max(80),
   email: z.string().email('Некорректный email').max(254),
@@ -108,6 +116,7 @@ export const chatSchema = z.object({
     ua: z.string().max(500).optional(),
     lang: z.string().max(20).optional(),
   }).strict().optional(),
+  file: chatFileSchema.optional(),
 }).strict();
 
 export type ChatInput = z.infer<typeof chatSchema>;

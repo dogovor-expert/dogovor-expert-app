@@ -1,10 +1,19 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Send, Loader2, ShieldCheck, AlertCircle } from "lucide-react";
+import { Send, Loader2, ShieldCheck, AlertCircle, Paperclip, X } from "lucide-react";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const POLL_MS = 2500;
+const MAX_FILE = 10 * 1024 * 1024;
+
+interface ChatFile {
+  url: string;
+  name: string;
+  mime: string;
+  kind: "image" | "file";
+  size?: number;
+}
 
 interface ChatMessage {
   id: string;
@@ -12,6 +21,7 @@ interface ChatMessage {
   text: string;
   ts: number;
   name?: string;
+  file?: ChatFile;
 }
 
 interface Profile {
@@ -39,7 +49,10 @@ export default function ChatPanel({ visitorId }: { visitorId: string }) {
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [unavailable, setUnavailable] = useState(false);
+  const [pending, setPending] = useState<ChatFile | null>(null);
+  const [uploading, setUploading] = useState(false);
   const listRef = useRef<HTMLDivElement>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
 
   // При монтировании — если профиль уже есть, сразу в чат.
   useEffect(() => {
@@ -100,9 +113,37 @@ export default function ChatPanel({ visitorId }: { visitorId: string }) {
     setError(null);
   };
 
+  const onPickFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0];
+    e.target.value = "";
+    if (!f || !profile) return;
+    setError(null);
+    if (f.size > MAX_FILE) {
+      setError("Файл больше 10 МБ.");
+      return;
+    }
+    setUploading(true);
+    try {
+      const fd = new FormData();
+      fd.append("visitorId", visitorId);
+      fd.append("file", f);
+      const res = await fetch("/api/chat/upload", { method: "POST", body: fd });
+      const data = (await res.json().catch(() => ({}))) as { file?: ChatFile; message?: string };
+      if (!res.ok || !data.file) {
+        setError(data.message || "Не удалось загрузить файл.");
+        return;
+      }
+      setPending(data.file);
+    } catch {
+      setError("Ошибка сети при загрузке файла.");
+    } finally {
+      setUploading(false);
+    }
+  };
+
   const send = async () => {
     const text = draft.trim();
-    if (!text || !profile || sending) return;
+    if ((!text && !pending) || !profile || sending) return;
     setSending(true);
     setError(null);
     const ctx = {
@@ -122,6 +163,7 @@ export default function ChatPanel({ visitorId }: { visitorId: string }) {
           consent: true,
           text,
           ctx,
+          ...(pending ? { file: pending } : {}),
         }),
       });
       const data = (await res.json().catch(() => ({}))) as { message?: unknown };
@@ -137,6 +179,7 @@ export default function ChatPanel({ visitorId }: { visitorId: string }) {
         setMessages((prev) => [...prev, data.message as ChatMessage]);
       }
       setDraft("");
+      setPending(null);
     } catch {
       setError("Ошибка сети. Попробуйте ещё раз.");
     } finally {
@@ -216,7 +259,25 @@ export default function ChatPanel({ visitorId }: { visitorId: string }) {
                   : "bg-white border border-slate-200 text-slate-800 rounded-bl-sm"
               }`}
             >
-              {m.text}
+              {m.file && (
+                m.file.kind === "image" ? (
+                  <a href={m.file.url} target="_blank" rel="noreferrer" className="block mb-1">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={m.file.url} alt={m.file.name} className="rounded-lg max-h-48 w-auto" />
+                  </a>
+                ) : (
+                  <a
+                    href={m.file.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className={`flex items-center gap-1.5 text-xs underline mb-1 ${m.role === "visitor" ? "text-white/90" : "text-brand-600"}`}
+                  >
+                    <Paperclip className="w-3.5 h-3.5 flex-shrink-0" />
+                    <span className="truncate">{m.file.name}</span>
+                  </a>
+                )
+              )}
+              {m.text && <span>{m.text}</span>}
             </div>
           </div>
         ))}
@@ -229,7 +290,38 @@ export default function ChatPanel({ visitorId }: { visitorId: string }) {
       </div>
       <div className="border-t border-slate-100 p-3">
         {error && <p className="text-xs text-red-600 mb-2">{error}</p>}
+        {pending && (
+          <div className="flex items-center gap-2 mb-2 text-xs bg-slate-100 rounded-lg px-2 py-1.5">
+            {pending.kind === "image" ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={pending.url} alt="" className="w-8 h-8 rounded object-cover flex-shrink-0" />
+            ) : (
+              <Paperclip className="w-3.5 h-3.5 text-slate-500 flex-shrink-0" />
+            )}
+            <span className="truncate flex-1 text-slate-700">{pending.name}</span>
+            <button type="button" onClick={() => setPending(null)} aria-label="Убрать вложение" className="text-slate-500 hover:text-slate-700">
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        )}
         <div className="flex items-end gap-2">
+          <input
+            ref={fileRef}
+            type="file"
+            accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt"
+            className="hidden"
+            onChange={(e) => { void onPickFile(e); }}
+          />
+          <button
+            type="button"
+            onClick={() => fileRef.current?.click()}
+            disabled={uploading || sending}
+            className="inline-flex items-center justify-center w-10 h-10 border border-slate-200 text-slate-500 rounded-xl hover:text-brand-600 hover:border-brand-300 disabled:opacity-50 transition flex-shrink-0"
+            aria-label="Прикрепить файл"
+            title="Прикрепить файл"
+          >
+            {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Paperclip className="w-4 h-4" />}
+          </button>
           <textarea
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
@@ -246,7 +338,7 @@ export default function ChatPanel({ visitorId }: { visitorId: string }) {
           <button
             type="button"
             onClick={() => { void send(); }}
-            disabled={!draft.trim() || sending}
+            disabled={(!draft.trim() && !pending) || sending}
             className="inline-flex items-center justify-center w-10 h-10 bg-brand-600 text-white rounded-xl hover:bg-brand-700 disabled:opacity-50 transition flex-shrink-0"
             aria-label="Отправить"
           >

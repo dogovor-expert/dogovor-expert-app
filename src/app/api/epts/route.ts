@@ -4,6 +4,7 @@ import { isSameOrigin } from "@/lib/admin-auth";
 import { limiters, clientIp, checkRateLimit, rateLimitResponse } from "@/lib/ratelimit";
 import { withCsrf } from "@/lib/csrf";
 import { sendEmail, sendTelegram, SUPPORT_EMAIL } from "@/lib/mail";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 /**
  * Заявка на выписку из ЭПТС.
@@ -42,6 +43,24 @@ async function postHandler(req: Request) {
   }
 
   const { vin, epts, email, phone }: EptsInput = parsed.data;
+
+  // Сохраняем заявку в БД (таблица leads, service='epts'), чтобы она была видна
+  // в админ-панели. Уведомление в поддержку дублируем ниже.
+  try {
+    const supabase = createAdminClient();
+    const { error: dbError } = await supabase.from("leads").insert({
+      service: "epts",
+      brand: "",
+      vin,
+      phone,
+      status: "new",
+      meta: { email, epts },
+    });
+    if (dbError) console.error("[epts] lead insert failed:", dbError.message);
+  } catch (e) {
+    console.error("[epts] lead insert exception:", String(e));
+  }
+
   const text = `Новая заявка: выписка ЭПТС\nVIN: ${vin}\n№ ЭПТС: ${epts}\nEmail: ${email}\nТелефон: ${phone}`;
 
   await sendTelegram("🔔 " + text);

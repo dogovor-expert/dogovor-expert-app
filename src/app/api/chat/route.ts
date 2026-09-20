@@ -15,12 +15,15 @@ import {
   saveProfile,
   touchActiveThread,
   touchPresence,
+  type ChatFile,
   type ChatMessage,
 } from "@/lib/chat-store";
 import {
   TELEGRAM_CONFIGURED,
   createForumTopic,
   sendToTopic,
+  sendPhotoToTopic,
+  sendDocumentToTopic,
   escapeHtml,
 } from "@/lib/telegram-chat";
 
@@ -107,10 +110,21 @@ async function postHandler(req: Request) {
   const parsed: unknown = await req.json().catch(() => null);
   const validated = validateBody(chatSchema, parsed);
   if (!validated.success) return validated.error;
-  const { visitorId, text: rawText, name, email, ctx: rawCtx } = validated.data;
-  const text = rawText.trim();
+  const { visitorId, text: rawText, name, email, ctx: rawCtx, file: rawFile } = validated.data;
+  const text = (rawText ?? "").trim();
   const safeVisitorId = visitorId.slice(0, 64);
   const ctx = rawCtx ?? {};
+
+  // Принимаем только вложения из нашего Storage (защита от подстановки чужих URL).
+  const storageHost = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
+  const file: ChatFile | undefined =
+    rawFile && storageHost && rawFile.url.startsWith(`${storageHost}/storage/`)
+      ? { url: rawFile.url, name: rawFile.name, mime: rawFile.mime, kind: rawFile.kind, size: rawFile.size }
+      : undefined;
+
+  if (!text && !file) {
+    return NextResponse.json({ ok: false, message: "Введите сообщение или приложите файл." }, { status: 400 });
+  }
 
   await saveProfile(safeVisitorId, { name, email });
 
@@ -156,16 +170,28 @@ async function postHandler(req: Request) {
     text,
     ts: Date.now(),
     name,
+    ...(file ? { file } : {}),
   };
   await appendMessage(visitorId, msg);
   await touchActiveThread(visitorId, msg.ts);
-  const delivered = await sendToTopic(topic, text);
+
+  const deliver = async (tid: number): Promise<boolean> => {
+    if (file) {
+      const caption = text || undefined;
+      return file.kind === "image"
+        ? sendPhotoToTopic(tid, file.url, caption)
+        : sendDocumentToTopic(tid, file.url, caption);
+    }
+    return sendToTopic(tid, text);
+  };
+
+  const delivered = await deliver(topic);
   if (!delivered) {
     // Тема могла быть удалена в Telegram («message thread not found»):
     // пересоздаём тему и переотправляем контекст + сообщение.
     threadId = null;
     const recreated = await ensureTopic();
-    if (recreated) await sendToTopic(recreated, text);
+    if (recreated) await deliver(recreated);
   }
 
   const res = NextResponse.json({ ok: true, message: msg });
