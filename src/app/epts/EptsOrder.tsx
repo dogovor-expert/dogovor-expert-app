@@ -106,7 +106,7 @@ export default function EptsOrder() {
   );
 
   return (
-    <form onSubmit={(ev) => { void submit(ev); }} className="rounded-2xl border border-gray-100 bg-white p-6 shadow-soft" noValidate>
+    <form id="epts-order-form" aria-label="Заявка на выписку из ЭПТС" onSubmit={(ev) => { void submit(ev); }} className="rounded-2xl border border-gray-100 bg-white p-6 shadow-soft" noValidate>
       <div className="mb-4 flex items-center justify-between gap-3">
         <h3 className="text-sm font-bold uppercase tracking-wide text-gray-500">Заявка на выписку</h3>
         <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">

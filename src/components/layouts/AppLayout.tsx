@@ -266,7 +266,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
           </button>
         </div>
 
-        <nav className="flex-1 overflow-y-auto p-4 scrollbar-thin">
+        <nav className="flex-1 overflow-y-auto p-4 scrollbar-hide">
           <Link
             href="/"
             onClick={() => setOpen(false)}
