@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { CheckCircle2, Loader2, ShieldCheck } from "lucide-react";
+import { useEffect, useState } from "react";
+import { CheckCircle2, CreditCard, Loader2, ShieldCheck } from "lucide-react";
 
 interface FormState {
   vin: string;
@@ -31,8 +31,15 @@ function validate(v: FormState): Errors {
 export default function EptsOrder() {
   const [values, setValues] = useState<FormState>(EMPTY);
   const [errors, setErrors] = useState<Errors>({});
-  const [status, setStatus] = useState<"idle" | "sending" | "done">("idle");
+  const [status, setStatus] = useState<"idle" | "sending" | "redirecting" | "paid">("idle");
   const [serverError, setServerError] = useState("");
+
+  // Возврат со страницы ЮKassa: return_url уводит на /epts?success=1
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get("success") === "1") {
+      setStatus("paid");
+    }
+  }, []);
 
   const set = (key: keyof FormState, value: string) => {
     setValues((v) => ({ ...v, [key]: value }));
@@ -64,20 +71,42 @@ export default function EptsOrder() {
         setStatus("idle");
         return;
       }
-      setStatus("done");
+      const data = (await res.json().catch(() => null)) as { confirmation_url?: string } | null;
+      if (!data?.confirmation_url) {
+        setServerError("Не удалось получить ссылку на оплату. Попробуйте ещё раз.");
+        setStatus("idle");
+        return;
+      }
+      setStatus("redirecting");
+      window.location.assign(data.confirmation_url);
     } catch {
       setServerError("Сеть недоступна. Проверьте соединение и повторите.");
       setStatus("idle");
     }
   };
 
-  if (status === "done") {
+  if (status === "paid") {
     return (
       <div className="rounded-2xl border border-gray-100 bg-white p-8 text-center shadow-soft">
-        <CheckCircle2 className="mx-auto mb-3 h-12 w-12 text-emerald-600" aria-hidden />
-        <h3 className="text-lg font-bold text-gray-900">Заявка принята</h3>
+        <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-emerald-50">
+          <CheckCircle2 className="h-7 w-7 text-emerald-600" aria-hidden />
+        </div>
+        <h3 className="text-lg font-bold text-gray-900">Оплата получена</h3>
         <p className="mt-1 text-sm text-gray-600">
-          Оператор свяжется с вами по указанному телефону или email для подтверждения и оплаты.
+          Заявка на выписку из ЭПТС оплачена. Оператор оформляет документ и пришлёт готовый PDF
+          на указанный email — обычно в течение 10 минут в рабочее время.
+        </p>
+      </div>
+    );
+  }
+
+  if (status === "redirecting") {
+    return (
+      <div className="rounded-2xl border border-gray-100 bg-white p-8 text-center shadow-soft">
+        <Loader2 className="mx-auto mb-3 h-8 w-8 animate-spin text-brand-600" aria-hidden />
+        <h3 className="text-base font-bold text-gray-900">Перенаправляем на оплату</h3>
+        <p className="mt-1 text-sm text-gray-600">
+          Заявка отправлена. Открываем защищённую страницу оплаты ЮKassa…
         </p>
       </div>
     );
@@ -106,7 +135,7 @@ export default function EptsOrder() {
   );
 
   return (
-    <form id="epts-order-form" aria-label="Заявка на выписку из ЭПТС" onSubmit={(ev) => { void submit(ev); }} className="rounded-2xl border border-gray-100 bg-white p-6 shadow-soft" noValidate>
+    <form id="epts-order-form" aria-label="Заявка на выписку из ЭПТС с оплатой" onSubmit={(ev) => { void submit(ev); }} className="rounded-2xl border border-gray-100 bg-white p-6 shadow-soft" noValidate>
       <div className="mb-4 flex items-center justify-between gap-3">
         <h3 className="text-sm font-bold uppercase tracking-wide text-gray-500">Заявка на выписку</h3>
         <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
@@ -135,8 +164,8 @@ export default function EptsOrder() {
           disabled={status === "sending"}
           className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-br from-brand-600 to-purple-600 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-brand-500/30 transition hover:-translate-y-0.5 disabled:opacity-70"
         >
-          {status === "sending" ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : null}
-          {status === "sending" ? "Отправляем…" : "Оставить заявку"}
+          {status === "sending" ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <CreditCard className="h-4 w-4" aria-hidden />}
+          {status === "sending" ? "Отправляем…" : "Оставить заявку и оплатить"}
         </button>
       </div>
 
@@ -144,8 +173,8 @@ export default function EptsOrder() {
 
       <p className="mt-3 flex items-start gap-2 text-[11px] leading-relaxed text-gray-500">
         <ShieldCheck className="mt-0.5 h-3.5 w-3.5 flex-none text-gray-400" aria-hidden />
-        Оплата — после подтверждения оператором. Отправляя заявку, вы соглашаетесь с обработкой
-        персональных данных.
+        Оплата 800 ₽ проходит на защищённой странице ЮKassa сразу после отправки заявки. Отправляя
+        заявку, вы соглашаетесь с обработкой персональных данных.
       </p>
     </form>
   );

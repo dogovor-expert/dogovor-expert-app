@@ -5,6 +5,13 @@ import { collectReport } from "@/lib/tronk";
 import { limiters, checkRateLimit, rateLimitResponse } from "@/lib/ratelimit";
 import { yookassaWebhookSchema, validateBody } from "@/lib/validations/api";
 import { logUserEvent, SERVER_SESSION_PREFIX } from "@/lib/userEvents";
+import { sendEmail, sendTelegram, SUPPORT_EMAIL } from "@/lib/mail";
+
+const EPTS_PRICE = 800;
+
+function escapeHtml(value: string): string {
+  return value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
 
 // Увеличенный таймаут для этого роута — collectReport может выполняться
 // до ~45 секунд. Генерация отчёта вынесена в after(): ответ ЮKassa
@@ -20,6 +27,14 @@ interface PaymentRow {
   status: string;
   amount: string | number | null;
   currency: string | null;
+  meta: Record<string, unknown> | null;
+}
+
+interface EptsLeadRow {
+  id: string;
+  status: string;
+  vin: string | null;
+  phone: string | null;
   meta: Record<string, unknown> | null;
 }
 
@@ -245,6 +260,58 @@ export async function POST(req: Request) {
   if (!payment?.id) return NextResponse.json({ ok: true });
 
   const admin = createAdminClient();
+
+  // ЭПТС-заказ: публичный флоу без аккаунта — заявку ищем по
+  // leads.meta->>provider_id (строка в payments не создаётся, т.к. тестовая
+  // таблица требует user_id, а у заказа ЭПТС пользователя нет).
+  const eptsLeadResult = await admin
+    .from("leads")
+    .select("id, status, vin, phone, meta")
+    .eq("service", "epts")
+    .filter("meta->>provider_id", "eq", payment.id)
+    .limit(1);
+  const rawEpts: unknown = eptsLeadResult.data;
+  const eptsLead = (rawEpts as EptsLeadRow[] | null)?.[0];
+
+  if (eptsLead) {
+    if (event === "payment.canceled" || event === "payment.refund.succeeded") {
+      if (eptsLead.status !== "paid") {
+        await admin.from("leads").update({ status: "payment_canceled" }).eq("id", eptsLead.id);
+      }
+      return NextResponse.json({ ok: true });
+    }
+
+    if (event !== "payment.succeeded") return NextResponse.json({ ok: true });
+    if (eptsLead.status === "paid") return NextResponse.json({ ok: true }); // идемпотентность
+
+    const meta = eptsLead.meta ?? {};
+    const amount = Number(meta.amount ?? EPTS_PRICE);
+    const verified = await verifyPayment(payment.id, amount, "RUB");
+    if (!verified.ok) return NextResponse.json({ ok: true });
+    if (verified.status !== "succeeded") return NextResponse.json({ ok: true });
+
+    const updResult = await admin
+      .from("leads")
+      .update({ status: "paid", meta: { ...meta, paid_at: new Date().toISOString(), provider_status: "paid" } })
+      .eq("id", eptsLead.id)
+      .neq("status", "paid")
+      .select("id");
+    if (!updResult.data || updResult.data.length === 0) {
+      return NextResponse.json({ ok: true, skipped: "already processed concurrently" });
+    }
+
+    const email = typeof meta.email === "string" ? meta.email : "";
+    const eptsNumber = typeof meta.epts === "string" ? meta.epts : "";
+    const text = `Оплачена заявка: выписка ЭПТС\nVIN: ${eptsLead.vin ?? ""}\n№ ЭПТС: ${eptsNumber}\nEmail: ${email}\nТелефон: ${eptsLead.phone ?? ""}\nСумма: ${amount} ₽`;
+    await sendTelegram("💰 " + text);
+    await sendEmail({
+      to: SUPPORT_EMAIL,
+      subject: "Оплата: выписка ЭПТС",
+      html: `<div style="font-family:Arial,sans-serif;padding:16px;white-space:pre-wrap;color:#374151;">${escapeHtml(text)}</div>`,
+    });
+    return NextResponse.json({ ok: true });
+  }
+
   const rowsResult = await admin
     .from("payments")
     .select("id, user_id, status, amount, currency, meta")
