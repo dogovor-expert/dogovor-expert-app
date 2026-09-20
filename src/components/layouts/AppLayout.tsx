@@ -9,7 +9,7 @@ import { restoreSessionFromCookie } from "@/lib/auth/bootstrap";
 import {
   FileText, Activity, Calculator,
   FolderOpen, Files, Trash2, CreditCard,
-  Settings, HelpCircle, Menu, X, ChevronDown, Shield, Home, LogIn, Shuffle, Newspaper,
+  Settings, HelpCircle, Menu, X, ChevronDown, Shield, Home, LogIn, Shuffle, Newspaper, Car,
   HardDrive, Download, Cookie, Moon, Sun
 } from "lucide-react";
 import HeaderSearch from "@/components/search/HeaderSearch";
@@ -38,6 +38,8 @@ function getDraftCount(): number {
 }
 
 const toolNav: NavItem[] = [
+  { icon: <FileText className="w-5 h-5" />, label: "Конструктор резюме", href: "/resume" },
+  { icon: <Car className="w-5 h-5" />, label: "Выписка ЭПТС", href: "/epts" },
   { icon: <Activity className="w-5 h-5" />, label: "Автотека", href: "/autoteka" },
   { icon: <Calculator className="w-5 h-5" />, label: "ОСАГО", href: "/osago" },
   { icon: <Shuffle className="w-5 h-5" />, label: "Конвертер документов", href: "/converter" },
