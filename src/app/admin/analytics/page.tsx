@@ -6,8 +6,11 @@ import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from "@
 import { DailyBarChart } from "@/components/admin/analytics/DailyBarChart";
 import { FunnelChart } from "@/components/admin/analytics/FunnelChart";
 import { getEventSummaries, getFunnel, getTopTemplates, getKpiTotals } from "@/lib/userEventsQueries";
+import { getDeviceBreakdown, getTopPaths, getTopReferrers, getDailyMulti, getKpiDeltas } from "@/lib/analyticsExtra";
+import { getLeadsSummary } from "@/lib/leadsQueries";
+import { countReplaySessions } from "@/lib/replayQueries";
 import { EVENT_CATALOG } from "@/lib/userEvents";
-import { Eye, Users, TrendingUp, Percent } from "lucide-react";
+import { Eye, Users, TrendingUp, Percent, MonitorSmartphone, FileText, ArrowUpRight, ArrowDownRight, Globe, Inbox, PlaySquare } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -23,6 +26,27 @@ const GROUP_LABELS: Record<string, string> = {
 
 const PERIODS = [7, 30, 90] as const;
 
+/** Горизонтальный список «значение + доля» для устройств/страниц/источников. */
+function BarList({ items }: { items: { label: string; count: number }[] }) {
+  if (!items.length) return <p className="text-sm text-gray-400">Нет данных за период</p>;
+  const max = Math.max(...items.map((i) => i.count), 1);
+  return (
+    <div className="space-y-2">
+      {items.map((it) => (
+        <div key={it.label} className="flex items-center gap-3">
+          <span className="text-sm text-gray-700 w-40 truncate shrink-0" title={it.label}>
+            {it.label}
+          </span>
+          <div className="flex-1 h-4 rounded bg-gray-100 overflow-hidden">
+            <div className="h-full rounded bg-brand-400" style={{ width: `${Math.max((it.count / max) * 100, 3)}%` }} />
+          </div>
+          <span className="text-xs text-gray-500 tabular-nums w-12 text-right">{it.count.toLocaleString("ru-RU")}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export default async function AdminAnalyticsPage({
   searchParams,
 }: {
@@ -36,12 +60,20 @@ export default async function AdminAnalyticsPage({
   const daysParam = Number(Array.isArray(sp.days) ? sp.days[0] : sp.days);
   const days = (PERIODS as readonly number[]).includes(daysParam) ? daysParam : 30;
 
-  const [summaries, funnel, topTemplates, kpi] = await Promise.all([
-    getEventSummaries(days),
-    getFunnel(days),
-    getTopTemplates(days),
-    getKpiTotals(),
-  ]);
+  const [summaries, funnel, topTemplates, kpi, devices, topPaths, referrers, multi, deltas, leads, replays] =
+    await Promise.all([
+      getEventSummaries(days),
+      getFunnel(days),
+      getTopTemplates(days),
+      getKpiTotals(),
+      getDeviceBreakdown(days),
+      getTopPaths(days),
+      getTopReferrers(days),
+      getDailyMulti(days),
+      getKpiDeltas(),
+      getLeadsSummary(days),
+      countReplaySessions(days),
+    ]);
 
   const pageViews = summaries.find((s) => s.event === "page_view");
   const byGroup = new Map<string, typeof summaries>();
@@ -51,9 +83,17 @@ export default async function AdminAnalyticsPage({
     byGroup.get(group)?.push(s);
   }
 
-  const kpiCards = [
-    { label: "Визитов сегодня", value: kpi.visitsToday, icon: Eye },
-    { label: "Визитов за 7 дней", value: kpi.visits7d, icon: TrendingUp },
+  const deltaPct = (c: number, p: number) => (p === 0 ? (c > 0 ? 100 : 0) : Math.round(((c - p) / p) * 100));
+  const kpiCards: Array<{
+    label: string;
+    value: number | string;
+    icon: typeof Eye;
+    delta?: number;
+    deltaLabel?: string;
+    hint?: string;
+  }> = [
+    { label: "Визитов сегодня", value: kpi.visitsToday, icon: Eye, delta: deltaPct(deltas.today.current, deltas.today.previous), deltaLabel: "к вчерашнему дню" },
+    { label: "Визитов за 7 дней", value: kpi.visits7d, icon: TrendingUp, delta: deltaPct(deltas.week.current, deltas.week.previous), deltaLabel: "к прошлой неделе" },
     { label: "Уникальных визитов за 7 дней", value: kpi.uniqueSessions7d, icon: Users },
     {
       label: "Конверсия в оплату",
@@ -99,8 +139,17 @@ export default async function AdminAnalyticsPage({
                   <Icon className="w-5 h-5 text-brand-600" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold text-gray-900 tabular-nums">{k.value}</p>
+                  <div className="flex items-baseline gap-2">
+                    <p className="text-2xl font-bold text-gray-900 tabular-nums">{k.value}</p>
+                    {typeof k.delta === "number" && (
+                      <span className={`inline-flex items-center gap-0.5 text-xs font-semibold ${k.delta >= 0 ? "text-emerald-600" : "text-red-500"}`}>
+                        {k.delta >= 0 ? <ArrowUpRight className="w-3.5 h-3.5" /> : <ArrowDownRight className="w-3.5 h-3.5" />}
+                        {Math.abs(k.delta)}%
+                      </span>
+                    )}
+                  </div>
                   <p className="text-xs text-gray-600">{k.label}</p>
+                  {k.deltaLabel && <p className="text-[10px] text-gray-400">{k.deltaLabel}</p>}
                 </div>
               </div>
             </Card>
@@ -150,6 +199,88 @@ export default async function AdminAnalyticsPage({
             })}
           </div>
         )}
+      </Card>
+
+      <Card padding="md">
+        <h2 className="font-semibold text-gray-900 mb-1">Мониторинг по дням</h2>
+        <p className="text-xs text-gray-500 mb-4">Визиты, открытия конструктора, экспорт и оплаты за {days} дней</p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+          {multi.map((m) => (
+            <div key={m.key}>
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-sm font-medium text-gray-700">{m.label}</span>
+                <span className="text-xs text-gray-500 tabular-nums">{m.total.toLocaleString("ru-RU")}</span>
+              </div>
+              <DailyBarChart data={m.series} color={m.color} height={72} />
+            </div>
+          ))}
+        </div>
+      </Card>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card padding="md">
+          <h2 className="font-semibold text-gray-900 mb-1 flex items-center gap-2">
+            <MonitorSmartphone className="w-4 h-4 text-brand-600" /> Устройства
+          </h2>
+          <p className="text-xs text-gray-500 mb-4">Визиты по типу устройства за {days} дней</p>
+          <BarList items={devices} />
+        </Card>
+        <Card padding="md">
+          <h2 className="font-semibold text-gray-900 mb-1 flex items-center gap-2">
+            <FileText className="w-4 h-4 text-brand-600" /> Топ страниц
+          </h2>
+          <p className="text-xs text-gray-500 mb-4">Просмотры за {days} дней</p>
+          <BarList items={topPaths} />
+        </Card>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card padding="md">
+          <h2 className="font-semibold text-gray-900 mb-1 flex items-center gap-2">
+            <Globe className="w-4 h-4 text-brand-600" /> Источники трафика
+          </h2>
+          <p className="text-xs text-gray-500 mb-4">Внешние переходы за {days} дней</p>
+          {referrers.length ? <BarList items={referrers} /> : <p className="text-sm text-gray-400">Внешних переходов нет</p>}
+        </Card>
+        <Card padding="md">
+          <h2 className="font-semibold text-gray-900 mb-1 flex items-center gap-2">
+            <Inbox className="w-4 h-4 text-brand-600" /> Заявки
+          </h2>
+          <p className="text-xs text-gray-500 mb-4">
+            Всего: <strong className="text-gray-800">{leads.total}</strong> · за {days} дней:{" "}
+            <strong className="text-gray-800">{leads.last}</strong>
+          </p>
+          {leads.total === 0 ? (
+            <p className="text-sm text-gray-400">Заявок пока нет</p>
+          ) : (
+            <div className="space-y-4">
+              <div>
+                <p className="text-xs font-medium text-gray-500 mb-2">По услуге</p>
+                <BarList items={leads.byService} />
+              </div>
+              <div>
+                <p className="text-xs font-medium text-gray-500 mb-2">По статусу</p>
+                <BarList items={leads.byStatus} />
+              </div>
+            </div>
+          )}
+        </Card>
+      </div>
+
+      <Card padding="md">
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <div>
+            <h2 className="font-semibold text-gray-900 flex items-center gap-2">
+              <PlaySquare className="w-4 h-4 text-brand-600" /> Записи визитов
+            </h2>
+            <p className="text-xs text-gray-500 mt-1">
+              Записей за {days} дней: <strong className="text-gray-800">{replays}</strong>
+            </p>
+          </div>
+          <Link href="/admin/replays" className="text-sm text-brand-700 hover:underline">
+            Открыть записи →
+          </Link>
+        </div>
       </Card>
 
       <Card padding="none">

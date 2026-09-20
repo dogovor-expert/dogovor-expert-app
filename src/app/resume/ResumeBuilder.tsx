@@ -15,7 +15,8 @@ import {
   ZoomOut,
   Maximize2,
   Check,
-  Printer,
+  FileDown,
+  Loader2,
   ChevronRight,
   GripVertical,
   ImageIcon,
@@ -24,6 +25,8 @@ import { RESUME_CSS } from "@/lib/resume/resumeCss";
 import { BUILDER_CSS } from "@/lib/resume/builderCss";
 import { PRESETS, PHRASES, SAMPLE_RESUME, TEMPLATES, TEMPLATE_META } from "@/lib/resume/data";
 import { buildResumeDocHtml, buildResumeHtml, countNumericBullets, fullName, hardSkills } from "@/lib/resume/render";
+// pdf-lib подгружается лениво при экспорте (см. exportPdfFile) — чтобы не раздувать бандл страницы
+import { saveAs } from "file-saver";
 import type { ResumeData, ResumeExperience, ResumeLanguage, TemplateId } from "@/lib/resume/types";
 
 const LS_DATA = "dogovorResumeData";
@@ -89,6 +92,7 @@ export default function ResumeBuilder() {
   const a4Ref = useRef<HTMLDivElement | null>(null);
   const qWrapRef = useRef<HTMLDivElement | null>(null);
   const [docH, setDocH] = useState(1123);
+  const [pdfBusy, setPdfBusy] = useState(false);
   const [tab, setTab] = useState<"edit" | "view">("edit");
   const [loaded, setLoaded] = useState(false);
   const gridRef = useRef<HTMLDivElement | null>(null);
@@ -256,34 +260,19 @@ export default function ResumeBuilder() {
     }));
   };
 
-  // Печать PDF через скрытый iframe: работает надёжнее window.open (не блокируется
-  // всплывающими окнами) и использует те же стили, что и превью.
-  const exportPdf = () => {
-    const iframe = document.createElement("iframe");
-    iframe.setAttribute("aria-hidden", "true");
-    iframe.style.cssText = "position:fixed;right:0;bottom:0;width:0;height:0;border:0;visibility:hidden";
-    document.body.appendChild(iframe);
-    const doc = iframe.contentDocument;
-    if (!doc) {
-      iframe.remove();
-      return;
+  // Настоящий PDF: A4, текстовый слой (не картинка), повторяет раскладку шаблона.
+  const exportPdfFile = async () => {
+    setPdfBusy(true);
+    try {
+      const { renderResumePdf } = await import("@/lib/resume/resumePdf");
+      const blob = await renderResumePdf(data, tpl);
+      saveAs(blob, `Резюме — ${fullName(data) || "без имени"}.pdf`);
+    } catch (err) {
+      console.error("[resume] pdf", err);
+      window.alert("Не удалось сформировать PDF. Попробуйте ещё раз.");
+    } finally {
+      setPdfBusy(false);
     }
-    const title = `Резюме — ${fullName(data) || "без имени"}`;
-    doc.open();
-    doc.write(
-      `<!doctype html><html lang="ru"><head><meta charset="utf-8"><title>${title}</title><style>${RESUME_CSS}</style><style>@page{size:A4;margin:0}html,body{margin:0;background:#fff}.a4{width:210mm;min-height:297mm;box-shadow:none;border-radius:0;margin:0}</style></head><body><div class="a4 t-${tpl}">${buildResumeHtml(data, tpl)}</div></body></html>`
-    );
-    doc.close();
-    const win = iframe.contentWindow;
-    window.setTimeout(() => {
-      try {
-        win?.focus();
-        win?.print();
-      } catch {
-        /* ignore */
-      }
-      window.setTimeout(() => iframe.remove(), 1500);
-    }, 500);
   };
 
   const showUndo = (label: string, restore: () => void) => {
@@ -470,9 +459,9 @@ export default function ResumeBuilder() {
               <FileText className="h-4 w-4" aria-hidden />
               <span className="hidden sm:inline">DOC</span>
             </button>
-            <button type="button" className="rvb-btn rvb-btn-p" onClick={exportPdf} title="Печать или сохранение в PDF">
-              <Printer className="h-4 w-4" aria-hidden />
-              <span className="hidden sm:inline">Печать</span>
+            <button type="button" className="rvb-btn rvb-btn-p" onClick={() => { void exportPdfFile(); }} title="Скачать резюме в PDF" disabled={pdfBusy}>
+              {pdfBusy ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <FileDown className="h-4 w-4" aria-hidden />}
+              <span className="hidden sm:inline">{pdfBusy ? "Готовим…" : "Скачать PDF"}</span>
             </button>
             <div className="rvb-zoom">
               <button type="button" onClick={() => zoomBy(-0.08)} aria-label="Уменьшить"><ZoomOut className="h-4 w-4" aria-hidden /></button>
