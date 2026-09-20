@@ -84,6 +84,7 @@ export default function ResumeBuilder() {
   const fitRef = useRef(0.62);
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const a4Ref = useRef<HTMLDivElement | null>(null);
+  const qWrapRef = useRef<HTMLDivElement | null>(null);
   const [docH, setDocH] = useState(1123);
   const [tab, setTab] = useState<"edit" | "view">("edit");
   const [loaded, setLoaded] = useState(false);
@@ -154,6 +155,20 @@ export default function ResumeBuilder() {
     ro.observe(el);
     return () => ro.disconnect();
   }, [data, tpl]);
+
+  // Esc закрывает drawer и поповер качества; клик вне поповера — тоже.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") { setDrawer(false); setQOpen(false); } };
+    const onDown = (e: MouseEvent) => {
+      if (qWrapRef.current && !qWrapRef.current.contains(e.target as Node)) setQOpen(false);
+    };
+    document.addEventListener("keydown", onKey);
+    document.addEventListener("mousedown", onDown);
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.removeEventListener("mousedown", onDown);
+    };
+  }, []);
 
   // Масштабирование мини-превью в drawer.
   useEffect(() => {
@@ -364,7 +379,7 @@ export default function ResumeBuilder() {
         <section className={`rvb-stage ${tab === "view" ? "mobile-on" : ""}`}>
           <div className="rvb-stagebar">
             <div className="tn">Шаблон: <span>{TEMPLATE_META[tpl]?.name}</span></div>
-            <div className="rvb-qwrap">
+            <div className="rvb-qwrap" ref={qWrapRef}>
               <button type="button" className="rvb-qbtn" onClick={() => setQOpen((v) => !v)} aria-expanded={qOpen}>
                 <span className="rvb-ring">
                   <svg width="30" height="30" viewBox="0 0 30 30">
