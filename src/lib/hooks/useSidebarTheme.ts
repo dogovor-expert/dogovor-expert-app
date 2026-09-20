@@ -6,11 +6,12 @@ export type SidebarTheme = "light" | "dark";
 const STORAGE_KEY = "dogovor_sidebar_theme_v1";
 
 function readStored(): SidebarTheme {
-  if (typeof window === "undefined") return "light";
+  if (typeof window === "undefined") return "dark";
   try {
-    return window.localStorage.getItem(STORAGE_KEY) === "dark" ? "dark" : "light";
+    // Тёмная тема — по умолчанию; светлую пользователь выбирает вручную.
+    return window.localStorage.getItem(STORAGE_KEY) === "light" ? "light" : "dark";
   } catch {
-    return "light";
+    return "dark";
   }
 }
 
@@ -20,10 +21,10 @@ function readStored(): SidebarTheme {
  * токены. Выбор сохраняется в localStorage и переживает перезагрузку.
  */
 export function useSidebarTheme() {
-  const [theme, setTheme] = useState<SidebarTheme>("light");
+  const [theme, setTheme] = useState<SidebarTheme>("dark");
 
-  // Гидратация: читаем сохранённое значение после монтирования, чтобы
-  // серверный рендер (light) и клиент совпали.
+  // Гидратация: читаем сохранённое значение после монтирования; тёмная —
+  // значение по умолчанию, поэтому серверный и первый клиентский рендер совпадают.
   useEffect(() => {
     setTheme(readStored());
   }, []);
