@@ -22,6 +22,31 @@ export interface BlogPost {
   relatedPosts?: string[];
 }
 
+import { BLOG_POSTS_BATCH1 } from "./batches/batch1";
+import { BLOG_POSTS_BATCH2 } from "./batches/batch2";
+import { BLOG_POSTS_BATCH3 } from "./batches/batch3";
+import { BLOG_POSTS_BATCH4 } from "./batches/batch4";
+import { BLOG_POSTS_BATCH5 } from "./batches/batch5";
+import { BLOG_POSTS_BATCH6 } from "./batches/batch6";
+import { BLOG_POSTS_BATCH7 } from "./batches/batch7";
+import { BLOG_POSTS_BATCH8 } from "./batches/batch8";
+import { BLOG_POSTS_BATCH9 } from "./batches/batch9";
+import { BLOG_POSTS_BATCH10 } from "./batches/batch10";
+import { BLOG_POSTS_BATCH11 } from "./batches/batch11";
+import { BLOG_POSTS_BATCH12 } from "./batches/batch12";
+import { BLOG_POSTS_BATCH1B } from "./batches/batch1b";
+import { BLOG_POSTS_BATCH2B } from "./batches/batch2b";
+import { BLOG_POSTS_BATCH3B } from "./batches/batch3b";
+import { BLOG_POSTS_BATCH4B } from "./batches/batch4b";
+import { BLOG_POSTS_BATCH5B } from "./batches/batch5b";
+import { BLOG_POSTS_BATCH6B } from "./batches/batch6b";
+import { BLOG_POSTS_BATCH7B } from "./batches/batch7b";
+import { BLOG_POSTS_BATCH8B } from "./batches/batch8b";
+import { BLOG_POSTS_BATCH9B } from "./batches/batch9b";
+import { BLOG_POSTS_BATCH10B } from "./batches/batch10b";
+import { BLOG_POSTS_BATCH11B } from "./batches/batch11b";
+import { BLOG_POSTS_BATCH12B } from "./batches/batch12b";
+
 export const BLOG_POSTS: BlogPost[] = [
   {
     slug: "kak-rastorgnut-dogovor-arendy-kvartiry",
@@ -2866,6 +2891,30 @@ export const BLOG_POSTS: BlogPost[] = [
       "kak-rastorgnut-dogovor-arendy-kvartiry",
     ],
   },
+...BLOG_POSTS_BATCH1,
+  ...BLOG_POSTS_BATCH2,
+  ...BLOG_POSTS_BATCH3,
+  ...BLOG_POSTS_BATCH4,
+  ...BLOG_POSTS_BATCH5,
+  ...BLOG_POSTS_BATCH6,
+  ...BLOG_POSTS_BATCH7,
+  ...BLOG_POSTS_BATCH8,
+  ...BLOG_POSTS_BATCH9,
+  ...BLOG_POSTS_BATCH10,
+  ...BLOG_POSTS_BATCH11,
+  ...BLOG_POSTS_BATCH12,
+  ...BLOG_POSTS_BATCH1B,
+  ...BLOG_POSTS_BATCH2B,
+  ...BLOG_POSTS_BATCH3B,
+  ...BLOG_POSTS_BATCH4B,
+  ...BLOG_POSTS_BATCH5B,
+  ...BLOG_POSTS_BATCH6B,
+  ...BLOG_POSTS_BATCH7B,
+  ...BLOG_POSTS_BATCH8B,
+  ...BLOG_POSTS_BATCH9B,
+  ...BLOG_POSTS_BATCH10B,
+  ...BLOG_POSTS_BATCH11B,
+  ...BLOG_POSTS_BATCH12B,
 ];
 
 export function getBlogPost(slug: string): BlogPost | undefined {
