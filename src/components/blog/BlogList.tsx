@@ -1,11 +1,35 @@
 "use client";
 
-import { useMemo, useState, useEffect, useCallback } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import Link from "next/link";
-import { Home, Car, Briefcase, Wallet, Scale, ChevronRight, FileText, ChevronLeft } from "lucide-react";
+import {
+  ArrowRight,
+  Briefcase,
+  Car,
+  ChevronLeft,
+  ChevronRight,
+  FileText,
+  Home,
+  Scale,
+  Search,
+  Wallet,
+  type LucideIcon,
+} from "lucide-react";
 import type { BlogPost } from "@/data/blog/posts";
+import { formatShortDate, postReadMinutes } from "@/lib/blog";
+import { AdSlot } from "@/components/ads/AdSlot";
+import BlogLiveCta from "@/components/blog/BlogLiveCta";
 
-const ICONS: Record<string, typeof Home> = {
+interface BlogListProps {
+  posts: BlogPost[];
+  labels: Record<string, string>;
+  order?: string[];
+  templatesCount: number;
+}
+
+const PAGE_SIZE = 10;
+
+const CATEGORY_ICON: Record<string, LucideIcon> = {
   аренда: Home,
   авто: Car,
   бизнес: Briefcase,
@@ -13,258 +37,331 @@ const ICONS: Record<string, typeof Home> = {
   право: Scale,
 };
 
-const MONTHS = ["янв", "фев", "мар", "апр", "мая", "июн", "июл", "авг", "сен", "окт", "ноя", "дек"];
-const fmt = (d: string) => {
-  const [, m, day] = d.split("-");
-  return `${+day} ${MONTHS[+m - 1]}`;
-};
-const read = (d: string) => Math.max(3, Math.round(d.length / 150) + 3) + " мин";
-
-const PAGE_SIZE = 10;
-
-interface BlogListProps {
-  posts: BlogPost[];
-  labels: Record<string, string>;
+function norm(s: string): string {
+  return s.toLowerCase().replace(/ё/g, "е");
 }
 
-export default function BlogList({ posts, labels }: BlogListProps) {
-  const cats = useMemo(
-    () => Array.from(new Set(posts.map((p) => p.category))),
-    [posts]
-  );
-
-  const [activeCat, setActiveCat] = useState<string>("all");
-  const [page, setPage] = useState<number>(1);
+export default function BlogList({ posts, labels, order, templatesCount }: BlogListProps) {
+  const [cat, setCat] = useState("all");
+  const [query, setQuery] = useState("");
+  const [page, setPage] = useState(1);
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    const params = new URLSearchParams(window.location.search);
-    const cat = params.get("cat");
-    if (cat && (cat === "all" || cats.includes(cat))) {
-      setActiveCat(cat);
-    }
-    const p = params.get("page");
-    if (p) {
-      const n = parseInt(p, 10);
-      if (!Number.isNaN(n) && n > 0) setPage(n);
-    }
-    if (cat || p) {
-      window.history.replaceState({}, "", window.location.pathname);
-    }
-  }, [cats]);
+    const fromUrl = new URLSearchParams(window.location.search).get("cat");
+    if (fromUrl && Object.prototype.hasOwnProperty.call(labels, fromUrl)) setCat(fromUrl);
+  }, [labels]);
 
-  const filtered = useMemo(
-    () => (activeCat === "all" ? posts : posts.filter((p) => p.category === activeCat)),
-    [posts, activeCat]
-  );
-
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
-  const safePage = Math.min(page, totalPages);
-  const currentPosts = filtered.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
-
-  const onSelectCat = useCallback((c: string) => {
-    setActiveCat(c);
+  useEffect(() => {
     setPage(1);
-  }, []);
+  }, [cat, query]);
 
-  const goPage = useCallback((n: number) => {
-    const next = Math.min(Math.max(1, n), totalPages);
-    setPage(next);
-    if (typeof window !== "undefined") {
-      window.scrollTo({ top: 0, behavior: "smooth" });
+  const cats = useMemo(() => {
+    const ids = order && order.length > 0 ? order.filter((id) => labels[id]) : Object.keys(labels);
+    return ids
+      .map((id) => ({ id, label: labels[id] ?? id, count: posts.filter((p) => p.category === id).length }))
+      .filter((c) => c.count > 0);
+  }, [posts, labels, order]);
+
+  const sorted = useMemo(() => [...posts].sort((a, b) => (a.date < b.date ? 1 : -1)), [posts]);
+
+  const filtered = useMemo(() => {
+    const q = norm(query.trim());
+    return sorted.filter((p) => {
+      if (cat !== "all" && p.category !== cat) return false;
+      if (!q) return true;
+      const hay = norm(`${p.title} ${p.description} ${p.sections.map((s) => s.h).join(" ")}`);
+      return hay.includes(q);
+    });
+  }, [sorted, cat, query]);
+
+  const isFlat = cat === "all" && !query.trim();
+  const featured = isFlat ? sorted[0] : null;
+  const gridPosts = featured ? filtered.slice(1) : filtered;
+
+  const pages = Math.max(1, Math.ceil(gridPosts.length / PAGE_SIZE));
+  const cur = Math.min(page, pages);
+  const pageItems = gridPosts.slice((cur - 1) * PAGE_SIZE, cur * PAGE_SIZE);
+
+  const grid: ReactNode[] = [];
+  pageItems.forEach((p, i) => {
+    grid.push(<PostCard key={p.slug} post={p} labels={labels} />);
+    if (i === 3 && pageItems.length > 4) {
+      grid.push(
+        <AdSlot
+          key="ad-infeed"
+          id="BLOG_INFEED"
+          className="col-span-full rounded-2xl border-2 border-dashed border-gray-200 p-6 text-center text-xs font-semibold uppercase tracking-wider text-gray-400"
+        />
+      );
     }
-  }, [totalPages]);
+  });
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-[1fr_290px] gap-7 lg:h-full lg:overflow-hidden">
-      {/* Левая панель: статьи (независимая прокрутка) */}
-      <div className="lg:h-full lg:overflow-y-auto lg:pr-1 lg:min-h-0 lg:scrollbar-hide">
-        <nav className="text-xs text-slate-600 flex items-center gap-1.5 flex-wrap mb-6">
-          <Link href="/" className="hover:text-brand-600">Главная</Link>
-          <ChevronRight className="w-3 h-3" />
-          <span className="text-slate-600">Блог</span>
-        </nav>
-
-        <header className="mb-8">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-brand-600 mb-2">
-            Блог о договорах
-          </p>
-          <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
-            Как составить договор и не потерять деньги
-          </h1>
-          <p className="mt-3 text-base text-slate-600 max-w-2xl leading-relaxed">
-            Инструкции по аренде, ГПХ, распискам, доверенностям и сделкам с авто — простым языком и со
-            ссылками на нормы ГК РФ, ТК РФ и НК РФ.
-          </p>
-        </header>
-
-        <div className="flex flex-wrap gap-2 mb-6" role="group" aria-label="Категории блога">
-          <button
-            type="button"
-            onClick={() => onSelectCat("all")}
-            aria-pressed={activeCat === "all"}
-            className={`text-sm font-semibold px-3.5 py-1.5 rounded-full border transition cursor-pointer ${
-              activeCat === "all"
-                ? "bg-brand-600 text-white border-brand-600"
-                : "bg-white text-slate-600 border-slate-200 hover:text-brand-700 hover:border-brand-200"
-            }`}
-          >
-            Все материалы
-          </button>
-          {cats.map((c) => (
-            <button
-              key={c}
-              type="button"
-              onClick={() => onSelectCat(c)}
-              aria-pressed={activeCat === c}
-              className={`text-sm font-semibold px-3.5 py-1.5 rounded-full border transition cursor-pointer ${
-                activeCat === c
-                  ? "bg-brand-600 text-white border-brand-600"
-                  : "bg-white text-slate-600 border-slate-200 hover:text-brand-700 hover:border-brand-200"
-              }`}
-            >
-              {labels[c] || c}
-            </button>
-          ))}
-        </div>
-
-        {currentPosts.length === 0 ? (
-          <p className="text-slate-600 py-8 text-center">В этой категории пока нет материалов.</p>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            {currentPosts.map((p) => {
-              const C = ICONS[p.category] || Home;
-              return (
-                <Link
-                  key={p.slug}
-                  href={`/blog/${p.slug}`}
-                  className="group block bg-white border border-slate-200 rounded-2xl p-6 transition-all duration-200 hover:-translate-y-0.5 hover:border-brand-200 hover:shadow-[0_8px_24px_rgba(29,78,216,0.10)]"
-                >
-                  <div className="flex items-center justify-between mb-4">
-                    <span className="inline-flex items-center rounded-full bg-brand-50 text-brand-700 border border-brand-100 text-[11px] font-semibold uppercase tracking-wide px-2.5 py-1">
-                      {labels[p.category] || p.category}
-                    </span>
-                    <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-50 text-brand-600 border border-brand-100">
-                      <C className="h-5 w-5" />
-                    </span>
-                  </div>
-                  <h3 className="text-lg font-bold text-slate-900 leading-snug group-hover:text-brand-700 transition-colors">
-                    {p.title}
-                  </h3>
-                  <p className="mt-2 text-sm text-slate-600 leading-relaxed line-clamp-3">{p.description}</p>
-                  <div className="mt-4 pt-4 border-t border-slate-100 flex items-center gap-2 text-xs text-slate-600">
-                    <span>{fmt(p.date)}</span>
-                    <span className="h-1 w-1 rounded-full bg-slate-300" />
-                    <span>{read(p.description)} чтения</span>
-                  </div>
-                </Link>
-              );
-            })}
-          </div>
-        )}
-
-        {totalPages > 1 && (
-          <nav className="mt-10 flex items-center justify-center gap-2" aria-label="Пагинация">
-            <button
-              type="button"
-              onClick={() => goPage(safePage - 1)}
-              disabled={safePage === 1}
-              className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-brand-600 bg-brand-50 border border-brand-200 rounded-xl hover:bg-brand-100 transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <ChevronLeft className="w-4 h-4" />
-              Назад
-            </button>
-            <div className="flex items-center gap-1">
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => {
-                const visible =
-                  totalPages <= 7 ||
-                  p === 1 ||
-                  p === totalPages ||
-                  (p >= safePage - 1 && p <= safePage + 1);
-                if (!visible) {
-                  if (p === safePage - 2 || p === safePage + 2) {
-                    return (
-                      <span key={p} className="w-10 h-10 flex items-center justify-center text-slate-400">…</span>
-                    );
-                  }
-                  return null;
-                }
-                return (
-                  <button
-                    key={p}
-                    type="button"
-                    onClick={() => goPage(p)}
-                    aria-current={p === safePage ? "page" : undefined}
-                    className={`w-10 h-10 flex items-center justify-center text-sm font-semibold rounded-xl transition cursor-pointer ${
-                      p === safePage
-                        ? "bg-brand-600 text-white"
-                        : "text-slate-600 hover:bg-slate-100"
-                    }`}
-                  >
-                    {p}
-                  </button>
-                );
-              })}
-            </div>
-            <button
-              type="button"
-              onClick={() => goPage(safePage + 1)}
-              disabled={safePage === totalPages}
-              className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-brand-600 bg-brand-50 border border-brand-200 rounded-xl hover:bg-brand-100 transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              Вперёд
-              <ChevronRight className="w-4 h-4" />
-            </button>
+    <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
+      <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_290px]">
+        <div className="min-w-0">
+          <nav className="flex flex-wrap items-center gap-1.5 text-xs text-gray-500">
+            <Link href="/" className="hover:text-brand-600">Главная</Link>
+            <span className="text-gray-300">/</span>
+            <span className="text-gray-700">Блог</span>
           </nav>
-        )}
 
-        <section className="mt-12 bg-brand-600 rounded-3xl px-6 py-9 text-center">
-          <h2 className="text-2xl font-bold text-white">Нужен сам договор, а не статья?</h2>
-          <p className="mt-2 text-sm text-brand-100 max-w-xl mx-auto">
-            В каталоге — более 350 шаблонов документов: заполните онлайн за 5 минут и скачайте PDF или DOCX.
-          </p>
-          <Link
-            href="/templates"
-            className="mt-5 inline-flex items-center gap-2 px-6 py-3 bg-white text-brand-700 rounded-xl hover:bg-indigo-50 font-bold text-sm transition cursor-pointer"
-          >
-            <FileText className="w-4 h-4" />
-            Перейти к шаблонам
-            <ChevronRight className="w-4 h-4" />
-          </Link>
-        </section>
-      </div>
+          <div className="mt-5">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-brand-600">
+              Блог о договорах
+            </p>
+            <h1 className="mt-2 max-w-2xl text-3xl font-extrabold leading-tight tracking-tight text-slate-900 sm:text-4xl">
+              Как составить договор и не потерять деньги
+            </h1>
+            <p className="mt-3 max-w-2xl text-sm leading-relaxed text-gray-600">
+              Разборы юристов с нормами ГК РФ, ТК РФ и НК РФ: аренда, ГПХ и
+              самозанятость, расписки, доверенности, ДКП авто.
+            </p>
+          </div>
 
-      {/* Правая панель: рейл (независимая прокрутка) */}
-      <aside className="hidden lg:block lg:h-full lg:overflow-y-auto lg:pl-1 lg:min-h-0 lg:scrollbar-hide">
-        <div className="bg-white border border-slate-200 rounded-2xl p-5">
-          <h4 className="text-xs font-bold uppercase tracking-wide text-slate-600 mb-3">Популярное</h4>
-          {posts.slice(0, 5).map((p, i) => (
-            <Link
-              key={p.slug}
-              href={`/blog/${p.slug}`}
-              className="flex gap-3 py-2.5 border-b border-slate-100 last:border-0 group"
-            >
-              <span className="text-lg font-extrabold text-brand-600 min-w-[22px]">{i + 1}</span>
-              <span className="text-sm font-semibold text-slate-700 group-hover:text-brand-700 leading-snug">
-                {p.title}
-              </span>
-            </Link>
-          ))}
+          <div className="relative mt-6">
+            <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+            <input
+              type="search"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Найти статью по названию или вопросу"
+              className="w-full rounded-2xl border border-gray-200 bg-white py-3.5 pl-11 pr-4 text-sm text-slate-900 shadow-sm outline-none transition placeholder:text-gray-400 focus:border-brand-500 focus:ring-4 focus:ring-brand-100"
+            />
+          </div>
 
-          <h4 className="text-xs font-bold uppercase tracking-wide text-slate-600 mb-1 mt-5">Категории</h4>
-          {cats.map((c) => (
-            <button
-              key={c}
-              type="button"
-              onClick={() => onSelectCat(c)}
-              className="w-full flex items-center justify-between py-2 border-b border-slate-100 last:border-0 group text-left cursor-pointer"
-            >
-              <span className="text-sm font-semibold text-slate-700 group-hover:text-brand-700">{labels[c] || c}</span>
-              <span className="text-xs text-slate-600">{posts.filter((p) => p.category === c).length}</span>
-            </button>
-          ))}
+          <div className="mt-4 flex flex-wrap gap-2">
+            <Chip active={cat === "all"} onClick={() => setCat("all")} label="Все статьи" />
+            {cats.map((c) => (
+              <Chip key={c.id} active={cat === c.id} onClick={() => setCat(c.id)} label={c.label} />
+            ))}
+          </div>
+
+          {query.trim() === "" && gridPosts.length > 0 && (
+            <p className="mt-3 text-xs text-gray-400">
+              {cat === "all" ? "Все статьи" : labels[cat]} · {gridPosts.length}{" "}
+              {plural(gridPosts.length, "статья", "статьи", "статей")}
+            </p>
+          )}
+
+          {featured && (
+            <FeaturedCard className="mt-5" post={featured} labels={labels} />
+          )}
+
+          <div className="mt-5 grid gap-4 sm:grid-cols-2">{grid}</div>
+
+          {gridPosts.length === 0 && (
+            <div className="mt-5 rounded-2xl border border-dashed border-gray-300 bg-white p-12 text-center">
+              <FileText className="mx-auto h-8 w-8 text-gray-300" />
+              <p className="mt-3 text-sm font-semibold text-gray-700">Ничего не найдено</p>
+              <p className="mt-1 text-xs text-gray-500">
+                Попробуйте изменить запрос или сбросить категорию.
+              </p>
+            </div>
+          )}
+
+          {pages > 1 && (
+            <div className="mt-8 flex items-center justify-center gap-1.5">
+              <PagerButton disabled={cur === 1} onClick={() => setPage(cur - 1)} ariaLabel="Предыдущая страница">
+                <ChevronLeft className="h-4 w-4" />
+              </PagerButton>
+              {Array.from({ length: pages }, (_, i) => i + 1).map((n) => (
+                <button
+                  key={n}
+                  type="button"
+                  onClick={() => setPage(n)}
+                  aria-current={n === cur ? "page" : undefined}
+                  className={`h-10 w-10 rounded-xl text-sm font-semibold transition ${
+                    n === cur
+                      ? "bg-brand-600 text-white shadow-md shadow-brand-600/30"
+                      : "border border-gray-200 bg-white text-gray-600 hover:border-brand-300 hover:text-brand-700"
+                  }`}
+                >
+                  {n}
+                </button>
+              ))}
+              <PagerButton disabled={cur === pages} onClick={() => setPage(cur + 1)} ariaLabel="Следующая страница">
+                <ChevronRight className="h-4 w-4" />
+              </PagerButton>
+            </div>
+          )}
+
+          <BlogLiveCta templatesCount={templatesCount} />
         </div>
-      </aside>
+
+        <aside className="hidden lg:block">
+          <div className="sticky top-6 space-y-6">
+            <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+              <h3 className="text-sm font-bold text-slate-900">Свежие статьи</h3>
+              <ol className="mt-4 space-y-3">
+                {sorted.slice(0, 5).map((p, i) => (
+                  <li key={p.slug}>
+                    <Link href={`/blog/${p.slug}`} className="group flex gap-3">
+                      <span className="w-5 shrink-0 pt-px text-xs font-black text-gray-300 transition group-hover:text-brand-500">
+                        {i + 1}
+                      </span>
+                      <span className="text-[13px] font-medium leading-snug text-gray-700 transition group-hover:text-brand-700 line-clamp-2">
+                        {p.title}
+                      </span>
+                    </Link>
+                  </li>
+                ))}
+              </ol>
+            </div>
+
+            <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+              <h3 className="text-sm font-bold text-slate-900">Категории</h3>
+              <ul className="mt-3 space-y-0.5">
+                {cats.map((c) => (
+                  <li key={c.id}>
+                    <button
+                      type="button"
+                      onClick={() => setCat(c.id)}
+                      className={`flex w-full items-center justify-between rounded-lg px-2.5 py-2 text-[13px] transition ${
+                        cat === c.id
+                          ? "bg-brand-50 font-semibold text-brand-700"
+                          : "text-gray-600 hover:bg-brand-50 hover:text-brand-700"
+                      }`}
+                    >
+                      <span>{c.label}</span>
+                      <span className="text-xs text-gray-400">{c.count}</span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <AdSlot
+              id="BLOG_SIDEBAR"
+              className="rounded-2xl border-2 border-dashed border-gray-200 p-6 text-center text-xs font-semibold uppercase tracking-wider text-gray-400"
+            />
+          </div>
+        </aside>
+      </div>
     </div>
+  );
+}
+
+function plural(n: number, one: string, few: string, many: string): string {
+  const mod10 = n % 10;
+  const mod100 = n % 100;
+  if (mod10 === 1 && mod100 !== 11) return one;
+  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return few;
+  return many;
+}
+
+function Chip({ active, onClick, label }: { active: boolean; onClick: () => void; label: string }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={active}
+      className={`rounded-full px-4 py-2 text-[13px] font-semibold transition ${
+        active
+          ? "bg-brand-600 text-white shadow-md shadow-brand-600/30"
+          : "border border-gray-200 bg-white text-gray-600 hover:border-brand-300 hover:text-brand-700"
+      }`}
+    >
+      {label}
+    </button>
+  );
+}
+
+function PagerButton({
+  disabled,
+  onClick,
+  ariaLabel,
+  children,
+}: {
+  disabled: boolean;
+  onClick: () => void;
+  ariaLabel: string;
+  children: ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      aria-label={ariaLabel}
+      className="flex h-10 w-10 items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-600 transition hover:border-brand-300 hover:text-brand-700 disabled:cursor-not-allowed disabled:opacity-40"
+    >
+      {children}
+    </button>
+  );
+}
+
+function PostCard({ post, labels }: { post: BlogPost; labels: Record<string, string> }) {
+  const Icon = CATEGORY_ICON[post.category] ?? FileText;
+  return (
+    <Link
+      href={`/blog/${post.slug}`}
+      className="group flex flex-col rounded-2xl border border-gray-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-brand-200 hover:shadow-lg"
+    >
+      <div className="flex items-center justify-between">
+        <span className="inline-flex items-center rounded-full bg-brand-50 px-2.5 py-1 text-[11px] font-semibold text-brand-700">
+          {labels[post.category] ?? post.category}
+        </span>
+        <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-50 text-brand-600">
+          <Icon className="h-4 w-4" />
+        </span>
+      </div>
+      <h3 className="mt-4 text-[15px] font-bold leading-snug text-slate-900 transition group-hover:text-brand-700 line-clamp-2">
+        {post.title}
+      </h3>
+      <p className="mt-2 text-[13px] leading-relaxed text-gray-500 line-clamp-3">{post.description}</p>
+      <div className="mt-4 flex items-center gap-2 border-t border-gray-100 pt-3 text-xs text-gray-400">
+        <span>{formatShortDate(post.date)}</span>
+        <span className="text-gray-300">·</span>
+        <span>{postReadMinutes(post)} мин чтения</span>
+      </div>
+    </Link>
+  );
+}
+
+function FeaturedCard({ post, labels, className }: { post: BlogPost; labels: Record<string, string>; className?: string }) {
+  const Icon = CATEGORY_ICON[post.category] ?? FileText;
+  return (
+    <Link
+      href={`/blog/${post.slug}`}
+      className={`group grid overflow-hidden rounded-3xl border border-gray-200 bg-white shadow-sm transition hover:shadow-lg lg:grid-cols-[1.05fr_0.95fr] ${className ?? ""}`}
+    >
+      <div className="relative min-h-[190px] overflow-hidden bg-gradient-to-br from-brand-600 via-brand-500 to-purple-600 p-7">
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute -right-12 -top-12 h-44 w-44 rounded-full bg-white/10 blur-sm"
+        />
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute -bottom-14 -left-8 h-40 w-40 rounded-full bg-purple-400/20 blur-md"
+        />
+        <div className="relative flex h-full flex-col justify-between">
+          <span className="inline-flex w-fit items-center gap-1.5 rounded-full border border-white/25 bg-white/15 px-3 py-1 text-[11px] font-semibold text-white backdrop-blur">
+            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-300" />
+            Новое · обновлено недавно
+          </span>
+          <Icon className="h-12 w-12 text-white/30" aria-hidden="true" />
+        </div>
+      </div>
+      <div className="flex flex-col p-7">
+        <p className="text-[11px] font-semibold uppercase tracking-wider text-brand-600">
+          {labels[post.category] ?? post.category}
+        </p>
+        <h2 className="mt-2 text-xl font-extrabold leading-snug text-slate-900 transition group-hover:text-brand-700 sm:text-2xl">
+          {post.title}
+        </h2>
+        <p className="mt-3 line-clamp-3 text-sm leading-relaxed text-gray-500">{post.description}</p>
+        <div className="mt-auto flex items-center gap-3 pt-5">
+          <div className="flex items-center gap-2 text-xs text-gray-400">
+            <span>{formatShortDate(post.date)}</span>
+            <span className="text-gray-300">·</span>
+            <span>{postReadMinutes(post)} мин чтения</span>
+          </div>
+          <span className="ml-auto inline-flex items-center gap-1 text-xs font-bold text-brand-600 transition group-hover:gap-2">
+            Читать <ArrowRight className="h-3.5 w-3.5" />
+          </span>
+        </div>
+        </div>
+      </Link>
   );
 }

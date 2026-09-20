@@ -103,6 +103,7 @@ const config: Config = {
         "scale-in": "scaleIn 0.3s ease-out",
         "pulse-soft": "pulseSoft 2s ease-in-out infinite",
         float: "float 3.6s ease-in-out infinite",
+        marquee: "marquee 32s linear infinite",
       },
       keyframes: {
         fadeIn: { "0%": { opacity: "0" }, "100%": { opacity: "1" } },
@@ -111,6 +112,7 @@ const config: Config = {
         scaleIn: { "0%": { transform: "scale(0.95)", opacity: "0" }, "100%": { transform: "scale(1)", opacity: "1" } },
         pulseSoft: { "0%, 100%": { opacity: "1" }, "50%": { opacity: "0.7" } },
         float: { "0%, 100%": { transform: "translateY(0)" }, "50%": { transform: "translateY(-6px)" } },
+        marquee: { from: { transform: "translateX(0)" }, to: { transform: "translateX(-50%)" } },
       },
     },
   },
