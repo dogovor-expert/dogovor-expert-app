@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Briefcase,
   User,
@@ -79,7 +79,10 @@ export default function ResumeBuilder() {
   const [drawer, setDrawer] = useState(false);
   const [filter, setFilter] = useState("all");
   const [qOpen, setQOpen] = useState(false);
-  const [zoom, setZoom] = useState(0.62);
+  const [scale, setScale] = useState(0.62);
+  const [manual, setManual] = useState(false);
+  const fitRef = useRef(0.62);
+  const scrollRef = useRef<HTMLDivElement | null>(null);
   const [tab, setTab] = useState<"edit" | "view">("edit");
   const [loaded, setLoaded] = useState(false);
   const gridRef = useRef<HTMLDivElement | null>(null);
@@ -113,17 +116,30 @@ export default function ResumeBuilder() {
     return () => window.clearTimeout(id);
   }, [data, tpl, loaded]);
 
-  // Подгонка масштаба под ширину сцены.
-  const fitZoom = useCallback(() => {
-    const el = document.querySelector(".rvb-scroll");
-    if (!el) return;
-    const avail = el.clientWidth - 48;
-    setZoom(Math.max(0.3, Math.min(1, avail / 794)));
-  }, []);
-
+  // Масштаб превью: подгоняем под ширину сцены (ResizeObserver), пока пользователь не задал зум вручную.
   useEffect(() => {
-    if (tab === "view") window.setTimeout(fitZoom, 60);
-  }, [tab, fitZoom]);
+    const el = scrollRef.current;
+    if (!el || typeof ResizeObserver === "undefined") return;
+    const compute = () => {
+      const avail = el.clientWidth - 48;
+      const fit = Math.max(0.25, Math.min(1, avail / 794));
+      fitRef.current = fit;
+      if (!manual) setScale(fit);
+    };
+    compute();
+    const ro = new ResizeObserver(compute);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [manual]);
+
+  const zoomBy = (d: number) => {
+    setManual(true);
+    setScale((s) => Math.max(0.25, Math.min(1.5, s + d)));
+  };
+  const fitZoom = () => {
+    setManual(false);
+    setScale(fitRef.current);
+  };
 
   // Масштабирование мини-превью в drawer.
   useEffect(() => {
@@ -341,14 +357,14 @@ export default function ResumeBuilder() {
               <span className="hidden sm:inline">Скачать PDF</span>
             </button>
             <div className="rvb-zoom">
-              <button type="button" onClick={() => setZoom((z) => Math.max(0.25, z - 0.08))} aria-label="Уменьшить"><ZoomOut className="h-4 w-4" aria-hidden /></button>
-              <span className="zv">{Math.round(zoom * 100)}%</span>
-              <button type="button" onClick={() => setZoom((z) => Math.min(1.35, z + 0.08))} aria-label="Увеличить"><ZoomIn className="h-4 w-4" aria-hidden /></button>
+              <button type="button" onClick={() => zoomBy(-0.08)} aria-label="Уменьшить"><ZoomOut className="h-4 w-4" aria-hidden /></button>
+              <span className="zv">{Math.round(scale * 100)}%</span>
+              <button type="button" onClick={() => zoomBy(0.08)} aria-label="Увеличить"><ZoomIn className="h-4 w-4" aria-hidden /></button>
               <button type="button" onClick={fitZoom} aria-label="По размеру"><Maximize2 className="h-4 w-4" aria-hidden /></button>
             </div>
           </div>
-          <div className="rvb-scroll">
-            <div className="rvb-scaler" style={{ transform: `scale(${zoom})`, marginBottom: 1123 * (zoom - 1) }}>
+          <div className="rvb-scroll" ref={scrollRef}>
+            <div className="rvb-scaler" style={{ transform: `scale(${scale})`, marginBottom: 1123 * (scale - 1) }}>
               <div className={`a4 t-${tpl}`} dangerouslySetInnerHTML={{ __html: html }} />
             </div>
           </div>
