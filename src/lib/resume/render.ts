@@ -171,51 +171,125 @@ export function buildResumeHtml(data: ResumeData, tpl: TemplateId): string {
   }
 }
 
+interface DocTemplateStyle {
+  accent: string;
+  layout: "single" | "sidebar";
+  center?: boolean;
+  serif?: boolean;
+  headerBg?: string;
+  headerFg?: string;
+  sideBg?: string;
+  sideFg?: string;
+  sideAccent?: string;
+}
+
+const DOC_TEMPLATES: Record<TemplateId, DocTemplateStyle> = {
+  classic: { accent: "#0f172a", layout: "single", center: true },
+  modern: { accent: "#4F46E5", layout: "single" },
+  minimal: { accent: "#9ca3af", layout: "single" },
+  executive: { accent: "#C9A227", layout: "sidebar", serif: true, sideBg: "#0b1220", sideFg: "#e2e8f0", sideAccent: "#E7C55A" },
+  gradient: { accent: "#6D28D9", layout: "single", headerBg: "#5b21b6", headerFg: "#ffffff" },
+  compact: { accent: "#4F46E5", layout: "sidebar", sideBg: "#F8FAFC", sideFg: "#334155", sideAccent: "#4F46E5" },
+  fresher: { accent: "#E11D48", layout: "single" },
+  timeline: { accent: "#4F46E5", layout: "single" },
+  twocol: { accent: "#0f172a", layout: "sidebar", headerBg: "#0f172a", headerFg: "#ffffff", sideBg: "#F8FAFC", sideFg: "#334155", sideAccent: "#4F46E5" },
+  academic: { accent: "#111827", layout: "single", center: true, serif: true },
+};
+
 /**
  * Word-совместимое представление резюме (HTML, открывается в MS Word / Google Docs).
- * Линейная вёрстка без flex/grid — чтобы документ корректно редактировался в Word.
+ * Повторяет выбранный шаблон: акцентный цвет, шапка или боковая колонка (таблицей),
+ * линейные секции — без flex/grid, чтобы документ корректно открывался и редактировался в Word.
  */
-export function buildResumeDocHtml(data: ResumeData): string {
+export function buildResumeDocHtml(data: ResumeData, tpl: TemplateId): string {
   const p = data.personal;
+  const cfg: DocTemplateStyle = DOC_TEMPLATES[tpl];
+  const font = cfg.serif ? "'Times New Roman',Georgia,serif" : "Arial,Helvetica,sans-serif";
   const name = escapeHtml(fullName(data)) || "Ваше имя";
-  const contacts = [p.city, p.phone, p.email, p.link].filter(Boolean).map((x) => escapeHtml(x)).join(" · ");
+  const role = escapeHtml(p.role);
+  const contacts = [p.city, p.phone, p.email, p.link].filter(Boolean).map((x) => escapeHtml(x));
+  const strong = "#0f172a";
+
   const h2 = (t: string) =>
-    `<h2 style="font-size:13pt;color:#111;border-bottom:1px solid #bbb;padding-bottom:3pt;margin:16pt 0 6pt;">${t}</h2>`;
-  const parts: string[] = [];
-  if (p.role) parts.push(`<p style="margin:2pt 0 0;color:#444;font-size:11pt;">${escapeHtml(p.role)}</p>`);
-  if (contacts) parts.push(`<p style="margin:2pt 0 0;color:#555;font-size:10pt;">${contacts}</p>`);
-  if (data.summary) parts.push(h2("О себе") + `<p style="margin:0;">${escapeHtml(data.summary)}</p>`);
-  if (data.experience.length) {
-    parts.push(h2("Опыт работы"));
-    data.experience.forEach((e) => {
-      parts.push(
-        `<p style="margin:0 0 2pt;"><b>${escapeHtml(e.position || "Должность")}</b>${e.company ? " — " + escapeHtml(e.company) : ""}</p>`
-      );
-      if (e.period) parts.push(`<p style="margin:0 0 2pt;color:#666;font-size:10pt;">${escapeHtml(e.period)}</p>`);
-      if (e.bullets.length) {
-        parts.push(`<ul style="margin:2pt 0 8pt 18pt;">${e.bullets.map((b) => `<li>${escapeHtml(b)}</li>`).join("")}</ul>`);
-      }
-    });
-  }
-  if (data.education.length) {
-    parts.push(h2("Образование"));
-    data.education.forEach((e) => {
-      parts.push(`<p style="margin:0 0 2pt;"><b>${escapeHtml(e.institution || "Учебное заведение")}</b></p>`);
-      const line = [e.field, e.degree].filter(Boolean).map((x) => escapeHtml(x)).join(", ");
-      const range = [e.start, e.end].filter(Boolean).map((x) => escapeHtml(x)).join(" — ");
-      if (line || range) {
-        parts.push(`<p style="margin:0 0 8pt;color:#666;font-size:10pt;">${line}${range ? (line ? " · " : "") + range : ""}</p>`);
-      }
-    });
-  }
+    `<h2 style="font-family:${font};font-size:12pt;color:${cfg.accent};border-bottom:1px solid ${cfg.accent};padding-bottom:2pt;margin:14pt 0 5pt;">${t}</h2>`;
+
+  const summary = data.summary ? h2("О себе") + `<p style="margin:0;">${escapeHtml(data.summary)}</p>` : "";
+
+  const exp = data.experience.length
+    ? h2("Опыт работы") +
+      data.experience
+        .map((e) => {
+          const head = `<p style="margin:0 0 1pt;"><b style="color:${strong};">${escapeHtml(e.position || "Должность")}</b>${e.company ? ` <span style="color:${cfg.accent};">— ${escapeHtml(e.company)}</span>` : ""}${e.period ? ` <span style="color:#6b7280;font-size:9.5pt;">(${escapeHtml(e.period)})</span>` : ""}</p>`;
+          const bl = e.bullets.length
+            ? `<ul style="margin:2pt 0 7pt 16pt;padding:0;">${e.bullets.map((b) => `<li style="margin:0 0 1pt;">${escapeHtml(b)}</li>`).join("")}</ul>`
+            : `<p style="margin:0 0 6pt;"></p>`;
+          return head + bl;
+        })
+        .join("")
+    : "";
+
+  const edu = data.education.length
+    ? h2("Образование") +
+      data.education
+        .map((e) => {
+          const line = [e.field, e.degree].filter(Boolean).map((x) => escapeHtml(x)).join(", ");
+          const range = [e.start, e.end].filter(Boolean).map((x) => escapeHtml(x)).join(" — ");
+          return `<p style="margin:0 0 5pt;"><b style="color:${strong};">${escapeHtml(e.institution || "Учебное заведение")}</b><br><span style="color:#6b7280;font-size:9.5pt;">${line}${range ? (line ? " · " : "") + range : ""}</span></p>`;
+        })
+        .join("")
+    : "";
+
   const hard = [...data.skills.hard, ...data.skills.tools].map((x) => escapeHtml(x)).join(", ");
-  if (hard) parts.push(h2("Навыки") + `<p style="margin:0;">${hard}</p>`);
-  if (data.skills.soft.length) {
-    parts.push(h2("Личные качества") + `<p style="margin:0;">${data.skills.soft.map((x) => escapeHtml(x)).join(", ")}</p>`);
-  }
-  if (data.languages.length) {
-    parts.push(h2("Языки") + `<p style="margin:0;">${data.languages.map((l) => `${escapeHtml(l.name)} — ${escapeHtml(l.level)}`).join(", ")}</p>`);
-  }
+  const soft = data.skills.soft.map((x) => escapeHtml(x)).join(", ");
+  const langs = data.languages.map((l) => `${escapeHtml(l.name)} — ${escapeHtml(l.level)}`).join(", ");
+
   const title = escapeHtml("Резюме — " + (fullName(data) || "без имени"));
-  return `<!doctype html><html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8"><title>${title}</title><style>@page{size:A4;margin:2cm}body{font-family:Arial,Helvetica,sans-serif;font-size:11pt;color:#111;line-height:1.4}h1{font-size:18pt;margin:0}ul{margin:2pt 0 8pt 18pt;padding:0}li{margin:0 0 2pt}</style></head><body><h1>${name}</h1>${parts.join("")}</body></html>`;
+  const head =
+    `<head><meta charset="utf-8"><title>${title}</title><style>` +
+    `@page{size:A4;margin:1.6cm}` +
+    `body{font-family:${font};font-size:10.5pt;color:#1f2937;line-height:1.45;margin:0}` +
+    `h1{font-family:${font};margin:0}h2{font-family:${font}}` +
+    `ul{margin:2pt 0 6pt 16pt;padding:0}li{margin:0 0 1pt}p{margin:0 0 3pt}` +
+    `</style></head>`;
+  const open = `<!doctype html><html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">${head}<body>`;
+  const close = `</body></html>`;
+
+  const singleHeader =
+    `<h1 style="color:${cfg.accent};font-size:20pt;${cfg.center ? "text-align:center;" : ""}">${name}</h1>` +
+    (role ? `<p style="margin:3pt 0 0;color:#6b7280;${cfg.center ? "text-align:center;" : ""};">${role}</p>` : "") +
+    (contacts.length ? `<p style="margin:2pt 0 0;color:#6b7280;font-size:9.5pt;${cfg.center ? "text-align:center;" : ""};">${contacts.join(" · ")}</p>` : "");
+
+  if (cfg.layout === "sidebar") {
+    const sideBg = cfg.sideBg ?? "#F8FAFC";
+    const sideFg = cfg.sideFg ?? "#334155";
+    const sideAccent = cfg.sideAccent ?? cfg.accent;
+    const sideHead = cfg.headerBg
+      ? ""
+      : `<h1 style="color:${sideFg === "#e2e8f0" ? "#ffffff" : "#0f172a"};font-size:17pt;margin:0 0 3pt;">${name}</h1>` +
+        (role ? `<p style="margin:0 0 8pt;color:${sideAccent};font-size:9.5pt;font-weight:bold;">${role}</p>` : "");
+    const side =
+      sideHead +
+      (contacts.length ? `<p style="margin:0 0 8pt;color:${sideFg};font-size:9.5pt;line-height:1.5;">${contacts.join("<br>")}</p>` : "") +
+      (hard ? `<p style="margin:0 0 2pt;color:${sideAccent};font-weight:bold;font-size:9.5pt;">НАВЫКИ</p><p style="margin:0 0 8pt;color:${sideFg};font-size:9.5pt;">${hard}</p>` : "") +
+      (soft ? `<p style="margin:0 0 2pt;color:${sideAccent};font-weight:bold;font-size:9.5pt;">КАЧЕСТВА</p><p style="margin:0 0 8pt;color:${sideFg};font-size:9.5pt;">${soft}</p>` : "") +
+      (langs ? `<p style="margin:0 0 2pt;color:${sideAccent};font-weight:bold;font-size:9.5pt;">ЯЗЫКИ</p><p style="margin:0;color:${sideFg};font-size:9.5pt;">${langs}</p>` : "");
+    const bandHeader = cfg.headerBg
+      ? `<table width="100%" cellpadding="12" cellspacing="0" style="border-collapse:collapse;margin:0 0 10pt;"><tr><td bgcolor="${cfg.headerBg}"><h1 style="color:${cfg.headerFg};font-size:20pt;margin:0;">${name}</h1>${role ? `<p style="margin:2pt 0 0;color:${cfg.headerFg};">${role}</p>` : ""}${contacts.length ? `<p style="margin:3pt 0 0;font-size:9.5pt;color:${cfg.headerFg};">${contacts.join(" · ")}</p>` : ""}</td></tr></table>`
+      : "";
+    const table =
+      `<table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;"><tr>` +
+      `<td width="32%" valign="top" bgcolor="${sideBg}" style="padding:10pt;">${side}</td>` +
+      `<td width="68%" valign="top" style="padding:2pt 0 10pt 14pt;">${summary}${exp}${edu}</td>` +
+      `</tr></table>`;
+    return open + bandHeader + table + close;
+  }
+
+  const skillsBlock =
+    (hard ? h2("Навыки") + `<p style="margin:0;">${hard}</p>` : "") +
+    (soft ? h2("Личные качества") + `<p style="margin:0;">${soft}</p>` : "") +
+    (langs ? h2("Языки") + `<p style="margin:0;">${langs}</p>` : "");
+  const headerBand = cfg.headerBg
+    ? `<table width="100%" cellpadding="14" cellspacing="0" style="border-collapse:collapse;margin:0 0 8pt;"><tr><td bgcolor="${cfg.headerBg}"><h1 style="color:${cfg.headerFg};font-size:22pt;margin:0;">${name}</h1>${role ? `<p style="margin:3pt 0 0;color:${cfg.headerFg};">${role}</p>` : ""}${contacts.length ? `<p style="margin:4pt 0 0;font-size:9.5pt;color:${cfg.headerFg};">${contacts.join(" · ")}</p>` : ""}</td></tr></table>`
+    : singleHeader;
+  return open + headerBand + summary + exp + edu + skillsBlock + close;
 }
