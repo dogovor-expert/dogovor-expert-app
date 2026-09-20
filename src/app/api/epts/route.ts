@@ -7,12 +7,19 @@ import { sendEmail, sendTelegram, SUPPORT_EMAIL } from "@/lib/mail";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 /**
- * Заявка на выписку из ЭПТС.
+ * Заявка на выписку из ЭПТС с немедленной оплатой через ЮKassa.
  *
- * MVP: заявка уходит в поддержку (Telegram + email). Платёж и автоматическая
- * выгрузка подключаются отдельно. Запись в БД не выполняется, чтобы не
- * зависеть от схемы таблицы leads (она рассчитана на другой enum услуг).
+ * Флоу: пользователь заполняет форму → мы создаём платёж ЮKassa (redirect) →
+ * сохраняем заявку (leads, service='epts') в статусе payment_pending →
+ * возвращаем confirmation_url → клиент уходит на страницу оплаты.
+ * Результат оплаты обрабатывает вебхук /api/billing/webhook (ищет заявку
+ * по leads.meta->>provider_id), который помечает заявку 'paid' и уведомляет
+ * поддержку. Уведомление об оплате уходит ДО того, как оператор начнёт
+ * оформлять документ.
  */
+
+const EPTS_PRICE = 800;
+
 const eptsSchema = z.object({
   vin: z.string().regex(/^[A-HJ-NPR-Z0-9]{17}$/, "VIN должен содержать 17 символов"),
   epts: z.string().regex(/^[0-9]{15}$/, "Номер ЭПТС должен содержать 15 цифр"),
@@ -21,6 +28,12 @@ const eptsSchema = z.object({
 });
 
 type EptsInput = z.infer<typeof eptsSchema>;
+
+interface YookassaPaymentResponse {
+  id: string;
+  status: string;
+  confirmation?: { confirmation_url?: string };
+}
 
 function escapeHtml(value: string): string {
   return value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
@@ -45,32 +58,107 @@ async function postHandler(req: Request) {
   const { vin, epts, email, phone }: EptsInput = parsed.data;
 
   // Сохраняем заявку в БД (таблица leads, service='epts'), чтобы она была видна
-  // в админ-панели. Уведомление в поддержку дублируем ниже.
+  // в админ-панели даже если платёж не удалось создать (оператор сможет
+  // связаться с клиентом).
+  let leadId: string | null = null;
   try {
     const supabase = createAdminClient();
-    const { error: dbError } = await supabase.from("leads").insert({
+    const leadResult = (await supabase.from("leads").insert({
       service: "epts",
       brand: "",
       vin,
       phone,
       status: "new",
       meta: { email, epts },
-    });
-    if (dbError) console.error("[epts] lead insert failed:", dbError.message);
+    }).select("id").single()) as { data: { id: string } | null; error: { message: string } | null };
+    if (leadResult.error) {
+      console.error("[epts] lead insert failed:", leadResult.error.message);
+    } else {
+      leadId = leadResult.data?.id ?? null;
+    }
   } catch (e) {
     console.error("[epts] lead insert exception:", String(e));
   }
 
-  const text = `Новая заявка: выписка ЭПТС\nVIN: ${vin}\n№ ЭПТС: ${epts}\nEmail: ${email}\nТелефон: ${phone}`;
+  const shopId = (process.env.YOOKASSA_SHOP_ID ?? "").trim();
+  const secretKey = (process.env.YOOKASSA_SECRET_KEY ?? "").trim();
+  if (!shopId || !secretKey) {
+    console.error("[epts] YOOKASSA env not set");
+    const text = `Заявка без оплаты: выписка ЭПТС\nVIN: ${vin}\n№ ЭПТС: ${epts}\nEmail: ${email}\nТелефон: ${phone}`;
+    await sendTelegram("⚠️ " + text);
+    await sendEmail({
+      to: SUPPORT_EMAIL,
+      subject: "Заявка: выписка ЭПТС (без оплаты)",
+      html: `<div style="font-family:Arial,sans-serif;padding:16px;white-space:pre-wrap;color:#374151;">${escapeHtml(text)}</div>`,
+    });
+    return NextResponse.json({ error: "payment_unavailable" }, { status: 503 });
+  }
 
-  await sendTelegram("🔔 " + text);
-  await sendEmail({
-    to: SUPPORT_EMAIL,
-    subject: "Заявка: выписка ЭПТС",
-    html: `<div style="font-family:Arial,sans-serif;padding:16px;white-space:pre-wrap;color:#374151;">${escapeHtml(text)}</div>`,
+  const host = req.headers.get("host") ?? "dogovor.expert";
+  const proto = host.includes("localhost") || host.includes("127.0.0.1") ? "http" : "https";
+
+  const res = await fetch("https://api.yookassa.ru/v3/payments", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Idempotence-Key": Buffer.from(`epts:${vin}:${epts}`).toString("base64"),
+      Authorization: "Basic " + Buffer.from(`${shopId}:${secretKey}`).toString("base64"),
+    },
+    body: JSON.stringify({
+      amount: { value: EPTS_PRICE.toFixed(2), currency: "RUB" },
+      capture: true,
+      confirmation: {
+        type: "redirect",
+        return_url: `${proto}://${host}/epts?success=1`,
+      },
+      description: `Выписка из ЭПТС · ${vin}`,
+      metadata: { type: "epts", lead_id: leadId ?? "" },
+    }),
   });
 
-  return NextResponse.json({ ok: true }, { status: 201 });
+  if (!res.ok) {
+    const detail = await res.text().catch(() => "");
+    console.error("[epts] YooKassa create payment failed", res.status, detail);
+    let providerDetail = "";
+    try {
+      const j: unknown = JSON.parse(detail);
+      const desc = (j as { description?: unknown }).description;
+      const code = (j as { code?: unknown }).code;
+      providerDetail = (typeof desc === "string" && desc) || (typeof code === "string" && code) || detail;
+    } catch {
+      providerDetail = detail;
+    }
+    const text = `Заявка без оплаты: выписка ЭПТС\nVIN: ${vin}\n№ ЭПТС: ${epts}\nEmail: ${email}\nТелефон: ${phone}\nОшибка ЮKassa: ${providerDetail}`;
+    await sendTelegram("⚠️ " + text);
+    await sendEmail({
+      to: SUPPORT_EMAIL,
+      subject: "Заявка: выписка ЭПТС (ошибка оплаты)",
+      html: `<div style="font-family:Arial,sans-serif;padding:16px;white-space:pre-wrap;color:#374151;">${escapeHtml(text)}</div>`,
+    });
+    return NextResponse.json({ error: "provider_error", yookassa_status: res.status, detail: providerDetail }, { status: 502 });
+  }
+
+  const payment = (await res.json()) as YookassaPaymentResponse;
+  if (payment.status !== "pending" || !payment.confirmation?.confirmation_url) {
+    console.error("[epts] YooKassa unexpected payment state", JSON.stringify(payment));
+    return NextResponse.json({ error: "provider_unexpected" }, { status: 502 });
+  }
+
+  // Связываем платёж с заявкой: вебхук будет искать её по meta->>provider_id.
+  try {
+    const supabase = createAdminClient();
+    await supabase
+      .from("leads")
+      .update({
+        status: "payment_pending",
+        meta: { email, epts, provider: "yookassa", provider_id: payment.id, amount: EPTS_PRICE },
+      })
+      .eq("id", leadId ?? "noop");
+  } catch (e) {
+    console.error("[epts] lead payment link failed:", String(e));
+  }
+
+  return NextResponse.json({ confirmation_url: payment.confirmation.confirmation_url }, { status: 201 });
 }
 
 export const POST = withCsrf(postHandler);

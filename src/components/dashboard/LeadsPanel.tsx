@@ -10,14 +10,16 @@ interface Lead {
   brand: string;
   vin: string;
   phone: string;
-  status: "new" | "paid" | "docs" | "filed" | "done" | "canceled";
+  status: "new" | "payment_pending" | "paid" | "payment_canceled" | "docs" | "filed" | "done" | "canceled";
   meta?: { email?: string; epts?: string } | null;
   created_at: string;
 }
 
 const STATUS_LABELS: Record<Lead["status"], { label: string; variant: "amber" | "green" | "blue" | "teal" | "gray" | "red" }> = {
   new: { label: "Новая", variant: "amber" },
+  payment_pending: { label: "Ждём оплату", variant: "amber" },
   paid: { label: "Оплачена", variant: "green" },
+  payment_canceled: { label: "Оплата не завершена", variant: "red" },
   docs: { label: "Документы готовы", variant: "blue" },
   filed: { label: "Подано на таможню", variant: "teal" },
   done: { label: "Завершена", variant: "gray" },
@@ -138,7 +140,9 @@ export default function LeadsPanel() {
                   className="text-xs bg-gray-50 border border-gray-200 rounded-lg px-2 py-1.5 text-gray-700 outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 cursor-pointer"
                 >
                   <option value="new">Новая</option>
+                  <option value="payment_pending">Ждём оплату</option>
                   <option value="paid">Оплачена</option>
+                  <option value="payment_canceled">Оплата не завершена</option>
                   <option value="docs">Документы готовы</option>
                   <option value="filed">Подано на таможню</option>
                   <option value="done">Завершена</option>
