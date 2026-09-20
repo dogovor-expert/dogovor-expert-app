@@ -19,12 +19,22 @@ if (!redis) {
 /** Срок жизни данных чата — 30 дней (приватность: переписка может содержать ФИО/паспортные данные). */
 const TTL_SECONDS = 60 * 60 * 24 * 30;
 
+export interface ChatFile {
+  /** Подписанная ссылка Supabase Storage (живёт столько же, сколько переписка). */
+  url: string;
+  name: string;
+  mime: string;
+  kind: "image" | "file";
+  size?: number;
+}
+
 export interface ChatMessage {
   id: string;
   role: "visitor" | "operator";
   text: string;
   ts: number;
   name?: string;
+  file?: ChatFile;
 }
 
 export interface ChatProfile {

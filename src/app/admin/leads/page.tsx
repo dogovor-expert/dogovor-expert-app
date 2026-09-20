@@ -8,8 +8,8 @@ export default async function AdminLeadsPage() {
   return (
     <div className="space-y-6 max-w-5xl mx-auto">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Лиды (растаможка)</h1>
-        <p className="text-gray-600 text-sm">Заявки из калькулятора «Растаможка». Меняйте статус прямо в карточке.</p>
+        <h1 className="text-2xl font-bold text-gray-900">Заявки</h1>
+        <p className="text-gray-600 text-sm">Заявки на растаможку и выписку ЭПТС. Меняйте статус прямо в карточке.</p>
       </div>
       <LeadsPanel />
     </div>

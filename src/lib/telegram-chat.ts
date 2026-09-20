@@ -69,6 +69,59 @@ export async function sendToTopic(threadId: number, text: string): Promise<boole
   return okAll;
 }
 
+/** URL файла в Bot API по file_id (для скачивания). */
+export async function getFilePath(fileId: string): Promise<string | null> {
+  const r = await call("getFile", { file_id: fileId });
+  if (!r.ok) return null;
+  const res = r.result as { file_path?: string } | undefined;
+  return res?.file_path ?? null;
+}
+
+/** Скачать файл из Telegram (Bot API отдаёт до 20 МБ). */
+export async function downloadTelegramFile(
+  filePath: string
+): Promise<{ bytes: ArrayBuffer; contentType: string } | null> {
+  if (!TOKEN) return null;
+  try {
+    const res = await fetch(`https://api.telegram.org/file/bot${TOKEN}/${filePath}`);
+    if (!res.ok) return null;
+    return {
+      bytes: await res.arrayBuffer(),
+      contentType: res.headers.get("content-type") || "application/octet-stream",
+    };
+  } catch {
+    return null;
+  }
+}
+
+/** Отправить изображение в тему по URL (Telegram скачивает сам). */
+export async function sendPhotoToTopic(threadId: number, url: string, caption?: string): Promise<boolean> {
+  if (!SUPPORT_GROUP_ID) return false;
+  const r = await call("sendPhoto", {
+    chat_id: SUPPORT_GROUP_ID,
+    message_thread_id: threadId,
+    photo: url,
+    caption: caption ? caption.slice(0, 1024) : undefined,
+    parse_mode: "HTML",
+  });
+  if (!r.ok) console.error("[telegram] sendPhoto failed:", r.description);
+  return r.ok;
+}
+
+/** Отправить документ в тему по URL. */
+export async function sendDocumentToTopic(threadId: number, url: string, caption?: string): Promise<boolean> {
+  if (!SUPPORT_GROUP_ID) return false;
+  const r = await call("sendDocument", {
+    chat_id: SUPPORT_GROUP_ID,
+    message_thread_id: threadId,
+    document: url,
+    caption: caption ? caption.slice(0, 1024) : undefined,
+    parse_mode: "HTML",
+  });
+  if (!r.ok) console.error("[telegram] sendDocument failed:", r.description);
+  return r.ok;
+}
+
 /** Установить webhook с секретом (для валидации входящих). */
 export async function setWebhook(url: string, secret: string): Promise<boolean> {
   const r = await call("setWebhook", {
