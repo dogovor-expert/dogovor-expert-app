@@ -1,13 +1,30 @@
-"use client";
+﻿"use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import {
+  Briefcase,
+  Calendar,
+  Car,
+  FileText,
+  type LucideIcon,
+  Globe,
+  Home,
+  Mail,
+  PenLine,
+  Scale,
+  Search,
+  Users,
+  Wallet,
+} from "lucide-react";
+import FormatBadges from "./FormatBadges";
 
 export interface BlankItem {
   id: string;
   name: string;
   description: string;
   category: string;
+  lastUpdated: string;
 }
 
 export interface BlankCategory {
@@ -16,33 +33,107 @@ export interface BlankCategory {
   count: number;
 }
 
+type SortKey = "popular" | "az" | "new";
+
 const PAGE_SIZE = 20;
+
+const CATEGORY_ICONS: Record<string, LucideIcon> = {
+  realty: Home,
+  business: Briefcase,
+  auto: Car,
+  finance: Wallet,
+  family: Users,
+  legal: Scale,
+  migration: Globe,
+  postal: Mail,
+  other: FileText,
+};
+
+const RU_MONTHS: Record<string, number> = {
+  январь: 1,
+  февраль: 2,
+  март: 3,
+  апрель: 4,
+  май: 5,
+  июнь: 6,
+  июль: 7,
+  август: 8,
+  сентябрь: 9,
+  октябрь: 10,
+  ноябрь: 11,
+  декабрь: 12,
+};
+
+/** «Май 2026» → число вида 202604, пригодное для сортировки «сначала новые». */
+function recentKey(s: string): number {
+  const m = /([а-яё]+)\s+(\d{4})/iu.exec(s);
+  if (!m) return 0;
+  const mon = RU_MONTHS[m[1].toLowerCase()] ?? 0;
+  return Number(m[2]) * 100 + mon;
+}
+
+function norm(s: string): string {
+  return s.toLowerCase().replace(/ё/g, "е").trim();
+}
+
+/** Поиск с учётом словоформ: «аренда» находит «аренды», «аренду» и т.п. */
+function matchQ(hay: string, q: string): boolean {
+  if (hay.includes(q)) return true;
+  const stem = q.replace(/[аеёиоуыэюяйьъ]+$/, "");
+  return stem.length >= 3 && hay.includes(stem);
+}
 
 export default function BlanksBrowser({
   items,
   categories,
+  popularIds,
 }: {
   items: BlankItem[];
   categories: BlankCategory[];
+  popularIds: readonly string[];
 }) {
   const [query, setQuery] = useState("");
   const [activeCat, setActiveCat] = useState<string>("all");
+  const [sort, setSort] = useState<SortKey>("popular");
   const [page, setPage] = useState(1);
+  const catalogRef = useRef<HTMLElement>(null);
 
-  const q = query.trim().toLowerCase();
+  const q = norm(query);
 
   const filtered = useMemo(() => {
-    return items.filter((it) => {
-      if (activeCat !== "all" && it.category !== activeCat) return false;
-      if (!q) return true;
-      const hay = `${it.name} ${it.description} ${it.id}`.toLowerCase();
-      return hay.includes(q);
-    });
+    const byCat = items.filter(
+      (it) => activeCat === "all" || it.category === activeCat
+    );
+    if (!q) return byCat;
+    return byCat.filter((it) =>
+      matchQ(norm(`${it.name} ${it.description} ${it.id}`), q)
+    );
   }, [items, activeCat, q]);
+
+  const sorted = useMemo(() => {
+    const arr = [...filtered];
+    if (sort === "az") {
+      arr.sort((a, b) => a.name.localeCompare(b.name, "ru"));
+    } else if (sort === "new") {
+      arr.sort(
+        (a, b) =>
+          recentKey(b.lastUpdated) - recentKey(a.lastUpdated) ||
+          a.name.localeCompare(b.name, "ru")
+      );
+    } else {
+      const rank = new Map(popularIds.map((id, i) => [id, i]));
+      arr.sort(
+        (a, b) =>
+          (rank.get(a.id) ?? Number.MAX_SAFE_INTEGER) -
+          (rank.get(b.id) ?? Number.MAX_SAFE_INTEGER)
+      );
+    }
+    return arr;
+  }, [filtered, sort, popularIds]);
 
   const byCategory = useMemo(() => {
     const map = new Map<string, BlankItem[]>();
-    for (const it of filtered) {
+    for (const it of sorted) {
       const arr = map.get(it.category) ?? [];
       arr.push(it);
       map.set(it.category, arr);
@@ -50,17 +141,18 @@ export default function BlanksBrowser({
     return categories
       .filter((c) => map.has(c.id))
       .map((c) => ({ ...c, items: map.get(c.id) ?? [] }));
-  }, [filtered, categories]);
+  }, [sorted, categories]);
 
-  const showGrouped = activeCat === "all" && !q;
-  const totalFlatPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const showGrouped = activeCat === "all" && !q && sort === "popular";
+  const totalFlatPages = Math.max(1, Math.ceil(sorted.length / PAGE_SIZE));
   const safePage = Math.min(page, totalFlatPages);
   const flatStart = (safePage - 1) * PAGE_SIZE;
-  const flatPaged = filtered.slice(flatStart, flatStart + PAGE_SIZE);
+  const flatPaged = sorted.slice(flatStart, flatStart + PAGE_SIZE);
 
   const reset = () => {
     setQuery("");
     setActiveCat("all");
+    setSort("popular");
     setPage(1);
   };
 
@@ -69,117 +161,213 @@ export default function BlanksBrowser({
     setPage(1);
   };
 
+  const goCat = (c: string) => {
+    changeCat(c);
+    catalogRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
+  const total = categories.reduce((s, c) => s + c.count, 0);
+
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row gap-3 sm:items-center">
-        <div className="relative flex-1">
-          <input
-            type="search"
-            value={query}
-            onChange={(e) => {
-              setQuery(e.target.value);
-              setPage(1);
-            }}
-            placeholder="Поиск бланка: договор аренды, расписка, счёт…"
-            aria-label="Поиск пустого бланка"
-            className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 bg-white text-sm text-gray-900 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400"
-          />
-          <svg
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-600"
-            width="18"
-            height="18"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            aria-hidden="true"
-          >
-            <circle cx="11" cy="11" r="7" />
-            <path d="m21 21-4.3-4.3" />
-          </svg>
+    <div className="space-y-10">
+      <section aria-label="Категории бланков" className="space-y-4">
+        <div className="flex flex-wrap items-end justify-between gap-2">
+          <h2 className="text-xl font-bold text-gray-900">Все категории</h2>
+          <span className="text-sm text-gray-500">
+            {total.toLocaleString("ru-RU")} бланков PDF и Word
+          </span>
         </div>
-      </div>
-
-      <div className="flex flex-wrap gap-2">
-        <FilterPill
-          active={activeCat === "all"}
-          onClick={() => changeCat("all")}
-          label="Все"
-          count={items.length}
-        />
-        {categories.map((c) => (
-          <FilterPill
-            key={c.id}
-            active={activeCat === c.id}
-            onClick={() => changeCat(c.id)}
-            label={c.label}
-            count={c.count}
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+          <CategoryTile
+            active={activeCat === "all"}
+            onClick={() => goCat("all")}
+            label="Все бланки"
+            count={items.length}
+            icon={FileText}
           />
-        ))}
-      </div>
+          {categories.map((c) => (
+            <CategoryTile
+              key={c.id}
+              active={activeCat === c.id}
+              onClick={() => goCat(c.id)}
+              label={c.label}
+              count={c.count}
+              icon={CATEGORY_ICONS[c.id] ?? FileText}
+            />
+          ))}
+        </div>
+      </section>
 
-      {filtered.length === 0 ? (
-        <p className="text-center text-gray-500 py-12">
-          По запросу «{query}» ничего не найдено. Попробуйте другое слово или{" "}
-          <button
-            type="button"
-            onClick={reset}
-            className="text-indigo-600 underline"
-          >
-            сбросьте фильтр
-          </button>
-          .
-        </p>
-      ) : showGrouped ? (
-        byCategory.map((group) => (
-          <section key={group.id}>
-            <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-              {group.label}
-              <span className="text-sm font-normal text-gray-600">
-                ({group.items.length})
-              </span>
-            </h2>
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
-              {group.items.map((t) => (
+      <section
+        ref={catalogRef}
+        aria-label="Каталог бланков"
+        className="space-y-5 scroll-mt-24"
+      >
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
+          <div className="relative flex-1">
+            <input
+              type="search"
+              value={query}
+              onChange={(e) => {
+                setQuery(e.target.value);
+                setPage(1);
+              }}
+              placeholder="Поиск бланка: договор аренды, расписка, счёт…"
+              aria-label="Поиск пустого бланка"
+              className="w-full rounded-xl border border-gray-200 bg-white py-3 pl-10 pr-4 text-sm text-gray-900 placeholder:text-gray-500 focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-200"
+            />
+            <Search className="absolute left-3 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-gray-400" />
+          </div>
+          <div className="flex items-center gap-2 lg:shrink-0">
+            <span className="text-sm text-gray-500">Сортировка:</span>
+            <div className="relative">
+              <select
+                value={sort}
+                onChange={(e) => {
+                  setSort(e.target.value as SortKey);
+                  setPage(1);
+                }}
+                aria-label="Сортировка бланков"
+                className="cursor-pointer appearance-none rounded-xl border border-gray-200 bg-white py-3 pl-4 pr-9 text-sm font-medium text-gray-700 hover:border-brand-300 focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-200"
+              >
+                <option value="popular">По популярности</option>
+                <option value="az">По алфавиту (А—Я)</option>
+                <option value="new">Сначала новые</option>
+              </select>
+              <Calendar className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+            </div>
+          </div>
+        </div>
+
+        <div className="flex flex-wrap gap-2">
+          <FilterPill
+            active={activeCat === "all"}
+            onClick={() => changeCat("all")}
+            label="Все"
+            count={items.length}
+          />
+          {categories.map((c) => (
+            <FilterPill
+              key={c.id}
+              active={activeCat === c.id}
+              onClick={() => changeCat(c.id)}
+              label={c.label}
+              count={c.count}
+            />
+          ))}
+        </div>
+
+        {sorted.length === 0 ? (
+          <p className="py-12 text-center text-gray-500">
+            По запросу «{query}» ничего не найдено. Попробуйте другое слово или{" "}
+            <button
+              type="button"
+              onClick={reset}
+              className="cursor-pointer text-brand-600 underline underline-offset-2"
+            >
+              сбросьте фильтры
+            </button>
+            .
+          </p>
+        ) : showGrouped ? (
+          byCategory.map((group) => (
+            <section key={group.id} className="space-y-4">
+              <h3 className="flex items-center gap-2 text-lg font-bold text-gray-900">
+                {group.label}
+                <span className="rounded-full bg-brand-50 px-2.5 py-0.5 text-sm font-medium text-brand-600">
+                  {group.items.length}
+                </span>
+              </h3>
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {group.items.map((t) => (
+                  <BlankCard key={t.id} item={t} />
+                ))}
+              </div>
+            </section>
+          ))
+        ) : (
+          <>
+            <div
+              className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3"
+              aria-live="polite"
+              aria-atomic="false"
+            >
+              {flatPaged.map((t) => (
                 <BlankCard key={t.id} item={t} />
               ))}
             </div>
-          </section>
-        ))
-      ) : (
-        <>
-          <div
-            className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3 min-h-[640px]"
-            aria-live="polite"
-            aria-atomic="false"
-          >
-            {flatPaged.map((t) => (
-              <BlankCard key={t.id} item={t} />
-            ))}
-          </div>
-          {totalFlatPages > 1 && (
-            <nav
-              className="flex items-center justify-center gap-2 pt-4"
-              aria-label="Пагинация бланков"
-            >
-              <PageBtn
-                disabled={safePage === 1}
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-                label="Назад"
-              />
-              <span className="text-sm text-gray-600 px-3">
-                {safePage} / {totalFlatPages}
-              </span>
-              <PageBtn
-                disabled={safePage === totalFlatPages}
-                onClick={() => setPage((p) => Math.min(totalFlatPages, p + 1))}
-                label="Вперёд"
-              />
-            </nav>
-          )}
-        </>
-      )}
+            {totalFlatPages > 1 && (
+              <nav
+                className="flex items-center justify-center gap-2 pt-4"
+                aria-label="Пагинация бланков"
+              >
+                <PageBtn
+                  disabled={safePage === 1}
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  label="Назад"
+                />
+                <span className="px-3 text-sm text-gray-600">
+                  {safePage} / {totalFlatPages}
+                </span>
+                <PageBtn
+                  disabled={safePage === totalFlatPages}
+                  onClick={() => setPage((p) => Math.min(totalFlatPages, p + 1))}
+                  label="Вперёд"
+                />
+              </nav>
+            )}
+          </>
+        )}
+      </section>
     </div>
+  );
+}
+
+function CategoryTile({
+  active,
+  onClick,
+  label,
+  count,
+  icon: Icon,
+}: {
+  active: boolean;
+  onClick: () => void;
+  label: string;
+  count: number;
+  icon: LucideIcon;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={active}
+      className={
+        "cursor-pointer rounded-2xl border p-4 text-left transition sm:p-5 " +
+        (active
+          ? "border-transparent bg-gradient-to-br from-brand-500 to-purple-600 text-white shadow-lg shadow-brand-500/20"
+          : "border-gray-200 bg-white text-gray-900 hover:border-brand-300 hover:shadow-sm")
+      }
+    >
+      <div className="flex items-start justify-between gap-2">
+        <span
+          className={
+            "grid h-9 w-9 place-items-center rounded-xl " +
+            (active ? "bg-white/20 text-white" : "bg-brand-50 text-brand-600")
+          }
+        >
+          <Icon className="h-5 w-5" />
+        </span>
+        <span
+          className={
+            "rounded-full px-2 py-0.5 text-xs font-semibold " +
+            (active ? "bg-white/20 text-white" : "bg-gray-100 text-gray-600")
+          }
+        >
+          {count}
+        </span>
+      </div>
+      <p className="mt-3 text-sm font-semibold leading-snug">{label}</p>
+    </button>
   );
 }
 
@@ -200,14 +388,14 @@ function FilterPill({
       onClick={onClick}
       aria-pressed={active}
       className={
-        "px-3.5 py-2 rounded-full text-sm font-medium transition border cursor-pointer " +
+        "cursor-pointer rounded-full border px-3.5 py-2 text-sm font-medium transition " +
         (active
-          ? "bg-indigo-600 text-white border-indigo-600"
-          : "bg-white text-gray-700 border-gray-200 hover:border-indigo-300 hover:text-indigo-600")
+          ? "border-brand-600 bg-brand-600 text-white"
+          : "border-gray-200 bg-white text-gray-700 hover:border-brand-300 hover:text-brand-600")
       }
     >
       {label}
-      <span className={active ? "text-indigo-100" : "text-gray-400"}> {count}</span>
+      <span className={active ? "text-brand-100" : "text-gray-400"}> {count}</span>
     </button>
   );
 }
@@ -226,7 +414,7 @@ function PageBtn({
       type="button"
       disabled={disabled}
       onClick={onClick}
-      className="px-4 py-2 text-sm font-medium text-indigo-600 bg-indigo-50 border border-indigo-200 rounded-xl hover:bg-indigo-100 transition cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+      className="cursor-pointer rounded-xl border border-brand-200 bg-brand-50 px-4 py-2 text-sm font-medium text-brand-600 transition hover:bg-brand-100 disabled:cursor-not-allowed disabled:opacity-40"
     >
       {label}
     </button>
@@ -235,17 +423,33 @@ function PageBtn({
 
 function BlankCard({ item }: { item: BlankItem }) {
   return (
-    <Link
-      href={`/blanks/${item.id}`}
-      className="group bg-white border border-gray-200 rounded-xl p-4 hover:border-indigo-300 hover:shadow-sm transition"
-    >
-      <p className="text-sm font-semibold text-gray-900 group-hover:text-indigo-600 leading-snug">
+    <article className="flex flex-col rounded-2xl border border-gray-200 bg-white p-4 transition hover:border-brand-300 hover:shadow-sm">
+      <Link
+        href={`/blanks/${item.id}`}
+        className="text-sm font-semibold leading-snug text-gray-900 hover:text-brand-600"
+      >
         {item.name}
-      </p>
-      <p className="text-xs text-gray-500 mt-1.5 line-clamp-2 leading-relaxed">
+      </Link>
+      <p className="mt-1.5 line-clamp-2 text-xs leading-relaxed text-gray-500">
         {item.description}
       </p>
-      <p className="text-xs text-indigo-600 mt-2 font-medium">Скачать бланк →</p>
-    </Link>
+      <FormatBadges className="mb-auto mt-3" />
+      <div className="mt-3 flex items-center gap-2 border-t border-gray-100 pt-3">
+        <Link
+          href={`/blanks/${item.id}`}
+          className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-brand-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-brand-700"
+        >
+          <FileText className="h-3.5 w-3.5" />
+          Скачать
+        </Link>
+        <Link
+          href={`/builder?template=${item.id}`}
+          className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-brand-200 bg-white px-3 py-2 text-xs font-semibold text-brand-700 transition hover:bg-brand-50"
+        >
+          <PenLine className="h-3.5 w-3.5" />
+          Заполнить
+        </Link>
+      </div>
+    </article>
   );
 }
