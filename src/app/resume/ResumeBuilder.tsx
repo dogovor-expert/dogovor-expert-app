@@ -20,7 +20,7 @@ import {
 import { RESUME_CSS } from "@/lib/resume/resumeCss";
 import { BUILDER_CSS } from "@/lib/resume/builderCss";
 import { PRESETS, PHRASES, SAMPLE_RESUME, TEMPLATES, TEMPLATE_META } from "@/lib/resume/data";
-import { buildResumeHtml, countNumericBullets, fullName, hardSkills } from "@/lib/resume/render";
+import { buildResumeDocHtml, buildResumeHtml, countNumericBullets, fullName, hardSkills } from "@/lib/resume/render";
 import type { ResumeData, ResumeExperience, ResumeLanguage, TemplateId } from "@/lib/resume/types";
 
 const LS_DATA = "dogovorResumeData";
@@ -83,6 +83,8 @@ export default function ResumeBuilder() {
   const [manual, setManual] = useState(false);
   const fitRef = useRef(0.62);
   const scrollRef = useRef<HTMLDivElement | null>(null);
+  const a4Ref = useRef<HTMLDivElement | null>(null);
+  const [docH, setDocH] = useState(1123);
   const [tab, setTab] = useState<"edit" | "view">("edit");
   const [loaded, setLoaded] = useState(false);
   const gridRef = useRef<HTMLDivElement | null>(null);
@@ -140,6 +142,18 @@ export default function ResumeBuilder() {
     setManual(false);
     setScale(fitRef.current);
   };
+
+  // Реальная высота документа — чтобы обёртка совпадала с визуальным размером
+  // (иначе масштабированный A4 вызывает лишнюю прокрутку).
+  useEffect(() => {
+    const el = a4Ref.current;
+    if (!el) return;
+    const measure = () => setDocH(el.offsetHeight || 1123);
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [data, tpl]);
 
   // Масштабирование мини-превью в drawer.
   useEffect(() => {
@@ -207,16 +221,48 @@ export default function ResumeBuilder() {
     }));
   };
 
+  // Печать PDF через скрытый iframe: работает надёжнее window.open (не блокируется
+  // всплывающими окнами) и использует те же стили, что и превью.
   const exportPdf = () => {
-    const w = window.open("", "_blank");
-    if (!w) return;
+    const iframe = document.createElement("iframe");
+    iframe.setAttribute("aria-hidden", "true");
+    iframe.style.cssText = "position:fixed;right:0;bottom:0;width:0;height:0;border:0;visibility:hidden";
+    document.body.appendChild(iframe);
+    const doc = iframe.contentDocument;
+    if (!doc) {
+      iframe.remove();
+      return;
+    }
     const title = `Резюме — ${fullName(data) || "без имени"}`;
-    const doc = `<!doctype html><html lang="ru"><head><meta charset="utf-8"><title>${title}</title><style>${RESUME_CSS}</style><style>@page{size:A4;margin:0}html,body{margin:0;background:#fff}.a4{width:210mm;min-height:297mm;box-shadow:none;border-radius:0;margin:0}</style></head><body><div class="a4 t-${tpl}">${buildResumeHtml(data, tpl)}</div></body></html>`;
-    w.document.write(doc);
-    w.document.close();
+    doc.open();
+    doc.write(
+      `<!doctype html><html lang="ru"><head><meta charset="utf-8"><title>${title}</title><style>${RESUME_CSS}</style><style>@page{size:A4;margin:0}html,body{margin:0;background:#fff}.a4{width:210mm;min-height:297mm;box-shadow:none;border-radius:0;margin:0}</style></head><body><div class="a4 t-${tpl}">${buildResumeHtml(data, tpl)}</div></body></html>`
+    );
+    doc.close();
+    const win = iframe.contentWindow;
     window.setTimeout(() => {
-      try { w.focus(); w.print(); } catch { /* окно могло быть закрыто */ }
-    }, 400);
+      try {
+        win?.focus();
+        win?.print();
+      } catch {
+        /* ignore */
+      }
+      window.setTimeout(() => iframe.remove(), 1500);
+    }, 500);
+  };
+
+  // Скачивание в DOC (Word-совместимый HTML): редактируемый документ.
+  const exportDoc = () => {
+    const html = buildResumeDocHtml(data);
+    const blob = new Blob(["\ufeff", html], { type: "application/msword" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `Резюме — ${fullName(data) || "без имени"}.doc`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    window.setTimeout(() => URL.revokeObjectURL(url), 2000);
   };
 
   const doneState = (id: SectionId): Done => {
@@ -352,6 +398,10 @@ export default function ResumeBuilder() {
               <Palette className="h-4 w-4" aria-hidden />
               <span className="hidden sm:inline">Шаблоны</span>
             </button>
+            <button type="button" className="rvb-btn rvb-btn-o" onClick={exportDoc} title="Скачать в DOC (Word)">
+              <FileText className="h-4 w-4" aria-hidden />
+              <span className="hidden sm:inline">DOC</span>
+            </button>
             <button type="button" className="rvb-btn rvb-btn-p" onClick={exportPdf}>
               <Download className="h-4 w-4" aria-hidden />
               <span className="hidden sm:inline">Скачать PDF</span>
@@ -364,8 +414,13 @@ export default function ResumeBuilder() {
             </div>
           </div>
           <div className="rvb-scroll" ref={scrollRef}>
-            <div className="rvb-scaler" style={{ transform: `scale(${scale})`, marginBottom: 1123 * (scale - 1) }}>
-              <div className={`a4 t-${tpl}`} dangerouslySetInnerHTML={{ __html: html }} />
+            <div className="rvb-scaler" style={{ width: 794 * scale, height: docH * scale }}>
+              <div
+                ref={a4Ref}
+                className={`a4 t-${tpl}`}
+                style={{ transformOrigin: "top left", transform: `scale(${scale})` }}
+                dangerouslySetInnerHTML={{ __html: html }}
+              />
             </div>
           </div>
         </section>

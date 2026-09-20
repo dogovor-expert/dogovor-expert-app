@@ -170,3 +170,52 @@ export function buildResumeHtml(data: ResumeData, tpl: TemplateId): string {
       return "";
   }
 }
+
+/**
+ * Word-совместимое представление резюме (HTML, открывается в MS Word / Google Docs).
+ * Линейная вёрстка без flex/grid — чтобы документ корректно редактировался в Word.
+ */
+export function buildResumeDocHtml(data: ResumeData): string {
+  const p = data.personal;
+  const name = escapeHtml(fullName(data)) || "Ваше имя";
+  const contacts = [p.city, p.phone, p.email, p.link].filter(Boolean).map((x) => escapeHtml(x)).join(" · ");
+  const h2 = (t: string) =>
+    `<h2 style="font-size:13pt;color:#111;border-bottom:1px solid #bbb;padding-bottom:3pt;margin:16pt 0 6pt;">${t}</h2>`;
+  const parts: string[] = [];
+  if (p.role) parts.push(`<p style="margin:2pt 0 0;color:#444;font-size:11pt;">${escapeHtml(p.role)}</p>`);
+  if (contacts) parts.push(`<p style="margin:2pt 0 0;color:#555;font-size:10pt;">${contacts}</p>`);
+  if (data.summary) parts.push(h2("О себе") + `<p style="margin:0;">${escapeHtml(data.summary)}</p>`);
+  if (data.experience.length) {
+    parts.push(h2("Опыт работы"));
+    data.experience.forEach((e) => {
+      parts.push(
+        `<p style="margin:0 0 2pt;"><b>${escapeHtml(e.position || "Должность")}</b>${e.company ? " — " + escapeHtml(e.company) : ""}</p>`
+      );
+      if (e.period) parts.push(`<p style="margin:0 0 2pt;color:#666;font-size:10pt;">${escapeHtml(e.period)}</p>`);
+      if (e.bullets.length) {
+        parts.push(`<ul style="margin:2pt 0 8pt 18pt;">${e.bullets.map((b) => `<li>${escapeHtml(b)}</li>`).join("")}</ul>`);
+      }
+    });
+  }
+  if (data.education.length) {
+    parts.push(h2("Образование"));
+    data.education.forEach((e) => {
+      parts.push(`<p style="margin:0 0 2pt;"><b>${escapeHtml(e.institution || "Учебное заведение")}</b></p>`);
+      const line = [e.field, e.degree].filter(Boolean).map((x) => escapeHtml(x)).join(", ");
+      const range = [e.start, e.end].filter(Boolean).map((x) => escapeHtml(x)).join(" — ");
+      if (line || range) {
+        parts.push(`<p style="margin:0 0 8pt;color:#666;font-size:10pt;">${line}${range ? (line ? " · " : "") + range : ""}</p>`);
+      }
+    });
+  }
+  const hard = [...data.skills.hard, ...data.skills.tools].map((x) => escapeHtml(x)).join(", ");
+  if (hard) parts.push(h2("Навыки") + `<p style="margin:0;">${hard}</p>`);
+  if (data.skills.soft.length) {
+    parts.push(h2("Личные качества") + `<p style="margin:0;">${data.skills.soft.map((x) => escapeHtml(x)).join(", ")}</p>`);
+  }
+  if (data.languages.length) {
+    parts.push(h2("Языки") + `<p style="margin:0;">${data.languages.map((l) => `${escapeHtml(l.name)} — ${escapeHtml(l.level)}`).join(", ")}</p>`);
+  }
+  const title = escapeHtml("Резюме — " + (fullName(data) || "без имени"));
+  return `<!doctype html><html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8"><title>${title}</title><style>@page{size:A4;margin:2cm}body{font-family:Arial,Helvetica,sans-serif;font-size:11pt;color:#111;line-height:1.4}h1{font-size:18pt;margin:0}ul{margin:2pt 0 8pt 18pt;padding:0}li{margin:0 0 2pt}</style></head><body><h1>${name}</h1>${parts.join("")}</body></html>`;
+}

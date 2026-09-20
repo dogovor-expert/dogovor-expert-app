@@ -4,7 +4,7 @@ export const BUILDER_CSS = `
 .rvb *{box-sizing:border-box}
 .rvb .a4{width:794px;min-height:1123px;background:#fff;box-shadow:0 20px 50px -12px rgba(15,23,42,.28),0 0 0 1px rgba(15,23,42,.05);border-radius:3px;overflow:hidden;position:relative}
 .rvb-app{display:grid;grid-template-columns:432px 1fr;height:calc(100vh - 64px);overflow:hidden}
-.rvb-panel{background:#fff;border-right:1px solid var(--rvb-bd);display:flex;flex-direction:column;min-height:0}
+.rvb-panel{background:#fff;border-right:1px solid var(--rvb-bd);display:flex;flex-direction:column;min-height:0;min-width:0}
 .rvb-nav{flex:1;overflow-y:auto;overscroll-behavior:contain}
 .rvb-acc{border-bottom:1px solid var(--rvb-mut)}
 .rvb-acc-h{width:100%;display:flex;align-items:center;gap:11px;padding:15px 18px;text-align:left;transition:background .15s}
@@ -50,7 +50,7 @@ export const BUILDER_CSS = `
 .rvb-chip button{display:grid;place-items:center;width:14px;height:14px;border-radius:50%;background:rgba(79,70,229,.16);color:var(--rvb-brand2);font-size:11px;line-height:1}
 .rvb-chip button:hover{background:var(--rvb-brand);color:#fff}
 .rvb-chadd{flex:1;min-width:110px;border:none;outline:none;font-size:12.5px;background:none;padding:4px}
-.rvb-stage{position:relative;background:#EDF0F5;display:flex;flex-direction:column;min-height:0;background-image:radial-gradient(rgba(15,23,42,.055) 1px,transparent 1px);background-size:22px 22px}
+.rvb-stage{position:relative;background:#EDF0F5;display:flex;flex-direction:column;min-height:0;min-width:0;background-image:radial-gradient(rgba(15,23,42,.055) 1px,transparent 1px);background-size:22px 22px}
 .rvb-stagebar{height:52px;display:flex;align-items:center;gap:12px;padding:0 16px;background:rgba(255,255,255,.86);backdrop-filter:blur(10px);border-bottom:1px solid var(--rvb-bd);flex-shrink:0}
 .rvb-stagebar .tn{font-size:13px;font-weight:650}
 .rvb-stagebar .tn span{color:var(--rvb-mf);font-weight:500}
@@ -58,8 +58,8 @@ export const BUILDER_CSS = `
 .rvb-zoom button{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;color:#27272A}
 .rvb-zoom button:hover{background:var(--rvb-mut)}
 .rvb-zoom .zv{min-width:46px;text-align:center;font-size:12.5px;font-weight:600;color:var(--rvb-mf)}
-.rvb-scroll{flex:1;overflow:auto;padding:34px 24px 60px;display:flex;justify-content:center;align-items:flex-start}
-.rvb-scaler{transform-origin:top center;transition:transform .15s}
+.rvb-scroll{flex:1;min-width:0;overflow:auto;padding:34px 24px 60px;display:flex;justify-content:center;align-items:flex-start}
+.rvb-scaler{position:relative;flex:none}
 .rvb-tabs{display:none}
 .rvb-ov{position:fixed;inset:0;background:rgba(15,23,42,.45);backdrop-filter:blur(3px);z-index:80;opacity:0;pointer-events:none;transition:opacity .2s}
 .rvb-ov.on{opacity:1;pointer-events:auto}
