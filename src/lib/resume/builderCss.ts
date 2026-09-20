@@ -51,14 +51,14 @@ export const BUILDER_CSS = `
 .rvb-chip button:hover{background:var(--rvb-brand);color:#fff}
 .rvb-chadd{flex:1;min-width:110px;border:none;outline:none;font-size:12.5px;background:none;padding:4px}
 .rvb-stage{position:relative;background:#EDF0F5;display:flex;flex-direction:column;min-height:0;min-width:0;background-image:radial-gradient(rgba(15,23,42,.055) 1px,transparent 1px);background-size:22px 22px}
-.rvb-stagebar{height:52px;display:flex;align-items:center;gap:12px;padding:0 16px;background:rgba(255,255,255,.86);backdrop-filter:blur(10px);border-bottom:1px solid var(--rvb-bd);flex-shrink:0}
+.rvb-stagebar{position:relative;z-index:20;height:52px;display:flex;align-items:center;gap:12px;padding:0 16px;background:rgba(255,255,255,.86);backdrop-filter:blur(10px);border-bottom:1px solid var(--rvb-bd);flex-shrink:0}
 .rvb-stagebar .tn{font-size:13px;font-weight:650}
 .rvb-stagebar .tn span{color:var(--rvb-mf);font-weight:500}
 .rvb-zoom{margin-left:auto;display:flex;align-items:center;gap:2px}
 .rvb-zoom button{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;color:#27272A}
 .rvb-zoom button:hover{background:var(--rvb-mut)}
 .rvb-zoom .zv{min-width:46px;text-align:center;font-size:12.5px;font-weight:600;color:var(--rvb-mf)}
-.rvb-scroll{flex:1;min-width:0;overflow:auto;padding:34px 24px 60px;display:flex;justify-content:center;align-items:flex-start}
+.rvb-scroll{position:relative;z-index:1;flex:1;min-width:0;overflow:auto;padding:34px 24px 60px;display:flex;justify-content:center;align-items:flex-start}
 .rvb-scaler{position:relative;flex:none}
 .rvb-tabs{display:none}
 .rvb-ov{position:fixed;inset:0;background:rgba(15,23,42,.45);backdrop-filter:blur(3px);z-index:80;opacity:0;pointer-events:none;transition:opacity .2s}
@@ -108,14 +108,18 @@ export const BUILDER_CSS = `
 .rvb-ico:hover{border-color:#818CF8;color:var(--rvb-brand)}
 @media (max-width:1080px){
   .rvb-app{grid-template-columns:1fr}
-  .rvb-panel{display:none;padding-bottom:64px}
+  .rvb-panel{display:none;padding-bottom:132px}
   .rvb-panel.mobile-on{display:flex}
   .rvb-stage{display:none}
   .rvb-stage.mobile-on{display:flex}
-  .rvb-tabs{display:flex;position:fixed;bottom:0;left:0;right:0;z-index:50;background:rgba(255,255,255,.94);backdrop-filter:blur(12px);border-top:1px solid var(--rvb-bd);padding:8px;gap:8px}
+  .rvb-tabs{display:flex;position:fixed;bottom:calc(56px + env(safe-area-inset-bottom,0px));left:0;right:0;z-index:50;background:rgba(255,255,255,.94);backdrop-filter:blur(12px);border-top:1px solid var(--rvb-bd);padding:8px;gap:8px}
   .rvb-tabs button{flex:1;padding:11px;border-radius:11px;font-weight:650;font-size:13.5px;color:var(--rvb-mf);display:flex;align-items:center;justify-content:center;gap:7px}
   .rvb-tabs button.on{background:var(--rvb-brand);color:#fff}
-  .rvb-scroll{padding:20px 10px 80px}
+  .rvb-scroll{padding:20px 10px 200px}
 }
-@media (max-width:640px){ .rvb-dgrid{grid-template-columns:1fr} .rvb-app{height:auto} }
+@media (max-width:640px){
+  .rvb-dgrid{grid-template-columns:1fr}
+  .rvb-app{height:auto}
+  .rvb-qpop{position:fixed;left:12px;right:12px;width:auto;top:calc(env(safe-area-inset-top,0px) + 68px)}
+}
 `;

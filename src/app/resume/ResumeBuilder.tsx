@@ -9,13 +9,13 @@ import {
   Star,
   Languages,
   Palette,
-  Download,
   X,
   Plus,
   ZoomIn,
   ZoomOut,
   Maximize2,
   Check,
+  Printer,
 } from "lucide-react";
 import { RESUME_CSS } from "@/lib/resume/resumeCss";
 import { BUILDER_CSS } from "@/lib/resume/builderCss";
@@ -89,6 +89,8 @@ export default function ResumeBuilder() {
   const [tab, setTab] = useState<"edit" | "view">("edit");
   const [loaded, setLoaded] = useState(false);
   const gridRef = useRef<HTMLDivElement | null>(null);
+  const appRef = useRef<HTMLDivElement | null>(null);
+  const [appH, setAppH] = useState<string | null>(null);
 
   // Загрузка черновика (после гидратации, чтобы не ломать SSR).
   useEffect(() => {
@@ -155,6 +157,21 @@ export default function ResumeBuilder() {
     ro.observe(el);
     return () => ro.disconnect();
   }, [data, tpl]);
+
+  // Высота рабочей области = окно минус фактическое смещение (заголовок сайта),
+  // чтобы не было лишней прокрутки страницы и «скачков» на мобильных.
+  useEffect(() => {
+    const compute = () => {
+      if (window.innerWidth <= 1080) { setAppH(null); return; }
+      const el = appRef.current;
+      if (!el) return;
+      const absoluteTop = el.getBoundingClientRect().top + window.scrollY;
+      setAppH(`${Math.max(420, Math.round(window.innerHeight - absoluteTop))}px`);
+    };
+    const timer = window.setTimeout(compute, 60);
+    window.addEventListener("resize", compute);
+    return () => { window.clearTimeout(timer); window.removeEventListener("resize", compute); };
+  }, []);
 
   // Esc закрывает drawer и поповер качества; клик вне поповера — тоже.
   useEffect(() => {
@@ -268,7 +285,7 @@ export default function ResumeBuilder() {
 
   // Скачивание в DOC (Word-совместимый HTML): редактируемый документ.
   const exportDoc = () => {
-    const html = buildResumeDocHtml(data);
+    const html = buildResumeDocHtml(data, tpl);
     const blob = new Blob(["\ufeff", html], { type: "application/msword" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -346,7 +363,7 @@ export default function ResumeBuilder() {
     <div className="rvb">
       <style dangerouslySetInnerHTML={{ __html: RESUME_CSS + BUILDER_CSS }} />
 
-      <div className="rvb-app">
+      <div className="rvb-app" ref={appRef} style={appH ? { height: appH } : undefined}>
         {/* Форма */}
         <aside className={`rvb-panel ${tab === "edit" ? "mobile-on" : ""}`}>
           <nav className="rvb-nav">
@@ -417,9 +434,9 @@ export default function ResumeBuilder() {
               <FileText className="h-4 w-4" aria-hidden />
               <span className="hidden sm:inline">DOC</span>
             </button>
-            <button type="button" className="rvb-btn rvb-btn-p" onClick={exportPdf}>
-              <Download className="h-4 w-4" aria-hidden />
-              <span className="hidden sm:inline">Скачать PDF</span>
+            <button type="button" className="rvb-btn rvb-btn-p" onClick={exportPdf} title="Печать или сохранение в PDF">
+              <Printer className="h-4 w-4" aria-hidden />
+              <span className="hidden sm:inline">Печать</span>
             </button>
             <div className="rvb-zoom">
               <button type="button" onClick={() => zoomBy(-0.08)} aria-label="Уменьшить"><ZoomOut className="h-4 w-4" aria-hidden /></button>
