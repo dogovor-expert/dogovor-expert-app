@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect, useCallback, useRef } from "react";
-import { Loader2, MessageCircle } from "lucide-react";
+import { Loader2, MessageCircle, Paperclip } from "lucide-react";
 
 interface ThreadPreview {
   visitorId: string;
@@ -19,6 +19,7 @@ interface ChatMessage {
   text: string;
   ts: number;
   name?: string;
+  file?: { url: string; name: string; mime: string; kind: "image" | "file"; size?: number };
 }
 
 function fmtTs(ts: number | null): string {
@@ -170,6 +171,19 @@ export default function ChatInbox() {
                           : "bg-gray-100 text-gray-800"
                       }`}
                     >
+                      {m.file && (
+                        m.file.kind === "image" ? (
+                          <a href={m.file.url} target="_blank" rel="noopener noreferrer" className="block mb-1">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img src={m.file.url} alt={m.file.name} className="rounded-lg max-h-56 w-auto" />
+                          </a>
+                        ) : (
+                          <a href={m.file.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 mb-1 underline break-all">
+                            <Paperclip className="w-3 h-3 flex-shrink-0" />
+                            {m.file.name}
+                          </a>
+                        )
+                      )}
                       {m.text}
                       <div
                         className={`text-[9px] mt-1 ${

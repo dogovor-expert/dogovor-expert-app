@@ -161,7 +161,7 @@ const CLASSIC: DesignTokens = {
     bold: "/fonts/pt-serif-bold.ttf",
     italic: "/fonts/pt-serif-italic.ttf",
     bolditalic: "/fonts/pt-serif-bolditalic.ttf",
-    family: "PT Serif",
+    family: "Times New Roman",
   },
   titleFontSize: 16,
   subheadingFontSize: 13,

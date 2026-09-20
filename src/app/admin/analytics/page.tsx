@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { unstable_cache } from "next/cache";
 import { requireAdminPage } from "@/lib/admin-auth";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
@@ -47,6 +48,30 @@ function BarList({ items }: { items: { label: string; count: number }[] }) {
   );
 }
 
+/**
+ * Агрегаты аналитики кэшируются на 5 минут: страница делает 11 запросов к БД,
+ * а данные за день меняются нечасто. Кэш общий (данные обезличены, раздел
+ * доступен только администраторам).
+ */
+const loadAnalytics = unstable_cache(
+  async (days: number) =>
+    Promise.all([
+      getEventSummaries(days),
+      getFunnel(days),
+      getTopTemplates(days),
+      getKpiTotals(),
+      getDeviceBreakdown(days),
+      getTopPaths(days),
+      getTopReferrers(days),
+      getDailyMulti(days),
+      getKpiDeltas(),
+      getLeadsSummary(days),
+      countReplaySessions(days),
+    ]),
+  ["admin-analytics"],
+  { revalidate: 300 }
+);
+
 export default async function AdminAnalyticsPage({
   searchParams,
 }: {
@@ -61,19 +86,7 @@ export default async function AdminAnalyticsPage({
   const days = (PERIODS as readonly number[]).includes(daysParam) ? daysParam : 30;
 
   const [summaries, funnel, topTemplates, kpi, devices, topPaths, referrers, multi, deltas, leads, replays] =
-    await Promise.all([
-      getEventSummaries(days),
-      getFunnel(days),
-      getTopTemplates(days),
-      getKpiTotals(),
-      getDeviceBreakdown(days),
-      getTopPaths(days),
-      getTopReferrers(days),
-      getDailyMulti(days),
-      getKpiDeltas(),
-      getLeadsSummary(days),
-      countReplaySessions(days),
-    ]);
+    await loadAnalytics(days);
 
   const pageViews = summaries.find((s) => s.event === "page_view");
   const byGroup = new Map<string, typeof summaries>();

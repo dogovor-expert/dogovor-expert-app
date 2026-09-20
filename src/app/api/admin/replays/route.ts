@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
-import { requireAdminApi, isSameOrigin } from "@/lib/admin-auth";
+import { requireAdminApi, isSameOrigin, getAdminUser } from "@/lib/admin-auth";
 import { withCsrf } from "@/lib/csrf";
+import { logAdminAction } from "@/lib/audit";
 import { deleteReplaySession, deleteReplaySessionsOlderThan } from "@/lib/replayQueries";
 
 export const dynamic = "force-dynamic";
@@ -14,6 +15,8 @@ async function deleteHandler(req: Request) {
   const admin = await requireAdminApi();
   if (!admin) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   if (!isSameOrigin(req)) return NextResponse.json({ error: "forbidden" }, { status: 403 });
+  const actor = await getAdminUser();
+  const adminId = actor?.id ?? "system";
 
   const body = (await req.json().catch(() => null)) as
     | { sessionId?: unknown; olderThanDays?: unknown }
@@ -25,10 +28,12 @@ async function deleteHandler(req: Request) {
   try {
     if (sessionId) {
       await deleteReplaySession(sessionId);
+      await logAdminAction({ adminId, action: "replay_delete", resource: "session_replays", resourceId: sessionId, meta: { deleted: 1 } });
       return NextResponse.json({ ok: true, deleted: 1 });
     }
     if (olderThanDays !== null && olderThanDays >= 1) {
       const deleted = await deleteReplaySessionsOlderThan(olderThanDays);
+      await logAdminAction({ adminId, action: "replay_delete", resource: "session_replays", meta: { deleted, olderThanDays } });
       return NextResponse.json({ ok: true, deleted });
     }
     return NextResponse.json({ error: "bad_request" }, { status: 400 });

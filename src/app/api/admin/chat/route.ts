@@ -58,7 +58,7 @@ export async function GET(req: Request) {
         name: profile?.name ?? null,
         email: profile?.email ?? null,
         online,
-        lastText: last?.text?.slice(0, 140) ?? null,
+        lastText: last?.text?.slice(0, 140) || (last?.file ? "📎 Вложение" : null),
         lastRole: last?.role ?? null,
         lastTs: last?.ts ?? null,
         total: messages.length,

@@ -328,8 +328,8 @@ export async function renderResumePdf(data: ResumeData, tpl: TemplateId): Promis
   const d = new Doc();
   const pdf = await PDFDocument.create();
   pdf.registerFontkit(fontkit);
-  const regular = await pdf.embedFont(regBytes, { subset: true });
-  const bold = await pdf.embedFont(boldBytes, { subset: true });
+  const regular = await pdf.embedFont(regBytes, { subset: false });
+  const bold = await pdf.embedFont(boldBytes, { subset: false });
 
   const margins = { left: 48, right: 48, top: 46, bottom: 44 };
   // init переиспользует созданный документ: подменяем ссылку.
