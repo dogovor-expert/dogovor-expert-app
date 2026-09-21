@@ -100,7 +100,7 @@ export default function TransportTax() {
           </div>
           <p className="text-2xl font-bold text-gray-900">{fmtMoney(result.tax)}</p>
           <p className="text-[11px] text-gray-600">Ставка {result.rate.toLocaleString("ru-RU")} ₽/л.с. · {months} мес. · повышающий коэффициент {result.luxury === 1 ? "не применяется" : "×" + result.luxury.toLocaleString("ru-RU")}</p>
-          <a href="/builder?id=claim-generic"
+          <a href="/builder?template=claim-generic"
             className="inline-block mt-1 py-2 px-3 rounded-lg bg-white border border-brand-300 text-brand-600 font-bold text-[11px] hover:bg-brand-50 transition">
             Спор по налогу →
           </a>

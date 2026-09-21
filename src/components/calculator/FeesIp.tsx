@@ -71,7 +71,7 @@ export default function FeesIp() {
               <p className="text-amber-700">Достигнут максимум 1% ({fmtMoney(result.maxPercent)}) — больше платить не нужно</p>
             )}
           </div>
-          <a href="/builder?id=gpa-contract"
+          <a href="/builder?template=gpa-contract"
             className="inline-block mt-1 py-2 px-3 rounded-lg bg-white border border-brand-300 text-brand-600 font-bold text-[11px] hover:bg-brand-50 transition">
             Договор с ИП →
           </a>

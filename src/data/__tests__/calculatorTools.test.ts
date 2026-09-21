@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { CALCULATOR_TOOLS, calcToolBySlug, calcToolById } from "@/data/calculator-tools";
+import { LEGAL_TEMPLATES } from "@/data/legalTemplates";
 
 /**
  * id инструментов в components/utils/UtilsTools.tsx и ключи
@@ -128,6 +129,14 @@ describe("каталог калькуляторов (SEO-страницы /utils
         expect(slug, `${t.slug} → ${slug}`).not.toBe(t.slug);
         expect(calcToolBySlug(slug), `${t.slug} → ${slug}`).toBeDefined();
       }
+    }
+  });
+
+  it("ctaTemplateId ссылается на существующий шаблон LEGAL_TEMPLATES", () => {
+    const templateIds = new Set(LEGAL_TEMPLATES.map((t) => t.id));
+    for (const t of CALCULATOR_TOOLS) {
+      if (!t.ctaTemplateId) continue;
+      expect(templateIds, `${t.slug} → ${t.ctaTemplateId}`).toContain(t.ctaTemplateId);
     }
   });
 

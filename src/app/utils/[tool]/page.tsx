@@ -34,6 +34,7 @@ import { breadcrumbJsonLd, faqJsonLd } from "@/lib/seo/faq";
 import { withSeo } from "@/lib/seo/withSeo";
 import { SITE_URL } from "@/lib/site";
 import { CALCULATOR_TOOLS, calcToolBySlug } from "@/data/calculator-tools";
+import { LEGAL_TEMPLATES } from "@/data/legalTemplates";
 
 export const dynamicParams = false;
 export const revalidate = 3600;
@@ -98,6 +99,10 @@ export default async function CalculatorToolPage({
   const related = t.related
     .map((slug) => calcToolBySlug(slug))
     .filter((x): x is NonNullable<typeof x> => Boolean(x));
+
+  const ctaTemplate = t.ctaTemplateId
+    ? LEGAL_TEMPLATES.find((x) => x.id === t.ctaTemplateId)
+    : undefined;
 
   return (
     <div className="p-6 max-w-5xl mx-auto">
@@ -268,8 +273,9 @@ export default async function CalculatorToolPage({
         <div className="flex-1">
           <h2 className="text-lg font-extrabold tracking-tight text-gray-900">Нужен документ по результатам расчёта?</h2>
           <p className="mt-1.5 text-[13px] text-gray-600 leading-relaxed">
-            В конструкторе доступны шаблоны претензий, исковых заявлений, расписок и договоров. Суммы и периоды из
-            калькулятора подставляются в документ автоматически.
+            {ctaTemplate
+              ? `Откройте «${ctaTemplate.name}» в конструкторе: форма документа уже выбрана, останется заполнить реквизиты и скачать готовый файл.`
+              : "В конструкторе доступны шаблоны претензий, исковых заявлений, расписок и договоров. Суммы и периоды из калькулятора подставляются в документ автоматически."}
           </p>
           <p className="mt-2 text-[12.5px] text-gray-500">
             Нужен другой инструмент?{" "}
@@ -278,12 +284,21 @@ export default async function CalculatorToolPage({
             </Link>
           </p>
         </div>
-        <a
-          href="/builder"
-          className="inline-flex items-center justify-center gap-2 px-5 py-3 bg-brand-600 text-white rounded-xl hover:bg-brand-700 font-semibold text-sm transition shrink-0 shadow-sm"
-        >
-          Перейти к конструктору →
-        </a>
+        {ctaTemplate ? (
+          <Link
+            href={`/builder?template=${ctaTemplate.id}`}
+            className="inline-flex items-center justify-center gap-2 px-5 py-3 bg-brand-600 text-white rounded-xl hover:bg-brand-700 font-semibold text-sm transition shrink-0 shadow-sm text-center"
+          >
+            Открыть «{ctaTemplate.name}» →
+          </Link>
+        ) : (
+          <Link
+            href="/builder"
+            className="inline-flex items-center justify-center gap-2 px-5 py-3 bg-brand-600 text-white rounded-xl hover:bg-brand-700 font-semibold text-sm transition shrink-0 shadow-sm"
+          >
+            Перейти к конструктору →
+          </Link>
+        )}
       </section>
 
       <p className="mt-6 text-xs text-gray-500 text-center">

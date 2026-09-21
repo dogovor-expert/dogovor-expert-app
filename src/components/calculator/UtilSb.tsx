@@ -100,7 +100,7 @@ export default function UtilSb() {
           </div>
           <p className="text-2xl font-bold text-gray-900">{fmtMoney(result.amount)}</p>
           <p className="text-[11px] text-gray-600">{result.formula}</p>
-          <a href="/builder?id=sale-agreement-car"
+          <a href="/builder?template=dkp-auto"
             className="inline-block mt-1 py-2 px-3 rounded-lg bg-white border border-brand-300 text-brand-600 font-bold text-[11px] hover:bg-brand-50 transition">
             Договор купли-продажи авто →
           </a>

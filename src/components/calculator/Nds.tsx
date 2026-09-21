@@ -96,7 +96,7 @@ export default function Nds() {
             </div>
           </div>
           <p className="text-[11px] text-gray-600 border-t border-gray-200 pt-2">{rublesInWords(result.total)}</p>
-          <a href="/builder?id=invoice-oferta"
+          <a href="/builder?template=invoice"
             className="inline-block mt-1 py-2 px-3 rounded-lg bg-white border border-brand-300 text-brand-600 font-bold text-[11px] hover:bg-brand-50 transition">
             Счёт с НДС по шаблону →
           </a>
