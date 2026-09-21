@@ -26,7 +26,7 @@ test.describe("Smoke — критические пути", () => {
     const res = await page.goto(`${BASE}/templates`);
     expect(res?.status()).toBeLessThan(400);
     // На странице должен быть хотя бы один заголовок/ссылка на шаблон
-    const cards = page.locator("a[href^='/templates/']");
+    const cards = page.locator("a[href^='/documents/']");
     expect(await cards.count()).toBeGreaterThan(0);
   });
 
@@ -35,11 +35,10 @@ test.describe("Smoke — критические пути", () => {
     expect(res?.status()).toBeLessThan(400);
     // Любая форма или инпут (может быть внутри client-only компонента)
     await page.waitForTimeout(1500);
-    const hasForm =
+    const fieldCount =
       (await page.locator("form").count()) +
-        (await page.locator("input,button").count()) >
-      0;
-    expect(hasForm).toBeGreaterThan(0);
+      (await page.locator("input,button").count());
+    expect(fieldCount).toBeGreaterThan(0);
   });
 
   test("4. 404: статус 404 на /this-page-does-not-exist", async ({ page }) => {
@@ -49,20 +48,20 @@ test.describe("Smoke — критические пути", () => {
 
   test("5. Cookie consent: баннер появляется, localStorage сохраняется", async ({
     page,
-    context,
   }) => {
-    await context.addInitScript(() => {
+    await page.goto(BASE);
+    await page.evaluate(() => {
       try {
         localStorage.clear();
       } catch {
         /* noop */
       }
     });
-    await page.goto(BASE);
+    await page.reload();
     await page.waitForLoadState("networkidle", { timeout: 15000 }).catch(() => {});
     await page.waitForTimeout(2000);
 
-    const banner = page.locator('[role="dialog"]', { hasText: /Мы используем cookies/i });
+    const banner = page.locator('[role="region"]', { hasText: /Мы используем cookies/i });
     await expect(banner).toBeVisible({ timeout: 8000 });
 
     const accept = banner.locator("button:has-text('Принять')").first();

@@ -1031,6 +1031,8 @@ function HomeContent() {
       const { blob } = await buildPdf(docs, {
         title: isPack ? "Паспорт сделки" : template.name,
         design: designId,
+        branding: !subscriptionActive,
+        qr: !subscriptionActive,
       });
       const buf = await blob.arrayBuffer();
       downloadBytes(new Uint8Array(buf), fileName + ".pdf");
@@ -1284,6 +1286,8 @@ function HomeContent() {
       const { blob } = await buildPdf(docs, {
         title: packTemplates.length > 1 ? "Паспорт сделки" : template.name,
         design: designId,
+        branding: !subscriptionActive,
+        qr: !subscriptionActive,
       });
       const buf = await blob.arrayBuffer();
       const pdfBase64 = uint8ToBase64(new Uint8Array(buf));

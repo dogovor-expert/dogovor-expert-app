@@ -1,9 +1,17 @@
 "use client";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useParams } from "next/navigation";
+import Link from "next/link";
 import type { LegalTemplate, TemplateField } from "@/data/types";
 import { normalizeOptions } from "@/lib/validation";
-import { Check, Loader2, Shield, AlertTriangle, Clock, Lock, Eye, EyeOff } from "lucide-react";
+import { createClient } from "@/lib/supabase/client";
+import { trackOwnOnly } from "@/lib/analytics";
+import { Check, Loader2, Shield, AlertTriangle, Clock, Lock, Eye, EyeOff, Sparkles } from "lucide-react";
+
+/* ── K-фактор: атрибуция регистрации по ссылке согласования ───────── */
+
+const APPROVAL_REF_KEY = "dogovor_approval_ref";
+const APPROVAL_REF_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 
 /* ── API shape ─────────────────────────────────────────────────────── */
 
@@ -49,6 +57,16 @@ export default function ApprovePage() {
   const [unlocking, setUnlocking] = useState(false);
   const [unlockError, setUnlockError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
+  const [isAuthed, setIsAuthed] = useState(false);
+
+  /* ── Auth state (чтобы не показывать CTA владельцу) ───────────── */
+
+  useEffect(() => {
+    createClient()
+      .auth.getUser()
+      .then(({ data: u }) => setIsAuthed(!!u.user))
+      .catch(() => {});
+  }, []);
 
   /* ── Restore accessToken from sessionStorage ──────────────────── */
 
@@ -98,6 +116,30 @@ export default function ApprovePage() {
     void fetchData(accessToken ?? undefined);
   }, [token]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  /* ── K-фактор: открытие ссылки + маркер атрибуции ─────────────── */
+
+  const openedTracked = useRef(false);
+  useEffect(() => {
+    if (!data) return;
+    if (!openedTracked.current) {
+      openedTracked.current = true;
+      trackOwnOnly("approval_opened", { template: data.templateId });
+    }
+    try {
+      const raw = localStorage.getItem(APPROVAL_REF_KEY);
+      const prev = raw ? (JSON.parse(raw) as { ts?: number }) : null;
+      const now = Date.now();
+      if (!prev || typeof prev.ts !== "number" || now - prev.ts > APPROVAL_REF_TTL_MS) {
+        localStorage.setItem(
+          APPROVAL_REF_KEY,
+          JSON.stringify({ template: data.templateId, ts: now })
+        );
+      }
+    } catch {
+      /* localStorage недоступен — не критично */
+    }
+  }, [data]);
+
   /* ── Unlock with password ─────────────────────────────────────── */
 
   const unlock = async () => {
@@ -127,6 +169,7 @@ export default function ApprovePage() {
         LEGAL_TEMPLATES.find((t) => t.id === d.templateId) || null
       );
       setTemplate(tpl);
+      trackOwnOnly("approval_unlocked", { template: d.templateId });
     } catch (e) {
       setUnlockError(e instanceof Error ? e.message : "Ошибка");
     } finally {
@@ -383,6 +426,24 @@ export default function ApprovePage() {
             Внесённые изменения увидят владелец документа. Согласование не является юридической консультацией.
           </p>
         </div>
+
+        {!isAuthed && (
+          <div className="mt-6 bg-gradient-to-br from-brand-50 to-indigo-50 rounded-2xl border border-brand-100 p-6 text-center">
+            <div className="w-11 h-11 rounded-xl bg-white shadow-sm flex items-center justify-center mx-auto mb-3">
+              <Sparkles className="w-5 h-5 text-brand-500" />
+            </div>
+            <p className="text-sm font-semibold text-gray-900 mb-1">Нужен свой документ?</p>
+            <p className="text-xs text-gray-600 mb-4">
+              Соберите договор бесплатно в конструкторе Dogovor.expert — 369 шаблонов, экспорт в PDF и Word.
+            </p>
+            <Link
+              href="/builder?ref=approval"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-brand-500 text-white text-sm font-medium hover:bg-brand-600 transition-colors"
+            >
+              Создать документ бесплатно
+            </Link>
+          </div>
+        )}
       </div>
     </div>
   );

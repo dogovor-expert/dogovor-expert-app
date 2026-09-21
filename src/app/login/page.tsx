@@ -12,6 +12,7 @@ const SmartCaptchaWidget = dynamic(() => import("@/components/auth/SmartCaptcha"
 const CountdownTimer = dynamic(() => import("@/components/billing/CountdownTimer"), { ssr: false });
 import { currentProPrice, PRO_PRICE_OLD, PROMO_LABEL, isPromoActive, promoCountdownTarget, formatRub } from "@/lib/pricing";
 import { LoginForm as LoginFormComponent } from "@/components/auth/LoginForm";
+import { trackOwnOnly } from "@/lib/analytics";
 
 function RegisterPromo() {
   if (!isPromoActive()) return null;
@@ -286,6 +287,22 @@ function LoginForm() {
       
       setStep("confirm");
       setInfo(`Регистрация почти завершена! На ваш email ${email} отправлено письмо с подтверждением. Проверьте папку "Входящие" или "Спам".`);
+
+      // Атрибуция K-фактора: регистрация после перехода по approval-ссылке.
+      try {
+        const raw = localStorage.getItem("dogovor_approval_ref");
+        if (raw) {
+          const ref = JSON.parse(raw) as { template?: string; ts?: number };
+          const fresh =
+            typeof ref.ts === "number" && Date.now() - ref.ts < 30 * 24 * 60 * 60 * 1000;
+          if (fresh) {
+            trackOwnOnly("approval_signup", { template: ref.template });
+          }
+          localStorage.removeItem("dogovor_approval_ref");
+        }
+      } catch {
+        /* ignore */
+      }
     } catch (err) {
       setError("Произошла ошибка при регистрации. Попробуйте позже.");
       console.error("Registration error:", err);
