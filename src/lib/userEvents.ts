@@ -106,6 +106,21 @@ export const EVENT_CATALOG = {
     group: "export",
     meta: { template: null },
   },
+  approval_opened: {
+    label: "Открыта ссылка согласования",
+    group: "export",
+    meta: { template: null },
+  },
+  approval_unlocked: {
+    label: "Ссылка согласования разблокирована",
+    group: "export",
+    meta: { template: null },
+  },
+  approval_signup: {
+    label: "Регистрация после ссылки согласования",
+    group: "export",
+    meta: { template: null },
+  },
   signing_started: {
     label: "Начато подписание УКЭП",
     group: "signing",

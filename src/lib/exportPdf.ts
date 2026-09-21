@@ -30,6 +30,17 @@ export interface ExportPdfOptions {
   design?: DesignId;
   /** Готовые байты шрифтов (для генерации вне браузера, напр. образцы). */
   fonts?: DesignFontBytes;
+  /**
+   * Показывать брендинг (шапка + «Сформировано на …» в подвале).
+   * По умолчанию true — free-документы продвигают сервис. На платном тарифе
+   * передавайте false, чтобы отдать чистый документ.
+   */
+  branding?: boolean;
+  /**
+   * Добавить QR-код со ссылкой на сервис в подвале последней страницы.
+   * По умолчанию false. Обычно включается вместе с брендингом для free.
+   */
+  qr?: boolean;
 }
 
 export interface DesignFontBytes {
@@ -326,6 +337,9 @@ class Renderer {
   private pm: PageMetrics;
   private comp: Compressed;
   private rgb: (r: number, g: number, b: number) => RGB;
+  private branding: boolean;
+  private qrImage: PDFImage | null;
+  private addLink?: (page: PDFPage, rect: number[], url: string) => void;
   private pages: PDFPage[] = [];
   private page: PDFPage;
   private y: number;
@@ -334,13 +348,28 @@ class Renderer {
   /** Доля контента на последней странице (0..1) — для орфан-контроля. */
   lastPageUsed = 1;
 
-  constructor(doc: PDFDocument, fonts: FontSet, pm: PageMetrics, design: DesignTokens, comp: Compressed, rgb: (r: number, g: number, b: number) => RGB) {
+  constructor(
+    doc: PDFDocument,
+    fonts: FontSet,
+    pm: PageMetrics,
+    design: DesignTokens,
+    comp: Compressed,
+    rgb: (r: number, g: number, b: number) => RGB,
+    opts: {
+      branding?: boolean;
+      qrImage?: PDFImage | null;
+      addLink?: (page: PDFPage, rect: number[], url: string) => void;
+    } = {}
+  ) {
     this.doc = doc;
     this.fonts = fonts;
     this.pm = pm;
     this.design = design;
     this.comp = comp;
     this.rgb = rgb;
+    this.branding = opts.branding !== false;
+    this.qrImage = opts.qrImage ?? null;
+    this.addLink = opts.addLink;
     this.page = doc.addPage([A4.w, A4.h]);
     this.pages.push(this.page);
     this.y = A4.h - pm.marginTop - pm.headerHeight;
@@ -373,8 +402,12 @@ class Renderer {
     const [r, g, b] = hexToRgb01(this.design.ruleColor);
     return this.rgb(r, g, b);
   }
+  private siteLink(): string {
+    return `https://${this.design.siteUrl}/?utm_source=pdf`;
+  }
 
   drawHeader() {
+    if (!this.branding) return;
     const pm = this.pm;
     const strong = this.design.logoWeight === "strong";
     const wordSize = strong ? this.design.smallFontSize : this.design.tinyFontSize;
@@ -437,15 +470,28 @@ class Renderer {
       font: this.fonts.regular,
       color: this.grayRgb(),
     });
-    const site = `Сформировано на ${this.design.siteUrl}`;
-    const sw = this.measure(site, size, false, false);
-    page.drawText(site, {
-      x: A4.w - pm.marginRight - sw,
-      y: textY,
-      size,
-      font: this.fonts.regular,
-      color: this.grayRgb(),
-    });
+    const isLast = index === total - 1;
+    const qs = this.qrImage && isLast ? Math.min(pm.footerHeight - 6, 28) : 0;
+    const rightEdge = A4.w - pm.marginRight - (qs > 0 ? qs + 6 : 0);
+    if (this.branding) {
+      const site = `Сформировано на ${this.design.siteUrl}`;
+      const sw = this.measure(site, size, false, false);
+      const sx = rightEdge - sw;
+      page.drawText(site, {
+        x: sx,
+        y: textY,
+        size,
+        font: this.fonts.regular,
+        color: this.grayRgb(),
+      });
+      this.addLink?.(page, [sx - 2, textY - 2, sx + sw + 2, textY + size + 2], this.siteLink());
+    }
+    if (qs > 0 && this.qrImage) {
+      const qx = A4.w - pm.marginRight - qs;
+      const qy = pm.marginBottom + (pm.footerHeight - qs) / 2;
+      page.drawImage(this.qrImage, { x: qx, y: qy, width: qs, height: qs });
+      this.addLink?.(page, [qx, qy, qx + qs, qy + qs], this.siteLink());
+    }
     if (watermark) {
       const ww = this.measure(watermark, size, false, false);
       page.drawText(watermark, {
@@ -1239,13 +1285,23 @@ export async function buildPdf(
     return { blob: new Blob([], { type: "application/pdf" }), pageCount: 0 };
   }
 
-  const [{ PDFDocument, rgb }, { default: fontkit }] = await Promise.all([
+  const [{ PDFDocument, rgb, PDFName, PDFString, PDFArray }, { default: fontkit }] = await Promise.all([
     import("pdf-lib"),
     import("@pdf-lib/fontkit"),
   ]);
 
   const design = getDesign(options.design);
-  const pm = pageMetrics(design);
+  const branding = options.branding !== false;
+  const qrOn = options.qr === true;
+  const MM = 2.834645669;
+  let pm = pageMetrics(design);
+  if (!branding) {
+    pm = { ...pm, headerHeight: 0, availHeight: pm.availHeight + pm.headerHeight };
+  }
+  if (qrOn) {
+    const extra = 6 * MM;
+    pm = { ...pm, footerHeight: pm.footerHeight + extra, availHeight: pm.availHeight - extra };
+  }
 
   const pdfDoc = await PDFDocument.create();
   pdfDoc.registerFontkit(fontkit);
@@ -1272,6 +1328,41 @@ export async function buildPdf(
     right: (options.margin?.right ?? design.marginRight) * 2.834645669,
   };
   const usedPm: PageMetrics = { ...pm, ...margin };
+
+  const addLink = (page: PDFPage, rect: number[], url: string) => {
+    const annotation = pdfDoc.context.obj({
+      Type: "Annot",
+      Subtype: "Link",
+      Rect: rect,
+      Border: [0, 0, 0],
+      A: { Type: "Action", S: "URI", URI: PDFString.of(url) },
+    });
+    const ref = pdfDoc.context.register(annotation);
+    const key = PDFName.of("Annots");
+    if (page.node.get(key)) {
+      page.node.lookup(key, PDFArray).push(ref);
+    } else {
+      page.node.set(key, pdfDoc.context.obj([ref]));
+    }
+  };
+
+  let qrImage: PDFImage | null = null;
+  if (qrOn) {
+    try {
+      const { default: QRCode } = await import("qrcode");
+      const dataUrl = await QRCode.toDataURL(`https://${design.siteUrl}/?utm_source=pdf`, {
+        margin: 0,
+        width: 256,
+        errorCorrectionLevel: "M",
+      });
+      const bin = atob(dataUrl.split(",")[1] ?? "");
+      const png = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) png[i] = bin.charCodeAt(i);
+      qrImage = await pdfDoc.embedPng(png);
+    } catch {
+      qrImage = null;
+    }
+  }
 
   const imgResolver = async (src: string): Promise<PDFImage | null> => {
     if (!src.startsWith("data:image/")) return null;
@@ -1300,7 +1391,7 @@ export async function buildPdf(
   // Логика «уместить на страницу»: сначала оценка, затем рендер.
   const render = (step: number) => {
     const comp = compress(design, step);
-    const renderer = new Renderer(pdfDoc, fonts, usedPm, design, comp, rgb);
+    const renderer = new Renderer(pdfDoc, fonts, usedPm, design, comp, rgb, { branding, qrImage, addLink });
     renderer.drawHeader();
     blocks.forEach((b) => renderer.renderBlock(b));
     renderer.finalize(options.watermark, options.pageNumbers !== false);

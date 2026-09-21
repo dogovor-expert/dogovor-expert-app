@@ -2,6 +2,7 @@ import type { MetadataRoute } from "next";
 import { LEGAL_TEMPLATES } from "@/data/templates";
 import { POPULAR_TEMPLATE_IDS } from "@/data/popular";
 import { BLOG_POSTS } from "@/data/blog/posts";
+import { CONVERTER_TOOLS } from "@/data/converter-tools";
 import { SITE_URL } from "@/lib/site";
 
 const POPULAR = new Set(POPULAR_TEMPLATE_IDS);
@@ -29,7 +30,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${SITE_URL}/autoteka`, changeFrequency: "monthly", priority: 0.6 },
     { url: `${SITE_URL}/tahograph`, changeFrequency: "monthly", priority: 0.5 },
     { url: `${SITE_URL}/techosmotr`, changeFrequency: "monthly", priority: 0.5 },
-    { url: `${SITE_URL}/converter`, changeFrequency: "monthly", priority: 0.5 },
+    { url: `${SITE_URL}/converter`, changeFrequency: "weekly", priority: 0.6 },
     { url: `${SITE_URL}/utils`, changeFrequency: "monthly", priority: 0.6 },
     { url: `${SITE_URL}/help`, changeFrequency: "monthly", priority: 0.5 },
     { url: `${SITE_URL}/security`, changeFrequency: "monthly", priority: 0.5 },
@@ -59,9 +60,15 @@ export default function sitemap(): MetadataRoute.Sitemap {
     lastModified: parseLastUpdated(p.updatedAt),
   }));
 
+  const converterTools: MetadataRoute.Sitemap = CONVERTER_TOOLS.map((t) => ({
+    url: `${SITE_URL}/converter/${t.slug}`,
+    changeFrequency: "weekly" as const,
+    priority: 0.7,
+  }));
+
   // 8.3 (аудит): страницы /blanks/{slug} исключены из sitemap — они
   // cross-canonical'ятся на /documents/{slug} (см. generateMetadata
   // blanks/[slug]). В индексе должна быть только каноническая страница;
   // базовый каталог /blanks остаётся (у него свой листинг-контент).
-  return [...staticPages, ...documents, ...blog];
+  return [...staticPages, ...documents, ...converterTools, ...blog];
 }
