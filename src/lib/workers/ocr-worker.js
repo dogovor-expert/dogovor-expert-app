@@ -28,6 +28,55 @@ let lastProgress = 0;
 
 const VIN_ALLOWED = "ABCDEFGHJKLMNPRSTUVWXYZ0123456789";
 
+/** Алфавит машиночитаемой зоны (ICAO 9303): A–Z, цифры и заполнитель '<'. */
+const MRZ_ALLOWED = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789<";
+
+/** Нормализует токен OCR к алфавиту MRZ (для поиска полосы и фильтра строк). */
+function mrzNormalize(text) {
+  return (text || "")
+    .toUpperCase()
+    .replace(/О/g, "0")
+    .replace(/[^A-Z0-9<]/g, "");
+}
+
+/** Похоже ли, что в тексте уже есть строка MRZ (тогда повтор не нужен). */
+function looksLikeMrzText(text) {
+  return (text || "").split("\n").some((l) => {
+    const s = mrzNormalize(l);
+    return s.length >= 28 && s.length <= 46;
+  });
+}
+
+/**
+ * Оценка полосы MRZ по словам первого прохода: MRZ-подобные слова в нижней
+ * половине кадра объединяются в один bbox. Возвращает bbox или null.
+ */
+function findMrzBand(words) {
+  if (!words || words.length === 0) return null;
+  const maxY = Math.max(...words.map((w) => w.bbox.y1));
+  const hits = words.filter((w) => {
+    const t = mrzNormalize(w.text);
+    return t.length >= 3 && w.bbox.y0 >= maxY * 0.5;
+  });
+  if (hits.length < 1) return null;
+  return {
+    x0: Math.min(...hits.map((w) => w.bbox.x0)),
+    y0: Math.min(...hits.map((w) => w.bbox.y0)),
+    x1: Math.max(...hits.map((w) => w.bbox.x1)),
+    y1: Math.max(...hits.map((w) => w.bbox.y1)),
+  };
+}
+
+/** Размер изображения — для фолбэк-полосы, когда слов нет вовсе. */
+async function imageSize(dataUrl) {
+  const resp = await fetch(dataUrl);
+  const blob = await resp.blob();
+  const bmp = await createImageBitmap(blob);
+  const size = { w: bmp.width, h: bmp.height };
+  bmp.close();
+  return size;
+}
+
 /**
  * Инициализирует persistent worker с русским языком (OEM 1 — LSTM).
  * Модель кэшируется в IndexedDB после первой загрузки.
@@ -265,6 +314,46 @@ self.onmessage = async (e) => {
           } catch {
             // VIN-повтор опционален — ошибка не проваливает основной результат.
           }
+        }
+      }
+
+      // Проход 4 (MRZ): загранпаспорта. Общий OCR часто рвёт моношрифтовую
+      // строку MRZ, поэтому нижнюю полосу распознаём отдельно с whitelist
+      // алфавита MRZ (как VIN). Найденные строки ДОБАВЛЯЕМ к тексту, а не
+      // заменяем — парсер MRZ на клиенте их найдёт, основной текст цел.
+      if (msg.mrzRetry && !looksLikeMrzText(best.text)) {
+        try {
+          let band = findMrzBand(pass1.words);
+          if (!band) {
+            const size = await imageSize(msg.file);
+            band = {
+              x0: 0,
+              y0: Math.round(size.h * 0.7),
+              x1: size.w,
+              y1: size.h,
+            };
+          }
+          if (band && band.y1 - band.y0 >= 8 && band.x1 - band.x0 >= 8) {
+            const mrzImage = await cropImageRegion(msg.file, band, 10);
+            const mrzPass = await recognizePass(
+              w,
+              mrzImage,
+              {
+                tessedit_char_whitelist: MRZ_ALLOWED,
+                tessedit_pageseg_mode: "6",
+              },
+              false
+            );
+            const extra = (mrzPass.text || "")
+              .split("\n")
+              .map((s) => mrzNormalize(s))
+              .filter((s) => s.length >= 28 && s.length <= 46);
+            if (extra.length > 0) {
+              best = { ...best, text: `${best.text}\n${extra.join("\n")}` };
+            }
+          }
+        } catch {
+          // MRZ-повтор опционален — ошибка не проваливает основной результат.
         }
       }
 

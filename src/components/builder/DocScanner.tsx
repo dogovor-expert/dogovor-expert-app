@@ -34,7 +34,7 @@ import { track, goals } from "@/lib/analytics";
 import { planFromScan } from "@/lib/docPlanner";
 import { prepareDocumentImage, type ImageQuality } from "@/lib/docImage";
 import { paddleRecognize, paddleWarmup } from "@/lib/paddleOcr";
-import { tryParseMrz, applyMrzToRole, mrzManualHints, type MrzParseSuccess } from "@/lib/docMrz";
+import { tryParseMrz, applyMrzToRole, mrzManualHints, hasMrzSignature, type MrzParseSuccess } from "@/lib/docMrz";
 import {
   fetchOcularStatus,
   postOcrRequest,
@@ -88,6 +88,8 @@ interface ScanResult {
   ocrHeight?: number;
   quality?: ImageQuality;
   manualHints?: string[];
+  /** Итог по MRZ для аналитики (значимо только для слота «паспорт»). */
+  mrz?: "valid" | "partial" | "none";
   slotId: string;
 }
 
@@ -362,13 +364,16 @@ export default function DocScanner({
         params: params ?? {},
         vinRetry:
           slot.ocrKind === "pts" || slot.ocrKind === "sts" || slot.ocrKind === "epts",
+        // MRZ-повтор (кроп нижней полосы + whitelist) — только загранпаспорта.
+        mrzRetry: slot.ocrKind === "passport",
       });
     });
   };
 
   const applyOcr = (
     slot: DocSlot,
-    text: string
+    text: string,
+    words?: OcrWord[]
   ): Omit<
     ScanResult,
     "confidence" | "words" | "quality" | "ocrWidth" | "ocrHeight"
@@ -380,7 +385,7 @@ export default function DocScanner({
       case "passport": {
         // 1) Пробуем MRZ (загранпаспорта): чек-суммы дают 100% точность
         //    номера и дат — приоритет над регэкспами по сыром тексту.
-        mrz = tryParseMrz(text);
+        mrz = tryParseMrz(text, words);
         if (mrz && slot.rolePrefix) {
           Object.assign(values, applyMrzToRole(template, slot.rolePrefix, mrz));
           manualHints.push(...mrzManualHints(template, slot.rolePrefix));
@@ -477,6 +482,16 @@ export default function DocScanner({
       missing,
       filledFields,
       manualHints: manualHints.length > 0 ? manualHints : undefined,
+      mrz:
+        slot.ocrKind === "passport"
+          ? mrz
+            ? mrz.valid
+              ? "valid"
+              : "partial"
+            : hasMrzSignature(text, words)
+              ? "partial"
+              : "none"
+          : undefined,
       slotId: slot.id,
     };
   };
@@ -606,7 +621,7 @@ export default function DocScanner({
           }
         }
 
-        const res = applyOcr(slot, ocr.text);
+        const res = applyOcr(slot, ocr.text, ocr.words);
         const full: ScanResult = {
           ...res,
           confidence: Math.round(ocr.confidence),
@@ -623,6 +638,7 @@ export default function DocScanner({
         track(goals.scannerUsed, {
           doc_type: slot.ocrKind,
           server_ocr: String(shouldUseServerOcr(ocularStatus, ocrConsent)),
+          ...(res.mrz ? { mrz: res.mrz } : {}),
         });
 
         // Определяем финальный engine для аналитики

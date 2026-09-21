@@ -4,6 +4,9 @@ import {
   tryParseMrz,
   applyMrzToRole,
   mrzManualHints,
+  mrzLineCandidatesFromWords,
+  hasMrzSignature,
+  type MrzWordBox,
   type MrzParseSuccess,
 } from "@/lib/docMrz";
 import type { LegalTemplate, TemplateField } from "@/data/types";
@@ -131,5 +134,77 @@ describe("mrzManualHints", () => {
   it("нет поля passport_date → пустой список", () => {
     const t = makeTemplate(buyerFields(["fio", "passport"]));
     expect(mrzManualHints(t, "buyer")).toEqual([]);
+  });
+});
+
+// ─── Геометрическая сборка строк из слов (новый путь) ────────────────────────
+/** Режет строку MRZ на «слова» с боксами в одну визуальную строку. */
+const wordsFromLine = (line: string, y: number): MrzWordBox[] =>
+  [line.slice(0, 6), line.slice(6, 20), line.slice(20)].map((text, i) => ({
+    text,
+    bbox: { x0: i * 120, y0: y, x1: i * 120 + 110, y1: y + 30 },
+  }));
+
+describe("mrzLineCandidatesFromWords — сборка рваного OCR", () => {
+  it("склеивает слова одной строки по X и группирует по Y", () => {
+    const words = [...wordsFromLine(TD3_L1, 100), ...wordsFromLine(TD3_L2, 140)];
+    const lines = mrzLineCandidatesFromWords(words);
+    expect(lines).toEqual([TD3_L1, TD3_L2]);
+  });
+
+  it("без координат (только текст) MRZ не собирается — доказывает ценность пути", () => {
+    // Тот же «рваный» OCR в виде текста: каждая часть короче 28 → кандидатов нет.
+    const broken = `${TD3_L1.slice(0, 6)} ${TD3_L1.slice(6, 20)}\n${TD3_L2.slice(0, 6)} ${TD3_L2.slice(6, 20)}`;
+    expect(extractMrzLines(broken)).toHaveLength(0);
+    expect(tryParseMrz(broken)).toBeNull();
+  });
+
+  it("tryParseMrz со словами распознаёт TD3 даже при пустом тексте", () => {
+    const words = [...wordsFromLine(TD3_L1, 100), ...wordsFromLine(TD3_L2, 140)];
+    const r = tryParseMrz("", words);
+    expect(r?.valid).toBe(true);
+    expect(r?.format).toBe("TD3");
+    expect(r?.fields.documentNumber).toBe("751234567");
+  });
+
+  it("мусорные слова игнорируются, валидность сохраняется", () => {
+    const words = [
+      ...wordsFromLine(TD3_L1, 100),
+      ...wordsFromLine(TD3_L2, 140),
+      { text: "Оплата", bbox: { x0: 0, y0: 300, x1: 60, y1: 330 } },
+    ];
+    const r = tryParseMrz("", words);
+    expect(r?.valid).toBe(true);
+  });
+});
+
+describe("extractMrzLines — склеенные строки и артефакты", () => {
+  it("две склеенные строки TD3 (88 символов) разрезаются на пару", () => {
+    const groups = extractMrzLines(`${TD3_L1}${TD3_L2}`);
+    expect(groups).toHaveLength(1);
+    expect(groups[0]).toEqual([TD3_L1, TD3_L2]);
+  });
+
+  it("OCR-артефакты (|, «») не мешают нормализации", () => {
+    // Артефакты ВСТАВЛЯЮТСЯ вокруг/внутрь строки (а не заменяют символы MRZ).
+    const dirty = `«${TD3_L1.slice(0, 20)}|${TD3_L1.slice(20)}»\n${TD3_L2}`;
+    expect(tryParseMrz(dirty)?.valid).toBe(true);
+  });
+});
+
+describe("hasMrzSignature — диагностика без парсинга", () => {
+  it("текст внутреннего паспорта РФ → false", () => {
+    expect(
+      hasMrzSignature("Паспорт гражданина РФ\nвыдан 12.05.2015\nкод подразделения")
+    ).toBe(false);
+  });
+
+  it("слова с MRZ-подобной строкой → true", () => {
+    const words = [...wordsFromLine(TD3_L1, 100), ...wordsFromLine(TD3_L2, 140)];
+    expect(hasMrzSignature("", words)).toBe(true);
+  });
+
+  it("валидная строка MRZ в тексте → true", () => {
+    expect(hasMrzSignature(`${TD3_L1}\n${TD3_L2}`)).toBe(true);
   });
 });
