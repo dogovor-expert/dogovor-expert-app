@@ -8,10 +8,26 @@
  *
  * ВАЖНО: у внутренних паспортов РФ MRZ нет — зона есть только в
  * загранпаспортах. Функция просто возвращает null, если MRZ не найдена.
+ *
+ * Два источника строк:
+ *  1) текст OCR, порезанный по строкам (extractMrzLines) — исторический путь;
+ *  2) СЛОВА с координатами (mrzLineCandidatesFromWords) — общий OCR часто
+ *     рвёт 44-символьную строку MRZ на куски, поэтому строку собираем
+ *     геометрически: группируем слова по вертикали и склеиваем по X.
+ *     Боксы приходят и от Tesseract, и от серверного OCR.
  */
 
 import { parse as parseMRZ } from "mrz";
 import type { LegalTemplate } from "@/data/types";
+
+/** Алфавит машиночитаемой зоны по ICAO 9303: A–Z, цифры и заполнитель '<'. */
+export const MRZ_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789<";
+
+/** Слово OCR с координатами — минимальный контракт (совместим с OcrWord). */
+export interface MrzWordBox {
+  text: string;
+  bbox: { x0: number; y0: number; x1: number; y1: number };
+}
 
 export interface MrzParseSuccess {
   ok: true;
@@ -30,21 +46,91 @@ export interface MrzParseSuccess {
   raw: string[];
 }
 
-/**
- * Ищет строки MRZ в произвольном OCR-тексте. Признаки:
- *  - длина строки 30/36/44 после нормализации;
- *  - состоит только из A-Z, 0-9 и '<';
- *  - начинается с P/I/A/C/V + '<' (тип документа) или содержит
- *    паттернTD3-второй строки (цифры+чек-суммы).
- * Возвращает группы найденных строк (2 для TD2/TD3, 3 для TD1).
- */
-export function extractMrzLines(text: string): string[][] {
-  const mrzChar = /^[A-Z0-9<]{28,46}$/;
-  const candidates = text
-    .split("\n")
-    .map((l) => l.replace(/[\s«»]/g, "").replace(/О/g, "0").toUpperCase())
-    .filter((l) => mrzChar.test(l));
+/** Допустимые длины строк MRZ: TD1 — 30, TD2 — 36, TD3 — 44. */
+const MRZ_LINE_LENGTHS = [44, 36, 30] as const;
 
+/** Строгая проверка «это похоже на строку MRZ»: длина 28–46, алфавит A-Z0-9<. */
+const STRICT_MRZ_LINE = /^[A-Z0-9<]{28,46}$/;
+
+/**
+ * Нормализация одного токена/строки MRZ: верхний регистр, кириллическая «О»
+ * (омоглиф нуля), удаление OCR-артефактов и всего, что не входит в алфавит.
+ */
+function normalizeMrzChars(s: string): string {
+  return s
+    .toUpperCase()
+    .replace(/О/g, "0")
+    .replace(/[«»|¦/\\.,:;'"`~^]/g, "")
+    .replace(/[^A-Z0-9<]/g, "");
+}
+
+/**
+ * Склеенные строки: OCR иногда отдаёт две строки MRZ одним токеном без
+ * разделителя (60/72/88 символов). Разрезаем ровно пополам, если обе
+ * половины сами по себе — валидные строки MRZ.
+ */
+function splitConcatenated(line: string): string[] {
+  for (const len of MRZ_LINE_LENGTHS) {
+    if (line.length === len * 2) {
+      const a = line.slice(0, len);
+      const b = line.slice(len);
+      if (STRICT_MRZ_LINE.test(a) && STRICT_MRZ_LINE.test(b)) return [a, b];
+    }
+  }
+  return [line];
+}
+
+/**
+ * Собирает строки-кандидаты MRZ из слов с координатами. Слова группируются
+ * по вертикальному перекрытию (одна строка документа) и склеиваются по X.
+ * Это чинит главную проблему: общий OCR рвёт моношрифтовую строку MRZ на
+ * отдельные «слова», и по тексту она не проходит фильтр длины.
+ */
+export function mrzLineCandidatesFromWords(
+  words: readonly MrzWordBox[]
+): string[] {
+  const items = words
+    .map((w) => {
+      const text = normalizeMrzChars(w.text);
+      const h = Math.max(1, w.bbox.y1 - w.bbox.y0);
+      return { text, bbox: w.bbox, h, cy: (w.bbox.y0 + w.bbox.y1) / 2 };
+    })
+    .filter((w) => w.text.length > 0);
+
+  items.sort((a, b) => a.cy - b.cy);
+
+  const lines: { words: typeof items; cy: number; h: number }[] = [];
+  for (const w of items) {
+    const line = lines.find((l) => {
+      const overlap =
+        Math.min(l.cy + l.h / 2, w.cy + w.h / 2) -
+        Math.max(l.cy - l.h / 2, w.cy - w.h / 2);
+      return overlap > Math.min(l.h, w.h) * 0.5;
+    });
+    if (line) {
+      line.words.push(w);
+      line.cy =
+        (line.cy * (line.words.length - 1) + w.cy) / line.words.length;
+      line.h = Math.max(line.h, w.h);
+    } else {
+      lines.push({ words: [w], cy: w.cy, h: w.h });
+    }
+  }
+
+  return lines.map((l) =>
+    l.words
+      .slice()
+      .sort((a, b) => a.bbox.x0 - b.bbox.x0)
+      .map((w) => w.text)
+      .join("")
+  );
+}
+
+/**
+ * Группирует строки-кандидаты в наборы MRZ: TD3 (2×44), TD2 (2×36), TD1 (3×30).
+ * Общий код для текстового и геометрического путей.
+ */
+function groupMrzCandidates(candidates: string[]): string[][] {
   const groups: string[][] = [];
   for (let i = 0; i < candidates.length; i++) {
     const cur = candidates[i];
@@ -78,11 +164,63 @@ export function extractMrzLines(text: string): string[][] {
 }
 
 /**
- * Пытается распарсить MRZ из OCR-текста. Возвращает первый валидный
+ * Ищет строки MRZ в произвольном OCR-тексте. Признаки:
+ *  - длина строки 30/36/44 после нормализации;
+ *  - состоит только из A-Z, 0-9 и '<';
+ *  - начинается с P/I/A/C/V + '<' (тип документа) или содержит
+ *    паттерн TD3-второй строки (цифры+чек-суммы).
+ * Возвращает группы найденных строк (2 для TD2/TD3, 3 для TD1).
+ */
+export function extractMrzLines(text: string): string[][] {
+  const candidates: string[] = [];
+  for (const rawLine of text.split("\n")) {
+    const line = normalizeMrzChars(rawLine);
+    // Обычная строка MRZ.
+    if (STRICT_MRZ_LINE.test(line)) {
+      candidates.push(line);
+      continue;
+    }
+    // Склеенные OCR строки (60/72/88) — проверяем ДО строгого фильтра длины.
+    for (const part of splitConcatenated(line)) {
+      if (part !== line && STRICT_MRZ_LINE.test(part)) candidates.push(part);
+    }
+  }
+  return groupMrzCandidates(candidates);
+}
+
+/**
+ * Пытается распарсить MRZ из OCR-текста. Если переданы слова с координатами,
+ * сначала пробуем геометрическую сборку строк (надёжнее при «рваном» OCR),
+ * затем — обычный текстовый путь. Возвращает первый валидный
  * (или лучший доступный) результат.
  */
-export function tryParseMrz(text: string): MrzParseSuccess | null {
-  const groups = extractMrzLines(text);
+export function tryParseMrz(
+  text: string,
+  words?: readonly MrzWordBox[]
+): MrzParseSuccess | null {
+  const groups: string[][] = [];
+  const seen = new Set<string>();
+
+  const pushGroups = (candidateLines: string[]) => {
+    for (const g of groupMrzCandidates(candidateLines)) {
+      const key = g.join("|");
+      if (seen.has(key)) continue;
+      seen.add(key);
+      groups.push(g);
+    }
+  };
+
+  if (words && words.length > 0) {
+    pushGroups(
+      mrzLineCandidatesFromWords(words).filter((l) => STRICT_MRZ_LINE.test(l))
+    );
+  }
+  pushGroups(
+    extractMrzLines(text)
+      .flat()
+      .filter((l) => STRICT_MRZ_LINE.test(l))
+  );
+
   if (groups.length === 0) return null;
 
   let best: MrzParseSuccess | null = null;
@@ -113,6 +251,29 @@ export function tryParseMrz(text: string): MrzParseSuccess | null {
     }
   }
   return best;
+}
+
+/**
+ * Диагностика (без парсинга): есть ли в тексте/словах признаки MRZ вообще.
+ * Нужна для аналитики — отличает «MRZ нет в кадре» (внутренний паспорт РФ)
+ * от «MRZ есть, но не распозналась» (наша недоработка). На парсинг не влияет.
+ */
+export function hasMrzSignature(
+  text: string,
+  words?: readonly MrzWordBox[]
+): boolean {
+  if (words && words.length > 0) {
+    const joined = mrzLineCandidatesFromWords(words).filter(
+      (l) => l.length >= 28 && l.length <= 46 && /^[A-Z0-9<]+$/.test(l)
+    );
+    if (joined.length > 0) return true;
+  }
+  return text.split("\n").some((l) => {
+    const line = normalizeMrzChars(l);
+    return (
+      line.length >= 20 && line.length <= 60 && /^[A-Z0-9<]+$/.test(line)
+    );
+  });
 }
 
 /**
