@@ -16,6 +16,24 @@
 
 ---
 
+## [2026-09-21] Конвертер: возврат старого дизайна хаба + сохранение SEO
+
+- **Агент:** big-pickle (opencode)
+- **Тип:** refactor
+- **Файлы:** `src/app/converter/page.tsx`, `src/components/converter/ConverterHub.tsx` (новый), удалён `src/components/converter/ConverterCatalog.tsx`
+- **Что сделано:**
+  1. Хаб `/converter` вернули к старому интерактивному дизайну: сетка плиток + панель выбранного инструмента на одной странице (через `ConverterRunner`, без перехода).
+  2. SEO-страницы `/converter/[tool]` (14 шт.) НЕ тронуты — остаются SSG с уникальными title/H1/FAQ/JSON-LD; это сохраняет органический трафик.
+  3. `page.tsx` остаётся server component (экспорт `metadata` через `withSeo`), интерактив вынесен в клиентский `ConverterHub`.
+  4. Внизу хаба добавлен блок внутренних ссылок «Все инструменты» → все 14 SEO-URL (усиливает перелинковку).
+- **⚠️ Внимание следующему агенту:**
+  - Нельзя делать `page.tsx` клиентским — потеряется экспорт `metadata` (SEO). Интерактив только в `ConverterHub`.
+  - Не удалять `/converter/[tool]` и `src/data/converter-tools.ts` — на них держится SEO (title/description/FAQ/JSON-LD + sitemap).
+  - Поле `ConverterTool.id` обязано совпадать с ключом в `ConverterRunner.COMPONENTS`, иначе панель хаба будет пустой.
+- **Связанные PRs/коммиты:** (не закоммичено)
+
+---
+
 ## [2026-09-21] Спринт-3 programmatic SEO вариаций (этап 4)
 
 - **Агент:** big-pickle (opencode)
