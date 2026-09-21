@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { AdSlot } from "@/components/ads/AdSlot";
 import dynamic from "next/dynamic";
 import Image from "next/image";
 import Link from "next/link";
@@ -193,6 +194,7 @@ export default function EptsPage() {
           <Link href="/resume" className="text-brand-600 hover:underline">конструктор резюме</Link>.
         </p>
       </section>
+    <AdSlot id="LANDING_INFEED" />
     </div>
   );
 }

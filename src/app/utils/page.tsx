@@ -2,6 +2,7 @@ import { Calculator, ShieldCheck, Scale, BookOpen, TrendingUp, FileCheck, Calcul
 import { SITE_URL } from "@/lib/site";
 import UtilsTools from "@/components/utils/UtilsTools";
 import { JsonLd } from "@/components/seo/JsonLd";
+import { AdSlot } from "@/components/ads/AdSlot";
 
 export const revalidate = 3600;
 export const dynamic = "force-static"; // P0: см. INVARIANTS.md
@@ -254,6 +255,8 @@ export default function UtilsPage() {
           ))}
         </div>
       </section>
+
+      <AdSlot id="CALC_RESULT" />
 
       {/* ===== CTA ===== */}
       <section className="mt-10 rounded-2xl bg-gradient-to-br from-brand-50 to-emerald-50 border border-brand-200 p-6 sm:p-7 flex flex-col md:flex-row md:items-center gap-4">

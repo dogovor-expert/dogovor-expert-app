@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { AdSlot } from "@/components/ads/AdSlot";
 import Link from "next/link";
 import { Card } from "@/components/ui/Card";
 
@@ -82,6 +83,7 @@ export default function TahographPage() {
           ))}
         </div>
       </Card>
+    <AdSlot id="LANDING_INFEED" />
     </div>
   );
 }

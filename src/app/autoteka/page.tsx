@@ -1,4 +1,5 @@
 import dynamic from "next/dynamic";
+import { AdSlot } from "@/components/ads/AdSlot";
 import { ShieldCheck, FileSearch, Clock } from "lucide-react";
 
 // E4 (аудит): страница была целиком 'use client' (775 строк) — поисковики
@@ -93,6 +94,7 @@ export default function AutotekaPage() {
           </div>
         </div>
       </section>
+    <AdSlot id="LANDING_INFEED" />
     </div>
   );
 }

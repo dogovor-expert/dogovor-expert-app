@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 import { LEGAL_TEMPLATES } from "@/data/templates";
+import { DOC_VARIATIONS } from "@/data/docVariations";
 import { POPULAR_TEMPLATE_IDS } from "@/data/popular";
 import { BLOG_POSTS } from "@/data/blog/posts";
 import { CONVERTER_TOOLS } from "@/data/converter-tools";
@@ -53,6 +54,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
     lastModified: parseLastUpdated(t.lastUpdated),
   }));
 
+  const variations: MetadataRoute.Sitemap = DOC_VARIATIONS.map((v) => ({
+    url: `${SITE_URL}/documents/v/${v.id}`,
+    changeFrequency: "monthly" as const,
+    priority: 0.6,
+  }));
+
   const blog: MetadataRoute.Sitemap = BLOG_POSTS.map((p) => ({
     url: `${SITE_URL}/blog/${p.slug}`,
     changeFrequency: "monthly" as const,
@@ -70,5 +77,5 @@ export default function sitemap(): MetadataRoute.Sitemap {
   // cross-canonical'ятся на /documents/{slug} (см. generateMetadata
   // blanks/[slug]). В индексе должна быть только каноническая страница;
   // базовый каталог /blanks остаётся (у него свой листинг-контент).
-  return [...staticPages, ...documents, ...converterTools, ...blog];
+  return [...staticPages, ...documents, ...variations, ...converterTools, ...blog];
 }
