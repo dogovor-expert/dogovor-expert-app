@@ -4,6 +4,7 @@ import { DOC_VARIATIONS } from "@/data/docVariations";
 import { POPULAR_TEMPLATE_IDS } from "@/data/popular";
 import { BLOG_POSTS } from "@/data/blog/posts";
 import { CONVERTER_TOOLS } from "@/data/converter-tools";
+import { CALCULATOR_TOOLS } from "@/data/calculator-tools";
 import { SITE_URL } from "@/lib/site";
 
 const POPULAR = new Set(POPULAR_TEMPLATE_IDS);
@@ -32,7 +33,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${SITE_URL}/tahograph`, changeFrequency: "monthly", priority: 0.5 },
     { url: `${SITE_URL}/techosmotr`, changeFrequency: "monthly", priority: 0.5 },
     { url: `${SITE_URL}/converter`, changeFrequency: "weekly", priority: 0.6 },
-    { url: `${SITE_URL}/utils`, changeFrequency: "monthly", priority: 0.6 },
+    { url: `${SITE_URL}/utils`, changeFrequency: "weekly", priority: 0.7 },
     { url: `${SITE_URL}/help`, changeFrequency: "monthly", priority: 0.5 },
     { url: `${SITE_URL}/security`, changeFrequency: "monthly", priority: 0.5 },
     { url: `${SITE_URL}/privacy`, changeFrequency: "yearly", priority: 0.3 },
@@ -73,9 +74,17 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: 0.7,
   }));
 
+  // 9.1 (аудит): 22 калькулятора получили отдельные SEO-страницы /utils/{slug}.
+  // Приоритет 0.7/weekly — под высокочастотные запросы «калькулятор …».
+  const calculatorTools: MetadataRoute.Sitemap = CALCULATOR_TOOLS.map((t) => ({
+    url: `${SITE_URL}/utils/${t.slug}`,
+    changeFrequency: "weekly" as const,
+    priority: 0.7,
+  }));
+
   // 8.3 (аудит): страницы /blanks/{slug} исключены из sitemap — они
   // cross-canonical'ятся на /documents/{slug} (см. generateMetadata
   // blanks/[slug]). В индексе должна быть только каноническая страница;
   // базовый каталог /blanks остаётся (у него свой листинг-контент).
-  return [...staticPages, ...documents, ...variations, ...converterTools, ...blog];
+  return [...staticPages, ...documents, ...variations, ...converterTools, ...calculatorTools, ...blog];
 }

@@ -68,6 +68,20 @@
 
 **Запреты:** не менять схему `/documents/[slug]`; каждая вариация `templateId` обязан существовать в `LEGAL_TEMPLATES`; h1 вариации не должен совпадать с `name` родителя; год в заголовке не хардкодить — `YEAR = new Date().getFullYear()`, добавляется в `generateMetadata` к `variation.title`.
 
+## Калькуляторы `/utils/[tool]` (22 страницы)
+
+`/utils/[tool]` — отдельные SEO-посадочные для каждого калькулятора, порождаемые из `src/data/calculator-tools.ts` (единый источник, `CALCULATOR_TOOLS`). SSG: `generateStaticParams` + `dynamicParams=false`, `revalidate=3600`, `dynamic="force-static"`, sitemap-группа priority 0.7 / weekly. Хаб `/utils` остаётся интерактивным каталогом и НЕ переписывается.
+
+**Правила:**
+1. `CalculatorTool.id` обязан совпадать с ключом `CalculatorRunner.COMPONENTS` и id инструмента в `UtilsTools` (инвариант закреплён тестом `src/data/__tests__/calculatorTools.test.ts`).
+2. Уникальные title (≤ 70 симв.) / H1 / description (120–175 симв.) / keywords; canonical — сам на себя; `robots: index, follow`.
+3. Обязательные блоки: формула + правовое основание (`norms`), HowTo (3 шага), SEO-текст (≥ 2 абзаца), FAQ (≥ 3) с `FAQPage` JSON-LD; плюс `BreadcrumbList` и `WebApplication`.
+4. `iconName` должен присутствовать в маппинге `ICONS` в `src/app/utils/[tool]/page.tsx`.
+5. Интерактив монтируется только клиентским `CalculatorRunner` (`dynamic(..., {ssr:false})`); `page.tsx` остаётся server component.
+6. Рекламный слот `CALC_RESULT` — под FAQ, вне рабочей зоны калькулятора.
+
+**Запреты:** не переписывать хаб `/utils` и `UtilsTools`; не хардкодить ставки/лимиты в тексте, если они есть в `src/lib/legal/*` (источник истины — код); не удалять related-перелинковку (обеспечивает обход кластера без ссылок с хаба).
+
 ## Акция PRO 299 ₽ (19.08.2026)
 
 - Единый источник — `src/lib/pricing.ts`: `PRO_PRICE=299`, `PRO_PRICE_OLD=990`, `PROMO_LABEL="-70%"`, `PROMO_ENDS_AT=2026-09-20T23:59:59+03:00`, `isPromoActive()`, `currentProPrice()`, `formatRub()`. Платежи (`/api/billing/create-payment`, `/api/billing/auto-renew`) берут сумму ТОЛЬКО через `currentProPrice()` — после дедлайна акция гаснет автоматически.

@@ -16,6 +16,28 @@
 
 ---
 
+## [2026-09-22] Калькуляторы: отдельные SEO-страницы /utils/[tool] (22 URL)
+
+- **Агент:** big-pickle (opencode)
+- **Тип:** feat
+- **Файлы:** `src/data/calculator-tools.ts` (новый), `src/app/utils/[tool]/page.tsx` (новый), `src/components/calculator/CalculatorRunner.tsx` (новый), `src/components/calculator/InnValidator.tsx` (новый), `src/components/utils/UtilsTools.tsx`, `src/app/sitemap.ts`, `src/data/__tests__/calculatorTools.test.ts` (новый)
+- **Что сделано:**
+  1. 22 калькулятора получили отдельные SSG-страницы `/utils/{slug}` (nds, gosposhlina, 395-gk, alimenty, …) с уникальными title/H1/description/keywords, блоком «Как считается» (формула + нормы), HowTo, SEO-текстом и FAQ.
+  2. JSON-LD на каждой: BreadcrumbList + FAQPage + WebApplication; canonical=self, `robots: index,follow`; `dynamicParams=false`, `revalidate=3600`, `force-static`.
+  3. Хаб `/utils` и его дизайн НЕ менялись (по требованию): интерактив `UtilsTools` и разметка прежние. Хаб теперь получает входящие ссылки с каждой страницы-инструмента (breadcrumb + блок CTA «Все калькуляторы»).
+  4. Битая ссылка `/utils/nds` из FAQ хаба починилась сама — URL теперь существует.
+  5. `CalculatorRunner` монтирует существующие компоненты `src/components/calculator/*` через `dynamic(..., {ssr:false})`; id калькуляторов совпадают с id в `UtilsTools` и ключами `COMPONENTS`.
+  6. `InnValidator` выделен из `UtilsTools` в отдельный компонент (единый источник разметки для хаба и SEO-страницы).
+  7. Sitemap: +22 URL (`priority 0.7`, weekly); `/utils` повышен с 0.6/monthly до 0.7/weekly.
+- **⚠️ Внимание следующему агенту:**
+  - `CalculatorTool.id` ОБЯЗАН совпадать с ключом в `CalculatorRunner.COMPONENTS` и с id инструмента в `UtilsTools` — иначе SEO-страница отрендерит пустую панель. Инвариант зафиксирован в `src/data/__tests__/calculatorTools.test.ts`.
+  - Не удалять `src/data/calculator-tools.ts` и роут `/utils/[tool]` — на них держится SEO (sitemap + canonical + JSON-LD).
+  - `page.tsx` — server component (экспорт `generateMetadata`); интерактив только внутри `CalculatorRunner`.
+  - `iconName` обязан присутствовать в маппинге `ICONS` в `src/app/utils/[tool]/page.tsx` (иначе фолбэк на Landmark).
+- **Связанные PRs/коммиты:** (не закоммичено)
+
+---
+
 ## [2026-09-21] Конвертер: возврат старого дизайна хаба + сохранение SEO
 
 - **Агент:** big-pickle (opencode)

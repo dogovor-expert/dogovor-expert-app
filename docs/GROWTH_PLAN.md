@@ -108,7 +108,7 @@
 ### 6.1. Текущее состояние в коде
 - `src/components/ads/AdSlot.tsx` — слот: рендерит `<div>` с `SLOT_MIN_HEIGHT` и `aria-label="Реклама"`, подключает загрузчик РСЯ (`https://yandex.ru/ads/system/context.js`) и рендерит RTB-блок **только** при `NEXT_PUBLIC_ADS_ENABLED=1` **и** согласии `categories.marketing` (152-ФЗ). Без заполненного `NEXT_PUBLIC_RTB_<SLOT>` блок не рендерится, место резервируется.
 - Все 13 слотов определены и **расставлены** по страницам: `HOME_INFEED, BLOG_INFEED, BLOG_SIDEBAR, ARTICLE_INLINE, ARTICLE_SIDEBAR, ARTICLE_FOOTER, TEMPLATES_INFEED, CALC_RESULT, LANDING_INFEED, CONVERTER_FOOTER, CONVERTER_RELATED, DOC_TEMPLATE_FOOTER, RESUME_INFEED`.
-- Расстановка: `ARTICLE_*` + `BLOG_*` в блоге; `CONVERTER_FOOTER`/`CONVERTER_RELATED` в `src/app/converter/[tool]/page.tsx`; `DOC_TEMPLATE_FOOTER` в `src/app/documents/[slug]/page.tsx`; `RESUME_INFEED` в `/resume`; `CALC_RESULT` в `/utils`; `TEMPLATES_INFEED` в `/templates`; `HOME_INFEED` на главной; `LANDING_INFEED` на лендингах `/dkp /osago /autoteka /epts /tahograph /techosmotr`.
+- Расстановка: `ARTICLE_*` + `BLOG_*` в блоге; `CONVERTER_FOOTER`/`CONVERTER_RELATED` в `src/app/converter/[tool]/page.tsx`; `DOC_TEMPLATE_FOOTER` в `src/app/documents/[slug]/page.tsx`; `RESUME_INFEED` в `/resume`; `CALC_RESULT` в `/utils` и `/utils/[tool]`; `TEMPLATES_INFEED` в `/templates`; `HOME_INFEED` на главной; `LANDING_INFEED` на лендингах `/dkp /osago /autoteka /epts /tahograph /techosmotr`.
 - RTB-идентификаторы берутся из `NEXT_PUBLIC_RTB_*` (см. `src/lib/ads.ts`). Пока не заполнены → слоты резервируют место, рекламы нет.
 
 ### 6.2. Как работает РСЯ (по офиц. документации Яндекса)
@@ -149,6 +149,7 @@
 | `/templates`, `/blanks` | `TEMPLATES_INFEED` | Баннер | между карточками шаблонов |
 | `/documents/[id]` | `DOC_TEMPLATE_FOOTER` *(новый)* | Баннер | после SEO-текста/FAQ, **не над кнопкой создания** |
 | `/utils` (калькуляторы) | `CALC_RESULT` | Баннер | **под** результатом, не перекрывая |
+| `/utils/[tool]` (22 калькулятора) | `CALC_RESULT` | Баннер | под FAQ, **не в рабочей зоне** калькулятора |
 | `/converter/[tool]` | `CONVERTER_FOOTER` + `CONVERTER_RELATED` *(новые)* | Баннер | под SEO-текстом/FAQ и после «других инструментов»; **не в рабочей зоне** |
 | Лендинги `/dkp /osago /autoteka /epts /tahograph /techosmotr` | `LANDING_INFEED` | Баннер | после контента |
 | `/resume` | `RESUME_INFEED` *(новый)* | Баннер | после блоков |
@@ -209,6 +210,14 @@
 > 5. На каждой странице: `<h1>`, блок «Как … онлайн», уникальный FAQ + `JsonLd` (`FAQPage`) из `src/components/seo/JsonLd.tsx`, перелинковка relatedTools.
 > 6. Добавь URL в `src/app/sitemap.ts` (priority 0.7, weekly).
 > 7. Соблюдай `docs/SEO_INVARIANTS.md`. Проверки: tsc, lint, test:unit, check:smoke, blast-radius.
+
+### 9.1.1. `/utils` → отдельные URL (выполнено)
+> Применён тот же приём, что в 9.1, к 22 калькуляторам (2026-09-22). Хаб `/utils` и его дизайн не менялись.
+> 1. `src/data/calculator-tools.ts` — 22 объекта `{slug, id, label, iconName, category, title, description, h1, intro, keywords, norms[], formula[], howTo[], faq[], seoText[], related[]}`. Поле `id` совпадает с id в `UtilsTools` и ключом в `CalculatorRunner`.
+> 2. `src/app/utils/[tool]/page.tsx` (server): `dynamicParams=false`, `generateStaticParams()`, `generateMetadata()` (canonical=self, index/follow), блоки «Как считается» (формула + правовое основание), HowTo, SEO-текст, FAQ, JSON-LD (Breadcrumb + FAQPage + WebApplication), `AdSlot CALC_RESULT`, related-перелинковка + ссылка на хаб.
+> 3. `src/components/calculator/CalculatorRunner.tsx` (`"use client"`) монтирует компоненты `src/components/calculator/*` через `dynamic(..., {ssr:false})`; валидатор ИНН вынесен в `InnValidator.tsx`.
+> 4. URL добавлены в sitemap (0.7/weekly); `/utils` повышен до 0.7/weekly.
+> 5. Инвариант id ↔ компонент закреплён тестом `src/data/__tests__/calculatorTools.test.ts`.
 
 ### 9.2. Яндекс.РСЯ
 > Подключи РСЯ, не нарушая CSP и cookie-политику.

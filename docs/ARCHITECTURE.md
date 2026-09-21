@@ -68,13 +68,14 @@ src/
 │   ├── templates/                       # /templates — каталог шаблонов
 │   ├── trash/                           # /trash — корзина
 │   ├── utils/                           # /utils — калькуляторы и проверки
+│   ├── utils/[tool]/                    # 22 SEO-страницы калькуляторов (SSG, /utils/nds и т.д.)
 │   ├── about/                           # /about
 │   ├── autoteka/, osago/, dkp/,         # Лендинги услуг
 │   ├── techosmotr/, tahograph/
 │   ├── layout.tsx                       # Корневой layout (Inter, JSON-LD Org+WebSite+SearchAction)
 │   ├── not-found.tsx                    # 404 fallback (явный noindex, без canonical)
 │   ├── page.tsx                         # Главная (canonical=/)
-│   ├── sitemap.ts                       # Динамический sitemap.xml (16 служебных + 369 документов + блог)
+│   ├── sitemap.ts                       # Динамический sitemap.xml (служебные + 369 документов + 36 вариаций + 14 конвертера + 22 калькулятора + блог)
 │   └── global-error.tsx                 # Error boundary
 │
 ├── components/                          # Переиспользуемые компоненты
@@ -249,6 +250,7 @@ e2e/                              # Playwright e2e
 | `/documents/[slug]` | **Публичные** посадочные документов | index,follow | – | SSG, canonical=self, JSON-LD FAQ |
 | `/documents` (без slug) | ЛК черновики | **Disallow /documents$** | auth-only | noindex |
 | `/utils` | Калькуляторы | index,follow | – | canonical=/utils |
+| `/utils/[tool]` | **22 калькулятора** (SSG) | index,follow | – | canonical=self, Breadcrumb+FAQ+WebApplication JSON-LD |
 | `/blog`, `/blog/[slug]` | Блог | index,follow | – | canonical=self, Article JSON-LD |
 | `/contacts`, `/about`, `/help` | Информационные | index,follow | – | – |
 | `/preview` | Предпросмотр | **Disallow** | – | – |
