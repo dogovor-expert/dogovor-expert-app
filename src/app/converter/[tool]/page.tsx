@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { JsonLd } from "@/components/seo/JsonLd";
 import ConverterRunner from "@/components/converter/ConverterRunner";
+import { AdSlot } from "@/components/ads/AdSlot";
 import { breadcrumbJsonLd, faqJsonLd } from "@/lib/seo/faq";
 import { withSeo } from "@/lib/seo/withSeo";
 import { SITE_URL } from "@/lib/site";
@@ -173,6 +174,8 @@ export default async function ConverterToolPage({
         ))}
       </section>
 
+      <AdSlot id="CONVERTER_FOOTER" />
+
       {related.length > 0 && (
         <section className="space-y-3">
           <h2 className="text-xl font-semibold text-gray-900">Другие инструменты</h2>
@@ -198,6 +201,8 @@ export default async function ConverterToolPage({
           </div>
         </section>
       )}
+
+      <AdSlot id="CONVERTER_RELATED" />
 
       <section className="rounded-2xl border border-gray-200 bg-gray-50 p-6 text-center">
         <h2 className="text-lg font-semibold text-gray-900">Нужен готовый документ?</h2>

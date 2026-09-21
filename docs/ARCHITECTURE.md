@@ -309,6 +309,7 @@ PROTECTED_API_PREFIXES (по auth cookie) — все /api/* кроме /api/auth
 - `NEXT_PUBLIC_YANDEX_CLIENT_ID`, `NEXT_PUBLIC_GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` — OAuth.
 - `NEXT_PUBLIC_CHAT_ENABLED` — флаг виджета чата.
 - `ADMIN_REQUIRE_2FA` — обязательная 2FA для админа.
+- `NEXT_PUBLIC_ADS_ENABLED` (=`1`) — master-флаг рекламы; `NEXT_PUBLIC_RTB_<SLOT>` (напр. `NEXT_PUBLIC_RTB_CONVERTER_FOOTER`) — RTB-блоки РСЯ по слотам (см. `src/lib/ads.ts`). Без них слоты резервируют место, но ничего не показывают.
 
 ---
 

@@ -6,6 +6,7 @@ import {
   Clock, Lock, HelpCircle, ScanLine, BadgeCheck,
 } from "lucide-react";
 import HomeTemplateGrid from "@/components/HomeTemplateGrid";
+import { AdSlot } from "@/components/ads/AdSlot";
 import MarketWeatherStrip from "@/components/home/MarketWeatherStrip";
 import HeroDocument from "@/components/home/HeroDocument";
 import LiveActivity from "@/components/home/LiveActivity";
@@ -458,6 +459,8 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+      <AdSlot id="HOME_INFEED" />
 
       {/* ======================= QUICK LINKS ======================= */}
       <section className="mx-auto max-w-7xl px-4 pt-12 sm:px-6">

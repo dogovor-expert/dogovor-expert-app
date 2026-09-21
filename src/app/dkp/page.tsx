@@ -11,6 +11,7 @@ import {
   Stamp,
 } from "lucide-react";
 import { LEGAL_TEMPLATES } from "@/data/templates";
+import { AdSlot } from "@/components/ads/AdSlot";
 import { TEMPLATE_PREVIEWS } from "@/data/templatePreviews";
 import { renderTemplateDocument } from "@/lib/renderDocument";
 import { JsonLd } from "@/components/seo/JsonLd";
@@ -275,6 +276,7 @@ export default function DkpPage() {
           <ChevronRight className="w-4 h-4" />
         </a>
       </section>
+    <AdSlot id="LANDING_INFEED" />
     </div>
   );
 }

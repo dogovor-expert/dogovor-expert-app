@@ -2,6 +2,7 @@
 import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { AdSlot } from "@/components/ads/AdSlot";
 import { TEMPLATE_META } from "@/data/templatesMeta";
 import { Search, Star, ArrowRight, Grid3X3, List, X } from "lucide-react";
 import Highlight from "@/components/ui/Highlight";
@@ -462,6 +463,8 @@ function TemplatesContent() {
           </div>
         </div>
       )}
+
+      <AdSlot id="TEMPLATES_INFEED" />
 
       {Number.isFinite(visibleCount) &&
         visibleCount < filtered.length && (

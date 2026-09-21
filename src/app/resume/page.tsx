@@ -3,6 +3,7 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 import { FileText, LayoutTemplate, ShieldCheck, Sparkles } from "lucide-react";
 import { JsonLd } from "@/components/seo/JsonLd";
+import { AdSlot } from "@/components/ads/AdSlot";
 import { SITE_URL } from "@/lib/site";
 
 const YEAR = new Date().getFullYear();
@@ -183,6 +184,8 @@ export default function ResumePage() {
             </div>
           ))}
         </div>
+
+        <AdSlot id="RESUME_INFEED" />
 
         <p className="text-sm text-gray-500">
           Смотрите также: <Link href="/documents" className="text-brand-600 hover:underline">шаблоны документов</Link> и{" "}

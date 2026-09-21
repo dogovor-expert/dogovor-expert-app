@@ -106,9 +106,10 @@
 ## 6. Яндекс.Реклама (РСЯ) — подключение и карта рекламных мест
 
 ### 6.1. Текущее состояние в коде
-- `src/components/ads/AdSlot.tsx` — **заготовка**: рендерит пустой `<div>` с `min-height`, `aria-label="Реклама"`, видимый только при `NEXT_PUBLIC_ADS_ENABLED=1` **и** согласии `categories.marketing` (152-ФЗ). **Кода рекламной сети нет** — реклама пока не показывается.
-- 9 слотов определены: `HOME_INFEED, BLOG_INFEED, BLOG_SIDEBAR, ARTICLE_INLINE, ARTICLE_SIDEBAR, ARTICLE_FOOTER, TEMPLATES_INFEED, CALC_RESULT, LANDING_INFEED`.
-- Реально используются: `ARTICLE_*` в `src/app/blog/[slug]/page.tsx:298`, `BLOG_*` в `src/components/blog/BlogList.tsx:90,234`.
+- `src/components/ads/AdSlot.tsx` — слот: рендерит `<div>` с `SLOT_MIN_HEIGHT` и `aria-label="Реклама"`, подключает загрузчик РСЯ (`https://yandex.ru/ads/system/context.js`) и рендерит RTB-блок **только** при `NEXT_PUBLIC_ADS_ENABLED=1` **и** согласии `categories.marketing` (152-ФЗ). Без заполненного `NEXT_PUBLIC_RTB_<SLOT>` блок не рендерится, место резервируется.
+- Все 13 слотов определены и **расставлены** по страницам: `HOME_INFEED, BLOG_INFEED, BLOG_SIDEBAR, ARTICLE_INLINE, ARTICLE_SIDEBAR, ARTICLE_FOOTER, TEMPLATES_INFEED, CALC_RESULT, LANDING_INFEED, CONVERTER_FOOTER, CONVERTER_RELATED, DOC_TEMPLATE_FOOTER, RESUME_INFEED`.
+- Расстановка: `ARTICLE_*` + `BLOG_*` в блоге; `CONVERTER_FOOTER`/`CONVERTER_RELATED` в `src/app/converter/[tool]/page.tsx`; `DOC_TEMPLATE_FOOTER` в `src/app/documents/[slug]/page.tsx`; `RESUME_INFEED` в `/resume`; `CALC_RESULT` в `/utils`; `TEMPLATES_INFEED` в `/templates`; `HOME_INFEED` на главной; `LANDING_INFEED` на лендингах `/dkp /osago /autoteka /epts /tahograph /techosmotr`.
+- RTB-идентификаторы берутся из `NEXT_PUBLIC_RTB_*` (см. `src/lib/ads.ts`). Пока не заполнены → слоты резервируют место, рекламы нет.
 
 ### 6.2. Как работает РСЯ (по офиц. документации Яндекса)
 Две части кода:
@@ -169,9 +170,8 @@
 1. Добавить сайт в кабинет Яндекс.Рекламы, пройти модерацию.
 2. Создать RTB-блоки под каждый формат; получить коды.
 3. Расширить CSP (см. 6.3).
-4. Реализовать загрузчик + инжект кода блока в `AdSlot` (по `id` → код блока из конфига, gated по `marketing`).
-5. Добавить новые слоты `CONVERTER_FOOTER`, `CONVERTER_RELATED`, `DOC_TEMPLATE_FOOTER`, `RESUME_INFEED`.
-6. Проверить: CSP не блокирует, CLS не растёт, блоки не показываются до согласия.
+4. Заполнить `NEXT_PUBLIC_RTB_<SLOT>` для каждого слота (см. `src/lib/ads.ts`), `NEXT_PUBLIC_ADS_ENABLED=1`.
+5. Проверить: CSP не блокирует, CLS не растёт, блоки не показываются до согласия.
 
 ---
 

@@ -9,6 +9,7 @@ import { faqForTemplate, faqJsonLd, breadcrumbJsonLd } from "@/lib/seo/faq";
 import { buildIntro, fieldsSummary } from "@/lib/seo/intro";
 import { withSeo } from "@/lib/seo/withSeo";
 import { SITE_URL } from "@/lib/site";
+import { AdSlot } from "@/components/ads/AdSlot";
 
 const YEAR = new Date().getFullYear();
 
@@ -246,6 +247,8 @@ export default async function DocumentPage({
           ))}
         </div>
       </section>
+
+      <AdSlot id="DOC_TEMPLATE_FOOTER" />
 
       <section className="bg-indigo-600 rounded-2xl px-6 py-8 text-center">
         <h2 className="text-xl font-bold text-white">

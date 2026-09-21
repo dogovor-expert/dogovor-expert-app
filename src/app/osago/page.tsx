@@ -1,4 +1,5 @@
 import { Calculator, Shield } from "lucide-react";
+import { AdSlot } from "@/components/ads/AdSlot";
 import InssmartWidget from "@/components/osago/InssmartWidget";
 import KbmInfo from "@/components/osago/KbmFrame";
 
@@ -91,6 +92,7 @@ export default function OsagoPage() {
           </div>
         </div>
       </section>
+    <AdSlot id="LANDING_INFEED" />
     </div>
   );
 }

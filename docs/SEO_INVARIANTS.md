@@ -53,6 +53,21 @@
 - Ключ: `60f95e2da98647ee80eb7f741083f90c` (файл `public/60f95e2da98647ee80eb7f741083f90c.txt`).
 - После деплоя с новыми/изменёнными URL: `node scripts/indexnow.mjs` (сначала подождать ~2–3 мин после публикации ключевого файла, иначе 403 SiteVerificationNotCompleted; успех = 200/202).
 
+## Вариации шаблонов (programmatic)
+
+`/documents/v/[slug]` — programmatic-посадочные, порождаемые из `src/data/docVariations.ts` (единый источник, `DOC_VARIATIONS`). Пилот — 12 вариаций. SSG: `generateStaticParams` + `dynamicParams=false`, `revalidate=3600`, `dynamic="force-static"`, sitemap-группа с priority 0.6 / monthly.
+
+**Порог уникальности** — вариация допустима ТОЛЬКО если выполнено ВСЁ:
+1. Свои H1 / title / description (title ≤ 60 симв., description 140–160) — не повторяют `name`/`description` родителя и друг друга;
+2. Свои FAQ (3–4, не дублирующие `faqForTemplate(категория)` и GENERAL_FAQ);
+3. Блок «Особенности вариации» — ≥3 реальных отличий содержания (условия/стороны/платежи/реквизиты/последствия), не SEO-пустословие;
+4. SEO-справка (normNotes) 1–2 абзаца со ссылками на нормы, релевантные именно вариации;
+5. canonical — САМ на себя (`/documents/v/{id}`), вариация уникальна и не каннибализирует родителя;
+6. Если вариация не дотягивает до порога — НЕ создавать (лучше меньше, но качественно);
+7. Новые вариации = спринт ≤ 100–200 страниц с контролем индексации через 2–4 недели (из indexnow/Я.Вебмастер).
+
+**Запреты:** не менять схему `/documents/[slug]`; каждая вариация `templateId` обязан существовать в `LEGAL_TEMPLATES`; h1 вариации не должен совпадать с `name` родителя; год в заголовке не хардкодить — `YEAR = new Date().getFullYear()`, добавляется в `generateMetadata` к `variation.title`.
+
 ## Акция PRO 299 ₽ (19.08.2026)
 
 - Единый источник — `src/lib/pricing.ts`: `PRO_PRICE=299`, `PRO_PRICE_OLD=990`, `PROMO_LABEL="-70%"`, `PROMO_ENDS_AT=2026-09-20T23:59:59+03:00`, `isPromoActive()`, `currentProPrice()`, `formatRub()`. Платежи (`/api/billing/create-payment`, `/api/billing/auto-renew`) берут сумму ТОЛЬКО через `currentProPrice()` — после дедлайна акция гаснет автоматически.
