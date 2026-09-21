@@ -137,7 +137,7 @@ export const EVENT_CATALOG = {
     meta: { enabled: ["true", "false"] as const },
   },
   autoteka_order_start: {
-    label: "Заказ отчёта Автотеки",
+    label: "Заказ отчёта проверки авто",
     group: "billing",
     meta: { tariff: ["std", "prem"] as const },
   },
