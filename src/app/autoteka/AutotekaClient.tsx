@@ -282,7 +282,7 @@ export default function AutotekaClient() {
             ГИБДД · ФНП · ЕАИСТО — напрямую
           </span>
           <h1 className="text-display-lg font-extrabold text-gray-900">
-            Автотека — проверка истории <span className="bg-gradient-to-r from-brand-500 to-purple-600 bg-clip-text text-transparent">автомобиля по VIN</span>
+            Проверка авто <span className="bg-gradient-to-r from-brand-500 to-purple-600 bg-clip-text text-transparent">по VIN</span>
           </h1>
           <p className="mt-2 text-gray-600">VIN, ДТП, залоги, розыск и реальный пробег из официальных источников.</p>
         </div>
@@ -631,9 +631,9 @@ function Marketing() {
   }, [open, next, prev]);
 
   const whyCards = [
-    { icon: Banknote, color: "brand", title: "Дешевле на 40–60%", text: "Тот же объём данных, что у конкурентов за 499 ₽, у нас стоит 199–299 ₽. Прямая закупка без наценки." },
-    { icon: FileText, color: "purple", title: "Брендированный отчёт", text: "Премиум — это готовый PDF/HTML на вашем домене. Перенос данных в договор ДКП в один клик." },
-    { icon: ShieldCheck, color: "emerald", title: "50+ источников данных", text: "ГИБДД, ЕАИСТО, ФНП, РСА, Росстандарт, ФТС, Федресурс — всё в одном отчёте без доплат." },
+    { icon: Banknote, color: "brand", title: "Дешевле аналогов", text: "Прямая закупка данных без посредников — тарифы ниже типичных платных отчётов." },
+    { icon: FileText, color: "purple", title: "Отчёт в личном кабинете", text: "Купленные отчёты сохраняются в истории и доступны в любое время." },
+    { icon: ShieldCheck, color: "emerald", title: "Официальные источники", text: "ГИБДД, ЕАИСТО, ФНП, РСА, Росстандарт, ФТС, Федресурс — в одном отчёте без доплат." },
     { icon: History, color: "brand", title: "История сохраняется", text: "Все купленные отчёты видны в личном кабинете. Обновили страницу — данные на месте." },
     { icon: Zap, color: "purple", title: "Мгновенно и честно", text: "Оплата через ЮKassa (МИР, Visa, СБП). Отчёт приходит через 30 секунд после оплаты." },
     { icon: Link2, color: "emerald", title: "Привязка к договору", text: "Переносите марку, VIN и год прямо в шаблон договора купли-продажи на том же сайте." },
@@ -646,10 +646,7 @@ function Marketing() {
   };
 
   const bars = [
-    { name: "Автокод", price: 499, ours: false },
-    { name: "Авто.ру", price: 179, ours: false },
-    { name: "Автотека", price: 179, ours: false },
-    { name: "Дром", price: 180, ours: false },
+    { name: "Другие сервисы", price: 499, ours: false },
     { name: "Наш Стандарт", price: 199, ours: true, accent: "brand" },
     { name: "Наш Премиум", price: 299, ours: true, accent: "purple" },
   ];
@@ -712,7 +709,7 @@ function Marketing() {
               );
             })}
           </div>
-          <p className="mt-5 text-center text-sm text-gray-500">При сопоставимом объёме данных Премиум в 1.7× дешевле Автокода и богаче базовых отчётов Авто.ру и Автотеки.</p>
+          <p className="mt-5 text-center text-sm text-gray-500">Наши тарифы дешевле типичных платных отчётов при сопоставимом объёме данных.</p>
         </div>
       </div>
 
@@ -732,7 +729,7 @@ function Marketing() {
             <thead>
               <tr className="text-gray-600">
                 <th className="text-left font-medium py-3 px-4">Возможность</th>
-                <th className="text-center font-semibold py-3 px-4 text-gray-700">Авто.ру / Автотека</th>
+                <th className="text-center font-semibold py-3 px-4 text-gray-700">Другие сервисы</th>
                 <th className="text-center font-semibold py-3 px-4 text-brand-700">Наш Стандарт</th>
                 <th className="text-center font-semibold py-3 px-4 text-purple-700">Наш Премиум</th>
               </tr>

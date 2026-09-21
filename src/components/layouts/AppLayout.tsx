@@ -40,7 +40,7 @@ function getDraftCount(): number {
 const toolNav: NavItem[] = [
   { icon: <FileText className="w-5 h-5" />, label: "Конструктор резюме", href: "/resume" },
   { icon: <Car className="w-5 h-5" />, label: "Выписка ЭПТС", href: "/epts" },
-  { icon: <Activity className="w-5 h-5" />, label: "Автотека", href: "/autoteka" },
+  { icon: <Activity className="w-5 h-5" />, label: "Проверка авто", href: "/autoteka" },
   { icon: <Calculator className="w-5 h-5" />, label: "ОСАГО", href: "/osago" },
   { icon: <Shuffle className="w-5 h-5" />, label: "Конвертер документов", href: "/converter" },
   { icon: <Calculator className="w-5 h-5" />, label: "Калькуляторы", href: "/utils" },

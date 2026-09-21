@@ -22,7 +22,7 @@ const TYPE_OPTIONS: { value: FeedbackType; label: string; icon: typeof Bug; hint
   { value: "other", label: "Другое", icon: HelpCircle, hint: "Любой другой вопрос" },
 ];
 
-const TOOLS = ["Автотека", "ОСАГО", "Конвертер", "Калькуляторы", "Сканер документов", "Личный кабинет", "Другое"];
+const TOOLS = ["Проверка авто", "ОСАГО", "Конвертер", "Калькуляторы", "Сканер документов", "Личный кабинет", "Другое"];
 const MAX_FILES = 3;
 const MAX_FILE_BYTES = 5 * 1024 * 1024;
 const ACCEPT = "image/png,image/jpeg,image/webp";

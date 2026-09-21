@@ -186,7 +186,7 @@ export const CHECKLIST_RULES: ChecklistItem[] = [
     group: "Государственные проверки",
     kind: "gov",
     govUrl: "https://гибдд.рф/check/auto",
-    govLabel: "ГИБДД / Автокод",
+    govLabel: "ГИБДД",
     why: "Залог/арест блокируют сделку; ДТП влияет на цену и безопасность.",
     cats: ["auto"],
     perspective: "buyer",

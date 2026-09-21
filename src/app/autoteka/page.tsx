@@ -23,8 +23,8 @@ const AutotekaClient = dynamic(() => import("./AutotekaClient"), {
 const PERKS = [
   {
     icon: FileSearch,
-    title: "Гибдд, ДТП, розыск, залоги",
-    text: "История регистраций, accidents, угоны и банковские обременения — в одном отчёте.",
+    title: "ГИБДД, ДТП, розыск, залоги",
+    text: "История регистраций, аварии, угоны и банковские обременения — в одном отчёте.",
   },
   {
     icon: ShieldCheck,

@@ -169,7 +169,7 @@ async function postHandler(req: Request) {
         type: "redirect",
         return_url: `${proto}://${host}/autoteka?success=1&vin=${encodeURIComponent(vin)}`,
       },
-      description: `Автотека · отчёт по VIN ${vin}${premium ? " (Премиум)" : ""}`,
+      description: `Проверка авто · отчёт по VIN ${vin}${premium ? " (Премиум)" : ""}`,
       metadata: { type: "report", vin, premium },
     }),
   });
