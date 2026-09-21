@@ -9,7 +9,7 @@ import { restoreSessionFromCookie } from "@/lib/auth/bootstrap";
 import {
   FileText, Activity, Calculator,
   FolderOpen, Files, Trash2, CreditCard,
-  Settings, HelpCircle, Menu, X, ChevronDown, Shield, Home, LogIn, Shuffle, Newspaper, Car,
+  Settings, HelpCircle, Menu, X, ChevronDown, Shield, Home, LogIn, Shuffle, Newspaper, Car, GitCompare,
   HardDrive, Download, Cookie, Moon, Sun
 } from "lucide-react";
 import HeaderSearch from "@/components/search/HeaderSearch";
@@ -44,6 +44,7 @@ const toolNav: NavItem[] = [
   { icon: <Calculator className="w-5 h-5" />, label: "ОСАГО", href: "/osago" },
   { icon: <Shuffle className="w-5 h-5" />, label: "Конвертер документов", href: "/converter" },
   { icon: <Calculator className="w-5 h-5" />, label: "Калькуляторы", href: "/utils" },
+  { icon: <GitCompare className="w-5 h-5" />, label: "Сравнение договоров", href: "/sravnenie-dogovorov" },
 ];
 
 const accountNav: NavItem[] = [

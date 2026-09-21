@@ -16,6 +16,85 @@
 
 ---
 
+## [2026-09-22] Сравнение редакций договора + протокол разногласий (/sravnenie-dogovorov)
+
+- **Агент:** big-pickle (opencode)
+- **Тип:** feat
+- **Файлы:** `src/lib/diff.ts` (новый), `src/lib/docText.ts` (новый), `src/lib/protocol.ts` (новый), `src/data/doc-compare.ts` (новый), `src/components/diff/DocCompare.tsx` (новый), `src/components/diff/ProtocolPrint.tsx` (новый), `src/app/sravnenie-dogovorov/page.tsx` (новый), `src/app/sitemap.ts`, `src/components/layouts/AppLayout.tsx`, тесты
+- **Что сделано:**
+  1. Свой LCS-дифф без внешних зависимостей (`diff.ts`): сравнение по пунктам + пословное, статистика и классификация блоков (unchanged/added/removed/changed), защита от квадратичного взрыва (`MAX_LCS_CELLS`).
+  2. Извлечение текста в браузере (`docText.ts`): DOCX (mammoth), PDF (pdfjs-dist), TXT/MD/RTF — файлы не покидают устройство.
+  3. Протокол разногласий (`protocol.ts`): реквизиты + таблица «Редакция 1 / Редакция 2 / Согласованная», экспорт DOCX (`exportToDocxHtml`) и печать/PDF (react-to-print).
+  4. Страница `/sravnenie-dogovorov` — SEO-лендинг (`withSeo`, `robots: index,follow`, canonical self, JSON-LD Breadcrumb + FAQPage + WebApplication), серверный SEO-текст и 8 FAQ; интерактив — client-island.
+  5. Навигация (`AppLayout`, пункт «Сравнение договоров») + sitemap (monthly, 0.7).
+  6. Тесты: +47 (diff 21, docText 8, protocol 9, docCompare 9).
+- **⚠️ Внимание следующему агенту:**
+  - `exportToDocxHtml` сам добавляет `.docx` — имя файла передавать БЕЗ расширения.
+  - pdfjs-dist v6: завершать через `task.destroy()`; у `PDFDocumentProxy` нет `destroy()`.
+  - Дифф-библиотек в проекте нет — используется свой `src/lib/diff.ts` (внешние без нужды не подключать).
+  - Инструмент полностью клиентский: не тащить содержимое договоров на сервер (152-ФЗ).
+- **Связанные PRs/коммиты:** (в коммитах этого дня)
+
+---
+
+## [2026-09-22] Проверка статуса самозанятого (НПД) по API ФНС
+
+- **Агент:** big-pickle (opencode)
+- **Тип:** feat
+- **Файлы:** `src/lib/npd.ts` (новый), `src/app/api/npd/route.ts` (новый), `src/components/builder/NpdStatusBadge.tsx` (новый), `src/lib/validations/api.ts`, `src/lib/ratelimit.ts`, `src/components/builder/FormField.tsx`, `src/lib/__tests__/npd.test.ts` (новый)
+- **Что сделано:**
+  1. Серверный прокси `POST /api/npd` к официальному публичному API ФНС `https://statusnpd.nalog.ru/api/v1/tracker/taxpayer_status` — у сервиса нет CORS, поэтому вызов только с сервера.
+  2. Чистая логика в `src/lib/npd.ts`: `todayMoscow` (дата по МСК), `normalizeNpdDate` (диапазон 01.01.2019…сегодня + реальность даты), `interpretNpdResponse` (200 `status` true/false; 422 `validation.failed` / `limited` / `unavailable`), `isNpdInn` (только 12-значный ИНН физлица с контрольным числом), `buildNpdPayload`.
+  3. Route: CSRF (`withCsrf`), Zod-схема `npdSchema`, лимитер `limiters.npd` (20/мин на IP), кэш 6 ч (`boundedCacheSet`), таймаут 10 с; кэшируются только содержательные ответы (не сбои/лимиты).
+  4. UI: бейдж `NpdStatusBadge` в поле ИНН (только 12 цифр) — 5 состояний: «проверяем» / «самозанятый (НПД) — подтверждено ФНС» / «не является плательщиком НПД» / «ИНН не прошёл проверку» / «ФНС недоступен».
+  5. Тесты: +20 (даты/часовой пояс, разбор ответов ФНС, валидация ИНН).
+- **⚠️ Внимание следующему агенту:**
+  - Вызов ФНС — ТОЛЬКО с сервера (нет CORS). Не делать `fetch` из клиента.
+  - У сервиса ФНС лимит запросов на IP → не убирать кэш и лимитер.
+  - `requestDate` не раньше 01.01.2019 и не позже сегодня (МСК), иначе 422.
+  - НПД бывает только у физлиц: проверяется 12-значный ИНН. 10-значный (юрлицо) не проверяем.
+- **Связанные PRs/коммиты:** (не закоммичено)
+
+---
+
+## [2026-09-22] Сканер: надёжный MRZ загранпаспортов (геометрия + whitelist-проход)
+
+- **Агент:** big-pickle (opencode)
+- **Тип:** feat
+- **Файлы:** `src/lib/docMrz.ts`, `src/lib/workers/ocr-worker.js`, `src/components/builder/DocScanner.tsx`, `src/lib/__tests__/docMrz.test.ts`
+- **Что сделано:**
+  1. `docMrz.ts`: геометрическая сборка строк MRZ из слов с координатами (`mrzLineCandidatesFromWords`) — общий OCR часто рвёт 44-символьную моношрифтовую строку на куски, теперь слова группируются по вертикали и склеиваются по X. `tryParseMrz(text, words?)` сначала пробует геометрию, затем текстовый путь.
+  2. Нормализация и разрезание склеенных строк: `normalizeMrzChars` (кириллическая «О» → 0, снятие артефактов `| ¦ « »` и др.), `splitConcatenated` — две слипшиеся строки (60/72/88 символов) разрезаются ровно пополам. Строгий фильтр длины (28–46) сохранён.
+  3. `hasMrzSignature(text, words?)` — диагностика без парсинга (для аналитики).
+  4. `ocr-worker.js`: новый проход 4 (MRZ) по образцу VIN-retry — нижняя полоса кропается (`findMrzBand` по словам, иначе нижние 30 % кадра), распознаётся с `tessedit_char_whitelist = MRZ_ALLOWED` и `PSM 6`; найденные MRZ-строки ДОБАВЛЯЮТСЯ к тексту (не заменяют его). Проход пропускается, если MRZ уже найдена.
+  5. `DocScanner.tsx`: `mrzRetry` только для слота «паспорт»; боксы слов пробрасываются в парсер; аналитика `goals.scannerUsed` получает `mrz: "valid" | "partial" | "none"`.
+  6. Тесты: +9 (геометрия, склейка, артефакты, диагностика) — 20/20 в `docMrz.test.ts`.
+- **⚠️ Внимание следующему агенту:**
+  - MRZ есть ТОЛЬКО у загранпаспортов; у внутреннего паспорта РФ её нет — `tryParseMrz` вернёт null, это норма, а не баг.
+  - Дату ВЫДАЧИ из MRZ получить нельзя (ICAO 9303: только номер, дата рождения и срок действия) — см. `mrzManualHints`.
+  - Не ослаблять строгий фильтр длины строки MRZ (28–46) — иначе в парсер попадут мусорные строки.
+  - MRZ-проход в воркере опционален: ошибка глушится и не влияет на основной результат.
+- **Связанные PRs/коммиты:** (не закоммичено)
+
+---
+
+## [2026-09-22] Контекстный CTA «калькулятор → документ» + фикс параметра ?template
+
+- **Агент:** big-pickle (opencode)
+- **Тип:** fix
+- **Файлы:** `src/app/utils/[tool]/page.tsx`, `src/data/calculator-tools.ts`, `src/data/__tests__/calculatorTools.test.ts`, 15 компонентов `src/components/calculator/*.tsx`, `src/app/tahograph/page.tsx`, `src/app/techosmotr/page.tsx`
+- **Что сделано:**
+  1. Исправлен баг: все ссылки на конструктор использовали `/builder?id=…`, а конструктор читает только `?template=` (`src/app/builder/page.tsx:81`). Заменено 22 ссылки в 17 файлах — теперь нужный шаблон реально открывается.
+  2. Исправлены мёртвые id: `invoice-oferta` → `invoice` («Счёт на оплату»), `sale-agreement-car` → `dkp-auto` («ДКП автомобиля»).
+  3. Добавлено поле `CalculatorTool.ctaTemplateId` (задано для 14 инструментов): на странице `/utils/<slug>` кнопка стала контекстной — «Открыть «<название шаблона>» →» со ссылкой `/builder?template=<id>`. Где профильного документа нет (проверка ИНН, реквизиты, сумма прописью, сроки, взносы ИП, транспортный налог, штрафы, растаможка) — осталась общая кнопка на `/builder`.
+  4. Тест-инвариант: `ctaTemplateId` обязан существовать в `LEGAL_TEMPLATES`.
+- **⚠️ Внимание следующему агенту:**
+  - Конструктор читает ТОЛЬКО параметр `?template=` (не `?id=`). Любая ссылка на конструктор должна быть вида `/builder?template=<id>`.
+  - `ctaTemplateId` сверяется с `LEGAL_TEMPLATES` тестом — не подставлять произвольные/устаревшие id.
+- **Связанные PRs/коммиты:** (не закоммичено)
+
+---
+
 ## [2026-09-22] Калькуляторы: отдельные SEO-страницы /utils/[tool] (22 URL)
 
 - **Агент:** big-pickle (opencode)

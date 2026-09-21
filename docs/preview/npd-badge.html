@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Образец: Проверка статуса самозанятого (НПД) в конструкторе — Dogovor.expert</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config = { theme: { extend: {
+  colors: { brand:{50:"#eff6ff",100:"#dbeafe",200:"#bfdbfe",300:"#93c5fd",500:"#2563eb",600:"#1d4ed8",700:"#1e40af"}, emerald:{50:"#ecfdf5",100:"#d1fae5",200:"#a7f3d0",500:"#059669",600:"#047857",700:"#065f46"}, amber:{50:"#fffbeb",100:"#fef3c7",200:"#fde68a",700:"#b45309",800:"#92400e"}, purple:{500:"#7c3aed",600:"#6d28d9"} },
+  boxShadow: { soft: "0 1px 2px rgba(16,24,40,.04), 0 8px 24px -12px rgba(16,24,40,.12)" }
+}}}
+</script>
+<style>body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}</style>
+</head>
+<body class="bg-gray-50 p-6">
+<div class="max-w-2xl mx-auto">
+  <p class="text-[10.5px] font-bold tracking-[0.14em] uppercase text-brand-600">Образец компонента</p>
+  <h1 class="mt-1 text-2xl font-extrabold tracking-tight">Проверка статуса самозанятого (НПД)</h1>
+  <p class="mt-2 text-sm text-gray-600">Поле ИНН исполнителя в конструкторе договора с самозанятым. Все состояния показаны рядом для согласования.</p>
+
+  <!-- Контекст: секция формы конструктора -->
+  <div class="mt-6 rounded-2xl bg-white border border-gray-200 shadow-soft p-5">
+    <p class="text-[11px] font-semibold text-gray-500 uppercase tracking-wide mb-4">Исполнитель</p>
+
+    <div class="space-y-5">
+      <!-- 1. Не проверено -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">ИНН исполнителя <span class="text-red-500">*</span></label>
+        <input value="770987654321" class="w-full px-3.5 py-2.5 text-base bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500" />
+        <div class="mt-2 flex items-center gap-2">
+          <button class="inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-semibold text-brand-700 bg-brand-50 border border-brand-100 rounded-lg hover:bg-brand-100">Проверить статус в ФНС</button>
+          <span class="text-[11px] text-gray-500">официальный сервис ФНС · бесплатно</span>
+        </div>
+      </div>
+
+      <hr class="border-gray-100" />
+
+      <!-- 2. Проверяем -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">ИНН исполнителя <span class="text-red-500">*</span></label>
+        <input value="770987654321" class="w-full px-3.5 py-2.5 text-base bg-gray-50 border border-gray-200 rounded-lg" />
+        <p class="flex items-center gap-1.5 mt-1.5 text-xs text-brand-700"><span class="inline-block w-3 h-3 border-2 border-brand-500 border-t-transparent rounded-full animate-spin"></span> Проверяем статус в ФНС…</p>
+      </div>
+
+      <hr class="border-gray-100" />
+
+      <!-- 3. Подтверждён (успех) -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">ИНН исполнителя <span class="text-red-500">*</span></label>
+        <input value="770987654321" class="w-full px-3.5 py-2.5 text-base bg-gray-50 border border-emerald-300 rounded-lg" />
+        <div class="mt-2 rounded-xl bg-emerald-50 border border-emerald-200 p-3">
+          <p class="flex items-center gap-1.5 text-[12.5px] font-semibold text-emerald-800">✓ Статус плательщика НПД подтверждён ФНС на 22.09.2026</p>
+          <p class="mt-1 text-[11.5px] text-emerald-700">«770987654321 является плательщиком налога на профессиональный доход». Чек по ст. 4 422-ФЗ исполнитель формирует в «Мой налог».</p>
+        </div>
+        <button class="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-semibold text-emerald-700 bg-white border border-emerald-200 rounded-lg hover:bg-emerald-50">Проверить снова</button>
+      </div>
+
+      <hr class="border-gray-100" />
+
+      <!-- 4. Не является самозанятым (риск) -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">ИНН исполнителя <span class="text-red-500">*</span></label>
+        <input value="770123456789" class="w-full px-3.5 py-2.5 text-base bg-gray-50 border border-amber-300 rounded-lg" />
+        <div class="mt-2 rounded-xl bg-amber-50 border border-amber-200 p-3">
+          <p class="flex items-center gap-1.5 text-[12.5px] font-semibold text-amber-800">⚠ ИНН не является плательщиком НПД на 22.09.2026</p>
+          <p class="mt-1 text-[11.5px] text-amber-700">Если оплатить услуги такому исполнителю, заказчику грозит доначисление НДФЛ 13% и страховых взносов 30%. Проверьте статус или выберите другой договор (трудовой / ГПХ с удержанием).</p>
+        </div>
+        <div class="mt-2 flex flex-wrap gap-2">
+          <button class="inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-semibold text-white bg-amber-500 rounded-lg hover:bg-amber-600">Проверить снова</button>
+          <a href="#" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-semibold text-amber-700 bg-white border border-amber-200 rounded-lg hover:bg-amber-50">Договор ГПХ с физлицом →</a>
+        </div>
+      </div>
+
+      <hr class="border-gray-100" />
+
+      <!-- 5. Сервис ФНС недоступен -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">ИНН исполнителя <span class="text-red-500">*</span></label>
+        <input value="770987654321" class="w-full px-3.5 py-2.5 text-base bg-gray-50 border border-gray-200 rounded-lg" />
+        <div class="mt-2 rounded-xl bg-gray-50 border border-gray-200 p-3">
+          <p class="text-[12.5px] font-semibold text-gray-700">Сервис ФНС временно недоступен</p>
+          <p class="mt-1 text-[11.5px] text-gray-600">Проверьте статус вручную в приложении «Мой налог» (раздел «Справки») перед подписанием. Договор можно продолжить заполнять.</p>
+        </div>
+        <button class="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-semibold text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50">Повторить</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Где ещё появится -->
+  <div class="mt-6 rounded-2xl bg-white border border-gray-200 shadow-soft p-5">
+    <p class="text-sm font-bold">Где ещё будет показан статус</p>
+    <ul class="mt-2 space-y-1.5 text-[12.5px] text-gray-600">
+      <li>• В шаблоне «Договор с самозанятым (НПД)» — бейдж рядом с реквизитами исполнителя.</li>
+      <li>• В предпросмотре документа — зелёная пометка «статус НПД подтверждён на дату». </li>
+      <li>• В <a href="#" class="text-brand-600 font-semibold hover:underline">/utils/usn-npd</a> — отдельный блок «Проверить контрагента».</li>
+    </ul>
+    <p class="mt-3 text-[11px] text-gray-500">Запрос идёт через наш серверный прокси (у сервиса ФНС нет CORS) — ключи и ПДн в браузер не попадают. Согласие на обработку не требуется: используется открытый сервис ФНС по ИНН.</p>
+  </div>
+</div>
+</body>
+</html>

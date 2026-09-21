@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Образцы новых разделов — Dogovor.expert</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config = { theme: { extend: {
+  colors: { brand:{50:"#eff6ff",100:"#dbeafe",200:"#bfdbfe",500:"#2563eb",600:"#1d4ed8",700:"#1e40af"}, purple:{500:"#7c3aed",600:"#6d28d9"} },
+  boxShadow: { soft: "0 1px 2px rgba(16,24,40,.04), 0 8px 24px -12px rgba(16,24,40,.12)" }
+}}}
+</script>
+<style>body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}</style>
+</head>
+<body class="bg-gray-50 p-6">
+<div class="max-w-3xl mx-auto">
+  <div class="flex items-center gap-2.5">
+    <div class="w-9 h-9 rounded-lg bg-gradient-to-br from-brand-500 to-purple-600 grid place-items-center text-white text-sm font-bold">D</div>
+    <span class="font-semibold">Dogovor.expert</span>
+  </div>
+  <h1 class="mt-5 text-2xl font-extrabold tracking-tight">Образцы новых разделов</h1>
+  <p class="mt-2 text-sm text-gray-600">Статические HTML-макеты для согласования перед внедрением. Откройте любой файл в браузере — интерфейс повторяет дизайн-систему сайта (Tailwind, палитра brand/emerald, карточки rounded-2xl, тень soft).</p>
+
+  <div class="mt-6 grid gap-3">
+    <a href="diff.html" class="block rounded-2xl bg-white border border-gray-200 shadow-soft p-5 hover:border-brand-300 transition">
+      <p class="text-[10.5px] font-bold tracking-[0.14em] uppercase text-brand-600">P0 · Новый раздел</p>
+      <h2 class="mt-1 text-lg font-extrabold">/diff — Сравнение редакций + Протокол разногласий</h2>
+      <p class="mt-1.5 text-[12.5px] text-gray-600">Загрузка двух редакций, подсветка правок, таблица «Редакция Исполнителя / Заказчика / Согласованная» (ст. 445 ГК), экспорт в DOCX/PDF.</p>
+    </a>
+    <a href="verify.html" class="block rounded-2xl bg-white border border-gray-200 shadow-soft p-5 hover:border-brand-300 transition">
+      <p class="text-[10.5px] font-bold tracking-[0.14em] uppercase text-brand-600">P1 · Новая страница</p>
+      <h2 class="mt-1 text-lg font-extrabold">/verify/[hash] — Проверка подлинности документа</h2>
+      <p class="mt-1.5 text-[12.5px] text-gray-600">Публичная страница по QR из колонтитула документа. Показаны состояния: подтверждён / не найден / изменён.</p>
+    </a>
+    <a href="mchd.html" class="block rounded-2xl bg-white border border-gray-200 shadow-soft p-5 hover:border-brand-300 transition">
+      <p class="text-[10.5px] font-bold tracking-[0.14em] uppercase text-brand-600">P2 · Новый раздел</p>
+      <h2 class="mt-1 text-lg font-extrabold">/mchd — Визуализатор машиночитаемых доверенностей</h2>
+      <p class="mt-1.5 text-[12.5px] text-gray-600">Загрузка XML (формат 003) → человекочитаемый бланк: доверитель, представитель, коды полномочий, срок действия.</p>
+    </a>
+    <a href="npd-badge.html" class="block rounded-2xl bg-white border border-gray-200 shadow-soft p-5 hover:border-brand-300 transition">
+      <p class="text-[10.5px] font-bold tracking-[0.14em] uppercase text-brand-600">P0 · Компонент в конструкторе</p>
+      <h2 class="mt-1 text-lg font-extrabold">Проверка статуса самозанятого (НПД) по API ФНС</h2>
+      <p class="mt-1.5 text-[12.5px] text-gray-600">Поле ИНН исполнителя: все состояния — не проверено, проверка, подтверждён, не самозанятый, сервис недоступен.</p>
+    </a>
+    <a href="mrz-scan.html" class="block rounded-2xl bg-white border border-gray-200 shadow-soft p-5 hover:border-brand-300 transition">
+      <p class="text-[10.5px] font-bold tracking-[0.14em] uppercase text-brand-600">P1 · Компонент сканера</p>
+      <h2 class="mt-1 text-lg font-extrabold">MRZ-сканирование паспорта камерой</h2>
+      <p class="mt-1.5 text-[12.5px] text-gray-600">Режим внутри «Сканера документов»: камера + рамка зоны MRZ, непрерывное распознавание в браузере (ONNX ~300 КБ).</p>
+    </a>
+  </div>
+
+  <p class="mt-6 text-[11px] text-gray-500">Примечание: эти файлы — только макеты. Реальные данные и парсинг (.docx, XML МЧД, MRZ) подключаются на этапе внедрения; сетевые запросы (ФНС) идут через серверный прокси.</p>
+</div>
+</body>
+</html>

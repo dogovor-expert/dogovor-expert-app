@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Образец: Проверка подлинности документа — Dogovor.expert</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config = { theme: { extend: {
+  colors: { brand:{50:"#eff6ff",100:"#dbeafe",200:"#bfdbfe",300:"#93c5fd",400:"#60a5fa",500:"#2563eb",600:"#1d4ed8",700:"#1e40af",800:"#1e3a8a"}, emerald:{50:"#ecfdf5",100:"#d1fae5",200:"#a7f3d0",500:"#059669",600:"#047857",700:"#065f46"}, purple:{500:"#7c3aed",600:"#6d28d9"} },
+  boxShadow: { soft: "0 1px 2px rgba(16,24,40,.04), 0 8px 24px -12px rgba(16,24,40,.12)" }
+}}}
+</script>
+<style>body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}</style>
+</head>
+<body class="min-h-screen bg-gray-50">
+<!-- Публичная страница: без сайдбара, минимальный хедер -->
+<header class="h-16 bg-white border-b border-gray-100 flex items-center justify-between px-6">
+  <a href="#" class="flex items-center gap-2.5">
+    <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-brand-500 to-purple-600 grid place-items-center text-white text-sm font-bold">D</div>
+    <span class="font-semibold">Dogovor.expert</span>
+  </a>
+  <a href="#" class="px-4 py-2 text-sm font-medium text-white bg-brand-500 rounded-xl">Создать документ</a>
+</header>
+
+<main class="max-w-2xl mx-auto p-6">
+  <!-- Успешная проверка -->
+  <div class="rounded-2xl bg-white border border-gray-200 shadow-soft overflow-hidden">
+    <div class="px-6 py-8 text-center bg-gradient-to-br from-emerald-50 to-white border-b border-gray-100">
+      <div class="mx-auto w-16 h-16 rounded-2xl bg-emerald-500 text-white grid place-items-center text-3xl shadow-sm">✓</div>
+      <h1 class="mt-4 text-2xl font-extrabold tracking-tight text-gray-900">Документ подтверждён</h1>
+      <p class="mt-1.5 text-sm text-emerald-800">Контрольная сумма совпадает — документ создан на сервисе Dogovor.expert и не изменялся после генерации.</p>
+    </div>
+
+    <div class="p-6">
+      <dl class="divide-y divide-gray-100 text-sm">
+        <div class="flex items-start justify-between gap-4 py-3">
+          <dt class="text-gray-500 shrink-0">Документ</dt>
+          <dd class="font-semibold text-right">Договор купли-продажи автомобиля (ДКП)</dd>
+        </div>
+        <div class="flex items-start justify-between gap-4 py-3">
+          <dt class="text-gray-500 shrink-0">Дата генерации</dt>
+          <dd class="font-semibold text-right">21.09.2026, 14:32 (МСК)</dd>
+        </div>
+        <div class="flex items-start justify-between gap-4 py-3">
+          <dt class="text-gray-500 shrink-0">Версия шаблона</dt>
+          <dd class="font-semibold text-right">dkp-auto · v4</dd>
+        </div>
+        <div class="flex items-start justify-between gap-4 py-3">
+          <dt class="text-gray-500 shrink-0">Контрольная сумма</dt>
+          <dd class="font-mono text-[12px] text-gray-700 text-right break-all">sha256:9f2a…c4e1</dd>
+        </div>
+      </dl>
+
+      <div class="mt-5 rounded-xl bg-brand-50 border border-brand-100 p-3.5 text-[12.5px] text-brand-800">
+        🔒 Персональные данные в проверке не раскрываются: сравнивается только неизменяемый слепок
+        метаданных (тип документа, дата, контрольная сумма текста без ПДн).
+      </div>
+
+      <div class="mt-5 flex flex-wrap gap-2">
+        <a href="#" class="inline-flex items-center gap-2 px-4 py-2.5 bg-brand-600 text-white rounded-xl hover:bg-brand-700 font-semibold text-sm">Создать свой документ</a>
+        <a href="#" class="inline-flex items-center gap-2 px-4 py-2.5 bg-white text-brand-700 border border-brand-200 rounded-xl hover:bg-brand-50 font-semibold text-sm">Как это работает</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Пояснение про QR в документе -->
+  <div class="mt-6 rounded-2xl bg-white border border-gray-200 shadow-soft p-5 flex gap-4 items-start">
+    <div class="w-12 h-12 rounded-xl bg-gray-50 border border-gray-200 grid place-items-center text-2xl shrink-0">▦</div>
+    <div>
+      <p class="text-sm font-bold">Как проверяют документ</p>
+      <p class="mt-1 text-[12.5px] text-gray-600 leading-relaxed">Внизу каждой страницы сформированного документа печатается микро-колонтитул с QR-кодом и короткой ссылкой. Достаточно навести камеру смартфона — откроется эта страница с результатом.</p>
+      <p class="mt-2 font-mono text-[11px] text-gray-500">dogovor.expert/verify/9f2a1b…c4e1</p>
+    </div>
+  </div>
+
+  <!-- Состояния (демонстрация для согласования) -->
+  <div class="mt-8">
+    <p class="text-[10.5px] font-bold tracking-[0.14em] uppercase text-gray-400">Состояния страницы (для согласования)</p>
+    <div class="mt-3 grid gap-3 sm:grid-cols-2">
+      <div class="rounded-2xl bg-white border border-amber-200 shadow-soft p-4">
+        <p class="text-sm font-bold text-amber-700">⚠ Документ не найден</p>
+        <p class="mt-1 text-[12px] text-gray-600">Хэш не зарегистрирован. Возможно, документ был создан до появления функции или ссылка повреждена.</p>
+      </div>
+      <div class="rounded-2xl bg-white border border-red-200 shadow-soft p-4">
+        <p class="text-sm font-bold text-red-700">✕ Документ изменён</p>
+        <p class="mt-1 text-[12px] text-gray-600">Контрольная сумма не совпадает с зарегистрированной — содержимое правилось после генерации.</p>
+      </div>
+    </div>
+  </div>
+</main>
+</body>
+</html>
