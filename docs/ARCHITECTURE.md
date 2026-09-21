@@ -69,6 +69,7 @@ src/
 │   ├── trash/                           # /trash — корзина
 │   ├── utils/                           # /utils — калькуляторы и проверки
 │   ├── utils/[tool]/                    # 22 SEO-страницы калькуляторов (SSG, /utils/nds и т.д.)
+│   ├── sravnenie-dogovorov/             # /sravnenie-dogovorov — сравнение редакций + протокол разногласий
 │   ├── about/                           # /about
 │   ├── autoteka/, osago/, dkp/,         # Лендинги услуг
 │   ├── techosmotr/, tahograph/
@@ -251,6 +252,7 @@ e2e/                              # Playwright e2e
 | `/documents` (без slug) | ЛК черновики | **Disallow /documents$** | auth-only | noindex |
 | `/utils` | Калькуляторы | index,follow | – | canonical=/utils |
 | `/utils/[tool]` | **22 калькулятора** (SSG) | index,follow | – | canonical=self, Breadcrumb+FAQ+WebApplication JSON-LD |
+| `/sravnenie-dogovorov` | Сравнение редакций договора + протокол разногласий | index,follow | – | canonical=self, Breadcrumb+FAQ+WebApplication JSON-LD |
 | `/blog`, `/blog/[slug]` | Блог | index,follow | – | canonical=self, Article JSON-LD |
 | `/contacts`, `/about`, `/help` | Информационные | index,follow | – | – |
 | `/preview` | Предпросмотр | **Disallow** | – | – |

@@ -82,6 +82,18 @@
 
 **Запреты:** не переписывать хаб `/utils` и `UtilsTools`; не хардкодить ставки/лимиты в тексте, если они есть в `src/lib/legal/*` (источник истины — код); не удалять related-перелинковку (обеспечивает обход кластера без ссылок с хаба).
 
+## Сравнение редакций `/sravnenie-dogovorov`
+
+`/sravnenie-dogovorov` — SEO-лендинг инструмента «Сравнение редакций договора + протокол разногласий». Server component: `withSeo` (canonical self, `robots: index, follow`), `dynamic="force-static"`, `revalidate=3600`, sitemap priority 0.7 / monthly. Интерактив — client-island `DocCompare`, весь расчёт в браузере.
+
+**Правила:**
+1. Разбор договоров — только на клиенте (`src/lib/diff.ts`, `src/lib/docText.ts`, `src/lib/protocol.ts`); содержимое документов НЕ отправлять на сервер (152-ФЗ).
+2. SEO-текст и FAQ — в `src/data/doc-compare.ts` (единый источник); на странице `BreadcrumbList` + `FAQPage` + `WebApplication`.
+3. Дифф — собственный (`src/lib/diff.ts`), без внешних библиотек; при больших входах срабатывает `MAX_LCS_CELLS` (деградация в delete+insert) — это ожидаемо.
+4. Экспорт DOCX — через `exportToDocxHtml`; имя файла передаётся БЕЗ расширения (`.docx` добавляется внутри).
+
+**Запреты:** не подключать внешние diff-библиотеки без необходимости; не переносить сравнение на сервер; не удалять пункт навигации и строку в sitemap.
+
 ## Акция PRO 299 ₽ (19.08.2026)
 
 - Единый источник — `src/lib/pricing.ts`: `PRO_PRICE=299`, `PRO_PRICE_OLD=990`, `PROMO_LABEL="-70%"`, `PROMO_ENDS_AT=2026-09-20T23:59:59+03:00`, `isPromoActive()`, `currentProPrice()`, `formatRub()`. Платежи (`/api/billing/create-payment`, `/api/billing/auto-renew`) берут сумму ТОЛЬКО через `currentProPrice()` — после дедлайна акция гаснет автоматически.
