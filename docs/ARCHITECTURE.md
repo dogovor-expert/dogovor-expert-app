@@ -157,7 +157,7 @@ User request
 [PostgreSQL]         — RLS политики, triggers, миграции (supabase/migrations/*.sql)
 ```
 
-## 4. Карта API-роутов (39 endpoints)
+## 4. Карта API-роутов (56 route-файлов в `src/app/api`)
 
 | Метод | Путь | Назначение | Auth | CSRF | Rate-limit | Zod |
 |-------|------|------------|------|------|-----------|-----|
@@ -166,13 +166,13 @@ User request
 | POST | `/api/billing/auto-renew` | Ручной auto-renew | ✓ | ✓ | – | ✓ |
 | POST | `/api/billing/auto-renewal` | Cron auto-renewal | service_role | ✓ | – | ✓ |
 | GET | `/api/billing/history` | История платежей | ✓ | – | – | – |
-| POST | `/api/billing/webhook` | Вебхук ЮKassa | IP+verify | – | – | – |
+| POST | `/api/billing/webhook` | Вебхук ЮKassa | IP+HMAC+verify | – | webhook | ✓ |
 | GET,POST,DELETE | `/api/documents` | CRUD черновиков | ✓ | ✓ | – | ✓ |
 | GET,PATCH,DELETE | `/api/documents/[id]` | Один черновик | ✓ | ✓ | – | ✓ |
 | GET,POST,DELETE | `/api/persons` | Сохранённые физлица | ✓ | ✓ | – | ✓ |
 | GET,POST,DELETE | `/api/contractors` | Сохранённые юрлица | ✓ | ✓ | – | ✓ |
 | GET,POST,DELETE | `/api/trash` | Корзина | ✓ | ✓ | – | ✓ |
-| POST | `/api/feedback` | Отзывы | – | ✓ | – | ✓ |
+| POST | `/api/feedback` | Обращения/тикеты обратной связи | – | ✓ | feedbackForm | ✓ |
 | POST | `/api/leads` | Лиды | – | ✓ | – | ✓ |
 | POST | `/api/dadata` | Прокси DaData | – | ✓ | – | ✓ |
 | POST | `/api/chat` | Виджет чата | – | ✓ | – | – |

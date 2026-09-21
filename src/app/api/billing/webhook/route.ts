@@ -201,6 +201,37 @@ async function verifyPayment(
   }
 }
 
+// Причины сбоя verifyPayment, при которых повторная доставка уведомления
+// может помочь: сетевые/временные сбои API ЮKassa или отложенная
+// согласованность (payment_not_found сразу после создания платежа).
+const RETRYABLE_VERIFY_REASONS = new Set([
+  "payment_not_found",
+  "provider_error",
+  "provider_unreachable",
+  "no_credentials",
+]);
+
+// Ранее при любом сбое verifyPayment возвращался 200 ({ok:true}) — ЮKassa
+// считала уведомление доставленным и НЕ повторяла его, из-за чего платёж
+// мог навсегда остаться необработанным (деньги списаны, услуга не выдана).
+// Теперь временные сбои → 5xx (ЮKassa повторит доставку), а недостоверные
+// уведомления (несовпадение суммы/валюты и т.п.) → 200, т.к. повтор не поможет.
+function verifyFailureResponse(reason: string, kind: string, providerId: string) {
+  if (RETRYABLE_VERIFY_REASONS.has(reason)) {
+    console.error(
+      `[billing/webhook] verifyPayment(${kind}) transient failure: ${reason} (payment ${providerId}) — asking YooKassa to retry`,
+    );
+    return NextResponse.json(
+      { ok: false, error: "verification_unavailable", reason },
+      { status: 500, headers: { "Retry-After": "60" } },
+    );
+  }
+  console.error(
+    `[billing/webhook] verifyPayment(${kind}) rejected: ${reason} (payment ${providerId}) — notification not processed`,
+  );
+  return NextResponse.json({ ok: true, rejected: reason });
+}
+
 export async function POST(req: Request) {
   // Fail-closed: если ЮKassa не настроена, вебхук полностью отключён.
   if (!process.env.YOOKASSA_SECRET_KEY) {
@@ -287,7 +318,7 @@ export async function POST(req: Request) {
     const meta = eptsLead.meta ?? {};
     const amount = Number(meta.amount ?? EPTS_PRICE);
     const verified = await verifyPayment(payment.id, amount, "RUB");
-    if (!verified.ok) return NextResponse.json({ ok: true });
+    if (!verified.ok) return verifyFailureResponse(verified.reason, "epts", payment.id);
     if (verified.status !== "succeeded") return NextResponse.json({ ok: true });
 
     const updResult = await admin
@@ -340,7 +371,7 @@ export async function POST(req: Request) {
     Number(row.amount ?? 0),
     row.currency ?? "RUB"
   );
-  if (!verified.ok) return NextResponse.json({ ok: true });
+  if (!verified.ok) return verifyFailureResponse(verified.reason, "payment", payment.id);
   const paid = verified.status === "succeeded";
 
   const { data: updatedRows } = await admin

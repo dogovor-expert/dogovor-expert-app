@@ -10,6 +10,22 @@ import { smartcaptchaConfigured, verifySmartCaptcha } from "@/lib/smartcaptcha";
 
 const STATUSES = ["new", "paid", "docs", "filed", "done", "canceled"] as const;
 
+// Экранирование пользовательских значений перед вставкой в HTML письма:
+// brand/vin/phone/service приходят из публичной формы, без экранирования
+// они позволяли HTML-инъекцию в письмо поддержки.
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+// В тему письма не должны попадать переводы строк (защита от header-injection).
+function sanitizeSubject(value: string): string {
+  return value.replace(/[\r\n]+/g, " ").slice(0, 150);
+}
+
 async function postHandler(req: Request) {
   // CSRF + same-origin: лид-форма — публичная, но не должна принимать
   // кросс-доменные POST (дроп заявок через чужие сайты).
@@ -70,8 +86,8 @@ async function postHandler(req: Request) {
   await sendTelegram("🔔 " + text);
   await sendEmail({
     to: SUPPORT_EMAIL,
-    subject: `Новый лид: ${brand}`,
-    html: `<div style="font-family:Arial,sans-serif;padding:16px;white-space:pre-wrap;color:#374151;">${text}</div>`,
+    subject: `Новый лид: ${sanitizeSubject(brand)}`,
+    html: `<div style="font-family:Arial,sans-serif;padding:16px;white-space:pre-wrap;color:#374151;">${escapeHtml(text)}</div>`,
   });
 
   return NextResponse.json({ data }, { status: 201 });

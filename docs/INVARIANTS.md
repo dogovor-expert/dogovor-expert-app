@@ -16,13 +16,13 @@
 ## 2. Аутентификация (CSRF, Rate-Limit, Sessions)
 
 - Каждый мутирующий эндпоинт в `src/app/api/**/route.ts` ОБЯЗАН быть обёрнут в `withCsrf()` **И** иметь проверку `isSameOrigin` (двойной барьер).
-- Rate-limits в `src/lib/ratelimit.ts` (Upstash sliding window) — это **обязательный** барьер на `/api/auth/login`, `/api/persons`, `/api/contractors`, `/api/trash`, `/api/feedback`, `/api/lead` и т.п. Без `UPSTASH_REDIS_REST_URL` лимитеры no-op (fail-open для prod, fail-closed для auth-роутов).
-- Вебхук YooKassa: IP-allowlist (подсети YooKassa + env `YOOKASSA_IP_ALLOWLIST`) + верификация через `GET /v3/payments/{id}` (Basic auth). НЕ добавлять HMAC-проверку — YooKassa НЕ подписывает вебхуки.
+- Rate-limits в `src/lib/ratelimit.ts` (Upstash sliding window) — это **обязательный** барьер на `/api/auth/login`, `/api/auth/mfa/verify`, `/api/persons`, `/api/contractors`, `/api/trash`, `/api/feedback`, `/api/leads`, `/api/telegram/webhook` и т.п. Без `UPSTASH_REDIS_REST_URL`/`UPSTASH_REDIS_REST_TOKEN` лимитеры `null` и `checkRateLimit()` **FAIL-CLOSED** (429) в проде; fail-open только в dev при явном `RATELIMIT_DISABLED=1`.
+- Вебхук YooKassa: HMAC-подпись (`x-yookassa-signature`, `YOOKASSA_NOTIFICATION_SECRET`, fail-closed) + IP-allowlist (подсети YooKassa + env `YOOKASSA_IP_ALLOWLIST`) + верификация через `GET /v3/payments/{id}` (Basic auth) + сверка `amount`/`currency`. Временный сбой verifyPayment → 5xx (ретрай ЮKassa); недостоверное уведомление → 200.
 - `params` и `searchParams` в Next 15 — `Promise` (использовать `await` или `use()`/`React.use`).
 
 ## 3. SEO и индексация
 
-- Каждая публичная страница (`page.tsx` в публичных сегментах) обязана экспортировать `generateMetadata` или `metadata`, сформированные через `withSeo(...)` из `@/lib/seo/withSeo`.
+- Каждая публичная страница (`page.tsx` в публичных сегментах) обязана экспортировать `metadata` или `generateMetadata` с уникальными `title`/`description` и явным `alternates.canonical`. Предпочтительно через `withSeo(...)` из `@/lib/seo/withSeo` (helper добавляет OG/Twitter); часть страниц использует обычный `export const metadata` с ручным `canonical` — это допустимо, но `canonical` обязателен.
 - Запрещено прописывать `canonical` на главную страницу (`/`) для внутренних страниц и страниц ошибок 404. Корневой `layout.tsx` НЕ должен иметь `alternates.canonical` — canonical задаётся **только** на уровне page.
 - `not-found.tsx` не должен наследовать канонические ссылки родительских макетов. Обязательно указывать `robots: { index: false, follow: false }` явно.
 - Публичные каталожные страницы (`/templates`, `/blanks`, `/utils`, `/blog`) кешируются через `export const revalidate = N` (ISR; на VDS — standalone-режим Next, кеш в рантайме контейнера). Приватные страницы (`/dashboard`, `/billing`, `/settings`, `/trash`, `/admin`, `/security`, `/connections`, `/builder`, `/documents`, `/login*`) **никогда** не должны получать заголовки `public, s-maxage`.

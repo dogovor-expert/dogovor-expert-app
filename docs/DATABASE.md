@@ -19,11 +19,11 @@
 | `public.contracts` / `documents` | Черновики документов | ✓ (self) | id, user_id, template_id, values (jsonb), status, created_at, updated_at |
 | `public.contractors` | Сохранённые юрлица | ✓ (self) | id, user_id, name, inn, ogrn, kpp, address, contacts, type |
 | `public.persons` | Сохранённые физлица (с 19.08.2026) | ✓ (self) | id, user_id, fio, birthday, phone, passport_series, passport_number, passport_issued_by, passport_code, address |
-| `public.leads` | Лиды (форма обратной связи) | ✗ (admin only) | id, name, email, phone, message, source, created_at |
+| `public.leads` | Лиды (растаможка / ЭПТС и др.) | ✗ (admin only) | id, service, brand, vin, phone, status, meta (jsonb), created_at |
 | `public.approvals` | Approve-токены для подписания | ✓ (mixed) | id, document_id, token, expires_at, used_at, signer_email, signer_name |
 | `public.subscriptions` | PRO-подписки | ✓ (self read, service_role write) | id, user_id, status, yookassa_payment_method_id, current_period_end, auto_renew |
 | `public.payments` | История платежей | ✓ (self read, service_role write) | id, user_id, yookassa_payment_id, amount, currency, status, description, created_at |
-| `public.feedback` | Отзывы (публичные) | ✓ (public read, auth write) | id, user_id, rating, text, published, created_at |
+| `public.feedback` | Обращения/тикеты обратной связи (с 20260822) | ✗ (insert/update/delete только `service_role`; SELECT — владелец или admin) | id, ticket_no, type, doc_slug, doc_name, tool, message, email, user_id, screenshots, tech, consent, status, created_at |
 | `public.feedback_private` | Приватные заметки по фидбеку (с 20260831) | admin only | id, feedback_id, internal_note, admin_id |
 | `public.autoteka_usage` | Использование проверок ТС (с 20260829) | ✓ (self) | id, user_id, vin, report_id, status, created_at |
 | `public.admin_audit` | Аудит-лог админских действий (с 20260823) | admin only | id, admin_id, action, target_type, target_id, payload, created_at |
@@ -45,7 +45,7 @@
 | `007_reports.sql` | – | reports (admin) |
 | `008_persons.sql` | 19.08.2026 | persons (сохранённые физлица) |
 | `009_billing_write_lock.sql` | 20.08.2026 | Write-lock: `anon`/`authenticated` НЕ имеют INSERT/UPDATE/DELETE на `subscriptions`/`payments` |
-| `20260822_feedback.sql` | 22.08.2026 | feedback (публичные отзывы) |
+| `20260822_feedback.sql` | 22.08.2026 | feedback (тикеты обратной связи) |
 | `20260823_admin_audit.sql` | 23.08.2026 | admin_audit (аудит действий) |
 | `20260829_autoteka_usage.sql` | 29.08.2026 | autoteka_usage (учёт проверок) |
 | `20260830_trash_favorites_columns.sql` | 30.08.2026 | trash + favorites колонки |
@@ -54,6 +54,18 @@
 | `20260902_payments_rls_service_only.sql` | 02.09.2026 | Усиление RLS: payments только service_role |
 | `20260903_signatures.sql` | 03.09.2026 | signatures (УКЭП) |
 | `20260904_sign_audit_meta.sql` | 04.09.2026 | sign_audit_meta (аудит подписания) |
+| `20260905_feedback_revoke_direct_insert.sql` | 05.09.2026 | feedback: revoke anon-INSERT (только service_role) |
+| `20260906_pades_crypto_verification.sql` | 06.09.2026 | Флаг крипто-верификации PAdES в document_signatures |
+| `20260907_tsl_certificates.sql` | 07.09.2026 | tsl_certificates (кэш доверенных сертификатов TSL) |
+| `20260908_tsl_raw_cache.sql` | 08.09.2026 | tsl_raw_cache (сырой кэш TSL) |
+| `20260909_notifications_gifts_consents.sql` | 09.09.2026 | notifications, gifts, marketing_consents |
+| `20260911_admin_audit_filters.sql` | 11.09.2026 | Фильтры admin_audit |
+| `20260911_admin_rbac.sql` | 11.09.2026 | admin_rbac (роли админки) |
+| `20260911_approval_security.sql` | 11.09.2026 | Безопасность approvals (unlock-токены, access log) |
+| `20260912_ocr_consent.sql` | 12.09.2026 | profiles.ocr_consent_at (согласие 152-ФЗ на OCR) |
+| `20260913_user_events.sql` | 13.09.2026 | user_events (аналитика, RLS без политик = deny-by-default) |
+| `20260914_session_replays.sql` | 14.09.2026 | session_replays + session_replay_chunks |
+| `20260918_ocr_consent_log.sql` | 18.09.2026 | ocr_consent_log (журнал согласий OCR) — последняя миграция |
 
 ## 3. RLS-паттерны
 
@@ -76,7 +88,7 @@ CREATE POLICY "self_insert" ON public.documents
 - `admin_audit`, `feedback_private`, `reports`, `sign_audit_meta` — только `is_admin = true` через `auth.jwt() -> 'is_admin' = true` ИЛИ проверка в коде через admin-клиент.
 
 ### Public read, auth write
-- `feedback` — SELECT публичный, INSERT для авторизованных, UPDATE/DELETE для admin.
+- `feedback` — INSERT/UPDATE/DELETE **только** `service_role` (миграция 20260905 отозвала anon-INSERT); SELECT — владелец (`user_id = auth.uid()`) или admin. Бакет storage `feedback` приватный (миграция 20260831, `public=false`).
 
 ### Mixed (для approval-flow)
 - `approvals` — владелец документа видит свои, signer по token видит по `signer_email` (rate-limited).

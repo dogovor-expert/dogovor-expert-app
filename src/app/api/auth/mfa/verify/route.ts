@@ -2,18 +2,31 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { withCsrf } from "@/lib/csrf";
 import { isSameOrigin } from "@/lib/admin-auth";
+import { limiters, checkRateLimit, rateLimitResponse, clientIp } from "@/lib/ratelimit";
 
 export const runtime = "nodejs";
 
 // Серверное подтверждение TOTP (challenge + verify). Вызывается со страницы
-// /login?mfa=1, когда сессия лежит в httpOnly-cookies и браузерный Supabase
-// клиент не может выполнить challenge/verify сам. После успешного verify
-// GoTrue повышает уровень сессии до aal2 — middleware пускает на защищённые
-// маршруты, а /api/auth/mfa/trust-device выдаёт куку «запомнить устройство».
+// /login?mfa=1, когда браузерный Supabase клиент не выполняет challenge/verify
+// сам (сессия обслуживается серверным @supabase/ssr-клиентом). После успешного
+// verify GoTrue повышает уровень сессии до aal2 — middleware пускает на
+// защищённые маршруты, а /api/auth/mfa/trust-device выдаёт куку «запомнить
+// устройство».
 async function verifyHandler(request: Request) {
   if (!isSameOrigin(request)) {
     return NextResponse.json({ error: "forbidden" }, { status: 403 });
   }
+
+  const supabase = await createClient();
+
+  // App-уровневый rate-limit на подбор TOTP-кода: 5 попыток/мин на
+  // пользователя (fallback — IP, если сессии ещё нет). Раньше защита была
+  // только платформенная (GoTrue), что не гарантирует лимит на инстансе.
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const rl = await checkRateLimit(limiters.authAction, `mfa-verify:${user?.id ?? clientIp(request)}`);
+  if (!rl.ok) return rateLimitResponse(rl.retryAfter);
 
   let body: { factorId?: unknown; code?: unknown };
   try {
@@ -27,8 +40,6 @@ async function verifyHandler(request: Request) {
   if (!factorId || code.length < 6) {
     return NextResponse.json({ error: "invalid_input" }, { status: 400 });
   }
-
-  const supabase = await createClient();
 
   const { data: challenge, error: challengeError } = await supabase.auth.mfa.challenge({
     factorId,
