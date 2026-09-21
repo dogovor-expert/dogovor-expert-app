@@ -4,6 +4,7 @@ import type { TemplateField } from "@/data/types";
 import { normalizeOptions, type AuditResult } from "@/lib/validation";
 import { applyFieldFormat } from "@/lib/format";
 import FioDeclineHint from "./FioDeclineHint";
+import NpdStatusBadge from "./NpdStatusBadge";
 import { useDadataSuggest, type SuggestOption } from "./DadataSuggest";
 
 interface FormFieldProps {
@@ -550,6 +551,9 @@ export default function FormField({
           <Search className="w-3 h-3" />
           Свериться с ЕГРЮЛ на egrul.nalog.ru
         </a>
+      )}
+      {field.type === "text" && field.id.includes("inn") && (
+        <NpdStatusBadge inn={value} />
       )}
     </div>
   );

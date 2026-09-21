@@ -163,6 +163,13 @@ export const createContractSchema = z.object({
 
 export type CreateContractInput = z.infer<typeof createContractSchema>;
 
+// Схема проверки статуса самозанятого (НПД) по ИНН физлица.
+// Дата опциональна: по умолчанию сервер подставляет сегодня (МСК).
+export const npdSchema = z.object({
+  inn: z.string().regex(/^\d{12}$/, 'ИНН самозанятого должен содержать 12 цифр'),
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Дата в формате YYYY-MM-DD').optional(),
+}).strict();
+
 // ---- Общие схемы для ответов ----
 
 // Универсальный ответ с данными
