@@ -93,7 +93,7 @@ export default function ContractPenalty() {
           {result.daily > 0 && (
             <p className="text-[11px] text-gray-600">В день: {fmtMoney(Math.round(result.daily * 100) / 100)}</p>
           )}
-          <a href="/builder?id=claim-generic"
+          <a href="/builder?template=claim-generic"
             className="inline-block mt-1 py-2 px-3 rounded-lg bg-white border border-brand-300 text-brand-600 font-bold text-[11px] hover:bg-brand-50 transition">
             Составить претензию / иск →
           </a>

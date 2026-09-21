@@ -141,7 +141,7 @@ export default function PddFines() {
                   ? <>Оплатите до <b>{result.deadline.split("-").reverse().join(".")}</b> — осталось <b>{result.daysLeft}</b> дн. Скидка сгорает при обжаловании постановления.</>
                   : <>Скидка 50% по этой статье не применяется (нарушение входит в исключения ст. 32.2 КоАП). Оплатите в течение 60 дней, иначе дело передадут приставам.</>}
               </p>
-              <a href="/builder?id=claim-generic"
+              <a href="/builder?template=claim-generic"
                 className="inline-block mt-1 py-2 px-3 rounded-lg bg-white border border-brand-300 text-brand-600 font-bold text-[11px] hover:bg-brand-50 transition">
                 Обжалование постановления →
               </a>

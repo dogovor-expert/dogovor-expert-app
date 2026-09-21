@@ -76,7 +76,7 @@ export default function TahographPage() {
             ["car-lease-crew", "Аренда ТС с экипажем"],
             ["dkp-truck", "ДКП грузовика"],
           ].map(([id, label]) => (
-            <Link key={id} href={`/builder?id=${id}`}
+            <Link key={id} href={`/builder?template=${id}`}
               className="px-4 py-2 rounded-lg bg-white border border-brand-300 text-brand-600 font-bold text-xs hover:bg-brand-50 transition">
               {label} →
             </Link>

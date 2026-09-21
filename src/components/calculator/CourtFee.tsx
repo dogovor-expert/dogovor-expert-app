@@ -53,12 +53,12 @@ export default function CourtFee() {
   };
 
   const templates: Record<string, string> = {
-    property: "/builder?id=claim-generic",
-    nonProperty: "/builder?id=claim-generic",
-    appeal: "/builder?id=appeal-complaint",
-    cassation: "/builder?id=appeal-complaint",
-    alimony: "/builder?id=alimony-claim",
-    order: "/builder?id=claim-generic",
+    property: "/builder?template=claim-generic",
+    nonProperty: "/builder?template=claim-generic",
+    appeal: "/builder?template=appeal-complaint",
+    cassation: "/builder?template=appeal-complaint",
+    alimony: "/builder?template=alimony-claim",
+    order: "/builder?template=claim-generic",
   };
 
   const modes: { id: Mode; label: string }[] = [
