@@ -7,7 +7,8 @@
 - IP-allowlist (официальные подсети YooKassa + env `YOOKASSA_IP_ALLOWLIST` через запятую).
 - Верификация платежа через API `GET /v3/payments/{id}` (Basic auth) + сверка `amount.value`/`currency` с таблицей.
 - Идемпотентность по `row.status`.
-- **НЕ добавлять** HMAC-проверку «для надёжности» — YooKassa НЕ подписывает вебхуки, работает только IP+API-verify.
+- **HMAC-подпись уведомлений реализована и обязательна (fail-closed)**. Заголовок `x-yookassa-signature` (или `yookassa-signature`), HMAC-SHA256 от raw body (до `JSON.parse`), секрет `YOOKASSA_NOTIFICATION_SECRET`, сравнение constant-time. Без секрета — 401 на все уведомления. ⚠️ Устаревшее утверждение «YooKassa НЕ подписывает вебхуки» неверно: подпись включается в ЛК ЮKassa («Настройки → Уведомления → Подпись»). Секрет обязан совпадать в env приложения И в ЛК, иначе все вебхуки отбиваются 401.
+- При временном сбое `verifyPayment` (provider_unreachable/payment_not_found/provider_error) роут отдаёт **5xx** — ЮKassa повторит доставку (раньше отдавал 200 и уведомление терялось). Недостоверные уведомления (amount_mismatch и т.п.) → 200.
 - Клиентский `x-forwarded-for` на Vercel перезаписывается реальным IP (спуфинг невозможен, проверено).
 
 ## RLS write-lock (миграция 009)

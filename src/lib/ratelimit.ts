@@ -37,6 +37,8 @@ export const limiters = {
   crudMutation: mk("rl:crud-mutation", 60, "60 s"),
   /** Вебхук платежей — 30 запросов/мин на IP. */
   webhook: mk("rl:webhook", 30, "60 s"),
+  /** Вебхук Telegram (ответы оператора) — 60 запросов/мин на IP. */
+  telegramWebhook: mk("rl:telegram-webhook", 60, "60 s"),
   /** Отправка на email — 10 запросов/мин на IP. */
   emailSend: mk("rl:email-send", 10, "60 s"),
   /** Форма обратной связи — 10 запросов/мин на IP. */

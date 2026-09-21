@@ -2,7 +2,9 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { MFA_DEVICE_COOKIE, verifyDeviceCookie } from "@/lib/mfa-device";
 
-const PROTECTED_PREFIXES = ["/dashboard", "/settings", "/trash", "/billing", "/security", "/connections", "/builder"];
+// /builder намеренно НЕ здесь: он публичен на уровне middleware (client-side
+// guard), см. isPublicRoute ниже — иначе запись была бы мёртвой.
+const PROTECTED_PREFIXES = ["/dashboard", "/settings", "/trash", "/billing", "/security", "/connections"];
 
 function decodeB64url(input: string): string {
   const b64 = input.replace(/-/g, "+").replace(/_/g, "/");
@@ -188,9 +190,9 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
     `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""} 'wasm-unsafe-eval' https://widgets.inssmart.ru https://smartcaptcha.yandexcloud.net https://mc.yandex.ru https://mc.yandex.md https://www.cryptopro.ru https://download.rutoken.ru https://accounts.google.com`,
     `worker-src 'self' blob:`,
     `style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://smartcaptcha.yandexcloud.net`,
-    `img-src 'self' data: blob: https://widgets.inssmart.ru https://xkakhztknlpzqarklewq.supabase.co${supabaseCspHost ? ` ${supabaseCspHost.startsWith('http') ? supabaseCspHost : `https://${supabaseCspHost}`} http://${supabaseCspHost}` : ''} https://lh3.googleusercontent.com https://avatars.yandex.net https://avatars.mds.yandex.net https://smartcaptcha.yandexcloud.net https://mc.yandex.ru https://mc.yandex.md https://mc.yandex.com`,
+    `img-src 'self' data: blob: https://widgets.inssmart.ru${supabaseCspHost ? ` ${supabaseCspHost.startsWith('http') ? supabaseCspHost : `https://${supabaseCspHost}`} http://${supabaseCspHost}` : ''} https://lh3.googleusercontent.com https://avatars.yandex.net https://avatars.mds.yandex.net https://smartcaptcha.yandexcloud.net https://mc.yandex.ru https://mc.yandex.md https://mc.yandex.com`,
     `font-src 'self' data: https://fonts.gstatic.com`,
-    `connect-src 'self' https://accounts.google.com https://www.googleapis.com https://oauth.yandex.ru https://cloud-api.yandex.net https://widgets.inssmart.ru https://suggestions.dadata.ru https://xkakhztknlpzqarklewq.supabase.co${supabaseCspHost ? ` ${supabaseCspHost.startsWith('http') ? supabaseCspHost : `https://${supabaseCspHost}`} http://${supabaseCspHost}` : ''} https://tessdata.projectnaptha.com https://mc.yandex.ru https://mc.yandex.md https://mc.yandex.com https://yandex.ru https://huggingface.co https://*.huggingface.co https://cdn-lfs.huggingface.co https://cdn.hf.co https://*.cdn.hf.co wss://mc.yandex.ru wss://mc.yandex.com wss://mc.yandex.md wss://yandex.ru https://*.ingest.us.sentry.io https://smartcaptcha.yandexcloud.net https://api.open-meteo.com https://www.cbr-xml-daily.ru`,
+    `connect-src 'self' https://accounts.google.com https://www.googleapis.com https://oauth.yandex.ru https://cloud-api.yandex.net https://widgets.inssmart.ru https://suggestions.dadata.ru${supabaseCspHost ? ` ${supabaseCspHost.startsWith('http') ? supabaseCspHost : `https://${supabaseCspHost}`} http://${supabaseCspHost}` : ''} https://tessdata.projectnaptha.com https://mc.yandex.ru https://mc.yandex.md https://mc.yandex.com https://yandex.ru https://huggingface.co https://*.huggingface.co https://cdn-lfs.huggingface.co https://cdn.hf.co https://*.cdn.hf.co wss://mc.yandex.ru wss://mc.yandex.com wss://mc.yandex.md wss://yandex.ru https://*.ingest.us.sentry.io https://smartcaptcha.yandexcloud.net https://api.open-meteo.com https://www.cbr-xml-daily.ru`,
     `frame-src 'self' blob: https://widgets.inssmart.ru https://mc.yandex.ru https://smartcaptcha.yandexcloud.net https://accounts.google.com`,
     `media-src 'self'`,
     `object-src 'none'`,

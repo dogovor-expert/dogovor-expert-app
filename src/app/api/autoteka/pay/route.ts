@@ -155,11 +155,16 @@ async function postHandler(req: Request) {
   const host = req.headers.get("host") ?? "dogovor.expert";
   const proto = host.includes("localhost") || host.includes("127.0.0.1") ? "http" : "https";
 
+  // Idempotence-Key с 5-минутным тайм-бакетом (как в billing/create-payment):
+  // двойной сабмит в пределах окна переиспользует ключ (нет двойного списания),
+  // а после отмены/экспирации платежа спустя окно можно создать новый.
+  const idempotenceBucket = Math.floor(Date.now() / 300000);
+
   const res = await fetch("https://api.yookassa.ru/v3/payments", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "Idempotence-Key": Buffer.from(`${user.id}:${vin}:${premium ? "prem" : "std"}`).toString("base64"),
+      "Idempotence-Key": Buffer.from(`${user.id}:${vin}:${premium ? "prem" : "std"}:${idempotenceBucket}`).toString("base64"),
       Authorization: "Basic " + Buffer.from(`${shopId}:${secretKey}`).toString("base64"),
     },
     body: JSON.stringify({

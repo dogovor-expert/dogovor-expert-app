@@ -9,6 +9,7 @@ import {
 } from "@/lib/chat-store";
 import { getFilePath, downloadTelegramFile } from "@/lib/telegram-chat";
 import { uploadChatFile, fileKind } from "@/lib/chat-files";
+import { limiters, checkRateLimit, rateLimitResponse, clientIp } from "@/lib/ratelimit";
 
 const SECRET = process.env.TELEGRAM_WEBHOOK_SECRET;
 const SUPPORT_GROUP_ID = process.env.TELEGRAM_SUPPORT_GROUP_ID;
@@ -62,6 +63,11 @@ export async function POST(req: Request) {
   if (!authorized(req)) {
     return NextResponse.json({ error: "forbidden" }, { status: 401 });
   }
+
+  // Rate-limit по IP источника (fail-closed): ограничивает поток апдейтов,
+  // если secret_token когда-либо утечёт, и защищает Redis/хранилище чата.
+  const rl = await checkRateLimit(limiters.telegramWebhook, clientIp(req));
+  if (!rl.ok) return rateLimitResponse(rl.retryAfter);
 
   const update = (await req.json().catch(() => null)) as TgUpdate | null;
   const msg = update?.message;
