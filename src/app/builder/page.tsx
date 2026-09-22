@@ -2074,7 +2074,7 @@ function HomeContent() {
                 onToggle={toggleSection}
               >
                 <SigningPanel
-                  visible={canShowSignSheet(template.id)}
+                  templateId={template.id}
                   signSheetEnabled={signSheetEnabled}
                   onToggle={setSignSheetEnabled}
                 />
