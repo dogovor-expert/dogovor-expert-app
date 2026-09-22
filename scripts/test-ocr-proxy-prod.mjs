@@ -1,8 +1,12 @@
 // E2E test: dogovor.expert /api/ocr-proxy через Supabase-сессию e2e-pro-пользователя
 import { readFile } from 'node:fs/promises';
 
-const SUPABASE_URL = 'https://xkakhztknlpzqarklewq.supabase.co';
-const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhrYWtoenRrbmxwenFhcmtsZXdxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYyNzc3NzYsImV4cCI6MjEwMTg1Mzc3Nn0.W28fD0iTeLxGKoMvJnqTv9VYfG-5IG6UYRAcD2HVDR8';
+const SUPABASE_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
+const SUPABASE_ANON = process.env.SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+if (!SUPABASE_URL || !SUPABASE_ANON) {
+  console.error('Задайте SUPABASE_URL и SUPABASE_ANON_KEY в окружении (ключи в .env.local)');
+  process.exit(1);
+}
 
 async function supabaseLogin() {
   const r = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
