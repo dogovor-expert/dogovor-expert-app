@@ -144,7 +144,11 @@ async function postHandler(req: NextRequest) {
   // при заполнении договора, а бесплатный лимит Dadata покрывает адреса.
   // Раньше здесь стоял общий gate — не-подписчики молча получали пустые
   // подсказки (жалоба: «адреса не подгружаются»).
-  const FREE_OPS = new Set(["suggest-address", "suggest-fms-unit"]);
+  const FREE_OPS = new Set([
+    "suggest-address",
+    "suggest-fms-unit",
+    "suggest-court",
+  ]);
   if (!FREE_OPS.has(op) && !(await hasActiveSubscription())) {
     return NextResponse.json(
       { error: "subscription required", fallback: true },
@@ -173,6 +177,8 @@ async function postHandler(req: NextRequest) {
     endpoint = "/suggest/address";
   } else if (op === "suggest-fms-unit") {
     endpoint = "/suggest/fms_unit";
+  } else if (op === "suggest-court") {
+    endpoint = "/suggest/court";
   } else {
     return NextResponse.json({ error: "unknown op" }, { status: 400 });
   }

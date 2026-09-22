@@ -32,7 +32,7 @@ function escapeHtml(value: string): string {
 function sanitizeHtml(html: string): string {
   return DOMPurify.sanitize(html, {
     ALLOWED_TAGS: [
-      "p", "br", "strong", "em", "u", "span", "div", "table", "thead", "tbody", "tr", "th", "td",
+      "p", "br", "strong", "em", "u", "span", "div", "table", "thead", "tbody", "tfoot", "tr", "th", "td",
       "ul", "ol", "li", "h1", "h2", "h3", "h4", "h5", "h6", "blockquote", "pre", "code",
       "img", "a", "hr", "b", "i", "small", "sup", "sub", "mark", "del", "ins"
     ],
@@ -349,6 +349,33 @@ export function renderTemplateDocument(
       }
       const total = items.reduce((s, it) => s + Number(it.sum || 0), 0);
       view._total_pretty = total.toLocaleString("ru-RU", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      });
+    }
+
+    // Акт сверки взаимных расчётов: итог оборотов за период.
+    // Суммы в op_amount — свободный текст («1 000,00»), поэтому парсим терпимо.
+    if (template.id === "reconciliation-statement") {
+      let ops: { op_amount?: string }[] = [];
+      try {
+        ops = JSON.parse(formValues.operations || "[]") as {
+          op_amount?: string;
+        }[];
+      } catch {
+        ops = [];
+      }
+      const parseRuAmount = (raw?: string): number => {
+        if (!raw) return 0;
+        const cleaned = raw
+          .replace(/\u00a0/g, "")
+          .replace(/\s/g, "")
+          .replace(",", ".");
+        const n = Number.parseFloat(cleaned);
+        return Number.isFinite(n) ? n : 0;
+      };
+      const total = ops.reduce((s, it) => s + parseRuAmount(it.op_amount), 0);
+      view._operations_total_pretty = total.toLocaleString("ru-RU", {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
       });

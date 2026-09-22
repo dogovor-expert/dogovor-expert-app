@@ -63,22 +63,20 @@ export default function FormField({
     field.type === "text"
       ? field.id.includes("passport_code")
         ? ("suggest-fms-unit" as const)
-        : field.id.includes("address")
-          ? ("suggest-address" as const)
-          : field.id.includes("fio")
-            ? ("suggest-fio" as const)
-            : field.id.includes("passport_series") || field.id.includes("passport_number")
-              ? ("suggest-passport" as const)
-              : null
+        : field.id.includes("court")
+          ? ("suggest-court" as const)
+          : field.id.includes("address")
+            ? ("suggest-address" as const)
+            : field.id.includes("fio")
+              ? ("suggest-fio" as const)
+              : field.id.includes("passport_series") || field.id.includes("passport_number")
+                ? ("suggest-passport" as const)
+                : null
       : null;
+  // suggestOp уже содержит точную операцию; null → хук не активен, но вызвать
+  // его нужно безусловно (правила хуков), поэтому fallback только для типа.
   const { suggestions, loading, query, clear } = useDadataSuggest(
-    suggestOp === "suggest-fms-unit"
-      ? "suggest-fms-unit"
-      : suggestOp === "suggest-fio"
-      ? "suggest-fio"
-      : suggestOp === "suggest-passport"
-      ? "suggest-passport"
-      : "suggest-address"
+    suggestOp ?? "suggest-address"
   );
   const [showSuggest, setShowSuggest] = useState(false);
   const pickedRef = useRef(false);
