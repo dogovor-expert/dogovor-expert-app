@@ -6,6 +6,7 @@ import {
   pairSign,
   commonClauses,
   pageShell,
+  taxClause,
 } from "./parts";
 
 export const TEMPLATES_CONTRACTS: LegalTemplate[] = [
@@ -37,6 +38,7 @@ export const TEMPLATES_CONTRACTS: LegalTemplate[] = [
           { label: "Предоплата 100%", value: "предоплата" },
         ] },
       { id: "deadline", label: "Срок выполнения (до даты)", type: "date", defaultValue: "", category: "contract", validation: { required: true } },
+      { id: "tax_clause", label: "Включить налоговую оговорку (защита от доначислений ФНС по ст. 54.1 НК РФ)", type: "checkbox", defaultValue: "false", category: "contract" },
     ],
     previewTemplate:
       pageShell("Договор оказания услуг с самозанятым") +
@@ -80,7 +82,8 @@ export const TEMPLATES_CONTRACTS: LegalTemplate[] = [
   <p class="mb-2 mt-4">Исполнитель:</p>
   ${sideBlock("executor", "Исполнитель")}
   <p class="text-xs mt-2">ИНН исполнителя: {{executor_inn}}</p>`
-      + commonClauses() +
+      + taxClause() +
+      commonClauses() +
       pairSign("customer", "Заказчик", "executor", "Исполнитель"),
   },
   {
@@ -114,6 +117,7 @@ export const TEMPLATES_CONTRACTS: LegalTemplate[] = [
         ] },
       { id: "start_date", label: "Начало работ", type: "date", defaultValue: "", category: "contract", validation: { required: true } },
       { id: "end_date", label: "Окончание работ", type: "date", defaultValue: "", category: "contract", validation: { required: true } },
+      { id: "tax_clause", label: "Включить налоговую оговорку (защита от доначислений ФНС по ст. 54.1 НК РФ)", type: "checkbox", defaultValue: "false", category: "contract" },
     ],
     previewTemplate:
       pageShell("Договор подряда") +
@@ -151,7 +155,8 @@ export const TEMPLATES_CONTRACTS: LegalTemplate[] = [
   ${sideBlock("customer", "Заказчик")}
   <p class="mb-2 mt-4">Подрядчик:</p>
   ${sideBlock("contractor", "Подрядчик")}`
-      + commonClauses() +
+      + taxClause() +
+      commonClauses() +
       pairSign("customer", "Заказчик", "contractor", "Подрядчик"),
   },
   {
@@ -187,6 +192,7 @@ export const TEMPLATES_CONTRACTS: LegalTemplate[] = [
       { id: "start_date", label: "Начало работ", type: "date", defaultValue: "", category: "contract", validation: { required: true } },
       { id: "end_date", label: "Окончание работ", type: "date", defaultValue: "", category: "contract", validation: { required: true } },
       { id: "guarantee_months", label: "Гарантийный срок (мес.)", type: "number", defaultValue: "24", category: "contract" },
+      { id: "tax_clause", label: "Включить налоговую оговорку (защита от доначислений ФНС по ст. 54.1 НК РФ)", type: "checkbox", defaultValue: "false", category: "contract" },
     ],
     previewTemplate:
       pageShell("Договор подряда на ремонт жилого дома") +
@@ -223,7 +229,8 @@ export const TEMPLATES_CONTRACTS: LegalTemplate[] = [
   ${sideBlock("customer", "Заказчик")}
   <p class="mb-2 mt-4">Подрядчик:</p>
   ${sideBlock("contractor", "Подрядчик")}`
-      + commonClauses() +
+      + taxClause() +
+      commonClauses() +
       pairSign("customer", "Заказчик", "contractor", "Подрядчик"),
   },
   {
@@ -255,6 +262,7 @@ export const TEMPLATES_CONTRACTS: LegalTemplate[] = [
       { id: "start_date", label: "Начало работ", type: "date", defaultValue: "", category: "contract", validation: { required: true } },
       { id: "end_date", label: "Окончание работ", type: "date", defaultValue: "", category: "contract", validation: { required: true } },
       { id: "guarantee_months", label: "Гарантийный срок (мес.)", type: "number", defaultValue: "36", category: "contract" },
+      { id: "tax_clause", label: "Включить налоговую оговорку (защита от доначислений ФНС по ст. 54.1 НК РФ)", type: "checkbox", defaultValue: "false", category: "contract" },
     ],
     previewTemplate:
       pageShell("Договор подряда на ремонт кровли") +
@@ -291,7 +299,8 @@ export const TEMPLATES_CONTRACTS: LegalTemplate[] = [
   ${sideBlock("customer", "Заказчик")}
   <p class="mb-2 mt-4">Подрядчик:</p>
   ${sideBlock("contractor", "Подрядчик")}`
-      + commonClauses() +
+      + taxClause() +
+      commonClauses() +
       pairSign("customer", "Заказчик", "contractor", "Подрядчик"),
   },
   {
@@ -328,6 +337,7 @@ export const TEMPLATES_CONTRACTS: LegalTemplate[] = [
           { label: "Объект страхуется Подрядчиком", value: "yes" },
           { label: "Страхование не проводится", value: "no" },
         ] },
+      { id: "tax_clause", label: "Включить налоговую оговорку (защита от доначислений ФНС по ст. 54.1 НК РФ)", type: "checkbox", defaultValue: "false", category: "contract" },
     ],
     previewTemplate:
       pageShell("Договор строительного подряда") +
@@ -376,7 +386,8 @@ export const TEMPLATES_CONTRACTS: LegalTemplate[] = [
   ${sideBlock("customer", "Заказчик")}
   <p class="mb-2 mt-4">Подрядчик:</p>
   ${sideBlock("contractor", "Подрядчик")}`
-      + commonClauses() +
+      + taxClause() +
+      commonClauses() +
       pairSign("customer", "Заказчик", "contractor", "Подрядчик"),
   },
   {
@@ -412,6 +423,7 @@ export const TEMPLATES_CONTRACTS: LegalTemplate[] = [
           { label: "По фактическому пробегу", value: "по пробегу" },
         ] },
       { id: "period", label: "Срок оказания услуг (с/по)", type: "text", defaultValue: "", category: "contract", validation: { required: true } },
+      { id: "tax_clause", label: "Включить налоговую оговорку (защита от доначислений ФНС по ст. 54.1 НК РФ)", type: "checkbox", defaultValue: "false", category: "contract" },
     ],
     previewTemplate:
       pageShell("Договор оказания транспортных услуг") +
@@ -454,7 +466,8 @@ export const TEMPLATES_CONTRACTS: LegalTemplate[] = [
   ${sideBlock("customer", "Заказчик")}
   <p class="mb-2 mt-4">Исполнитель:</p>
   ${sideBlock("executor", "Исполнитель")}`
-      + commonClauses() +
+      + taxClause() +
+      commonClauses() +
       pairSign("customer", "Заказчик", "executor", "Исполнитель"),
   },
   {
@@ -488,6 +501,7 @@ export const TEMPLATES_CONTRACTS: LegalTemplate[] = [
           { label: "Передаются Заказчику полностью", value: "transfer" },
           { label: "Остаются у Исполнителя (лицензия на использование)", value: "license" },
         ] },
+      { id: "tax_clause", label: "Включить налоговую оговорку (защита от доначислений ФНС по ст. 54.1 НК РФ)", type: "checkbox", defaultValue: "false", category: "contract" },
     ],
     previewTemplate:
       pageShell("Договор на разработку дизайн-проекта") +
@@ -524,7 +538,8 @@ export const TEMPLATES_CONTRACTS: LegalTemplate[] = [
   ${sideBlock("customer", "Заказчик")}
   <p class="mb-2 mt-4">Исполнитель:</p>
   ${sideBlock("executor", "Исполнитель")}`
-      + commonClauses() +
+      + taxClause() +
+      commonClauses() +
       pairSign("customer", "Заказчик", "executor", "Исполнитель"),
   },
   {
