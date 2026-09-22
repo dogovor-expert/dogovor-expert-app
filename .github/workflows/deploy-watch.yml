@@ -1,0 +1,31 @@
+name: Deploy watch (production)
+
+# Сторожевой контроль CapRover-деплоя: после пуша в `production`
+# ждёт, пока прод начнёт отдавать ВСЕ маршруты из этого коммита
+# (новые страницы 404, пока жив старый контейнер), затем завершается.
+# Красный статус = деплой не доехал за 40 минут, смотреть панель CapRover.
+# Секретов не требует.
+
+on:
+  push:
+    branches: [production]
+
+concurrency:
+  group: prod-deploy-watch
+  cancel-in-progress: false
+
+jobs:
+  watch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Wait until the new build serves all routes
+        run: node scripts/deploy-watch.mjs
