@@ -15,7 +15,12 @@ const MONTHS: Record<string, number> = {
   июль: 7, август: 8, сентябрь: 9, октябрь: 10, ноябрь: 11, декабрь: 12,
 };
 
-function parseLastUpdated(s: string): string | undefined {
+export function parseLastUpdated(s: string): string | undefined {
+  if (!s) return undefined;
+  // ISO-даты блога (2026-09-22): раньше не парсились → у 59 статей не было
+  // lastModified в sitemap (потеря сигнала свежести после правок).
+  const iso = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (iso) return `${iso[1]}-${iso[2]}-${iso[3]}`;
   const m = s.match(/([А-Яа-яё]+)\s+(\d{4})/);
   if (!m) return undefined;
   const month = MONTHS[m[1].toLowerCase()];
@@ -36,7 +41,9 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${SITE_URL}/utils`, changeFrequency: "weekly", priority: 0.7 },
     { url: `${SITE_URL}/sravnenie-dogovorov`, changeFrequency: "monthly", priority: 0.7 },
     { url: `${SITE_URL}/help`, changeFrequency: "monthly", priority: 0.5 },
-    { url: `${SITE_URL}/security`, changeFrequency: "monthly", priority: 0.5 },
+    // /security — личный кабинет «Безопасность аккаунта» (noindex, follow=false):
+    // в sitemap не включаем (аудит 2026-09-22: раньше был конфликт sitemap↔noindex).
+    { url: `${SITE_URL}/legal/trademark`, changeFrequency: "yearly", priority: 0.3 },
     { url: `${SITE_URL}/privacy`, changeFrequency: "yearly", priority: 0.3 },
     { url: `${SITE_URL}/terms`, changeFrequency: "yearly", priority: 0.3 },
     { url: `${SITE_URL}/about`, changeFrequency: "monthly", priority: 0.3 },

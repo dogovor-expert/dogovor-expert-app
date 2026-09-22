@@ -16,6 +16,35 @@
 
 ---
 
+## [2026-09-22] SEO-аудит: сниппеты, sitemap↔noindex, ISO lastModified
+
+- **Агент:** big-pickle (opencode)
+- **Тип:** feat (SEO) + fix
+- **Файлы:** `src/lib/seo/docMeta.ts` (новый) + `src/lib/__tests__/docMeta.test.ts`, `src/lib/__tests__/sitemap.test.ts` (новый), `src/app/documents/[slug]/page.tsx`, `src/app/blanks/[slug]/page.tsx`, `src/app/documents/v/[slug]/page.tsx`, `src/app/blog/[slug]/page.tsx`, `src/app/sitemap.ts`, `src/data/blog/posts.ts`
+- **Находки аудита (факты из собранного HTML):**
+  1. Google **отключил FAQ rich results 07.05.2026** (и HowTo ранее) — «кратный рост сниппета» от FAQPage невозможен; разметку оставили (валидна/парсится), но CTR-рычаг — title/description.
+  2. В метаданных год и «PDF/DOCX» дописывались В КОНЕЦ description и отрезались на 160 симв (369 шаблонов).
+  3. У 49 длинных имён год вылетал при обрезке заголовка; обрезка была с «…».
+  4. **FAQPage отсутствовала на всех 59 постах блога** (визуальный FAQ был, схемы нет).
+  5. **`/security` в sitemap, но страница `noindex`** — прямой конфликт.
+  6. `parseLastUpdated` не понимал ISO-даты → у всех статей блога **не было `lastModified`** в sitemap.
+  7. Дублей: `blanks/{id}` cross-canonical на `documents/{id}` — корректно; `/documents` (кабинет) noindex и вне sitemap — корректно; вариации self-canonical — корректно.
+- **Что сделано:**
+  1. `docMeta.ts`: год/«образец»/действие — вперёд; год гарантирован (ужимается имя, не год); обрезка по словам без «…». Тесты прогнаны по всем 369 шаблонам.
+  2. Blog: добавлена FAQPage-схема; description обрезается по словам.
+  3. Расписка: title/description переписаны под прямой ответ + год; `updatedAt`=2026-09-22 (переобход).
+  4. +7 постов получили год в заголовке.
+  5. sitemap: убран `/security`, добавлен `/legal/trademark`, ISO-даты блога дают `lastModified`.
+  6. Инвариант-тесты: sitemap не содержит noindex-URL; ISO-даты парсятся.
+- **⚠️ Внимание следующему агенту:**
+  - `documents/layout.tsx` (title «Мои документы», noindex) — это **личный кабинет**, а НЕ каталог. Публичные `/documents/{id}` и `/documents/v/{id}` переопределяют robots в своём generateMetadata (проверено в HTML: `index, follow`).
+  - Бренд `| Dogovor.expert` НЕ добавляется к `/documents/*` (из-за layout сегмента) — это ок, 60 симв. бюджета уходят на ключи.
+  - `/security` — кабинет (noindex). Не возвращать в sitemap.
+  - FAQ на страницах документов — категорийный (`faqForTemplate`), т.е. одинаковый внутри категории; при желании усилить уникальность — делать пер-документные FAQ.
+- **Связанные PRs/коммиты:** aac4672, (этот)
+
+---
+
 ## [2026-09-22] Стабильность деплоя: диагностика + deploy-watch + фикс SITE_VERSION
 
 - **Агент:** big-pickle (opencode)
