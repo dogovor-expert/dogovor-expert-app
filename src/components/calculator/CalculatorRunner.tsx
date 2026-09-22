@@ -24,6 +24,7 @@ const KaskoQuote = dynamic(() => import("@/components/calculator/KaskoQuote"), {
 const Validators = dynamic(() => import("@/components/calculator/Validators"), { ssr: false });
 const SumWords = dynamic(() => import("@/components/calculator/SumWords"), { ssr: false });
 const DayCounter = dynamic(() => import("@/components/calculator/DayCounter"), { ssr: false });
+const Reconciliation = dynamic(() => import("@/components/calculator/Reconciliation"), { ssr: false });
 
 /**
  * Маппинг id калькулятора → компонент. Ключи совпадают с `CalculatorTool.id`
@@ -52,6 +53,7 @@ const COMPONENTS: Record<string, React.ComponentType> = {
   valid: Validators,
   words: SumWords,
   days: DayCounter,
+  recon: Reconciliation,
 };
 
 /**

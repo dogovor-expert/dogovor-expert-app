@@ -30,6 +30,7 @@ const EXPECTED_IDS = [
   "valid",
   "words",
   "days",
+  "recon",
 ];
 
 const ICON_NAMES = [
@@ -54,11 +55,12 @@ const ICON_NAMES = [
   "Fingerprint",
   "Hash",
   "CalendarDays",
+  "FileSpreadsheet",
 ];
 
 describe("каталог калькуляторов (SEO-страницы /utils/[tool])", () => {
-  it("содержит все 22 инструмента с уникальными id и slug", () => {
-    expect(CALCULATOR_TOOLS).toHaveLength(22);
+  it("содержит все 23 инструмента с уникальными id и slug", () => {
+    expect(CALCULATOR_TOOLS).toHaveLength(23);
 
     const ids = new Set(CALCULATOR_TOOLS.map((t) => t.id));
     const slugs = new Set(CALCULATOR_TOOLS.map((t) => t.slug));

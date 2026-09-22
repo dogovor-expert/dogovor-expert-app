@@ -11,7 +11,7 @@ import {
   Landmark,
   Scale, Percent, Banknote, Home, Baby, FileWarning, TrendingUp,
   Briefcase, Wallet, Store, Plane, Car, CarFront, Fingerprint, Hash as HashIcon, CalendarDays, Recycle, Ship, CarTaxiFront, ShieldQuestion,
-  Search, Star,
+  Search, Star, FileSpreadsheet,
 } from "lucide-react";
 import InnValidator from "@/components/calculator/InnValidator";
 import CourtFee from "@/components/calculator/CourtFee";
@@ -35,6 +35,7 @@ import UtilSb from "@/components/calculator/UtilSb";
 import CustomsDuty from "@/components/calculator/CustomsDuty";
 import NdflSale from "@/components/calculator/NdflSale";
 import KaskoQuote from "@/components/calculator/KaskoQuote";
+import Reconciliation from "@/components/calculator/Reconciliation";
 
 type Tool = {
   id: string;
@@ -87,6 +88,7 @@ const GROUPS: { id: string; label: string; tools: Tool[] }[] = [
       { id: "valid", label: "Проверка реквизитов", icon: Fingerprint, desc: "СНИЛС, ОГРН, БИК, счёт, карта", comp: Validators, pop: true },
       { id: "words", label: "Сумма прописью", icon: HashIcon, desc: "Для договоров и расписок", comp: SumWords, neu: true },
       { id: "days", label: "Сроки и дни", icon: CalendarDays, desc: "Календарные и рабочие дни", comp: DayCounter, neu: true },
+      { id: "recon", label: "Акт сверки", icon: FileSpreadsheet, desc: "Взаиморасчёты, сальдо, экспорт DOCX/PDF", comp: Reconciliation, neu: true },
     ],
   },
 ];

@@ -25,6 +25,7 @@ import {
   Store,
   TrendingUp,
   Wallet,
+  FileSpreadsheet,
   type LucideIcon,
 } from "lucide-react";
 import { JsonLd } from "@/components/seo/JsonLd";
@@ -62,6 +63,7 @@ const ICONS: Record<string, LucideIcon> = {
   Fingerprint,
   Hash,
   CalendarDays,
+  FileSpreadsheet,
 };
 
 export function generateStaticParams() {
