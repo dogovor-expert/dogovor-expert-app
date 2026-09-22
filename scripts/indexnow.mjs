@@ -3,7 +3,11 @@
 //   node scripts/indexnow.mjs            — отправить все URL из sitemap.xml
 //   node scripts/indexnow.mjs /blog/foo  — отправить один URL
 const HOST = "https://dogovor.expert";
-const KEY = "60f95e2da98647ee80eb7f741083f90c";
+const KEY = process.env.INDEXNOW_KEY || "";
+if (!KEY) {
+  console.error("Задайте INDEXNOW_KEY в окружении (ключ публикуется как /<KEY>.txt)");
+  process.exit(1);
+}
 const ENDPOINT = "https://api.indexnow.org/indexnow";
 
 async function main() {
