@@ -1,6 +1,7 @@
 import {
   ArrowLeft,
   ArrowRight,
+  Calendar,
   Check,
   ChevronDown,
   Copy,
@@ -20,6 +21,8 @@ import {
 import type { LegalTemplate, TemplateField } from "@/data/types";
 import PdfPreview from "@/components/PdfPreview";
 import { type RefObject, useState, useRef, useEffect } from "react";
+import { saveAs } from "file-saver";
+import { buildIcs, isDeadlineField, type IcsEvent } from "@/lib/ics";
 
 interface PreviewStageProps {
   template: LegalTemplate;
@@ -113,6 +116,34 @@ export default function PreviewStage({
     setCopied(true);
     if (copiedTimer.current) clearTimeout(copiedTimer.current);
     copiedTimer.current = setTimeout(() => setCopied(false), 2000);
+  };
+
+  const icsEvents = (): IcsEvent[] => {
+    if (!template || !quickEditValues) return [];
+    const events: IcsEvent[] = [];
+    for (const f of template.fields) {
+      if (f.type !== "date") continue;
+      const value = (quickEditValues[f.id] ?? "").trim();
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) continue;
+      const uid = `${template.id}-${f.id}-${value}@dogovor.expert`;
+      events.push({
+        uid,
+        summary: f.label,
+        start: value,
+        description: template.name,
+        alarmsMin: isDeadlineField(f.id) ? [1440, 2880] : [],
+      });
+    }
+    return events;
+  };
+
+  const handleExportIcs = () => {
+    const events = icsEvents();
+    if (events.length === 0) return;
+    const ics = buildIcs({ events, name: template.name });
+    const blob = new Blob([ics], { type: "text/calendar;charset=utf-8" });
+    saveAs(blob, `${template.name}_напоминания.ics`);
+    setExportMenuOpen(false);
   };
 
   useEffect(() => {
@@ -257,6 +288,18 @@ export default function PreviewStage({
                     <FileText className="w-3.5 h-3.5 text-blue-500" />
                     Скачать DOCX
                   </button>
+                  {template && quickEditValues && icsEvents().length > 0 && (
+                    <button
+                      onClick={handleExportIcs}
+                      className="w-full flex items-center gap-2 px-3 py-2 text-xs text-gray-700 hover:bg-gray-50 transition-colors"
+                    >
+                      <Calendar className="w-3.5 h-3.5 text-violet-500" />
+                      Скачать .ics (календарь)
+                      <span className="ml-auto text-[10px] text-violet-600 bg-violet-50 px-1.5 py-0.5 rounded-full">
+                        {icsEvents().length}
+                      </span>
+                    </button>
+                  )}
                   <button
                     onClick={() => { onOpenEmailModal(); setExportMenuOpen(false); }}
                     disabled={emailSending}
