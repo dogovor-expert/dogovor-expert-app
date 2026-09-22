@@ -97,6 +97,17 @@ export type PdfWorkerRequest =
       fileName: string;
       /** URL шрифта с кириллицей. */
       fontUrl: string;
+    }
+  | {
+      type: "redact";
+      jobId: string;
+      bytes: ArrayBuffer;
+      /**
+       * Регионы закрашивания на страницу: regions[i] — массив прямоугольников
+       * i-й страницы (0-based) в нормализованных координатах 0..1 (x, y, w, h).
+       * Пустой массив = страница без изменений.
+       */
+      regions: { x: number; y: number; w: number; h: number }[][];
     };
 
 export type PdfWorkerResponse =
@@ -724,6 +735,78 @@ async function handleTextToPdf(
   }
 }
 
+/**
+ * Анонимизация PDF: растеризация страниц + чёрные заливки указанных регионов.
+ *
+ * Почему растеризация: у PDF нет надёжного способа «стереть» текст без
+ * сторонней экстракции. Заливка поверх может оставить слой текста, который
+ * восстанавливается копированием. Поэтому закрашиваемые страницы полностью
+ * растеризуются в изображение, а затем регионы закрашиваются чёрным цветом —
+ * исходный текст физически отсутствует в итоговом файле.
+ */
+async function handleRedact(
+  jobId: string,
+  bytes: ArrayBuffer,
+  regions: { x: number; y: number; w: number; h: number }[][]
+): Promise<void> {
+  try {
+    const out = await PDFDocument.create();
+    const src = await PDFDocument.load(bytes, { ignoreEncryption: true });
+    const total = src.getPageCount();
+    let needsRaster = false;
+    for (let i = 0; i < total; i++) {
+      if ((regions[i] ?? []).length > 0) { needsRaster = true; break; }
+    }
+    if (!needsRaster) {
+      const copied = await out.copyPages(src, src.getPageIndices());
+      copied.forEach((p) => out.addPage(p));
+    } else {
+      const pdfjs = await import("pdfjs-dist");
+      pdfjs.GlobalWorkerOptions.workerSrc = "/workers/pdf.worker.min.mjs";
+      const srcDoc = await pdfjs.getDocument({ data: bytes }).promise;
+      for (let i = 0; i < total; i++) {
+        post({ type: "progress", jobId, current: i, total, phase: "redact" });
+        const regs = regions[i] ?? [];
+        if (regs.length === 0) {
+          const [p] = await out.copyPages(src, [i]);
+          out.addPage(p);
+          continue;
+        }
+        const page = await srcDoc.getPage(i + 1);
+        const base = page.getViewport({ scale: 1 });
+        const vp = page.getViewport({ scale: 2 });
+        const canvas = new OffscreenCanvas(Math.ceil(vp.width), Math.ceil(vp.height));
+        const g = canvas.getContext("2d");
+        if (!g) { page.cleanup(); throw new Error("canvas_unavailable"); }
+        g.fillStyle = "#ffffff";
+        g.fillRect(0, 0, canvas.width, canvas.height);
+        await page.render({ canvas: canvas as unknown as HTMLCanvasElement, viewport: vp }).promise;
+        page.cleanup();
+        // Заливка регионов чёрным поверх растеризованной страницы.
+        g.fillStyle = "#000000";
+        for (const r of regs) {
+          const x = Math.max(0, Math.min(1, r.x)) * canvas.width;
+          const y = Math.max(0, Math.min(1, r.y)) * canvas.height;
+          const w = Math.min(1 - r.x, Math.max(0, r.w)) * canvas.width;
+          const h = Math.min(1 - r.y, Math.max(0, r.h)) * canvas.height;
+          g.fillRect(x, y, w, h);
+        }
+        const blob = await canvas.convertToBlob({ type: "image/jpeg", quality: 0.92 });
+        const img = await out.embedJpg(new Uint8Array(await blob.arrayBuffer()));
+        const p = out.addPage([base.width, base.height]);
+        p.drawImage(img, { x: 0, y: 0, width: base.width, height: base.height });
+      }
+      await srcDoc.loadingTask.destroy();
+    }
+    post({ type: "progress", jobId, current: total, total, phase: "save" });
+    const saved = await out.save({ useObjectStreams: true });
+    const ab = toArrayBuffer(saved);
+    post({ type: "result", jobId, payload: ab, meta: { name: "redacted.pdf" } }, [ab]);
+  } catch (e) {
+    post({ type: "error", jobId, message: e instanceof Error ? e.message : "redact_failed" });
+  }
+}
+
 ctx.addEventListener("message", (ev: MessageEvent<PdfWorkerRequest>) => {
   const msg = ev.data;
   void (async () => {
@@ -743,6 +826,8 @@ ctx.addEventListener("message", (ev: MessageEvent<PdfWorkerRequest>) => {
       await handleCompress(msg.jobId, msg.bytes, msg);
     } else if (msg.type === "textToPdf") {
       await handleTextToPdf(msg.jobId, msg.text, msg);
+    } else if (msg.type === "redact") {
+      await handleRedact(msg.jobId, msg.bytes, msg.regions);
     }
   })();
 });

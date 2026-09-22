@@ -5,6 +5,7 @@ import {
   AlignLeft,
   Archive,
   Droplets,
+  Eraser,
   FileDown,
   FileImage,
   FileText,
@@ -37,6 +38,7 @@ const ICONS: Record<string, LucideIcon> = {
   FileUp,
   Droplets,
   Hash,
+  Eraser,
 };
 
 /**

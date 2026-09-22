@@ -6,6 +6,7 @@ import {
   Archive,
   ChevronRight,
   Droplets,
+  Eraser,
   FileDown,
   FileImage,
   FileText,
@@ -47,6 +48,7 @@ const ICONS: Record<string, LucideIcon> = {
   FileUp,
   Droplets,
   Hash,
+  Eraser,
 };
 
 export function generateStaticParams() {

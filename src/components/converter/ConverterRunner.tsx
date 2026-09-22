@@ -16,6 +16,7 @@ const PageNumbers = dynamic(() => import("@/components/converter/PageNumbers"), 
 const PdfToText = dynamic(() => import("@/components/converter/PdfToText"), { ssr: false });
 const PdfToWord = dynamic(() => import("@/components/converter/PdfToWord"), { ssr: false });
 const TextToPdf = dynamic(() => import("@/components/converter/TextToPdf"), { ssr: false });
+const RedactPdf = dynamic(() => import("@/components/converter/RedactPdf"), { ssr: false });
 
 const COMPONENTS: Record<string, React.ComponentType> = {
   merge: MergePdf,
@@ -32,6 +33,7 @@ const COMPONENTS: Record<string, React.ComponentType> = {
   pdf2text: PdfToText,
   pdf2word: PdfToWord,
   text2pdf: TextToPdf,
+  redact: RedactPdf,
 };
 
 /**
