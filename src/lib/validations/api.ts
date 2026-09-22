@@ -72,8 +72,8 @@ export const yookassaWebhookSchema = z.object({
 export type YookassaWebhookInput = z.infer<typeof yookassaWebhookSchema>;
 
 // Схема для DaData-прокси (/api/dadata)
-// Поддерживает 7 операций: find-party, suggest-party, suggest-fio, find-fio,
-// suggest-passport, suggest-address, suggest-fms-unit.
+// Поддерживает 8 операций: find-party, suggest-party, suggest-fio, find-fio,
+// suggest-passport, suggest-address, suggest-fms-unit, suggest-court.
 // query: 1-200 символов, count: 1-10.
 export const dadataSchema = z.object({
   op: z.enum([
@@ -84,6 +84,7 @@ export const dadataSchema = z.object({
     'suggest-passport',
     'suggest-address',
     'suggest-fms-unit',
+    'suggest-court',
   ]),
   query: z.string().min(1, 'Запрос не может быть пустым').max(200, 'Максимум 200 символов'),
   count: z.number().int().min(1).max(10).optional().default(10),

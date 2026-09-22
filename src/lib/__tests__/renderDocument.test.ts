@@ -5,6 +5,8 @@ import {
   buildPackValues,
 } from "@/lib/renderDocument";
 import { dkpLikeTemplate, invoiceTemplate, receiptTemplate } from "./fixtures";
+import { LEGAL_TEMPLATES } from "@/data/templates";
+import { TEMPLATE_PREVIEWS } from "@/data/templatePreviews";
 import type { LegalTemplate, TemplateField } from "@/data/types";
 
 // Сквозной фикс D-6 (аудит Ф3): скрытые по dependsOn значения не должны
@@ -246,5 +248,54 @@ describe("buildPackValues", () => {
 
   it("пустая форма → пустой результат", () => {
     expect(buildPackValues(receiptTemplate, {})).toEqual({});
+  });
+});
+
+// ─── Акт сверки взаимных расчётов: итог оборотов за период ──────────────────
+describe("акт сверки (reconciliation-statement)", () => {
+  const tpl = LEGAL_TEMPLATES.find((t) => t.id === "reconciliation-statement");
+  const preview = TEMPLATE_PREVIEWS["reconciliation-statement"];
+
+  const render = (values: Record<string, string>) =>
+    renderTemplateDocument(tpl as LegalTemplate, values, {
+      previewTemplate: preview,
+    });
+
+  it("шаблон есть в каталоге, поле operations — повторяющееся", () => {
+    expect(tpl).toBeTruthy();
+    expect(preview).toBeTruthy();
+    const rep = (tpl as LegalTemplate).fields.find(
+      (f) => f.id === "operations"
+    );
+    expect(rep?.type).toBe("repeating");
+    expect((rep?.repeatingFields ?? []).map((f) => f.id)).toEqual([
+      "op_date",
+      "op_doc",
+      "op_desc",
+      "op_amount",
+    ]);
+  });
+
+  it("считает итог за период из сумм операций", () => {
+    const html = render({
+      operations: JSON.stringify([
+        { op_date: "01.01.2026", op_doc: "1", op_desc: "Оплата", op_amount: "1 000,00" },
+        { op_date: "02.01.2026", op_doc: "2", op_desc: "Оплата", op_amount: "250,50" },
+      ]),
+    });
+    // tfoot должен сохраниться (он в ALLOWED_TAGS DOMPurify).
+    expect(html).toContain("<tfoot>");
+    expect(html).toMatch(/1(&nbsp;|\s)250,50/);
+  });
+
+  it("терпим к пустым и нечисловым суммам", () => {
+    const html = render({
+      operations: JSON.stringify([
+        { op_amount: "" },
+        { op_amount: "abc" },
+        { op_amount: "100" },
+      ]),
+    });
+    expect(html).toMatch(/100,00/);
   });
 });

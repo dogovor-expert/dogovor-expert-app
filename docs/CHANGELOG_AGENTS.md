@@ -16,6 +16,25 @@
 
 ---
 
+## [2026-09-22] Автоподбор суда (DaData), итоги акта сверки, меню
+
+- **Агент:** big-pickle (opencode)
+- **Тип:** feat
+- **Файлы:** `src/app/api/dadata/route.ts`, `src/lib/validations/api.ts`, `src/components/builder/DadataSuggest.tsx`, `src/components/builder/FormField.tsx`, `src/lib/renderDocument.ts`, `src/data/templatePreviews.ts`, `src/components/layouts/AppLayout.tsx`, тесты (`renderDocument.test.ts`)
+- **Что сделано:**
+  1. **Автоподбор суда**: новая операция `suggest-court` в DaData-прокси (endpoint `/suggest/court`), бесплатная (как адреса и ФМС); в конструкторе поля с `court` в id (напр. `court_name`) получают подсказку суда с типом и регионом.
+  2. **Акт сверки** (`reconciliation-statement` — шаблон уже существовал, дубль не создавали): добавлена строка «Итого за период» (`<tfoot>`) с автоматическим подсчётом суммы операций (`_operations_total_pretty`, терпимый парсер сумм «1 250,50»).
+  3. **Фикс DOMPurify**: в `ALLOWED_TAGS` добавлен `tfoot` — ранее он вырезался во ВСЕХ шаблонах с итогами (upd, loan-graph, container-spec и др.).
+  4. **Меню**: пункт «Проверка авто» убран из основного меню; страница `/autoteka` и инструмент сохранены (вернуть пункт = одна строка в `toolNav`).
+- **⚠️ Внимание следующему агенту:**
+  - `src/data/signingMeta.ts` — АВТОГЕНЕРАЦИЯ (`npx tsx scripts/generate-signing-meta.mts`); вручную не править. Тест `signing.test.ts` требует запись для КАЖДОГО шаблона.
+  - Акт сверки — это `reconciliation-statement` (в `business.ts`); не создавать дубль.
+  - У шаблонов без inline `previewTemplate` текст лежит в `src/data/templatePreviews.ts`; при рендере вне клиента обязательно передавать `{ previewTemplate: TEMPLATE_PREVIEWS[id] }`, иначе HTML пустой.
+  - DaData-подсказки требуют `DADATA_API_KEY` (env добавлен в CapRover; без него — 503).
+- **Связанные PRs/коммиты:** (в коммитах этого дня)
+
+---
+
 ## [2026-09-22] Починка серверной подписи /api/sign/* (двухшаговый PAdES)
 
 - **Агент:** big-pickle (opencode)

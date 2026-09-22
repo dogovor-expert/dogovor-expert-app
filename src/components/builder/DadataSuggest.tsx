@@ -7,7 +7,7 @@ export interface SuggestOption {
   extra?: Record<string, string>;
 }
 
-type SuggestOp = "suggest-fms-unit" | "suggest-address" | "suggest-fio" | "find-fio" | "suggest-passport";
+type SuggestOp = "suggest-fms-unit" | "suggest-address" | "suggest-fio" | "find-fio" | "suggest-passport" | "suggest-court";
 
 interface DadataData {
   surname?: string;
@@ -25,6 +25,8 @@ interface DadataData {
   city_with_type?: string;
   settlement_with_type?: string;
   region_with_type?: string;
+  region?: string;
+  court_type?: string;
   postal_code?: string;
 }
 
@@ -88,6 +90,23 @@ function mapSuggestion(s: DadataSuggestion, op: SuggestOp): SuggestOption | null
       fillValue: value,
       sub: `Выдан: ${d.passport_issued_by ?? "—"} ${d.passport_issue_date ? `, ${d.passport_issue_date}` : ""}`,
       extra,
+    };
+  }
+  if (op === "suggest-court") {
+    // DaData отдаёт наименование суда в `value`, тип и регион — в `data`.
+    const value = String(s.value ?? s.unrestricted_value ?? "");
+    if (!value) return null;
+    const d = s.data ?? {};
+    const sub = [
+      String(d.court_type ?? ""),
+      String(d.region_with_type ?? d.region ?? ""),
+    ]
+      .filter(Boolean)
+      .join(", ");
+    return {
+      value,
+      fillValue: String(s.unrestricted_value ?? value),
+      sub: sub || undefined,
     };
   }
   const value = String(s.value ?? "");
