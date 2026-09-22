@@ -105,6 +105,7 @@ src/
 │   ├── pricing.ts                       # PRO_PRICE=299, PRO_PRICE_OLD=990, isPromoActive(), currentProPrice()
 │   ├── personMapping.ts                 # roleToPerson / personToFields
 │   ├── signatures.ts                    # Работа с УКЭП (embedSignature удалён)
+│   ├── sign-prepare.ts                  # Подготовка к подписи: шаблон из LEGAL_TEMPLATES, текст из TEMPLATE_PREVIEWS, values из documents.fields
 │   ├── withSecurityHeaders.ts           # security headers wrapper
 │   ├── withCsrf.ts                      # CSRF wrapper (включая safeNext)
 │   ├── withOrigin.ts                    # isSameOrigin

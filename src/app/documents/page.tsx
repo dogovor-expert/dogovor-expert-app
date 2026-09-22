@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import dynamicImport from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -20,6 +21,7 @@ import {
   HardDrive,
   Copy,
   Calculator,
+  FileSignature,
 } from "lucide-react";
 import { getAllDrafts, clearDraft, clearDraftVersions, getDraftVersions, restoreDraftVersion, type DraftData, type DraftVersion } from "@/lib/autosave";
 import { exportDocument, getConnectedProviders } from "@/lib/cloud/manager";
@@ -34,6 +36,13 @@ import { TEMPLATE_META } from "@/data/templatesMeta";
 import Highlight from "@/components/ui/Highlight";
 import { tokenGroups, textMatchesTokens } from "@/lib/search";
 import { calcKindFromTemplateId, CALC_KIND_LABEL } from "@/lib/calcDoc";
+
+// Диалог подписания УКЭП грузим лениво: он тянет КриптоПро-обвязку, которая
+// нужна только в момент подписания.
+const SignDialog = dynamicImport(
+  () => import("@/components/sign/SignDialog").then((m) => ({ default: m.SignDialog })),
+  { ssr: false }
+);
 
 interface ServerDoc {
   id: string;
@@ -65,6 +74,8 @@ interface DocItem {
   /** 3.10: протокол из калькулятора (синтетический template_id `calc-…`). */
   calc?: boolean;
   protocol?: string;
+  /** UUID серверной записи documents — нужен для подписания УКЭП. */
+  serverId?: string;
 }
 
 const CATEGORY_BADGE: Record<string, { variant: "blue" | "green" | "amber" | "gray" | "red" | "purple" }> = {
@@ -158,7 +169,10 @@ export default function DocumentsPage() {
   };
 
   const serverDocsToItems = (rows: ServerDoc[]) =>
-    rows.map((s: ServerDoc) => toDocItem(s.template_id, s.fields, s.updated_at, s.title));
+    rows.map((s: ServerDoc) => ({
+      ...toDocItem(s.template_id, s.fields, s.updated_at, s.title),
+      serverId: s.id,
+    }));
 
   const loadDocs = useCallback(
     async (q: string) => {
@@ -464,6 +478,7 @@ export default function DocumentsPage() {
   // 3.10: просмотр протокола калькулятора (нет шаблона → не открываем в builder).
   const [calcViewDoc, setCalcViewDoc] = useState<DocItem | null>(null);
   const [calcCopied, setCalcCopied] = useState(false);
+  const [signDoc, setSignDoc] = useState<DocItem | null>(null);
 
   const copyCalcProtocol = async () => {
     if (!calcViewDoc?.protocol) return;
@@ -766,13 +781,22 @@ export default function DocumentsPage() {
                                <HardDrive className="w-4 h-4" />
                              </button>
                            )}
-                           <button
-                              onClick={() => { void handleDelete(doc.id); }}
-                             className="p-1.5 hover:bg-red-50 rounded-lg text-gray-600 hover:text-red-500 transition-colors"
-                             title="Удалить"
-                           >
-                             <Trash2 className="w-4 h-4" />
-                           </button>
+                            {!doc.calc && doc.serverId && (
+                              <button
+                                onClick={() => setSignDoc(doc)}
+                                className="p-1.5 hover:bg-emerald-50 rounded-lg text-emerald-600 hover:text-emerald-700 transition-colors"
+                                title="Подписать электронной подписью (УКЭП)"
+                              >
+                                <FileSignature className="w-4 h-4" />
+                              </button>
+                            )}
+                            <button
+                               onClick={() => { void handleDelete(doc.id); }}
+                              className="p-1.5 hover:bg-red-50 rounded-lg text-gray-600 hover:text-red-500 transition-colors"
+                              title="Удалить"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
                         </div>
                       </TableCell>
                     </TableRow>
@@ -952,6 +976,15 @@ export default function DocumentsPage() {
             />
           </div>
         </div>
+      )}
+
+      {signDoc?.serverId && (
+        <SignDialog
+          isOpen
+          documentId={signDoc.serverId}
+          documentTitle={signDoc.name}
+          onClose={() => setSignDoc(null)}
+        />
       )}
 
       {cloudPaywallModal}

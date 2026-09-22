@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   X,
   ShieldCheck,
@@ -12,8 +12,24 @@ import {
 } from "lucide-react";
 import { CertificateList, type CertInfo } from "@/components/sign/CertificateList";
 import { signPdfWithCryptoPro } from "@/lib/signCryptoPro";
-import { embedCms, uint8ArrayToHex } from "@/lib/embedPades";
+import { embedCms, hexLengthOfCms, uint8ArrayToHex } from "@/lib/embedPades";
 import { uint8ToBase64 } from "@/lib/bytes";
+
+/**
+ * Длина CMS детерминирована для сертификата (цепочка + метка времени), поэтому
+ * измеряем её один раз пробным подписанием и кэшируем — иначе на каждое
+ * подписание приходилось бы дважды вызывать КриптоПро.
+ * Тот же приём используется в UKEPSigner.
+ */
+const CMS_LEN_CACHE = new Map<string, number>();
+
+/** Опции подписи: ОБЯЗАНЫ совпадать в пробном и финальном проходе. */
+const SIGN_OPTS = {
+  detached: true,
+  encodingType: "base64" as const,
+  addSigningTime: true,
+  addTimestamp: true,
+};
 
 interface SignDialogProps {
   isOpen: boolean;
@@ -32,6 +48,8 @@ interface PrepareResponse {
   placeholderPdfBase64: string;
   signedContentBase64: string;
   cmsHexLen: number;
+  /** true — пробный проход (место под CMS зарезервировано «на глазок»). */
+  isProbe: boolean;
   documentHash: string;
   documentId: string;
 }
@@ -53,6 +71,32 @@ export function SignDialog({
   const [cmsHexLen, setCmsHexLen] = useState<number>(0);
   const [documentHash, setDocumentHash] = useState<string | null>(null);
 
+  /**
+   * Запрос подготовки документа. Без cmsHexLen — пробный проход, с cmsHexLen —
+   * финальный плейсхолдер точной длины (только так ByteRange совпадёт с CMS).
+   */
+  const requestPrepare = useCallback(
+    async (cmsHexLen?: number): Promise<PrepareResponse> => {
+      const res = await fetch("/api/sign/prepare", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          documentId,
+          designId,
+          ...(cmsHexLen ? { cmsHexLen } : {}),
+        }),
+      });
+
+      if (!res.ok) {
+        const err = (await res.json().catch(() => ({ error: "prepare failed" }))) as { error?: string };
+        throw new Error(err.error || "Не удалось подготовить документ");
+      }
+
+      return (await res.json()) as PrepareResponse;
+    },
+    [documentId, designId]
+  );
+
   // Загружаем PDF и данные для подписания при открытии диалога
   useEffect(() => {
     if (!isOpen) return;
@@ -62,18 +106,7 @@ export function SignDialog({
     async function prepare() {
       try {
         setSigning(true);
-        const res = await fetch("/api/sign/prepare", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ documentId, designId }),
-        });
-
-        if (!res.ok) {
-          const err = (await res.json().catch(() => ({ error: "prepare failed" }))) as { error?: string };
-          throw new Error(err.error || "Не удалось подготовить документ");
-        }
-
-        const data = (await res.json()) as PrepareResponse;
+        const data = await requestPrepare();
         if (mounted) {
           const placeholder = Uint8Array.from(atob(data.placeholderPdfBase64), (c) => c.charCodeAt(0));
           const content = Uint8Array.from(atob(data.signedContentBase64), (c) => c.charCodeAt(0));
@@ -97,7 +130,7 @@ export function SignDialog({
     return () => {
       mounted = false;
     };
-  }, [isOpen, documentId, designId]);
+  }, [isOpen, requestPrepare]);
 
   // Сброс при закрытии
   useEffect(() => {
@@ -132,23 +165,42 @@ export function SignDialog({
     setError(null);
 
     try {
-      // 1. Создаём отсоединённую CAdES-X-Long Type 1 подпись через КриптоПро для signedContent
-      setStep("signing");
-      const signatureBase64 = await signPdfWithCryptoPro(signedContent, selectedCert.thumbprint, {
-        detached: true,
-        encodingType: "base64",
-        addSigningTime: true,
-        addTimestamp: true,
-      });
+      const thumbprint = selectedCert.thumbprint;
 
-      // 2. Встраиваем подпись в PDF через embedCms (правильный PAdES)
+      // 1. Точная длина CMS. Она детерминирована для сертификата (цепочка +
+      // метка времени), но заранее неизвестна — измеряем пробным подписанием.
+      // Без этого шага зарезервированное место не совпадёт с подписью и
+      // встроить её в PDF не получится (ByteRange поедет).
+      let cmsLen = CMS_LEN_CACHE.get(thumbprint);
+      if (!cmsLen) {
+        setStep("signing");
+        const probeBase64 = await signPdfWithCryptoPro(signedContent, thumbprint, SIGN_OPTS);
+        cmsLen = hexLengthOfCms(probeBase64);
+        CMS_LEN_CACHE.set(thumbprint, cmsLen);
+      }
+
+      // 2. Финальный плейсхолдер — ровно под длину CMS.
+      const finalPrep = await requestPrepare(cmsLen);
+      const finalPlaceholder = Uint8Array.from(atob(finalPrep.placeholderPdfBase64), (c) => c.charCodeAt(0));
+      const finalContent = Uint8Array.from(atob(finalPrep.signedContentBase64), (c) => c.charCodeAt(0));
+
+      // 3. Подписываем именно финальный контент (у него свои ByteRange).
+      setStep("signing");
+      const signatureBase64 = await signPdfWithCryptoPro(finalContent, thumbprint, SIGN_OPTS);
+
+      // 4. Встраиваем подпись в PDF (PAdES: adbe.pkcs7.detached).
       setStep("embedding");
       const cmsHex = uint8ArrayToHex(
         new Uint8Array(Buffer.from(signatureBase64, "base64"))
       );
-      const signedPdfBytes = embedCms(placeholderPdf, cmsHex);
+      if (cmsHex.length !== finalPrep.cmsHexLen) {
+        throw new Error(
+          `Длина подписи не совпала с плейсхолдером (${cmsHex.length} ≠ ${finalPrep.cmsHexLen}). Попробуйте ещё раз.`
+        );
+      }
+      const signedPdfBytes = embedCms(finalPlaceholder, cmsHex);
 
-      // 3. Скачиваем подписанный PDF
+      // 5. Скачиваем подписанный PDF
       const blob = new Blob([signedPdfBytes as unknown as BlobPart], { type: "application/pdf" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -159,7 +211,7 @@ export function SignDialog({
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
 
-      // 4. Отправляем подписанный PDF на сервер для сохранения и аудита.
+      // 6. Отправляем подписанный PDF на сервер для сохранения и аудита.
       // Чанкованное преобразование: `String.fromCharCode.apply` на весь массив
       // бросает RangeError на документах больше ~130 КБ.
       const signedPdfBase64 = uint8ToBase64(signedPdfBytes);
@@ -170,10 +222,12 @@ export function SignDialog({
         body: JSON.stringify({
           documentId,
           signedPdfBase64,
-          thumbprint: selectedCert.thumbprint,
+          thumbprint,
           subjectName: selectedCert.subjectName,
           validTo: selectedCert.validTo,
-          algorithm: "CAdES-BES",
+          // Подпись создаётся с меткой времени → CAdES-X-Long Type 1
+          // (в БД на это значение есть CHECK-ограничение).
+          algorithm: "CAdES-X-Long-Type-1",
         }),
       });
 

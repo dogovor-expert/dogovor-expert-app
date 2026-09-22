@@ -16,6 +16,29 @@
 
 ---
 
+## [2026-09-22] Починка серверной подписи /api/sign/* (двухшаговый PAdES)
+
+- **Агент:** big-pickle (opencode)
+- **Тип:** fix
+- **Файлы:** `src/lib/sign-prepare.ts` (новый), `src/app/api/sign/prepare/route.ts`, `src/lib/embedPades.ts`, `src/components/sign/SignDialog.tsx`, `src/app/documents/page.tsx`, тесты (`signPrepare.test.ts`, `templatePreviews.test.ts`, `embedPadesContract.test.ts`)
+- **Что было сломано:**
+  1. `/api/sign/prepare` читал колонки `documents.html` / `documents.data` (их нет; значения хранятся в `documents.fields` jsonb) и таблицу `templates`, которой в прод-БД **нет вообще** → роут всегда отвечал 404.
+  2. Резерв под CMS был фиксированным (10000 hex), а `embedCms` требует ТОЧНОГО совпадения длины с реальной подписью → подпись не встраивалась.
+  3. `SignDialog` не был смонтирован нигде → серверный API подписи был недостижим из UI.
+- **Что сделано:**
+  1. Шаблон берётся из статического `LEGAL_TEMPLATES`, текст — `TEMPLATE_PREVIEWS[id] ?? t.previewTemplate`, значения — из `documents.fields`; пустой документ подписывать нельзя (404).
+  2. Двухшаговый протокол как в рабочем `UKEPSigner`: пробный prepare (резерв 8192) → измерение длины CMS → финальный prepare с точной длиной → подпись → сверка длины → embed → accept.
+  3. `SignDialog` подключён в `/documents` (ленивый импорт; кнопка «Подписать» для серверных записей).
+  4. `accept` пишет корректный `algorithm: "CAdES-X-Long-Type-1"` (при `addTimestamp: true`; CHECK-констрейнт допускает оба значения).
+- **⚠️ Внимание следующему агенту:**
+  - Таблицы `templates` в БД НЕТ и не планируется — шаблоны ТОЛЬКО статические (`src/data/templates/*` + `src/data/templatePreviews.ts`). Не добавлять запросы `from("templates")`.
+  - Значения документа — в `documents.fields` (jsonb); колонок `html`/`data` не существует.
+  - `embedCms` требует, чтобы длина CMS точно совпадала с длиной резерва; не возвращать фиксированный резерв.
+  - Схема БД живёт ВНЕ `supabase/migrations/*` репозитория (миграции не описывают `documents`).
+- **Связанные PRs/коммиты:** (в коммитах этого дня)
+
+---
+
 ## [2026-09-22] Сравнение редакций договора + протокол разногласий (/sravnenie-dogovorov)
 
 - **Агент:** big-pickle (opencode)

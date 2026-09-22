@@ -167,13 +167,25 @@ export async function preparePAdESPlaceholder(
 
 /**
  * Вставляет готовый CMS (hex) в плейсхолдер на место нулевого Contents.
- * Длина cmsHex должна совпадать с длиной плейсхолдера (фиксированная длина файла).
+ *
+ * КОНТРАКТ: длина cmsHex ДОЛЖНА точно совпадать с зарезервированным Contents.
+ * Если вставить подпись короче, изменится длина файла и позиции ByteRange —
+ * подпись станет невалидной. Поэтому плейсхолдер готовят под точную длину CMS
+ * (см. пробный проход в SignDialog / UKEPSigner), а не «на глазок».
  */
 export function embedCms(placeholder: Uint8Array, cmsHex: string): Uint8Array {
   const pdfStr = latin1Decode(placeholder);
   const needle = `<${'0'.repeat(cmsHex.length)}>`;
   const gapStart = pdfStr.indexOf(needle);
-  if (gapStart === -1) throw new Error('Не удалось найти плейсхолдер Contents для вставки CMS');
+  if (gapStart === -1) {
+    // Диагностика вместо невнятной ошибки: показываем фактический резерв.
+    const reserved = /<0{16,}>/.exec(pdfStr);
+    const reservedLen = reserved ? reserved[0].length - 2 : 0;
+    throw new Error(
+      `Длина CMS (${cmsHex.length} hex) не совпадает с зарезервированным Contents (${reservedLen} hex). ` +
+        `Плейсхолдер нужно готовить под точную длину подписи (preparePAdESPlaceholder).`
+    );
+  }
   const gapEnd = gapStart + needle.length;
 
   const before = pdfStr.slice(0, gapStart);
