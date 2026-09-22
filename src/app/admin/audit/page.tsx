@@ -3,20 +3,21 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { Badge } from "@/components/ui/Badge";
 import { Card } from "@/components/ui/Card";
 import { Table, TableHead, TableBody, TableRow, TableHeader, TableCell } from "@/components/ui/Table";
+import { describeAuditRow, resourceName, actionName } from "@/lib/admin-audit";
+import Link from "next/link";
 
 const fmt = (s?: string | null) =>
   s ? new Date(s).toLocaleString("ru-RU", { day: "2-digit", month: "2-digit", year: "2-digit", hour: "2-digit", minute: "2-digit" }) : "—";
 
-const ACTION_LABELS: Record<string, string> = {
-  feedback_status: "Статус заявки",
-  admin_role: "Смена роли",
-  profile_update: "Редактирование профиля",
-};
-
-const ACTION_VARIANT: Record<string, "blue" | "purple" | "green"> = {
-  feedback_status: "blue",
-  admin_role: "purple",
-  profile_update: "green",
+/** Ссылка на объект, если для него есть страница в админке. */
+const objectHref = (resource: string, resourceId: string | null): string | null => {
+  const { href } = resourceName(resource);
+  if (!href) return null;
+  if (!resourceId) return href;
+  if ((resource === "profiles" || resource === "subscriptions") && /^[0-9a-f-]{36}$/i.test(resourceId)) {
+    return `/admin/users/${resourceId}`;
+  }
+  return null;
 };
 
 type AuditRow = {
@@ -110,10 +111,11 @@ export default async function AdminAuditPage({
   }));
   const actionOptions = Array.from(
     new Set((allActions ?? []).map((a: { action: string }) => a.action)),
-  );
-  const resourceOptions = Array.from(
+  ).sort();
+  const resourceKeys = Array.from(
     new Set((allResources ?? []).map((r: { resource: string }) => r.resource)),
-  );
+  ).sort();
+  // Куратор списка ресурсов для селекта — только те, что уже светились в журнале.
 
   const buildQs = (over: Record<string, string>) => {
     const params = new URLSearchParams();
@@ -129,7 +131,7 @@ export default async function AdminAuditPage({
     <div className="space-y-6 max-w-6xl mx-auto">
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Журнал действий</h1>
-        <p className="text-gray-600 text-sm">Все мутации в админке: смена ролей, статусов заявок, редактирование профилей.</p>
+        <p className="text-gray-600 text-sm">Кто из администраторов что менял: заявки, пользователи, подписки, записи экрана, выгрузки.</p>
       </div>
 
       {/* 6.3 (аудит): GET-форма фильтров — работает без JS, состояние в URL. */}
@@ -148,7 +150,7 @@ export default async function AdminAuditPage({
             <select id="f-action" name="action" defaultValue={action} className={inputCls}>
               <option value="">все</option>
               {actionOptions.map((a) => (
-                <option key={a} value={a}>{ACTION_LABELS[a] || a}</option>
+                <option key={a} value={a}>{actionName(a)}</option>
               ))}
             </select>
           </div>
@@ -156,8 +158,8 @@ export default async function AdminAuditPage({
             <label htmlFor="f-resource" className="text-[10px] font-mono uppercase text-gray-500">Объект</label>
             <select id="f-resource" name="resource" defaultValue={resource} className={inputCls}>
               <option value="">все</option>
-              {resourceOptions.map((r) => (
-                <option key={r} value={r}>{r}</option>
+              {resourceKeys.map((r) => (
+                <option key={r} value={r}>{resourceName(r).many}</option>
               ))}
             </select>
           </div>
@@ -189,31 +191,45 @@ export default async function AdminAuditPage({
             <TableRow>
               <TableHeader>Дата</TableHeader>
               <TableHeader>Кто</TableHeader>
-              <TableHeader>Действие</TableHeader>
-              <TableHeader>Объект</TableHeader>
-              <TableHeader>Детали</TableHeader>
+              <TableHeader>Что сделал</TableHeader>
+              <TableHeader>С чем</TableHeader>
             </TableRow>
           </TableHead>
           <TableBody>
-            {list.map((r) => (
-              <TableRow key={r.id}>
-                <TableCell className="text-gray-600 whitespace-nowrap">{fmt(r.created_at)}</TableCell>
-                <TableCell className="text-gray-700">{adminById.get(r.admin_id) || r.admin_id}</TableCell>
-                <TableCell>
-                  <Badge variant={ACTION_VARIANT[r.action] || "gray"} size="sm">
-                    {ACTION_LABELS[r.action] || r.action}
-                  </Badge>
-                </TableCell>
-                <TableCell className="text-gray-600">{r.resource}{r.resource_id ? ` · ${r.resource_id.slice(0, 8)}` : ""}</TableCell>
-                <TableCell className="text-gray-600 max-w-[280px] truncate">
-                  {r.meta ? JSON.stringify(r.meta) : "—"}
-                </TableCell>
-              </TableRow>
-            ))}
+            {list.map((r) => {
+              const v = describeAuditRow(r);
+              const href = objectHref(r.resource, r.resource_id);
+              return (
+                <TableRow key={r.id}>
+                  <TableCell className="text-gray-600 whitespace-nowrap">{fmt(r.created_at)}</TableCell>
+                  <TableCell className="text-gray-700">{adminById.get(r.admin_id) || r.admin_id}</TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <Badge variant={v.tone} size="sm">
+                        {actionName(r.action)}
+                      </Badge>
+                      <span className="text-gray-900">{v.verb}</span>
+                    </div>
+                    {v.detail && v.detail !== "—" && (
+                      <div className="text-xs text-gray-500 mt-1">{v.detail}</div>
+                    )}
+                  </TableCell>
+                  <TableCell className="text-gray-600">
+                    {href ? (
+                      <Link href={href} className="text-brand-600 hover:underline">
+                        {v.object}
+                      </Link>
+                    ) : (
+                      v.object
+                    )}
+                  </TableCell>
+                </TableRow>
+              );
+            })}
             {!list.length && (
               <TableRow>
-                <TableCell colSpan={5} className="text-center text-gray-600 py-10">
-                  {hasActiveFilters ? "По фильтрам ничего не найдено" : "Действий пока нет"}
+                <TableCell colSpan={4} className="text-center text-gray-600 py-10">
+                  {hasActiveFilters ? "По фильтрам ничего не найдено — попробуйте ослабить фильтры" : "Действий пока нет: журнал фиксирует смены статусов заявок, ролей, правки профилей и подписок"}
                 </TableCell>
               </TableRow>
             )}
