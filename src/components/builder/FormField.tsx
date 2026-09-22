@@ -123,6 +123,16 @@ export default function FormField({
         [`${prefix}passport_code`]: extra.code || extra.passport_code || "",
       };
     }
+    if (suggestOp === "suggest-court") {
+      // Поле наименования суда заканчивается на _name → соседнее поле адреса
+      // court_address заполняем адресом из DaData (data.address).
+      const prefix = field.id.replace(/_name$/, "");
+      const address = extra.court_address || extra.address || "";
+      extra = {
+        ...extra,
+        [`${prefix}_address`]: address,
+      };
+    }
     if (Object.keys(extra).length > 0 && onSuggestFill) {
       onSuggestFill(extra);
     }

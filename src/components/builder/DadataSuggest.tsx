@@ -28,6 +28,7 @@ interface DadataData {
   region?: string;
   court_type?: string;
   postal_code?: string;
+  address?: string;
 }
 
 interface DadataSuggestion {
@@ -103,10 +104,13 @@ function mapSuggestion(s: DadataSuggestion, op: SuggestOp): SuggestOption | null
     ]
       .filter(Boolean)
       .join(", ");
+    const extra: Record<string, string> = {};
+    if (d.address) extra.court_address = String(d.address);
     return {
       value,
       fillValue: String(s.unrestricted_value ?? value),
       sub: sub || undefined,
+      extra: Object.keys(extra).length ? extra : undefined,
     };
   }
   const value = String(s.value ?? "");
@@ -182,6 +186,7 @@ export function useDadataSuggest(op: SuggestOp) {
     "suggest-address": "address",
     "suggest-fio": "fio",
     "suggest-passport": "passport",
+    "suggest-court": "court",
     "find-fio": "fio", // find-fio использует findById/fio (POST), не suggest
   };
   const directOp = opMap[op] || "address";
