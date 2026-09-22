@@ -7,8 +7,9 @@ import { BLOG_POSTS, getBlogPost, getRelatedPosts } from "@/data/blog/posts";
 import { LEGAL_TEMPLATES } from "@/data/templates";
 import type { LegalTemplate } from "@/data/types";
 import { JsonLd } from "@/components/seo/JsonLd";
-import { breadcrumbJsonLd } from "@/lib/seo/faq";
+import { breadcrumbJsonLd, faqJsonLd } from "@/lib/seo/faq";
 import { withSeo } from "@/lib/seo/withSeo";
+import { truncateWord } from "@/lib/seo/docMeta";
 import { SITE_URL } from "@/lib/site";
 import { CATEGORY_LABELS, formatLongDate, postReadMinutes, postWordCount } from "@/lib/blog";
 import { ArticleProgress } from "@/components/blog/ArticleProgress";
@@ -31,7 +32,10 @@ export function generateMetadata({ params }: { params: Promise<{ slug: string }>
     if (!post) return {};
     return withSeo({
       title: post.metaTitle,
-      description: (post.description || post.metaTitle || "Статьи о договорах и законе").slice(0, 155),
+      description: truncateWord(
+        (post.description || post.metaTitle || "Статьи о договорах и законе").trim(),
+        155
+      ),
       path: `/blog/${post.slug}`,
       ogType: "article",
       publishedTime: post.date,
@@ -132,6 +136,7 @@ export default async function BlogPostPage({
               { name: "Блог", path: "/blog" },
               { name: post.title, path: url },
             ]),
+            ...(post.faq.length > 0 ? [faqJsonLd(post.faq)] : []),
             {
               "@context": "https://schema.org",
               "@type": "Article",

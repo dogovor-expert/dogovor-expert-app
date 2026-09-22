@@ -8,6 +8,7 @@ import type { LegalTemplate } from "@/data/types";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { faqJsonLd, breadcrumbJsonLd } from "@/lib/seo/faq";
 import { withSeo } from "@/lib/seo/withSeo";
+import { truncateWord } from "@/lib/seo/docMeta";
 import { SITE_URL } from "@/lib/site";
 import { AdSlot } from "@/components/ads/AdSlot";
 
@@ -23,13 +24,6 @@ export function generateStaticParams() {
 
 function slugToVariation(slug: string): DocVariation | undefined {
   return getVariation(slug);
-}
-
-function truncateWord(text: string, max: number): string {
-  if (text.length <= max) return text;
-  const cut = text.slice(0, max + 1);
-  const lastSpace = cut.lastIndexOf(" ");
-  return (lastSpace > max * 0.6 ? cut.slice(0, lastSpace) : text.slice(0, max)) + "…";
 }
 
 export function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {

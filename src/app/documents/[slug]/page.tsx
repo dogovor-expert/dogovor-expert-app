@@ -7,6 +7,7 @@ import type { LegalTemplate } from "@/data/types";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { faqForTemplate, faqJsonLd, breadcrumbJsonLd } from "@/lib/seo/faq";
 import { buildIntro, fieldsSummary } from "@/lib/seo/intro";
+import { docTitle, docDesc } from "@/lib/seo/docMeta";
 import { withSeo } from "@/lib/seo/withSeo";
 import { SITE_URL } from "@/lib/site";
 import { AdSlot } from "@/components/ads/AdSlot";
@@ -30,12 +31,10 @@ export function generateMetadata({ params }: { params: Promise<{ slug: string }>
     const t = slugToTemplate(slug);
     if (!t) return {};
     const url = `/documents/${t.id}`;
-    const baseDesc = `${t.description} Заполнение онлайн за 5 минут: PDF и DOCX, бесплатно, без регистрации. Образец ${YEAR} года.`;
-    const baseTitle = `${t.name} — образец ${YEAR}: составить и скачать`;
     return withSeo({
       path: url,
-      title: truncateWord(baseTitle, 60),
-      description: truncateWord(baseDesc, 160),
+      title: docTitle(t.name),
+      description: docDesc(t.description),
       ogType: "article",
       modifiedTime: t.lastUpdated,
       robots: {
@@ -50,13 +49,6 @@ export function generateMetadata({ params }: { params: Promise<{ slug: string }>
       },
     });
   });
-}
-
-function truncateWord(text: string, max: number): string {
-  if (text.length <= max) return text;
-  const cut = text.slice(0, max + 1);
-  const lastSpace = cut.lastIndexOf(" ");
-  return (lastSpace > max * 0.6 ? cut.slice(0, lastSpace) : text.slice(0, max)) + "…";
 }
 
 export default async function DocumentPage({

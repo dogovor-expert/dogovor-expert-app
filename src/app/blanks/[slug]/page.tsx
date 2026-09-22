@@ -12,6 +12,7 @@ import { fieldsSummary } from "@/lib/seo/intro";
 import { renderTemplateDocument } from "@/lib/renderDocument";
 import BlankDownloadButtons from "@/components/blank/BlankDownloadButtons";
 import { withSeo } from "@/lib/seo/withSeo";
+import { blankTitle, blankDesc } from "@/lib/seo/docMeta";
 import { SITE_URL } from "@/lib/site";
 
 export const dynamicParams = false;
@@ -53,12 +54,10 @@ export function generateMetadata({ params }: { params: Promise<{ slug: string }>
     const t = slugToTemplate(slug);
     if (!t) return {};
     const url = `/blanks/${t.id}`;
-    const baseTitle = `Скачать бланк «${t.name}» — PDF и Word`;
-    const baseDesc = `Пустой бланк «${t.name}» для ручного заполнения. Скачайте бесплатно в PDF и Word с dogovor.expert, без регистрации.`;
     return withSeo({
       path: url,
-      title: truncateWord(baseTitle, 60),
-      description: truncateWord(baseDesc, 160),
+      title: blankTitle(t.name),
+      description: blankDesc(t.name),
       ogType: "article",
       // 8.3 (аудит): /blanks/{slug} и /documents/{slug} — близнецы по контенту
       // (369×2). Каноническая — /documents (основная страница шаблона с формой).
@@ -80,13 +79,6 @@ export function generateMetadata({ params }: { params: Promise<{ slug: string }>
       },
     });
   });
-}
-
-function truncateWord(text: string, max: number): string {
-  if (text.length <= max) return text;
-  const cut = text.slice(0, max + 1);
-  const lastSpace = cut.lastIndexOf(" ");
-  return (lastSpace > max * 0.6 ? cut.slice(0, lastSpace) : text.slice(0, max)) + "…";
 }
 
 export default async function BlankPage({ params }: { params: Promise<{ slug: string }> }) {
