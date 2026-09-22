@@ -16,7 +16,27 @@
 
 ---
 
-## [2026-09-22] Фикс: акция «PRO 299 ₽» не показывалась в интерфейсе
+## [2026-09-22] 5 фич: суд DaData (адрес), налоговая оговорка, .ics, анонимайзер PDF, акт сверки
+
+- **Агент:** big-pickle (opencode)
+- **Тип:** feat
+- **Файлы:** `src/components/builder/{DadataSuggest,FormField,PreviewStage}.tsx`, `src/data/templates/{parts,contracts}.ts`, `src/lib/ics.ts` (новый) + `src/lib/__tests__/ics.test.ts`, `src/workers/pdf.worker.ts`, `src/components/converter/RedactPdf.tsx` (новый), `src/components/converter/{ConverterRunner,ConverterHub}.tsx`, `src/app/converter/[tool]/page.tsx`, `src/data/converter-tools.ts`, `src/components/calculator/Reconciliation.tsx` (новый), `src/components/calculator/CalculatorRunner.tsx`, `src/components/utils/UtilsTools.tsx`, `src/data/calculator-tools.ts` + тест, `src/app/utils/{page.tsx,[tool]/page.tsx}`
+- **Что сделано:**
+  1. **Суд DaData**: `suggest-court` теперь возвращает `extra.court_address = data.address`; `FormField` при id поля с суффиксом `_name` авто-заполняет соседнее поле `*_address`.
+  2. **Налоговая оговорка**: `taxClause()` (два механизма: заверения по ст. 431.2 ГК + возмещение потерь по ст. 406.1 ГК + подтверждение добросовестности по ст. 54.1 НК), чекбокс `tax_clause` — в 8 шаблонах подряда (`contract-personal`, `house-repair`, `roof-repair` и др.).
+  3. **Экспорт .ics**: кнопка «Скачать .ics (календарь)» в меню экспорта PreviewStage; `src/lib/ics.ts` — RFC 5545 генератор (folding ≤75 октетов, VALARM, время-напоминания для полей-дедлайнов). КЛИЕНТСКИЙ, данные не уходят.
+  4. **Анонимайзер PDF** `/converter/redact-pdf`: закраска областей + РАСТЕРИЗАЦИЯ страниц (текст под заливкой физически удаляется, а не прячется). Регионы нормализованы 0..1, рисуются мышью, клик снимает заливку.
+  5. **Генератор акта сверки**: `Reconciliation` — операции, дебет/кредит/сальдо, акт в DOCX/PDF/печать; в `/utils` (FileSpreadsheet) и калькуляторах; SEO-запись `akt-sverki` + CTA на шаблон `act-works`.
+- **⚠️ Внимание следующему агенту:**
+  - commitlint `scope`-enum строго: `[auth, templates, supabase, ui, api, deps, config, ci, docs, cookies, analytics, pdf, perf, audit, agents]`; для конвертера использовать `pdf` или `ui` (не `converter`).
+  - Pre-commit хуки: typecheck + lint + blast-radius + vitest related + gitleaks.
+  - Деплой — fast-forward push `master:production` (вебхук CapRover собирает сам). На проде `NEXT_PUBLIC_*` запекаются в билде.
+  - `isDeadlineField` использует маркер `end` (НЕ `_end`) — иначе `end_date` не совпадёт.
+  - Растеризация PDF при закраске — по дизайну (безопасность), scale 2 / jpeg 0.92.
+  - Отчёт сборки: `/converter/[tool]` = 15 маршрутов, `/utils/[tool]` = 23.
+- **Связанные PRs/коммиты:** 8cad17c, 9cb3e34, e7ba7cb, ead9d25, b549b60
+
+---
 
 - **Агент:** big-pickle (opencode)
 - **Тип:** fix
