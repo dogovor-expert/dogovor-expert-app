@@ -75,6 +75,10 @@ export function buildIntro(template: LegalTemplate): string[] {
 
   paragraphs.push(template.description);
 
+  if (template.seoLsi && template.seoLsi.length > 0) {
+    paragraphs.push(...template.seoLsi);
+  }
+
   paragraphs.push(
     `Правовая основа — ${template.actSource}. Документ составлен с учётом актуальных требований законодательства РФ на ${template.lastUpdated.toLowerCase()}. Для сделок, не требующих обязательного нотариального удостоверения, достаточно простой письменной формы (ст. 161 ГК РФ): распечатайте документ и подпишите его обеими сторонами.`
   );

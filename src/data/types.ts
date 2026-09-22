@@ -123,6 +123,8 @@ export interface LegalTemplate {
   actSource: string;
   lastUpdated: string;
   description: string;
+  /** LSI-абзацы для SEO: рендерятся в вводном тексте страницы документа. */
+  seoLsi?: string[];
   fields: TemplateField[];
   previewTemplate?: string;
   suggestedDocs: string[];

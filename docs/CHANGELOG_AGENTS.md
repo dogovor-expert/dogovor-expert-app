@@ -16,6 +16,24 @@
 
 ---
 
+## [2026-09-22] SEO-контент: пер-документные FAQ, переписаны 31 описание, LSI
+
+- **Агент:** big-pickle (opencode)
+- **Тип:** feat (SEO)
+- **Файлы:** `src/lib/seo/faq.ts` (переписан), `src/lib/__tests__/faq.test.ts` (новый), `src/lib/seo/intro.ts`, `src/data/types.ts`, `src/data/templates/auto.ts`, `src/data/blog/posts.ts` + `src/data/blog/batches/batch1..12b.ts`, `src/app/documents/[slug]/page.tsx`, `src/app/blanks/[slug]/page.tsx`
+- **Что сделано:**
+  1. **Пер-документные FAQ** вместо категорийных: `faqForDocument(t)` генерирует 4 вопроса из данных шаблона (состав полей, actSource, имя). Убраны `CATEGORY_FAQ`/`GENERAL_FAQ`/`faqForTemplate`. Тест проверяет уникальность первых двух ответов по всем 369 шаблонам.
+  2. **31 описание блога** (>155 симв.) переписаны «ответом вперёд», все ≤155; у всех 59 постов в title/description есть год 2026.
+  3. **LSI-абзацы**: добавлено поле `LegalTemplate.seoLsi`, рендерится в intro; заполнено для `taxi-lease` и `car-detailing`.
+- **⚠️ Внимание следующему агенту:**
+  - Посты блога лежат в ДВУХ местах: собственный массив в `posts.ts` И `batches/batch1..12b.ts` (по 1 посту). Правя описание, ищи файл по slug (в `posts.ts` дублей нет). `BLOG_POSTS = [ ...own, ...batches ]`.
+  - `faqForDocument` включала имя документа в ответы специально — иначе у шаблонов с одинаковым набором полей ответы дублировались.
+  - FAQ rich results в Google deprecated (07.05.2026) — разметка для ИИ/других ПС, не для плашки.
+- **Проверки:** typecheck, lint, 709 тестов, build 955 стр.; HTML: FAQ-вопросов 4 на документ, LSI-фразы присутствуют.
+- **Связанные коммиты:** (этот)
+
+---
+
 ## [2026-09-22] SEO-аудит: сниппеты, sitemap↔noindex, ISO lastModified
 
 - **Агент:** big-pickle (opencode)

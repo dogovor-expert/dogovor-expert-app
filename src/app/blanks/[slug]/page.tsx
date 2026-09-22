@@ -7,7 +7,7 @@ import { Clock, Download, FileText, ShieldCheck, ChevronRight, Check, Sparkles }
 import { LEGAL_TEMPLATES } from "@/data/templates";
 import type { LegalTemplate } from "@/data/types";
 import { JsonLd } from "@/components/seo/JsonLd";
-import { faqForTemplate, faqJsonLd, breadcrumbJsonLd } from "@/lib/seo/faq";
+import { faqForDocument, faqJsonLd, breadcrumbJsonLd } from "@/lib/seo/faq";
 import { fieldsSummary } from "@/lib/seo/intro";
 import { renderTemplateDocument } from "@/lib/renderDocument";
 import BlankDownloadButtons from "@/components/blank/BlankDownloadButtons";
@@ -96,7 +96,7 @@ export default async function BlankPage({ params }: { params: Promise<{ slug: st
 
   const previewImages = getBlankPreviewImages(t.id);
 
-  const faq = faqForTemplate(t.category);
+  const faq = faqForDocument(t);
   const summary = fieldsSummary(t);
   const related = (t.suggestedDocs || [])
     .map((id) => LEGAL_TEMPLATES.find((x) => x.id === id))
