@@ -1070,8 +1070,8 @@ export default function DocScanner({
   };
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200/70 shadow-soft">
-      <div className="sticky top-0 z-20 bg-gradient-to-br from-brand-500 to-brand-700 px-4 py-4 text-white rounded-t-2xl">
+    <div className="a2-scan rounded-2xl border">
+      <div className="a2-scan-head px-4 py-4 text-white rounded-t-2xl">
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-3 min-w-0">
             <div className="w-11 h-11 rounded-2xl bg-white/15 backdrop-blur flex items-center justify-center shrink-0">

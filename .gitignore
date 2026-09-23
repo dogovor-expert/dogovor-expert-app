@@ -94,4 +94,5 @@ dev-3100.cmd
 make-shortcut.ps1
 fix-shortcut.ps1
 check-prod.mjs
+add-bt-sels.py
 next3100.log
