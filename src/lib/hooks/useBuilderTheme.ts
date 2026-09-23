@@ -2,15 +2,11 @@
 import { useCallback, useEffect, useState } from "react";
 
 /**
- * Каталог светлых тем рабочей области (/builder). Все — светлые,
- * отличаются теплотой фона: от холодного нейтрального (primer)
- * до самого тёплого (milktea). Значения — из исследования
- * paper/sepia-тем (Kindle, Firefox Reader, Solarized, Gruvbox,
- * Obsidian), контраст текста везде ≥ 4.5:1 (AA).
- *
- * Ненужные темы удаляются отсюда одной строкой — хук, панель
- * и CSS берутся из этого же списка (ключи data-bt генерируются
- * из id, body-класс из bodyClass).
+ * Каталог тем рабочей области (/builder). Светлая полоса: от холодного
+ * нейтрального (primer) до самого тёплого светлого (milktea).
+ * Тёмно-бежевая полоса (sand → bark): фон темнее карточки milktea,
+ * текст остаётся тёмным — структура CSS не меняется. Контраст
+ * текста везде ≥ 4.5:1 (AA, проверено скриптом WCAG).
  */
 export interface BuilderThemeDef {
   id: string;
@@ -30,7 +26,11 @@ export const BUILDER_THEMES: BuilderThemeDef[] = [
   { id: "sepia", label: "Сепия", hint: "как в читалках", bodyClass: "bt-sepia", swatch: "#e7dbc0" },
   { id: "kindle", label: "Киндл", hint: "книжный уют", bodyClass: "bt-kindle", swatch: "#eddcb9" },
   { id: "gruvbox", label: "Грувбокс", hint: "медовый", bodyClass: "bt-gruvbox", swatch: "#ebdbb2" },
-  { id: "milktea", label: "Милк-ти", hint: "самый тёплый", bodyClass: "bt-milktea", swatch: "#eadfcd" },
+  { id: "milktea", label: "Милк-ти", hint: "самый тёплый светлый", bodyClass: "bt-milktea", swatch: "#eadfcd" },
+  { id: "sand", label: "Песок", hint: "тёмно-бежевый I", bodyClass: "bt-sand", swatch: "#d9cba8" },
+  { id: "clay", label: "Глина", hint: "тёмно-бежевый II", bodyClass: "bt-clay", swatch: "#cdb894" },
+  { id: "umber", label: "Умбра", hint: "тёмно-бежевый III", bodyClass: "bt-umber", swatch: "#bda87f" },
+  { id: "bark", label: "Кора", hint: "самый тёмный", bodyClass: "bt-bark", swatch: "#a89468" },
 ];
 
 export type BuilderTheme = (typeof BUILDER_THEMES)[number]["id"];

@@ -832,9 +832,11 @@
 }
 
 /* ============================================================
- * Темы рабочей области конструктора (/builder): только светлые,
- * от нейтральной к тёплой. Каталог — BUILDER_THEMES в
- * src/lib/hooks/useBuilderTheme.ts (id → body.bt-* + data-bt).
+ * Темы рабочей области конструктора (/builder): светлые
+ * (нейтральная → тёплая) + тёмно-бежевые (sand → bark, фон
+ * темнее карточки milktea, текст остаётся тёмным). Каталог —
+ * BUILDER_THEMES в src/lib/hooks/useBuilderTheme.ts
+ * (id → body.bt-* + data-bt).
  * Документ (PreviewStage, печать, экспорт) НЕ входит в скоуп
  * и всегда остаётся белым — темы красят только рабочую зону.
  * Акценты тёплых тем — умбра/олива/терракота, НЕ ярко-синий
@@ -861,6 +863,18 @@ body.bt-gruvbox {
 }
 body.bt-milktea {
   background-color: #eadfcd;
+}
+body.bt-sand {
+  background-color: #d9cba8;
+}
+body.bt-clay {
+  background-color: #cdb894;
+}
+body.bt-umber {
+  background-color: #bda87f;
+}
+body.bt-bark {
+  background-color: #a89468;
 }
 
 /* --- Тёплые/светлые темы: общий шаблон перекраски рабочей области.
@@ -1109,6 +1123,170 @@ body.bt-milktea {
 [data-bt="milktea"] input::placeholder,
 [data-bt="milktea"] textarea::placeholder {
   color: #a89a83;
+  opacity: 1;
+}
+
+[data-bt="sand"] .bg-white,
+[data-bt="sand"].bg-white {
+  background-color: #e8dcc0;
+}
+[data-bt="sand"] .bg-gray-50,
+[data-bt="sand"] .bg-slate-50,
+[data-bt="sand"] .bg-slate-100,
+[data-bt="sand"] .bg-gray-100 {
+  background-color: #dfd1ae;
+}
+[data-bt="sand"] .text-gray-900,
+[data-bt="sand"] .text-slate-900,
+[data-bt="sand"] .text-slate-800,
+[data-bt="sand"] .text-gray-800 {
+  color: #3d3029;
+}
+[data-bt="sand"] .text-gray-700,
+[data-bt="sand"] .text-slate-700,
+[data-bt="sand"] .text-slate-600,
+[data-bt="sand"] .text-gray-600 {
+  color: #5a4a33;
+}
+[data-bt="sand"] .border-gray-100,
+[data-bt="sand"] .border-gray-200,
+[data-bt="sand"] .border-slate-200\/70,
+[data-bt="sand"] .border-slate-200 {
+  border-color: #c9b98f;
+}
+[data-bt="sand"] input,
+[data-bt="sand"] select,
+[data-bt="sand"] textarea {
+  background-color: #e2d5b8;
+  border-color: #c9b98f;
+  color: #3d3029;
+}
+[data-bt="sand"] input::placeholder,
+[data-bt="sand"] textarea::placeholder {
+  color: #97865f;
+  opacity: 1;
+}
+
+[data-bt="clay"] .bg-white,
+[data-bt="clay"].bg-white {
+  background-color: #ddcba6;
+}
+[data-bt="clay"] .bg-gray-50,
+[data-bt="clay"] .bg-slate-50,
+[data-bt="clay"] .bg-slate-100,
+[data-bt="clay"] .bg-gray-100 {
+  background-color: #d3be9c;
+}
+[data-bt="clay"] .text-gray-900,
+[data-bt="clay"] .text-slate-900,
+[data-bt="clay"] .text-slate-800,
+[data-bt="clay"] .text-gray-800 {
+  color: #3a2d20;
+}
+[data-bt="clay"] .text-gray-700,
+[data-bt="clay"] .text-slate-700,
+[data-bt="clay"] .text-slate-600,
+[data-bt="clay"] .text-gray-600 {
+  color: #54402a;
+}
+[data-bt="clay"] .border-gray-100,
+[data-bt="clay"] .border-gray-200,
+[data-bt="clay"] .border-slate-200\/70,
+[data-bt="clay"] .border-slate-200 {
+  border-color: #bda37c;
+}
+[data-bt="clay"] input,
+[data-bt="clay"] select,
+[data-bt="clay"] textarea {
+  background-color: #d5c09e;
+  border-color: #bda37c;
+  color: #3a2d20;
+}
+[data-bt="clay"] input::placeholder,
+[data-bt="clay"] textarea::placeholder {
+  color: #8f7a58;
+  opacity: 1;
+}
+
+[data-bt="umber"] .bg-white,
+[data-bt="umber"].bg-white {
+  background-color: #cfbd95;
+}
+[data-bt="umber"] .bg-gray-50,
+[data-bt="umber"] .bg-slate-50,
+[data-bt="umber"] .bg-slate-100,
+[data-bt="umber"] .bg-gray-100 {
+  background-color: #c3ae85;
+}
+[data-bt="umber"] .text-gray-900,
+[data-bt="umber"] .text-slate-900,
+[data-bt="umber"] .text-slate-800,
+[data-bt="umber"] .text-gray-800 {
+  color: #332619;
+}
+[data-bt="umber"] .text-gray-700,
+[data-bt="umber"] .text-slate-700,
+[data-bt="umber"] .text-slate-600,
+[data-bt="umber"] .text-gray-600 {
+  color: #4d3d24;
+}
+[data-bt="umber"] .border-gray-100,
+[data-bt="umber"] .border-gray-200,
+[data-bt="umber"] .border-slate-200\/70,
+[data-bt="umber"] .border-slate-200 {
+  border-color: #a99668;
+}
+[data-bt="umber"] input,
+[data-bt="umber"] select,
+[data-bt="umber"] textarea {
+  background-color: #c4b086;
+  border-color: #a99668;
+  color: #332619;
+}
+[data-bt="umber"] input::placeholder,
+[data-bt="umber"] textarea::placeholder {
+  color: #85714b;
+  opacity: 1;
+}
+
+[data-bt="bark"] .bg-white,
+[data-bt="bark"].bg-white {
+  background-color: #bfa87c;
+}
+[data-bt="bark"] .bg-gray-50,
+[data-bt="bark"] .bg-slate-50,
+[data-bt="bark"] .bg-slate-100,
+[data-bt="bark"] .bg-gray-100 {
+  background-color: #b09e72;
+}
+[data-bt="bark"] .text-gray-900,
+[data-bt="bark"] .text-slate-900,
+[data-bt="bark"] .text-slate-800,
+[data-bt="bark"] .text-gray-800 {
+  color: #2e2318;
+}
+[data-bt="bark"] .text-gray-700,
+[data-bt="bark"] .text-slate-700,
+[data-bt="bark"] .text-slate-600,
+[data-bt="bark"] .text-gray-600 {
+  color: #332818;
+}
+[data-bt="bark"] .border-gray-100,
+[data-bt="bark"] .border-gray-200,
+[data-bt="bark"] .border-slate-200\/70,
+[data-bt="bark"] .border-slate-200 {
+  border-color: #968155;
+}
+[data-bt="bark"] input,
+[data-bt="bark"] select,
+[data-bt="bark"] textarea {
+  background-color: #b09c72;
+  border-color: #968155;
+  color: #2e2318;
+}
+[data-bt="bark"] input::placeholder,
+[data-bt="bark"] textarea::placeholder {
+  color: #6f6040;
   opacity: 1;
 }
 
@@ -1395,6 +1573,122 @@ body.bt-milktea {
   --a2-node-tx: #a89a83;
   --a2-shadow: 0 2px 10px rgba(61, 48, 41, 0.09);
   --a2-shadow-now: 0 6px 24px rgba(192, 96, 42, 0.2);
+}
+.a2-band[data-bt="sand"] {
+  --a2-bg: #d9cba8;
+  --a2-card: #e8dcc0;
+  --a2-border: #c9b98f;
+  --a2-ink: #3d3029;
+  --a2-sub: #463927;
+  --a2-muted: #5a4a33;
+  --a2-faint: #97865f;
+  --a2-field-bg: #e2d5b8;
+  --a2-field-bd: #c9b98f;
+  --a2-chip-bg: #e8dcc0;
+  --a2-chip-bd: #c9b98f;
+  --a2-chip-tx: #5a4a33;
+  --a2-chip-done-bg: #d9d7b4;
+  --a2-chip-done-bd: #6b6234;
+  --a2-chip-done-tx: #3f3a16;
+  --a2-chip-now-bg: #e6cea8;
+  --a2-chip-now-bd: #8a5a1b;
+  --a2-chip-now-tx: #5f3d0c;
+  --a2-pill-ok-bg: #d3d8b4;
+  --a2-pill-ok-tx: #3f3a16;
+  --a2-pill-mid-bg: #e6cea8;
+  --a2-pill-mid-tx: #5f3d0c;
+  --a2-node-bg: #e8dcc0;
+  --a2-node-bd: #c9b98f;
+  --a2-node-tx: #97865f;
+  --a2-shadow: 0 2px 10px rgba(61, 48, 41, 0.12);
+  --a2-shadow-now: 0 6px 24px rgba(138, 90, 27, 0.24);
+}
+.a2-band[data-bt="clay"] {
+  --a2-bg: #cdb894;
+  --a2-card: #ddcba6;
+  --a2-border: #bda37c;
+  --a2-ink: #3a2d20;
+  --a2-sub: #423623;
+  --a2-muted: #54402a;
+  --a2-faint: #8f7a58;
+  --a2-field-bg: #d5c09e;
+  --a2-field-bd: #bda37c;
+  --a2-chip-bg: #ddcba6;
+  --a2-chip-bd: #bda37c;
+  --a2-chip-tx: #54402a;
+  --a2-chip-done-bg: #cdc8a2;
+  --a2-chip-done-bd: #63592e;
+  --a2-chip-done-tx: #3a3413;
+  --a2-chip-now-bg: #ddbd92;
+  --a2-chip-now-bd: #7c4a12;
+  --a2-chip-now-tx: #552f08;
+  --a2-pill-ok-bg: #c6cba4;
+  --a2-pill-ok-tx: #3a3413;
+  --a2-pill-mid-bg: #ddbd92;
+  --a2-pill-mid-tx: #552f08;
+  --a2-node-bg: #ddcba6;
+  --a2-node-bd: #bda37c;
+  --a2-node-tx: #8f7a58;
+  --a2-shadow: 0 2px 10px rgba(58, 45, 32, 0.13);
+  --a2-shadow-now: 0 6px 24px rgba(124, 74, 18, 0.26);
+}
+.a2-band[data-bt="umber"] {
+  --a2-bg: #bda87f;
+  --a2-card: #cfbd95;
+  --a2-border: #a99668;
+  --a2-ink: #332619;
+  --a2-sub: #3b2f1d;
+  --a2-muted: #4d3d24;
+  --a2-faint: #85714b;
+  --a2-field-bg: #c4b086;
+  --a2-field-bd: #a99668;
+  --a2-chip-bg: #cfbd95;
+  --a2-chip-bd: #a99668;
+  --a2-chip-tx: #4d3d24;
+  --a2-chip-done-bg: #bdb78e;
+  --a2-chip-done-bd: #575227;
+  --a2-chip-done-tx: #322d0f;
+  --a2-chip-now-bg: #cda977;
+  --a2-chip-now-bd: #6b3f0e;
+  --a2-chip-now-tx: #4a2806;
+  --a2-pill-ok-bg: #b5ba90;
+  --a2-pill-ok-tx: #322d0f;
+  --a2-pill-mid-bg: #cda977;
+  --a2-pill-mid-tx: #4a2806;
+  --a2-node-bg: #cfbd95;
+  --a2-node-bd: #a99668;
+  --a2-node-tx: #85714b;
+  --a2-shadow: 0 2px 10px rgba(51, 38, 25, 0.15);
+  --a2-shadow-now: 0 6px 24px rgba(107, 63, 14, 0.3);
+}
+.a2-band[data-bt="bark"] {
+  --a2-bg: #a89468;
+  --a2-card: #bfa87c;
+  --a2-border: #968155;
+  --a2-ink: #2e2318;
+  --a2-sub: #35291b;
+  --a2-muted: #332818;
+  --a2-faint: #6f6040;
+  --a2-field-bg: #b09c72;
+  --a2-field-bd: #968155;
+  --a2-chip-bg: #bfa87c;
+  --a2-chip-bd: #968155;
+  --a2-chip-tx: #332818;
+  --a2-chip-done-bg: #aaa276;
+  --a2-chip-done-bd: #4c4520;
+  --a2-chip-done-tx: #29240c;
+  --a2-chip-now-bg: #bd9660;
+  --a2-chip-now-bd: #5c350b;
+  --a2-chip-now-tx: #3d2105;
+  --a2-pill-ok-bg: #a1a67e;
+  --a2-pill-ok-tx: #29240c;
+  --a2-pill-mid-bg: #bd9660;
+  --a2-pill-mid-tx: #3d2105;
+  --a2-node-bg: #bfa87c;
+  --a2-node-bd: #968155;
+  --a2-node-tx: #6f6040;
+  --a2-shadow: 0 2px 10px rgba(46, 35, 24, 0.17);
+  --a2-shadow-now: 0 6px 24px rgba(92, 53, 11, 0.32);
 }
 
 /* --- Hero-полоса --- */
