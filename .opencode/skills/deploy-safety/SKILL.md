@@ -1,6 +1,6 @@
 ---
 name: deploy-safety
-description: Безопасный деплой проекта Dogovor на Vercel. Проверяет предусловия, выполняет деплой и верифицирует результат. Используй перед каждым деплоем на прод.
+description: Безопасный деплой Dogovor на прод (CapRover). Проверяет предусловия, выполняет деплой и верифицирует результат. Используй перед каждым деплоем на прод.
 ---
 
 # Deploy Safety
@@ -8,8 +8,8 @@ description: Безопасный деплой проекта Dogovor на Verce
 ## Когда использовать
 
 Этот skill ОБЯЗАН использоваться при:
-- Деплое на Vercel через `npx vercel --prod`
-- Любых изменениях в `.vercel.json`, `next.config.mjs`, `middleware.ts`
+- Деплое на прод через `git push origin master:production` (CapRover-вебхук)
+- Любых изменениях в `captain-definition`, `next.config.mjs`, `middleware.ts`
 - Обновлении зависимостей, влияющих на сборку
 - После исправления багов, требующих проверки на проде
 
@@ -22,14 +22,13 @@ description: Безопасный деплой проекта Dogovor на Verce
 ## Деплой
 
 ```powershell
-npx vercel --prod --yes --cwd "D:\Мои сайты\site Dogovor"
+git push origin master:production
 ```
+Канон — `docs/DEPLOY.md`; `production` обязана быть fast-forward от `master`.
 
 ### Критические правила (из AGENTS.md)
-- **НЕ исключать `*.png`** из robocopy — `og-image.png` (1200x630) и `apple-icon.png` (180x180) обязаны попасть в деплой
-- **НЕ заливать `.vercel`** (и `.vercel/output`) — Vercel подхватит как prebuilt build artifacts → 404
-- **НЕ заливать `.next/cache`** — build-кэш, большой `0.pack` может уронить загрузку
-- **`proj` должен содержать ВЕСЬ проект** — Vercel запускает реальный `next build`
+- **НЕ исключать `*.png`** — `og-image.png` (1200x630) и `apple-icon.png` (180x180) обязаны попасть в деплой
+- **НЕ заливать `.next/cache`** — build-кэш может уронить загрузку
 
 ## Пост-деплой верификация (ОБЯЗАТЕЛЬНА)
 
@@ -73,6 +72,6 @@ Disallow: /documents/$
 
 ## Известные ловушки
 
-- «READY+PROMOTED» НЕ означает доставку кода — проверять фактически
+- Статус «deployed» в панели CapRover НЕ означает доставку кода — проверять фактически (HTTP-коды + smoke)
 - `package.json` в `.next` — служебный `{"type":"module"}`, подменять sha в манифесте
 - Кириллица в PowerShell: `[Console]::OutputEncoding = [System.Text.Encoding]::UTF8`

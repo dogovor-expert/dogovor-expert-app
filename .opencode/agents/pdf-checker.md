@@ -1,7 +1,6 @@
-﻿---
+---
 description: Специалист по PDF-рендеру проекта Dogovor. Проверяет координаты, watermark, шрифты и целостность PDF.
 mode: subagent
-model: bynara/glm-5.3-free
 permission:
   read: allow
   glob: allow
@@ -20,7 +19,7 @@ permission:
 ## Зоны ответственности
 
 1. **Координаты блоков** — шапка (y ~57-90), тело (y возрастает), watermark/колонтитул (y ~800-822)
-2. **Watermark** — текст «Сформировано бесплатно на сервисе Dogovor» без хвоста
+2. **Watermark** — текст «Сформировано на {siteUrl}» (см. `drawFooter` в `src/lib/exportPdf.ts`) без хвоста
 3. **Шрифты** — только TTF в `public/fonts` (OTF → CFF-сабсеттинг критически медленный)
 4. **Рендерер** — `src/lib/exportPdf.ts` (buildPdf) — единый рендерер PDF
 5. **Токены дизайна** — `src/lib/docDesign.ts` (3 стиля: classic/minimal/brand)

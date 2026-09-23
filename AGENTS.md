@@ -1,116 +1,67 @@
 # Dogovor — правила для агентов
 
-> **Канонический источник правды** для AI-агентов (соответствует стандарту [agents.md](https://agents.md/) — Linux Foundation).
-> Для IDE-обёрток (Cursor, Cline, Windsurf, Copilot) — см. секцию «IDE-обёртки» ниже.
+> **Канонический источник правды** для AI-агентов (стандарт [agents.md](https://agents.md/)).
+> Акция 299 ₽ до 2026-09-20 завершена — ориентируйся на `docs/GROWTH_PLAN.md` и тексты сайта.
 
 ## 🚨 Обязательные правила (нарушать = баг в проде)
 
-1. **Проверка PDF-экспорта** — нельзя писать «PDF-баг исправлен» без прогона skill `pdf-export-verify` (реальные данные, скачивание PDF с прода, программный анализ координат, проверка бандла).
-2. **Связанные элементы при наполнении контентом** — любое изменение шаблона/поля/раздела/модуля = НЕ изолированная правка. Полная карта связей и чек-лист: [`docs/CONTENT_RULES.md`](docs/CONTENT_RULES.md).
-3. **Качественный барьер (Quality Gate)** — blast radius + vitest related + tsc + smoke + модульная изоляция. Полный регламент: [`docs/QUALITY_GATE.md`](docs/QUALITY_GATE.md). Финальный чек-лист перед сдачей — там же.
-4. **Деплой и проверка прода** — актуальный флоу на 19.08.2026: [`docs/DEPLOY.md`](docs/DEPLOY.md).
-5. **SEO-инварианты** — не ломать robots/sitemap/canonical/JSON-LD. Полный список: [`docs/SEO_INVARIANTS.md`](docs/SEO_INVARIANTS.md).
-6. **Аудит-фиксы 20.08.2026** — YooKassa webhook, RLS write-lock, экранирование, rate limit, Next 15 API: [`docs/AUDIT_FIXES.md`](docs/AUDIT_FIXES.md).
-7. **Site audit protocol** — единая команда `npm run audit:full` + триггеры предложения аудита. Полный регламент: [`docs/SITE_AUDIT.md`](docs/SITE_AUDIT.md).
-8. **Правила среды выполнения (Windows / OpenCode)** — LF, UTF-8 no-BOM, безопасная замена: [`docs/ENV_RULES.md`](docs/ENV_RULES.md).
-9. **Адаптивность (responsive)** — mobile-first, dvh/safe-area, container queries; инварианты и план: [`docs/RESPONSIVE.md`](docs/RESPONSIVE.md). PWA/«сайт как приложение» и service worker — **НЕ внедрять** (решение владельца, отложено).
+1. **Проверка PDF-экспорта** — нельзя писать «PDF-баг исправлен» без прогона skill `pdf-export-verify`.
+2. **Связанные элементы при наполнении контентом** — изменение шаблона/поля/раздела/модуля = НЕ изолированная правка. Карта связей: [`docs/CONTENT_RULES.md`](docs/CONTENT_RULES.md).
+3. **Качественный барьер (Quality Gate)** — blast radius + vitest related + tsc + smoke. Регламент: [`docs/QUALITY_GATE.md`](docs/QUALITY_GATE.md).
+4. **Деплой и проверка прода** — флоу на 19.08.2026: [`docs/DEPLOY.md`](docs/DEPLOY.md). Только `git push origin master:production` → CapRover-вебхук.
+5. **SEO-инварианты** — не ломать robots/sitemap/canonical/JSON-LD: [`docs/SEO_INVARIANTS.md`](docs/SEO_INVARIANTS.md).
+6. **Аудит-фиксы 20.08.2026** — YooKassa webhook, RLS write-lock, rate limit, Next 15 API: [`docs/AUDIT_FIXES.md`](docs/AUDIT_FIXES.md).
+7. **Site audit protocol** — команда `npm run audit:full`: [`docs/SITE_AUDIT.md`](docs/SITE_AUDIT.md).
+8. **Среда выполнения (Windows / OpenCode)** — LF, UTF-8 no-BOM: [`docs/ENV_RULES.md`](docs/ENV_RULES.md).
+9. **Адаптивность** — mobile-first, dvh/safe-area: [`docs/RESPONSIVE.md`](docs/RESPONSIVE.md). PWA/service worker — НЕ внедрять.
+
+## 🧠 Экономия контекста (CRITICAL)
+
+- Вложенные `AGENTS.md`, `docs/*`, `CHANGELOG_AGENTS.md` читай **только точечно под задачу** (`Read` с `offset/limit`), никогда целиком. `CHANGELOG_AGENTS.md` (60 КБ) — только последние 40 строк.
+- Один вопрос = один `codegraph_explore`, не цепочки grep+read. Тяжёлые дампы — в `Task(explore)` с возвратом summary.
+- `ocr_review`/`ocr_delegate` — всегда сначала `preview=true` + `exclude`, `concurrency ≤4`, `overallTimeoutMinutes ≤10`.
+- MCP точечно, не «на всякий случай». Playwright — только для UI-проверок; sentry — включать только на разбор ошибок прода и выключать обратно.
 
 ## Project overview
 
 - Стек: Next.js 15.5 + React 19 + TypeScript strict + Tailwind + lucide-react
-- БД: Supabase self-hosted (PostgreSQL + RLS) — `https://supabase.vds.dogovor.expert` (VDS `82.146.35.220`)
-- Деплой: VDS (CapRover, `82.146.35.220`, панель `captain.vds.dogovor.expert`, прод https://dogovor.expert)
-- Шаблонов: 369, PRO-подписка через YooKassa (акция 299 ₽ до 2026-09-20)
-- Аналитика: Яндекс.Метрика (consent-gated), Sentry
-- Ветка: `master` — источник правды (PR не используются). Ветка `production` — только деплой: она обязана быть fast-forward от `master` и не должна опережать её; авто-синхронизация — `.github/workflows/branch-sync.yml`, подробности — `docs/DEPLOY.md` → «Инвариант веток»
-- Секреты: `.env.production` (.env.production.local) для локального `next start`; prod-окружение — environment variables приложения CapRover (не коммитить `.env*`)
+- БД: Supabase self-hosted — `https://supabase.vds.dogovor.expert` (VDS `82.146.35.220`)
+- Деплой: CapRover, прод https://dogovor.expert. `master` — источник правды; `production` — только деплой, обязана быть fast-forward от `master` (`.github/workflows/branch-sync.yml`)
+- Шаблонов: 369, PRO-подписка через YooKassa. Секреты — только env CapRover, `.env*` не коммитить
 
 ## Setup commands
 
-- Install: `npm install`
-- Dev: `npm run dev`
-- Verify (typecheck+lint+test): `npm run verify`
-- Build: `npm run build`
-- Deploy: `git push origin master:production` → CapRover-вебхук сам собирает и деплоит прод (см. `docs/DEPLOY.md`)
-- Smoke (prod): `npm run check:smoke:prod`
-- Полный аудит: `npm run audit:full` (PSI + LHCI + Squirrelscan)
+- Install: `npm install` · Dev: `npm run dev` · Verify: `npm run verify` (typecheck+lint+test)
+- Build: `npm run build` · Deploy: `git push origin master:production`
+- Smoke (prod): `npm run check:smoke:prod` · Аудит: `npm run audit:full`
 
-## Code style
+## Code style / Testing / Security (кратко)
 
-- TypeScript strict, без `any` и `@ts-ignore`
-- ESLint + Prettier (Biome — отдельно для скорости)
-- Tailwind utility, mobile-first
-- lucide-react icons (импортировать по одному)
-- React 19: `use()` для promises, server actions где возможно
-- Все строки UI — на русском
-
-## Testing instructions
-
-- Vitest для unit (296+ тестов), Playwright для e2e
-- Перед коммитом: `npm run verify` (typecheck + lint + test:unit)
-- Перед деплоем: `npm run check:smoke:prod` (5 сценариев)
-- Coverage: ≥ 60% (v8), не снижать
-
-## Security considerations
-
-- Все env vars — через Zod-валидацию (`src/lib/env.ts`)
-- Supabase: server client в server actions, browser client в client components
-- API routes: Zod-схема + CSRF (`@/lib/csrf`) + rate limit (`@/lib/ratelimit`)
-- CSP через middleware (source-based; см. `src/middleware.ts`; НЕ nonce/strict-dynamic — несовместимо с SSG prerender)
-- Sentry для мониторинга (НЕ отключать)
-- НЕ логировать токены, ключи, персональные данные
+- TS strict без `any`; ESLint+Prettier; Tailwind mobile-first; lucide по одному; React 19 `use()` + server actions; UI-строки на русском.
+- Vitest (unit) + Playwright (e2e); перед коммитом `npm run verify`; coverage ≥60%, не снижать.
+- Env — напрямую из `process.env` (единого Zod-модуля нет); server client — в actions, browser — в client; API: Zod + CSRF + rate limit; CSP через middleware (source-based); не логировать секреты/PII.
 
 ## Things to avoid
 
-- НЕ использовать `any` (strict mode)
-- НЕ хардкодить строки на русском — выносить в константы
-- НЕ создавать API route, если можно Server Action
-- НЕ добавлять зависимости без обоснования (`package.json` diff)
-- НЕ отключать линтер-правила, ESLint disable без reason
-- НЕ коммитить `.env*`, секреты, ключи
+- `any`, хардкод русских строк, API route вместо Server Action, зависимости без обоснования, `ESLint disable` без reason, коммит `.env*`.
 
 ## Commit conventions
 
-- Conventional Commits (enforce через commitlint)
-- `feat:`, `fix:`, `chore:`, `docs:`, `refactor:`, `test:`
-- Scope: `feat(auth):`, `fix(cookies):`, `chore(deps):`
-- Breaking: `feat(api)!:` или footer `BREAKING CHANGE:`
-- release-please автоматически бампит версию + CHANGELOG.md
+- Conventional Commits (`feat/fix/chore/docs/refactor/test` + scope); release-please бампит версию сам.
 
-## MCP-инструменты (экономно используй)
+## MCP-инструменты (экономно)
 
-- **context7** — документация библиотек (Next.js 15, React 19, pdf-lib, supabase-js). Когда не уверен в API/версии — `use context7`.
-- **playwright** (local MCP) — браузер для проверки UI/снимков на localhost и проде. Дополняет e2e.
-- **gh_grep** (grep.app) — примеры кода на GitHub. Лёгкий, можно всегда.
-- **firecrawl** — живой веб-поиск/скрейпинг (конкуренты, проверка SEO).
-- **sentry** — по умолчанию disabled. Включать (`enabled: true`) только когда нужен разбор ошибок прода. Всегда выключай обратно.
-
-Правило: MCP-инструменты добавляют токены в контекст. Используй точечно, не «на всякий случай».
+- **context7** — доки библиотек при сомнениях в API. **playwright** — UI-снимки localhost/прод. **gh_grep** — лёгкий, можно всегда. **sentry** — disabled по умолчанию.
 
 ## Личные файлы
 
-Не коммитить и не редактировать: `prompt-для-нейросети.md`, `СКОРО_растаможка.md`, `на-потом.md` (в корне репозитория).
+Не коммитить/не редактировать: `prompt-для-нейросети.md`, `СКОРО_растаможка.md`, `на-потом.md`.
 
-## Вложенные AGENTS.md (специфичные правила по разделам)
+## Вложенные AGENTS.md (читать только при работе в этих путях)
 
-- `src/lib/supabase/AGENTS.md` — правила Supabase (RLS, миграции, безопасные клиенты)
-- `src/lib/cloud/AGENTS.md` — облачные провайдеры (Google Drive, Яндекс.Диск, Dropbox)
-- `src/components/AGENTS.md` — правила UI (a11y, Storybook, Tailwind, lucide-react)
-- `src/app/api/AGENTS.md` — правила API routes (Zod, rate limit, CSRF)
-- `src/app/admin/AGENTS.md` — админка (защита, аудит, RLS-политики)
-- `src/lib/validations/AGENTS.md` — Zod-схемы (контракты, реэкспорт)
+- `src/lib/supabase/AGENTS.md` · `src/lib/cloud/AGENTS.md` · `src/components/AGENTS.md`
+- `src/app/api/AGENTS.md` · `src/app/admin/AGENTS.md` · `src/lib/validations/AGENTS.md`
 
-## IDE-обёртки (агент читает по своим правилам)
+## IDE-обёртки
 
-| IDE/Агент | Файл | Статус |
-|---|---|---|
-| AGENTS.md (стандарт) | `AGENTS.md` | ✅ источник правды |
-| GitHub Copilot | `.github/copilot-instructions.md` | ✅ краткая выжимка |
-| Cursor | `.cursorrules` | ✅ краткая выжимка |
-| Cline (VS Code) | `.clinerules` | ✅ краткая выжимка |
-| Windsurf | `.windsurfrules` | ✅ краткая выжимка |
-| Aider | `.aider.conf.yml` | read=AGENTS.md |
-| Continue.dev | `.continuerules.json` | ✅ |
-| opencode | `AGENTS.md` (нативно) | ✅ |
-
-При обновлении этого регламента — синхронизируй `.cursorrules`, `.clinerules`, `.windsurfrules`, `CLAUDE.md` (см. `.github/workflows/sync-agents.yml`).
+Канон — этот файл. Выжимки: `.github/copilot-instructions.md`, `.cursorrules`, `.clinerules`, `.windsurfrules`, `CLAUDE.md` (синк — `.github/workflows/sync-agents.yml`).

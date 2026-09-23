@@ -10,9 +10,16 @@
   "compaction": {
     "auto": true,
     "prune": true,
-    "reserved": 15000,
+    "reserved": 12000,
     "preserve_recent_tokens": 8000,
-    "tail_turns": 10
+    "tail_turns": 10,
+    "keep": { "tokens": 8000 },
+    "buffer": 20000
+  },
+  "experimental": {
+    "truncate_all_tool_outputs": true,
+    "preemptive_compaction": true,
+    "preemptive_compaction_threshold": 0.8
   },
   "mcp": {
     "playwright": {

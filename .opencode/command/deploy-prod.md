@@ -1,23 +1,22 @@
 ---
-description: Безопасный деплой проекта Dogovor на Vercel по регламенту AGENTS.md
+description: Безопасный деплой Dogovor на прод (CapRover) по регламенту AGENTS.md
 ---
 
-## Безопасный деплой на Vercel
+## Безопасный деплой на прод (CapRover)
 
-Выполни деплой строго по правилам из `AGENTS.md`:
+Канон — `AGENTS.md` + `docs/DEPLOY.md`. Vercel НЕ используется.
 
 ### Предварительная проверка
-1. Запусти `npx tsc --noEmit` — убедись в чистоте типов.
-2. Запусти `npm run test:unit` — все тесты должны пройти.
-3. Проверь `git status` — не должно быть незакоммиченных критических изменений.
+1. `npx tsc --noEmit` — 0 ошибок.
+2. `npm run test:unit` — все зелёные.
+3. `git status` — без критичных незакоммиченных изменений; `production` обязана быть fast-forward от `master`.
 
 ### Деплой
-4. Выполни `npx vercel --prod --yes --cwd "D:\Мои сайты\site Dogovor"`
+4. `git push origin master:production` → CapRover-вебхук сам собирает и деплоит прод.
 
 ### Пост-деплой проверка (ОБЯЗАТЕЛЬНА)
-5. Проверь что `og-image.png` и `apple-icon.png` доступны на проде (НЕ исключать `*.png` из sync).
-6. Проверь что сайт отдаёт 200 на основных страницах.
-7. Убедись что `.vercel` и `.next/cache` НЕ попали в деплой.
-8. Проверь что `robots.txt` корректен: `Disallow: /documents$` (не убивает посадочные).
+5. `og-image.png` и `apple-icon.png` отдают 200 (НЕ исключать `*.png`).
+6. Основные страницы отдают 200; `npm run check:smoke:prod`.
+7. `robots.txt`: `Disallow: /documents$`, посадочные не убиты.
 
 Верни краткий отчет о статусе деплоя.

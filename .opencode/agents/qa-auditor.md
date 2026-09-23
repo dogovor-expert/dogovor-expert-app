@@ -1,7 +1,6 @@
-﻿---
+---
 description: Автоматический тестировщик проекта Dogovor. Запускает все тесты и возвращает краткий отчет без лишнего вывода.
 mode: subagent
-model: bynara/glm-5.3-free
 permission:
   read: allow
   glob: allow
@@ -42,7 +41,7 @@ permission:
 
 ## Связанные файлы
 - Конфиги тестов: `vitest.config.ts`, `playwright.config.ts`
-- Тесты шаблонов: `src/lib/__tests__/templates.test.ts`
+- Тесты шаблонов: `src/data/__tests__/templates.test.ts`
 - Тесты рендера: `src/lib/__tests__/renderDocument.test.ts`
 - Тесты сканера: `src/lib/__tests__/docScanner.test.ts`
 - Тесты дизайна: `src/lib/__tests__/docDesign.test.ts`

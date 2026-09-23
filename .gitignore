@@ -85,3 +85,6 @@ supabase/.temp/
 /reports/audit-*.md
 
 audit/fixtures/
+
+# CodeGraph local index (per-machine, regenerable via tokless)
+.codegraph/

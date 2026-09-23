@@ -1,7 +1,6 @@
-﻿---
+---
 description: Специалист по созданию и модификации юридических шаблонов Dogovor. Знает карту связей шаблон-рендер-сканер-тесты.
 mode: subagent
-model: bynara/glm-5.3-free
 permission:
   read: allow
   glob: allow
@@ -24,7 +23,7 @@ permission:
 - Каждый шаблон = объект `LegalTemplate` с полями (`src/data/types.ts`)
 - Категория — из списка в `index.ts` (порядок важен: AUTO, FINANCE, REALTY, BUSINESS, RENTALS, SALES, CONTRACTS, HR, CLAIMS, FINANCE_ACTS, CORPORATE_WEB, FAMILY, OTHER, MIGRATION, LEGAL, POSTAL)
 - Общие блоки — из `parts.ts` (pageShell, pairIntro, pairSign, sideFields, sideBlock, commonClauses, saleSign, rentSign)
-- Счётчик шаблонов: `src/lib/__tests__/templates.test.ts` ожидает 369
+- Счётчик шаблонов: `src/data/__tests__/templates.test.ts` ожидает 369
 
 ### B. Поля и валидация
 - `src/lib/format.ts` — applyFieldFormat (НИКОГДА не форматировать `*_words` как числа)
