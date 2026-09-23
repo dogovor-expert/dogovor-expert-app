@@ -1,26 +1,30 @@
 import { describe, expect, it } from "vitest";
-import { resolveInitialTheme } from "@/lib/hooks/useBuilderTheme";
+import { BUILDER_THEMES, resolveInitialTheme } from "@/lib/hooks/useBuilderTheme";
 
 describe("resolveInitialTheme", () => {
-  it("сохранённое значение важнее системной темы", () => {
-    expect(resolveInitialTheme("sepia", true)).toBe("sepia");
-    expect(resolveInitialTheme("sepia", false)).toBe("sepia");
-    expect(resolveInitialTheme("light", true)).toBe("light");
-    expect(resolveInitialTheme("dark", false)).toBe("dark");
+  it("все темы каталога применяются", () => {
+    for (const t of BUILDER_THEMES) {
+      expect(resolveInitialTheme(t.id)).toBe(t.id);
+    }
   });
 
-  it("без сохранённого — системная тема (dark → dark)", () => {
-    expect(resolveInitialTheme(null, true)).toBe("dark");
-  });
-
-  it("без сохранённого и без системной тёмной — светлая", () => {
-    expect(resolveInitialTheme(null, false)).toBe("light");
-    expect(resolveInitialTheme("", false)).toBe("light");
+  it("всё остальное — светлая (старый dark мигрирует в light)", () => {
+    expect(resolveInitialTheme("light")).toBe("light");
+    expect(resolveInitialTheme("dark")).toBe("light");
+    expect(resolveInitialTheme(null)).toBe("light");
+    expect(resolveInitialTheme("")).toBe("light");
   });
 
   it("мусор в хранилище игнорируется", () => {
-    expect(resolveInitialTheme("midnight", true)).toBe("dark");
-    expect(resolveInitialTheme("midnight", false)).toBe("light");
-    expect(resolveInitialTheme("DARK", false)).toBe("light");
+    expect(resolveInitialTheme("midnight")).toBe("light");
+    expect(resolveInitialTheme("SEPIA")).toBe("light");
+  });
+
+  it("каталог — только светлые темы, без dark", () => {
+    expect(BUILDER_THEMES.length).toBeGreaterThanOrEqual(2);
+    expect(BUILDER_THEMES.some((t) => t.id === "dark")).toBe(false);
+    for (const t of BUILDER_THEMES) {
+      expect(t.swatch).toMatch(/^#[0-9a-f]{6}$/i);
+    }
   });
 });

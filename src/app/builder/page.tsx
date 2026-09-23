@@ -34,7 +34,7 @@ import { useVisualViewport } from "@/hooks/useVisualViewport";
 import dynamic from "next/dynamic";
 import ProgressSteps from "@/components/builder/ProgressSteps";
 import TemplateSelector from "@/components/builder/TemplateSelector";
-import ComfortPanel from "@/components/builder/ComfortPanel";
+import ComfortBar from "@/components/builder/ComfortBar";
 import ToolRow from "@/components/builder/ToolRow";
 import { AdSlot } from "@/components/ads/AdSlot";
 import { useBuilderTheme } from "@/lib/hooks/useBuilderTheme";
@@ -1742,14 +1742,27 @@ function HomeContent() {
       {/* Main Content: A2-полоса на всю ширину контейнера */}
       {wizardStep === "form" && (
         <div className="a2-band -m-6 px-4 sm:px-6 pt-6 pb-28" data-bt={builderTheme}>
+        {/* Комфорт и вид — сверху над формой: тема, размер, фокус, перерывы */}
+        {viewMode === "form" && (
+          <ComfortBar
+            theme={builderTheme}
+            onThemeChange={setBuilderTheme}
+            formScale={formScale}
+            onScaleChange={applyFormScale}
+            focusMode={focusMode}
+            onFocusToggle={toggleFocusMode}
+            breakReminder={breakReminder}
+            onBreakToggle={toggleBreakReminder}
+          />
+        )}
         <div
-          className={`grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_370px] gap-5 ${
+          className={`grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_auto] gap-5 transition-all duration-300 ease-in-out ${
             viewMode === "preview" ? "print:hidden" : ""
-          }`}
+          } ${focusMode ? "xl:gap-0" : ""}`}
         >
-          {/* Left: Form (в фокус-режиме — во всю ширину сетки) */}
+          {/* Left: Form (в фокус-режиме рельса плавно схлопывается, форма занимает всю ширину) */}
           <div
-            className={`${focusMode ? "xl:col-span-5" : "xl:col-span-3"} space-y-4 pb-20 xl:pb-0`}
+            className="space-y-4 pb-20 xl:pb-0 min-w-0"
             style={{
               zoom: formScale !== 100 ? formScale / 100 : undefined,
               // iOS-клавиатура: держим активное поле над видимой областью
@@ -1855,8 +1868,8 @@ function HomeContent() {
               >
                 <TemplateInfoPanel template={template} />
               </Collapsible>
-              {/* Desktop sticky dock: прогресс и действия всегда под рукой */}
-              <div className="hidden xl:flex sticky bottom-4 z-20 items-center gap-3 rounded-2xl border border-brand-200 bg-white/95 backdrop-blur px-4 py-3 shadow-lg">
+              {/* Desktop dock: статичная полоса в конце формы (не липнет к скроллу) */}
+              <div className="hidden xl:flex items-center gap-3 rounded-2xl border border-brand-200 bg-white/95 px-4 py-3 shadow-lg mt-2">
                 <span className="text-xs text-gray-600 mr-auto">
                   {(() => {
                     const p = requiredProgress(template, formValues);
@@ -1961,8 +1974,21 @@ function HomeContent() {
             )}
           </div>
 
-          {/* Right Column: A2-рельса (мини-А4 + инструменты) */}
-          {viewMode === "form" && (<div id="builder-sidebar" data-bt={builderTheme} className={`space-y-4 xl:sticky xl:top-[74px] self-start ${focusMode ? "hidden" : ""}`}>
+          {/* Right Column: A2-рельса (мини-А4 + инструменты).
+              В фокус-режиме плавно схлопывается (max-width + fade, см. .a2-rail),
+              на мобиле — скрывается; выход всегда доступен из дока/плавающей кнопки. */}
+          {viewMode === "form" && (
+            <div
+              id="builder-sidebar"
+              data-bt={builderTheme}
+              inert={focusMode || undefined}
+              className={`a2-rail self-start xl:sticky xl:top-[74px] xl:overflow-hidden ${
+                focusMode
+                  ? "hidden xl:block xl:max-w-0 xl:opacity-0 xl:translate-x-8 xl:pointer-events-none"
+                  : "xl:max-w-[370px] xl:opacity-100"
+              }`}
+            >
+            <div className="space-y-4 xl:w-[370px]">
             {(() => {
               const p = requiredProgress(template, formValues);
               const errCount = liveAudit.filter((r) => r.type === "error" && r.field !== "_all").length;
@@ -2275,22 +2301,10 @@ function HomeContent() {
               </div>
             </div>
 
-            <div className="a2-tools px-[18px] pt-1 pb-[14px]">
-              <h3 className="text-sm font-bold py-3" style={{ color: "var(--a2-ink)" }}>Комфорт и вид</h3>
-              <ComfortPanel
-                theme={builderTheme}
-                onThemeChange={setBuilderTheme}
-                formScale={formScale}
-                onScaleChange={applyFormScale}
-                focusMode={focusMode}
-                onFocusToggle={toggleFocusMode}
-                breakReminder={breakReminder}
-                onBreakToggle={toggleBreakReminder}
-              />
-            </div>
             {/* РСЯ: ненавязчивый блок под инструментами, над paywall.
                 Рендерится только при ADS_ENABLED=1 + marketing-согласии. */}
             <AdSlot id="BUILDER_SIDEBAR" />
+            </div>
           </div>)}
         </div>
         </div>

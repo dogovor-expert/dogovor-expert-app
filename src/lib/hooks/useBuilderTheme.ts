@@ -1,28 +1,61 @@
 "use client";
 import { useCallback, useEffect, useState } from "react";
 
-export type BuilderTheme = "light" | "sepia" | "dark";
+/**
+ * Каталог светлых тем рабочей области (/builder). Все — светлые,
+ * отличаются теплотой фона: от холодного нейтрального (primer)
+ * до самого тёплого (milktea). Значения — из исследования
+ * paper/sepia-тем (Kindle, Firefox Reader, Solarized, Gruvbox,
+ * Obsidian), контраст текста везде ≥ 4.5:1 (AA).
+ *
+ * Ненужные темы удаляются отсюда одной строкой — хук, панель
+ * и CSS берутся из этого же списка (ключи data-bt генерируются
+ * из id, body-класс из bodyClass).
+ */
+export interface BuilderThemeDef {
+  id: string;
+  label: string;
+  hint: string;
+  /** Класс на body (фон за пределами .a2-band). */
+  bodyClass: string;
+  /** Цвет дот-превью в переключателе. */
+  swatch: string;
+}
+
+export const BUILDER_THEMES: BuilderThemeDef[] = [
+  { id: "light", label: "Светлая", hint: "как обычно", bodyClass: "", swatch: "#eef2f7" },
+  { id: "primer", label: "Нейтраль", hint: "холодный серый", bodyClass: "bt-primer", swatch: "#f6f8fa" },
+  { id: "warmgray", label: "Тёплый серый", hint: "едва тёплый", bodyClass: "bt-warmgray", swatch: "#e9e6df" },
+  { id: "solar", label: "Соларайз", hint: "приглушённый", bodyClass: "bt-solar", swatch: "#eee8d5" },
+  { id: "sepia", label: "Сепия", hint: "как в читалках", bodyClass: "bt-sepia", swatch: "#e7dbc0" },
+  { id: "kindle", label: "Киндл", hint: "книжный уют", bodyClass: "bt-kindle", swatch: "#eddcb9" },
+  { id: "gruvbox", label: "Грувбокс", hint: "медовый", bodyClass: "bt-gruvbox", swatch: "#ebdbb2" },
+  { id: "milktea", label: "Милк-ти", hint: "самый тёплый", bodyClass: "bt-milktea", swatch: "#eadfcd" },
+];
+
+export type BuilderTheme = (typeof BUILDER_THEMES)[number]["id"];
 
 const STORAGE_KEY = "dogovor_builder_theme_v1";
 
+/** Все body-классы тем — для снятия при переключении. */
+const BODY_CLASSES = BUILDER_THEMES.map((t) => t.bodyClass).filter(Boolean);
+
 /**
  * Чистая функция выбора стартовой темы (покрыта unit-тестами):
- * сохранённое значение важнее всего, без него — системная тема.
+ * сохранённое значение из каталога применяется, всё остальное
+ * (включая старые "dark"/"sepia") — светлая тема.
  */
-export function resolveInitialTheme(
-  stored: string | null,
-  prefersDark: boolean
-): BuilderTheme {
-  if (stored === "sepia" || stored === "dark" || stored === "light") {
-    return stored;
-  }
-  return prefersDark ? "dark" : "light";
+export function resolveInitialTheme(stored: string | null): BuilderTheme {
+  const found = BUILDER_THEMES.find((t) => t.id === stored);
+  if (found) return found.id;
+  // Миграция со старой двухтемной схемы: sepia → sepia (есть в каталоге выше).
+  return "light";
 }
 
 /**
  * Тема рабочей области конструктора (НЕ документа: превью и печать
- * всегда остаются белыми). Переключает классы body (bt-dark/bt-sepia),
- * которые красит src/styles/globals.css в скоупе [data-bt].
+ * всегда остаются белыми). Переключает класс body.bt-*
+ * + атрибут data-bt, которые красит src/styles/globals.css.
  * Выбор сохраняется в localStorage и переживает перезагрузку.
  */
 export function useBuilderTheme() {
@@ -35,17 +68,15 @@ export function useBuilderTheme() {
     } catch {
       // приватный режим — игнорируем
     }
-    const prefersDark =
-      typeof window.matchMedia === "function" &&
-      window.matchMedia("(prefers-color-scheme: dark)").matches;
-    setThemeState(resolveInitialTheme(stored, prefersDark));
+    setThemeState(resolveInitialTheme(stored));
   }, []);
 
   useEffect(() => {
-    document.body.classList.toggle("bt-dark", theme === "dark");
-    document.body.classList.toggle("bt-sepia", theme === "sepia");
+    document.body.classList.remove(...BODY_CLASSES);
+    const def = BUILDER_THEMES.find((t) => t.id === theme);
+    if (def?.bodyClass) document.body.classList.add(def.bodyClass);
     return () => {
-      document.body.classList.remove("bt-dark", "bt-sepia");
+      document.body.classList.remove(...BODY_CLASSES);
     };
   }, [theme]);
 
