@@ -2,11 +2,10 @@
 import { useCallback, useEffect, useState } from "react";
 
 /**
- * Каталог тем рабочей области (/builder). Светлая полоса: от холодного
- * нейтрального (primer) до самого тёплого светлого (milktea).
- * Тёмно-бежевая полоса (sand → bark): фон темнее карточки milktea,
- * текст остаётся тёмным — структура CSS не меняется. Контраст
- * текста везде ≥ 4.5:1 (AA, проверено скриптом WCAG).
+ * Каталог тем рабочей области (/builder): 4 отобранные —
+ * нейтраль (холодный серый), тёплый серый (едва тёплый),
+ * киндл (книжный уют), песок (тёмно-бежевый).
+ * Контраст текста везде ≥ 4.5:1 (AA, проверено скриптом WCAG).
  */
 export interface BuilderThemeDef {
   id: string;
@@ -22,15 +21,8 @@ export const BUILDER_THEMES: BuilderThemeDef[] = [
   { id: "light", label: "Светлая", hint: "как обычно", bodyClass: "", swatch: "#eef2f7" },
   { id: "primer", label: "Нейтраль", hint: "холодный серый", bodyClass: "bt-primer", swatch: "#f6f8fa" },
   { id: "warmgray", label: "Тёплый серый", hint: "едва тёплый", bodyClass: "bt-warmgray", swatch: "#e9e6df" },
-  { id: "solar", label: "Соларайз", hint: "приглушённый", bodyClass: "bt-solar", swatch: "#eee8d5" },
-  { id: "sepia", label: "Сепия", hint: "как в читалках", bodyClass: "bt-sepia", swatch: "#e7dbc0" },
   { id: "kindle", label: "Киндл", hint: "книжный уют", bodyClass: "bt-kindle", swatch: "#eddcb9" },
-  { id: "gruvbox", label: "Грувбокс", hint: "медовый", bodyClass: "bt-gruvbox", swatch: "#ebdbb2" },
-  { id: "milktea", label: "Милк-ти", hint: "самый тёплый светлый", bodyClass: "bt-milktea", swatch: "#eadfcd" },
-  { id: "sand", label: "Песок", hint: "тёмно-бежевый I", bodyClass: "bt-sand", swatch: "#d9cba8" },
-  { id: "clay", label: "Глина", hint: "тёмно-бежевый II", bodyClass: "bt-clay", swatch: "#cdb894" },
-  { id: "umber", label: "Умбра", hint: "тёмно-бежевый III", bodyClass: "bt-umber", swatch: "#bda87f" },
-  { id: "bark", label: "Кора", hint: "самый тёмный", bodyClass: "bt-bark", swatch: "#a89468" },
+  { id: "sand", label: "Песок", hint: "тёмно-бежевый", bodyClass: "bt-sand", swatch: "#d9cba8" },
 ];
 
 export type BuilderTheme = (typeof BUILDER_THEMES)[number]["id"];
