@@ -88,3 +88,10 @@ audit/fixtures/
 
 # CodeGraph local index (per-machine, regenerable via tokless)
 .codegraph/
+
+# Local dev helpers (per-machine)
+dev-3100.cmd
+make-shortcut.ps1
+fix-shortcut.ps1
+check-prod.mjs
+next3100.log
