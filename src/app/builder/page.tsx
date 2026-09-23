@@ -1472,12 +1472,24 @@ function HomeContent() {
     ).slice(0, 4);
   }, [template.id, template.category, template.suggestedDocs]);
 
+  // Все вкладки инструментов по умолчанию свёрнуты (красивый компактный
+  // вид рельсы A2). Ключ в localStorage — чтобы развёрнутое пользователем
+  // переживало перезагрузку, но дефолт для новых — всё закрыто.
   const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>(() => ({
     about: true,
+    scanner: true,
     dadata: true,
     contractors: true,
+    persons: true,
+    audit: true,
+    checklist: true,
+    costs: true,
+    related: true,
+    approval: true,
     esign: true,
     signing: true,
+    drafts: true,
+    similar: true,
   }));
 
   const toggleSection = (id: string) =>
