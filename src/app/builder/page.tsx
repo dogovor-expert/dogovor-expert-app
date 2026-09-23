@@ -13,6 +13,7 @@ import {
   Crown,
   Loader2,
   ArrowRight,
+  SlidersHorizontal,
 } from "lucide-react";
 import { LEGAL_TEMPLATES } from "@/data/legalTemplates";
 import type { LegalTemplate, TemplateField } from "@/data/types";
@@ -38,6 +39,11 @@ import { useVisualViewport } from "@/hooks/useVisualViewport";
 import dynamic from "next/dynamic";
 import ProgressSteps from "@/components/builder/ProgressSteps";
 import TemplateSelector from "@/components/builder/TemplateSelector";
+import ComfortPanel from "@/components/builder/ComfortPanel";
+import NextFieldNav from "@/components/builder/NextFieldNav";
+import { AdSlot } from "@/components/ads/AdSlot";
+import { useBuilderTheme } from "@/lib/hooks/useBuilderTheme";
+import { incompleteRequiredFields } from "@/lib/builderNav";
 import FormSection from "@/components/builder/FormSection";
 import PreviewStage from "@/components/builder/PreviewStage";
 import Collapsible from "@/components/builder/Collapsible";
@@ -137,10 +143,41 @@ function HomeContent() {
     try { localStorage.setItem("dogovor_form_scale", String(clamped)); } catch { /* localStorage недоступен */ }
   };
   const [sidebarTab, setSidebarTab] = useState<"preview" | "tools">("tools");
+  // Комфорт: тема рабочей области (хук сам читает localStorage + системную тему).
+  const { theme: builderTheme, setTheme: setBuilderTheme } = useBuilderTheme();
+  // Фокус-режим: прячет боковую панель, форма во всю ширину.
+  const [focusMode, setFocusMode] = useState(false);
+  useEffect(() => {
+    try {
+      if (localStorage.getItem("dogovor_builder_focus") === "1") setFocusMode(true);
+    } catch { /* localStorage недоступен */ }
+  }, []);
+  const toggleFocusMode = useCallback(() => {
+    setFocusMode((prev) => {
+      try { localStorage.setItem("dogovor_builder_focus", prev ? "0" : "1"); } catch { /* noop */ }
+      return !prev;
+    });
+  }, []);
+  // Напоминание о перерыве: раз в час, по умолчанию включено.
+  const [breakReminder, setBreakReminder] = useState(true);
+  useEffect(() => {
+    try {
+      if (localStorage.getItem("dogovor_break_reminder") === "0") setBreakReminder(false);
+    } catch { /* localStorage недоступен */ }
+  }, []);
+  const toggleBreakReminder = useCallback(() => {
+    setBreakReminder((prev) => {
+      try { localStorage.setItem("dogovor_break_reminder", prev ? "0" : "1"); } catch { /* noop */ }
+      return !prev;
+    });
+  }, []);
   const [previewBlocked, setPreviewBlocked] =
     useState<AuditResult[] | null>(null);
   const printRef = useRef<HTMLDivElement>(null);
   const flatRef = useRef<HTMLDivElement>(null);
+  // Рефы для горячих клавиш (синхронизация при каждом рендере — см. ниже).
+  const goToPreviewRef = useRef<(() => void) | null>(null);
+  const snapshotDraftRef = useRef<(() => void) | null>(null);
   const formValuesRef = useRef<Record<string, string>>(formValues);
   formValuesRef.current = formValues;
   const pendingMergeRef = useRef<Record<string, string> | null>(null);
@@ -967,6 +1004,34 @@ function HomeContent() {
     if (focusable) focusable.focus({ preventScroll: true });
   };
 
+  // Горячие клавиши конструктора: Ctrl/Cmd+Enter — предпросмотр,
+  // Ctrl/Cmd+S — зафиксировать версию черновика (без диалога браузера).
+  // Вызовы идут через рефы, чтобы не пересоздавать слушатель и не ловить
+  // устаревшие замыкания (рефы синхронизируются при каждом рендере ниже).
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (!(e.ctrlKey || e.metaKey) || e.repeat) return;
+      if (e.code === "Enter") {
+        e.preventDefault();
+        goToPreviewRef.current?.();
+      } else if (e.code === "KeyS") {
+        e.preventDefault();
+        snapshotDraftRef.current?.();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
+  // Напоминание о перерыве: один раз через час после монтирования.
+  useEffect(() => {
+    if (!breakReminder) return;
+    const id = setTimeout(() => {
+      showToast("Вы работаете уже час — посмотрите вдаль 20 секунд, глаза скажут спасибо.");
+    }, 60 * 60 * 1000);
+    return () => clearTimeout(id);
+  }, [breakReminder]);
+
   const handlePhotosChange = (slotId: string, photos: string[]) => {
     setScanPhotos((prev) => ({ ...prev, [slotId]: photos }));
   };
@@ -1016,6 +1081,22 @@ function HomeContent() {
     setViewMode("form");
     window.scrollTo(0, 0);
   };
+
+  // Синхронизация рефов для горячих клавиш (актуальные замыкания).
+  goToPreviewRef.current = goToPreview;
+  snapshotDraftRef.current = () => {
+    pushDraftVersion(template.id, formValuesRef.current, checklist, activeTab);
+    showToast("Версия черновика сохранена — можно откатиться в «Черновиках».");
+  };
+
+  // Навигация «осталось заполнить»: незаполненные обязательные видимые поля.
+  const incompleteFields = useMemo(
+    () =>
+      wizardStep === "form"
+        ? incompleteRequiredFields(template, formValues)
+        : [],
+    [wizardStep, template, formValues]
+  );
 
   const handleExportPdf = async (scope: "pack" | "current" = "pack") => {
     if (scope === "pack" && packTemplates.length > 1 && !subscriptionActive) {
@@ -1525,7 +1606,7 @@ function HomeContent() {
   return (
     <div className="p-6 max-w-7xl mx-auto">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-6" data-bt={builderTheme}>
         <div>
           <h1 className="text-2xl font-bold text-gray-900">
             {greeting}, {userName}!
@@ -1566,6 +1647,7 @@ function HomeContent() {
       </div>
 
       {/* Progress Stepper */}
+      <div data-bt={builderTheme} className="contents">
       <ProgressSteps
         wizardStep={wizardStep}
         viewMode={viewMode}
@@ -1573,40 +1655,19 @@ function HomeContent() {
         onBackToForm={backToForm}
         onGoToPreview={goToPreview}
       />
+      </div>
 
       {/* №9 аудита: прогресс заполнения обязательных полей */}
       {wizardStep === "form" && viewMode === "form" && (() => {
         const { filled, total } = requiredProgress(template, formValues);
         const pct = total ? Math.round((filled / total) * 100) : 100;
         return (
-          <div className="mb-6 max-w-4xl">
+            <div className="mb-6 max-w-4xl" data-bt={builderTheme}>
             <div className="flex items-center justify-between text-xs text-gray-600 mb-1">
               <span>Заполнено обязательных полей</span>
               <span className="flex items-center gap-3">
                 <span className={pct === 100 ? "text-emerald-600 font-medium" : ""}>
                   {filled} из {total} ({pct}%)
-                </span>
-                <span
-                  className="flex items-center gap-1"
-                  title="Размер формы (поля и текст)"
-                >
-                  <button
-                    type="button"
-                    onClick={() => applyFormScale(formScale - 10)}
-                    className="w-6 h-6 rounded border border-gray-200 bg-white hover:bg-gray-50 text-gray-700 text-sm leading-none font-semibold"
-                    aria-label="Уменьшить размер формы"
-                  >
-                    −
-                  </button>
-                  <span className="w-9 text-center tabular-nums">{formScale}%</span>
-                  <button
-                    type="button"
-                    onClick={() => applyFormScale(formScale + 10)}
-                    className="w-6 h-6 rounded border border-gray-200 bg-white hover:bg-gray-50 text-gray-700 text-sm leading-none font-semibold"
-                    aria-label="Увеличить размер формы"
-                  >
-                    +
-                  </button>
                 </span>
               </span>
             </div>
@@ -1662,9 +1723,9 @@ function HomeContent() {
             viewMode === "preview" ? "print:hidden" : ""
           }`}
         >
-          {/* Left: Form */}
+          {/* Left: Form (в фокус-режиме — во всю ширину сетки) */}
           <div
-            className="xl:col-span-3 space-y-4 pb-20 xl:pb-0"
+            className={`${focusMode ? "xl:col-span-5" : "xl:col-span-3"} space-y-4 pb-20 xl:pb-0`}
             style={{
               zoom: formScale !== 100 ? formScale / 100 : undefined,
               // iOS-клавиатура: держим активное поле над видимой областью
@@ -1672,7 +1733,9 @@ function HomeContent() {
               paddingBottom: keyboardInset ? `${keyboardInset + 24}px` : undefined,
             }}
           >
-            {viewMode === "form" && (<>
+            {/* Тема рабочей области: обёртка-проброс (display:contents не ломает
+                сетку). Fullscreen-превью и печать — ВНЕ скоупа, документ всегда белый. */}
+            {viewMode === "form" && (<div data-bt={builderTheme} className="contents">
               {previewBlocked && (
                 <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-start gap-3">
                   <div className="w-9 h-9 rounded-full bg-red-500 text-white flex items-center justify-center flex-shrink-0">
@@ -1710,6 +1773,12 @@ function HomeContent() {
                   </button>
                 </div>
               )}
+              {/* Навигация «осталось заполнить» — теги ведут к полям */}
+              <NextFieldNav
+                incomplete={incompleteFields}
+                total={requiredProgress(template, formValues).total}
+                onJump={handleAuditResultClick}
+              />
               {/* Form */}
               {template.id === "dkp-auto" || template.id === "dkp-auto-short" ? (
                 <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
@@ -1768,7 +1837,34 @@ function HomeContent() {
               >
                 <TemplateInfoPanel template={template} />
               </Collapsible>
-            </>)}
+              {/* Desktop sticky dock: прогресс и действия всегда под рукой */}
+              <div className="hidden xl:flex sticky bottom-4 z-20 items-center gap-3 rounded-2xl border border-brand-200 bg-white/95 backdrop-blur px-4 py-3 shadow-lg">
+                <span className="text-xs text-gray-600 mr-auto">
+                  {(() => {
+                    const p = requiredProgress(template, formValues);
+                    const pct = p.total ? Math.round((p.filled / p.total) * 100) : 100;
+                    return (<>Заполнено обязательных: <b>{p.filled} из {p.total} ({pct}%)</b></>);
+                  })()}
+                </span>
+                <button
+                  type="button"
+                  onClick={handleAudit}
+                  className="inline-flex items-center justify-center font-medium transition-all px-4 py-2 text-sm rounded-xl gap-2 bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200"
+                >
+                  <Shield className="w-4 h-4" />
+                  Проверить
+                </button>
+                <button
+                  type="button"
+                  onClick={goToPreview}
+                  className="inline-flex items-center justify-center font-medium transition-all px-4 py-2 text-sm rounded-xl gap-2 bg-brand-500 text-white hover:bg-brand-600"
+                >
+                  <Eye className="w-4 h-4" />
+                  Предпросмотр
+                  <ArrowRight className="w-4 h-4" />
+                </button>
+              </div>
+            </div>)}
 
             {/* Mobile sticky CTA: дублируем кнопки «Проверить» и «Предпросмотр» снизу
                 на мобиле, чтобы не скроллить форму до конца. На десктопе скрыт. */}
@@ -1826,7 +1922,7 @@ function HomeContent() {
           </div>
 
           {/* Right Column: Live preview / Tools */}
-          {viewMode === "form" && (<div id="builder-sidebar" className="xl:col-span-2 space-y-4">
+          {viewMode === "form" && (<div id="builder-sidebar" data-bt={builderTheme} className={`xl:col-span-2 space-y-4 ${focusMode ? "hidden" : ""}`}>
             <div className="flex gap-1 bg-slate-100 p-1 rounded-2xl">
               {(
                 [
@@ -1902,6 +1998,25 @@ function HomeContent() {
               )}
             </>) : (<>
               {/* Document assembly tools */}
+              {/* Комфорт и вид: тема, размер текста, фокус, перерывы */}
+              <Collapsible
+                id="comfort"
+                title="Комфорт и вид"
+                icon={<SlidersHorizontal className="w-4 h-4 text-brand-600" />}
+                collapsed={!!collapsedSections["comfort"]}
+                onToggle={toggleSection}
+              >
+                <ComfortPanel
+                  theme={builderTheme}
+                  onThemeChange={setBuilderTheme}
+                  formScale={formScale}
+                  onScaleChange={applyFormScale}
+                  focusMode={focusMode}
+                  onFocusToggle={toggleFocusMode}
+                  breakReminder={breakReminder}
+                  onBreakToggle={toggleBreakReminder}
+                />
+              </Collapsible>
               {subscriptionActive ? (
                 <DocScanner
                   template={template}
@@ -2079,6 +2194,9 @@ function HomeContent() {
                   onToggle={setSignSheetEnabled}
                 />
               </Collapsible>
+              {/* РСЯ: ненавязчивый блок под инструментами, над paywall.
+                  Рендерится только при ADS_ENABLED=1 + marketing-согласии. */}
+              <AdSlot id="BUILDER_SIDEBAR" />
             </>)}
           </div>)}
         </div>

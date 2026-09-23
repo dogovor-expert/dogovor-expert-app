@@ -50,6 +50,28 @@ describe("applyFieldFormat", () => {
     // 8... нормализуется к 7...
     expect(applyFieldFormat(tf("seller_phone", "text"), "89251234567")).toBe("+7 (925) 123-45-67");
   });
+
+  it("госномер — верхний регистр, не длиннее 9 символов", () => {
+    expect(applyFieldFormat(tf("car_plate", "text"), "а123бв777")).toBe("А123БВ777");
+    expect(applyFieldFormat(tf("car_plate", "text"), "А123БВ777RUS")).toBe("А123БВ777");
+  });
+
+  it("СНИЛС — XXX-XXX-XXX CC", () => {
+    expect(applyFieldFormat(tf("seller_snils", "text"), "11223344595")).toBe("112-233-445 95");
+    expect(applyFieldFormat(tf("seller_snils", "text"), "11223")).toBe("112-23");
+  });
+
+  it("КПП/БИК — 9 цифр, счёт — 20 цифр", () => {
+    expect(applyFieldFormat(tf("org_kpp", "text"), "7707010019")).toBe("770701001");
+    expect(applyFieldFormat(tf("org_bik", "text"), "044525225")).toBe("044525225");
+    expect(applyFieldFormat(tf("org_account", "text"), "40702810900000000001234")).toBe("40702810900000000001");
+  });
+
+  it("цена хранится цифрами без разделителей (валидация через Number)", () => {
+    expect(applyFieldFormat(tf("contract_price", "text"), "850 000")).toBe("850000");
+    expect(applyFieldFormat(tf("contract_price", "text"), "850000.50")).toBe("850000.50");
+    expect(applyFieldFormat(tf("rent_amount", "text"), "50тыс")).toBe("50");
+  });
 });
 
 describe("formatInn", () => {

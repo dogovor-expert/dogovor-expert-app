@@ -827,3 +827,141 @@
     animation: none;
   }
 }
+
+/* ============================================================
+ * Темы рабочей области конструктора (/builder).
+ * Переключаются хуком useBuilderTheme (body.bt-dark / body.bt-sepia
+ * + атрибут data-bt на контейнерах формы и сайдбара).
+ * Документ (PreviewStage, печать, экспорт) НЕ входит в скоуп
+ * и всегда остаётся белым — темы красят только рабочую зону.
+ * ============================================================ */
+body.bt-dark {
+  background-color: #0b1220;
+}
+body.bt-sepia {
+  background-color: #ece1cb;
+}
+
+/* --- Тёмная тема рабочей области --- */
+[data-bt="dark"] .bg-white,
+[data-bt="dark"].bg-white {
+  background-color: #131c2e;
+}
+[data-bt="dark"] .bg-white\/95 {
+  background-color: rgba(19, 28, 46, 0.95);
+}
+[data-bt="dark"] .bg-gray-50,
+[data-bt="dark"] .bg-slate-50,
+[data-bt="dark"] .bg-slate-100,
+[data-bt="dark"] .bg-gray-100 {
+  background-color: #1a2742;
+}
+[data-bt="dark"] .text-gray-900,
+[data-bt="dark"] .text-slate-900,
+[data-bt="dark"] .text-slate-800,
+[data-bt="dark"] .text-gray-800 {
+  color: #e2e8f0;
+}
+[data-bt="dark"] .text-gray-700,
+[data-bt="dark"] .text-slate-700,
+[data-bt="dark"] .text-slate-600,
+[data-bt="dark"] .text-gray-600 {
+  color: #94a3b8;
+}
+[data-bt="dark"] .border-gray-100,
+[data-bt="dark"] .border-gray-200,
+[data-bt="dark"] .border-slate-200\/70,
+[data-bt="dark"] .border-slate-200 {
+  border-color: #22304a;
+}
+[data-bt="dark"] input,
+[data-bt="dark"] select,
+[data-bt="dark"] textarea {
+  background-color: #0f1830;
+  border-color: #2b3c5c;
+  color: #e2e8f0;
+}
+[data-bt="dark"] input::placeholder,
+[data-bt="dark"] textarea::placeholder {
+  color: #5b6b85;
+}
+[data-bt="dark"] .bg-amber-50 {
+  background-color: #3a2c07;
+}
+[data-bt="dark"] .text-amber-700,
+[data-bt="dark"] .text-amber-800 {
+  color: #fcd34d;
+}
+[data-bt="dark"] .bg-emerald-50 {
+  background-color: #12352b;
+}
+[data-bt="dark"] .text-emerald-600,
+[data-bt="dark"] .text-emerald-700 {
+  color: #6ee7b7;
+}
+[data-bt="dark"] .bg-red-50 {
+  background-color: #3d1414;
+}
+[data-bt="dark"] .text-red-700,
+[data-bt="dark"] .text-red-800,
+[data-bt="dark"] .text-red-600 {
+  color: #fca5a5;
+}
+[data-bt="dark"] .bg-blue-50 {
+  background-color: #16294d;
+}
+[data-bt="dark"] .text-blue-800 {
+  color: #bfdbfe;
+}
+[data-bt="dark"] .bg-brand-50,
+[data-bt="dark"] .bg-brand-100 {
+  background-color: #16294d;
+}
+[data-bt="dark"] .text-brand-700,
+[data-bt="dark"] .text-brand-600 {
+  color: #93c5fd;
+}
+
+/* --- Сепия: тёплая тема рабочей области --- */
+[data-bt="sepia"] .bg-white,
+[data-bt="sepia"].bg-white {
+  background-color: #faf4e4;
+}
+[data-bt="sepia"] .bg-white\/95 {
+  background-color: rgba(250, 244, 228, 0.95);
+}
+[data-bt="sepia"] .bg-gray-50,
+[data-bt="sepia"] .bg-slate-50,
+[data-bt="sepia"] .bg-slate-100,
+[data-bt="sepia"] .bg-gray-100 {
+  background-color: #f0e6cf;
+}
+[data-bt="sepia"] .text-gray-900,
+[data-bt="sepia"] .text-slate-900,
+[data-bt="sepia"] .text-slate-800,
+[data-bt="sepia"] .text-gray-800 {
+  color: #433422;
+}
+[data-bt="sepia"] .text-gray-700,
+[data-bt="sepia"] .text-slate-700,
+[data-bt="sepia"] .text-slate-600,
+[data-bt="sepia"] .text-gray-600 {
+  color: #7c6a4f;
+}
+[data-bt="sepia"] .border-gray-100,
+[data-bt="sepia"] .border-gray-200,
+[data-bt="sepia"] .border-slate-200\/70,
+[data-bt="sepia"] .border-slate-200 {
+  border-color: #e0d2b6;
+}
+[data-bt="sepia"] input,
+[data-bt="sepia"] select,
+[data-bt="sepia"] textarea {
+  background-color: #f3ead6;
+  border-color: #d8c8a4;
+  color: #433422;
+}
+[data-bt="sepia"] input::placeholder,
+[data-bt="sepia"] textarea::placeholder {
+  color: #a89878;
+}

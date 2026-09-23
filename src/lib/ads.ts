@@ -16,7 +16,8 @@ export type AdSlotId =
   | "CONVERTER_FOOTER"
   | "CONVERTER_RELATED"
   | "DOC_TEMPLATE_FOOTER"
-  | "RESUME_INFEED";
+  | "RESUME_INFEED"
+  | "BUILDER_SIDEBAR";
 
 // Минимальная высота блока (px) — резервируется заранее, чтобы не ломать CLS.
 export const SLOT_MIN_HEIGHT: Record<AdSlotId, number> = {
@@ -33,6 +34,7 @@ export const SLOT_MIN_HEIGHT: Record<AdSlotId, number> = {
   CONVERTER_RELATED: 200,
   DOC_TEMPLATE_FOOTER: 250,
   RESUME_INFEED: 250,
+  BUILDER_SIDEBAR: 250,
 };
 
 // Идентификаторы RTB-блоков из кабинета Яндекса
@@ -53,6 +55,7 @@ const RTB_BLOCK_IDS: Record<AdSlotId, string | undefined> = {
   CONVERTER_RELATED: process.env.NEXT_PUBLIC_RTB_CONVERTER_RELATED,
   DOC_TEMPLATE_FOOTER: process.env.NEXT_PUBLIC_RTB_DOC_TEMPLATE_FOOTER,
   RESUME_INFEED: process.env.NEXT_PUBLIC_RTB_RESUME_INFEED,
+  BUILDER_SIDEBAR: process.env.NEXT_PUBLIC_RTB_BUILDER_SIDEBAR,
 };
 
 /** ID RTB-блока для слота или undefined, если блок не настроен. */
