@@ -3,17 +3,12 @@ import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import {
   FileText,
   Shield,
-  Check,
   AlertTriangle,
-  Clock,
-  Copy,
-  Calculator,
-  Eye,
-  Wrench,
   Crown,
+  Focus,
   Loader2,
+  Eye,
   ArrowRight,
-  SlidersHorizontal,
 } from "lucide-react";
 import { LEGAL_TEMPLATES } from "@/data/legalTemplates";
 import type { LegalTemplate, TemplateField } from "@/data/types";
@@ -31,7 +26,7 @@ import { migrateFieldValues } from "@/lib/fieldMigration";
 import { Modal } from "@/components/ui/Modal";
 import { getSigning, canShowSignSheet } from "@/data/signingMeta";
 import { type DesignId } from "@/lib/docDesign";
-import { buildTemplateDefaults, getGreeting, normalizeTypography, todayStr } from "@/lib/format";
+import { buildTemplateDefaults, normalizeTypography, todayStr } from "@/lib/format";
 import { downloadBytes } from "@/lib/converter/download";
 import { uint8ToBase64 } from "@/lib/bytes";
 import { track, goals } from "@/lib/analytics";
@@ -40,10 +35,11 @@ import dynamic from "next/dynamic";
 import ProgressSteps from "@/components/builder/ProgressSteps";
 import TemplateSelector from "@/components/builder/TemplateSelector";
 import ComfortPanel from "@/components/builder/ComfortPanel";
-import NextFieldNav from "@/components/builder/NextFieldNav";
+import ToolRow from "@/components/builder/ToolRow";
 import { AdSlot } from "@/components/ads/AdSlot";
 import { useBuilderTheme } from "@/lib/hooks/useBuilderTheme";
 import { incompleteRequiredFields } from "@/lib/builderNav";
+import { tabRoleLabel } from "@/lib/roleLabels";
 import FormSection from "@/components/builder/FormSection";
 import PreviewStage from "@/components/builder/PreviewStage";
 import Collapsible from "@/components/builder/Collapsible";
@@ -78,11 +74,7 @@ const BRIEF_VARIANT: Record<string, string> = {
 const preferBrief = (id: string) => BRIEF_VARIANT[id] ?? id;
 
 function HomeContent() {
-  const [userName, setUserName] = useState<string>("Гость");
-  const [greeting, setGreeting] = useState<string>("Добрый день");
-
   useEffect(() => {
-    setGreeting(getGreeting());
     const tryOpenFromUrl = () => {
       const p = new URLSearchParams(window.location.search).get("template");
       // ДКП по умолчанию открывается в краткой (1 стр.) форме
@@ -142,7 +134,6 @@ function HomeContent() {
     setFormScale(clamped);
     try { localStorage.setItem("dogovor_form_scale", String(clamped)); } catch { /* localStorage недоступен */ }
   };
-  const [sidebarTab, setSidebarTab] = useState<"preview" | "tools">("tools");
   // Комфорт: тема рабочей области (хук сам читает localStorage + системную тему).
   const { theme: builderTheme, setTheme: setBuilderTheme } = useBuilderTheme();
   // Фокус-режим: прячет боковую панель, форма во всю ширину.
@@ -255,7 +246,6 @@ function HomeContent() {
       .then((res) => {
         const data = res?.data;
         if (data?.full_name) {
-          setUserName(data.full_name.split(" ")[0]);
           setMeFio(data.full_name);
         }
       })
@@ -1045,7 +1035,6 @@ function HomeContent() {
     });
     setAuditTimestamp(new Date());
     setShowAudit(true);
-    setSidebarTab("preview");
     setTimeout(() => {
       document
         .getElementById("builder-sidebar")
@@ -1605,81 +1594,115 @@ function HomeContent() {
 
   return (
     <div className="p-6 max-w-7xl mx-auto">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6" data-bt={builderTheme}>
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">
-            {greeting}, {userName}!
-          </h1>
-          <p className="text-gray-600 mt-1 text-sm">{template.name}</p>
-        </div>
-        {migrationInfo && (
-          <div className="px-3 py-2 rounded-lg bg-blue-50 border border-blue-200 text-xs text-blue-800 flex items-center gap-2">
-            <span className="font-medium">
-              Перенесено {migrationInfo.migratedCount} из {migrationInfo.totalFields} полей
-            </span>
-            <button
-              type="button"
-              onClick={() => setMigrationInfo(null)}
-              className="text-blue-500 hover:text-blue-700"
-              aria-label="Закрыть"
-            >
-              ×
-            </button>
-          </div>
-        )}
-        <div className="flex items-center gap-3">
-          {showSaved && (
-            <div className="flex items-center gap-1.5 text-xs text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-lg">
-              <Check className="w-3.5 h-3.5" />
-              Сохранено
-            </div>
-          )}
-          <span className="text-[10px] text-gray-600">
-            <Clock className="w-3 h-3 inline mr-1" />
-            {template.actSource}
-          </span>
-          <span className="hidden sm:inline-flex items-center gap-1 text-[10px] text-gray-600">
-            <Shield className="w-3 h-3" />
-            Данные обрабатываются локально в браузере
-          </span>
-        </div>
-      </div>
-
-      {/* Progress Stepper */}
-      <div data-bt={builderTheme} className="contents">
-      <ProgressSteps
-        wizardStep={wizardStep}
-        viewMode={viewMode}
-        onSelectTemplateStep={() => setWizardStep("select")}
-        onBackToForm={backToForm}
-        onGoToPreview={goToPreview}
-      />
-      </div>
-
-      {/* №9 аудита: прогресс заполнения обязательных полей */}
+      {/* A2 «Гид Премиум»: hero + шаги. Рендерится только на шаге формы. */}
       {wizardStep === "form" && viewMode === "form" && (() => {
         const { filled, total } = requiredProgress(template, formValues);
         const pct = total ? Math.round((filled / total) * 100) : 100;
+        const next = incompleteFields[0];
+        const nextCat = next
+          ? template.fields.find((f) => f.id === next.id)?.category
+          : undefined;
         return (
-            <div className="mb-6 max-w-4xl" data-bt={builderTheme}>
-            <div className="flex items-center justify-between text-xs text-gray-600 mb-1">
-              <span>Заполнено обязательных полей</span>
-              <span className="flex items-center gap-3">
-                <span className={pct === 100 ? "text-emerald-600 font-medium" : ""}>
-                  {filled} из {total} ({pct}%)
+          <>
+            {migrationInfo && (
+              <div className="mb-4 px-3 py-2 rounded-xl bg-blue-50 border border-blue-200 text-xs text-blue-800 flex items-center gap-2">
+                <span className="font-medium">
+                  Перенесено {migrationInfo.migratedCount} из {migrationInfo.totalFields} полей
                 </span>
-              </span>
-            </div>
-            <div className="h-1.5 rounded-full bg-gray-100 overflow-hidden">
+                <button
+                  type="button"
+                  onClick={() => setMigrationInfo(null)}
+                  className="text-blue-500 hover:text-blue-700"
+                  aria-label="Закрыть"
+                >
+                  ×
+                </button>
+              </div>
+            )}
+            <div className="a2-hero flex items-center gap-6 p-[26px_28px] mb-5 max-sm:flex-col max-sm:items-start">
               <div
-                className={`h-full rounded-full transition-all duration-300 ${pct === 100 ? "bg-emerald-500" : "bg-brand-500"}`}
-                style={{ width: `${pct}%` }}
-              />
+                className="a2-ring"
+                role="img"
+                aria-label={`Заполнено ${pct} процентов`}
+                style={{
+                  background: `conic-gradient(#fff 0 ${pct}%, rgba(255,255,255,.25) ${pct}% 100%)`,
+                }}
+              >
+                <span>{pct}%</span>
+              </div>
+              <div className="min-w-0">
+                <h1 className="text-[21px] font-bold mb-1">{template.name}</h1>
+                <p className="text-[13px] text-[#dbeafe] max-w-[520px]">
+                  Заполнено {filled} из {total} обязательных полей. Документ
+                  сохраняется автоматически — можно закрыть вкладку и вернуться позже.
+                </p>
+                {showSaved && (
+                  <span className="a2-saved px-3 py-1.5 mt-2">
+                    <span className="a2-pulse" aria-hidden="true" />
+                    Сохранено
+                  </span>
+                )}
+              </div>
+              {next ? (
+                <button
+                  type="button"
+                  onClick={() => handleAuditResultClick(next.id)}
+                  className="a2-hero-next px-[18px] py-3 text-sm ml-auto max-sm:ml-0 max-sm:w-full"
+                >
+                  Следующее поле: {next.label}
+                  {nextCat && (
+                    <small>раздел «{tabRoleLabel(template.id, nextCat, nextCat)}»</small>
+                  )}
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={goToPreview}
+                  className="a2-hero-next px-[18px] py-3 text-sm ml-auto max-sm:ml-0 max-sm:w-full"
+                >
+                  Всё заполнено — к предпросмотру
+                  <small>проверка и подпись</small>
+                </button>
+              )}
             </div>
-          </div>
+
+            <div className="flex gap-2 mb-5" role="list" aria-label="Шаги оформления">
+              <button
+                type="button"
+                role="listitem"
+                onClick={() => setWizardStep("select")}
+                className="a2-chip done flex items-center gap-2 px-3.5 py-2.5"
+              >
+                ✓ 1 · Шаблон выбран
+              </button>
+              <div role="listitem" aria-current="step" className="a2-chip now flex items-center gap-2 px-3.5 py-2.5">
+                ◐ 2 · Заполнение · {pct}%
+              </div>
+              <button
+                type="button"
+                role="listitem"
+                onClick={goToPreview}
+                className="a2-chip flex items-center gap-2 px-3.5 py-2.5 hover:border-brand-300"
+              >
+                3 · Проверка и подпись
+              </button>
+            </div>
+          </>
         );
       })()}
+
+      {/* Progress Stepper на шаге выбора шаблона */}
+      {wizardStep === "select" && (
+        <div data-bt={builderTheme} className="contents">
+          <ProgressSteps
+            wizardStep={wizardStep}
+            viewMode={viewMode}
+            onSelectTemplateStep={() => setWizardStep("select")}
+            onBackToForm={backToForm}
+            onGoToPreview={goToPreview}
+          />
+        </div>
+      )}
 
       {/* Template Selector — Step-by-step */}
       {wizardStep === "select" && (
@@ -1716,10 +1739,11 @@ function HomeContent() {
         </>
       )}
 
-      {/* Main Content */}
+      {/* Main Content: A2-полоса на всю ширину контейнера */}
       {wizardStep === "form" && (
+        <div className="a2-band -m-6 px-4 sm:px-6 pt-6 pb-28" data-bt={builderTheme}>
         <div
-          className={`grid grid-cols-1 xl:grid-cols-5 gap-5 ${
+          className={`grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_370px] gap-5 ${
             viewMode === "preview" ? "print:hidden" : ""
           }`}
         >
@@ -1773,12 +1797,6 @@ function HomeContent() {
                   </button>
                 </div>
               )}
-              {/* Навигация «осталось заполнить» — теги ведут к полям */}
-              <NextFieldNav
-                incomplete={incompleteFields}
-                total={requiredProgress(template, formValues).total}
-                onJump={handleAuditResultClick}
-              />
               {/* Form */}
               {template.id === "dkp-auto" || template.id === "dkp-auto-short" ? (
                 <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
@@ -1863,6 +1881,16 @@ function HomeContent() {
                   Предпросмотр
                   <ArrowRight className="w-4 h-4" />
                 </button>
+                {focusMode && (
+                  <button
+                    type="button"
+                    onClick={toggleFocusMode}
+                    className="inline-flex items-center justify-center font-medium transition-all px-4 py-2 text-sm rounded-xl gap-2 bg-white text-gray-700 hover:bg-gray-50 border border-gray-200"
+                  >
+                    <Focus className="w-4 h-4" />
+                    Выйти из фокуса
+                  </button>
+                )}
               </div>
             </div>)}
 
@@ -1891,6 +1919,18 @@ function HomeContent() {
                   </button>
                 </div>
               </div>
+            )}
+            {/* Выход из фокуса на мобиле: сайдбар с тумблером скрыт,
+                поэтому отдельная плавающая кнопка над нижним CTA. */}
+            {viewMode === "form" && focusMode && (
+              <button
+                type="button"
+                onClick={toggleFocusMode}
+                className="a2-focus-exit xl:hidden fixed bottom-24 right-3 z-30 inline-flex items-center gap-2 px-4 py-2.5 text-sm font-bold"
+              >
+                <Focus className="w-4 h-4" />
+                Выйти из фокуса
+              </button>
             )}
             {viewMode === "preview" && (
               <div className="fixed inset-0 z-40 bg-white overflow-y-auto">
@@ -1921,284 +1961,338 @@ function HomeContent() {
             )}
           </div>
 
-          {/* Right Column: Live preview / Tools */}
-          {viewMode === "form" && (<div id="builder-sidebar" data-bt={builderTheme} className={`xl:col-span-2 space-y-4 ${focusMode ? "hidden" : ""}`}>
-            <div className="flex gap-1 bg-slate-100 p-1 rounded-2xl">
-              {(
-                [
-                  ["preview", "Аудит и чек-лист", <Eye key="preview" className="w-4 h-4" />],
-                  ["tools", "Документы и инструменты", <Wrench key="tools" className="w-4 h-4" />],
-                ] as const
-              ).map(([id, label, icon]) => (
-                <button
-                  key={id}
-                  onClick={() => setSidebarTab(id)}
-                  className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
-                    sidebarTab === id
-                      ? "bg-white text-brand-700 shadow-sm"
-                      : "text-slate-600 hover:text-slate-700"
-                  }`}
-                >
-                  {icon}
-                  {label}
-                </button>
-              ))}
-            </div>
-
-            {sidebarTab === "preview" ? (<>
-              {showAudit && auditResults && (
-                <Collapsible
-                  id="audit"
-                  title="Правовой аудит"
-                  icon={<Shield className="w-4 h-4 text-brand-600" />}
-                  collapsed={!!collapsedSections["audit"]}
-                  onToggle={toggleSection}
-                >
-                  <AuditPanel
-                    results={auditResults}
-                    onResultClick={handleAuditResultClick}
-                    lastCheckedAt={auditTimestamp ?? undefined}
-                  />
-                </Collapsible>
-              )}
-
-              <Collapsible
-                id="checklist"
-                title="Чек-лист перед сделкой"
-                collapsed={!!collapsedSections["checklist"]}
-                onToggle={toggleSection}
-              >
-                <ChecklistPanel
-                  template={template}
-                  checklist={checklist}
-                  onChange={(item, checked) =>
-                    setChecklist((prev) => ({ ...prev, [item]: checked }))
-                  }
-                  packTemplateIds={packTemplateIds}
-                  suggestedDocs={template.suggestedDocs}
-                  onAddDoc={togglePack}
-                  formValues={formValues}
-                />
-              </Collapsible>
-
-              {hasContractPrice && (
-                <Collapsible
-                  id="costs"
-                  title="Расходы на сделку"
-                  icon={<Calculator className="w-4 h-4 text-brand-600" />}
-                  collapsed={!!collapsedSections["costs"]}
-                  onToggle={toggleSection}
-                >
-                  <CostsPanel
-                    costCalc={costCalc}
-                    ownershipYears={ownershipYears}
-                    onOwnershipYearsChange={setOwnershipYears}
-                  />
-                </Collapsible>
-              )}
-            </>) : (<>
-              {/* Document assembly tools */}
-              {/* Комфорт и вид: тема, размер текста, фокус, перерывы */}
-              <Collapsible
-                id="comfort"
-                title="Комфорт и вид"
-                icon={<SlidersHorizontal className="w-4 h-4 text-brand-600" />}
-                collapsed={!!collapsedSections["comfort"]}
-                onToggle={toggleSection}
-              >
-                <ComfortPanel
-                  theme={builderTheme}
-                  onThemeChange={setBuilderTheme}
-                  formScale={formScale}
-                  onScaleChange={applyFormScale}
-                  focusMode={focusMode}
-                  onFocusToggle={toggleFocusMode}
-                  breakReminder={breakReminder}
-                  onBreakToggle={toggleBreakReminder}
-                />
-              </Collapsible>
-              {subscriptionActive ? (
-                <DocScanner
-                  template={template}
-                  photos={scanPhotos}
-                  onPhotosChange={handlePhotosChange}
-                  onFieldChange={handleFieldChange}
-                />
-              ) : (
-                <div className="rounded-2xl border-2 border-dashed border-brand-300 bg-brand-50 p-6 text-center">
-                  <div className="mx-auto w-14 h-14 rounded-full bg-brand-100 flex items-center justify-center mb-3">
-                    <Crown className="w-7 h-7 text-brand-600" />
+          {/* Right Column: A2-рельса (мини-А4 + инструменты) */}
+          {viewMode === "form" && (<div id="builder-sidebar" data-bt={builderTheme} className={`space-y-4 xl:sticky xl:top-[74px] self-start ${focusMode ? "hidden" : ""}`}>
+            {(() => {
+              const p = requiredProgress(template, formValues);
+              const errCount = liveAudit.filter((r) => r.type === "error" && r.field !== "_all").length;
+              return (
+                <div className="a2-a4card p-[18px] text-center">
+                  <div className="a2-a4 w-[172px] mx-auto mb-3 px-[14px] py-4 text-left">
+                    <h4 className="text-[8px] leading-snug text-center mb-2 font-bold">{template.name}</h4>
+                    <p className="text-[5.5px] leading-[1.7] text-justify text-[#475569]">
+                      Заполнено {p.filled} из {p.total} обязательных полей. Документ
+                      обновляется автоматически при каждом изменении формы.
+                    </p>
+                    <div className="flex justify-between mt-2">
+                      <i className="not-italic text-[5px] text-[#94a3b8] border-t border-[#cbd5e1] pt-[2px] w-[45%]">Продавец /подпись/</i>
+                      <i className="not-italic text-[5px] text-[#94a3b8] border-t border-[#cbd5e1] pt-[2px] w-[45%]">Покупатель /подпись/</i>
+                    </div>
                   </div>
-                  <h4 className="font-semibold text-gray-900">Сканер документов — функция PRO</h4>
-                  <p className="text-sm text-gray-600 mt-1 mb-4">
-                    Фотографируйте паспорт, ПТС или СТС — OCR автоматически заполнит поля договора.
-                  </p>
+                  <div className="a2-meta flex justify-center gap-3.5 text-[11px] mb-3">
+                    <span>📄 {exportPages > 0 ? `${exportPages} стр.` : "… стр."}</span>
+                    <span>🔄 {showSaved ? "сохранено только что" : "автосохранение включено"}</span>
+                  </div>
                   <button
-                    onClick={() => setPaywallOpen(true)}
-                    className="px-4 py-2 bg-brand-600 text-white rounded-xl text-sm font-medium hover:bg-brand-700 transition"
+                    type="button"
+                    onClick={goToPreview}
+                    className="a2-btn a2-btn-brand w-full justify-center px-5 py-2.5 mb-2"
                   >
-                    Оформить PRO и включить сканер
+                    Открыть предпросмотр →
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleAudit}
+                    className="a2-btn a2-btn-ghost w-full justify-center px-5 py-2.5"
+                  >
+                    🛡 Проверить ошибки{errCount > 0 ? ` (${errCount})` : ""}
                   </button>
                 </div>
-              )}
-              {getRelatedDocs().length > 0 && (
-                <Collapsible
-                  id="related"
-                  title="Связанные документы"
-                  collapsed={!!collapsedSections["related"]}
-                  onToggle={toggleSection}
-                >
-                  <RelatedDocsPanel
-                    relatedDocs={getRelatedDocs()}
-                    packTemplateIds={packTemplateIds}
-                    onTogglePack={togglePack}
-                    onSelectTemplate={(id) => selectRelatedTemplate(preferBrief(id))}
-                  />
-                </Collapsible>
-              )}
-              {draftInfos.length > 0 && (
-                <Collapsible
-                  id="drafts"
-                  title="Мои черновики"
-                  icon={<Clock className="w-4 h-4 text-brand-600" />}
-                  collapsed={!!collapsedSections["drafts"]}
-                  onToggle={toggleSection}
-                >
-                  <DraftsPanel
-                    draftInfos={draftInfos}
-                    selectedTemplateId={selectedTemplateId}
-                    onCreateVersion={() => {
-                      pushDraftVersion(template.id, formValues, checklist, activeTab);
-                      lastVersionRef.current = Date.now();
-                      setDraftInfos(getAllDrafts());
-                      setShowSaved(true);
-                      setTimeout(() => setShowSaved(false), 2000);
-                    }}
-                    onOpenDraft={openDraft}
-                    onRemoveDraft={removeDraft}
-                  />
-                </Collapsible>
-              )}
-              <Collapsible
-                id="approval"
-                title="Согласование с контрагентом"
-                icon={<Shield className="w-4 h-4 text-brand-600" />}
-                collapsed={!!collapsedSections["approval"]}
-                onToggle={toggleSection}
-              >
-                <ApprovalPanel
-                  templateId={template.id}
-                  approvalMode={approvalMode}
-                  onModeChange={setApprovalMode}
-                  approvalBusy={approvalBusy}
-                  approvalMsg={approvalMsg}
-                  myApprovals={myApprovals}
-                  approvalQr={approvalQr}
-                  onCreate={() => { void createApproval(); }}
-                  onRefresh={loadMyApprovals}
-                  onApply={applyApproval}
-                  onCopyLink={copyApprovalLink}
-                  onToggleQr={(token) => { void showApprovalQr(token); }}
-                  subscriptionActive={subscriptionActive}
-                  onUpgrade={() => requirePro("Согласование с контрагентом — функция PRO")}
-                />
-              </Collapsible>
-              {similarTemplates.length > 0 && (
-                <Collapsible
-                  id="similar"
-                  title="Похожие шаблоны"
-                  icon={<Copy className="w-4 h-4 text-brand-600" />}
-                  collapsed={!!collapsedSections["similar"]}
-                  onToggle={toggleSection}
-                >
-                  <SimilarTemplatesPanel
-                    similarTemplates={similarTemplates}
-                    onSelectTemplate={(id) => selectRelatedTemplate(preferBrief(id))}
-                  />
-                </Collapsible>
-              )}
+              );
+            })()}
 
-              {/* Data & signatures */}
-              <div className="pt-1 pb-0.5">
-                <p className="text-[10px] font-semibold text-gray-600 uppercase tracking-wide px-1">
-                  Данные и подписи
-                </p>
+            <div className="a2-tools px-[18px] pt-1 pb-[14px]">
+              <h3 className="text-sm font-bold py-3" style={{ color: "var(--a2-ink)" }}>Инструменты</h3>
+              <div className="a2-tgroup py-2">
+                <b>Подготовка</b>
+                <ToolRow
+                  id="scanner"
+                  tile="📷"
+                  tint="t-amber"
+                  title="Сканер документов"
+                  sub="Фото ПТС → поля сами"
+                  locked={!subscriptionActive}
+                  expanded={!collapsedSections["scanner"]}
+                  onToggle={toggleSection}
+                >
+                  {subscriptionActive ? (
+                    <DocScanner
+                      template={template}
+                      photos={scanPhotos}
+                      onPhotosChange={handlePhotosChange}
+                      onFieldChange={handleFieldChange}
+                    />
+                  ) : (
+                    <div className="rounded-2xl border-2 border-dashed border-brand-300 bg-brand-50 p-6 text-center">
+                      <div className="mx-auto w-14 h-14 rounded-full bg-brand-100 flex items-center justify-center mb-3">
+                        <Crown className="w-7 h-7 text-brand-600" />
+                      </div>
+                      <h4 className="font-semibold text-gray-900">Сканер документов — функция PRO</h4>
+                      <p className="text-sm text-gray-600 mt-1 mb-4">
+                        Фотографируйте паспорт, ПТС или СТС — OCR автоматически заполнит поля договора.
+                      </p>
+                      <button
+                        onClick={() => setPaywallOpen(true)}
+                        className="px-4 py-2 bg-brand-600 text-white rounded-xl text-sm font-medium hover:bg-brand-700 transition"
+                      >
+                        Оформить PRO и включить сканер
+                      </button>
+                    </div>
+                  )}
+                </ToolRow>
+                <ToolRow
+                  id="dadata"
+                  tile="🏢"
+                  tint="t-blue"
+                  title="Компания по ИНН"
+                  sub="Реквизиты одной строкой"
+                  expanded={!collapsedSections["dadata"]}
+                  onToggle={toggleSection}
+                >
+                  <DadataPanel
+                    subscriptionActive={subscriptionActive}
+                    dadataKey={dadataKey}
+                    onKeyChange={setDadataKey}
+                    partyQuery={partyQuery}
+                    onQueryChange={setPartyQuery}
+                    partyResults={partyResults}
+                    partyAnalyzing={partyAnalyzing}
+                    dadataLoading={dadataLoading}
+                    dadataMsg={dadataMsg}
+                    onSearch={() => { void searchParty(); }}
+                    onApplyResult={applyPartyResult}
+                    onClearResults={() => setPartyResults([])}
+                  />
+                </ToolRow>
+                <ToolRow
+                  id="contractors"
+                  tile="👤"
+                  tint="t-green"
+                  title="Мои данные · Контрагенты"
+                  sub="Подстановка в один клик"
+                  expanded={!collapsedSections["contractors"]}
+                  onToggle={toggleSection}
+                >
+                  <ContractorsPanel
+                    template={template}
+                    contractors={contractors}
+                    contractorsMsg={contractorsMsg}
+                    onApply={applyContractor}
+                    onDelete={(id) => { void deleteContractor(id); }}
+                    onSave={(prefix) => { void saveContractor(prefix); }}
+                  />
+                </ToolRow>
+                {personRoles.length > 0 && (
+                  <ToolRow
+                    id="persons"
+                    tile="🧑‍💼"
+                    tint="t-green"
+                    title="Сохранённые лица"
+                    sub="По ролям сторон"
+                    expanded={!collapsedSections["persons"]}
+                    onToggle={toggleSection}
+                  >
+                    <PersonsPanel
+                      roles={personRoles}
+                      persons={persons}
+                      personsMsg={personsMsg}
+                      meFio={meFio}
+                      onApplyToRole={applyPersonToRole}
+                      onApplyMe={applyMeToRole}
+                      onDelete={(id) => { void deletePerson(id); }}
+                      onSave={(prefix) => { void savePerson(prefix); }}
+                    />
+                  </ToolRow>
+                )}
               </div>
-              <Collapsible
-                id="dadata"
-                title="Автозаполнение по ИНН (DADATA)"
-                collapsed={!!collapsedSections["dadata"]}
-                onToggle={toggleSection}
-              >
-                <DadataPanel
-                  subscriptionActive={subscriptionActive}
-                  dadataKey={dadataKey}
-                  onKeyChange={setDadataKey}
-                  partyQuery={partyQuery}
-                  onQueryChange={setPartyQuery}
-                  partyResults={partyResults}
-                  partyAnalyzing={partyAnalyzing}
-                  dadataLoading={dadataLoading}
-                  dadataMsg={dadataMsg}
-                  onSearch={() => { void searchParty(); }}
-                  onApplyResult={applyPartyResult}
-                  onClearResults={() => setPartyResults([])}
-                />
-              </Collapsible>
 
-              <Collapsible
-                id="contractors"
-                title="Контрагенты"
-                collapsed={!!collapsedSections["contractors"]}
-                onToggle={toggleSection}
-              >
-                <ContractorsPanel
-                  template={template}
-                  contractors={contractors}
-                  contractorsMsg={contractorsMsg}
-                  onApply={applyContractor}
-                  onDelete={(id) => { void deleteContractor(id); }}
-                  onSave={(prefix) => { void saveContractor(prefix); }}
-                />
-              </Collapsible>
-
-              {personRoles.length > 0 && (
-                <Collapsible
-                  id="persons"
-                  title="Сохранённые лица"
-                  collapsed={!!collapsedSections["persons"]}
+              <div className="a2-tgroup py-2 border-t border-dashed" style={{ borderColor: "var(--a2-field-bd)" }}>
+                <b>Проверка</b>
+                {showAudit && auditResults && (
+                  <ToolRow
+                    id="audit"
+                    tile="🛡"
+                    tint="t-amber"
+                    title="Правовой аудит"
+                    sub={(() => {
+                      const n = auditResults.filter((r) => r.type === "error" || r.type === "warning").length;
+                      if (n === 0) return "замечаний нет";
+                      const word = n % 10 === 1 && n % 100 !== 11 ? "замечание" : (n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 >= 20)) ? "замечания" : "замечаний";
+                      return `${n} ${word}`;
+                    })()}
+                    expanded={!collapsedSections["audit"]}
+                    onToggle={toggleSection}
+                  >
+                    <AuditPanel
+                      results={auditResults}
+                      onResultClick={handleAuditResultClick}
+                      lastCheckedAt={auditTimestamp ?? undefined}
+                    />
+                  </ToolRow>
+                )}
+                <ToolRow
+                  id="checklist"
+                  tile="☑"
+                  tint="t-green"
+                  title="Чек-лист"
+                  sub="Что проверить до денег"
+                  expanded={!collapsedSections["checklist"]}
                   onToggle={toggleSection}
                 >
-                  <PersonsPanel
-                    roles={personRoles}
-                    persons={persons}
-                    personsMsg={personsMsg}
-                    meFio={meFio}
-                    onApplyToRole={applyPersonToRole}
-                    onApplyMe={applyMeToRole}
-                    onDelete={(id) => { void deletePerson(id); }}
-                    onSave={(prefix) => { void savePerson(prefix); }}
+                  <ChecklistPanel
+                    template={template}
+                    checklist={checklist}
+                    onChange={(item, checked) =>
+                      setChecklist((prev) => ({ ...prev, [item]: checked }))
+                    }
+                    packTemplateIds={packTemplateIds}
+                    suggestedDocs={template.suggestedDocs}
+                    onAddDoc={togglePack}
+                    formValues={formValues}
                   />
-                </Collapsible>
-              )}
+                </ToolRow>
+                {hasContractPrice && (
+                  <ToolRow
+                    id="costs"
+                    tile="🧮"
+                    tint="t-violet"
+                    title="Расходы"
+                    sub="Налог и пошлина"
+                    expanded={!collapsedSections["costs"]}
+                    onToggle={toggleSection}
+                  >
+                    <CostsPanel
+                      costCalc={costCalc}
+                      ownershipYears={ownershipYears}
+                      onOwnershipYearsChange={setOwnershipYears}
+                    />
+                  </ToolRow>
+                )}
+              </div>
 
-              <Collapsible
-                id="signing"
-                title="Подписание и протокол (ПЭП)"
-                collapsed={!!collapsedSections["signing"]}
-                onToggle={toggleSection}
-              >
-                <SigningPanel
-                  templateId={template.id}
-                  signSheetEnabled={signSheetEnabled}
-                  onToggle={setSignSheetEnabled}
-                />
-              </Collapsible>
-              {/* РСЯ: ненавязчивый блок под инструментами, над paywall.
-                  Рендерится только при ADS_ENABLED=1 + marketing-согласии. */}
-              <AdSlot id="BUILDER_SIDEBAR" />
-            </>)}
+              <div className="a2-tgroup py-2 border-t border-dashed" style={{ borderColor: "var(--a2-field-bd)" }}>
+                <b>Завершение</b>
+                {getRelatedDocs().length > 0 && (
+                  <ToolRow
+                    id="related"
+                    tile="📎"
+                    tint="t-blue"
+                    title="Акт и расписка"
+                    sub="Приложить к договору"
+                    expanded={!collapsedSections["related"]}
+                    onToggle={toggleSection}
+                  >
+                    <RelatedDocsPanel
+                      relatedDocs={getRelatedDocs()}
+                      packTemplateIds={packTemplateIds}
+                      onTogglePack={togglePack}
+                      onSelectTemplate={(id) => selectRelatedTemplate(preferBrief(id))}
+                    />
+                  </ToolRow>
+                )}
+                <ToolRow
+                  id="approval"
+                  tile="✍"
+                  tint="t-violet"
+                  title="Согласование"
+                  sub="Ссылка второй стороне"
+                  expanded={!collapsedSections["approval"]}
+                  onToggle={toggleSection}
+                >
+                  <ApprovalPanel
+                    templateId={template.id}
+                    approvalMode={approvalMode}
+                    onModeChange={setApprovalMode}
+                    approvalBusy={approvalBusy}
+                    approvalMsg={approvalMsg}
+                    myApprovals={myApprovals}
+                    approvalQr={approvalQr}
+                    onCreate={() => { void createApproval(); }}
+                    onRefresh={loadMyApprovals}
+                    onApply={applyApproval}
+                    onCopyLink={copyApprovalLink}
+                    onToggleQr={(token) => { void showApprovalQr(token); }}
+                    subscriptionActive={subscriptionActive}
+                    onUpgrade={() => requirePro("Согласование с контрагентом — функция PRO")}
+                  />
+                </ToolRow>
+                <ToolRow
+                  id="signing"
+                  tile="🔏"
+                  tint="t-rose"
+                  title="Подписание (ПЭП)"
+                  sub="Протокол и лист подписания"
+                  expanded={!collapsedSections["signing"]}
+                  onToggle={toggleSection}
+                >
+                  <SigningPanel
+                    templateId={template.id}
+                    signSheetEnabled={signSheetEnabled}
+                    onToggle={setSignSheetEnabled}
+                  />
+                </ToolRow>
+                {draftInfos.length > 0 && (
+                  <ToolRow
+                    id="drafts"
+                    tile="💾"
+                    tint="t-blue"
+                    title="Черновики"
+                    sub="Откат к любой версии"
+                    expanded={!collapsedSections["drafts"]}
+                    onToggle={toggleSection}
+                  >
+                    <DraftsPanel
+                      draftInfos={draftInfos}
+                      selectedTemplateId={selectedTemplateId}
+                      onCreateVersion={() => {
+                        pushDraftVersion(template.id, formValues, checklist, activeTab);
+                        lastVersionRef.current = Date.now();
+                        setDraftInfos(getAllDrafts());
+                        setShowSaved(true);
+                        setTimeout(() => setShowSaved(false), 2000);
+                      }}
+                      onOpenDraft={openDraft}
+                      onRemoveDraft={removeDraft}
+                    />
+                  </ToolRow>
+                )}
+                {similarTemplates.length > 0 && (
+                  <ToolRow
+                    id="similar"
+                    tile="📑"
+                    tint="t-violet"
+                    title="Похожие шаблоны"
+                    sub="Другие варианты"
+                    expanded={!collapsedSections["similar"]}
+                    onToggle={toggleSection}
+                  >
+                    <SimilarTemplatesPanel
+                      similarTemplates={similarTemplates}
+                      onSelectTemplate={(id) => selectRelatedTemplate(preferBrief(id))}
+                    />
+                  </ToolRow>
+                )}
+              </div>
+            </div>
+
+            <div className="a2-tools px-[18px] pt-1 pb-[14px]">
+              <h3 className="text-sm font-bold py-3" style={{ color: "var(--a2-ink)" }}>Комфорт и вид</h3>
+              <ComfortPanel
+                theme={builderTheme}
+                onThemeChange={setBuilderTheme}
+                formScale={formScale}
+                onScaleChange={applyFormScale}
+                focusMode={focusMode}
+                onFocusToggle={toggleFocusMode}
+                breakReminder={breakReminder}
+                onBreakToggle={toggleBreakReminder}
+              />
+            </div>
+            {/* РСЯ: ненавязчивый блок под инструментами, над paywall.
+                Рендерится только при ADS_ENABLED=1 + marketing-согласии. */}
+            <AdSlot id="BUILDER_SIDEBAR" />
           </div>)}
+        </div>
         </div>
       )}
 

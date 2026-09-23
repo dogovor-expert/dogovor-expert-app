@@ -144,19 +144,19 @@ export default function FormField({
 
   const fieldMessage =
     (errorMsg && (
-      <p className="flex items-center gap-1 mt-1 text-xs text-red-600">
+      <p className="flex items-center gap-1 a2-fmsg err">
         <AlertCircle className="w-3 h-3 flex-shrink-0" />
         {errorMsg}
       </p>
     )) ||
     (warnMsg && (
-      <p className="flex items-center gap-1 mt-1 text-xs text-amber-700">
+      <p className="flex items-center gap-1 a2-fmsg warn">
         <AlertTriangle className="w-3 h-3 flex-shrink-0" />
         {warnMsg}
       </p>
     )) ||
     (successMsg && (
-      <p className="flex items-center gap-1 mt-1 text-xs text-emerald-600">
+      <p className="flex items-center gap-1 a2-fmsg ok">
         <CheckCircle className="w-3 h-3 flex-shrink-0" />
         {successMsg}
       </p>
@@ -167,28 +167,24 @@ export default function FormField({
     value === "" &&
     field.defaultValue !== "" &&
     (field.type === "text" || field.type === "number" || field.type === "textarea") ? (
-      <p className="text-xs text-gray-600 mt-0.5">
+      <p className="a2-fmsg dim">
         Пример: {field.defaultValue}
       </p>
     ) : null;
 
-  const baseInputClass = `w-full px-3.5 py-2.5 max-sm:py-3 text-base bg-gray-50 border rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all ${
-    hasError
-      ? "border-red-400"
-      : hasWarn
-        ? "border-amber-300"
-        : "border-gray-200"
+  const baseInputClass = `a2-input px-3 py-2.5 max-sm:py-3 ${
+    hasError ? "bad" : ""
   }`;
 
   const requiredMark = field.validation?.required && (
-    <span className="text-red-500 ml-0.5">*</span>
+    <span className="text-[#dc2626] ml-0.5">*</span>
   );
 
   if (field.type === "radio" && field.options) {
     const opts = normalizeOptions(field.options);
     return (
       <div data-field={field.id} className="col-span-2">
-        <label className="block text-sm font-medium text-gray-700 mb-2">
+        <label className="a2-label mb-[5px]">
           {field.label}
           {requiredMark}
         </label>
@@ -196,7 +192,7 @@ export default function FormField({
           {opts.map((opt) => (
             <label
               key={opt.value}
-              className="flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 hover:bg-gray-50 cursor-pointer transition-colors"
+              className="flex items-center gap-2 px-3 py-2 rounded-lg border border-[var(--a2-field-bd)] hover:bg-[var(--a2-field-bg)] cursor-pointer transition-colors"
             >
               <input
                 type="radio"
@@ -206,7 +202,7 @@ export default function FormField({
                 onChange={(e) => onChange(field.id, e.target.value)}
                 className="w-4 h-4 text-brand-600 focus:ring-brand-500"
               />
-              <span className="text-xs text-gray-700">{opt.label}</span>
+              <span className="text-xs text-[var(--a2-sub)]">{opt.label}</span>
             </label>
           ))}
         </div>
@@ -218,16 +214,16 @@ export default function FormField({
   if (field.type === "checkbox") {
     return (
       <div data-field={field.id} className="col-span-2">
-        <label className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors">
+        <label className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-[var(--a2-field-bg)] cursor-pointer transition-colors">
           <input
             type="checkbox"
             checked={value === "true"}
             onChange={(e) =>
               onChange(field.id, e.target.checked ? "true" : "false")
             }
-            className="w-4 h-4 rounded border-gray-300 text-brand-600 focus:ring-brand-500"
+            className="w-4 h-4 rounded border-[var(--a2-field-bd)] text-brand-600 focus:ring-brand-500"
           />
-          <span className="text-xs text-gray-700">{field.label}</span>
+          <span className="text-xs text-[var(--a2-sub)]">{field.label}</span>
         </label>
         {fieldMessage}
       </div>
@@ -237,7 +233,7 @@ export default function FormField({
   if (field.type === "select" && field.options) {
     const opts = normalizeOptions(field.options);
     return (
-      <div data-field={field.id}>\n        <label className="block text-sm font-medium text-gray-700 mb-1">
+      <div data-field={field.id}>\n        <label className="a2-label mb-[5px]">
           {field.label}
           {requiredMark}
         </label>
@@ -265,7 +261,7 @@ export default function FormField({
           </p>
         )}
         {field.validation?.helpText && (
-          <p className="text-xs text-gray-600 mt-0.5">
+          <p className="a2-fmsg dim">
             {field.validation.helpText}
           </p>
         )}
@@ -278,7 +274,7 @@ export default function FormField({
   if (field.type === "textarea") {
     return (
       <div data-field={field.id} className="col-span-2">
-        <label className="block text-sm font-medium text-gray-700 mb-1">
+        <label className="a2-label mb-[5px]">
           {field.label}
           {requiredMark}
         </label>
@@ -292,7 +288,7 @@ export default function FormField({
           className={`${baseInputClass} resize-none`}
         />
         {field.validation?.helpText && (
-          <p className="text-xs text-gray-600 mt-0.5">
+          <p className="a2-fmsg dim">
             {field.validation.helpText}
           </p>
         )}
@@ -341,27 +337,27 @@ export default function FormField({
 
     return (
       <div data-field={field.id} className="col-span-2">
-        <label className="block text-sm font-medium text-gray-700 mb-2">
+        <label className="a2-label mb-[5px]">
           {field.label}
         </label>
-        <div className="border border-gray-200 rounded-lg overflow-hidden">
+        <div className="border border-[var(--a2-field-bd)] rounded-lg overflow-hidden">
           {/* Мобильные карточки */}
-          <div className="block sm:hidden divide-y divide-gray-100">
+          <div className="block sm:hidden divide-y divide-[var(--a2-field-bd)]">
             {items.map((item, idx) => (
               <div key={idx} className="p-3 space-y-2">
                 {repeatingFields.map((rf) => (
                   <div key={rf.id} className="flex items-center gap-2">
-                    <span className="text-xs text-gray-600 w-1/3">{rf.label}</span>
+                    <span className="text-xs text-[var(--a2-muted)] w-1/3">{rf.label}</span>
                     <input
                       type={rf.type === "number" ? "number" : "text"}
                       value={item[rf.id] || ""}
                       onChange={(e) => updateItem(idx, rf.id, e.target.value)}
-                      className="flex-1 px-2 py-1 text-xs bg-white border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-brand-500"
+                      className="flex-1 px-2 py-1 text-xs bg-[var(--a2-card)] border border-[var(--a2-field-bd)] rounded focus:outline-none focus:ring-1 focus:ring-brand-500"
                     />
                   </div>
                 ))}
                 <div className="flex justify-end">
-                  <button onClick={() => removeItem(idx)} className="p-1 hover:bg-red-50 rounded text-gray-600 hover:text-red-500">
+                  <button onClick={() => removeItem(idx)} className="p-1 hover:bg-red-50 rounded text-[var(--a2-muted)] hover:text-red-500">
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
                 </div>
@@ -371,11 +367,11 @@ export default function FormField({
           {/* Десктопная таблица */}
           <table className="w-full text-xs hidden sm:table">
             <thead>
-              <tr className="bg-gray-50">
+              <tr className="bg-[var(--a2-field-bg)]">
                 {field.repeatingFields.map((rf) => (
                   <th
                     key={rf.id}
-                    className="px-2 py-1.5 text-left font-medium text-gray-600 border-b"
+                    className="px-2 py-1.5 text-left font-medium text-[var(--a2-muted)] border-b"
                     style={{ width: rf.width }}
                   >
                     {rf.label}
@@ -386,7 +382,7 @@ export default function FormField({
             </thead>
             <tbody>
               {items.map((item, idx) => (
-                <tr key={idx} className="hover:bg-gray-50">
+                <tr key={idx} className="hover:bg-[var(--a2-field-bg)]">
                   {repeatingFields.map((rf) => (
                     <td key={rf.id} className="px-1 py-1 border-b">
                       <input
@@ -395,14 +391,14 @@ export default function FormField({
                         onChange={(e) =>
                           updateItem(idx, rf.id, e.target.value)
                         }
-                        className="w-full px-2 py-1 text-xs bg-white border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-brand-500"
+                        className="w-full px-2 py-1 text-xs bg-[var(--a2-card)] border border-[var(--a2-field-bd)] rounded focus:outline-none focus:ring-1 focus:ring-brand-500"
                       />
                     </td>
                   ))}
                   <td className="px-1 py-1 border-b text-center">
                     <button
                       onClick={() => removeItem(idx)}
-                      className="p-1 hover:bg-red-50 rounded text-gray-600 hover:text-red-500 transition-colors"
+                      className="p-1 hover:bg-red-50 rounded text-[var(--a2-muted)] hover:text-red-500 transition-colors"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
@@ -420,7 +416,7 @@ export default function FormField({
             <Plus className="w-3.5 h-3.5" />
             Добавить позицию
           </button>
-          <span className="text-xs font-semibold text-gray-700">
+          <span className="text-xs font-semibold text-[var(--a2-sub)]">
             Итого: {total.toLocaleString("ru-RU")} ₽
           </span>
         </div>
@@ -439,7 +435,7 @@ export default function FormField({
 
   return (
     <div data-field={field.id}>
-      <label htmlFor={field.id} className="block text-sm font-medium text-gray-700 mb-1">
+      <label htmlFor={field.id} className="a2-label mb-[5px]">
         {field.label}
         {requiredMark}
       </label>
@@ -488,7 +484,7 @@ export default function FormField({
           className={baseInputClass}
         />
         {showDropdown && (
-          <div className="absolute left-0 right-0 top-full mt-1 z-30 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden">
+          <div className="absolute left-0 right-0 top-full mt-1 z-30 bg-[var(--a2-card)] border border-[var(--a2-field-bd)] rounded-lg shadow-lg overflow-hidden">
             <ul className="max-h-56 overflow-y-auto">
               {suggestions.map((s, i) => (
                 <li key={i}>
@@ -496,11 +492,11 @@ export default function FormField({
                     type="button"
                     onMouseDown={(e) => e.preventDefault()}
                     onClick={() => pickSuggestion(s)}
-                    className="w-full text-left px-3 py-2 text-sm text-gray-800 hover:bg-brand-50 transition-colors"
+                    className="w-full text-left px-3 py-2 text-sm text-[var(--a2-ink)] hover:bg-brand-50 transition-colors"
                   >
                     <span className="block">{s.value}</span>
                     {s.sub && s.sub !== s.value && (
-                      <span className="block text-xs text-gray-600">{s.sub}</span>
+                      <span className="block text-xs text-[var(--a2-muted)]">{s.sub}</span>
                     )}
                   </button>
                 </li>
@@ -509,7 +505,7 @@ export default function FormField({
           </div>
         )}
         {loading && (
-          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-600">
+          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-[var(--a2-muted)]">
             ищем…
           </span>
         )}
@@ -530,7 +526,7 @@ export default function FormField({
         </datalist>
       )}
       {field.validation?.helpText && (
-        <p className="text-xs text-gray-600 mt-0.5">
+        <p className="a2-fmsg dim">
           {field.validation.helpText}
         </p>
       )}
@@ -554,7 +550,7 @@ export default function FormField({
           href="https://egrul.nalog.ru"
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center gap-1 mt-1 text-xs text-gray-600 hover:text-brand-600 transition-colors"
+          className="inline-flex items-center gap-1 mt-1 text-xs text-[var(--a2-muted)] hover:text-brand-600 transition-colors"
         >
           <Search className="w-3 h-3" />
           Свериться с ЕГРЮЛ на egrul.nalog.ru
