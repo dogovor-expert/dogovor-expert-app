@@ -5,13 +5,18 @@ import Link from "next/link";
 import {
   ArrowRight,
   Briefcase,
+  Building2,
   Car,
   ChevronLeft,
   ChevronRight,
   FileText,
+  Gavel,
+  HardHat,
   Home,
+  Landmark,
   Scale,
   Search,
+  Users,
   Wallet,
   type LucideIcon,
 } from "lucide-react";
@@ -35,6 +40,11 @@ const CATEGORY_ICON: Record<string, LucideIcon> = {
   бизнес: Briefcase,
   финансы: Wallet,
   право: Scale,
+  недвижимость: Building2,
+  работа: HardHat,
+  семья: Users,
+  потребители: Gavel,
+  налоги: Landmark,
 };
 
 function norm(s: string): string {
@@ -114,8 +124,9 @@ export default function BlogList({ posts, labels, order, templatesCount }: BlogL
               Как составить договор и не потерять деньги
             </h1>
             <p className="mt-3 max-w-2xl text-sm leading-relaxed text-gray-600">
-              Разборы юристов с нормами ГК РФ, ТК РФ и НК РФ: аренда, ГПХ и
-              самозанятость, расписки, доверенности, ДКП авто.
+              Разборы юристов с нормами ГК РФ, ТК РФ и НК РФ: недвижимость,
+              аренда, авто, работа и трудовое, семья и наследство, налоги и
+              защита прав потребителей.
             </p>
           </div>
 

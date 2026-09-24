@@ -46,6 +46,11 @@ import { BLOG_POSTS_BATCH9B } from "./batches/batch9b";
 import { BLOG_POSTS_BATCH10B } from "./batches/batch10b";
 import { BLOG_POSTS_BATCH11B } from "./batches/batch11b";
 import { BLOG_POSTS_BATCH12B } from "./batches/batch12b";
+import { BLOG_POSTS_BATCH13 } from "./batches/batch13";
+import { BLOG_POSTS_BATCH14 } from "./batches/batch14";
+import { BLOG_POSTS_BATCH15 } from "./batches/batch15";
+import { BLOG_POSTS_BATCH16 } from "./batches/batch16";
+import { BLOG_POSTS_BATCH17 } from "./batches/batch17";
 
 export const BLOG_POSTS: BlogPost[] = [
   {
@@ -2915,6 +2920,11 @@ export const BLOG_POSTS: BlogPost[] = [
   ...BLOG_POSTS_BATCH10B,
   ...BLOG_POSTS_BATCH11B,
   ...BLOG_POSTS_BATCH12B,
+  ...BLOG_POSTS_BATCH13,
+  ...BLOG_POSTS_BATCH14,
+  ...BLOG_POSTS_BATCH15,
+  ...BLOG_POSTS_BATCH16,
+  ...BLOG_POSTS_BATCH17,
 ];
 
 export function getBlogPost(slug: string): BlogPost | undefined {
