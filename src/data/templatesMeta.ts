@@ -4856,7 +4856,7 @@ export const TEMPLATE_META: TemplateMeta[] = [
   },
   {
     "id": "stmt-vacation",
-    "name": "Заявление о предоставлении отпуска",
+    "name": "Заявление о предоставлении отпуска (вне графика)",
     "category": "business",
     "description": "Заявление работодателю о предоставлении ежегодного оплачиваемого отпуска: даты начала и длительность. Оплачиваемый отпуск — 28 календарных дней в год.",
     "actSource": "ТК РФ (ст. 114, 122–123)",
@@ -4898,6 +4898,2150 @@ export const TEMPLATE_META: TemplateMeta[] = [
       "objection-debt-claim"
     ],
     "fieldCount": 10,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "courts"
+  },
+  {
+    "id": "stmt-fssp-minimum",
+    "name": "Заявление приставу о сохранении прожиточного минимума",
+    "category": "legal",
+    "description": "Заявление судебному приставу о сохранении зарплаты и иных доходов в размере прожиточного минимума: пристав выносит постановление, банк снимает ограничения сверх минимума.",
+    "actSource": "ФЗ № 229-ФЗ «Об исполнительном производстве» (ст. 30, 64.1, 101), ГПК РФ (ст. 446)",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "stmt-fssp-execution",
+      "lawsuit-statement"
+    ],
+    "fieldCount": 10,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "fssp"
+  },
+  {
+    "id": "stmt-fssp-delay",
+    "name": "Заявление об отсрочке или рассрочке исполнения",
+    "category": "legal",
+    "description": "Просьба в суд об отсрочке или рассрочке исполнения решения: тяжёлое материальное положение, болезнь, иные уважительные обстоятельства. Пристав исполнение не откладывает — решает суд.",
+    "actSource": "ФЗ № 229-ФЗ (ст. 37), ГПК РФ (ст. 203)",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "stmt-fssp-execution",
+      "lawsuit-statement"
+    ],
+    "fieldCount": 10,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "fssp"
+  },
+  {
+    "id": "stmt-fssp-complaint",
+    "name": "Жалоба на действия судебного пристава",
+    "category": "legal",
+    "description": "Жалоба старшему судебному приставу на действие/бездействие пристава: срок подачи — 10 дней с момента нарушения, рассмотрение — 10 дней. Либо сразу в суд.",
+    "actSource": "ФЗ № 229-ФЗ (ст. 121–126)",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "stmt-fssp-execution",
+      "stmt-prosecutor-complaint"
+    ],
+    "fieldCount": 10,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "fssp"
+  },
+  {
+    "id": "stmt-court-evidence",
+    "name": "Ходатайство об истребовании доказательств",
+    "category": "legal",
+    "description": "Просьба к суду запросить доказательства, которые вы не можете получить сами: выписки, записи, документы у ответчика или госорганов. Укажите, что доказывает и где находится.",
+    "actSource": "ГПК РФ (ст. 57), АПК РФ (ст. 66)",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "lawsuit-statement",
+      "stmt-court-postpone"
+    ],
+    "fieldCount": 10,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "courts"
+  },
+  {
+    "id": "stmt-court-expertise",
+    "name": "Ходатайство о назначении судебной экспертизы",
+    "category": "legal",
+    "description": "Просьба назначить экспертизу (почерковедческую, строительную, оценочную): формулируйте вопросы эксперту сами — суд ставит их с учётом вашего списка. Расходы — с проигравшей стороны.",
+    "actSource": "ГПК РФ (ст. 79, 80, 98)",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "lawsuit-statement",
+      "stmt-court-evidence"
+    ],
+    "fieldCount": 10,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "courts"
+  },
+  {
+    "id": "stmt-court-fee-delay",
+    "name": "Ходатайство об отсрочке уплаты госпошлины",
+    "category": "legal",
+    "description": "Просьба отсрочить/рассрочить госпошлину или уменьшить её размер: прикладывается к иску. Нужны доказательства тяжёлого материального положения.",
+    "actSource": "ГПК РФ (ст. 90), НК РФ (ст. 333.20, 333.41)",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "lawsuit-statement",
+      "claim-generic"
+    ],
+    "fieldCount": 10,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "courts"
+  },
+  {
+    "id": "stmt-court-security",
+    "name": "Заявление об обеспечении иска",
+    "category": "legal",
+    "description": "Просьба арестовать имущество ответчика или запретить ему действия до решения суда: иначе ответчик успеет продать квартиру или вывести деньги. Суд решает в день подачи.",
+    "actSource": "ГПК РФ (ст. 139–142)",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "lawsuit-statement",
+      "stmt-court-expertise"
+    ],
+    "fieldCount": 10,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "courts"
+  },
+  {
+    "id": "stmt-housing-quality",
+    "name": "Жалоба на некачественные коммунальные услуги",
+    "category": "realty",
+    "description": "Жалоба в УК на некачественную услугу (холодные батареи, грязная вода, неубранный подъезд): требуйте акт проверки, перерасчёт и устранение. УК обязана проверить в течение 2 часов.",
+    "actSource": "ПП РФ № 354 (п. 104–113), ЖК РФ (ст. 157)",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "stmt-housing-recalc",
+      "stmt-prosecutor-complaint"
+    ],
+    "fieldCount": 9,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "housing"
+  },
+  {
+    "id": "stmt-housing-flood",
+    "name": "Заявление о заливе квартиры (составление акта)",
+    "category": "realty",
+    "description": "Заявление в УК о заливе квартиры: требуйте составить акт осмотра в течение 12 часов — без акта суд не взыщет ущерб. Фиксируйте всё на фото до прихода комиссии.",
+    "actSource": "ПП РФ № 491 (п. 152), ГК РФ (ст. 1064), ЖК РФ (ст. 161)",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "stmt-housing-quality",
+      "lawsuit-statement"
+    ],
+    "fieldCount": 9,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "housing"
+  },
+  {
+    "id": "stmt-rospotrebnadzor",
+    "name": "Жалоба в Роспотребнадзор",
+    "category": "legal",
+    "description": "Жалоба в Роспотребнадзор на продавца/исполнителя: обсчёт, просрочка, отказ в возврате, антисанитария. Сначала направьте претензию продавцу — это усилит жалобу.",
+    "actSource": "ФЗ № 59-ФЗ, Закон «О защите прав потребителей» (ст. 40), ФЗ № 52-ФЗ",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "claim-generic",
+      "stmt-prosecutor-complaint"
+    ],
+    "fieldCount": 9,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "oversight"
+  },
+  {
+    "id": "stmt-gti-complaint",
+    "name": "Жалоба в трудовую инспекцию (ГИТ)",
+    "category": "business",
+    "description": "Жалоба в ГИТ на работодателя: задержка зарплаты, неоформление, незаконное увольнение. Можно просить не разглашать имя работодателю — инспекция обязана сохранить конфиденциальность.",
+    "actSource": "ТК РФ (ст. 356–357), ФЗ № 59-ФЗ",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "stmt-vacation",
+      "lawsuit-statement"
+    ],
+    "fieldCount": 10,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "oversight"
+  },
+  {
+    "id": "stmt-hr-dismiss",
+    "name": "Заявление об увольнении по собственному желанию (в период отпуска)",
+    "category": "business",
+    "description": "Заявление об увольнении по собственному желанию: предупреждение за 2 недели, в последний день — трудовая и полный расчёт. До истечения срока можно отозвать.",
+    "actSource": "ТК РФ (ст. 80)",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "stmt-vacation",
+      "employment-contract"
+    ],
+    "fieldCount": 9,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "hr"
+  },
+  {
+    "id": "stmt-hr-salary",
+    "name": "Заявление о выплате задержанной зарплаты",
+    "category": "business",
+    "description": "Требование работодателю погасить долг по зарплате с компенсацией: за каждый день просрочки — 1/150 ключевой ставки ЦБ. При задержке over 15 дней можно приостановить работу.",
+    "actSource": "ТК РФ (ст. 142, 236)",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "stmt-gti-complaint",
+      "lawsuit-statement"
+    ],
+    "fieldCount": 9,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "hr"
+  },
+  {
+    "id": "stmt-police-theft",
+    "name": "Заявление в полицию о краже",
+    "category": "legal",
+    "description": "Заявление о краже: дежурная часть обязана принять в любое время, выдать талон-уведомление. Решение о возбуждении дела — за 3 суток (до 30 при проверке).",
+    "actSource": "УПК РФ (ст. 141, 144), УК РФ (ст. 158)",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "stmt-police-fraud",
+      "lawsuit-statement"
+    ],
+    "fieldCount": 9,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "police"
+  },
+  {
+    "id": "stmt-police-fraud",
+    "name": "Заявление в полицию о мошенничестве",
+    "category": "legal",
+    "description": "Заявление о мошенничестве (включая онлайн/телефонное): распишите, как вошли в доверие и куда ушли деньги. Приложите переписку, чеки переводов, номера телефонов.",
+    "actSource": "УПК РФ (ст. 141, 144), УК РФ (ст. 159)",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "stmt-police-theft",
+      "lawsuit-statement"
+    ],
+    "fieldCount": 9,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "police"
+  },
+  {
+    "id": "stmt-police-missing",
+    "name": "Заявление в полицию о пропаже человека",
+    "category": "legal",
+    "description": "Заявление о безвестном исчезновении: подавайте сразу, правило «ждать 3 дня» — миф. Укажите приметы, одежду, телефон, последнее место. Примут в любом отделе.",
+    "actSource": "УПК РФ (ст. 141), ФЗ «О полиции» (ст. 12)",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "stmt-police-theft",
+      "stmt-police-fraud"
+    ],
+    "fieldCount": 9,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "police"
+  },
+  {
+    "id": "stmt-hr-maternity",
+    "name": "Заявление о предоставлении отпуска по уходу за ребёнком",
+    "category": "business",
+    "description": "Заявление на отпуск по уходу до 1,5/3 лет + пособие: подаёт мать, отец, бабушка — любой фактически ухаживающий. Пособие — 40% заработка. Место сохраняется.",
+    "actSource": "ТК РФ (ст. 256), ФЗ № 255-ФЗ (ст. 11.1–11.2)",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "stmt-vacation",
+      "stmt-hr-dismiss"
+    ],
+    "fieldCount": 9,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "hr"
+  },
+  {
+    "id": "stmt-hr-remote",
+    "name": "Заявление о переводе на дистанционную работу",
+    "category": "business",
+    "description": "Просьба перевести на удалёнку: по соглашению сторон или временно (до 6 месяцев). Временный перевод по инициативе работодателя — только в исключительных случаях.",
+    "actSource": "ТК РФ (ст. 72, гл. 49.1, ст. 312.1–312.9)",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "stmt-vacation",
+      "employment-contract"
+    ],
+    "fieldCount": 10,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "hr"
+  },
+  {
+    "id": "stmt-court-witness",
+    "name": "Ходатайство о вызове свидетелей",
+    "category": "legal",
+    "description": "Просьба допросить свидетелей: укажите ФИО, адрес и какие факты подтвердит каждый. Без пояснения «что подтвердит» суд может отказать.",
+    "actSource": "ГПК РФ (ст. 55, 69), АПК РФ (ст. 56, 88)",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "lawsuit-statement",
+      "stmt-court-evidence"
+    ],
+    "fieldCount": 9,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "courts"
+  },
+  {
+    "id": "stmt-court-docs",
+    "name": "Заявление о выдаче судебного решения и исполнительных документов",
+    "category": "legal",
+    "description": "Просьба выдать копию решения и исполнительный лист: без исполнительного листа приставы не возбудят производство. Подаётся после вступления решения в силу.",
+    "actSource": "ГПК РФ (ст. 214, 428–429), АПК РФ (ст. 319)",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "stmt-fssp-execution",
+      "lawsuit-statement"
+    ],
+    "fieldCount": 9,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "courts"
+  },
+  {
+    "id": "stmt-appeal",
+    "name": "Апелляционная жалоба на решение суда",
+    "category": "legal",
+    "description": "Жалоба на решение мирового/районного суда в апелляцию: срок — месяц со дня принятия в окончательной форме. Подаётся через суд, вынесший решение. Новые доказательства — только если не могли представить раньше.",
+    "actSource": "ГПК РФ (ст. 320–322, 328)",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "lawsuit-statement",
+      "stmt-court-postpone"
+    ],
+    "fieldCount": 10,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "courts"
+  },
+  {
+    "id": "stmt-court-order-cancel",
+    "name": "Возражение на судебный приказ (отмена)",
+    "category": "legal",
+    "description": "Отмена судебного приказа одним заявлением: срок — 10 дней с получения. Мотивировать не нужно — достаточно «не согласен». Суд отменяет, взыскатель идёт с иском.",
+    "actSource": "ГПК РФ (ст. 128–130)",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "lawsuit-statement",
+      "stmt-appeal"
+    ],
+    "fieldCount": 9,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "courts"
+  },
+  {
+    "id": "stmt-fssp-search",
+    "name": "Заявление о розыске должника и его имущества",
+    "category": "legal",
+    "description": "Просьба объявить розыск должника/ребёнка/имущества: пристав выносит постановление в 3-дневный срок. По алиментам и возмещению вреда — розыск обязателен.",
+    "actSource": "ФЗ № 229-ФЗ (ст. 65)",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "stmt-fssp-execution",
+      "stmt-fssp-complaint"
+    ],
+    "fieldCount": 9,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "fssp"
+  },
+  {
+    "id": "stmt-fssp-travel-ban",
+    "name": "Заявление об ограничении выезда должника",
+    "category": "legal",
+    "description": "Просьба запретить должнику выезд за границу: порог — 30 000 ₽ (10 000 ₽ по алиментам и возмещению вреда). Пристав обязан рассмотреть и вынести постановление.",
+    "actSource": "ФЗ № 229-ФЗ (ст. 67)",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "stmt-fssp-execution",
+      "stmt-fssp-search"
+    ],
+    "fieldCount": 9,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "fssp"
+  },
+  {
+    "id": "stmt-housing-meter",
+    "name": "Заявление о вводе счётчиков в эксплуатацию (опломбировка)",
+    "category": "realty",
+    "description": "Заявка в УК на ввод ИПУ в эксплуатацию: после установки счётчиков без акта их не примут к расчётам. УК обязана прийти в согласованную дату.",
+    "actSource": "ПП РФ № 354 (п. 81–81(9))",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "stmt-housing-recalc",
+      "stmt-housing-quality"
+    ],
+    "fieldCount": 9,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "housing"
+  },
+  {
+    "id": "stmt-housing-capital",
+    "name": "Заявление о проведении капремонта / жалоба на его отсутствие",
+    "category": "realty",
+    "description": "Обращение о капремонте дома: взносы платят все, а ремонт откладывают. Требуйте включить дом в краткосрочную программу или перенести сроки.",
+    "actSource": "ЖК РФ (ст. 166–174, 189–191)",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "stmt-housing-quality",
+      "stmt-prosecutor-complaint"
+    ],
+    "fieldCount": 9,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "housing"
+  },
+  {
+    "id": "stmt-mil-postpone",
+    "name": "Заявление об отсрочке от призыва",
+    "category": "other",
+    "description": "Заявление в призывную комиссию об отсрочке: учёба, здоровье, семейные обстоятельства. Прикладывайте документы заранее — комиссия решает на основании дела.",
+    "actSource": "ФЗ № 53-ФЗ «О воинской обязанности» (ст. 24)",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "stmt-mil-appeal",
+      "stmt-prosecutor-complaint"
+    ],
+    "fieldCount": 8,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "military"
+  },
+  {
+    "id": "stmt-mil-appeal",
+    "name": "Жалоба на решение призывной комиссии",
+    "category": "other",
+    "description": "Обжалование решения о призыве: в вышестоящую комиссию или в суд. Подача жалобы приостанавливает отправку до рассмотрения.",
+    "actSource": "ФЗ № 53-ФЗ (ст. 28), КАС РФ",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "stmt-mil-postpone",
+      "stmt-prosecutor-complaint"
+    ],
+    "fieldCount": 9,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "military"
+  },
+  {
+    "id": "stmt-notary-inherit",
+    "name": "Заявление нотариусу о принятии наследства",
+    "category": "family",
+    "description": "Заявление нотариусу о принятии наследства: срок — 6 месяцев со дня смерти. Пропустили срок — только через суд (восстановление) или фактическое принятие с доказательствами.",
+    "actSource": "ГК РФ (ст. 1112–1115, 1152–1154)",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "lawsuit-statement",
+      "claim-generic"
+    ],
+    "fieldCount": 10,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "official-forms"
+  },
+  {
+    "id": "stmt-divorce-alimony-order",
+    "name": "Заявление о взыскании алиментов (судебный приказ)",
+    "category": "family",
+    "description": "Алименты в долях через судебный приказ — за 5 дней без заседаний: 1/4 на одного ребёнка, 1/3 на двоих, 1/2 на троих. Если нужна твёрдая сумма — подавайте иск.",
+    "actSource": "СК РФ (ст. 80–83, 106–108), ГПК РФ (ст. 122–124)",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "lawsuit-statement",
+      "stmt-court-order-cancel"
+    ],
+    "fieldCount": 10,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "courts"
+  },
+  {
+    "id": "stmt-bank-chargeback",
+    "name": "Заявление в банк об оспаривании операции (чарджбэк)",
+    "category": "finance",
+    "description": "Оспаривание списания: несанкционированная операция или неоказанная услуга. По 161-ФЗ сообщите банку немедленно — иначе в возмещении могут отказать.",
+    "actSource": "ФЗ № 161-ФЗ «О НПС» (ст. 9), ГК РФ (ст. 854, 1102)",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "stmt-police-fraud",
+      "claim-generic"
+    ],
+    "fieldCount": 9,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "official-forms"
+  },
+  {
+    "id": "stmt-bank-restructure",
+    "name": "Заявление о реструктуризации кредита / кредитных каникулах",
+    "category": "finance",
+    "description": "Просьба о кредитных каникулах или реструктуризации: при падении дохода на 30%+ имеете право на льготный период до 6 месяцев. Банк обязан рассмотреть за 5 дней.",
+    "actSource": "ФЗ № 353-ФЗ «О потребительском кредите» (ст. 6.1-1, 6.1-2)",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "stmt-bank-chargeback",
+      "claim-generic"
+    ],
+    "fieldCount": 10,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "official-forms"
+  },
+  {
+    "id": "stmt-insurance-refuse",
+    "name": "Заявление об отказе от страховки по кредиту (период охлаждения)",
+    "category": "finance",
+    "description": "Отказ от навязанной страховки: 30 дней на возврат полной премии (если не было страховых случаев). Деньги возвращают за 7 рабочих дней.",
+    "actSource": "Указание ЦБ № 3854-У, ГК РФ (ст. 958)",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "stmt-bank-restructure",
+      "stmt-rospotrebnadzor"
+    ],
+    "fieldCount": 8,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "official-forms"
+  },
+  {
+    "id": "stmt-rent-deposit",
+    "name": "Требование о возврате залога за аренду",
+    "category": "realty",
+    "description": "Досудебное требование арендодателю вернуть обеспечительный платёж: квартира сдана без замечаний, удержание незаконно. Следующий шаг — суд с процентами.",
+    "actSource": "ГК РФ (ст. 329, 381.1, 622)",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "stmt-housing-recalc",
+      "lawsuit-statement"
+    ],
+    "fieldCount": 9,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "housing"
+  },
+  {
+    "id": "stmt-tax-deduction",
+    "name": "Заявление на налоговый вычет (ИИС/имущественный/социальный)",
+    "category": "other",
+    "description": "Заявление в налоговую о возврате НДФЛ: имущественный (покупка жилья), социальный (лечение, обучение), инвестиционный (ИИС). Подаётся с декларацией 3-НДФЛ.",
+    "actSource": "НК РФ (ст. 78, 219–221)",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "stmt-bank-chargeback",
+      "claim-generic"
+    ],
+    "fieldCount": 10,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "official-forms"
+  },
+  {
+    "id": "stmt-cb-complaint",
+    "name": "Жалоба в Банк России (на банк/МФО/страховую)",
+    "category": "finance",
+    "description": "Жалоба в ЦБ на финансовую организацию: навязывание услуг, блокировка счёта, отказ в каникулах. ЦБ не решает денежные споры, но штрафует и обязывает устранить нарушение.",
+    "actSource": "ФЗ № 86-ФЗ (ст. 4, 76.1), ФЗ № 59-ФЗ",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "stmt-bank-chargeback",
+      "stmt-fin-ombudsman"
+    ],
+    "fieldCount": 10,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "oversight"
+  },
+  {
+    "id": "stmt-fin-ombudsman",
+    "name": "Обращение к финансовому уполномоченному",
+    "category": "finance",
+    "description": "Досудебное взыскание с банка/СК/МФО до 500 000 ₽: решение омбудсмена обязательно для организации (как исполнительный документ). В суд — только после омбудсмена.",
+    "actSource": "ФЗ № 123-ФЗ «Об уполномоченном по правам потребителей финансовых услуг»",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "stmt-cb-complaint",
+      "stmt-bank-chargeback"
+    ],
+    "fieldCount": 10,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "oversight"
+  },
+  {
+    "id": "stmt-gibdd-appeal",
+    "name": "Жалоба на постановление ГИБДД (штраф)",
+    "category": "auto",
+    "description": "Обжалование штрафа ГИБДД: 10 суток с получения. Вышестоящему должностному лицу или в суд — на выбор. Камера ошиблась, за рулём были не вы — шансы высоки.",
+    "actSource": "КоАП РФ (ст. 30.1–30.3)",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "stmt-prosecutor-complaint",
+      "claim-generic"
+    ],
+    "fieldCount": 9,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "oversight"
+  },
+  {
+    "id": "stmt-fssp-excess-return",
+    "name": "Заявление о возврате излишне удержанных приставом сумм",
+    "category": "legal",
+    "description": "Возврат переплаты: пристав удержал больше долга или списал с защищённых выплат (пособия, алименты). Деньги возвращают с депозита ОСП, а если ушли взыскателю — через суд.",
+    "actSource": "ФЗ № 229-ФЗ (ст. 70, 110–111)",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "stmt-fssp-complaint",
+      "stmt-fssp-minimum"
+    ],
+    "fieldCount": 9,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "fssp"
+  },
+  {
+    "id": "stmt-fssp-seizure-lift",
+    "name": "Заявление о снятии ареста со счёта и имущества пристава",
+    "category": "legal",
+    "description": "Снятие ареста после погашения долга — или с защищённых счетов (зарплатные, детские пособия). Пристав снимает арест постановлением в день погашения.",
+    "actSource": "ФЗ № 229-ФЗ (ст. 80–81)",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "stmt-fssp-execution",
+      "stmt-fssp-excess-return"
+    ],
+    "fieldCount": 10,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "fssp"
+  },
+  {
+    "id": "stmt-fssp-alimony-debt",
+    "name": "Заявление о расчёте задолженности по алиментам",
+    "category": "family",
+    "description": "Расчёт долга по алиментам от пристава: постановление нужно для неустойки (0,1% в день), лишения прав и уголовной статьи 157 УК. Обжалуется в суде за 10 дней.",
+    "actSource": "СК РФ (ст. 113), ФЗ № 229-ФЗ (ст. 102)",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "stmt-divorce-alimony-order",
+      "lawsuit-statement"
+    ],
+    "fieldCount": 9,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "fssp"
+  },
+  {
+    "id": "stmt-fssp-wage-garnish",
+    "name": "Заявление о направлении взыскания на зарплату должника",
+    "category": "legal",
+    "description": "Взыскание через работодателя должника: до 50% зарплаты (70% по алиментам и возмещению вреда). Работает, даже если счетов и имущества у должника нет.",
+    "actSource": "ФЗ № 229-ФЗ (ст. 98–99)",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "stmt-fssp-execution",
+      "stmt-fssp-alimony-debt"
+    ],
+    "fieldCount": 9,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "fssp"
+  },
+  {
+    "id": "stmt-fssp-info-request",
+    "name": "Запрос взыскателя о ходе исполнительного производства",
+    "category": "legal",
+    "description": "Запрос материалов производства: что сделал пристав за полгода — запросы, аресты, выходы. Молчание пристава — основание для жалобы старшему приставу и в суд.",
+    "actSource": "ФЗ № 229-ФЗ (ст. 50), ФЗ № 59-ФЗ",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "stmt-fssp-complaint",
+      "stmt-fssp-search"
+    ],
+    "fieldCount": 8,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "fssp"
+  },
+  {
+    "id": "stmt-court-cassation",
+    "name": "Кассационная жалоба на судебные акты",
+    "category": "legal",
+    "description": "Третья инстанция после апелляции: проверяет только нарушения закона, факты заново не устанавливает. Срок — 3 месяца со дня апелляции. Подаётся через первый суд.",
+    "actSource": "ГПК РФ (ст. 376–378, 390.8)",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "stmt-appeal",
+      "lawsuit-statement"
+    ],
+    "fieldCount": 9,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "courts"
+  },
+  {
+    "id": "stmt-court-private-complaint",
+    "name": "Частная жалоба на определение суда первой инстанции",
+    "category": "legal",
+    "description": "Обжалование промежуточных определений (возврат иска, отказ в обеспечении, приостановка): срок — 15 дней. Подаётся через суд, вынесший определение.",
+    "actSource": "ГПК РФ (ст. 331–334)",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "stmt-appeal",
+      "stmt-court-security"
+    ],
+    "fieldCount": 9,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "courts"
+  },
+  {
+    "id": "stmt-court-default-cancel",
+    "name": "Заявление об отмене заочного решения",
+    "category": "legal",
+    "description": "Отмена заочного решения (вынесено без вас): 7 дней с получения копии. Докажите уважительность неявки + приложите возражения. Затем дело рассмотрят заново.",
+    "actSource": "ГПК РФ (ст. 237–242)",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "stmt-appeal",
+      "stmt-court-postpone"
+    ],
+    "fieldCount": 10,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "courts"
+  },
+  {
+    "id": "stmt-court-costs",
+    "name": "Заявление о взыскании судебных расходов",
+    "category": "legal",
+    "description": "Возврат трат выигравшей стороны: госпошлина, юрист, экспертиза, проезд. Подаётся в тот же суд за 3 месяца со дня последнего акта. Нужны чеки и договор с юристом.",
+    "actSource": "ГПК РФ (ст. 98–103)",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "lawsuit-statement",
+      "stmt-court-docs"
+    ],
+    "fieldCount": 9,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "courts"
+  },
+  {
+    "id": "stmt-court-settlement",
+    "name": "Ходатайство об утверждении мирового соглашения",
+    "category": "legal",
+    "description": "Мир вместо решения: стороны договариваются, суд утверждает определением (сила исполнительного листа). Пропишите сроки, суммы и отказ от остальных требований.",
+    "actSource": "ГПК РФ (ст. 39, 153.8–153.11, 173)",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "lawsuit-statement",
+      "stmt-court-costs"
+    ],
+    "fieldCount": 9,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "courts"
+  },
+  {
+    "id": "stmt-hr-work-book",
+    "name": "Заявление о выдаче трудовой книжки и документов при увольнении",
+    "category": "business",
+    "description": "Требование выдать трудовую, приказы, справки 2-НДФЛ и о заработке: в последний день или за 3 дня по запросу. За задержку — средний заработок за каждый день.",
+    "actSource": "ТК РФ (ст. 62, 84.1)",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "stmt-hr-dismiss",
+      "stmt-hr-salary"
+    ],
+    "fieldCount": 8,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "hr"
+  },
+  {
+    "id": "stmt-hr-unpaid-leave",
+    "name": "Заявление на отпуск без сохранения зарплаты (по семейным обстоятельствам)",
+    "category": "business",
+    "description": "Отпуск за свой счёт: по семейным обстоятельствам — по соглашению, а ветеранам, инвалидам, при рождении/смерти — работодатель отказать не вправе.",
+    "actSource": "ТК РФ (ст. 128)",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "stmt-vacation",
+      "stmt-hr-dismiss"
+    ],
+    "fieldCount": 9,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "hr"
+  },
+  {
+    "id": "stmt-hr-transfer",
+    "name": "Заявление о переводе на другую должность",
+    "category": "business",
+    "description": "Просьба о переводе (постоянном или временном): только с письменного согласия, кроме чрезвычайных случаев. Оформляется допсоглашением и приказом.",
+    "actSource": "ТК РФ (ст. 72, 72.1)",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "stmt-hr-remote",
+      "employment-contract"
+    ],
+    "fieldCount": 8,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "hr"
+  },
+  {
+    "id": "stmt-hr-overtime-pay",
+    "name": "Заявление об оплате сверхурочной работы",
+    "category": "business",
+    "description": "Требование оплатить переработки: первые 2 часа — в полуторном размере, дальше — в двойном. Лимит — 120 часов в год. Фиксируйте приказы и табели.",
+    "actSource": "ТК РФ (ст. 99, 152)",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "stmt-hr-salary",
+      "stmt-gti-complaint"
+    ],
+    "fieldCount": 9,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "hr"
+  },
+  {
+    "id": "stmt-hr-discipline-appeal",
+    "name": "Объяснительная и возражение на дисциплинарное взыскание",
+    "category": "business",
+    "description": "Письменное объяснение + несогласие с выговором: работодатель обязан запросить объяснение и дать 2 дня. Без этого взыскание незаконно — обжалуется в ГИТ и суде.",
+    "actSource": "ТК РФ (ст. 192–193)",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "stmt-gti-complaint",
+      "lawsuit-statement"
+    ],
+    "fieldCount": 9,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "hr"
+  },
+  {
+    "id": "stmt-police-beating",
+    "name": "Заявление в полицию о побоях / угрозе убийством",
+    "category": "legal",
+    "description": "Заявление о побоях или угрозах: сначала в травмпункт (снимите побои!), затем в полицию. Приложите медсправку — без неё дело почти не возбудят.",
+    "actSource": "УПК РФ (ст. 141), УК РФ (ст. 115–117, 119)",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "stmt-police-theft",
+      "lawsuit-statement"
+    ],
+    "fieldCount": 8,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "police"
+  },
+  {
+    "id": "stmt-police-car-theft",
+    "name": "Заявление в полицию об угоне автомобиля",
+    "category": "auto",
+    "description": "Заявление об угоне: звоните 102 сразу, затем письменно в дежурную часть. Укажите VIN, госномер, приметы, сигнализацию, КАСКО. Объявляют план «Перехват».",
+    "actSource": "УПК РФ (ст. 141), УК РФ (ст. 158, 166)",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "stmt-police-theft",
+      "stmt-gibdd-appeal"
+    ],
+    "fieldCount": 8,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "police"
+  },
+  {
+    "id": "stmt-police-noise",
+    "name": "Заявление участковому на шумных соседей",
+    "category": "legal",
+    "description": "Жалоба на шум ночью (ремонт, музыка): фиксируйте вызовы 102, соберите подписи соседей. Штраф — по региональному закону о тишине (в Москве — ст. 3.13 КоАП г. Москвы).",
+    "actSource": "КоАП РФ (региональный закон о тишине), ФЗ «О полиции» (ст. 12)",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "stmt-police-beating",
+      "stmt-prosecutor-complaint"
+    ],
+    "fieldCount": 8,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "police"
+  },
+  {
+    "id": "stmt-gzhi-complaint",
+    "name": "Жалоба в жилищную инспекцию (ГЖИ) на УК",
+    "category": "realty",
+    "description": "Жалоба в ГЖИ, когда УК игнорирует: грязный подъезд, разбитые окна, текущий подвал. ГЖИ штрафует и выдаёт предписание — работает лучше повторных писем в УК.",
+    "actSource": "ЖК РФ (ст. 20), ФЗ № 59-ФЗ",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "stmt-housing-quality",
+      "stmt-prosecutor-complaint"
+    ],
+    "fieldCount": 10,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "oversight"
+  },
+  {
+    "id": "stmt-fas-complaint",
+    "name": "Жалоба в ФАС на рекламу и навязывание услуг",
+    "category": "legal",
+    "description": "Жалоба на спам-звонки, недостоверную рекламу, навязанную страховку: ФАС штрафует до 500 000 ₽. Приложите скриншоты, записи звонков, детализацию.",
+    "actSource": "ФЗ «О рекламе» (ст. 5, 18, 28), ФЗ № 135-ФЗ «О защите конкуренции»",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "stmt-rospotrebnadzor",
+      "stmt-cb-complaint"
+    ],
+    "fieldCount": 9,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "oversight"
+  },
+  {
+    "id": "stmt-family-divorce-joint",
+    "name": "Заявление о расторжении брака по взаимному согласию (в ЗАГС)",
+    "category": "family",
+    "description": "Развод через ЗАГС за месяц: только если нет общих несовершеннолетних детей и оба согласны. Иначе — через мировой суд. Пошлина — 650 ₽ с каждого.",
+    "actSource": "СК РФ (ст. 19–20), ФЗ № 143-ФЗ «Об актах гражданского состояния»",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "stmt-divorce-alimony-order",
+      "lawsuit-statement"
+    ],
+    "fieldCount": 8,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "official-forms"
+  },
+  {
+    "id": "stmt-family-paternity",
+    "name": "Заявление об установлении отцовства (совместное)",
+    "category": "family",
+    "description": "Совместное заявление родителей в ЗАГС: отец признаёт ребёнка, в свидетельство вписывают его данные. Если мать против — только через суд с экспертизой ДНК.",
+    "actSource": "СК РФ (ст. 48–50), ФЗ № 143-ФЗ",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "stmt-family-divorce-joint",
+      "stmt-divorce-alimony-order"
+    ],
+    "fieldCount": 8,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "official-forms"
+  },
+  {
+    "id": "stmt-family-child-meet",
+    "name": "Заявление об определении порядка общения с ребёнком",
+    "category": "family",
+    "description": "График встреч отдельно живущего родителя: дни, часы, отпуск, праздники. Сначала опека, затем суд. Конкретика в графике — ключ к исполнению.",
+    "actSource": "СК РФ (ст. 61–67)",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "stmt-divorce-alimony-order",
+      "lawsuit-statement"
+    ],
+    "fieldCount": 9,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "courts"
+  },
+  {
+    "id": "stmt-inherit-accept-fact",
+    "name": "Заявление о фактическом принятии наследства",
+    "category": "family",
+    "description": "Пропустили 6 месяцев у нотариуса, но жили в квартире и платили коммуналку? Суд признает фактическое принятие — приложите квитанции, чеки ремонта, показания соседей.",
+    "actSource": "ГК РФ (ст. 1152–1155)",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "stmt-notary-inherit",
+      "lawsuit-statement"
+    ],
+    "fieldCount": 9,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "courts"
+  },
+  {
+    "id": "stmt-inherit-missed-term",
+    "name": "Заявление о восстановлении срока принятия наследства",
+    "category": "family",
+    "description": "Пропустили 6 месяцев по уважительной причине (болезнь, не знали о смерти)? Суд восстановит срок, если обратитесь в течение 6 месяцев после того, как причина отпала.",
+    "actSource": "ГК РФ (ст. 1155)",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "stmt-inherit-accept-fact",
+      "stmt-notary-inherit"
+    ],
+    "fieldCount": 9,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "courts"
+  },
+  {
+    "id": "stmt-auto-osago-claim",
+    "name": "Заявление в страховую о выплате по ОСАГО",
+    "category": "auto",
+    "description": "Заявление о страховом возмещении после ДТП: 5 рабочих дней на подачу, осмотр за 5 дней, выплата за 20 дней (деньгами или ремонтом). Европротокол — тоже сюда.",
+    "actSource": "ФЗ № 40-ФЗ «Об ОСАГО» (ст. 11–12), Положение ЦБ № 431-П",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "stmt-gibdd-appeal",
+      "stmt-police-car-theft"
+    ],
+    "fieldCount": 9,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "official-forms"
+  },
+  {
+    "id": "stmt-auto-tax-refund",
+    "name": "Заявление о перерасчёте транспортного налога",
+    "category": "auto",
+    "description": "Налог пришёл за проданную машину или с ошибкой в мощности? Требуйте перерасчёт: приложите ДКП и справку ГИБДД о снятии с учёта.",
+    "actSource": "НК РФ (ст. 52, 78, 358–362)",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "stmt-tax-deduction",
+      "stmt-gibdd-appeal"
+    ],
+    "fieldCount": 9,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "official-forms"
+  },
+  {
+    "id": "stmt-migration-registration",
+    "name": "Заявление о регистрации по месту жительства (прописка)",
+    "category": "migration",
+    "description": "Прописка постоянная и временная: собственник пишет согласие, вы — заявление. Через Госуслуги — без очередей, штамп за 3–8 дней. Штрафа нет, если уложились в 7 дней.",
+    "actSource": "Закон № 5242-1, ПП РФ № 713, Приказ МВД № 984",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "stmt-tax-deduction",
+      "claim-generic"
+    ],
+    "fieldCount": 9,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "official-forms"
+  },
+  {
+    "id": "stmt-edu-school-place",
+    "name": "Заявление о приёме ребёнка в школу / сад",
+    "category": "other",
+    "description": "Заявление в школу по прописке (отказать не вправе) или в сад через очередь: подаётся лично или через Госуслуги. Отказ — только если мест нет, с направлением в другую школу.",
+    "actSource": "ФЗ № 273-ФЗ «Об образовании» (ст. 55, 67), Приказ Минпросвещения № 458",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "stmt-prosecutor-complaint",
+      "claim-generic"
+    ],
+    "fieldCount": 9,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "official-forms"
+  },
+  {
+    "id": "stmt-med-attach",
+    "name": "Заявление о прикреплении к поликлинике",
+    "category": "other",
+    "description": "Прикрепление к любой поликлинике (не только по прописке): менять можно раз в год. Отказ — только если плановая мощность превышена, и то с направлением.",
+    "actSource": "ФЗ № 323-ФЗ (ст. 19, 21, 84), Приказ Минздрава № 406н",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "stmt-prosecutor-complaint",
+      "claim-generic"
+    ],
+    "fieldCount": 8,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "official-forms"
+  },
+  {
+    "id": "stmt-med-complaint",
+    "name": "Жалоба на врача / качество медпомощи",
+    "category": "other",
+    "description": "Лестница жалоб: главврач → страховая → Росздравнадзор → прокуратура. Начните с главврача и страховой — экспертиза качества бесплатна для вас.",
+    "actSource": "ФЗ № 323-ФЗ (ст. 19, 70, 88), ФЗ № 59-ФЗ",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "stmt-med-attach",
+      "stmt-prosecutor-complaint"
+    ],
+    "fieldCount": 9,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "oversight"
+  },
+  {
+    "id": "stmt-sfr-benefit",
+    "name": "Заявление на детское пособие / единую выплату (СФР)",
+    "category": "family",
+    "description": "Единое пособие на детей и беременным через СФР/Госуслуги: нуждаемость проверяют сами по доходам. Отказ — обжалуйте с расчётом среднедушевого дохода.",
+    "actSource": "ФЗ № 81-ФЗ, ФЗ № 178-ФЗ, ПП РФ № 2330",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "stmt-tax-deduction",
+      "stmt-prosecutor-complaint"
+    ],
+    "fieldCount": 8,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "official-forms"
+  },
+  {
+    "id": "stmt-pension-recalc",
+    "name": "Заявление о перерасчёте пенсии",
+    "category": "other",
+    "description": "Не учли стаж, зарплату, иждивенца? Требуйте перерасчёт: приложите трудовую, справки о зарплате, свидетельства. Перерасчёт — с месяца обращения (по вине фонда — с даты ошибки).",
+    "actSource": "ФЗ № 400-ФЗ (ст. 23), Приказ Минтруда № 600н",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "stmt-sfr-benefit",
+      "stmt-prosecutor-complaint"
+    ],
+    "fieldCount": 8,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "official-forms"
+  },
+  {
+    "id": "stmt-nalog-complaint",
+    "name": "Жалоба на налоговую инспекцию (вышестоящему органу)",
+    "category": "other",
+    "description": "Досудебное обжалование обязательно: сначала УФНС, только потом суд. Срок — год с решения, исполнение взыскания приостанавливается по заявлению.",
+    "actSource": "НК РФ (ст. 137–140)",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "stmt-tax-deduction",
+      "stmt-auto-tax-refund"
+    ],
+    "fieldCount": 9,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "oversight"
+  },
+  {
+    "id": "stmt-nalog-overpay",
+    "name": "Заявление о возврате переплаты по налогам",
+    "category": "other",
+    "description": "Возврат переплаты с ЕНС: сначала зачтут долги, остаток вернут по заявлению за дни. Срок на возврат — 3 года с переплаты.",
+    "actSource": "НК РФ (ст. 78–79)",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "stmt-nalog-complaint",
+      "stmt-tax-deduction"
+    ],
+    "fieldCount": 9,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "official-forms"
+  },
+  {
+    "id": "stmt-nalog-benefit",
+    "name": "Заявление о налоговой льготе (имущество/транспорт/земля)",
+    "category": "other",
+    "description": "Пенсионерам, инвалидам, многодетным: льгота не всегда назначается автоматически — подайте заявление раз, дальше продлевается сама. Приложите удостоверение.",
+    "actSource": "НК РФ (ст. 361.1, 396–397, 407)",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "stmt-nalog-overpay",
+      "stmt-auto-tax-refund"
+    ],
+    "fieldCount": 8,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "official-forms"
+  },
+  {
+    "id": "stmt-hr-quit-no-workoff",
+    "name": "Заявление об увольнении без отработки (льготные случаи)",
+    "category": "business",
+    "description": "Увольнение одним днём: зачисление в вуз, выход на пенсию, переезд супруга-военного, нарушение работодателем ТК. Без причины — только по соглашению.",
+    "actSource": "ТК РФ (ст. 80)",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "stmt-hr-dismiss",
+      "stmt-hr-work-book"
+    ],
+    "fieldCount": 9,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "hr"
+  },
+  {
+    "id": "stmt-hr-vacation-pay",
+    "name": "Заявление о замене отпуска денежной компенсацией",
+    "category": "business",
+    "description": "Компенсация только за дни сверх 28: основной отпуск отгулять обязаны (беременным и несовершеннолетним — вообще нельзя заменять). При увольнении — за все неиспользованные дни.",
+    "actSource": "ТК РФ (ст. 126)",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "stmt-vacation",
+      "stmt-hr-dismiss"
+    ],
+    "fieldCount": 8,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "hr"
+  },
+  {
+    "id": "stmt-hr-schedule-change",
+    "name": "Заявление об изменении режима рабочего времени",
+    "category": "business",
+    "description": "Неполный день, гибкий график, смена начала/конца: беременным, родителям детей до 14 лет и ухаживающим за больным — работодатель отказать не вправе.",
+    "actSource": "ТК РФ (ст. 93, 100–102)",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "stmt-hr-remote",
+      "stmt-hr-maternity"
+    ],
+    "fieldCount": 8,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "hr"
+  },
+  {
+    "id": "stmt-hr-sick-pay",
+    "name": "Заявление об оплате больничного (несвоевременная выплата)",
+    "category": "business",
+    "description": "Больничный не оплатили за 10 дней? Требуйте выплату + компенсацию по 236 ТК. Электронный больничный работодатель видит сам — номер сообщать не обязательно.",
+    "actSource": "ФЗ № 255-ФЗ (ст. 13–15), ТК РФ (ст. 183)",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "stmt-hr-salary",
+      "stmt-gti-complaint"
+    ],
+    "fieldCount": 8,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "hr"
+  },
+  {
+    "id": "stmt-police-extremism-threats",
+    "name": "Заявление в полицию об угрозах и вымогательстве",
+    "category": "legal",
+    "description": "Угрожают расправой или требуют деньги/имущество: фиксируйте всё (записи, переписка, свидетели). Отличие угрозы от вымогательства распишите подробно — это разные статьи.",
+    "actSource": "УПК РФ (ст. 141), УК РФ (ст. 119, 163)",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "stmt-police-beating",
+      "stmt-police-fraud"
+    ],
+    "fieldCount": 8,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "police"
+  },
+  {
+    "id": "stmt-police-dacha-theft",
+    "name": "Заявление в полицию о краже с дачи / из квартиры (взлом)",
+    "category": "legal",
+    "description": "Кража со взломом — тяжкий состав (до 6 лет): ничего не трогайте до приезда полиции, вызывайте 102. Перепишите серийники техники заранее — это ускорит розыск.",
+    "actSource": "УПК РФ (ст. 141), УК РФ (ст. 158 ч. 3 — с проникновением)",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "stmt-police-theft",
+      "stmt-police-car-theft"
+    ],
+    "fieldCount": 8,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "police"
+  },
+  {
+    "id": "stmt-police-doc-loss",
+    "name": "Заявление в полицию об утере паспорта / документов",
+    "category": "other",
+    "description": "Потеряли паспорт — идите в полицию за талоном-уведомлением, затем в МВД/МФЦ за новым. Талон защитит от кредитов на ваше имя. Штраф за утерю — 100–300 ₽.",
+    "actSource": "Положение о паспорте (ПП РФ № 828), КоАП РФ (ст. 19.16)",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "stmt-police-theft",
+      "stmt-migration-registration"
+    ],
+    "fieldCount": 8,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "police"
+  },
+  {
+    "id": "stmt-court-divorce-court",
+    "name": "Исковое заявление о расторжении брака (через суд)",
+    "category": "family",
+    "description": "Развод через суд: есть дети до 18 или второй против. Мировой — без спора о детях, районный — со спором. Срок на примирение — до 3 месяцев.",
+    "actSource": "СК РФ (ст. 21–25), ГПК РФ (ст. 23, 28)",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "stmt-family-divorce-joint",
+      "stmt-divorce-alimony-order"
+    ],
+    "fieldCount": 8,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "courts"
+  },
+  {
+    "id": "stmt-court-debt-note",
+    "name": "Исковое заявление о взыскании долга по расписке",
+    "category": "finance",
+    "description": "Долг по расписке: прикладывайте оригинал + расчёт процентов (ключевая ставка ЦБ). До 100 000 ₽ — мировой судья, свыше — районный. Досудебная претензия усилит позицию.",
+    "actSource": "ГК РФ (ст. 807–811, 395), ГПК РФ (ст. 23, 28)",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "stmt-court-order-cancel",
+      "stmt-court-docs"
+    ],
+    "fieldCount": 9,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "courts"
+  },
+  {
+    "id": "stmt-housing-privatization",
+    "name": "Заявление о приватизации квартиры",
+    "category": "realty",
+    "description": "Приватизация муниципального жилья: бесплатно один раз в жизни. Нужны согласия всех зарегистрированных (отказы — нотариально). Срок оформления — 2 месяца.",
+    "actSource": "Закон № 1541-1 «О приватизации жилищного фонда»",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "stmt-migration-registration",
+      "stmt-housing-recalc"
+    ],
+    "fieldCount": 8,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "official-forms"
+  },
+  {
+    "id": "stmt-housing-subsidy",
+    "name": "Заявление на субсидию на оплату ЖКУ",
+    "category": "realty",
+    "description": "Субсидия, если коммуналка съедает over 22% дохода семьи (в Москве — 10%): назначается на 6 месяцев, продлевается. Подаётся через Госуслуги/МФЦ.",
+    "actSource": "ЖК РФ (ст. 159), ПП РФ № 761",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "stmt-housing-recalc",
+      "stmt-sfr-benefit"
+    ],
+    "fieldCount": 8,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "official-forms"
+  },
+  {
+    "id": "stmt-housing-neighbour-flood-claim",
+    "name": "Претензия соседу о возмещении ущерба от залива",
+    "category": "realty",
+    "description": "Досудебная претензия виновнику залива: акт УК + оценка ущерба + требование. Добровольно не платит — в суд с теми же документами плюс госпошлина.",
+    "actSource": "ГК РФ (ст. 1064, 1082)",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "stmt-housing-flood",
+      "lawsuit-statement"
+    ],
+    "fieldCount": 9,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "housing"
+  },
+  {
+    "id": "stmt-hr-severance",
+    "name": "Заявление о выплате выходного пособия при сокращении",
+    "category": "business",
+    "description": "При сокращении положено: средний месячный заработок + сохранение за 2 месяца (3-й — через ЦЗН). Увольнение раньше 2 месяцев — плюс компенсация.",
+    "actSource": "ТК РФ (ст. 178, 180)",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "stmt-hr-dismiss",
+      "stmt-hr-work-book"
+    ],
+    "fieldCount": 9,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "hr"
+  },
+  {
+    "id": "stmt-hr-maternity-benefit",
+    "name": "Заявление о назначении пособия по беременности и родам",
+    "category": "business",
+    "description": "Декретные: 140 дней (194 при многоплодной), 100% среднего заработка. Электронный больничный — заявление короткое, деньги платит СФР через работодателя.",
+    "actSource": "ФЗ № 255-ФЗ (ст. 10–11), ТК РФ (ст. 255)",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "stmt-hr-maternity",
+      "stmt-sfr-benefit"
+    ],
+    "fieldCount": 8,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "hr"
+  },
+  {
+    "id": "stmt-police-cyber-fraud",
+    "name": "Заявление в полицию о взломе аккаунта / краже с карты онлайн",
+    "category": "legal",
+    "description": "Взлом Госуслуг, соцсетей, кража с карты через фишинг: меняйте пароли, блокируйте карты, затем в полицию. Укажите IP/номера/ссылки — это улики.",
+    "actSource": "УПК РФ (ст. 141), УК РФ (ст. 158 ч. 3 п. «г», 159.3, 272)",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "stmt-police-fraud",
+      "stmt-bank-chargeback"
+    ],
+    "fieldCount": 8,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "police"
+  },
+  {
+    "id": "stmt-court-alimony-fixed",
+    "name": "Иск о взыскании алиментов в твёрдой сумме",
+    "category": "family",
+    "description": "Должник без официального дохода, ИП или в валюте? Просите твёрдую сумму — не ниже прожиточного минимума на ребёнка. Индексируется приставом автоматически.",
+    "actSource": "СК РФ (ст. 83, 117)",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "stmt-divorce-alimony-order",
+      "stmt-fssp-alimony-debt"
+    ],
+    "fieldCount": 9,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "courts"
+  },
+  {
+    "id": "stmt-court-zpp-defect",
+    "name": "Иск о возврате денег за товар с недостатками (ЗПП)",
+    "category": "legal",
+    "description": "Брак, отказ в возврате: цена + неустойка 1% в день + штраф 50% + моральный вред. Потребитель освобождён от пошлины до 1 млн ₽, иск — по своему адресу.",
+    "actSource": "Закон «О защите прав потребителей» (ст. 18–24), ГПК РФ",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "stmt-rospotrebnadzor",
+      "claim-generic"
+    ],
+    "fieldCount": 9,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "courts"
+  },
+  {
+    "id": "stmt-court-labor-reinstate",
+    "name": "Иск о восстановлении на работе и оплате прогула",
+    "category": "business",
+    "description": "Незаконное увольнение: срок — месяц с приказа/трудовой! Восстановление + средний заработок за прогул + моралка. Участвует прокурор.",
+    "actSource": "ТК РФ (ст. 391–395), ГПК РФ (ст. 28)",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "stmt-gti-complaint",
+      "stmt-hr-discipline-appeal"
+    ],
+    "fieldCount": 9,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "courts"
+  },
+  {
+    "id": "stmt-bank-account-close",
+    "name": "Заявление о закрытии счёта и возврате остатка",
+    "category": "finance",
+    "description": "Закрытие счёта по вашему заявлению — в любой момент, без объяснений. Остаток выдают наличными или переводят. Комиссию за закрытие брать не вправе.",
+    "actSource": "ГК РФ (ст. 859), Инструкция ЦБ № 204-И",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "stmt-bank-chargeback",
+      "stmt-cb-complaint"
+    ],
+    "fieldCount": 8,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "official-forms"
+  },
+  {
+    "id": "stmt-court-zpp-service",
+    "name": "Иск о некачественной услуге (ремонт, стройка, сервис)",
+    "category": "legal",
+    "description": "Сорваны сроки, брак в работе: уменьшение цены, неустойка 3% в день, расторжение + штраф 50%. Экспертиза докажет брак лучше слов.",
+    "actSource": "Закон «О защите прав потребителей» (ст. 27–31)",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "stmt-court-zpp-defect",
+      "stmt-rospotrebnadzor"
+    ],
+    "fieldCount": 9,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "courts"
+  },
+  {
+    "id": "stmt-court-housing-eviction-neighbour",
+    "name": "Иск о выселении / нечинении препятствий в пользовании жильём",
+    "category": "realty",
+    "description": "Бывший член семьи не съезжает или чинит препятствия: только через суд, участковый не выселит. Приложите выписку из домовой книги и акты о непроживании/препятствиях.",
+    "actSource": "ЖК РФ (ст. 31, 35, 83–91), ГК РФ (ст. 304)",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "stmt-housing-recalc",
+      "stmt-police-noise"
+    ],
+    "fieldCount": 9,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "courts"
+  },
+  {
+    "id": "stmt-family-alimony-agreement-end",
+    "name": "Заявление об отмене алиментов при усыновлении / совершеннолетии",
+    "category": "family",
+    "description": "Алименты прекращаются не сами: ребёнку 18, усыновление, смерть, восстановление трудоспособности. Подайте в суд — пристав закроет производство по решению.",
+    "actSource": "СК РФ (ст. 114–120)",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "stmt-divorce-alimony-order",
+      "stmt-fssp-alimony-debt"
+    ],
+    "fieldCount": 8,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "courts"
+  },
+  {
+    "id": "stmt-hr-salary-index",
+    "name": "Заявление об индексации зарплаты",
+    "category": "business",
+    "description": "Работодатель обязан индексировать зарплату при росте цен — порядок пишет в локальных актах. Нет индексации годами — требуйте письменно, затем в ГИТ и суд.",
+    "actSource": "ТК РФ (ст. 130, 134)",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "stmt-hr-salary",
+      "stmt-gti-complaint"
+    ],
+    "fieldCount": 8,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "hr"
+  },
+  {
+    "id": "stmt-bank-card-block-appeal",
+    "name": "Заявление о разблокировке счёта (115-ФЗ)",
+    "category": "finance",
+    "description": "Банк заблокировал счёт по антиотмывочному закону: несите документы о происхождении денег (договоры, справки). Отказ — в межведомственную комиссию ЦБ, затем в суд.",
+    "actSource": "ФЗ № 115-ФЗ (ст. 7–7.2), Положение ЦБ № 375-П",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "stmt-bank-account-close",
+      "stmt-cb-complaint"
+    ],
+    "fieldCount": 8,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "official-forms"
+  },
+  {
+    "id": "stmt-auto-dtp-europrotocol",
+    "name": "Извещение о ДТП (европротокол) — инструкция и заполнение",
+    "category": "auto",
+    "description": "Без ГИБДД при 4 условиях: 2 авто, ОСАГО у обоих, ущерб до 100 000 ₽ (до 400 000 ₽ с фотофиксацией), пострадавших нет. Разъезжайтесь только после фото и извещения.",
+    "actSource": "ФЗ № 40-ФЗ (ст. 11.1), ПДД (п. 2.6.1)",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "stmt-auto-osago-claim",
+      "stmt-gibdd-appeal"
+    ],
+    "fieldCount": 8,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "official-forms"
+  },
+  {
+    "id": "stmt-travel-tour-refund",
+    "name": "Претензия туроператору о возврате за отменённый тур",
+    "category": "other",
+    "description": "Тур не состоялся или сорван: требуйте возврат + неустойку. Отказ от тура по своей инициативе — возврат за вычетом фактических расходов (требуйте их доказать).",
+    "actSource": "ФЗ № 132-ФЗ «Об основах туристской деятельности» (ст. 10–10.1), Закон о ЗПП (ст. 32)",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "stmt-rospotrebnadzor",
+      "stmt-court-zpp-defect"
+    ],
+    "fieldCount": 9,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "official-forms"
+  },
+  {
+    "id": "stmt-telecom-spam-stop",
+    "name": "Заявление оператору о блокировке спама и платных подписок",
+    "category": "other",
+    "description": "Снимают за подписки, которых не подключали, звонят с рекламой: требуйте детализацию, отключение и возврат. Не помогло — в Роскомнадзор и суд.",
+    "actSource": "ФЗ «О связи» (ст. 44–44.1), ФЗ «О рекламе» (ст. 18), ПП РФ № 1342",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "stmt-fas-complaint",
+      "stmt-rospotrebnadzor"
+    ],
+    "fieldCount": 9,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "official-forms"
+  },
+  {
+    "id": "stmt-med-tax-refund",
+    "name": "Заявление на вычет за лечение и лекарства",
+    "category": "other",
+    "description": "Возврат 13% за лечение (своё, детей, родителей, супруга): обычное — до 150 000 ₽ расходов, дорогостоящее — без лимита. Справка из клиники — главный документ.",
+    "actSource": "НК РФ (ст. 219)",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "stmt-tax-deduction",
+      "stmt-med-complaint"
+    ],
+    "fieldCount": 9,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "official-forms"
+  },
+  {
+    "id": "stmt-court-inheritance-dispute",
+    "name": "Иск о разделе наследственного имущества",
+    "category": "family",
+    "description": "Наследники не договорились: раздел через суд с учётом долей, преимущественного права (кто жил/пользовался) и компенсации. Оценка имущества обязательна.",
+    "actSource": "ГК РФ (ст. 252, 1141–1149, 1164–1170)",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "stmt-notary-inherit",
+      "stmt-inherit-accept-fact"
+    ],
+    "fieldCount": 9,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "courts"
+  },
+  {
+    "id": "stmt-court-criminal-compensation",
+    "name": "Гражданский иск в уголовном деле (возмещение вреда)",
+    "category": "legal",
+    "description": "Вред от преступления взыскивайте прямо в уголовном деле — без отдельного иска и пошлины. Заявите следователю или в суде до удаления в совещательную.",
+    "actSource": "УПК РФ (ст. 44), ГК РФ (ст. 1064, 1100–1101)",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "stmt-police-theft",
+      "stmt-police-fraud"
+    ],
+    "fieldCount": 8,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "courts"
+  },
+  {
+    "id": "stmt-court-admin-sue",
+    "name": "Административный иск на госорган (КАС)",
+    "category": "legal",
+    "description": "Оспаривание действий чиновников, отказов, бездействия: 3 месяца с нарушения. Суд сам истребует доказательства у органа — бремя доказывания на нём.",
+    "actSource": "КАС РФ (ст. 124–127, 218–220)",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "stmt-prosecutor-complaint",
+      "stmt-nalog-complaint"
+    ],
+    "fieldCount": 9,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "courts"
+  },
+  {
+    "id": "stmt-postal-lost-claim",
+    "name": "Претензия Почте России за утерю / повреждение отправления",
+    "category": "postal",
+    "description": "Потеряли посылку или разбили: компенсация — объявленная ценность + тариф. Претензия — за 6 месяцев, ответ — месяц. Затем — суд по ЗПП.",
+    "actSource": "ФЗ «О почтовой связи» (ст. 34), Приказ Минцифры № 234",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "stmt-rospotrebnadzor",
+      "stmt-court-zpp-defect"
+    ],
+    "fieldCount": 9,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "official-forms"
+  },
+  {
+    "id": "stmt-court-moral-harm-police",
+    "name": "Иск о компенсации за незаконные действия полиции / задержание",
+    "category": "legal",
+    "description": "Незаконное задержание, обыск, уголовное преследование с оправданием: вред возмещает казна, вина не доказывается. Сначала добейтесь признания действий незаконными.",
+    "actSource": "ГК РФ (ст. 1069–1071, 1100–1101), УПК РФ (гл. 18 — реабилитация)",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "stmt-prosecutor-complaint",
+      "stmt-police-beating"
+    ],
+    "fieldCount": 9,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "courts"
+  },
+  {
+    "id": "stmt-other-name-change",
+    "name": "Заявление о перемене имени",
+    "category": "other",
+    "description": "Смена ФИО с 14 лет (до 18 — с согласия родителей/опеки): месяц на рассмотрение. Затем месяц на замену паспорта — иначе штраф за недействительный паспорт.",
+    "actSource": "ФЗ № 143-ФЗ (ст. 58–63), СК РФ (ст. 59)",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "stmt-migration-registration",
+      "stmt-police-doc-loss"
+    ],
+    "fieldCount": 8,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "official-forms"
+  },
+  {
+    "id": "stmt-other-pensioner-benefit-region",
+    "name": "Заявление на региональные льготы (ветеран труда / пенсионер)",
+    "category": "other",
+    "description": "ЕДВ, компенсация ЖКУ 50%, льготный проезд: звание «ветеран труда» — через соцзащиту, льготы — заявлением. Отказ обжалуйте с расчётом стажа.",
+    "actSource": "ФЗ № 5-ФЗ «О ветеранах», региональные законы о соцподдержке",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "stmt-pension-recalc",
+      "stmt-housing-subsidy"
+    ],
+    "fieldCount": 8,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "official-forms"
+  },
+  {
+    "id": "stmt-court-establish-fact",
+    "name": "Заявление об установлении юридического факта",
+    "category": "legal",
+    "description": "Родство, иждивение, трудовой стаж без записей, принадлежность документов: только если иначе (внесудебно) установить нельзя. Опишите, зачем нужен факт.",
+    "actSource": "ГПК РФ (ст. 264–268)",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "stmt-inherit-accept-fact",
+      "stmt-pension-recalc"
+    ],
+    "fieldCount": 9,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "courts"
+  },
+  {
+    "id": "stmt-court-defamation",
+    "name": "Иск о защите чести и достоинства (клевета в интернете)",
+    "category": "legal",
+    "description": "Порочащий пост/отзыв: заверьте у нотариуса (скриншоты тают), требуйте удаления + опровержения + компенсацию. Ответчик доказывает правдивость, вы — факт публикации.",
+    "actSource": "ГК РФ (ст. 152), ГПК РФ",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "stmt-police-beating",
+      "stmt-court-moral-harm-police"
+    ],
+    "fieldCount": 9,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "courts"
+  },
+  {
+    "id": "stmt-mil-ags",
+    "name": "Заявление о замене военной службы альтернативной (АГС)",
+    "category": "other",
+    "description": "АГС по убеждениям: подавайте за 6 месяцев до призыва, обоснуйте убеждения подробно. Отказ — обжалуйте в суд, отправку приостановят.",
+    "actSource": "ФЗ № 113-ФЗ «Об альтернативной гражданской службе», Конституция (ст. 59)",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "stmt-mil-postpone",
+      "stmt-mil-appeal"
+    ],
+    "fieldCount": 8,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "military"
+  },
+  {
+    "id": "stmt-mil-health-review",
+    "name": "Заявление о направлении на медосвидетельствование / переосвидетельствование",
+    "category": "other",
+    "description": "Не согласны с категорией годности? Требуйте направления к профильному врачу и приобщения новых диагнозов. КМО вышестоящей комиссии — тоже по заявлению.",
+    "actSource": "ФЗ № 53-ФЗ (ст. 5.1), ПП РФ № 565 (Расписание болезней)",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "stmt-mil-postpone",
+      "stmt-mil-appeal"
+    ],
+    "fieldCount": 8,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "military"
+  },
+  {
+    "id": "stmt-hr-reference",
+    "name": "Заявление о выдаче характеристики / рекомендации с работы",
+    "category": "business",
+    "description": "Характеристика для суда, опеки, нового работодателя: выдаётся за 3 дня по письменному запросу. Отказ — нарушение ст. 62 ТК.",
+    "actSource": "ТК РФ (ст. 62)",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "stmt-hr-work-book",
+      "stmt-hr-dismiss"
+    ],
+    "fieldCount": 8,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "hr"
+  },
+  {
+    "id": "stmt-zpp-airline-delay",
+    "name": "Претензия авиакомпании за задержку / отмену рейса",
+    "category": "other",
+    "description": "Рейс задержан over 2 часов — положены вода, питание, отель; отмена — возврат + 25% штрафа + убытки. Внутренний рейс — претензия за 6 месяцев.",
+    "actSource": "Воздушный кодекс (ст. 120–126), Закон о ЗПП, Монреальская конвенция",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "stmt-travel-tour-refund",
+      "stmt-rospotrebnadzor"
+    ],
+    "fieldCount": 9,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "official-forms"
+  },
+  {
+    "id": "stmt-auto-insurance-kasko-dispute",
+    "name": "Претензия по КАСКО (занижение / отказ)",
+    "category": "auto",
+    "description": "Страховая занизила выплату или отказала: независимая экспертиза + претензия с расчётом. Затем — финомбудсмен (бесплатно) и суд со штрафом 50%.",
+    "actSource": "ГК РФ (ст. 929–943), Закон о ЗПП",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "stmt-auto-osago-claim",
+      "stmt-fin-ombudsman"
+    ],
+    "fieldCount": 9,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "official-forms"
+  },
+  {
+    "id": "stmt-housing-today-repair-current",
+    "name": "Заявление о текущем ремонте подъезда",
+    "category": "realty",
+    "description": "Облезшие стены, разбитые почтовые ящики, текущие трубы: текущий ремонт — обязанность УК за счёт содержания жилья. Раз в 3–5 лет — плановый ремонт подъезда.",
+    "actSource": "ПП РФ № 491 (п. 18), ЖК РФ (ст. 161, 165)",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "stmt-housing-quality",
+      "stmt-gzhi-complaint"
+    ],
+    "fieldCount": 8,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "housing"
+  },
+  {
+    "id": "stmt-fssp-exempt-protect",
+    "name": "Заявление о снятии взыскания с детских пособий и соцвыплат",
+    "category": "family",
+    "description": "Списали пособия, алименты, маткапитал? Это незаконно (ст. 101): несите справку о назначении выплат — пристав обязан вернуть за дни. Коды «2» в платёжках — ваша защита.",
+    "actSource": "ФЗ № 229-ФЗ (ст. 101), ГПК РФ (ст. 446)",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "stmt-fssp-excess-return",
+      "stmt-fssp-minimum"
+    ],
+    "fieldCount": 9,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "fssp"
+  },
+  {
+    "id": "stmt-court-motion-video",
+    "name": "Ходатайство о видеоконференц-связи (ВКС) в суде",
+    "category": "legal",
+    "description": "Живёте в другом городе? Участвуйте по видео из ближайшего суда: подайте ходатайство заранее, укажите суд для связи. Отказ — только если нет технической возможности.",
+    "actSource": "ГПК РФ (ст. 155.1), АПК РФ (ст. 153.1), КАС РФ (ст. 142)",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "lawsuit-statement",
+      "stmt-court-postpone"
+    ],
+    "fieldCount": 9,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "courts"
+  },
+  {
+    "id": "stmt-court-motion-language",
+    "name": "Ходатайство о переводчике в суде",
+    "category": "legal",
+    "description": "Не владеете русским? Суд обязан предоставить переводчика бесплатно — достаточно заявить. Отказ — грубое нарушение, основание для отмены решения.",
+    "actSource": "ГПК РФ (ст. 9), КАС РФ (ст. 12)",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "lawsuit-statement",
+      "stmt-court-motion-video"
+    ],
+    "fieldCount": 9,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "courts"
+  },
+  {
+    "id": "stmt-court-motion-recusal",
+    "name": "Заявление об отводе судьи",
+    "category": "legal",
+    "description": "Судья — родственник стороны, уже участвовал в деле или заинтересован? Заявляйте отвод до начала рассмотрения по существу. Мотивируйте фактами, а не эмоциями.",
+    "actSource": "ГПК РФ (ст. 16–19)",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "stmt-appeal",
+      "stmt-court-private-complaint"
+    ],
+    "fieldCount": 9,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "courts"
+  },
+  {
+    "id": "stmt-court-motion-postpone-appeal",
+    "name": "Ходатайство о приостановлении исполнения решения (апелляция)",
+    "category": "legal",
+    "description": "Подали апелляцию, а приставы уже списывают? Просите апелляцию приостановить исполнение: приложите доказательства несоразмерности и гарантию (депозит, поручительство).",
+    "actSource": "ГПК РФ (ст. 326.2)",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "stmt-appeal",
+      "stmt-fssp-delay"
+    ],
+    "fieldCount": 9,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "courts"
+  },
+  {
+    "id": "stmt-court-motion-restore-term",
+    "name": "Ходатайство о восстановлении пропущенного срока",
+    "category": "legal",
+    "description": "Пропустили срок (апелляция, отмена приказа)? Просите восстановить + совершайте само действие (приложите жалобу). Болезнь, командировка, неполучение почты — уважительно.",
+    "actSource": "ГПК РФ (ст. 109–112)",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "stmt-appeal",
+      "stmt-court-order-cancel"
+    ],
+    "fieldCount": 9,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "courts"
+  },
+  {
+    "id": "stmt-housing-common-meeting",
+    "name": "Требование о проведении общего собрания собственников (ОСС)",
+    "category": "realty",
+    "description": "Хотите сменить УК, шлагбаум, тариф? 10% собственников требуют собрания письменно — УК обязана провести за 45 дней. Игнор — жалуйтесь в ГЖИ.",
+    "actSource": "ЖК РФ (ст. 44–48)",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "stmt-housing-quality",
+      "stmt-gzhi-complaint"
+    ],
+    "fieldCount": 8,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "housing"
+  },
+  {
+    "id": "stmt-court-motion-claim-secure-evidence",
+    "name": "Заявление об обеспечении доказательств (осмотр до суда)",
+    "category": "legal",
+    "description": "Доказательство исчезнет до суда (зальют, снесут, удалят)? Просите суд зафиксировать заранее: осмотр, экспертиза, запрос. Подаётся до иска или в процессе.",
+    "actSource": "ГПК РФ (ст. 64–66)",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "stmt-court-evidence",
+      "stmt-housing-flood"
+    ],
+    "fieldCount": 8,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "courts"
+  },
+  {
+    "id": "stmt-court-motion-third-party",
+    "name": "Ходатайство о привлечении третьего лица / соответчика",
+    "category": "legal",
+    "description": "Решение затронет ещё кого-то (сособственника, страховую, работодателя)? Просите привлечь третьим лицом или соответчиком — иначе потом судиться заново.",
+    "actSource": "ГПК РФ (ст. 40–43)",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "lawsuit-statement",
+      "stmt-court-evidence"
+    ],
+    "fieldCount": 9,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "courts"
+  },
+  {
+    "id": "stmt-court-motion-doc-copies",
+    "name": "Заявление о выдаче копий материалов дела для ознакомления",
+    "category": "legal",
+    "description": "Знакомьтесь с делом свободно: фотографируйте всё, копии — за свой счёт. Отказ — обжалуйте председателю суда. Доверенность представителя приложите.",
+    "actSource": "ГПК РФ (ст. 35)",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "lawsuit-statement",
+      "stmt-court-docs"
+    ],
+    "fieldCount": 8,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "courts"
+  },
+  {
+    "id": "stmt-court-motion-correct-error",
+    "name": "Заявление об исправлении описки в решении суда",
+    "category": "legal",
+    "description": "Опечатка в ФИО, сумме, адресе мешает исполнению? Суд исправляет определением без нового разбирательства. Суть решения менять нельзя — только описку.",
+    "actSource": "ГПК РФ (ст. 200)",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "stmt-court-docs",
+      "stmt-fssp-execution"
+    ],
+    "fieldCount": 8,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "courts"
+  },
+  {
+    "id": "stmt-court-motion-additional-decision",
+    "name": "Заявление о дополнительном решении суда",
+    "category": "legal",
+    "description": "Суд забыл взыскать пошлину, расходы или решить часть требований? Просите дополнительное решение — до вступления в силу или в апелляции.",
+    "actSource": "ГПК РФ (ст. 201)",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "stmt-court-costs",
+      "stmt-court-motion-correct-error"
+    ],
+    "fieldCount": 8,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "courts"
+  },
+  {
+    "id": "stmt-court-motion-explain",
+    "name": "Заявление о разъяснении решения суда",
+    "category": "legal",
+    "description": "Решение неясно приставам или сторонам (порядок, сроки, доли)? Просите разъяснить — изменить суть суд не вправе, только уточнить формулировки.",
+    "actSource": "ГПК РФ (ст. 202)",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "stmt-court-motion-correct-error",
+      "stmt-fssp-execution"
+    ],
+    "fieldCount": 8,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "courts"
+  },
+  {
+    "id": "stmt-court-motion-turnaround",
+    "name": "Заявление о повороте исполнения решения",
+    "category": "legal",
+    "description": "Решение исполнили, а апелляция/кассация его отменила? Требуйте вернуть всё обратно (деньги, имущество). Подаётся в первый суд.",
+    "actSource": "ГПК РФ (ст. 443–445)",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "stmt-appeal",
+      "stmt-court-cassation"
+    ],
+    "fieldCount": 8,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "courts"
+  },
+  {
+    "id": "stmt-court-motion-leave-no-consider",
+    "name": "Ходатайство об оставлении иска без рассмотрения",
+    "category": "legal",
+    "description": "Истец дважды не явился, досудебный порядок не соблюдён, дело уже в другом суде? Просите оставить без рассмотрения — после устранения препятствий можно подать заново.",
+    "actSource": "ГПК РФ (ст. 222–223)",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "lawsuit-statement",
+      "stmt-court-postpone"
+    ],
+    "fieldCount": 9,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "courts"
+  },
+  {
+    "id": "stmt-court-motion-terminate",
+    "name": "Ходатайство о прекращении производства по делу",
+    "category": "legal",
+    "description": "Мировое, отказ от иска, смерть стороны без правопреемства, уже есть решение по тому же спору? Просите прекратить — повторно с тем же иском уже не обратиться.",
+    "actSource": "ГПК РФ (ст. 220–221)",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "stmt-court-settlement",
+      "stmt-court-motion-leave-no-consider"
+    ],
+    "fieldCount": 9,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "courts"
+  },
+  {
+    "id": "stmt-court-motion-audio-protocol",
+    "name": "Заявление о замечаниях на протокол / выдаче аудиозаписи заседания",
+    "category": "legal",
+    "description": "Протокол исказил показания? Замечания — за 5 дней с подписания. Аудиозапись заседания выдадут по заявлению — сверьте с протоколом перед апелляцией.",
+    "actSource": "ГПК РФ (ст. 231–232)",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "stmt-court-motion-doc-copies",
+      "stmt-appeal"
+    ],
+    "fieldCount": 9,
     "kind": "statement",
     "formKind": "free",
     "statementGroup": "courts"
