@@ -25,15 +25,17 @@ export const dynamic = "force-static"; // P0: явно включаем SSG, и�
 
 export const metadata: Metadata = withSeo({
   path: "/blanks",
-  title: "Скачать пустые бланки договоров — PDF и Word",
+  title: "Скачать пустые бланки договоров и заявлений — PDF и Word",
   description:
-    "Бесплатные пустые бланки договоров для ручного заполнения: ДКП авто, аренда, подряд, расписка, счёт. 360+ шаблонов, PDF и Word, без регистрации.",
+    "Бесплатные пустые бланки договоров и заявлений для ручного заполнения: ДКП авто, аренда, расписка, заявления в ФССП, суд, работодателю. 370+ шаблонов, PDF и Word, без регистрации.",
   keywords: [
     "скачать бланк договора",
     "пустой бланк договора",
     "бланк договора аренды скачать",
     "бланк договора купли продажи",
     "пустые бланки документов",
+    "пустые бланки заявлений",
+    "бланк заявления скачать",
     "образец бланка",
   ],
   robots: { index: true, follow: true },
@@ -67,7 +69,7 @@ const CATEGORY_LABELS: Record<string, string> = {
 const INDEX_FAQ = [
   {
     q: "Чем пустой бланк отличается от готового документа?",
-    a: "Бланк — это форма без заполненного содержания: поля под Вас, данные сторон, подписи. Готовый документ конструктор собирает сам, если внести данные в форме на сайте. Бланк удобен для ручного заполнения, конструктор — если важна скорость.",
+    a: "Бланк — это форма без заполненного содержания: поля под Вас, данные сторон, подписи. Готовый документ конструктор собирает сам, если внести данные в форме на сайте. Бланк удобен для ручного заполнения, конструктор — если важна скорость. Пустые бланки заявлений собраны отдельным табом «Пустые бланки заявлений».",
   },
   {
     q: "Скачивание бланков действительно бесплатно?",
@@ -87,13 +89,21 @@ const INDEX_FAQ = [
   },
 ];
 
-export default function BlanksIndexPage() {
+export default async function BlanksIndexPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ kind?: string }>;
+}) {
+  const kindParam = (await searchParams)?.kind;
+  const initialKind: "all" | "contract" | "statement" =
+    kindParam === "statement" ? "statement" : kindParam === "contract" ? "contract" : "all";
   const items: BlankItem[] = LEGAL_TEMPLATES.map((t) => ({
     id: t.id,
     name: t.name,
     description: t.description,
     category: t.category,
     lastUpdated: t.lastUpdated,
+    kind: t.kind ?? "contract",
   }));
 
   const categories: BlankCategory[] = CATEGORY_ORDER.map((cat) => ({
@@ -114,9 +124,9 @@ export default function BlanksIndexPage() {
           {
             "@context": "https://schema.org",
             "@type": "CollectionPage",
-            name: "Пустые бланки договоров",
+            name: "Пустые бланки договоров и заявлений",
             description:
-              "Бесплатные пустые бланки договоров: ДКП авто, аренда, подряд, расписка, счёт. 360+ шаблонов, PDF и Word, без регистрации.",
+              "Бесплатные пустые бланки договоров и заявлений: ДКП авто, аренда, расписка, заявления в ФССП, суд, работодателю. 370+ шаблонов, PDF и Word, без регистрации.",
             url: `${SITE_URL}/blanks`,
             inLanguage: "ru",
             isPartOf: { "@type": "WebSite", name: "Dogovor.expert", url: SITE_URL },
@@ -157,11 +167,11 @@ export default function BlanksIndexPage() {
 
       <section className="py-2 text-center">
         <h1 className="text-display-lg font-bold text-gray-900">
-          Пустые бланки договоров
+          Пустые бланки договоров и заявлений
         </h1>
         <p className="mx-auto mt-3 max-w-2xl leading-relaxed text-gray-600">
-          Скачайте готовый пустой бланк любого договора и заполните его от руки
-          или на компьютере. Все файлы — в форматах{" "}
+          Скачайте готовый пустой бланк любого договора или заявления и
+          заполните его от руки или на компьютере. Все файлы — в форматах{" "}
           <span className="font-semibold text-gray-900">PDF и Word</span>,
           бесплатно и без регистрации. На каждом бланке указан адрес{" "}
           <span className="font-semibold text-brand-600">dogovor.expert</span>.
@@ -218,6 +228,7 @@ export default function BlanksIndexPage() {
           items={items}
           categories={categories}
           popularIds={POPULAR_TEMPLATE_IDS}
+          initialKind={initialKind}
         />
       </div>
 

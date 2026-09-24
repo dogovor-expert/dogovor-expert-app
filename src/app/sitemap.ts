@@ -34,6 +34,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${SITE_URL}/contacts`, changeFrequency: "monthly", priority: 0.4 },
     { url: `${SITE_URL}/blog`, changeFrequency: "weekly", priority: 0.8 },
     { url: `${SITE_URL}/blanks`, changeFrequency: "weekly", priority: 0.9 },
+    { url: `${SITE_URL}/zayavleniya`, changeFrequency: "weekly", priority: 0.9 },
     { url: `${SITE_URL}/resume`, changeFrequency: "weekly", priority: 0.9 },
     { url: `${SITE_URL}/epts`, changeFrequency: "monthly", priority: 0.6 },
   ];

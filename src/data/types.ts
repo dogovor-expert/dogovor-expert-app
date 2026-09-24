@@ -116,6 +116,43 @@ export interface TemplateSigning {
   signers: TemplateSigner[];
 }
 
+/**
+ * Вид шаблона: договор/сделка (contract) или заявление/обращение
+ * в госорган, суд, работодателю, УК (statement). Отсутствие поля =
+ * contract (обратная совместимость со всеми 369 существующими).
+ */
+export type TemplateKind = "contract" | "statement";
+
+/**
+ * Форма заявления: official — утверждённая форма ведомства
+ * (менять структуру нельзя, конструктор работает как help-to-fill);
+ * free — свободная форма (полноценный конструктор).
+ */
+export type StatementFormKind = "official" | "free";
+
+/** Группа заявлений для хаба /zayavleniya. */
+export type StatementGroup =
+  | "fssp"
+  | "courts"
+  | "hr"
+  | "housing"
+  | "police"
+  | "oversight"
+  | "military"
+  | "official-forms";
+
+/** Блок «Куда подавать» на странице заявления. */
+export interface StatementSubmitTo {
+  /** Куда: орган/адресат. */
+  where: string;
+  /** Срок рассмотрения/возбуждения. */
+  term: string;
+  /** Госпошлина/плата. */
+  fee: string;
+  /** Что приложить. */
+  attach: string;
+}
+
 export interface LegalTemplate {
   id: string;
   name: string;
@@ -131,4 +168,14 @@ export interface LegalTemplate {
   supportsOcr?: boolean;
   versions?: TemplateVersion[];
   printInstruction?: string;
+  /** Вид: договор или заявление. По умолчанию contract. */
+  kind?: TemplateKind;
+  /** Форма заявления: официальная ведомства или свободная. */
+  formKind?: StatementFormKind;
+  /** Группа заявлений для хаба /zayavleniya. */
+  statementGroup?: StatementGroup;
+  /** Блок «Куда подавать» (только у заявлений). */
+  submitTo?: StatementSubmitTo;
+  /** Примерные значения полей для режима «образец заполнения». */
+  sampleValues?: Record<string, string>;
 }

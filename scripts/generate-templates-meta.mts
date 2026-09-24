@@ -11,6 +11,9 @@ const meta = LEGAL_TEMPLATES.map((t) => ({
   lastUpdated: t.lastUpdated,
   suggestedDocs: t.suggestedDocs,
   fieldCount: t.fields.length,
+  ...(t.kind ? { kind: t.kind } : {}),
+  ...(t.formKind ? { formKind: t.formKind } : {}),
+  ...(t.statementGroup ? { statementGroup: t.statementGroup } : {}),
 }));
 
 const body = JSON.stringify(meta, null, 2);
@@ -27,6 +30,9 @@ export interface TemplateMeta {
   lastUpdated: string;
   suggestedDocs: string[];
   fieldCount: number;
+  kind?: "contract" | "statement";
+  formKind?: "official" | "free";
+  statementGroup?: string;
 }
 
 export const TEMPLATE_META: TemplateMeta[] = ${body};

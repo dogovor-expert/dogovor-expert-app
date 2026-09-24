@@ -79,9 +79,17 @@ export function buildIntro(template: LegalTemplate): string[] {
     paragraphs.push(...template.seoLsi);
   }
 
-  paragraphs.push(
-    `Правовая основа — ${template.actSource}. Документ составлен с учётом актуальных требований законодательства РФ на ${template.lastUpdated.toLowerCase()}. Для сделок, не требующих обязательного нотариального удостоверения, достаточно простой письменной формы (ст. 161 ГК РФ): распечатайте документ и подпишите его обеими сторонами.`
-  );
+  // Заявления — одностороннее обращение, а не сделка: своя формулировка
+  // правовой основы (без «подпишите обеими сторонами»).
+  if (template.kind === "statement") {
+    paragraphs.push(
+      `Правовая основа — ${template.actSource}. Заявление составлено с учётом актуальных требований законодательства РФ на ${template.lastUpdated.toLowerCase()}. Заявление подаётся в простой письменной форме: распечатайте, подпишите и подайте ${template.submitTo ? template.submitTo.where.charAt(0).toLowerCase() + template.submitTo.where.slice(1) : "в соответствующий орган"}.`
+    );
+  } else {
+    paragraphs.push(
+      `Правовая основа — ${template.actSource}. Документ составлен с учётом актуальных требований законодательства РФ на ${template.lastUpdated.toLowerCase()}. Для сделок, не требующих обязательного нотариального удостоверения, достаточно простой письменной формы (ст. 161 ГК РФ): распечатайте документ и подпишите его обеими сторонами.`
+    );
+  }
 
   const fieldCats = [...new Set(template.fields.map((f) => f.category))].filter(
     (c) => FIELD_CATEGORY_LABELS[c]

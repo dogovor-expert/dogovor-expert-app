@@ -25,6 +25,8 @@ export interface BlankItem {
   description: string;
   category: string;
   lastUpdated: string;
+  /** Вид: договор или заявление (опционально — старые вызовы без kind). */
+  kind?: "contract" | "statement";
 }
 
 export interface BlankCategory {
@@ -87,13 +89,17 @@ export default function BlanksBrowser({
   items,
   categories,
   popularIds,
+  initialKind = "all",
 }: {
   items: BlankItem[];
   categories: BlankCategory[];
   popularIds: readonly string[];
+  /** Стартовый таб вида (для ?kind=statement — «Пустые бланки заявлений»). */
+  initialKind?: "all" | "contract" | "statement";
 }) {
   const [query, setQuery] = useState("");
   const [activeCat, setActiveCat] = useState<string>("all");
+  const [activeKind, setActiveKind] = useState<"all" | "contract" | "statement">(initialKind);
   const [sort, setSort] = useState<SortKey>("popular");
   const [page, setPage] = useState(1);
   const catalogRef = useRef<HTMLElement>(null);
@@ -101,14 +107,19 @@ export default function BlanksBrowser({
   const q = norm(query);
 
   const filtered = useMemo(() => {
-    const byCat = items.filter(
+    const byKind = items.filter(
+      (it) =>
+        activeKind === "all" ||
+        (it.kind ?? "contract") === activeKind
+    );
+    const byCat = byKind.filter(
       (it) => activeCat === "all" || it.category === activeCat
     );
     if (!q) return byCat;
     return byCat.filter((it) =>
       matchQ(norm(`${it.name} ${it.description} ${it.id}`), q)
     );
-  }, [items, activeCat, q]);
+  }, [items, activeCat, activeKind, q]);
 
   const sorted = useMemo(() => {
     const arr = [...filtered];
@@ -131,6 +142,23 @@ export default function BlanksBrowser({
     return arr;
   }, [filtered, sort, popularIds]);
 
+  // Категории пересчитываются под активный таб вида: счётчики —
+  // только договоры/заявления соответственно, пустые скрываются.
+  const visibleCategories = useMemo(
+    () =>
+      categories
+        .map((c) => ({
+          ...c,
+          count: items.filter(
+            (it) =>
+              it.category === c.id &&
+              (activeKind === "all" || (it.kind ?? "contract") === activeKind)
+          ).length,
+        }))
+        .filter((c) => c.count > 0),
+    [categories, items, activeKind]
+  );
+
   const byCategory = useMemo(() => {
     const map = new Map<string, BlankItem[]>();
     for (const it of sorted) {
@@ -138,13 +166,12 @@ export default function BlanksBrowser({
       arr.push(it);
       map.set(it.category, arr);
     }
-    return categories
+    return visibleCategories
       .filter((c) => map.has(c.id))
       .map((c) => ({ ...c, items: map.get(c.id) ?? [] }));
-  }, [sorted, categories]);
+  }, [sorted, visibleCategories]);
 
-  const showGrouped = activeCat === "all" && !q && sort === "popular";
-  const totalFlatPages = Math.max(1, Math.ceil(sorted.length / PAGE_SIZE));
+  const showGrouped = activeCat === "all" && !q && sort === "popular";  const totalFlatPages = Math.max(1, Math.ceil(sorted.length / PAGE_SIZE));
   const safePage = Math.min(page, totalFlatPages);
   const flatStart = (safePage - 1) * PAGE_SIZE;
   const flatPaged = sorted.slice(flatStart, flatStart + PAGE_SIZE);
@@ -152,6 +179,7 @@ export default function BlanksBrowser({
   const reset = () => {
     setQuery("");
     setActiveCat("all");
+    setActiveKind("all");
     setSort("popular");
     setPage(1);
   };
@@ -161,15 +189,56 @@ export default function BlanksBrowser({
     setPage(1);
   };
 
+  const changeKind = (k: "all" | "contract" | "statement") => {
+    setActiveKind(k);
+    setActiveCat("all");
+    setPage(1);
+  };
+
   const goCat = (c: string) => {
     changeCat(c);
     catalogRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
-  const total = categories.reduce((s, c) => s + c.count, 0);
+  const kindCount = (k: "all" | "contract" | "statement") =>
+    k === "all" ? items.length : items.filter((it) => (it.kind ?? "contract") === k).length;
+
+  const total = visibleCategories.reduce((s, c) => s + c.count, 0);
 
   return (
     <div className="space-y-10">
+      {/* Табы вида: Все / Договоры / Заявления (как табы TemplateSelector). */}
+      <div className="flex flex-wrap items-center gap-2" role="tablist" aria-label="Вид бланков">
+        {(
+          [
+            { id: "all", label: "Все" },
+            { id: "contract", label: "Договоры" },
+            { id: "statement", label: "Пустые бланки заявлений" },
+          ] as const
+        ).map((k) => {
+          const active = activeKind === k.id;
+          return (
+            <button
+              key={k.id}
+              type="button"
+              role="tab"
+              aria-selected={active}
+              onClick={() => changeKind(k.id)}
+              className={`inline-flex items-center gap-1.5 rounded-full border px-4 py-2 text-[13px] font-semibold transition-colors min-h-[40px] ${
+                active
+                  ? "bg-brand-600 border-brand-600 text-white"
+                  : "bg-white border-gray-200 text-gray-600 hover:border-brand-300"
+              }`}
+            >
+              {k.label}
+              <span className={`rounded-full px-1.5 text-[11px] ${active ? "bg-white/25" : "bg-gray-100 text-gray-500"}`}>
+                {kindCount(k.id)}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
       <section aria-label="Категории бланков" className="space-y-4">
         <div className="flex flex-wrap items-end justify-between gap-2">
           <h2 className="text-xl font-bold text-gray-900">Все категории</h2>
@@ -182,10 +251,10 @@ export default function BlanksBrowser({
             active={activeCat === "all"}
             onClick={() => goCat("all")}
             label="Все бланки"
-            count={items.length}
+            count={total}
             icon={FileText}
           />
-          {categories.map((c) => (
+          {visibleCategories.map((c) => (
             <CategoryTile
               key={c.id}
               active={activeCat === c.id}
@@ -244,9 +313,9 @@ export default function BlanksBrowser({
             active={activeCat === "all"}
             onClick={() => changeCat("all")}
             label="Все"
-            count={items.length}
+            count={total}
           />
-          {categories.map((c) => (
+          {visibleCategories.map((c) => (
             <FilterPill
               key={c.id}
               active={activeCat === c.id}

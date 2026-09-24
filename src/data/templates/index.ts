@@ -16,6 +16,7 @@ import { TEMPLATES_HR } from "./hr";
 import { TEMPLATES_CLAIMS } from "./claims";
 import { TEMPLATES_FINANCE_ACTS } from "./finance-act";
 import { TEMPLATES_CORPORATE_WEB } from "./corporate-web";
+import { TEMPLATES_STATEMENTS } from "./statements";
 
 export const LEGAL_TEMPLATES: LegalTemplate[] = [
   ...TEMPLATES_AUTO,
@@ -34,4 +35,5 @@ export const LEGAL_TEMPLATES: LegalTemplate[] = [
   ...TEMPLATES_MIGRATION,
   ...TEMPLATES_LEGAL,
   ...TEMPLATES_POSTAL,
+  ...TEMPLATES_STATEMENTS,
 ];

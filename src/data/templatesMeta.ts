@@ -11,6 +11,9 @@ export interface TemplateMeta {
   lastUpdated: string;
   suggestedDocs: string[];
   fieldCount: number;
+  kind?: "contract" | "statement";
+  formKind?: "official" | "free";
+  statementGroup?: string;
 }
 
 export const TEMPLATE_META: TemplateMeta[] = [
@@ -78,7 +81,7 @@ export const TEMPLATE_META: TemplateMeta[] = [
       "dkp-auto",
       "gibdd-reg-app"
     ],
-    "fieldCount": 15
+    "fieldCount": 17
   },
   {
     "id": "auto-lease",
@@ -3138,7 +3141,7 @@ export const TEMPLATE_META: TemplateMeta[] = [
       "act-services",
       "service-agreement"
     ],
-    "fieldCount": 25
+    "fieldCount": 26
   },
   {
     "id": "contract-personal",
@@ -3151,7 +3154,7 @@ export const TEMPLATE_META: TemplateMeta[] = [
       "act-works",
       "raspiska-money"
     ],
-    "fieldCount": 25
+    "fieldCount": 26
   },
   {
     "id": "house-repair",
@@ -3165,7 +3168,7 @@ export const TEMPLATE_META: TemplateMeta[] = [
       "act-works",
       "contract-personal"
     ],
-    "fieldCount": 26
+    "fieldCount": 27
   },
   {
     "id": "roof-repair",
@@ -3179,7 +3182,7 @@ export const TEMPLATE_META: TemplateMeta[] = [
       "contract-works",
       "act-works"
     ],
-    "fieldCount": 27
+    "fieldCount": 28
   },
   {
     "id": "contract-construction",
@@ -3193,7 +3196,7 @@ export const TEMPLATE_META: TemplateMeta[] = [
       "act-works",
       "project-design"
     ],
-    "fieldCount": 28
+    "fieldCount": 29
   },
   {
     "id": "transport-services",
@@ -3207,7 +3210,7 @@ export const TEMPLATE_META: TemplateMeta[] = [
       "logistics-contract",
       "act-services"
     ],
-    "fieldCount": 25
+    "fieldCount": 26
   },
   {
     "id": "design-dev",
@@ -3221,7 +3224,7 @@ export const TEMPLATE_META: TemplateMeta[] = [
       "website-support",
       "act-services"
     ],
-    "fieldCount": 25
+    "fieldCount": 26
   },
   {
     "id": "loan-use",
@@ -4818,5 +4821,85 @@ export const TEMPLATE_META: TemplateMeta[] = [
       "postal-power-of-attorney"
     ],
     "fieldCount": 10
+  },
+  {
+    "id": "stmt-fssp-execution",
+    "name": "Заявление о возбуждении исполнительного производства",
+    "category": "legal",
+    "description": "Заявление судебному приставу о возбуждении исполнительного производства: шапка «куда/от кого», основание (исполнительный лист), сумма, реквизиты для перечисления. Пристав возбуждает ИП за 3 дня.",
+    "actSource": "ФЗ № 229-ФЗ «Об исполнительном производстве» (ст. 30)",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "claim-generic",
+      "lawsuit-statement"
+    ],
+    "fieldCount": 11,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "fssp"
+  },
+  {
+    "id": "stmt-prosecutor-complaint",
+    "name": "Жалоба в прокуратуру",
+    "category": "legal",
+    "description": "Жалоба в прокуратуру на нарушение прав: шапка, суть нарушения, какие законы нарушены, требование провести проверку. Срок рассмотрения — 30 дней.",
+    "actSource": "ФЗ № 59-ФЗ «О порядке рассмотрения обращений граждан», ФЗ «О прокуратуре РФ»",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "claim-generic",
+      "lawsuit-statement"
+    ],
+    "fieldCount": 10,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "oversight"
+  },
+  {
+    "id": "stmt-vacation",
+    "name": "Заявление о предоставлении отпуска",
+    "category": "business",
+    "description": "Заявление работодателю о предоставлении ежегодного оплачиваемого отпуска: даты начала и длительность. Оплачиваемый отпуск — 28 календарных дней в год.",
+    "actSource": "ТК РФ (ст. 114, 122–123)",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "employment-contract",
+      "vacation-order"
+    ],
+    "fieldCount": 10,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "hr"
+  },
+  {
+    "id": "stmt-housing-recalc",
+    "name": "Заявление о перерасчёте платы за ЖКУ",
+    "category": "realty",
+    "description": "Заявление в управляющую компанию о перерасчёте платы за коммунальные услуги: временное отсутствие, некачественная услуга или ошибка в начислениях.",
+    "actSource": "ПП РФ № 354 (п. 86–97), ЖК РФ (ст. 157)",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "claim-generic",
+      "lawsuit-statement"
+    ],
+    "fieldCount": 10,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "housing"
+  },
+  {
+    "id": "stmt-court-postpone",
+    "name": "Ходатайство об отложении судебного заседания",
+    "category": "legal",
+    "description": "Ходатайство в суд об отложении заседания: уважительная причина (болезнь, командировка) + просьба не рассматривать без участия. Подаётся до заседания.",
+    "actSource": "ГПК РФ (ст. 167), АПК РФ (ст. 158)",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "lawsuit-statement",
+      "objection-debt-claim"
+    ],
+    "fieldCount": 10,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "courts"
   }
 ];

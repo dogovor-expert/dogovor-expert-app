@@ -64,6 +64,7 @@ export default async function DocumentPage({
   const intro = buildIntro(t);
   const summary = fieldsSummary(t);
   const faq = faqForDocument(t);
+  const isStatement = t.kind === "statement";
   const related = (t.suggestedDocs || [])
     .map((id) => LEGAL_TEMPLATES.find((x) => x.id === id))
     .filter((x): x is LegalTemplate => Boolean(x))
@@ -81,7 +82,9 @@ export default async function DocumentPage({
         data={[
           breadcrumbJsonLd([
             { name: "Главная", path: "/" },
-            { name: "Каталог шаблонов", path: "/templates" },
+            ...(isStatement
+              ? [{ name: "Заявления", path: "/zayavleniya" }]
+              : [{ name: "Каталог шаблонов", path: "/templates" }]),
             { name: t.name, path: url },
           ]),
           faqJsonLd(faq),
@@ -100,7 +103,11 @@ export default async function DocumentPage({
       <nav className="text-xs text-gray-600 flex items-center gap-1.5 flex-wrap">
         <Link href="/" className="hover:text-brand-600">Главная</Link>
         <ChevronRight className="w-3 h-3" />
-        <Link href="/templates" className="hover:text-brand-600">Каталог шаблонов</Link>
+        {isStatement ? (
+          <Link href="/zayavleniya" className="hover:text-brand-600">Заявления</Link>
+        ) : (
+          <Link href="/templates" className="hover:text-brand-600">Каталог шаблонов</Link>
+        )}
         <ChevronRight className="w-3 h-3" />
         <span className="text-gray-600">{t.name}</span>
       </nav>
@@ -114,9 +121,15 @@ export default async function DocumentPage({
             Бесплатно · Без регистрации · {t.actSource}
           </p>
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">{t.name}</h1>
+          {isStatement && (
+            <p className="mt-2 inline-block rounded-md bg-emerald-100 px-2 py-0.5 text-[11px] font-extrabold text-emerald-700">
+              Заявление · {t.formKind === "official" ? "официальная форма" : "свободная форма"}
+            </p>
+          )}
           <p className="text-sm text-gray-600 mt-1.5 max-w-2xl leading-relaxed">
-            Образец {YEAR} года: заполните форму — документ сформируется автоматически.
-            Печать на листе А4, экспорт в PDF и DOCX.
+            {isStatement
+              ? `Образец ${YEAR} года: заполните форму — заявление сформируется автоматически. Печать на листе А4, экспорт в PDF и DOCX.`
+              : `Образец ${YEAR} года: заполните форму — документ сформируется автоматически. Печать на листе А4, экспорт в PDF и DOCX.`}
           </p>
         </div>
         <div className="sm:ml-auto flex items-center gap-3 flex-shrink-0">
@@ -159,6 +172,18 @@ export default async function DocumentPage({
         ))}
       </div>
 
+      {isStatement && t.submitTo && (
+        <section aria-label="Куда подавать" className="rounded-2xl border border-emerald-200 bg-emerald-50 p-5">
+          <h2 className="text-lg font-bold text-emerald-900 mb-3">📍 Куда подавать</h2>
+          <ul className="space-y-2 text-sm text-emerald-800">
+            <li><b>Куда:</b> {t.submitTo.where}</li>
+            <li><b>Срок:</b> {t.submitTo.term}</li>
+            <li><b>Пошлина:</b> {t.submitTo.fee}</li>
+            <li><b>Приложить:</b> {t.submitTo.attach}</li>
+          </ul>
+        </section>
+      )}
+
       <section>
         <h2 className="text-lg font-bold text-gray-900 mb-4">
           Что входит в документ
@@ -200,7 +225,7 @@ export default async function DocumentPage({
       {siblings.length > 0 && (
         <section>
           <h2 className="text-lg font-bold text-gray-900 mb-4">
-            Другие документы категории
+            {isStatement ? "Другие заявления" : "Другие документы категории"}
           </h2>
           <div className="flex flex-wrap gap-2">
             {siblings.map((s) => (
@@ -213,10 +238,10 @@ export default async function DocumentPage({
               </Link>
             ))}
             <Link
-              href="/templates"
+              href={isStatement ? "/zayavleniya" : "/templates"}
               className="px-3 py-1.5 bg-indigo-50 border border-indigo-100 rounded-full text-xs text-indigo-700 hover:bg-indigo-100 transition"
             >
-              Все шаблоны →
+              {isStatement ? "Все заявления →" : "Все шаблоны →"}
             </Link>
           </div>
         </section>
@@ -244,7 +269,7 @@ export default async function DocumentPage({
 
       <section className="bg-indigo-600 rounded-2xl px-6 py-8 text-center">
         <h2 className="text-xl font-bold text-white">
-          Составьте документ за 5 минут
+          {isStatement ? "Составьте заявление за 5 минут" : "Составьте документ за 5 минут"}
         </h2>
         <p className="text-sm text-indigo-200 mt-1.5 max-w-xl mx-auto">
           <Sparkles className="w-4 h-4 inline mr-1" />
@@ -254,7 +279,7 @@ export default async function DocumentPage({
           href={`/builder?template=${t.id}`}
           className="mt-5 inline-flex items-center gap-2 px-6 py-3 bg-white text-indigo-700 rounded-xl hover:bg-indigo-50 font-bold text-sm transition cursor-pointer"
         >
-          Составить документ бесплатно
+          Составить {isStatement ? "заявление" : "документ"} бесплатно
           <ChevronRight className="w-4 h-4" />
         </Link>
       </section>
