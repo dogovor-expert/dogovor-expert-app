@@ -1,4 +1,5 @@
-import type { Metadata } from "next";
+"use client";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import {
   ChevronRight,
@@ -20,27 +21,10 @@ import type { LegalTemplate, StatementGroup } from "@/data/types";
 import { TEMPLATE_META } from "@/data/templatesMeta";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { breadcrumbJsonLd } from "@/lib/seo/faq";
-import { withSeo } from "@/lib/seo/withSeo";
 import { SITE_URL } from "@/lib/site";
+import { normalizeText, tokenGroups, textMatchesTokens } from "@/lib/search";
 
 export const revalidate = 3600;
-export const dynamic = "force-static";
-
-export const metadata: Metadata = withSeo({
-  path: "/zayavleniya",
-  title: "Заявления — образцы и бланки 2026: ФССП, суды, работа, ЖКХ",
-  description:
-    "120+ заявлений с образцами заполнения и пустыми бланками: приставам, в суды, работодателю, ЖКХ, полицию. Заполнение онлайн за 5 минут, PDF и Word бесплатно.",
-  keywords: [
-    "заявления образцы",
-    "бланки заявлений скачать",
-    "заявление приставам образец",
-    "жалоба в прокуратуру образец",
-    "заявление на отпуск образец",
-  ],
-  robots: { index: true, follow: true },
-  openGraph: { url: "/zayavleniya" },
-});
 
 const GROUPS: Array<{ id: StatementGroup; label: string; hint: string; icon: typeof FileText; tint: string }> = [
   { id: "fssp", label: "Приставам (ФССП)", hint: "возбуждение ИП, жалобы", icon: Landmark, tint: "bg-sky-50 text-sky-600" },
@@ -77,6 +61,25 @@ export default function StatementsHubPage() {
   const byId = new Map(stmts.map((s) => [s.id, s]));
   const metaById = new Map(TEMPLATE_META.map((m) => [m.id, m]));
   const groupOf = (t: LegalTemplate) => t.statementGroup ?? "official-forms";
+  const [query, setQuery] = useState("");
+
+  // Ветка поиска: хиты+группы скрываются, показываются результаты.
+  // Без поиска: обычный хаб.
+  const tokens = useMemo(() => tokenGroups(query.trim()), [query]);
+  const searchHits: LegalTemplate[] | null = useMemo<LegalTemplate[] | null>(() => {
+    const q = query.trim();
+    if (q.length < 2) return null;
+    const hits: LegalTemplate[] = stmts
+      .filter((t) =>
+        textMatchesTokens(
+          normalizeText(`${t.name} ${t.description} ${t.id} ${t.submitTo?.where ?? ""}`),
+          tokens
+        )
+      )
+      .slice(0, 12);
+    return hits;
+  }, [query, stmts, tokens]);
+  const showHub = searchHits === null;
 
   return (
     <div className="mx-auto max-w-5xl space-y-10 p-6">
@@ -148,6 +151,18 @@ export default function StatementsHubPage() {
             Договоры — в шаблонах
           </Link>
         </div>
+        {/* Живой поиск по заявлениям — как тулбар в builder. */}
+        <div className="relative mx-auto mt-5 max-w-xl">
+          <input
+            type="search"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Найти заявление: отпуск, пристав, прокуратура…"
+            aria-label="Поиск заявления"
+            className="w-full rounded-xl border border-gray-200 bg-white py-3 pl-10 pr-4 text-sm text-gray-900 placeholder:text-gray-400 focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-200"
+          />
+          <Search className="absolute left-3 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-gray-400" />
+        </div>
         <div className="mx-auto mt-6 grid max-w-3xl grid-cols-2 gap-3 sm:grid-cols-4">
           {[
             { value: String(stmts.length), label: "заявлений" },
@@ -167,7 +182,6 @@ export default function StatementsHubPage() {
         <h2 className="text-xl font-bold text-gray-900">Группы заявлений</h2>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           {GROUPS.map((g) => {
-            const count = stmts.filter((t) => groupOf(t) === g.id).length;
             return (
               <a
                 key={g.id}
@@ -179,7 +193,7 @@ export default function StatementsHubPage() {
                 </span>
                 <p className="mt-3 text-sm font-semibold leading-snug text-gray-900">{g.label}</p>
                 <p className="mt-1 text-xs text-gray-500">
-                  {g.hint} · {count}
+                  {g.hint} · {stmts.filter((t) => groupOf(t) === g.id).length}
                 </p>
               </a>
             );
@@ -187,11 +201,13 @@ export default function StatementsHubPage() {
         </div>
       </section>
 
-      <section className="space-y-4">
-        <h2 className="flex items-center gap-2 text-xl font-bold text-gray-900">
-          <Flame className="h-5 w-5 text-amber-600" />
-          Выбирают чаще всего
-        </h2>
+      {showHub ? (
+        <>
+          <section className="space-y-4">
+            <h2 className="flex items-center gap-2 text-xl font-bold text-gray-900">
+              <Flame className="h-5 w-5 text-amber-600" />
+              Выбирают чаще всего ({stmts.length})
+            </h2>
         <div className="grid gap-3 sm:grid-cols-2">
           {stmts.slice(0, 4).map((t) => (
             <Link
@@ -263,6 +279,53 @@ export default function StatementsHubPage() {
           </section>
         );
       })}
+
+      {/* Результаты живого поиска заменяют группы и хиты. */}
+      {!showHub ? (
+        <section className="space-y-4">
+          <h2 className="text-xl font-bold text-gray-900">
+            Найдено: {(searchHits as LegalTemplate[] | null ?? []).length}
+          </h2>
+          {((searchHits as LegalTemplate[] | null) ?? []).length === 0 ? (
+            <div className="rounded-2xl border border-gray-200 bg-white p-6 text-center">
+              <p className="text-sm font-semibold text-gray-900">
+                По запросу «{query.trim()}» ничего не найдено
+              </p>
+              <p className="mx-auto mt-1.5 max-w-md text-xs leading-relaxed text-gray-500">
+                Попробуйте другое слово (например, «пристав», «отпуск», «прокуратура»)
+                или спросите AI-юриста — он подберёт нужное заявление
+              </p>
+              <Link
+                href="/ai-yurist"
+                className="mt-4 inline-flex min-h-[44px] items-center rounded-xl bg-brand-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-brand-700"
+              >
+                Спросить AI-юриста — бесплатно
+              </Link>
+            </div>
+          ) : (
+            <div className="grid gap-3 sm:grid-cols-2">
+              {((searchHits as LegalTemplate[] | null) ?? []).map((t: LegalTemplate) => (
+                <Link
+                  key={t.id}
+                  href={`/documents/${t.id}`}
+                  className="flex items-center gap-3 rounded-2xl border border-gray-200 bg-white p-4 transition hover:border-brand-300 hover:shadow-sm"
+                >
+                  <span className="grid h-10 w-10 flex-shrink-0 place-items-center rounded-xl bg-brand-50 text-brand-600">
+                    <FileText className="h-5 w-5" />
+                  </span>
+                  <span className="min-w-0">
+                    <span className="block truncate text-sm font-bold text-gray-900">{t.name}</span>
+                    <span className="block truncate text-xs text-gray-500">{t.description}</span>
+                  </span>
+                  <span className="ml-auto flex-shrink-0 text-xs font-bold text-brand-600">Открыть →</span>
+                </Link>
+              ))}
+            </div>
+          )}
+        </section>
+      ) : null}
+      </>
+      ) : null}
 
       <section className="space-y-4">
         <h2 className="text-xl font-bold text-gray-900">Не нашли нужное заявление?</h2>

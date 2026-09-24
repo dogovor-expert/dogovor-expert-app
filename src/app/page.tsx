@@ -464,10 +464,11 @@ export default function HomePage() {
 
       {/* ======================= QUICK LINKS ======================= */}
       <section className="mx-auto max-w-7xl px-4 pt-12 sm:px-6">
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
           {[
             { href: "/converter", icon: ScanLine, t: "Конвертер PDF", d: "Объединить, разделить, сжать" },
             { href: "/templates", icon: FileStack, t: "Каталог шаблонов", d: `${TOTAL} документов в 6 категориях` },
+            { href: "/zayavleniya", icon: FileText, t: "Заявления", d: "Образцы и бланки в госорганы" },
             { href: "/blanks", icon: Download, t: "Бланки", d: "Готовые формы для печати" },
             { href: "/blog", icon: Sparkles, t: "Блог", d: "Разборы и правовые советы" },
           ].map((l) => (

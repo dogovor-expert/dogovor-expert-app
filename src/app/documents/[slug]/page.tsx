@@ -69,12 +69,21 @@ export default async function DocumentPage({
     .map((id) => LEGAL_TEMPLATES.find((x) => x.id === id))
     .filter((x): x is LegalTemplate => Boolean(x))
     .slice(0, 5);
-  // Sibling-перелинковка: документы той же категории (mesh внутри кластера),
-  // исключая текущий и уже показанные в «Связанных».
+  // Sibling-перелинковка: у заявлений — только заявления (та же группа
+  // statementGroup, иначе legal-категория подмешает иски к бытовым),
+  // у договоров — документы той же категории. Исключаем текущий и related.
   const relatedIds = new Set(related.map((r) => r.id));
-  const siblings = LEGAL_TEMPLATES.filter(
-    (x) => x.category === t.category && x.id !== t.id && !relatedIds.has(x.id)
-  ).slice(0, 6);
+  const siblings = isStatement
+    ? LEGAL_TEMPLATES.filter(
+        (x) =>
+          x.kind === "statement" &&
+          (x.statementGroup ?? "official-forms") === (t.statementGroup ?? "official-forms") &&
+          x.id !== t.id &&
+          !relatedIds.has(x.id)
+      ).slice(0, 6)
+    : LEGAL_TEMPLATES.filter(
+        (x) => x.category === t.category && x.id !== t.id && !relatedIds.has(x.id)
+      ).slice(0, 6);
 
   return (
     <div className="p-6 max-w-4xl mx-auto space-y-10">
@@ -113,19 +122,24 @@ export default async function DocumentPage({
       </nav>
 
       <section className="flex flex-col items-start gap-6 sm:flex-row sm:items-center">
-        <div className="w-12 h-12 rounded-xl bg-indigo-50 border border-indigo-200 flex items-center justify-center text-indigo-500 flex-shrink-0">
+        <div className={`w-12 h-12 rounded-xl border flex items-center justify-center flex-shrink-0 ${isStatement ? "bg-emerald-50 border-emerald-200 text-emerald-600" : "bg-indigo-50 border-indigo-200 text-indigo-500"}`}>
           <FileText className="h-6 w-6" />
         </div>
         <div>
-          <p className="text-[10px] font-mono uppercase tracking-widest text-indigo-700 mb-1">
-            Бесплатно · Без регистрации · {t.actSource}
+          <p className={`text-[10px] font-mono uppercase tracking-widest mb-1 ${isStatement ? "text-emerald-700" : "text-indigo-700"}`}>
+            {isStatement ? "Заявление · " : ""}Бесплатно · Без регистрации · {t.actSource}
           </p>
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">{t.name}</h1>
-          {isStatement && (
-            <p className="mt-2 inline-block rounded-md bg-emerald-100 px-2 py-0.5 text-[11px] font-extrabold text-emerald-700">
-              Заявление · {t.formKind === "official" ? "официальная форма" : "свободная форма"}
-            </p>
-          )}
+          {isStatement ? (
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              <span className="rounded-md bg-emerald-100 px-2 py-0.5 text-[11px] font-extrabold text-emerald-700">
+                Заявление
+              </span>
+              <span className="rounded-md bg-gray-100 px-2 py-0.5 text-[11px] font-bold text-gray-600">
+                {t.formKind === "official" ? "официальная форма" : "свободная форма"}
+              </span>
+            </div>
+          ) : null}
           <p className="text-sm text-gray-600 mt-1.5 max-w-2xl leading-relaxed">
             {isStatement
               ? `Образец ${YEAR} года: заполните форму — заявление сформируется автоматически. Печать на листе А4, экспорт в PDF и DOCX.`
@@ -144,7 +158,7 @@ export default async function DocumentPage({
             href={`/builder?template=${t.id}`}
             className="inline-flex items-center gap-2 px-5 py-3 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 font-bold text-sm transition cursor-pointer"
           >
-            Составить документ
+            Составить {isStatement ? "заявление" : "документ"}
             <ChevronRight className="w-4 h-4" />
           </Link>
         </div>
@@ -186,7 +200,7 @@ export default async function DocumentPage({
 
       <section>
         <h2 className="text-lg font-bold text-gray-900 mb-4">
-          Что входит в документ
+          {isStatement ? "Что входит в заявление" : "Что входит в документ"}
         </h2>
         <div className="bg-white border border-gray-200 rounded-xl p-5 space-y-3">
           {summary.map((s) => (
@@ -273,7 +287,7 @@ export default async function DocumentPage({
         </h2>
         <p className="text-sm text-indigo-200 mt-1.5 max-w-xl mx-auto">
           <Sparkles className="w-4 h-4 inline mr-1" />
-          Никакой регистрации: откройте форму, введите данные — документ готов к печати.
+          Никакой регистрации: откройте форму, введите данные — {isStatement ? "заявление" : "документ"} готово к печати.
         </p>
         <Link
           href={`/builder?template=${t.id}`}

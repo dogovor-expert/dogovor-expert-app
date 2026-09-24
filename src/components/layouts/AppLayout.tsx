@@ -198,6 +198,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   const docNav: NavItem[] = [
     { icon: <FolderOpen className="w-5 h-5" />, label: "Мои документы", href: "/documents", badge: draftCount > 0 ? String(draftCount) : undefined },
     { icon: <Files className="w-5 h-5" />, label: "Каталог шаблонов", href: "/templates" },
+    { icon: <FileText className="w-5 h-5" />, label: "Заявления", href: "/zayavleniya", badge: "NEW" },
     { icon: <Download className="w-5 h-5" />, label: "Бланки", href: "/blanks" },
     { icon: <Trash2 className="w-5 h-5" />, label: "Корзина", href: "/trash" },
   ];

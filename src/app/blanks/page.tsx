@@ -431,6 +431,13 @@ function CtaBand({ itemsCount }: { itemsCount: number }) {
               >
                 Готовые шаблоны
               </Link>
+              <Link
+                href="/zayavleniya"
+                className="inline-flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-6 py-3 text-sm font-bold text-emerald-700 transition hover:bg-emerald-100"
+              >
+                Заявления — образцы и бланки
+                <ArrowRight className="h-4 w-4" />
+              </Link>
             </div>
           </div>
           <div
