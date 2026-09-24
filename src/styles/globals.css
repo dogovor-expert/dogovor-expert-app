@@ -2186,18 +2186,23 @@ body.bt-bark {
 }
 .a2-t-blue {
   background: #dbeafe;
+  color: #1d4ed8;
 }
 .a2-t-amber {
   background: #fef3c7;
+  color: #b45309;
 }
 .a2-t-green {
   background: #d1fae5;
+  color: #047857;
 }
 .a2-t-violet {
   background: #ede9fe;
+  color: #6d28d9;
 }
 .a2-t-rose {
   background: #ffe4e6;
+  color: #be123c;
 }
 .a2-tool b {
   font-size: 13px;

@@ -60,6 +60,7 @@
     "@peculiar/asn1-cms": "^2.9.4",
     "@peculiar/asn1-x509": "^2.9.4",
     "@peculiar/webcrypto": "^1.7.1",
+    "@phosphor-icons/react": "^2.1.10",
     "@sentry/nextjs": "^10.73.0",
     "@supabase/ssr": "^0.12.4",
     "@supabase/supabase-js": "^2.112.2",

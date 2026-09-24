@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import TermsIcon from "./TermsIcon";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { SITE_CONTACT_EMAIL, SITE_NAME, SITE_LEGAL_NAME, SITE_LEGAL_INN } from "@/lib/site";
@@ -109,8 +110,8 @@ export default function TermsPage() {
   return (
     <div className="p-6 max-w-4xl mx-auto">
       <div className="flex items-center gap-4 mb-2">
-        <div className="w-12 h-12 rounded-xl bg-brand-100 flex items-center justify-center">
-          <span className="text-2xl">📄</span>
+        <div className="w-12 h-12 rounded-xl bg-brand-100 flex items-center justify-center text-brand-700">
+          <TermsIcon />
         </div>
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Пользовательское соглашение</h1>

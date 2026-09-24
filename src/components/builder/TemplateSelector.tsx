@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { Search, Star } from "lucide-react";
+import { MagnifyingGlass, Star } from "@phosphor-icons/react";
+import { categoryIcon } from "@/components/categoryIcons";
 import { TEMPLATE_META } from "@/data/templatesMeta";
 import Highlight from "@/components/ui/Highlight";
 import { tokenGroups, scoreText, textMatchesTokens } from "@/lib/search";
@@ -29,18 +30,6 @@ const CATEGORY_COLORS: Record<string, { gradient: string; badge: string }> = {
   other: { gradient: "from-gray-500 to-slate-600", badge: "bg-gray-100 text-gray-600" },
   migration: { gradient: "from-gray-500 to-slate-600", badge: "bg-gray-100 text-gray-600" },
   postal: { gradient: "from-gray-500 to-slate-600", badge: "bg-gray-100 text-gray-600" },
-};
-
-const CATEGORY_ICONS: Record<string, string> = {
-  auto: "🚗",
-  realty: "🏠",
-  business: "💼",
-  finance: "💰",
-  family: "❤️",
-  legal: "⚖️",
-  other: "📄",
-  migration: "📄",
-  postal: "📄",
 };
 
 interface TemplateSelectorProps {
@@ -141,7 +130,7 @@ export default function TemplateSelector({
         <span className="text-xs text-gray-600">— {filteredTemplates.length} готовых шаблонов</span>
         {favorites.size > 0 && (
           <span className="text-[10px] font-medium text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full flex items-center gap-1">
-            <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
+            <Star size={12} weight="fill" className="text-amber-400" />
             {favorites.size} в избранном, показаны первыми
           </span>
         )}
@@ -149,7 +138,7 @@ export default function TemplateSelector({
 
       {/* Search */}
       <div className="relative mb-4">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-600" />
+        <MagnifyingGlass size={16} weight="bold" className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-600" />
         <input
           type="text"
           placeholder="Найти шаблон... например, ДКП, аренда, доверенность"
@@ -188,8 +177,8 @@ export default function TemplateSelector({
                   : "border-gray-200 bg-white hover:border-brand-300 hover:shadow-sm"
               }`}
             >
-              <span className={`w-9 h-9 rounded-lg bg-gradient-to-br ${colors.gradient} flex items-center justify-center text-white text-base flex-shrink-0`}>
-                {CATEGORY_ICONS[t.category] || "📄"}
+              <span className={`w-9 h-9 rounded-lg bg-gradient-to-br ${colors.gradient} flex items-center justify-center text-white flex-shrink-0`}>
+                {(() => { const CatIcon = categoryIcon(t.category); return <CatIcon size={19} weight="fill" />; })()}
               </span>
               <span className={`text-xs font-medium text-center leading-snug line-clamp-2 min-h-[2em] ${isSelected ? "text-brand-700" : "text-gray-600"}`}>
                 <Highlight text={t.name} query={templateSearch} />
@@ -218,7 +207,7 @@ export default function TemplateSelector({
                 }`}
                 title={favorites.has(t.id) ? "Убрать из избранного" : "В избранное"}
               >
-                <Star className={`w-3.5 h-3.5 ${favorites.has(t.id) ? "fill-amber-400" : ""}`} />
+                <Star size={18} weight={favorites.has(t.id) ? "fill" : "regular"} className={favorites.has(t.id) ? "text-amber-400" : ""} />
               </span>
             </button>
           );
@@ -234,7 +223,7 @@ export default function TemplateSelector({
 
       {filteredTemplates.length === 0 && (
         <div className="text-center py-12 bg-white rounded-xl border border-gray-200">
-          <Search className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+          <MagnifyingGlass size={48} weight="light" className="text-gray-300 mx-auto mb-4" />
           <h3 className="text-lg font-semibold text-gray-900 mb-1">
             {templateSearch.trim() ? `Ничего не найдено по запросу «${templateSearch.trim()}»` : "Нет шаблонов в категории"}
           </h3>

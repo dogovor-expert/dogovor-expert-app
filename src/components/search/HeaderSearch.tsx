@@ -2,21 +2,10 @@
 import { useId, useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { Search } from "lucide-react";
+import { categoryIcon } from "@/components/categoryIcons";
 import { TEMPLATE_META } from "@/data/templatesMeta";
 import Highlight from "@/components/ui/Highlight";
 import { tokenGroups, scoreText, textMatchesTokens } from "@/lib/search";
-
-const CATEGORY_ICONS: Record<string, string> = {
-  auto: "🚗",
-  realty: "🏠",
-  business: "💼",
-  finance: "💰",
-  family: "❤️",
-  legal: "⚖️",
-  other: "📄",
-  migration: "📄",
-  postal: "📄",
-};
 
 type ScoredItem = {
   t: (typeof TEMPLATE_META)[number];
@@ -150,7 +139,7 @@ export default function HeaderSearch() {
             active === i ? "bg-brand-50" : "bg-white"
           }`}
         >
-          <span className="text-base flex-shrink-0">{CATEGORY_ICONS[t.category] || "📄"}</span>
+                  <span className="flex-shrink-0 text-gray-600">{(() => { const MIcon = categoryIcon(t.category); return <MIcon size={17} weight="fill" />; })()}</span>
           <span className="min-w-0">
             <span className="block text-sm text-gray-900 truncate">
               <Highlight text={t.name} query={query} />
@@ -284,7 +273,7 @@ export default function HeaderSearch() {
                     active === i ? "bg-brand-50" : "bg-white"
                   }`}
                 >
-                  <span className="text-base flex-shrink-0">{CATEGORY_ICONS[t.category] || "📄"}</span>
+          <span className="flex-shrink-0 text-gray-600">{(() => { const SIcon = categoryIcon(t.category); return <SIcon size={17} weight="fill" />; })()}</span>
                   <span className="min-w-0">
                     <span className="block text-sm text-gray-900 truncate">
                       <Highlight text={t.name} query={query} />

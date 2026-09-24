@@ -10,6 +10,20 @@ import {
   Eye,
   ArrowRight,
 } from "lucide-react";
+import {
+  FileMagnifyingGlass,
+  Buildings,
+  Users,
+  IdentificationCard,
+  ShieldCheck,
+  ListChecks,
+  Calculator,
+  Paperclip,
+  PenNib,
+  Stamp,
+  FloppyDisk,
+  SquaresFour,
+} from "@phosphor-icons/react";
 import { LEGAL_TEMPLATES } from "@/data/legalTemplates";
 import type { LegalTemplate, TemplateField } from "@/data/types";
 import {
@@ -2045,7 +2059,7 @@ function HomeContent() {
                 <b>Подготовка</b>
                 <ToolRow
                   id="scanner"
-                  tile="📷"
+                  tile={FileMagnifyingGlass}
                   tint="t-amber"
                   title="Сканер документов"
                   sub="Фото ПТС → поля сами"
@@ -2080,7 +2094,7 @@ function HomeContent() {
                 </ToolRow>
                 <ToolRow
                   id="dadata"
-                  tile="🏢"
+                  tile={Buildings}
                   tint="t-blue"
                   title="Компания по ИНН"
                   sub="Реквизиты одной строкой"
@@ -2104,7 +2118,7 @@ function HomeContent() {
                 </ToolRow>
                 <ToolRow
                   id="contractors"
-                  tile="👤"
+                  tile={Users}
                   tint="t-green"
                   title="Мои данные · Контрагенты"
                   sub="Подстановка в один клик"
@@ -2123,7 +2137,7 @@ function HomeContent() {
                 {personRoles.length > 0 && (
                   <ToolRow
                     id="persons"
-                    tile="🧑‍💼"
+                    tile={IdentificationCard}
                     tint="t-green"
                     title="Сохранённые лица"
                     sub="По ролям сторон"
@@ -2149,7 +2163,7 @@ function HomeContent() {
                 {showAudit && auditResults && (
                   <ToolRow
                     id="audit"
-                    tile="🛡"
+                    tile={ShieldCheck}
                     tint="t-amber"
                     title="Правовой аудит"
                     sub={(() => {
@@ -2170,7 +2184,7 @@ function HomeContent() {
                 )}
                 <ToolRow
                   id="checklist"
-                  tile="☑"
+                  tile={ListChecks}
                   tint="t-green"
                   title="Чек-лист"
                   sub="Что проверить до денег"
@@ -2192,7 +2206,7 @@ function HomeContent() {
                 {hasContractPrice && (
                   <ToolRow
                     id="costs"
-                    tile="🧮"
+                    tile={Calculator}
                     tint="t-violet"
                     title="Расходы"
                     sub="Налог и пошлина"
@@ -2213,7 +2227,7 @@ function HomeContent() {
                 {getRelatedDocs().length > 0 && (
                   <ToolRow
                     id="related"
-                    tile="📎"
+                    tile={Paperclip}
                     tint="t-blue"
                     title="Акт и расписка"
                     sub="Приложить к договору"
@@ -2230,7 +2244,7 @@ function HomeContent() {
                 )}
                 <ToolRow
                   id="approval"
-                  tile="✍"
+                  tile={PenNib}
                   tint="t-violet"
                   title="Согласование"
                   sub="Ссылка второй стороне"
@@ -2256,7 +2270,7 @@ function HomeContent() {
                 </ToolRow>
                 <ToolRow
                   id="signing"
-                  tile="🔏"
+                  tile={Stamp}
                   tint="t-rose"
                   title="Подписание (ПЭП)"
                   sub="Протокол и лист подписания"
@@ -2272,7 +2286,7 @@ function HomeContent() {
                 {draftInfos.length > 0 && (
                   <ToolRow
                     id="drafts"
-                    tile="💾"
+                    tile={FloppyDisk}
                     tint="t-blue"
                     title="Черновики"
                     sub="Откат к любой версии"
@@ -2297,7 +2311,7 @@ function HomeContent() {
                 {similarTemplates.length > 0 && (
                   <ToolRow
                     id="similar"
-                    tile="📑"
+                    tile={SquaresFour}
                     tint="t-violet"
                     title="Похожие шаблоны"
                     sub="Другие варианты"

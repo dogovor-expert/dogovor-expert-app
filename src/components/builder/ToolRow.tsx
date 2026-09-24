@@ -1,11 +1,12 @@
 import type { ReactNode } from "react";
+import type { Icon } from "@phosphor-icons/react";
 import { ChevronDown } from "lucide-react";
 
 interface ToolRowProps {
   /** Совпадает с ключом collapsedSections (состояние сворачивания переживает перезагрузку). */
   id: string;
-  /** Эмодзи-пиктограмма плитки (как в макете A2). */
-  tile: string;
+  /** Заливная SVG-пиктограмма плитки (Phosphor Fill, как в макете A2). */
+  tile: Icon;
   /** Тон плитки: t-blue | t-amber | t-green | t-violet | t-rose
    * (маппится на a2-t-* из globals.css, как в макете A2). */
   tint: string;
@@ -37,6 +38,7 @@ export default function ToolRow({
   // tint из page.tsx ("t-amber") → класс CSS ("a2-t-amber"):
   // в globals.css определены только a2-t-*, голый t-* фона не даёт.
   const tintClass = tint.startsWith("a2-") ? tint : `a2-${tint}`;
+  const TileIcon = tile;
   return (
     <div>
       <button
@@ -46,7 +48,7 @@ export default function ToolRow({
         onClick={() => onToggle(id)}
       >
         <span className={`a2-tile ${tintClass}`} aria-hidden="true">
-          {tile}
+          <TileIcon size={19} weight="fill" />
         </span>
         <span className="min-w-0">
           <b>{title}</b>

@@ -4,7 +4,9 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { AdSlot } from "@/components/ads/AdSlot";
 import { TEMPLATE_META } from "@/data/templatesMeta";
-import { Search, Star, ArrowRight, Grid3X3, List, X } from "lucide-react";
+import { Search, ArrowRight, Grid3X3, List, X } from "lucide-react";
+import { Star } from "@phosphor-icons/react";
+import { categoryIcon } from "@/components/categoryIcons";
 import Highlight from "@/components/ui/Highlight";
 import { scoreText, tokenGroups, textMatchesTokens } from "@/lib/search";
 
@@ -31,18 +33,6 @@ const CATEGORY_COLORS: Record<string, string> = {
   other: "from-gray-500 to-slate-600",
   migration: "from-gray-500 to-slate-600",
   postal: "from-gray-500 to-slate-600",
-};
-
-const CATEGORY_ICONS: Record<string, string> = {
-  auto: "🚗",
-  realty: "🏠",
-  business: "💼",
-  finance: "💰",
-  family: "❤️",
-  legal: "⚖️",
-  other: "📄",
-  migration: "📄",
-  postal: "📄",
 };
 
 const CATEGORY_BADGE: Record<string, string> = {
@@ -318,7 +308,7 @@ function TemplatesContent() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 pb-12 items-stretch">
           {filtered.slice(0, visibleCount).map(({ t }) => {
             const gradient = CATEGORY_COLORS[t.category] || CATEGORY_COLORS.other;
-            const icon = CATEGORY_ICONS[t.category] || "📄";
+            const CatIcon = categoryIcon(t.category);
             const badge = CATEGORY_BADGE[t.category] || "bg-gray-100 text-gray-600";
             const catLabel =
               TEMPLATE_CATEGORIES.find((c) => c.id === t.category)?.label ||
@@ -333,7 +323,7 @@ function TemplatesContent() {
                 <div className="p-5 flex flex-col flex-1">
                   {t.fieldCount > 30 && (
                     <div className="flex items-center gap-1 mb-3">
-                      <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
+                      <Star size={14} weight="fill" className="text-amber-400" />
                       <span className="text-xs font-medium text-amber-700">
                         Расширенный: {t.fieldCount} полей
                       </span>
@@ -352,12 +342,12 @@ function TemplatesContent() {
                     title={favorites.has(t.id) ? "Убрать из избранного" : "В избранное"}
                     aria-label={favorites.has(t.id) ? "Убрать из избранного" : "В избранное"}
                   >
-                    <Star className={`w-4 h-4 ${favorites.has(t.id) ? "fill-amber-400" : ""}`} />
+                    <Star size={20} weight={favorites.has(t.id) ? "fill" : "regular"} />
                   </button>
                   <div
-                    className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${gradient} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform shrink-0`}
+                    className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${gradient} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform shrink-0 text-white`}
                   >
-                    <span className="text-2xl">{icon}</span>
+                    <CatIcon size={24} weight="fill" />
                   </div>
                   <h3 className="text-base font-bold text-gray-900 mb-1 leading-snug" title={t.name}>
                     <Link href={`/documents/${t.id}`} className="hover:text-brand-600 transition-colors">
@@ -402,7 +392,7 @@ function TemplatesContent() {
           <div className="divide-y divide-gray-100">
             {filtered.slice(0, visibleCount).map(({ t }) => {
               const gradient = CATEGORY_COLORS[t.category] || CATEGORY_COLORS.other;
-              const icon = CATEGORY_ICONS[t.category] || "📄";
+              const ListIcon = categoryIcon(t.category);
               const badge = CATEGORY_BADGE[t.category] || "bg-gray-100 text-gray-600";
               const catLabel =
                 TEMPLATE_CATEGORIES.find((c) => c.id === t.category)?.label ||
@@ -413,9 +403,9 @@ function TemplatesContent() {
                   className="flex items-center gap-4 px-6 py-4 hover:bg-gray-50 transition-colors cursor-pointer"
                 >
                   <div
-                    className={`w-10 h-10 rounded-xl bg-gradient-to-br ${gradient} flex items-center justify-center flex-shrink-0`}
+                    className={`w-10 h-10 rounded-xl bg-gradient-to-br ${gradient} flex items-center justify-center flex-shrink-0 text-white`}
                   >
-                    <span className="text-xl">{icon}</span>
+                    <ListIcon size={21} weight="fill" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-gray-900" title={t.name}>
@@ -449,7 +439,7 @@ function TemplatesContent() {
                     title={favorites.has(t.id) ? "Убрать из избранного" : "В избранное"}
                     aria-label={favorites.has(t.id) ? "Убрать из избранного" : "В избранное"}
                   >
-                    <Star className={`w-4 h-4 ${favorites.has(t.id) ? "fill-amber-400" : ""}`} />
+                    <Star size={20} weight={favorites.has(t.id) ? "fill" : "regular"} />
                   </button>
                   <button
                     onClick={() => handleUseTemplate(t.id)}
