@@ -58,6 +58,10 @@ RUN --mount=type=cache,target=/root/.npm \
 COPY . .
 
 # .next/cache кэшируется между сборками (партиальный Webpack/Turbopack инкремент)
+# NODE_OPTIONS: на VDS всего 3.8 ГБ RAM — дефолтный heap Node (~2 ГБ на 64-бит)
+# роняет next build с exit 134 (SIGABRT) когда рядом живут Supabase/CapRover.
+# 3072 МБ — потолок, при котором сборка стабильна и не душит соседей.
+ENV NODE_OPTIONS="--max-old-space-size=3072"
 RUN --mount=type=cache,target=/root/.npm \
     --mount=type=cache,target=/app/.next/cache \
     npm run build
