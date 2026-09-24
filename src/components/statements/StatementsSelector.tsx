@@ -12,6 +12,7 @@ import {
   SquaresFour,
   ChatsCircle,
   X,
+  ShoppingCart,
 } from "@phosphor-icons/react";
 import { LEGAL_TEMPLATES } from "@/data/templates";
 import type { LegalTemplate } from "@/data/types";
@@ -31,6 +32,7 @@ const STATEMENT_GROUPS = [
   { id: "police", label: "В полицию" },
   { id: "oversight", label: "Жалобы в надзоры" },
   { id: "military", label: "Военкомат" },
+  { id: "procurement", label: "Госзакупки (ФАС)" },
   { id: "official-forms", label: "Госорганы (формы)" },
 ] as const;
 
@@ -43,6 +45,7 @@ const GROUP_ICONS: Record<string, typeof Fire> = {
   police: ChatsCircle,
   oversight: Fire,
   military: Star,
+  procurement: ShoppingCart,
   "official-forms": SquaresFour,
 };
 

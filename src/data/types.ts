@@ -139,6 +139,7 @@ export type StatementGroup =
   | "police"
   | "oversight"
   | "military"
+  | "procurement"
   | "official-forms";
 
 /** Блок «Куда подавать» на странице заявления. */

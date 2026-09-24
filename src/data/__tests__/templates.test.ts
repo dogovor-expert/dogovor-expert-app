@@ -3,8 +3,8 @@ import { LEGAL_TEMPLATES } from "@/data/legalTemplates";
 import { buildTemplateDefaults } from "@/lib/format";
 
 describe("каталог шаблонов", () => {
-  it("508 шаблонов (369 + 139 заявлений), id уникальны", () => {
-    expect(LEGAL_TEMPLATES.length).toBe(508);
+  it("570 шаблонов (369 + 139 заявлений + 11 арбитраж + 15 корпоративных + 8 госзакупок + 16 кадровых + 12 претензий по сферам), id уникальны", () => {
+    expect(LEGAL_TEMPLATES.length).toBe(570);
     const ids = new Set(LEGAL_TEMPLATES.map((t) => t.id));
     expect(ids.size).toBe(LEGAL_TEMPLATES.length);
   });

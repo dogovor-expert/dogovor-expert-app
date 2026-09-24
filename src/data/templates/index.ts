@@ -17,6 +17,11 @@ import { TEMPLATES_CLAIMS } from "./claims";
 import { TEMPLATES_FINANCE_ACTS } from "./finance-act";
 import { TEMPLATES_CORPORATE_WEB } from "./corporate-web";
 import { TEMPLATES_STATEMENTS } from "./statements";
+import { TEMPLATES_ARBITRATION } from "./arbitration";
+import { TEMPLATES_CORPORATE } from "./corporate";
+import { TEMPLATES_PROCUREMENT } from "./procurement";
+import { TEMPLATES_HR_POLICIES } from "./hr-policies";
+import { TEMPLATES_SECTOR_CLAIMS } from "./claims-sectors";
 
 export const LEGAL_TEMPLATES: LegalTemplate[] = [
   ...TEMPLATES_AUTO,
@@ -36,4 +41,9 @@ export const LEGAL_TEMPLATES: LegalTemplate[] = [
   ...TEMPLATES_LEGAL,
   ...TEMPLATES_POSTAL,
   ...TEMPLATES_STATEMENTS,
+  ...TEMPLATES_ARBITRATION,
+  ...TEMPLATES_CORPORATE,
+  ...TEMPLATES_PROCUREMENT,
+  ...TEMPLATES_HR_POLICIES,
+  ...TEMPLATES_SECTOR_CLAIMS,
 ];

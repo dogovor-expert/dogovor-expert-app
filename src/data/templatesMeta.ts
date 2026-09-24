@@ -7045,5 +7045,897 @@ export const TEMPLATE_META: TemplateMeta[] = [
     "kind": "statement",
     "formKind": "free",
     "statementGroup": "courts"
+  },
+  {
+    "id": "arbitration-response",
+    "name": "Отзыв на исковое заявление (арбитражный суд)",
+    "category": "legal",
+    "description": "Отзыв ответчика на иск в арбитражном суде: возражения по существу требований, ссылки на закон и доказательства, просьба отказать истцу. Обязанность направить отзыв — по ст. 131 АПК РФ.",
+    "actSource": "ст. 131 АПК РФ",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "arbitration-counterclaim",
+      "claim-generic"
+    ],
+    "fieldCount": 13,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "courts"
+  },
+  {
+    "id": "arbitration-counterclaim",
+    "name": "Встречный иск в арбитражный суд",
+    "category": "legal",
+    "description": "Встречный иск ответчика для совместного рассмотрения с первоначальным иском в арбитражном суде: цена иска, основания требований, просьба принять встречный иск. Условия — ст. 132 АПК РФ.",
+    "actSource": "ст. 132 АПК РФ",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "arbitration-response",
+      "lawsuit-statement"
+    ],
+    "fieldCount": 13,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "courts"
+  },
+  {
+    "id": "arbitration-interim-measures",
+    "name": "Заявление об обеспечении иска (арбитражный суд)",
+    "category": "legal",
+    "description": "Просьба принять обеспечительные меры в арбитражном процессе: арест денег или имущества ответчика, запрет распоряжаться им. Суд рассматривает заявление в день поступления без вызова сторон (ст. 93 АПК РФ).",
+    "actSource": "гл. 8 (ст. 90–99) АПК РФ",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "arbitration-counterclaim",
+      "claim-generic"
+    ],
+    "fieldCount": 13,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "courts"
+  },
+  {
+    "id": "arbitration-appeal",
+    "name": "Апелляционная жалоба в арбитражный суд",
+    "category": "legal",
+    "description": "Апелляционная жалоба на не вступившее в силу решение арбитражного суда: обжалуемое решение, нарушения норм материального и процессуального права, просьба отменить и принять новый акт. Срок — месяц (ст. 259 АПК РФ).",
+    "actSource": "гл. 34 (ст. 257–272) АПК РФ",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "arbitration-cassation",
+      "arbitration-response"
+    ],
+    "fieldCount": 13,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "courts"
+  },
+  {
+    "id": "arbitration-cassation",
+    "name": "Кассационная жалоба в арбитражный суд",
+    "category": "legal",
+    "description": "Кассационная жалоба в арбитражный суд округа на вступившие в силу решение и апелляционное постановление: проверяет только законность, факты заново не устанавливает. Срок — 2 месяца (ст. 276 АПК РФ).",
+    "actSource": "гл. 35 (ст. 273–291) АПК РФ",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "arbitration-appeal",
+      "arbitration-response"
+    ],
+    "fieldCount": 12,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "courts"
+  },
+  {
+    "id": "arbitration-creditor-register",
+    "name": "Заявление о включении в реестр требований кредиторов",
+    "category": "legal",
+    "description": "Заявление кредитора о включении долга в реестр требований кредиторов должника в деле о банкротстве: размер и основание долга, просьба включить в соответствующую очередь. Подаётся в арбитражный суд, рассматривающий дело о банкротстве.",
+    "actSource": "ст. 71, 100, 142 ФЗ № 127-ФЗ «О несостоятельности (банкротстве)»",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "arbitration-bankruptcy-debtor",
+      "claim-letter"
+    ],
+    "fieldCount": 12,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "courts"
+  },
+  {
+    "id": "arbitration-bankruptcy-debtor",
+    "name": "Заявление кредитора о признании должника банкротом",
+    "category": "legal",
+    "description": "Заявление кредитора (юрлица или ИП) в арбитражный суд о признании должника банкротом: подтверждённый долг свыше 300 000 рублей и просрочка более 3 месяцев. Суд проверяет обоснованность заявления (ст. 42, 48 ФЗ-127).",
+    "actSource": "ст. 7, 39–40 ФЗ № 127-ФЗ «О несостоятельности (банкротстве)»",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "arbitration-creditor-register",
+      "claim-letter"
+    ],
+    "fieldCount": 14,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "courts"
+  },
+  {
+    "id": "arbitration-challenge-transactions",
+    "name": "Заявление об оспаривании сделки должника (банкротство)",
+    "category": "legal",
+    "description": "Заявление об оспаривании сделки должника в деле о банкротстве: подозрительная сделка (неравноценное встречное предоставление) или сделка с предпочтением. Подаётся арбитражным управляющим или кредитором в арбитражный суд.",
+    "actSource": "ст. 61.2, 61.3, 61.8 ФЗ № 127-ФЗ «О несостоятельности (банкротстве)»",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "arbitration-creditor-register",
+      "arbitration-bankruptcy-debtor"
+    ],
+    "fieldCount": 13,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "courts"
+  },
+  {
+    "id": "arbitration-evidence-request",
+    "name": "Ходатайство об истребовании доказательств (арбитражный суд)",
+    "category": "legal",
+    "description": "Ходатайство в арбитражном суде об истребовании доказательств у лица, у которого они находятся: какие документы нужны, у кого, почему невозможно получить их самостоятельно. Суд выдаёт запрос (ст. 66 АПК РФ).",
+    "actSource": "ст. 66 АПК РФ",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "arbitration-response",
+      "arbitration-appeal"
+    ],
+    "fieldCount": 11,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "courts"
+  },
+  {
+    "id": "arbitration-postpone-hearing",
+    "name": "Ходатайство об отложении заседания (арбитражный суд)",
+    "category": "legal",
+    "description": "Ходатайство об отложении судебного разбирательства в арбитражном суде: уважительная причина (болезнь, командировка, отпуск представителя) и просьба назначить новую дату. Подаётся до заседания (ст. 158 АПК РФ).",
+    "actSource": "ст. 158 АПК РФ",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "arbitration-response",
+      "arbitration-evidence-request"
+    ],
+    "fieldCount": 10,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "courts"
+  },
+  {
+    "id": "arbitration-enforcement-award",
+    "name": "Заявление о выдаче исполнительного листа на решение третейского суда",
+    "category": "legal",
+    "description": "Заявление в арбитражный суд о выдаче исполнительного листа на принудительное исполнение решения третейского суда: состав суда, решение, срок добровольного исполнения. Срок обращения — 3 месяца (ст. 238 АПК РФ).",
+    "actSource": "гл. 30 (ст. 236–240) АПК РФ",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "arbitration-response",
+      "claim-generic"
+    ],
+    "fieldCount": 11,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "courts"
+  },
+  {
+    "id": "decision-major-deal",
+    "name": "Решение об одобрении крупной сделки",
+    "category": "business",
+    "description": "Решение единственного участника ООО об одобрении крупной сделки: определяется предмет, контрагент и цена. Крупной считается сделка на сумму 25% и более балансовой стоимости активов общества (ст. 46 ФЗ-14). При нескольких участниках решение принимается общим собранием.",
+    "actSource": "ст. 39, 46 ФЗ-14 «Об ООО»",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "llc-meeting-minutes",
+      "sole-member-decision",
+      "decision-interested-deal"
+    ],
+    "fieldCount": 9
+  },
+  {
+    "id": "decision-interested-deal",
+    "name": "Решение об одобрении сделки с заинтересованностью",
+    "category": "business",
+    "description": "Решение единственного участника ООО об одобрении сделки, в совершении которой имеется заинтересованность. Для сделки с заинтересованностью требуется согласие общего собрания (ст. 45 ФЗ-14); лицо, заинтересованное в сделке, не участвует в голосовании, если это предусмотрено уставом.",
+    "actSource": "ст. 39, 45 ФЗ-14 «Об ООО»",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "llc-meeting-minutes",
+      "decision-major-deal",
+      "sole-member-decision"
+    ],
+    "fieldCount": 9
+  },
+  {
+    "id": "decision-increase-capital",
+    "name": "Решение об увеличении уставного капитала",
+    "category": "business",
+    "description": "Решение единственного участника ООО об увеличении уставного капитала за счёт вклада участника или дополнительных вкладов. Изменения подлежат государственной регистрации в течение месяца со дня принятия решения (ст. 19 ФЗ-14).",
+    "actSource": "ст. 19, 39 ФЗ-14 «Об ООО»",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "decision-admit-member",
+      "sole-member-decision",
+      "participants-list"
+    ],
+    "fieldCount": 8
+  },
+  {
+    "id": "decision-decrease-capital",
+    "name": "Решение об уменьшении уставного капитала",
+    "category": "business",
+    "description": "Решение единственного участника ООО об уменьшении уставного капитала. Общество обязано уведомить кредиторов и опубликовать сведения в «Вестнике государственной регистрации» (ст. 20 ФЗ-14). Уставный капитал не может быть меньше 10 000 рублей.",
+    "actSource": "ст. 20, 39 ФЗ-14 «Об ООО»",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "participants-list",
+      "sole-member-decision",
+      "decision-increase-capital"
+    ],
+    "fieldCount": 8
+  },
+  {
+    "id": "decision-change-director",
+    "name": "Решение о смене генерального директора",
+    "category": "business",
+    "description": "Решение единственного участника ООО о прекращении полномочий прежнего и назначении нового генерального директора, утверждении срока полномочий. Сведения о директоре подлежат внесению в ЕГРЮЛ (ст. 5 ФЗ-129).",
+    "actSource": "ст. 33, 40, 39 ФЗ-14 «Об ООО»",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "sole-member-decision",
+      "llc-meeting-minutes",
+      "participants-list"
+    ],
+    "fieldCount": 8
+  },
+  {
+    "id": "decision-change-address",
+    "name": "Решение об изменении места нахождения общества",
+    "category": "business",
+    "description": "Решение единственного участника ООО об изменении места нахождения общества. Изменение регистрируется в ЕГРЮЛ; при смене региона действует порядок, установленный п. 6 ст. 17 ФЗ-14 (уведомление за 20 дней).",
+    "actSource": "ст. 17 ФЗ-14 «Об ООО», ст. 5 ФЗ-129",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "charter-llc",
+      "sole-member-decision",
+      "participants-list"
+    ],
+    "fieldCount": 7
+  },
+  {
+    "id": "decision-admit-member",
+    "name": "Решение о приёме нового участника в ООО",
+    "category": "business",
+    "description": "Решение единственного участника ООО о приёме нового участника за счёт внесения им дополнительного вклада и увеличении уставного капитала. Доли определяются пропорционально размерам вкладов; изменения регистрируются в ЕГРЮЛ.",
+    "actSource": "ст. 19, 39 ФЗ-14 «Об ООО»",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "decision-increase-capital",
+      "participants-list",
+      "charter-llc"
+    ],
+    "fieldCount": 8
+  },
+  {
+    "id": "decision-liquidate",
+    "name": "Решение о ликвидации ООО",
+    "category": "business",
+    "description": "Решение единственного участника ООО о добровольной ликвидации: назначение ликвидатора (ликвидационной комиссии), срок ликвидации, уведомление регистрирующего органа. Промежуточный и ликвидационный балансы утверждаются после расчётов с кредиторами.",
+    "actSource": "ст. 61–63 ГК РФ, ст. 39, 57 ФЗ-14 «Об ООО»",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "participants-list",
+      "sole-member-decision",
+      "charter-llc"
+    ],
+    "fieldCount": 7
+  },
+  {
+    "id": "decision-approve-charter",
+    "name": "Решение об утверждении устава в новой редакции",
+    "category": "business",
+    "description": "Решение единственного участника ООО об утверждении устава в новой редакции и внесении изменений в ЕГРЮЛ. Изменения, связанные с уставом, регистрируются по форме Р13014 в течение 7 рабочих дней.",
+    "actSource": "ст. 33, 39 ФЗ-14 «Об ООО»",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "charter-llc",
+      "sole-member-decision",
+      "participants-list"
+    ],
+    "fieldCount": 6
+  },
+  {
+    "id": "protocol-absentee-voting",
+    "name": "Протокол заочного голосования общего собрания участников ООО",
+    "category": "business",
+    "description": "Протокол общего собрания участников ООО, проводимого заочным голосованием (без совместного присутствия). Результаты определяются по числу полученных бюллетеней/опросных листов; заочная форма допускается, если решение не требует обсуждения.",
+    "actSource": "ст. 37, 38 ФЗ-14 «Об ООО»",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "llc-meeting-minutes",
+      "ballot-voting",
+      "participants-list"
+    ],
+    "fieldCount": 11
+  },
+  {
+    "id": "protocol-annual-report",
+    "name": "Протокол об утверждении годовой отчётности ООО",
+    "category": "business",
+    "description": "Протокол очередного общего собрания участников ООО об утверждении годового отчёта и бухгалтерской (финансовой) отчётности, распределении чистой прибыли. Очередное собрание проводится не ранее чем через два месяца и не позднее чем через четыре месяца после окончания финансового года (ст. 34 ФЗ-14).",
+    "actSource": "ст. 33, 34, 37 ФЗ-14 «Об ООО»",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "llc-meeting-minutes",
+      "sole-member-decision",
+      "protocol-absentee-voting"
+    ],
+    "fieldCount": 8
+  },
+  {
+    "id": "participants-list",
+    "name": "Список участников ООО",
+    "category": "business",
+    "description": "Список участников общества — документ, подтверждающий права на доли. Ведение списка с обязательными сведениями обеспечивает общество; с 2018 года сведения о долях также отражаются в ЕГРЮЛ (ст. 31.1 ФЗ-14).",
+    "actSource": "ст. 31.1 ФЗ-14 «Об ООО»",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "charter-llc",
+      "decision-admit-member",
+      "sole-member-decision"
+    ],
+    "fieldCount": 8
+  },
+  {
+    "id": "ballot-voting",
+    "name": "Бюллетень для голосования на общем собрании ООО",
+    "category": "business",
+    "description": "Бюллетень (опросный лист) для голосования на общем собрании участников ООО, в том числе при заочной форме. Содержит вопросы повестки и варианты голосования «за / против / воздержался»; подписывается участником.",
+    "actSource": "ст. 37, 38 ФЗ-14 «Об ООО»",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "protocol-absentee-voting",
+      "llc-meeting-minutes",
+      "participants-list"
+    ],
+    "fieldCount": 6
+  },
+  {
+    "id": "member-exit-app",
+    "name": "Заявление участника о выходе из ООО",
+    "category": "business",
+    "description": "Заявление участника о выходе из общества путём отчуждения доли обществу. Выход допускается, если это предусмотрено уставом; доля переходит к обществу с даты получения заявления, а участник вправе получить действительную стоимость доли.",
+    "actSource": "ст. 26 ФЗ-14 «Об ООО»",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "participants-list",
+      "charter-llc",
+      "decision-decrease-capital"
+    ],
+    "fieldCount": 7
+  },
+  {
+    "id": "share-sale-notice",
+    "name": "Уведомление о продаже доли в уставном капитале ООО",
+    "category": "business",
+    "description": "Уведомление участника общества о намерении продать свою долю (часть доли) третьему лицу. Другие участники имеют преимущественное право покупки по цене предложения в течение установленного уставом срока, но не менее 30 дней.",
+    "actSource": "ст. 21 ФЗ-14 «Об ООО»",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "llc-share-purchase",
+      "charter-llc",
+      "participants-list"
+    ],
+    "fieldCount": 7
+  },
+  {
+    "id": "procurement-fas-complaint-44",
+    "name": "Жалоба в ФАС на действия заказчика (44-ФЗ)",
+    "category": "legal",
+    "description": "Жалоба в антимонопольную службу на действия (бездействие) заказчика, комиссии или оператора электронной площадки при закупке по 44-ФЗ: описание нарушения, доводы, требования. Подаётся через ЕИС в течение 10 дней.",
+    "actSource": "ст. 105 ФЗ № 44-ФЗ «О контрактной системе»",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "procurement-fas-complaint-223",
+      "procurement-clarification-44"
+    ],
+    "fieldCount": 13,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "procurement"
+  },
+  {
+    "id": "procurement-fas-complaint-223",
+    "name": "Жалоба в ФАС на закупку по 223-ФЗ",
+    "category": "legal",
+    "description": "Жалоба в ФАС на действия заказчика при закупке по 223-ФЗ: нарушения положения о закупке, документации, порядка оценки заявок. Рассматривается по правилам ст. 18.1 Закона о защите конкуренции.",
+    "actSource": "ст. 5.1 ФЗ № 223-ФЗ; ст. 18.1 ФЗ № 135-ФЗ «О защите конкуренции»",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "procurement-fas-complaint-44",
+      "procurement-clarification-223"
+    ],
+    "fieldCount": 13,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "procurement"
+  },
+  {
+    "id": "procurement-clarification-44",
+    "name": "Запрос разъяснений положений извещения (44-ФЗ)",
+    "category": "legal",
+    "description": "Запрос заказчику о разъяснении положений извещения и документации о закупке по 44-ФЗ. Заказчик обязан разместить разъяснения в ЕИС в течение двух рабочих дней.",
+    "actSource": "ст. 42 ФЗ № 44-ФЗ",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "procurement-clarification-223",
+      "procurement-fas-complaint-44"
+    ],
+    "fieldCount": 10,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "procurement"
+  },
+  {
+    "id": "procurement-clarification-223",
+    "name": "Запрос разъяснений документации о закупке (223-ФЗ)",
+    "category": "legal",
+    "description": "Запрос заказчику о разъяснении положений документации о закупке по 223-ФЗ. Сроки и порядок ответа определяются положением о закупке, а при их отсутствии — законом.",
+    "actSource": "ст. 3.2 ФЗ № 223-ФЗ",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "procurement-clarification-44",
+      "procurement-fas-complaint-223"
+    ],
+    "fieldCount": 10,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "procurement"
+  },
+  {
+    "id": "procurement-protocol-disagreements",
+    "name": "Протокол разногласий к проекту контракта (44-ФЗ)",
+    "category": "legal",
+    "description": "Протокол разногласий победителя закупки к проекту контракта, размещённому заказчиком в ЕИС: изложение замечаний и предложений по условиям проекта. Заказчик рассматривает в течение трёх рабочих дней.",
+    "actSource": "ст. 83.2 ФЗ № 44-ФЗ",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "procurement-fas-complaint-44",
+      "procurement-penalty-claim"
+    ],
+    "fieldCount": 11,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "procurement"
+  },
+  {
+    "id": "procurement-penalty-claim",
+    "name": "Требование об уплате неустойки по контракту (госзакупки)",
+    "category": "legal",
+    "description": "Досудебное требование об уплате пени (неустойки) за просрочку исполнения или штрафа за ненадлежащее исполнение контракта по госзакупке. Содержит расчёт и реквизиты для перечисления.",
+    "actSource": "ст. 34 ФЗ № 44-ФЗ; ст. 330, 331 ГК РФ",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "claim-generic",
+      "procurement-supplier-termination"
+    ],
+    "fieldCount": 14,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "procurement"
+  },
+  {
+    "id": "procurement-rnp-objection",
+    "name": "Возражение на включение в реестр недобросовестных поставщиков",
+    "category": "legal",
+    "description": "Возражение поставщика в ФАС против включения сведений в реестр недобросовестных поставщиков (РНП): обоснование добросовестности, доказательства отсутствия вины, доводы против обращения заказчика.",
+    "actSource": "ст. 104 ФЗ № 44-ФЗ",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "procurement-supplier-termination",
+      "procurement-fas-complaint-44"
+    ],
+    "fieldCount": 12,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "procurement"
+  },
+  {
+    "id": "procurement-supplier-termination",
+    "name": "Уведомление об одностороннем отказе от контракта (поставщик)",
+    "category": "legal",
+    "description": "Уведомление заказчика об одностороннем отказе поставщика (подрядчика) от исполнения контракта по 44-ФЗ: причины отказа, требование о расчётах, правовые основания. Направляется через ЕИС.",
+    "actSource": "ст. 95 ФЗ № 44-ФЗ; ст. 450.1, 715, 717 ГК РФ",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "procurement-penalty-claim",
+      "procurement-rnp-objection"
+    ],
+    "fieldCount": 12,
+    "kind": "statement",
+    "formKind": "free",
+    "statementGroup": "procurement"
+  },
+  {
+    "id": "staffing-table",
+    "name": "Штатное расписание (Т-3)",
+    "category": "business",
+    "description": "Штатное расписание организации (унифицированная форма Т-3): перечень структурных подразделений, должностей, количество штатных единиц и оклады.",
+    "actSource": "Постановление Госкомстата РФ от 05.01.2004 № 1 (форма Т-3)",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "hire-order",
+      "regulation-pay"
+    ],
+    "fieldCount": 10
+  },
+  {
+    "id": "vacation-schedule",
+    "name": "График отпусков (Т-7)",
+    "category": "business",
+    "description": "График отпусков на календарный год (унифицированная форма Т-7): очерёдность предоставления ежегодных оплачиваемых отпусков.",
+    "actSource": "ст. 123 ТК РФ; Постановление Госкомстата РФ от 05.01.2004 № 1 (форма Т-7)",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "vacation-order",
+      "vacation-letter"
+    ],
+    "fieldCount": 7
+  },
+  {
+    "id": "regulation-pay",
+    "name": "Положение об оплате труда",
+    "category": "business",
+    "description": "Локальный нормативный акт, устанавливающий систему оплаты труда, порядок, место и сроки выплаты заработной платы, аванс и индексацию.",
+    "actSource": "ст. 129, 135, 136 ТК РФ",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "regulation-bonus",
+      "staffing-table",
+      "internal-rules"
+    ],
+    "fieldCount": 10
+  },
+  {
+    "id": "regulation-bonus",
+    "name": "Положение о премировании работников",
+    "category": "business",
+    "description": "Локальный нормативный акт о видах, условиях, показателях и порядке выплаты премий работникам, а также об основаниях снижения или невыплаты премии.",
+    "actSource": "ст. 129, 135, 191 ТК РФ",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "regulation-pay",
+      "reward-order",
+      "internal-rules"
+    ],
+    "fieldCount": 9
+  },
+  {
+    "id": "regulation-business-trip",
+    "name": "Положение о служебных командировках",
+    "category": "business",
+    "description": "Локальный нормативный акт о порядке направления работников в служебные командировки, размерах суточных, порядке возмещения расходов и отчётности.",
+    "actSource": "гл. 24 ТК РФ (ст. 166–168); Постановление Правительства РФ от 13.10.2008 № 749",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "business-trip-order",
+      "advance-report"
+    ],
+    "fieldCount": 9
+  },
+  {
+    "id": "labor-protection-instruction",
+    "name": "Инструкция по охране труда",
+    "category": "business",
+    "description": "Инструкция по охране труда для работника: общие требования охраны труда, требования перед началом, во время работы, в аварийных ситуациях и по окончании работы.",
+    "actSource": "ст. 212, 214, 225 ТК РФ",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "internal-rules",
+      "medical-exam-referral"
+    ],
+    "fieldCount": 10
+  },
+  {
+    "id": "commercial-secret-policy",
+    "name": "Положение о коммерческой тайне",
+    "category": "business",
+    "description": "Локальный нормативный акт о режиме коммерческой тайны: перечень конфиденциальных сведений, порядок доступа, обязанности работников и ответственность.",
+    "actSource": "Федеральный закон от 29.07.2004 № 98-ФЗ; ст. 1465, 1470 ГК РФ",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "nda-employee",
+      "internal-rules"
+    ],
+    "fieldCount": 8
+  },
+  {
+    "id": "regulation-attestation",
+    "name": "Положение об аттестации работников",
+    "category": "business",
+    "description": "Локальный нормативный акт о порядке проведения аттестации работников: цели, периодичность, состав комиссии, процедура и решения по результатам.",
+    "actSource": "ст. 81 ч.1 п.3 ТК РФ; ФЗ от 03.07.2016 № 238-ФЗ",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "job-description",
+      "internal-rules"
+    ],
+    "fieldCount": 9
+  },
+  {
+    "id": "absence-act",
+    "name": "Акт об отсутствии работника на рабочем месте",
+    "category": "business",
+    "description": "Акт, фиксирующий отсутствие работника на рабочем месте, с указанием времени и свидетелей; служит основанием для применения дисциплинарного взыскания.",
+    "actSource": "ст. 81 ч.1 п.6 подп. «а» ТК РФ; ст. 193 ТК РФ",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "disciplinary-order",
+      "refusal-explanation-act"
+    ],
+    "fieldCount": 12
+  },
+  {
+    "id": "intoxication-act",
+    "name": "Акт о состоянии опьянения работника",
+    "category": "business",
+    "description": "Акт, фиксирующий признаки алкогольного (наркотического) опьянения работника, отстранение от работы и сведения о медицинском освидетельствовании.",
+    "actSource": "ст. 76, 81 ч.1 п.6 подп. «б» ТК РФ; Приказ Минздрава РФ от 18.12.2015 № 933н",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "disciplinary-order",
+      "absence-act"
+    ],
+    "fieldCount": 12
+  },
+  {
+    "id": "refusal-explanation-act",
+    "name": "Акт об отказе работника от дачи объяснений",
+    "category": "business",
+    "description": "Акт, фиксирующий отказ работника представить письменные объяснения по факту дисциплинарного проступка либо неполучение объяснений.",
+    "actSource": "ст. 193 ТК РФ",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "disciplinary-order",
+      "absence-act"
+    ],
+    "fieldCount": 11
+  },
+  {
+    "id": "layoff-notice",
+    "name": "Уведомление о сокращении численности (штата)",
+    "category": "business",
+    "description": "Персональное уведомление работника о предстоящем увольнении в связи с сокращением численности или штата, с предложением вакансий.",
+    "actSource": "ст. 81 ч.1 п.2, ст. 180, 373 ТК РФ",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "termination-employment",
+      "firing-order"
+    ],
+    "fieldCount": 10
+  },
+  {
+    "id": "vacation-notice",
+    "name": "Уведомление работника о начале отпуска",
+    "category": "business",
+    "description": "Уведомление работника о времени начала ежегодного оплачиваемого отпуска не позднее чем за две недели до его начала.",
+    "actSource": "ст. 123 ТК РФ",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "vacation-schedule",
+      "vacation-order"
+    ],
+    "fieldCount": 9
+  },
+  {
+    "id": "medical-exam-referral",
+    "name": "Направление на обязательный медицинский осмотр",
+    "category": "business",
+    "description": "Направление работника на обязательный предварительный, периодический или внеочередной медицинский осмотр с указанием вредных факторов и медицинской организации.",
+    "actSource": "ст. 214, 220 ТК РФ; Приказ Минздрава РФ от 28.01.2021 № 29н",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "labor-protection-instruction",
+      "internal-rules"
+    ],
+    "fieldCount": 11
+  },
+  {
+    "id": "disciplinary-order",
+    "name": "Приказ о дисциплинарном взыскании",
+    "category": "business",
+    "description": "Приказ о применении дисциплинарного взыскания (замечание, выговор, увольнение) с указанием проступка и документов-оснований.",
+    "actSource": "ст. 192, 193 ТК РФ",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "absence-act",
+      "refusal-explanation-act"
+    ],
+    "fieldCount": 11
+  },
+  {
+    "id": "reward-order",
+    "name": "Приказ о поощрении работника (Т-11)",
+    "category": "business",
+    "description": "Приказ о поощрении работника (форма Т-11): благодарность, премия, ценный подарок, почётная грамота за добросовестный труд.",
+    "actSource": "ст. 191 ТК РФ; Постановление Госкомстата РФ от 05.01.2004 № 1 (форма Т-11)",
+    "lastUpdated": "Сентябрь 2026",
+    "suggestedDocs": [
+      "regulation-bonus",
+      "hire-order"
+    ],
+    "fieldCount": 10
+  },
+  {
+    "id": "claim-telecom",
+    "name": "Претензия оператору связи",
+    "category": "legal",
+    "description": "Досудебная претензия оператору связи: ненадлежащее качество услуг (интернет, мобильная связь, ТВ), необоснованное списание средств, требование перерасчёта или возврата.",
+    "actSource": "ст. 44–46 ФЗ «О связи»; Закон РФ «О защите прав потребителей»",
+    "lastUpdated": "Август 2026",
+    "suggestedDocs": [
+      "claim-services",
+      "claim-generic",
+      "refund-claim"
+    ],
+    "fieldCount": 13
+  },
+  {
+    "id": "claim-medical",
+    "name": "Претензия медицинской организации",
+    "category": "legal",
+    "description": "Досудебная претензия платной медицинской организации: некачественная медицинская услуга, требование возврата средств, устранения недостатков, возмещения вреда здоровью.",
+    "actSource": "ст. 98 ФЗ № 323-ФЗ; ст. 4, 29 Закона РФ «О защите прав потребителей»",
+    "lastUpdated": "Август 2026",
+    "suggestedDocs": [
+      "claim-services",
+      "claim-generic",
+      "refund-claim"
+    ],
+    "fieldCount": 13
+  },
+  {
+    "id": "claim-education",
+    "name": "Претензия образовательной организации",
+    "category": "legal",
+    "description": "Досудебная претензия образовательной организации: досрочное прекращение договора об обучении, возврат стоимости обучения, перерасчёт за фактически оказанные услуги.",
+    "actSource": "ст. 61 ФЗ № 273-ФЗ; ст. 32 Закона РФ «О защите прав потребителей»",
+    "lastUpdated": "Август 2026",
+    "suggestedDocs": [
+      "claim-services",
+      "claim-generic",
+      "refund-claim"
+    ],
+    "fieldCount": 13
+  },
+  {
+    "id": "claim-insurance-property",
+    "name": "Претензия страховой по имущественному страхованию",
+    "category": "legal",
+    "description": "Досудебная претензия страховой компании по имущественному страхованию: отказ или неполная страховая выплата, требование доплаты возмещения и неустойки.",
+    "actSource": "ст. 929, 943 ГК РФ; ст. 10 Закона РФ № 4015-1; Закон РФ «О защите прав потребителей»",
+    "lastUpdated": "Август 2026",
+    "suggestedDocs": [
+      "claim-generic",
+      "claim-services",
+      "refund-claim"
+    ],
+    "fieldCount": 14
+  },
+  {
+    "id": "claim-bank",
+    "name": "Претензия банку по навязанным услугам",
+    "category": "legal",
+    "description": "Досудебная претензия банку: возврат страховой премии по навязанному страхованию при кредите, возврат незаконных комиссий, исключение навязанных условий из договора.",
+    "actSource": "ст. 16 Закона РФ «О защите прав потребителей»; ст. 819, 859 ГК РФ; ФЗ № 395-1",
+    "lastUpdated": "Август 2026",
+    "suggestedDocs": [
+      "claim-generic",
+      "refund-claim",
+      "claim-services"
+    ],
+    "fieldCount": 13
+  },
+  {
+    "id": "claim-marketplace",
+    "name": "Претензия маркетплейсу (продавцу)",
+    "category": "legal",
+    "description": "Досудебная претензия маркетплейсу или продавцу: отказ в возврате товара, некачественный товар, неисполнение заказа, возврат денежных средств.",
+    "actSource": "ст. 26.1 Закона РФ «О защите прав потребителей»; Правила продажи ПП № 2463",
+    "lastUpdated": "Август 2026",
+    "suggestedDocs": [
+      "claim-sale",
+      "refund-claim",
+      "claim-generic"
+    ],
+    "fieldCount": 13
+  },
+  {
+    "id": "claim-fitness",
+    "name": "Претензия фитнес-клубу",
+    "category": "legal",
+    "description": "Досудебная претензия фитнес-клубу (спортклубу): возврат стоимости абонемента за неиспользованный период, отказ от договора оказания услуг.",
+    "actSource": "ст. 32 Закона РФ «О защите прав потребителей»; ст. 782 ГК РФ",
+    "lastUpdated": "Август 2026",
+    "suggestedDocs": [
+      "claim-services",
+      "refund-claim",
+      "claim-generic"
+    ],
+    "fieldCount": 13
+  },
+  {
+    "id": "claim-autoservice",
+    "name": "Претензия автосервису",
+    "category": "legal",
+    "description": "Досудебная претензия автосервису (станции техобслуживания): некачественный ремонт, требование устранения недостатков, возврата средств или возмещения расходов.",
+    "actSource": "ст. 18, 29 Закона РФ «О защите прав потребителей»; ст. 723 ГК РФ",
+    "lastUpdated": "Август 2026",
+    "suggestedDocs": [
+      "claim-works",
+      "claim-generic",
+      "refund-claim"
+    ],
+    "fieldCount": 14
+  },
+  {
+    "id": "claim-developer",
+    "name": "Претензия застройщику (неустойка по ДДУ)",
+    "category": "legal",
+    "description": "Досудебная претензия застройщику о выплате неустойки за нарушение срока передачи объекта долевого строительства, возмещении убытков.",
+    "actSource": "ст. 6, 9 ФЗ № 214-ФЗ; ст. 23 Закона РФ «О защите прав потребителей»",
+    "lastUpdated": "Август 2026",
+    "suggestedDocs": [
+      "claim-generic",
+      "dkp-flat",
+      "claim-services"
+    ],
+    "fieldCount": 15
+  },
+  {
+    "id": "claim-management-company",
+    "name": "Претензия управляющей компании (ЖКХ)",
+    "category": "legal",
+    "description": "Досудебная претензия управляющей компании (ТСЖ): перерасчёт платы за некачественные коммунальные услуги, устранение недостатков содержания общего имущества, возмещение ущерба.",
+    "actSource": "ст. 161 ЖК РФ; Правила ПП № 354, № 491; Закон РФ «О защите прав потребителей»",
+    "lastUpdated": "Август 2026",
+    "suggestedDocs": [
+      "claim-services",
+      "claim-generic",
+      "refund-claim"
+    ],
+    "fieldCount": 14
+  },
+  {
+    "id": "claim-carrier",
+    "name": "Претензия транспортной компании (повреждение груза)",
+    "category": "legal",
+    "description": "Досудебная претензия перевозчику (транспортной компании): повреждение, утрата или недостача груза, требование возмещения стоимости груза и убытков.",
+    "actSource": "ст. 796, 797 ГК РФ; УЖТ РФ / КТМ РФ; ФЗ «О транспортно-экспедиционной деятельности»",
+    "lastUpdated": "Август 2026",
+    "suggestedDocs": [
+      "claim-supply",
+      "claim-generic",
+      "refund-claim"
+    ],
+    "fieldCount": 14
+  },
+  {
+    "id": "claim-hotel",
+    "name": "Претензия отелю",
+    "category": "legal",
+    "description": "Досудебная претензия гостинице (отелю): некачественное оказание услуг проживания, отказ в возврате предоплаты, возмещение ущерба и убытков.",
+    "actSource": "Правила предоставления гостиничных услуг ПП № 1853; Закон РФ «О защите прав потребителей»",
+    "lastUpdated": "Август 2026",
+    "suggestedDocs": [
+      "claim-services",
+      "claim-generic",
+      "refund-claim"
+    ],
+    "fieldCount": 13
   }
 ];
