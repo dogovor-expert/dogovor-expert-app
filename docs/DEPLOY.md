@@ -78,6 +78,32 @@ git push origin master:production
    пуш = ещё один полный цикл сборки (~20 мин) в очереди.
 4. Новые страницы 404, а старые работают = старая сборка ещё жива, ждать watch.
 
+### Известные причины «ошибки развертывания» (2026-09-24, проверено на живых логах)
+
+1. **Client-страница с серверными экспортами (exit code 1).** `"use client"` + любой из
+   `export const metadata/revalidate/dynamic` → `next build` падает, CapRover показывает
+   «ошибку развертывания», запись версии остаётся пустой (без образа и gitHash).
+   Коварство: локально сборка может пройти из тёплого `.next`-кэша и не поймать ошибку.
+   Правило: серверные экспорты — только в `layout.tsx` сегмента, клиентская `page.tsx`
+   их не дублирует. Перед пушем проверять:
+   `git grep -n -E "export const (metadata|revalidate|dynamic)"` по файлам с `"use client"`.
+   Случай: `af2af70` (`/zayavleniya` → `"use client"` + забытые `metadata/revalidate`,
+   мета уже была в `layout.tsx`), фикс `bcb3d36`.
+2. **OOM при сборке (exit code 134, SIGABRT).** На VDS 3.8 ГБ RAM дефолтный heap Node
+   роняет `next build`, когда рядом живут Supabase-стек и CapRover. Фикс в `Dockerfile`
+   перед `npm run build`: `ENV NODE_OPTIONS="--max-old-space-size=3072"`
+   (коммит `81ae44e`). Симптом в логе капитана: `process "/bin/sh -c npm run build"
+   did not complete successfully: exit code: 134`. Тихий вариант: после `Building docker
+   image` — обрыв лога без ошибки (buildkit-процесс убит по памяти).
+3. **Забит диск.** Симптомы: долгие/падающие сборки, таймауты SSH. Чистка:
+   `docker rmi img-captain-dogovor-prod:<старые>` (оставить рабочий + 1 резерв) +
+   `docker builder prune -f`. 2026-09-24: было 84% (47G/59G) → стало 31%.
+
+⚠️ `deploy-watch` (и workflow `deploy-watch.yml`) проверяет только HTTP 200,
+а НЕ содержимое — зелёный статус не означает, что новый код реально на проде.
+После каждого деплоя сверять контент: `/zayavleniya` содержит «Группы заявлений»,
+главная — актуальное число шаблонов, `/builder` — новый селектор.
+
 ### Диск на VDS (главный кандидат при «внезапных» долгих/падающих сборках)
 
 Образы `img-captain-dogovor-prod:N` копятся, BuildKit-кэш вытесняется → сборки
