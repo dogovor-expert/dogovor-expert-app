@@ -171,6 +171,25 @@ export const npdSchema = z.object({
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Дата в формате YYYY-MM-DD').optional(),
 }).strict();
 
+// ---- AI-юрист (/api/ai/*) ----
+
+// Вопрос: текст 2-4000 символов, threadId опционален (новый диалог — без него).
+// consent — обязательное согласие на обработку (вопрос может содержать ПДн).
+export const aiChatSchema = z.object({
+  text: z.string().min(2, 'Вопрос слишком короткий').max(4000, 'Слишком длинное сообщение'),
+  threadId: z.string().uuid('Некорректный threadId').optional(),
+  consent: z.literal(true, { errorMap: () => ({ message: 'Необходимо согласие на обработку данных' }) }),
+}).strict();
+
+export type AiChatInput = z.infer<typeof aiChatSchema>;
+
+// Пополнение AI-баланса: 100–100 000 ₽ целыми рублями.
+export const aiTopupSchema = z.object({
+  amountRub: z.number().int().min(100, 'Минимум 100 ₽').max(100000, 'Максимум 100 000 ₽'),
+}).strict();
+
+export type AiTopupInput = z.infer<typeof aiTopupSchema>;
+
 // ---- Общие схемы для ответов ----
 
 // Универсальный ответ с данными

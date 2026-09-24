@@ -10,7 +10,7 @@ import {
   FileText, Calculator,
   FolderOpen, Files, Trash2, CreditCard,
   Settings, HelpCircle, Menu, X, ChevronDown, Shield, Home, LogIn, Shuffle, Newspaper, Car, GitCompare,
-  HardDrive, Download, Cookie, Moon, Sun
+  HardDrive, Download, Cookie, Moon, Sun, Scale
 } from "lucide-react";
 import HeaderSearch from "@/components/search/HeaderSearch";
 import { CookieBanner } from "@/components/cookie/CookieBanner";
@@ -38,6 +38,7 @@ function getDraftCount(): number {
 }
 
 const toolNav: NavItem[] = [
+  { icon: <Scale className="w-5 h-5" />, label: "AI-юрист", href: "/ai-yurist", badge: "NEW" },
   { icon: <FileText className="w-5 h-5" />, label: "Конструктор резюме", href: "/resume" },
   { icon: <Car className="w-5 h-5" />, label: "Выписка ЭПТС", href: "/epts" },
   { icon: <Calculator className="w-5 h-5" />, label: "ОСАГО", href: "/osago" },

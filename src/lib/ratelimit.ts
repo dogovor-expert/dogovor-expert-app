@@ -81,6 +81,8 @@ export const limiters = {
   autotekaHistory: mk("rl:autoteka-history", 30, "60 s"),
   /** Загрузка аватара (валидация + ре-энкод) — 5/мин на user.id. */
   avatarUpload: mk("rl:avatar-upload", 5, "60 s"),
+  /** AI-юрист: вопрос — 20/мин на user.id (каждый запрос = деньги). */
+  aiChat: mk("rl:ai-chat", 20, "60 s"),
 };
 
 export function clientIp(req: Request): string {

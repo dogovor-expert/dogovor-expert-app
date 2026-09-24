@@ -23,7 +23,7 @@ interface EventSpec {
   /** Человекочитаемое название — для дашборда и docs. */
   label: string;
   /** Группа для воронки/фильтров в /admin/analytics. */
-  group: "traffic" | "builder" | "ocr" | "export" | "billing" | "signing" | "support";
+  group: "traffic" | "builder" | "ocr" | "export" | "billing" | "signing" | "support" | "ai";
   /**
    * Разрешённые ключи meta и опциональный enum допустимых значений
    * (для строк). Если поле не строковый enum — просто перечисляем ключ
@@ -165,6 +165,21 @@ export const EVENT_CATALOG = {
     label: "Отправлена заявка (лид)",
     group: "support",
     meta: { service: null },
+  },
+  ai_message: {
+    label: "Вопрос AI-юристу",
+    group: "ai",
+    meta: { thread_id: null, free: null, confidence: null },
+  },
+  ai_topup_created: {
+    label: "Создано пополнение AI-баланса",
+    group: "billing",
+    meta: { amount_rub: null },
+  },
+  ai_topup_success: {
+    label: "Пополнен AI-баланс",
+    group: "billing",
+    meta: { amount_rub: null },
   },
 } as const satisfies Record<string, EventSpec>;
 

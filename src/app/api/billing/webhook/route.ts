@@ -6,6 +6,7 @@ import { limiters, checkRateLimit, rateLimitResponse } from "@/lib/ratelimit";
 import { yookassaWebhookSchema, validateBody } from "@/lib/validations/api";
 import { logUserEvent, SERVER_SESSION_PREFIX } from "@/lib/userEvents";
 import { sendEmail, sendTelegram, SUPPORT_EMAIL } from "@/lib/mail";
+import { creditForTopup } from "@/lib/ai/pricing";
 
 const EPTS_PRICE = 800;
 
@@ -355,9 +356,48 @@ export async function POST(req: Request) {
   const row = rows[0];
   const paymentMethodId = payment.payment_method?.id ?? null;
 
+  // Возврат/отмена: для ai_topup обязательно списываем зачисленное,
+  // иначе abuse — «пополнил → потратил → вернул через банк → баланс остался».
+  // Идемпотентность — по записи topup_refund в леджере.
   if (event === "payment.canceled" || event === "payment.refund.succeeded") {
     if (row.status !== "paid") {
       await admin.from("payments").update({ status: "canceled" }).eq("id", row.id);
+    } else if ((row.meta as { purpose?: unknown } | null)?.purpose === "ai_topup") {
+      const refunded = await admin
+        .from("ai_ledger")
+        .select("id")
+        .eq("user_id", row.user_id)
+        .eq("reason", "topup_refund")
+        .filter("meta->>payment_id", "eq", payment.id)
+        .limit(1);
+      const already = refunded.data ?? [];
+      if (already.length === 0) {
+        const topups = await admin
+          .from("ai_ledger")
+          .select("delta_kopeks")
+          .eq("user_id", row.user_id)
+          .in("reason", ["topup", "topup_bonus"])
+          .filter("meta->>payment_id", "eq", payment.id);
+        const credited = (topups.data ?? [])
+          .reduce((sum: number, r: { delta_kopeks: number }) => sum + r.delta_kopeks, 0);
+        if (credited > 0) {
+          const balRes = await admin
+            .from("ai_balances")
+            .select("balance_kopeks")
+            .eq("user_id", row.user_id)
+            .limit(1)
+            .maybeSingle();
+          const current = Number((balRes.data as { balance_kopeks?: unknown } | null)?.balance_kopeks ?? 0);
+          const deduct = Math.min(current, credited);
+          await admin.from("ai_balances").update({ balance_kopeks: current - deduct, updated_at: new Date().toISOString() }).eq("user_id", row.user_id);
+          await admin.from("ai_ledger").insert({
+            user_id: row.user_id,
+            delta_kopeks: -deduct,
+            reason: "topup_refund",
+            meta: { payment_id: payment.id },
+          });
+        }
+      }
     }
     return NextResponse.json({ ok: true });
   }
@@ -402,8 +442,52 @@ export async function POST(req: Request) {
       meta: { plan: typeof meta.plan === "string" ? meta.plan : undefined },
     });
 
-    if (meta.type === "report" && typeof meta.vin === "string") {
-      const vin = meta.vin.toUpperCase();
+    // AI-баланс: пополнение кошелька (meta.purpose === "ai_topup" из /api/ai/topup).
+    // Идемпотентность — та же, что у подписок: повторный вебхук по уже
+    // оплаченному платежу отбрасывается проверкой row.status выше.
+    if (meta.purpose === "ai_topup") {
+      const amountRub = Math.floor(Number(meta.amount_rub ?? row.amount ?? 0));
+      if (amountRub > 0) {
+        const { creditKopeks, bonusKopeks } = creditForTopup(amountRub);
+        const balRes = await admin
+          .from("ai_balances")
+          .select("balance_kopeks")
+          .eq("user_id", row.user_id)
+          .limit(1)
+          .maybeSingle();
+        const current = Number((balRes.data as { balance_kopeks?: unknown } | null)?.balance_kopeks ?? 0);
+        if (!balRes.data) {
+          await admin.from("ai_balances").insert({ user_id: row.user_id, balance_kopeks: creditKopeks, free_asked: 0 });
+        } else {
+          await admin.from("ai_balances").update({ balance_kopeks: current + creditKopeks, updated_at: new Date().toISOString() }).eq("user_id", row.user_id);
+        }
+        await admin.from("ai_ledger").insert([
+          {
+            user_id: row.user_id,
+            delta_kopeks: amountRub * 100,
+            reason: "topup",
+            meta: { payment_id: payment.id, amount_rub: amountRub },
+          },
+          ...(bonusKopeks > 0
+            ? [{
+                user_id: row.user_id,
+                delta_kopeks: bonusKopeks,
+                reason: "topup_bonus",
+                meta: { payment_id: payment.id, amount_rub: amountRub },
+              }]
+            : []),
+        ]);
+        await logUserEvent({
+          event: "ai_topup_success",
+          userId: row.user_id,
+          sessionId: `${SERVER_SESSION_PREFIX}${payment.id}`,
+          meta: { amount_rub: amountRub },
+        });
+      }
+      return NextResponse.json({ ok: true });
+    }
+
+    if (meta.type === "report" && typeof meta.vin === "string") {      const vin = meta.vin.toUpperCase();
       // Сборка отчёта может занимать до ~45с — выносим в after(), чтобы
       // ответить ЮKassa немедленно (иначе webhook рискует таймаутом и
       // повторной доставкой). Идемпотентность платежа обеспечена выше.
