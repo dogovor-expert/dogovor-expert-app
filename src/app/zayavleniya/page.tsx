@@ -24,8 +24,6 @@ import { breadcrumbJsonLd } from "@/lib/seo/faq";
 import { SITE_URL } from "@/lib/site";
 import { normalizeText, tokenGroups, textMatchesTokens } from "@/lib/search";
 
-export const revalidate = 3600;
-
 const GROUPS: Array<{ id: StatementGroup; label: string; hint: string; icon: typeof FileText; tint: string }> = [
   { id: "fssp", label: "Приставам (ФССП)", hint: "возбуждение ИП, жалобы", icon: Landmark, tint: "bg-sky-50 text-sky-600" },
   { id: "courts", label: "В суды", hint: "иски, ходатайства", icon: Gavel, tint: "bg-violet-50 text-violet-600" },
