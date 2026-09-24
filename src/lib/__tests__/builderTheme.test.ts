@@ -20,19 +20,22 @@ describe("resolveInitialTheme", () => {
     expect(resolveInitialTheme("SEPIA")).toBe("light");
   });
 
-  it("каталог — 5 отобранных тем, удалённые мигрируют в light", () => {
+  it("каталог — все 6 гамм образца + светлая и песок; удалённые мигрируют в light", () => {
     expect(BUILDER_THEMES.map((t) => t.id)).toEqual([
       "light",
       "primer",
       "warmgray",
+      "solar",
+      "sepia",
       "kindle",
+      "milktea",
       "sand",
     ]);
     for (const t of BUILDER_THEMES) {
       expect(t.swatch).toMatch(/^#[0-9a-f]{6}$/i);
     }
     // удалённые темы ведут себя как мусор — светлая
-    for (const gone of ["solar", "sepia", "gruvbox", "milktea", "clay", "umber", "bark", "dark"]) {
+    for (const gone of ["gruvbox", "clay", "umber", "bark", "dark"]) {
       expect(resolveInitialTheme(gone)).toBe("light");
     }
   });

@@ -2,9 +2,10 @@
 import { useCallback, useEffect, useState } from "react";
 
 /**
- * Каталог тем рабочей области (/builder): 4 отобранные —
- * нейтраль (холодный серый), тёплый серый (едва тёплый),
- * киндл (книжный уют), песок (тёмно-бежевый).
+ * Каталог тем рабочей области (/builder): все 6 гамм образца
+ * shades-choice.html (нейтраль → тёплый серый → solar → sepia ★ →
+ * kindle → milk tea) + песок (тёмно-бежевый, самый тёмный).
+ * Значения — из мини-сцен образца (зона/карточка/текст/бордер/поле).
  * Контраст текста везде ≥ 4.5:1 (AA, проверено скриптом WCAG).
  */
 export interface BuilderThemeDef {
@@ -21,7 +22,10 @@ export const BUILDER_THEMES: BuilderThemeDef[] = [
   { id: "light", label: "Светлая", hint: "как обычно", bodyClass: "", swatch: "#eef2f7" },
   { id: "primer", label: "Нейтраль", hint: "холодный серый", bodyClass: "bt-primer", swatch: "#f6f8fa" },
   { id: "warmgray", label: "Тёплый серый", hint: "едва тёплый", bodyClass: "bt-warmgray", swatch: "#e9e6df" },
+  { id: "solar", label: "Solar", hint: "бумага программистов", bodyClass: "bt-solar", swatch: "#eee8d5" },
+  { id: "sepia", label: "Сепия", hint: "как в Firefox", bodyClass: "bt-sepia", swatch: "#e7dbc0" },
   { id: "kindle", label: "Киндл", hint: "книжный уют", bodyClass: "bt-kindle", swatch: "#eddcb9" },
+  { id: "milktea", label: "Милк-ти", hint: "самый тёплый", bodyClass: "bt-milktea", swatch: "#eadfcd" },
   { id: "sand", label: "Песок", hint: "тёмно-бежевый", bodyClass: "bt-sand", swatch: "#d9cba8" },
 ];
 
