@@ -12,6 +12,9 @@ export interface LawChunk {
   article: string;
   chunk: string;
   edition_date: string | null;
+  source_url?: string | null;
+  edition_id?: string | null;
+  locator?: string | null;
 }
 
 export const AI_SYSTEM_PROMPT = `Ты — AI-юрист сервиса Dogovor.expert. Отвечаешь по-русски, просто, без канцелярита.
@@ -29,7 +32,10 @@ export function buildUserMessage(question: string, chunks: LawChunk[]): string {
     return `Вопрос пользователя:\n${question}\n\n(КОНТЕКСТ: фрагментов законов по вопросу не найдено — действует правило 2.)`;
   }
   const ctx = chunks
-    .map((c, i) => `[${i + 1}] ${c.code}, ${c.article} (ред. ${c.edition_date ?? "?"}) : ${c.chunk}`)
+    .map((c, i) => {
+      const source = c.source_url ? `; источник: ${c.source_url}` : "";
+      return `[${i + 1}] ${c.code}, ${c.article} (ред. ${c.edition_date ?? "?"}${source}) : ${c.chunk}`;
+    })
     .join("\n\n");
   return `КОНТЕКСТ (фрагменты действующих норм):\n${ctx}\n\nВопрос пользователя:\n${question}`;
 }

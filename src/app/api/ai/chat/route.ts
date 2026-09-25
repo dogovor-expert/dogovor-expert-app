@@ -29,18 +29,29 @@ interface BalanceRow {
   free_asked: number;
 }
 
-/** RAG-поиск: эмбеддинг вопроса → match_law_chunks. Ошибка = пустой контекст (честный режим), не 500. */
+/** RAG-поиск: расширение синонимов -> эмбеддинг -> match_law_chunks. Ошибка = пустой контекст (честный режим), не 500. */
 async function findChunks(
   admin: ReturnType<typeof createAdminClient>,
   question: string
 ): Promise<LawChunk[]> {
   try {
-    const vectors = await createEmbedding(question);
+    // Разговорные термины («ОСАГО», «уволиться») дописываем статутными
+    // эквивалентами из law_synonyms — иначе ни вектор, ни FTS не находят
+    // статьи, где этих слов нет. Сбой расширения = исходный вопрос.
+    let expanded = question;
+    try {
+      const exp: { data: unknown } = await admin.rpc("law_expand_query", { q: question });
+      if (typeof exp.data === "string" && exp.data.length > 0) expanded = exp.data;
+    } catch {
+      expanded = question;
+    }
+    const vectors = await createEmbedding(expanded);
     const vec = vectors[0];
     if (!vec) return [];
     const rpcRes: { data: unknown; error: { message: string } | null } = await admin.rpc("match_law_chunks", {
       query_embedding: `[${vec.join(",")}]`,
       match_count: 5,
+      query_text: expanded,
     });
     if (rpcRes.error) {
       console.error("[ai/chat] match_law_chunks failed:", rpcRes.error.message);
@@ -184,11 +195,13 @@ async function postHandler(req: Request) {
 
   const confidence = checkCitations(answer, chunks);
   const costKopeks = estimateCostKopeks(tokensIn, tokensOut);
-  const sources = chunks.map((c) => ({
-    code: c.code,
-    article: c.article,
-    edition_date: c.edition_date,
-  }));
+    const sources = chunks.map((c) => ({
+      code: c.code,
+      article: c.article,
+      edition_date: c.edition_date,
+      source_url: c.source_url ?? null,
+      locator: c.locator ?? null,
+    }));
 
   // Списание с optimistic locking: update только если баланс не изменился
   // параллельным запросом. Конфликт → 409, клиент повторяет. Потеря при
