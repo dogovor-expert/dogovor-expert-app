@@ -20,6 +20,9 @@ import {
   BookBookmark,
   Quotes,
   ArrowRight,
+  ArrowSquareOut,
+  FilePdf,
+  FileDoc,
   MagnifyingGlass,
   Clock,
 } from "@phosphor-icons/react";
@@ -32,6 +35,8 @@ interface Source {
   code: string;
   article: string;
   edition_date: string | null;
+  source_url?: string | null;
+  locator?: string | null;
 }
 
 interface ChatMsg {
@@ -56,11 +61,14 @@ const EXAMPLES = [
 
 const PACKS = [100, 300, 500, 1000];
 
+/** Ключ последнего открытого диалога — чтобы восстанавливать чат после F5. */
+const LAST_THREAD_KEY = "ai_last_thread";
+
 const TRUST = [
   { icon: BookBookmark, title: "Отвечает по текстам законов", text: "RAG по действующим редакциям ГК, ЖК, ТК, КоАП — а не по памяти модели" },
   { icon: Quotes, title: "Цитата в каждом ответе", text: "Статья + дословная цитата + дата редакции. Нет цитаты — нет ответа" },
   { icon: ShieldCheck, title: "Двойная проверка", text: "Номера статей сверяются с базой, ответ прогоняется верификатором" },
-  { icon: FilePlus, title: "Сразу в документ", text: "Кнопка «Составить» превращает ответ в договор из 369 шаблонов" },
+  { icon: FilePlus, title: "Сразу в документ", text: "Кнопка «Составить» превращает ответ в договор из 570 шаблонов" },
 ];
 
 const STEPS = [
@@ -105,7 +113,9 @@ export default function AiYuristClient() {
   const [topupBusy, setTopupBusy] = useState(false);
   const [authed, setAuthed] = useState<boolean | null>(null);
   const [topupDone, setTopupDone] = useState(false);
+  const [exporting, setExporting] = useState<"pdf" | "docx" | null>(null);
   const boxRef = useRef<HTMLDivElement>(null);
+  const restoredRef = useRef(false);
   const searchParams = useSearchParams();
 
   const loadBalance = useCallback(async () => {
@@ -126,34 +136,14 @@ export default function AiYuristClient() {
     }
   }, []);
 
-  const loadThreads = useCallback(async () => {
-    try {
-      const res = await fetch("/api/ai/threads", { credentials: "same-origin" });
-      if (!res.ok) return;
-      const d = (await res.json()) as { threads: Thread[] };
-      setThreads(d.threads ?? []);
-    } catch {
-      /* ignore */
-    }
-  }, []);
-
-  useEffect(() => {
-    void loadBalance();
-    void loadThreads();
-    // Возврат с ЮKassa: показываем подтверждение один раз, чистим URL.
-    if (searchParams.get("topup") === "success") {
-      setTopupDone(true);
-      window.history.replaceState(null, "", "/ai-yurist");
-    }
-  }, [loadBalance, loadThreads, searchParams]);
-
-  useEffect(() => {
-    boxRef.current?.scrollTo({ top: boxRef.current.scrollHeight, behavior: "smooth" });
-  }, [msgs]);
-
   const openThread = useCallback(async (id: string) => {
     setThreadId(id);
     setError(null);
+    try {
+      window.localStorage.setItem(LAST_THREAD_KEY, id);
+    } catch {
+      /* приватный режим — не критично */
+    }
     try {
       const token = await fetchCsrf();
       const res = await fetch("/api/ai/threads", {
@@ -169,6 +159,78 @@ export default function AiYuristClient() {
       /* ignore */
     }
   }, []);
+
+  const newChat = useCallback(() => {
+    setThreadId(null);
+    setMsgs([]);
+    setError(null);
+    try {
+      window.localStorage.removeItem(LAST_THREAD_KEY);
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
+  /** Список диалогов. Возвращает список — нужен для восстановления при загрузке. */
+  const loadThreads = useCallback(async (): Promise<Thread[]> => {
+    try {
+      const res = await fetch("/api/ai/threads", { credentials: "same-origin" });
+      if (!res.ok) return [];
+      const d = (await res.json()) as { threads: Thread[] };
+      setThreads(d.threads ?? []);
+      return d.threads ?? [];
+    } catch {
+      return [];
+    }
+  }, []);
+
+  useEffect(() => {
+    void loadBalance();
+    void (async () => {
+      const list = await loadThreads();
+      // Восстановление после перезагрузки: последний открытый диалог либо самый свежий.
+      if (restoredRef.current || list.length === 0) return;
+      restoredRef.current = true;
+      let stored: string | null = null;
+      try {
+        stored = window.localStorage.getItem(LAST_THREAD_KEY);
+      } catch {
+        /* ignore */
+      }
+      const target = stored && list.some((t) => t.id === stored) ? stored : list[0].id;
+      await openThread(target);
+    })();
+    // Возврат с ЮKassa: показываем подтверждение один раз, чистим URL.
+    if (searchParams.get("topup") === "success") {
+      setTopupDone(true);
+      window.history.replaceState(null, "", "/ai-yurist");
+    }
+  }, [loadBalance, loadThreads, openThread, searchParams]);
+
+  useEffect(() => {
+    boxRef.current?.scrollTo({ top: boxRef.current.scrollHeight, behavior: "smooth" });
+  }, [msgs]);
+
+  /** Экспорт сообщения или всего диалога в фирменный PDF/DOCX (ленивая загрузка библиотек). */
+  const exportMessages = useCallback(
+    async (list: ChatMsg[], kind: "chat" | "message", fmt: "pdf" | "docx") => {
+      setExporting(fmt);
+      setError(null);
+      try {
+        const mod = await import("@/lib/ai/chatExport");
+        const date = new Date().toLocaleDateString("ru-RU");
+        const html = mod.buildChatHtml(list, { date });
+        const name = mod.chatExportFilename(kind, new Date().toISOString().slice(0, 10));
+        if (fmt === "pdf") await mod.downloadChatPdf(html, name);
+        else await mod.downloadChatDocx(html, name);
+      } catch {
+        setError("Не удалось сформировать файл. Попробуйте ещё раз.");
+      } finally {
+        setExporting(null);
+      }
+    },
+    []
+  );
 
   const send = useCallback(
     async (text: string) => {
@@ -215,6 +277,11 @@ export default function AiYuristClient() {
           balance_kopeks: number;
         };
         setThreadId(d.thread_id);
+        try {
+          window.localStorage.setItem(LAST_THREAD_KEY, d.thread_id);
+        } catch {
+          /* ignore */
+        }
         setBalance(d.balance_kopeks);
         setLow(d.balance_kopeks < 2000);
         setMsgs((m) => [...m, { role: "assistant", content: d.answer, sources: d.sources, confidence: d.confidence }]);
@@ -354,8 +421,39 @@ export default function AiYuristClient() {
           </Card>
         ) : (
           <div className="grid gap-4 lg:grid-cols-[240px_1fr]">
+            <details className="h-fit rounded-2xl border border-slate-200 bg-white p-3 lg:hidden">
+              <summary className="cursor-pointer text-sm font-bold">
+                История диалогов{threads.length > 0 ? ` (${threads.length})` : ""}
+              </summary>
+              <div className="mt-2">
+                <Button className="w-full" onClick={newChat}>
+                  <Plus size={16} weight="bold" /> Новый вопрос
+                </Button>
+                {threads.length === 0 && <p className="mt-2 px-1 text-xs text-slate-500">Пока пусто — задайте первый вопрос.</p>}
+                {threads.map((t) => (
+                  <button
+                    key={t.id}
+                    onClick={() => void openThread(t.id)}
+                    className={`mt-1 block w-full truncate rounded-lg px-2 py-1.5 text-left text-[13px] hover:bg-slate-100 ${t.id === threadId ? "bg-brand-50 font-semibold text-brand-700" : "text-slate-600"}`}
+                  >
+                    {t.title}
+                  </button>
+                ))}
+                {msgs.length > 0 && (
+                  <div className="mt-3 grid gap-1.5">
+                    <Button size="sm" variant="outline" disabled={exporting !== null} onClick={() => void exportMessages(msgs, "chat", "pdf")}>
+                      <FilePdf size={14} /> Скачать диалог PDF
+                    </Button>
+                    <Button size="sm" variant="outline" disabled={exporting !== null} onClick={() => void exportMessages(msgs, "chat", "docx")}>
+                      <FileDoc size={14} /> Скачать диалог DOCX
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </details>
+
             <Card className="hidden h-fit p-3 lg:block">
-              <Button className="w-full" onClick={() => { setThreadId(null); setMsgs([]); }}>
+              <Button className="w-full" onClick={newChat}>
                 <Plus size={16} weight="bold" /> Новый вопрос
               </Button>
               <p className="mb-1 mt-4 px-1 text-[11px] font-bold uppercase tracking-wide text-slate-400">История</p>
@@ -369,6 +467,16 @@ export default function AiYuristClient() {
                   {t.title}
                 </button>
               ))}
+              {msgs.length > 0 && (
+                <div className="mt-3 grid gap-1.5">
+                  <Button size="sm" variant="outline" disabled={exporting !== null} onClick={() => void exportMessages(msgs, "chat", "pdf")}>
+                    <FilePdf size={14} /> Скачать диалог PDF
+                  </Button>
+                  <Button size="sm" variant="outline" disabled={exporting !== null} onClick={() => void exportMessages(msgs, "chat", "docx")}>
+                    <FileDoc size={14} /> Скачать диалог DOCX
+                  </Button>
+                </div>
+              )}
               <div className="mt-3 rounded-xl bg-gradient-to-br from-brand-50 to-emerald-50 p-3 text-xs">
                 <p className="flex items-center gap-1 font-bold"><Gift size={15} weight="fill" /> {freeAsked < 2 ? `Осталось бесплатных: ${2 - freeAsked}` : "Бесплатные использованы"}</p>
                 <p className="mt-1 text-slate-600">Дальше 19 ₽/сообщение. Баланс не сгорает.</p>
@@ -394,12 +502,32 @@ export default function AiYuristClient() {
                       <div className="whitespace-pre-wrap rounded-xl rounded-tl-sm border border-slate-200 bg-white px-4 py-3 text-[14px]">{m.content}</div>
                       {m.sources && m.sources.length > 0 && (
                         <div className="mt-2 grid gap-1.5">
-                          {m.sources.map((s, j) => (
-                            <div key={j} className="rounded-lg border border-slate-200 border-l-4 border-l-brand-500 bg-slate-50 px-3 py-2 text-xs">
-                              <b className="text-brand-700">{s.code}, {s.article}</b>
-                              <span className="block text-slate-400">ред. {s.edition_date ?? "—"} · проверено по базе</span>
-                            </div>
-                          ))}
+                          {m.sources.map((s, j) => {
+                            const body = (
+                              <>
+                                <b className="text-brand-700">{s.code}, {s.article}</b>
+                                <span className="block text-slate-400">ред. {s.edition_date ?? "—"} · проверено по базе</span>
+                              </>
+                            );
+                            return s.source_url ? (
+                              <a
+                                key={j}
+                                href={s.source_url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="rounded-lg border border-slate-200 border-l-4 border-l-brand-500 bg-slate-50 px-3 py-2 text-xs transition hover:border-brand-300 hover:bg-white"
+                              >
+                                {body}
+                                <span className="mt-1 inline-flex items-center gap-1 text-[11px] font-semibold text-brand-600">
+                                  Открыть в источнике <ArrowSquareOut size={12} weight="bold" />
+                                </span>
+                              </a>
+                            ) : (
+                              <div key={j} className="rounded-lg border border-slate-200 border-l-4 border-l-brand-500 bg-slate-50 px-3 py-2 text-xs">
+                                {body}
+                              </div>
+                            );
+                          })}
                         </div>
                       )}
                       <p className="mt-1.5 flex items-center gap-2 text-[11px] text-slate-400">
@@ -409,6 +537,22 @@ export default function AiYuristClient() {
                       </p>
                       <div className="mt-1.5 flex flex-wrap gap-1.5">
                         <Link href="/builder"><Button size="sm"><FilePlus size={14} weight="fill" /> Составить документ</Button></Link>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          disabled={exporting !== null}
+                          onClick={() => void exportMessages(i > 0 && msgs[i - 1].role === "user" ? [msgs[i - 1], m] : [m], "message", "pdf")}
+                        >
+                          <FilePdf size={14} /> PDF
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          disabled={exporting !== null}
+                          onClick={() => void exportMessages(i > 0 && msgs[i - 1].role === "user" ? [msgs[i - 1], m] : [m], "message", "docx")}
+                        >
+                          <FileDoc size={14} /> DOCX
+                        </Button>
                         <Button size="sm" variant="outline"><Star size={14} /> В избранное</Button>
                         <Button size="sm" variant="outline"><ChatsCircle size={14} /> Уточнить у поддержки</Button>
                       </div>
@@ -515,7 +659,7 @@ export default function AiYuristClient() {
               {[
                 ["Откуда статьи", "Из памяти — номера выдумываются", "Из кодексов: статья + цитата + дата редакции"],
                 ["Законы 2026", "Срез знаний устаревает", "База обновляется при изменении законов"],
-                ["На выходе", "Текст — проверяйте и перепечатывайте сами", "Готовый документ в 1 клик, 369 шаблонов"],
+                ["На выходе", "Текст — проверяйте и перепечатывайте сами", "Готовый документ в 1 клик, 570 шаблонов"],
                 ["Ваш договор", "«В целом нормально», без норм", "Разбор по пунктам со статьями и рисками — скоро"],
                 ["Память дела", "Каждый раз с нуля", "История, черновики, контекст ваших сделок"],
                 ["Ваши данные", "Уходят на обучение модели", "Не используются для обучения, файлы — 24 часа"],
@@ -566,7 +710,7 @@ export default function AiYuristClient() {
       <div className="mt-6 grid items-center gap-4 rounded-2xl bg-gradient-to-r from-brand-700 to-indigo-600 p-7 text-white lg:grid-cols-[1fr_auto]">
         <div>
           <h3 className="text-xl font-extrabold">Ответ получен — документ соберём сами</h3>
-          <p className="mt-1 text-[13.5px] opacity-85">Жалоба на штраф, претензия, договор задатка — 369 проверенных шаблонов за 5–7 минут.</p>
+          <p className="mt-1 text-[13.5px] opacity-85">Жалоба на штраф, претензия, договор задатка — 570 проверенных шаблонов за 5–7 минут.</p>
         </div>
         <Link href="/builder"><Button variant="secondary">Выбрать шаблон →</Button></Link>
       </div>

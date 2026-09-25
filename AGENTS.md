@@ -15,6 +15,13 @@
 8. **Среда выполнения (Windows / OpenCode)** — LF, UTF-8 no-BOM: [`docs/ENV_RULES.md`](docs/ENV_RULES.md).
 9. **Адаптивность** — mobile-first, dvh/safe-area: [`docs/RESPONSIVE.md`](docs/RESPONSIVE.md). PWA/service worker — НЕ внедрять.
 
+## 📌 Открытые задачи
+
+- Расширение RAG-корпуса AI-юриста (ГПК, КАС, ФЗ-214 и далее) — runbook и очередь:
+  [`docs/TASKS.md`](docs/TASKS.md). Делается отдельным прогоном **по одному акту**,
+  команда `/corpus-expand`. При смене парсера корпуса колонка `law_chunks.article`
+  синхронизируется **вручную** — не забывать.
+
 ## 🧠 Экономия контекста (CRITICAL)
 
 - Вложенные `AGENTS.md`, `docs/*`, `CHANGELOG_AGENTS.md` читай **только точечно под задачу** (`Read` с `offset/limit`), никогда целиком. `CHANGELOG_AGENTS.md` (60 КБ) — только последние 40 строк.
