@@ -36,6 +36,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${SITE_URL}/blanks`, changeFrequency: "weekly", priority: 0.9 },
     { url: `${SITE_URL}/zayavleniya`, changeFrequency: "weekly", priority: 0.9 },
     { url: `${SITE_URL}/resume`, changeFrequency: "weekly", priority: 0.9 },
+    // /ai-yurist — публичный лендинг AI-юриста (robots index:true, canonical /ai-yurist).
+    { url: `${SITE_URL}/ai-yurist`, changeFrequency: "weekly", priority: 0.7 },
     { url: `${SITE_URL}/epts`, changeFrequency: "monthly", priority: 0.6 },
   ];
 

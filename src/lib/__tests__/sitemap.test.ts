@@ -34,6 +34,10 @@ describe("sitemap: технические инварианты", () => {
     expect(urls).toContain(`${SITE_URL}/legal/trademark`);
   });
 
+  it("содержит публичный /ai-yurist (robots index:true)", () => {
+    expect(urls).toContain(`${SITE_URL}/ai-yurist`);
+  });
+
   it("бланки-дубли /blanks/{id} в sitemap не попадают (только каталог /blanks)", () => {
     const blankDeep = urls.filter((u) => /\/blanks\/.+/.test(u));
     expect(blankDeep).toHaveLength(0);
