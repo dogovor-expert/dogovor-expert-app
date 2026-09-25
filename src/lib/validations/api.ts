@@ -177,7 +177,7 @@ export const npdSchema = z.object({
 // consent — обязательное согласие на обработку (вопрос может содержать ПДн).
 export const aiChatSchema = z.object({
   text: z.string().min(2, 'Вопрос слишком короткий').max(4000, 'Слишком длинное сообщение'),
-  threadId: z.string().uuid('Некорректный threadId').optional(),
+  threadId: z.string().uuid('Некорректный threadId').nullish(),
   consent: z.literal(true, { errorMap: () => ({ message: 'Необходимо согласие на обработку данных' }) }),
 }).strict();
 

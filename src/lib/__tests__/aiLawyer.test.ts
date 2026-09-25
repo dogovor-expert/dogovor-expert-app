@@ -105,6 +105,15 @@ describe("ai validations", () => {
     expect(r.success).toBe(false);
   });
 
+  it("aiChatSchema: null threadId (новый чат из UI) проходит", () => {
+    const r = aiChatSchema.safeParse({ text: "Что делать при ДТП?", threadId: null, consent: true });
+    expect(r.success).toBe(true);
+  });
+
+  it("aiChatSchema: невалидный threadId — отказ", () => {
+    expect(aiChatSchema.safeParse({ text: "Что делать?", threadId: "не-uuid", consent: true }).success).toBe(false);
+  });
+
   it("aiChatSchema: пустой и слишком длинный — отказ", () => {
     expect(aiChatSchema.safeParse({ text: "x", consent: true }).success).toBe(false);
     expect(aiChatSchema.safeParse({ text: "x".repeat(4001), consent: true }).success).toBe(false);
