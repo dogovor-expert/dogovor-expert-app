@@ -171,6 +171,11 @@ export const EVENT_CATALOG = {
     group: "ai",
     meta: { thread_id: null, free: null, via_quota: null, confidence: null },
   },
+  ai_audit: {
+    label: "Аудит договора AI-юристом",
+    group: "ai",
+    meta: { thread_id: null, free: null, via_quota: null, confidence: null, audit_score: null },
+  },
   ai_topup_created: {
     label: "Создано пополнение AI-баланса",
     group: "billing",

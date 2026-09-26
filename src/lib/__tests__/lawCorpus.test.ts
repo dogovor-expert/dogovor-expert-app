@@ -38,7 +38,8 @@ describe("law-corpus: происхождение и официальный ис�
       expect(doc.officialSourceUrl).toContain(doc.nd);
       expect(doc.mustContain.length).toBeGreaterThan(0);
     }
-    expect(LAW_DOCUMENTS.length).toBe(7);
+    expect(LAW_DOCUMENTS.length).toBe(9);
+    expect(new Set(LAW_DOCUMENTS.map((d) => d.code.split(" ")[0])).size).toBeGreaterThanOrEqual(8);
   });
 
   it("buildArchiveUrl ведёт на полный MHTML-архив, а не на обрезанный page=1", () => {

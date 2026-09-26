@@ -19,9 +19,12 @@ import {
   isProxyApiConfigured,
 } from "@/lib/ai/proxyapi";
 import {
+  AI_AUDIT_SYSTEM_PROMPT,
   AI_SYSTEM_PROMPT,
+  buildAuditUserMessage,
   buildUserMessage,
   checkCitations,
+  parseAuditReport,
   type LawChunk,
 } from "@/lib/ai/prompt";
 import { logUserEvent } from "@/lib/userEvents";
@@ -91,7 +94,13 @@ async function postHandler(req: Request) {
   }
   const validation = validateBody(aiChatSchema, body);
   if (!validation.success) return validation.error;
-  const { text, threadId } = validation.data;
+  const { text, threadId, mode } = validation.data;
+  const isAudit = mode === "audit";
+  // Аудит: текст договора длиннее вопроса — требуем минимум 200 символов,
+  // иначе это обычный вопрос не в том режиме (защита от случайных трат).
+  if (isAudit && text.length < 200) {
+    return NextResponse.json({ error: "audit_text_too_short" }, { status: 400 });
+  }
 
   if (!isProxyApiConfigured()) {
     return NextResponse.json({ error: "ai_unavailable" }, { status: 503 });
@@ -169,7 +178,8 @@ async function postHandler(req: Request) {
     const t = await admin.from("ai_threads").select("id").eq("id", tid).eq("user_id", user.id).limit(1).maybeSingle();
     if (!t.data) return NextResponse.json({ error: "thread_not_found" }, { status: 404 });
   } else {
-    const title = text.length > 60 ? text.slice(0, 60) + "…" : text;
+    const rawTitle = isAudit ? `Аудит договора: ${text.slice(0, 40)}…` : text;
+    const title = rawTitle.length > 60 ? rawTitle.slice(0, 60) + "…" : rawTitle;
     const created = await admin
       .from("ai_threads")
       .insert({ user_id: user.id, title })
@@ -206,20 +216,25 @@ async function postHandler(req: Request) {
   }
 
   // Запрос к модели. Ошибка провайдера = 502, деньги НЕ списаны.
-  // maxTokens 3000: reasoning-модель тратит ~500-700 токенов на
-  // внутренние рассуждения (не видны пользователю), остальное — ответ.
+  // maxTokens 3000 (чат) / 4000 (аудит: JSON-отчёт с находками длиннее ответа).
+  // reasoning-модель тратит ~500-700 токенов на внутренние рассуждения.
   let answer: string;
   let tokensIn = 0;
   let tokensOut = 0;
   try {
     const result = await chatCompletion(
       AI_MODEL_CHAT,
-      [
-        { role: "system", content: AI_SYSTEM_PROMPT },
-        ...history,
-        { role: "user", content: buildUserMessage(text, chunks) },
-      ],
-      { temperature: 0, maxTokens: 3000 }
+      isAudit
+        ? [
+            { role: "system", content: AI_AUDIT_SYSTEM_PROMPT },
+            { role: "user", content: buildAuditUserMessage(text, chunks) },
+          ]
+        : [
+            { role: "system", content: AI_SYSTEM_PROMPT },
+            ...history,
+            { role: "user", content: buildUserMessage(text, chunks) },
+          ],
+      { temperature: 0, maxTokens: isAudit ? 4000 : 3000 }
     );
     answer = result.text.trim();
     tokensIn = result.usage.prompt_tokens;
@@ -236,6 +251,9 @@ async function postHandler(req: Request) {
 
   const confidence = checkCitations(answer, chunks);
   const costKopeks = estimateCostKopeks(tokensIn, tokensOut);
+  // Аудит: структурированный отчёт из JSON модели. Не распарсился —
+  // отдаём сырой текст (audit: null), клиент покажет как обычный ответ.
+  const audit = isAudit ? parseAuditReport(answer) : null;
     const sources = chunks.map((c) => ({
       code: c.code,
       article: c.article,
@@ -284,22 +302,23 @@ async function postHandler(req: Request) {
   await admin.from("ai_ledger").insert({
     user_id: user.id,
     delta_kopeks: -price,
-    reason: useQuota ? "quota_question" : isFree ? "free_question" : "chat_message",
-    meta: { thread_id: tid, tokens_in: tokensIn, tokens_out: tokensOut, cost_kopeks: costKopeks, confidence, via_quota: useQuota },
+    reason: isAudit ? "audit" : useQuota ? "quota_question" : isFree ? "free_question" : "chat_message",
+    meta: { thread_id: tid, tokens_in: tokensIn, tokens_out: tokensOut, cost_kopeks: costKopeks, confidence, via_quota: useQuota, mode: isAudit ? "audit" : "chat", audit_score: audit?.score ?? null },
   });
 
   await logUserEvent({
-    event: "ai_message",
+    event: isAudit ? "ai_audit" : "ai_message",
     userId: user.id,
     sessionId: `ai:${tid}`,
     path: "/ai-yurist",
-    meta: { thread_id: tid, free: isFree, via_quota: useQuota, confidence },
+    meta: { thread_id: tid, free: isFree, via_quota: useQuota, confidence, audit_score: audit?.score ?? null },
   });
 
   return NextResponse.json({
     answer,
     sources,
     confidence,
+    audit,
     thread_id: tid,
     free: isFree,
     via_quota: useQuota,

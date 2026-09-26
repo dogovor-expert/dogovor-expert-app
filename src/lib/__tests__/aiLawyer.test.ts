@@ -14,8 +14,11 @@ import {
   resolveQuestionSource,
 } from "@/lib/ai/pricing";
 import {
+  AI_AUDIT_SYSTEM_PROMPT,
+  buildAuditUserMessage,
   buildUserMessage,
   checkCitations,
+  parseAuditReport,
   type LawChunk,
 } from "@/lib/ai/prompt";
 import { aiChatSchema, aiTopupSchema } from "@/lib/validations/api";
@@ -120,13 +123,64 @@ describe("ai validations", () => {
 
   it("aiChatSchema: пустой и слишком длинный — отказ", () => {
     expect(aiChatSchema.safeParse({ text: "x", consent: true }).success).toBe(false);
-    expect(aiChatSchema.safeParse({ text: "x".repeat(4001), consent: true }).success).toBe(false);
+    expect(aiChatSchema.safeParse({ text: "x".repeat(8001), consent: true }).success).toBe(false);
+    expect(aiChatSchema.safeParse({ text: "x".repeat(8000), consent: true }).success).toBe(true);
+  });
+
+  it("aiChatSchema: mode по умолчанию chat, audit проходит явно", () => {
+    const r = aiChatSchema.safeParse({ text: "Что делать при ДТП?", consent: true });
+    expect(r.success).toBe(true);
+    if (r.success) expect(r.data.mode).toBe("chat");
+    expect(aiChatSchema.safeParse({ text: "x".repeat(500), mode: "audit", consent: true }).success).toBe(true);
+    expect(aiChatSchema.safeParse({ text: "Что делать?", mode: "hack", consent: true }).success).toBe(false);
   });
 
   it("aiTopupSchema: границы 100–100000", () => {
     expect(aiTopupSchema.safeParse({ amountRub: 100 }).success).toBe(true);
     expect(aiTopupSchema.safeParse({ amountRub: 99 }).success).toBe(false);
     expect(aiTopupSchema.safeParse({ amountRub: 100001 }).success).toBe(false);
+  });
+});
+
+describe("ai audit", () => {
+  const ANSWER =
+    'Вот отчёт:\n```json\n{"score": 54, "verdict": "Требуются правки", "summary": "Кабальные условия.", "findings": [{"type": "critical", "clause": "п. 4.2", "title": "Невозвратный залог", "problem": "Риск.", "law": "ст. 381.1 ГК РФ", "fix": "«Возврат за 30 дней.»"}]}\n```';
+
+  it("промпт аудита запрещает нормы по памяти и требует JSON", () => {
+    expect(AI_AUDIT_SYSTEM_PROMPT).toContain("```json");
+    expect(AI_AUDIT_SYSTEM_PROMPT).toContain("по памяти");
+  });
+
+  it("buildAuditUserMessage: текст договора + контекст", () => {
+    const msg = buildAuditUserMessage("п. 1. Текст.", [CHUNK]);
+    expect(msg).toContain("ТЕКСТ ДОГОВОРА");
+    expect(msg).toContain("п. 1. Текст.");
+    expect(msg).toContain("ст. 12.37");
+  });
+
+  it("parseAuditReport: валидный JSON из блока", () => {
+    const r = parseAuditReport(ANSWER);
+    expect(r?.score).toBe(54);
+    expect(r?.verdict).toBe("Требуются правки");
+    expect(r?.findings).toHaveLength(1);
+    expect(r?.findings[0].law).toBe("ст. 381.1 ГК РФ");
+  });
+
+  it("parseAuditReport: мусор → null", () => {
+    expect(parseAuditReport("Просто текст без JSON.")).toBe(null);
+    expect(parseAuditReport('{"score": 10}')).toBe(null);
+    expect(parseAuditReport("```json\nне json\n```")).toBe(null);
+  });
+
+  it("parseAuditReport: score клэмпится, verdict чинится, findings режутся до 8", () => {
+    const many = Array.from({ length: 12 }, (_, i) => ({
+      type: "bogus", clause: "п. " + i, title: "t", problem: "p", law: "l", fix: "f",
+    }));
+    const r = parseAuditReport(JSON.stringify({ score: 150, verdict: "???", summary: "s", findings: many }));
+    expect(r?.score).toBe(100);
+    expect(r?.verdict).toBe("Безопасен");
+    expect(r?.findings).toHaveLength(8);
+    expect(r?.findings[0].type).toBe("warning");
   });
 });
 

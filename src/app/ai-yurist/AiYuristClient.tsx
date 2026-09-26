@@ -8,7 +8,6 @@ import {
   Wallet,
   Plus,
   PaperPlaneRight,
-  Paperclip,
   ShieldCheck,
   Star,
   ChatsCircle,
@@ -39,11 +38,28 @@ interface Source {
   locator?: string | null;
 }
 
+interface AuditFinding {
+  type: "critical" | "warning" | "good";
+  clause: string;
+  title: string;
+  problem: string;
+  law: string;
+  fix: string;
+}
+
+interface AuditReport {
+  score: number;
+  verdict: string;
+  summary: string;
+  findings: AuditFinding[];
+}
+
 interface ChatMsg {
   role: "user" | "assistant" | "system";
   content: string;
   sources?: Source[];
   confidence?: "high" | "low";
+  audit?: AuditReport | null;
 }
 
 interface Thread {
@@ -60,6 +76,28 @@ const EXAMPLES = [
 ];
 
 const PACKS = [100, 300, 500, 1000];
+
+const AUDIT_PRESETS: Array<{ id: string; label: string; text: string }> = [
+  {
+    id: "rent",
+    label: "Аренда — риски жильца",
+    text: "4.2. Арендодатель вправе в любое время в одностороннем внесудебном порядке отказаться от исполнения договора, уведомив Арендатора за 3 календарных дня. При этом обеспечительный платеж (залог) Арендатору не возвращается и удерживается в качестве штрафа.\n5.4. В случае просрочки внесения арендной платы более чем на 2 дня, Арендатор уплачивает пеню в размере 1% от суммы задолженности за каждый день просрочки.\n6.1. Арендодатель имеет право посещать жилое помещение в любое время суток без предварительного уведомления Арендатора для проверки состояния имущества.\n7.3. Договор заключен сроком на 11 месяцев с момента подписания.",
+  },
+  {
+    id: "podryad",
+    label: "Подряд — риски исполнителя",
+    text: "3.2. Заказчик рассматривает Акт сдачи-приемки выполненных работ в течение неограниченного времени до полного устранения всех возможных замечаний.\n4.1. Оплата производится в течение 90 банковских дней с момента подписания Акта при наличии финансирования от инвестора.\n8.2. Подрядчик несет ответственность за просрочку даже в случае непредоставления Заказчиком площадки и проектной документации.",
+  },
+  {
+    id: "samozanyaty",
+    label: "Самозанятый — переквалификация",
+    text: "1.3. Исполнитель обязуется соблюдать правила внутреннего трудового распорядка и находиться в офисе с 09:00 до 18:00.\n3.1. Выплачивается фиксированное ежемесячное вознаграждение 85 000 руб. 5-го и 20-го числа каждого месяца.\n2.4. Исполнитель выполняет распоряжения руководителя отдела маркетинга.",
+  },
+];
+
+function scrollToAudit() {
+  document.getElementById("ai-audit")?.scrollIntoView({ behavior: "smooth" });
+}
 
 /** Ключ последнего открытого диалога — чтобы восстанавливать чат после F5. */
 const LAST_THREAD_KEY = "ai_last_thread";
@@ -119,6 +157,12 @@ export default function AiYuristClient({
   const [authed, setAuthed] = useState<boolean | null>(initialAuthed);
   const [topupDone, setTopupDone] = useState(false);
   const [exporting, setExporting] = useState<"pdf" | "docx" | null>(null);
+  const [auditText, setAuditText] = useState(AUDIT_PRESETS[0].text);
+  const [auditPreset, setAuditPreset] = useState(AUDIT_PRESETS[0].id);
+  const [auditSending, setAuditSending] = useState(false);
+  const [auditReport, setAuditReport] = useState<AuditReport | null>(null);
+  const [auditSources, setAuditSources] = useState<Source[]>([]);
+  const [auditError, setAuditError] = useState<string | null>(null);
   const boxRef = useRef<HTMLDivElement>(null);
   const restoredRef = useRef(false);
   const searchParams = useSearchParams();
@@ -316,6 +360,76 @@ export default function AiYuristClient({
     [consent, sending, threadId, loadBalance, loadThreads]
   );
 
+  /** Настоящий аудит договора: mode=audit, отчёт JSON парсится сервером. */
+  const sendAudit = useCallback(async () => {
+    const text = auditText.trim();
+    if (!text || auditSending) return;
+    if (text.length < 200) {
+      setAuditError("Вставьте текст договора — минимум 200 символов, иначе это обычный вопрос для чата выше.");
+      return;
+    }
+    if (!consent) {
+      setAuditError("Поставьте галочку согласия на обработку данных в чате выше — она действует и для проверки.");
+      return;
+    }
+    setAuditError(null);
+    setAuditReport(null);
+    setAuditSources([]);
+    setAuditSending(true);
+    try {
+      const token = await fetchCsrf();
+      const res = await fetch("/api/ai/chat", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json", "x-csrf-token": token },
+        body: JSON.stringify({ text, threadId, consent: true, mode: "audit" }),
+      });
+      if (res.status === 400) {
+        setAuditError("Текст слишком короткий или некорректный. Минимум — 200 символов.");
+        return;
+      }
+      if (res.status === 402) {
+        setAuditError("Недостаточно средств на AI-балансе. Пополните — от 100 ₽, деньги не сгорают.");
+        setTopupOpen(true);
+        return;
+      }
+      if (res.status === 409) {
+        setAuditError("Параллельный запрос изменил баланс. Нажмите «Проверить» ещё раз.");
+        return;
+      }
+      if (!res.ok) {
+        setAuditError("Сервис временно недоступен. Деньги не списаны — попробуйте позже.");
+        return;
+      }
+      const d = (await res.json()) as {
+        answer: string;
+        sources: Source[];
+        audit: AuditReport | null;
+        thread_id: string;
+        balance_kopeks: number;
+      };
+      setThreadId(d.thread_id);
+      try {
+        window.localStorage.setItem(LAST_THREAD_KEY, d.thread_id);
+      } catch {
+        /* ignore */
+      }
+      setBalance(d.balance_kopeks);
+      setLow(d.balance_kopeks < 2000);
+      setAuditReport(d.audit);
+      setAuditSources(d.sources ?? []);
+      if (!d.audit) {
+        setAuditError("Модель вернула ответ не в формате отчёта — попробуйте ещё раз или задайте вопрос в чате.");
+      }
+      void loadThreads();
+      void loadBalance();
+    } catch {
+      setAuditError("Сеть недоступна. Деньги не списаны — попробуйте позже.");
+    } finally {
+      setAuditSending(false);
+    }
+  }, [auditText, auditSending, consent, threadId, loadBalance, loadThreads]);
+
   const doTopup = useCallback(async () => {
     setTopupBusy(true);
     try {
@@ -358,25 +472,28 @@ export default function AiYuristClient({
       {/* Hero */}
       <div className="grid items-center gap-6 py-4 lg:grid-cols-[1.05fr_0.95fr]">
         <div>
-          <p className="mb-3 inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3.5 py-1.5 text-xs font-bold text-brand-700">
-            <Scales size={15} weight="fill" /> AI-юрист · отвечает по действующим законам
+          <p className="mb-3 inline-flex items-center gap-1.5 rounded-full bg-slate-950 px-3.5 py-1.5 text-xs font-bold text-indigo-300">
+            <span className="relative flex h-2 w-2"><span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" /><span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" /></span>
+            AI-Юрист — проверка и генерация документов за секунду
           </p>
           <h2 className="text-3xl font-extrabold leading-tight sm:text-4xl">
-            Спросите по-русски — <span className="text-brand-600">ответим по закону</span> за 10 секунд
+            Ваш личный юрист, <span className="bg-gradient-to-r from-brand-600 to-indigo-500 bg-clip-text text-transparent">работающий 24/7</span>
           </h2>
           <p className="mt-3 max-w-xl text-slate-600">
+            Проверьте договор, напишите претензию или соберите документ из простого описания ситуации.
             Каждый ответ — со <b className="text-slate-900">ссылками на статьи</b> действующих редакций 2026 года,
             а не «из головы». Стоит <b className="text-slate-900">от 14 ₽</b> — в разы дешевле живого юриста.
             И сразу превращает ответ в <b className="text-slate-900">готовый документ</b>.
           </p>
           <div className="mt-4 flex flex-wrap gap-2.5">
             <Button onClick={scrollToChat}>Задать вопрос — бесплатно <ArrowRight size={16} weight="bold" /></Button>
+            <Button variant="outline" onClick={scrollToAudit}>Проверить договор — 19 ₽</Button>
             <Button variant="outline" onClick={() => document.getElementById("ai-tariffs")?.scrollIntoView({ behavior: "smooth" })}>Сколько стоит</Button>
           </div>
-          <div className="mt-4 flex flex-wrap gap-x-5 gap-y-1.5 text-[13px] text-slate-600">
-            <span className="flex items-center gap-1.5"><CheckCircle size={16} weight="fill" className="text-emerald-600" /> 2 первых вопроса — 0 ₽</span>
-            <span className="flex items-center gap-1.5"><CheckCircle size={16} weight="fill" className="text-emerald-600" /> Без подписки, баланс не сгорает</span>
-            <span className="flex items-center gap-1.5"><CheckCircle size={16} weight="fill" className="text-emerald-600" /> Цитаты статей в каждом ответе</span>
+          <div className="mt-4 flex flex-wrap gap-2 text-xs font-medium text-slate-600">
+            <span className="flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1.5"><CheckCircle size={15} weight="fill" className="text-emerald-600" /> На основе законов РФ</span>
+            <span className="flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1.5"><CheckCircle size={15} weight="fill" className="text-emerald-600" /> 2 первых вопроса — 0 ₽, без карты</span>
+            <span className="flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1.5"><CheckCircle size={15} weight="fill" className="text-emerald-600" /> 24/7, из любого часового пояса</span>
           </div>
         </div>
         <Card className="overflow-hidden p-0">
@@ -390,6 +507,11 @@ export default function AiYuristClient({
               Новый владелец обязан переоформить авто за <b>10 дней</b>. На 11-й день прекратите регистрацию сами через Госуслуги.
               <div className="mt-2 rounded-lg bg-slate-50 p-2 text-xs">
                 <b className="text-brand-700">п. 60 Правил № 1764</b> · «прежний владелец вправе прекратить регистрацию по истечении 10 суток» <span className="text-slate-500">· ред. 2026</span>
+              </div>
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                <button onClick={scrollToChat} className="rounded-lg bg-slate-950 px-3 py-1.5 text-xs font-bold text-white">Составить документ →</button>
+                <span className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600">PDF</span>
+                <span className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600">DOCX</span>
               </div>
             </div>
           </div>
@@ -614,8 +736,8 @@ export default function AiYuristClient({
 
               <div className="border-t border-slate-100 p-3">
                 <div className="flex items-center gap-2">
-                  <button title="Прикрепить файл — скоро" className="rounded-xl border border-slate-200 p-3 text-slate-400" disabled>
-                    <Paperclip size={18} weight="bold" />
+                  <button onClick={scrollToAudit} title="Проверить договор — аудит по пунктам" className="rounded-xl border border-slate-200 p-3 text-brand-600 transition hover:bg-brand-50">
+                    <MagnifyingGlass size={18} weight="bold" />
                   </button>
                   <input
                     value={draft}
@@ -625,7 +747,7 @@ export default function AiYuristClient({
                     className="flex-1 rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none focus:border-brand-500"
                     maxLength={4000}
                   />
-                  <Button onClick={() => void send(draft)} disabled={sending}>
+                  <Button onClick={() => void send(draft)} disabled={sending} className="bg-gradient-to-br from-brand-600 to-indigo-600">
                     <PaperPlaneRight size={16} weight="bold" /> Спросить
                   </Button>
                 </div>
@@ -640,6 +762,151 @@ export default function AiYuristClient({
             </Card>
           </div>
         )}
+      </div>
+
+      {/* Проверка договора */}
+      <div id="ai-audit" className="scroll-mt-4 pt-8">
+        <h2 className="text-xl font-extrabold">Проверка договора — найдём риски до подписания</h2>
+        <p className="mb-3 mt-1 max-w-3xl text-sm text-slate-500">Вставьте текст договора — AI-юрист сверит пункты с действующими законами, выставит индекс безопасности и предложит безопасные формулировки. Требуется вход: 1 проверка = 19 ₽ или из бесплатных вопросов.</p>
+        <Card className="overflow-hidden p-0">
+          <div className="flex flex-col gap-3 border-b border-slate-100 bg-slate-50/70 p-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-3">
+              <div className="relative grid h-11 w-11 place-items-center rounded-2xl bg-gradient-to-br from-brand-600 to-indigo-600 text-white shadow">
+                <MagnifyingGlass size={22} weight="bold" />
+                <span className="absolute -right-0.5 -top-0.5 flex h-3.5 w-3.5"><span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" /><span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500" /></span>
+              </div>
+              <div>
+                <p className="flex items-center gap-2 text-sm font-bold">Аудит договора <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold uppercase text-emerald-700">● Online</span></p>
+                <p className="text-xs text-slate-500">RAG-поиск по кодексам + проверка цитат</p>
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {AUDIT_PRESETS.map((p) => (
+                <button
+                  key={p.id}
+                  onClick={() => { setAuditPreset(p.id); setAuditText(p.text); setAuditReport(null); setAuditError(null); }}
+                  className={`rounded-xl border px-3.5 py-2 text-xs font-bold ${auditPreset === p.id ? "border-brand-600 bg-brand-50 text-brand-700" : "border-slate-200 bg-white text-slate-700"}`}
+                >
+                  {p.label}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="grid gap-5 p-4 sm:p-5 lg:grid-cols-2">
+            <div className="flex flex-col">
+              <div className="flex items-center justify-between pb-2">
+                <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Текст договора (до 8000 символов)</span>
+                <span className="flex items-center gap-1 text-[11px] text-slate-400"><ShieldCheck size={13} /> Данные в РФ</span>
+              </div>
+              <textarea
+                value={auditText}
+                onChange={(e) => setAuditText(e.target.value)}
+                rows={9}
+                maxLength={8000}
+                placeholder="Вставьте сюда пункты договора для проверки…"
+                className="w-full flex-1 rounded-2xl border border-slate-200 bg-slate-50/50 p-4 font-mono text-xs leading-relaxed outline-none placeholder:text-slate-400 focus:border-brand-500 focus:bg-white"
+              />
+              <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <span className="text-[11px] text-slate-400">Символов: {auditText.length} / 8000 · минимум 200</span>
+                <Button onClick={() => void sendAudit()} disabled={auditSending} className="bg-gradient-to-br from-brand-600 to-indigo-600">
+                  <MagnifyingGlass size={16} weight="bold" /> {auditSending ? "Проверяем…" : "Проверить договор — 19 ₽"}
+                </Button>
+              </div>
+              {auditSending && (
+                <div className="mt-2 flex gap-1.5 rounded-xl border border-slate-200 px-4 py-3">
+                  <span className="h-2 w-2 animate-pulse rounded-full bg-slate-300" />
+                  <span className="h-2 w-2 animate-pulse rounded-full bg-slate-300" />
+                  <span className="h-2 w-2 animate-pulse rounded-full bg-slate-300" />
+                  <span className="ml-1 text-xs text-slate-500">RAG-поиск по кодексам → разбор рисков → проверка цитат…</span>
+                </div>
+              )}
+              {auditError && (
+                <p className="mt-2 flex items-center gap-2 rounded-lg bg-red-50 px-3 py-2 text-[13px] text-red-700">
+                  <Warning size={16} weight="fill" /> {auditError}
+                </p>
+              )}
+            </div>
+            <div className="flex flex-col rounded-2xl border border-slate-200/90 bg-slate-50/50 p-4 sm:p-5">
+              {!auditReport && !auditSending && (
+                <div className="flex flex-1 flex-col items-center justify-center py-10 text-center text-slate-400">
+                  <MagnifyingGlass size={36} weight="bold" className="text-slate-300" />
+                  <p className="mt-3 text-sm font-bold text-slate-600">Нажмите «Проверить договор — 19 ₽»</p>
+                  <p className="mt-1 text-xs">Настоящий разбор: RAG-поиск статей, индекс риска, безопасные формулировки.</p>
+                </div>
+              )}
+              {auditReport && (
+                <>
+                  <div className="flex flex-col gap-3 border-b border-slate-200 pb-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <div className="text-xs font-bold uppercase tracking-wider text-slate-400">Индекс безопасности</div>
+                      <div className="mt-1 flex items-baseline gap-2">
+                        <span className={`text-3xl font-extrabold ${auditReport.score < 50 ? "text-rose-600" : auditReport.score < 80 ? "text-amber-600" : "text-emerald-600"}`}>{auditReport.score} / 100</span>
+                        <span className={`rounded-full px-2.5 py-0.5 text-xs font-bold ${auditReport.score < 50 ? "bg-rose-100 text-rose-700" : auditReport.score < 80 ? "bg-amber-100 text-amber-700" : "bg-emerald-100 text-emerald-700"}`}>{auditReport.verdict}</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 text-xs font-bold">
+                      {auditReport.findings.filter((f) => f.type === "critical").length > 0 && (
+                        <span className="rounded-lg border border-rose-200 bg-rose-50 px-2.5 py-1 text-rose-700">🔴 {auditReport.findings.filter((f) => f.type === "critical").length} критичных</span>
+                      )}
+                      {auditReport.findings.filter((f) => f.type === "warning").length > 0 && (
+                        <span className="rounded-lg border border-amber-200 bg-amber-50 px-2.5 py-1 text-amber-700">⚠️ {auditReport.findings.filter((f) => f.type === "warning").length} замечаний</span>
+                      )}
+                      {auditReport.findings.filter((f) => f.type === "good").length > 0 && (
+                        <span className="rounded-lg border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-emerald-700">✅ {auditReport.findings.filter((f) => f.type === "good").length} ОК</span>
+                      )}
+                    </div>
+                  </div>
+                  {auditReport.summary && (
+                    <div className="mt-3 rounded-xl border border-slate-200 bg-white p-3 text-xs leading-relaxed text-slate-700">
+                      <span className="font-bold text-slate-900">Заключение AI-Юриста: </span>{auditReport.summary}
+                    </div>
+                  )}
+                  <div className="mt-4 space-y-3">
+                    {auditReport.findings.map((f, i) => (
+                      <div key={i} className={`rounded-xl border p-3.5 ${f.type === "critical" ? "border-rose-200 bg-rose-50/40" : f.type === "warning" ? "border-amber-200 bg-amber-50/40" : "border-emerald-200 bg-emerald-50/40"}`}>
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex items-center gap-2">
+                            <span className={`grid h-5 w-5 shrink-0 place-items-center rounded-full text-[10px] font-bold text-white ${f.type === "critical" ? "bg-rose-600" : f.type === "warning" ? "bg-amber-500" : "bg-emerald-600"}`}>{f.type === "critical" ? "!" : f.type === "warning" ? "?" : "✓"}</span>
+                            <span className="rounded bg-white px-1.5 py-0.5 font-mono text-[11px] font-bold text-slate-700 shadow-sm">{f.clause}</span>
+                            <h4 className="text-xs font-bold text-slate-900">{f.title}</h4>
+                          </div>
+                          {f.law && <span className="shrink-0 text-[10px] font-semibold text-slate-500">{f.law}</span>}
+                        </div>
+                        {f.type === "good" ? (
+                          <p className="mt-2 text-xs leading-relaxed text-emerald-800">{f.fix}</p>
+                        ) : (
+                          <>
+                            {f.problem && <p className="mt-2 text-xs leading-relaxed text-slate-600">{f.problem}</p>}
+                            {f.fix && (
+                              <div className="mt-2.5 rounded-lg border border-slate-200/80 bg-white p-3">
+                                <div className="text-[11px] font-bold text-brand-700">Безопасная формулировка от AI-юриста:</div>
+                                <p className="mt-1.5 font-mono text-[11px] leading-relaxed text-slate-800">{f.fix}</p>
+                              </div>
+                            )}
+                          </>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                  {auditSources.length > 0 && (
+                    <div className="mt-3 border-t border-slate-200 pt-3">
+                      <p className="mb-1.5 text-[11px] font-bold uppercase tracking-wider text-slate-400">Нормы из базы ({auditSources.length})</p>
+                      <div className="grid gap-1.5">
+                        {auditSources.map((s, j) => (
+                          <div key={j} className="rounded-lg border border-slate-200 border-l-4 border-l-brand-500 bg-white px-3 py-2 text-xs">
+                            <b className="text-brand-700">{s.code}, {s.article}</b>
+                            <span className="block text-slate-400">ред. {s.edition_date ?? "—"} · проверено по базе</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  <p className="mt-4 rounded-xl bg-slate-950 px-4 py-3 text-center text-[13px] text-slate-300">Проверка сохранена в истории диалогов · Информация общего характера, не юридическая консультация</p>
+                </>
+              )}
+            </div>
+          </div>
+        </Card>
       </div>
 
       {/* Почему точнее */}
@@ -663,13 +930,21 @@ export default function AiYuristClient({
         <p className="mb-3 mt-1 max-w-3xl text-sm text-slate-500">Пополнили от 100 ₽ — тратите, пока не закончится. Баланс не сгорает. Чем больше сумма, тем больше бонус. Оплата картой МИР, Visa, СБП через ЮKassa.</p>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {PACKS.map((p) => (
-            <Card key={p} className={`p-5 text-center ${p === 300 ? "border-2 border-brand-500" : ""}`}>
-              {p === 300 && <p className="-mt-8 mb-2 inline-block rounded-full bg-brand-600 px-3 py-0.5 text-[10.5px] font-extrabold text-white">БЕРУТ ЧАЩЕ ВСЕГО</p>}
-              <p className="text-2xl font-extrabold">{p} ₽</p>
-              <p className="text-xl font-extrabold text-emerald-600">≈{messagesForTopup(p)} сообщений</p>
-              <p className="text-xs text-slate-500">бонус {p >= 1000 ? "+30%" : p >= 500 ? "+20%" : p >= 300 ? "+10%" : "—"}</p>
-              <Button className="mt-3 w-full" variant={p === 300 ? "primary" : "outline"} onClick={() => { setTopupSum(p); setTopupOpen(true); }}>Пополнить</Button>
-            </Card>
+            p === 300 ? (
+              <div key={p} className="relative rounded-2xl bg-slate-950 p-5 text-center text-white shadow-2xl lg:-translate-y-2">
+                <p className="absolute -top-3 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-amber-400 px-3 py-0.5 text-[10.5px] font-extrabold uppercase text-slate-900">Берут чаще всего</p>
+                <p className="text-2xl font-extrabold">{p} ₽</p>
+                <p className="text-xl font-extrabold text-emerald-400">≈{messagesForTopup(p)} сообщений +10%</p>
+                <Button className="mt-3 w-full bg-white text-slate-900 hover:bg-slate-100" onClick={() => { setTopupSum(p); setTopupOpen(true); }}>Пополнить</Button>
+              </div>
+            ) : (
+              <Card key={p} className="p-5 text-center">
+                <p className="text-2xl font-extrabold">{p} ₽</p>
+                <p className="text-xl font-extrabold text-emerald-600">≈{messagesForTopup(p)} сообщений{p >= 500 ? ` +${p >= 1000 ? "30" : "20"}%` : ""}</p>
+                <p className="text-xs text-slate-500">бонус {p >= 1000 ? "+30%" : p >= 500 ? "+20%" : "—"}</p>
+                <Button className="mt-3 w-full" variant="outline" onClick={() => { setTopupSum(p); setTopupOpen(true); }}>Пополнить</Button>
+              </Card>
+            )
           ))}
         </div>
         <p className="mt-3 flex items-center gap-2 rounded-xl bg-emerald-50 px-4 py-3 text-[13px] text-emerald-800">
@@ -688,7 +963,7 @@ export default function AiYuristClient({
                 ["Откуда статьи", "Из памяти — номера выдумываются", "Из кодексов: статья + цитата + дата редакции"],
                 ["Законы 2026", "Срез знаний устаревает", "База обновляется при изменении законов"],
                 ["На выходе", "Текст — проверяйте и перепечатывайте сами", "Готовый документ в 1 клик, 570 шаблонов"],
-                ["Ваш договор", "«В целом нормально», без норм", "Разбор по пунктам со статьями и рисками — скоро"],
+                ["Ваш договор", "«В целом нормально», без норм", "Аудит по пунктам: индекс, риски, безопасные формулировки ↑"],
                 ["Память дела", "Каждый раз с нуля", "История, черновики, контекст ваших сделок"],
                 ["Ваши данные", "Уходят на обучение модели", "Не используются для обучения, файлы — 24 часа"],
               ].map(([label, free, us]) => (
@@ -758,7 +1033,7 @@ export default function AiYuristClient({
 
       <p className="mt-6 flex items-center gap-2 text-sm text-slate-500">
         <Clock size={17} weight="fill" className="text-slate-400" />
-        Скоро: разбор договоров и фото, голосовые и видео. Следите за обновлениями.
+        Аудит договоров уже работает ↑ · разбор фото, голосовые и видео — следите за обновлениями.
       </p>
 
       {topupOpen && (

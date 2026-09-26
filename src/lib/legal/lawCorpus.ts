@@ -39,6 +39,8 @@ export const LAW_DOCUMENTS: LawDocumentMeta[] = [
   { code: "КоАП РФ", title: "Кодекс Российской Федерации об административных правонарушениях", nd: "102074277", mustContain: ["Статья 1.1", "Статья 12.37", "Статья 32.14"] },
   { code: "ЗоЗПП", title: "Закон Российской Федерации о защите прав потребителей", nd: "102014512", mustContain: ["Статья 1", "Статья 46"] },
   { code: "СК РФ", title: "Семейный кодекс Российской Федерации", nd: "102038925", mustContain: ["Статья 1", "Статья 34", "Статья 170"] },
+  { code: "НК РФ часть 1", title: "Налоговый кодекс Российской Федерации (часть первая)", nd: "102054722", mustContain: ["Статья 1", "Статья 138"] },
+  { code: "УК РФ", title: "Уголовный кодекс Российской Федерации", nd: "102041891", mustContain: ["Статья 1", "Статья 361"] },
 ].map((document) => ({
   ...document,
   officialSourceUrl: `${OFFICIAL_IPS_BASE}/?nd=${document.nd}`,
@@ -92,26 +94,50 @@ export function extractArchiveText(archiveBytes: Uint8Array): { text: string; ar
   if (partStart === -1) throw new Error("MHTML-архив не содержит text/html части");
   const headerEnd = raw.indexOf("\r\n\r\n", partStart);
   if (headerEnd === -1) throw new Error("MHTML-архив: повреждённые заголовки части");
-  const boundary = raw.match(/boundary="([^"]+)"/)?.[1];
-  let partRaw = boundary
-    ? raw.slice(headerEnd + 4, raw.indexOf(boundary, headerEnd))
-    : raw.slice(headerEnd + 4);
-  partRaw = partRaw.replace(/\r\n/g, "\n");
-
-  // quoted-printable → байты (=XX hex, мягкий перенос "=\n" отбрасываем)
-  const out: number[] = [];
-  for (let i = 0; i < partRaw.length; i++) {
-    const ch = partRaw[i];
-    if (ch === "=" && /^[0-9A-Fa-f]{2}$/.test(partRaw.slice(i + 1, i + 3))) {
-      out.push(parseInt(partRaw.slice(i + 1, i + 3), 16));
-      i += 2;
-    } else if (ch === "=" && partRaw[i + 1] === "\n") {
-      i += 1;
-    } else {
-      out.push(partRaw.charCodeAt(i) & 0xff);
-    }
+  const headerBlock = raw.slice(partStart, headerEnd);
+  const bodyStart = headerEnd + 4;
+  // Граница части: boundary ищем в строке Content-Type заголовка ВСЕГО
+  // архива (MIME-Version ... Content-Type: multipart/related), а НЕ первым
+  // вхождением по всему тексту — значение boundary может случайно
+  // встретиться внутри HTML-тела. Совпадение — только со знаком -- в начале
+  // строки. Заголовка нет (IPS pravo.gov.ru) — тело идёт до конца архива.
+  const topHeaders = raw.slice(0, partStart);
+  const boundaryParam = topHeaders.match(/boundary="?([^"\s;]+)"?/i)?.[1];
+  let partRaw: string;
+  if (boundaryParam) {
+    const marker = new RegExp(`^--${boundaryParam.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}`, "m");
+    const mm = marker.exec(raw.slice(bodyStart));
+    partRaw = mm ? raw.slice(bodyStart, bodyStart + mm.index) : raw.slice(bodyStart);
+  } else {
+    partRaw = raw.slice(bodyStart);
   }
-  const html = new TextDecoder("windows-1251").decode(new Uint8Array(out));
+  // Декодирование тела по Content-Transfer-Encoding (quoted-printable/base64/8bit).
+  let html: string;
+  if (/content-transfer-encoding:\s*base64/i.test(headerBlock)) {
+    const b64 = partRaw.replace(/\s+/g, "");
+    const bin = Uint8Array.from(Buffer.from(b64, "base64"));
+    html = new TextDecoder("windows-1251").decode(bin);
+  } else if (/content-transfer-encoding:\s*(binary|8bit|7bit)/i.test(headerBlock)) {
+    const bytes = new Uint8Array(partRaw.length);
+    for (let i = 0; i < partRaw.length; i++) bytes[i] = partRaw.charCodeAt(i) & 0xff;
+    html = new TextDecoder("windows-1251").decode(bytes);
+  } else {
+    // quoted-printable (дефолт MHTML): =XX hex, мягкий перенос "=\n" отбрасываем.
+    // Важно: \r\n нормализуем ПОСЛЕ декодирования, иначе =XX на границе строк рвётся.
+    const out: number[] = [];
+    for (let i = 0; i < partRaw.length; i++) {
+      const ch = partRaw[i];
+      if (ch === "=" && /^[0-9A-Fa-f]{2}$/.test(partRaw.slice(i + 1, i + 3))) {
+        out.push(parseInt(partRaw.slice(i + 1, i + 3), 16));
+        i += 2;
+      } else if (ch === "=" && (partRaw[i + 1] === "\n" || (partRaw[i + 1] === "\r" && partRaw[i + 2] === "\n"))) {
+        i += partRaw[i + 1] === "\r" ? 2 : 1;
+      } else {
+        out.push(partRaw.charCodeAt(i) & 0xff);
+      }
+    }
+    html = new TextDecoder("windows-1251").decode(new Uint8Array(out));
+  }
 
   const text = stripMarkup(html)
     .replace(/\r/g, "")

@@ -175,10 +175,13 @@ export const npdSchema = z.object({
 
 // Вопрос: текст 2-4000 символов, threadId опционален (новый диалог — без него).
 // consent — обязательное согласие на обработку (вопрос может содержать ПДн).
+// mode: 'chat' — обычный вопрос, 'audit' — проверка договора (длинный текст,
+// отчёт JSON: индекс + находки; тарифицируется как 1 сообщение).
 export const aiChatSchema = z.object({
-  text: z.string().min(2, 'Вопрос слишком короткий').max(4000, 'Слишком длинное сообщение'),
+  text: z.string().min(2, 'Вопрос слишком короткий').max(8000, 'Слишком длинное сообщение'),
   threadId: z.string().uuid('Некорректный threadId').nullish(),
   consent: z.literal(true, { errorMap: () => ({ message: 'Необходимо согласие на обработку данных' }) }),
+  mode: z.enum(['chat', 'audit']).optional().default('chat'),
 }).strict();
 
 export type AiChatInput = z.infer<typeof aiChatSchema>;
