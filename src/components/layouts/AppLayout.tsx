@@ -13,6 +13,7 @@ import {
   HardDrive, Download, Cookie, Moon, Sun, Scale
 } from "lucide-react";
 import HeaderSearch from "@/components/search/HeaderSearch";
+import Logo from "@/components/layout/Logo";
 import { CookieBanner } from "@/components/cookie/CookieBanner";
 import { useCookieConsent } from "@/hooks/useCookieConsent";
 import { useSidebarTheme } from "@/lib/hooks/useSidebarTheme";
@@ -257,12 +258,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
           : "hidden lg:flex lg:static"
       }`}>
         <div className={`flex items-center justify-between h-16 px-6 border-b flex-shrink-0 ${sidebarDark ? "border-dark-800" : "border-gray-100"}`}>
-          <Link href="/" className="flex items-center gap-2.5 group">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-brand-500 to-purple-600 flex items-center justify-center text-white text-sm font-bold shadow-sm">
-              D
-            </div>
-            <span className={`font-semibold group-hover:text-brand-500 transition-colors ${sidebarDark ? "text-white" : "text-gray-900"}`}>Dogovor.expert</span>
-          </Link>
+          <Logo dark={sidebarDark} />
           <button onClick={() => setOpen(false)} className={`lg:hidden p-2.5 rounded-lg ${sidebarDark ? "hover:bg-white/10" : "hover:bg-gray-100"}`} aria-label="Закрыть меню навигации">
             <X className={`w-5 h-5 ${sidebarDark ? "text-slate-300" : "text-gray-600"}`} />
           </button>
@@ -390,6 +386,10 @@ export default function AppLayout({ children }: { children: ReactNode }) {
             <button onClick={() => setOpen(true)} className="lg:hidden p-2.5 hover:bg-gray-100 rounded-lg" aria-label="Открыть меню навигации">
               <Menu className="w-5 h-5 text-gray-600" />
             </button>
+            {/* Логотип в шапке — как в макете главной; на десктопе его несёт сайдбар */}
+            <div className="lg:hidden">
+              <Logo tagline={false} />
+            </div>
             <HeaderSearch />
             <PromoPill />
           </div>
@@ -456,6 +456,12 @@ export default function AppLayout({ children }: { children: ReactNode }) {
                 >
                   <LogIn className="w-4 h-4" />
                   Войти
+                </Link>
+                <Link
+                  href="/builder"
+                  className="hidden sm:inline-flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-white bg-gradient-to-br from-brand-600 to-blue-700 rounded-xl shadow-lg shadow-brand-600/25 transition hover:shadow-brand-600/40 hover:brightness-110"
+                >
+                  Начать бесплатно
                 </Link>
               </>
             )}

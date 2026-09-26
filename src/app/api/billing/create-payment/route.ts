@@ -32,7 +32,7 @@ async function postHandler(req: Request) {
   const host = req.headers.get("host") ?? "dogovor.expert";
   const proto = host.includes("localhost") || host.includes("127.0.0.1") ? "http" : "https";
 
-  // План: "pro" (по умолчанию) или "ai" (тариф «AI-юрист»: 490 ₽/мес,
+  // План: "pro" (по умолчанию) или "ai" (тариф «AI-юрист»: 690 ₽/мес,
   // 200 вопросов, квота выставляется вебхуком при активации).
   let plan: "pro" | "ai" = "pro";
   try {

@@ -12,8 +12,8 @@ export const AI_MIN_TOPUP_KOPEKS = 10000; // 100 ₽ — мин. пополне�
 export const AI_LOW_BALANCE_KOPEKS = 2000; // 20 ₽ — порог «низкий баланс»
 
 // --- Тариф «AI-юрист» (подписка, квоты) ---
-export const AI_PLAN_PRICE_RUB = 490; // 490 ₽/мес
-export const AI_PLAN_PRICE_KOPEKS = 49000;
+export const AI_PLAN_PRICE_RUB = 690; // 690 ₽/мес
+export const AI_PLAN_PRICE_KOPEKS = 69000;
 export const AI_PLAN_QUESTIONS = 200; // вопросов в месяц, сгорают
 export const AI_PLAN_PERIOD_DAYS = 30;
 

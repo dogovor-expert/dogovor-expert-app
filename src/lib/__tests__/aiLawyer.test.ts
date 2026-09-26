@@ -131,8 +131,8 @@ describe("ai validations", () => {
 });
 
 describe("ai plan quota", () => {
-  it("тариф: 490 ₽, 200 вопросов в месяц", () => {
-    expect(AI_PLAN_PRICE_KOPEKS).toBe(49000);
+  it("тариф: 690 ₽, 200 вопросов в месяц", () => {
+    expect(AI_PLAN_PRICE_KOPEKS).toBe(69000);
     expect(AI_PLAN_QUESTIONS).toBe(200);
   });
 
