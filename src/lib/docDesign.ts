@@ -21,6 +21,12 @@ export interface DesignFonts {
   bolditalic: string;
   /** Имя семейства для DOCX/Word и печатного CSS. */
   family: string;
+  /**
+   * Системное семейство ТОЛЬКО для DOCX. Библиотека docx не встраивает
+   * шрифты, поэтому здесь обязан быть шрифт, имеющийся на любой машине
+   * (Word иначе делает подмену и документ выглядит «некорректно»).
+   */
+  officeFamily: string;
 }
 
 export interface FitCompression {
@@ -162,6 +168,7 @@ const CLASSIC: DesignTokens = {
     italic: "/fonts/pt-serif-italic.ttf",
     bolditalic: "/fonts/pt-serif-bolditalic.ttf",
     family: "Times New Roman",
+    officeFamily: "Times New Roman",
   },
   titleFontSize: 16,
   subheadingFontSize: 13,
@@ -202,6 +209,7 @@ const MINIMAL: DesignTokens = {
     italic: "/fonts/inter-italic.ttf",
     bolditalic: "/fonts/inter-bolditalic.ttf",
     family: "Inter",
+    officeFamily: "Calibri",
   },
   titleFontSize: 16,
   subheadingFontSize: 13,
@@ -242,6 +250,7 @@ const BRAND: DesignTokens = {
     italic: "/fonts/inter-italic.ttf",
     bolditalic: "/fonts/inter-bolditalic.ttf",
     family: "Inter",
+    officeFamily: "Calibri",
   },
   titleFontSize: 16,
   subheadingFontSize: 13,

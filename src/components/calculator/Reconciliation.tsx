@@ -171,7 +171,8 @@ export default function Reconciliation() {
       const { buildPdf } = await import("@/lib/exportPdf");
       const html = `<div class="doc-page">${buildAktHtml(form, rows)}</div>`;
       const { blob } = await buildPdf(html, { design: "classic", pageNumbers: true });
-      const { saveAs } = await import("file-saver");
+      const { loadSaveAs } = await import("@/lib/download");
+      const saveAs = await loadSaveAs();
       saveAs(blob, `Акт_сверки_${form.periodTo || "период"}.pdf`);
     } catch {
       setError("Не удалось сформировать PDF");

@@ -84,15 +84,16 @@ export function chatExportFilename(kind: "chat" | "message", date: string): stri
 }
 
 export async function downloadChatPdf(html: string, filename: string): Promise<void> {
-  const [{ buildPdf }, { saveAs }] = await Promise.all([
+  const [{ buildPdf }, { loadSaveAs }] = await Promise.all([
     import("@/lib/exportPdf"),
-    import("file-saver"),
+    import("@/lib/download"),
   ]);
   const { blob } = await buildPdf(html, {
     design: "brand",
     pageNumbers: true,
     branding: true,
   });
+  const saveAs = await loadSaveAs();
   saveAs(blob, `${filename}.pdf`);
 }
 

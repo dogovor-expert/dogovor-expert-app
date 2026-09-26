@@ -125,7 +125,7 @@ function toRuns(
       return new TextRun({
         text: '\u00A0'.repeat(it.blank),
         size: opts.size ?? halfPoints(design.bodyFontSize),
-        font: design.fonts.family,
+        font: design.fonts.officeFamily,
         bold: opts.boldAll ?? it.bold,
         italics: it.italic,
         underline: { type: UnderlineType.SINGLE, color: design.ruleColor === 'auto' ? undefined : design.ruleColor },
@@ -134,7 +134,7 @@ function toRuns(
     return new TextRun({
       text: opts.caps && it.text ? it.text.toUpperCase() : it.text || '',
       size: opts.size ?? halfPoints(design.bodyFontSize),
-      font: design.fonts.family,
+      font: design.fonts.officeFamily,
       bold: opts.boldAll ?? it.bold,
       italics: it.italic,
       color: opts.brand ? design.accent : undefined,
@@ -519,7 +519,7 @@ function buildHeader(
           new TextRun({
             text: design.wordmark,
             size: wordSize,
-            font: design.fonts.family,
+            font: design.fonts.officeFamily,
             bold: true,
             color: strong ? design.accent : undefined,
           }),
@@ -532,7 +532,7 @@ function buildHeader(
           new TextRun({
             text: design.tagline,
             size: halfPoints(design.tinyFontSize * 0.9),
-            font: design.fonts.family,
+            font: design.fonts.officeFamily,
             color: design.grayText,
           }),
         ],
@@ -560,15 +560,15 @@ function buildFooter(
         ],
         spacing: { before: 80, after: 0, line: lineUnits(design, 1.1) },
         children: [
-          new TextRun({ text: 'Стр. ', size, font: design.fonts.family, color: design.grayText }),
-          new TextRun({ children: [PageNumber.CURRENT], size, font: design.fonts.family, color: design.grayText }),
-          new TextRun({ text: ' из ', size, font: design.fonts.family, color: design.grayText }),
-          new TextRun({ children: [PageNumber.TOTAL_PAGES], size, font: design.fonts.family, color: design.grayText }),
-          new TextRun({ text: '\t', size, font: design.fonts.family, color: design.grayText }),
+          new TextRun({ text: 'Стр. ', size, font: design.fonts.officeFamily, color: design.grayText }),
+          new TextRun({ children: [PageNumber.CURRENT], size, font: design.fonts.officeFamily, color: design.grayText }),
+          new TextRun({ text: ' из ', size, font: design.fonts.officeFamily, color: design.grayText }),
+          new TextRun({ children: [PageNumber.TOTAL_PAGES], size, font: design.fonts.officeFamily, color: design.grayText }),
+          new TextRun({ text: '\t', size, font: design.fonts.officeFamily, color: design.grayText }),
           new TextRun({
             text: `Сформировано на ${design.siteUrl}`,
             size,
-            font: design.fonts.family,
+            font: design.fonts.officeFamily,
             color: design.grayText,
           }),
         ],
