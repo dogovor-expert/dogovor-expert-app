@@ -184,7 +184,7 @@ export default function DkpPage() {
           ваши значения.
         </p>
         <div className="rounded-xl border border-gray-200 bg-gray-100 p-3">
-          <div className="max-h-[540px] overflow-auto rounded-lg bg-white shadow-sm">
+          <div className="max-h-[540px] overflow-auto rounded-lg bg-white shadow-sm" role="region" aria-label="Образец договора купли-продажи" tabIndex={0}>
             <div dangerouslySetInnerHTML={{ __html: demoHtml }} />
           </div>
         </div>

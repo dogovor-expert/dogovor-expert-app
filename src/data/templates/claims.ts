@@ -434,6 +434,7 @@ export const TEMPLATES_CLAIMS: LegalTemplate[] = [
   {
     id: "terminate-sale",
     name: "Соглашение о расторжении договора купли-продажи",
+    seoTitle: "Соглашение о расторжении договора купли-продажи, 2026",
     category: "legal",
     actSource: "ст. 450, 453 ГК РФ",
     lastUpdated: "Август 2026",

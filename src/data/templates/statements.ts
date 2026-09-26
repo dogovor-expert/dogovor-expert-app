@@ -857,6 +857,7 @@ export const TEMPLATES_STATEMENTS: LegalTemplate[] = [
   {
     id: "stmt-hr-dismiss",
     name: "Заявление об увольнении по собственному желанию (в период отпуска)",
+    seoTitle: "Заявление об увольнении в период отпуска, образец 2026",
     category: "business",
     kind: "statement",
     formKind: "free",

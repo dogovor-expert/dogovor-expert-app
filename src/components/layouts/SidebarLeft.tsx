@@ -23,7 +23,7 @@ export function SidebarLeft({ children, navItems, accentColor = "brand", user }:
 
   return (
     <div className="flex h-screen overflow-hidden bg-gray-50">
-      <aside className={cn(
+      <aside aria-label="Боковая панель" className={cn(
         "fixed inset-y-0 left-0 z-30 w-64 bg-white border-r border-gray-100 transform transition-transform duration-200 lg:relative lg:translate-x-0",
         open ? "translate-x-0" : "-translate-x-full"
       )}>
@@ -38,7 +38,7 @@ export function SidebarLeft({ children, navItems, accentColor = "brand", user }:
             <X className="w-5 h-5 text-gray-600" />
           </button>
         </div>
-        <nav className="p-4 space-y-1">
+        <nav aria-label="Навигация по разделам" className="p-4 space-y-1">
           {navItems.map((item, i) => (
             <a
               key={i}

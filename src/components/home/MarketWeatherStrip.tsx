@@ -291,7 +291,7 @@ export default function MarketWeatherStrip() {
               </div>
             </>
           ) : weatherErr ? (
-            <p className="mt-3 text-sm text-slate-400">Погода недоступна</p>
+            <p className="mt-3 text-sm text-slate-500">Погода недоступна</p>
           ) : (
             <div className="mt-2 space-y-2" aria-hidden>
               <div className="h-8 w-20 animate-pulse rounded-lg bg-slate-100" />
@@ -306,7 +306,7 @@ export default function MarketWeatherStrip() {
             <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
               Курсы ЦБ РФ
             </span>
-            <span className="inline-flex items-center gap-1.5 text-[11px] text-slate-400">
+            <span className="inline-flex items-center gap-1.5 text-[11px] text-slate-500">
               <span className={cn("h-1.5 w-1.5 rounded-full", currency ? "bg-emerald-500" : "bg-slate-300", currency && "animate-pulse")} />
               {currency ? currency.date : "загрузка…"}
             </span>
@@ -334,7 +334,7 @@ export default function MarketWeatherStrip() {
               ))}
             </div>
           ) : currencyErr ? (
-            <p className="mt-3 text-sm text-slate-400">Курсы временно недоступны</p>
+            <p className="mt-3 text-sm text-slate-500">Курсы временно недоступны</p>
           ) : (
             <div className="mt-3 grid grid-cols-4 gap-2" aria-hidden>
               {[0, 1, 2, 3].map((i) => (
@@ -380,7 +380,7 @@ export default function MarketWeatherStrip() {
                 setTo(from);
               }}
               aria-label="Поменять валюты местами"
-              className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-brand-600"
+              className="rounded-lg p-1.5 text-slate-500 transition-colors hover:bg-slate-100 hover:text-brand-600"
             >
               <ArrowRight className="h-4 w-4" />
             </button>
@@ -404,7 +404,7 @@ export default function MarketWeatherStrip() {
       </div>
 
       {/* Общая строка обновления + ручной refresh */}
-      <div className="mt-2 flex items-center justify-between px-1 text-[11px] text-slate-400">
+      <div className="mt-2 flex items-center justify-between px-1 text-[11px] text-slate-500">
         <span className="inline-flex items-center gap-1.5">
           <span className={cn("h-1.5 w-1.5 rounded-full", refreshing ? "bg-brand-500 animate-ping" : "bg-emerald-500 animate-pulse")} />
           Данные обновлены в {updatedLabel} · ЦБ РФ и Open-Meteo
@@ -413,7 +413,7 @@ export default function MarketWeatherStrip() {
           type="button"
           onClick={() => void load(true)}
           disabled={refreshing}
-          className="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 font-semibold text-slate-400 transition-colors hover:bg-slate-100 hover:text-brand-600 disabled:opacity-50"
+          className="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 font-semibold text-slate-500 transition-colors hover:bg-slate-100 hover:text-brand-600 disabled:opacity-50"
         >
           <RefreshCw className={cn("h-3 w-3", refreshing && "animate-spin")} />
           Обновить

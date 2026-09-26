@@ -16,6 +16,9 @@
  */
 import type { Metadata } from "next";
 import { SITE_URL, SITE_NAME } from "@/lib/site";
+import { truncateWord, composeTitle } from "./docMeta";
+
+const DESC_MAX = 160;
 
 const OG_IMAGE = {
   url: `${SITE_URL}/og-image.png`,
@@ -45,10 +48,13 @@ export type WithSeoOptions = {
 export function withSeo(opts: WithSeoOptions): Metadata {
   const fullUrl = opts.path.startsWith("http") ? opts.path : `${SITE_URL}${opts.path}`;
   const images = opts.images ?? [OG_IMAGE];
+  // Единый контракт длины: title ≤ 60 (с брендом, если помещается), description ≤ 160.
+  const title = composeTitle(opts.title);
+  const description = truncateWord(opts.description, DESC_MAX);
 
   return {
-    title: opts.title,
-    description: opts.description,
+    title: { absolute: title },
+    description,
     ...(opts.keywords ? { keywords: opts.keywords } : {}),
     ...(opts.robots ? { robots: opts.robots } : {}),
     alternates: opts.alternates ?? { canonical: opts.path },
@@ -57,8 +63,8 @@ export function withSeo(opts: WithSeoOptions): Metadata {
       siteName: SITE_NAME,
       locale: "ru_RU",
       url: fullUrl,
-      title: opts.title,
-      description: opts.description,
+      title,
+      description,
       images,
       ...(opts.publishedTime ? { publishedTime: opts.publishedTime } : {}),
       ...(opts.modifiedTime ? { modifiedTime: opts.modifiedTime } : {}),
@@ -66,8 +72,8 @@ export function withSeo(opts: WithSeoOptions): Metadata {
     },
     twitter: {
       card: "summary_large_image",
-      title: opts.title,
-      description: opts.description,
+      title,
+      description,
       images: images.map((i) => i.url),
       ...opts.twitter,
     },

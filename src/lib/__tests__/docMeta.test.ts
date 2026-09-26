@@ -90,3 +90,26 @@ describe("docMeta.blankTitle/blankDesc", () => {
     }
   });
 });
+
+describe("docMeta: уникальность SEO-title документов", () => {
+  // Инвариант: эффективный заголовок страницы /documents/{id} (seoTitle ?? docTitle)
+  // обязан быть уникальным — иначе два документа конкурируют в выдаче (каннибализация).
+  it("у всех шаблонов эффективный title уникален и ≤60", () => {
+    const seen = new Map<string, string>();
+    for (const tpl of LEGAL_TEMPLATES) {
+      const title = tpl.seoTitle ?? docTitle(tpl.name);
+      expect(title.length, `${tpl.id} → ${title}`).toBeLessThanOrEqual(60);
+      const prev = seen.get(title);
+      expect(prev, `дубль title «${title}»: ${prev} и ${tpl.id}`).toBeUndefined();
+      seen.set(title, tpl.id);
+    }
+  });
+
+  it("явный seoTitle содержит год и не пустой", () => {
+    for (const tpl of LEGAL_TEMPLATES) {
+      if (!tpl.seoTitle) continue;
+      expect(tpl.seoTitle, tpl.id).toContain(String(SEO_YEAR));
+      expect(tpl.seoTitle.trim().length, tpl.id).toBeGreaterThan(10);
+    }
+  });
+});

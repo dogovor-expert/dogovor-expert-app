@@ -2,14 +2,17 @@ import type { Metadata } from "next";
 import { AdSlot } from "@/components/ads/AdSlot";
 import Link from "next/link";
 import { Card } from "@/components/ui/Card";
+import { truncateWord, composeTitle } from "@/lib/seo/docMeta";
 
 export const revalidate = 3600;
 export const dynamic = "force-static"; // P0: явно включаем SSG (см. INVARIANTS.md).
 
 export const metadata: Metadata = {
-  title: "Техосмотр 2026: диагностическая карта, ЕАИСТО, штрафы | Конструктор документов",
-  description:
+  title: { absolute: composeTitle("Техосмотр 2026: диагностическая карта, ЕАИСТО, штрафы") },
+  description: truncateWord(
     "Техосмотр в 2026: кому обязателен, реестр ЕАИСТО, диагностическая карта, правила для такси и грузовиков, штрафы по ст. 12.5 КоАП.",
+    160
+  ),
   alternates: { canonical: "/techosmotr" },
 };
 

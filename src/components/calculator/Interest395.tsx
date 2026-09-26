@@ -34,8 +34,9 @@ export default function Interest395() {
     <div className="space-y-4">
       <div className="space-y-3">
         <div className="space-y-1">
-          <label className="text-[10px] font-mono text-gray-600">Сумма долга (₽)</label>
+          <label htmlFor="i395-debt" className="text-[10px] font-mono text-gray-600">Сумма долга (₽)</label>
           <input
+            id="i395-debt"
             type="number"
             min="0"
             value={debt}
@@ -46,8 +47,9 @@ export default function Interest395() {
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-1">
-            <label className="text-[10px] font-mono text-gray-600">Начало просрочки</label>
+            <label htmlFor="i395-from" className="text-[10px] font-mono text-gray-600">Начало просрочки</label>
             <input
+              id="i395-from"
               type="date"
               value={from}
               onChange={(e) => setFrom(e.target.value)}
@@ -55,8 +57,9 @@ export default function Interest395() {
             />
           </div>
           <div className="space-y-1">
-            <label className="text-[10px] font-mono text-gray-600">Дата расчёта</label>
+            <label htmlFor="i395-to" className="text-[10px] font-mono text-gray-600">Дата расчёта</label>
             <input
+              id="i395-to"
               type="date"
               value={to}
               onChange={(e) => setTo(e.target.value)}
@@ -79,12 +82,14 @@ export default function Interest395() {
             <div key={i} className="flex gap-2 mb-2">
               <input
                 type="date"
+                aria-label={`Дата оплаты №${i + 1}`}
                 value={p.date}
                 onChange={(e) => setPayments(payments.map((x, j) => (j === i ? { ...x, date: e.target.value } : x)))}
                 className="flex-1 bg-gray-50 border border-gray-200 text-xs py-2 px-3 rounded-lg text-gray-900 outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500"
               />
               <input
                 type="number"
+                aria-label={`Сумма оплаты №${i + 1}`}
                 value={p.amount}
                 onChange={(e) => setPayments(payments.map((x, j) => (j === i ? { ...x, amount: e.target.value } : x)))}
                 placeholder="Сумма"
@@ -92,6 +97,7 @@ export default function Interest395() {
               />
               <button
                 onClick={() => setPayments(payments.filter((_, j) => j !== i))}
+                aria-label={`Удалить оплату №${i + 1}`}
                 className="px-2 text-gray-600 hover:text-red-500 cursor-pointer"
               >
                 <Trash2 className="w-4 h-4" />

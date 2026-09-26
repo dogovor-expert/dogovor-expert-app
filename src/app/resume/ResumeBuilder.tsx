@@ -438,7 +438,7 @@ export default function ResumeBuilder() {
               </button>
               {qOpen && (
                 <div className="rvb-qpop on">
-                  <h4>Готовность резюме</h4>
+                  <h3>Готовность резюме</h3>
                   <div className="rvb-qsub">
                     {qPct >= 80 ? "Отличное резюме — можно отправлять" : qPct >= 50 ? "Хорошо! Осталось несколько пунктов" : "Заполните ключевые разделы"}
                   </div>
@@ -470,7 +470,7 @@ export default function ResumeBuilder() {
               <button type="button" onClick={fitZoom} aria-label="По размеру"><Maximize2 className="h-4 w-4" aria-hidden /></button>
             </div>
           </div>
-          <div className="rvb-scroll" ref={scrollRef}>
+          <div className="rvb-scroll" ref={scrollRef} role="region" aria-label="Предпросмотр резюме" tabIndex={0}>
             <div className="rvb-scaler" style={{ width: 794 * scale, height: docH * scale }}>
               <div
                 ref={a4Ref}
@@ -495,7 +495,7 @@ export default function ResumeBuilder() {
 
       {/* Drawer шаблонов */}
       <div className={`rvb-ov ${drawer ? "on" : ""}`} onClick={() => setDrawer(false)} aria-hidden={!drawer} />
-      <aside className={`rvb-drawer ${drawer ? "on" : ""}`} aria-label="Выбор шаблона" aria-hidden={!drawer}>
+      <aside className={`rvb-drawer ${drawer ? "on" : ""}`} aria-label="Выбор шаблона" aria-hidden={!drawer} inert={!drawer}>
         <div className="rvb-drawer-h">
           <div>
             <h3>Шаблоны резюме</h3>
@@ -516,7 +516,7 @@ export default function ResumeBuilder() {
             </button>
           ))}
         </div>
-        <div className="rvb-dgrid" ref={gridRef}>
+        <div className="rvb-dgrid" ref={gridRef} role="group" aria-label="Шаблоны резюме" tabIndex={0}>
           {drawer &&
             filtered.map((t) => (
               <div

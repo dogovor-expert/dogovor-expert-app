@@ -1498,6 +1498,7 @@ export const TEMPLATES_BUSINESS: LegalTemplate[] = [
 {
     id: "termination-agreement",
     name: "Соглашение о расторжении договора (универсальное)",
+    seoTitle: "Соглашение о расторжении договора (универсальное), 2026",
     category: "business",
     actSource: "ст. 450-453 ГК РФ",
     lastUpdated: "Август 2026",

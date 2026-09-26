@@ -163,6 +163,12 @@ export interface LegalTemplate {
   description: string;
   /** LSI-абзацы для SEO: рендерятся в вводном тексте страницы документа. */
   seoLsi?: string[];
+  /**
+   * Явный SEO-title (≤60 символов). Нужен только там, где авто-заголовок
+   * docTitle() схлопывается с другим документом при обрезке длинного имени
+   * (проверяется тестом `document titles уникальны`).
+   */
+  seoTitle?: string;
   fields: TemplateField[];
   previewTemplate?: string;
   suggestedDocs: string[];

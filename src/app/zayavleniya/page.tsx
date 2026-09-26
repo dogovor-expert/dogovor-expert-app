@@ -106,7 +106,7 @@ export default function StatementsHubPage() {
 
       <nav className="flex flex-wrap items-center gap-1.5 text-xs text-gray-600">
         <Link href="/" className="hover:text-brand-600">Главная</Link>
-        <ChevronRight className="h-3 w-3 text-gray-400" />
+        <ChevronRight className="h-3 w-3 text-gray-500" />
         <span className="text-gray-600">Заявления</span>
       </nav>
 
@@ -139,7 +139,7 @@ export default function StatementsHubPage() {
             Пустые бланки для печати
           </Link>
         </div>
-        <p className="mt-3 text-xs text-gray-400">
+        <p className="mt-3 text-xs text-gray-500">
           Порядок подачи и формы — по состоянию на сентябрь 2026
         </p>
       </section>
@@ -299,7 +299,7 @@ export default function StatementsHubPage() {
         </div>
       </section>
 
-      <p className="text-center text-xs text-gray-400">
+      <p className="text-center text-xs text-gray-500">
         Ищете договор, а не заявление? <Link href="/templates" className="text-brand-600 underline underline-offset-2">Каталог шаблонов договоров</Link>
       </p>
     </div>

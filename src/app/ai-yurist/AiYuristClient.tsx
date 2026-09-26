@@ -370,14 +370,14 @@ export default function AiYuristClient({
         <Card className="overflow-hidden p-0">
           <div className="flex items-center gap-2 border-b border-slate-100 px-4 py-3 text-[13px] font-bold">
             <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" /> AI-юрист онлайн
-            <span className="ml-auto font-normal text-slate-400">RAG по кодексам</span>
+            <span className="ml-auto font-normal text-slate-500">RAG по кодексам</span>
           </div>
           <div className="p-4">
             <p className="mb-2.5 mr-10 rounded-xl rounded-tl-sm bg-brand-50 px-3.5 py-2.5 text-[13.5px]">Продал машину, а штрафы приходят мне. Что делать?</p>
             <div className="ml-10 rounded-xl rounded-tr-sm border border-slate-200 px-3.5 py-2.5 text-[13.5px]">
               Новый владелец обязан переоформить авто за <b>10 дней</b>. На 11-й день прекратите регистрацию сами через Госуслуги.
               <div className="mt-2 rounded-lg bg-slate-50 p-2 text-xs">
-                <b className="text-brand-700">п. 60 Правил № 1764</b> · «прежний владелец вправе прекратить регистрацию по истечении 10 суток» <span className="text-slate-400">· ред. 2026</span>
+                <b className="text-brand-700">п. 60 Правил № 1764</b> · «прежний владелец вправе прекратить регистрацию по истечении 10 суток» <span className="text-slate-500">· ред. 2026</span>
               </div>
             </div>
           </div>
@@ -691,7 +691,7 @@ export default function AiYuristClient({
         <Card className="mt-3 overflow-x-auto p-0">
           <table className="w-full min-w-[560px] text-[13px]">
             <thead><tr className="bg-slate-900 text-left text-white">
-              <th className="px-4 py-2.5 font-semibold"></th><th className="px-4 py-2.5 font-semibold">Наш AI-юрист</th><th className="px-4 py-2.5 font-semibold">Правовед.ru</th><th className="px-4 py-2.5 font-semibold">СберПраво</th><th className="px-4 py-2.5 font-semibold">Живой юрист</th>
+              <th className="px-4 py-2.5 font-semibold"><span className="sr-only">Критерий</span></th><th className="px-4 py-2.5 font-semibold">Наш AI-юрист</th><th className="px-4 py-2.5 font-semibold">Правовед.ru</th><th className="px-4 py-2.5 font-semibold">СберПраво</th><th className="px-4 py-2.5 font-semibold">Живой юрист</th>
             </tr></thead>
             <tbody>
               {[

@@ -100,7 +100,7 @@ export default function BlogList({ posts, labels, order, templatesCount }: BlogL
         <AdSlot
           key="ad-infeed"
           id="BLOG_INFEED"
-          className="col-span-full rounded-2xl border-2 border-dashed border-gray-200 p-6 text-center text-xs font-semibold uppercase tracking-wider text-gray-400"
+          className="col-span-full rounded-2xl border-2 border-dashed border-gray-200 p-6 text-center text-xs font-semibold uppercase tracking-wider text-gray-500"
         />
       );
     }
@@ -110,7 +110,7 @@ export default function BlogList({ posts, labels, order, templatesCount }: BlogL
     <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
       <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_290px]">
         <div className="min-w-0">
-          <nav className="flex flex-wrap items-center gap-1.5 text-xs text-gray-500">
+          <nav aria-label="Хлебные крошки" className="flex flex-wrap items-center gap-1.5 text-xs text-gray-500">
             <Link href="/" className="hover:text-brand-600">Главная</Link>
             <span className="text-gray-300">/</span>
             <span className="text-gray-700">Блог</span>
@@ -131,13 +131,13 @@ export default function BlogList({ posts, labels, order, templatesCount }: BlogL
           </div>
 
           <div className="relative mt-6">
-            <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+            <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
             <input
               type="search"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Найти статью по названию или вопросу"
-              className="w-full rounded-2xl border border-gray-200 bg-white py-3.5 pl-11 pr-4 text-sm text-slate-900 shadow-sm outline-none transition placeholder:text-gray-400 focus:border-brand-500 focus:ring-4 focus:ring-brand-100"
+              className="w-full rounded-2xl border border-gray-200 bg-white py-3.5 pl-11 pr-4 text-sm text-slate-900 shadow-sm outline-none transition placeholder:text-gray-500 focus:border-brand-500 focus:ring-4 focus:ring-brand-100"
             />
           </div>
 
@@ -149,7 +149,7 @@ export default function BlogList({ posts, labels, order, templatesCount }: BlogL
           </div>
 
           {query.trim() === "" && gridPosts.length > 0 && (
-            <p className="mt-3 text-xs text-gray-400">
+            <p className="mt-3 text-xs text-gray-500">
               {cat === "all" ? "Все статьи" : labels[cat]} · {gridPosts.length}{" "}
               {plural(gridPosts.length, "статья", "статьи", "статей")}
             </p>
@@ -235,7 +235,7 @@ export default function BlogList({ posts, labels, order, templatesCount }: BlogL
                       }`}
                     >
                       <span>{c.label}</span>
-                      <span className="text-xs text-gray-400">{c.count}</span>
+                      <span className="text-xs text-gray-500">{c.count}</span>
                     </button>
                   </li>
                 ))}
@@ -244,7 +244,7 @@ export default function BlogList({ posts, labels, order, templatesCount }: BlogL
 
             <AdSlot
               id="BLOG_SIDEBAR"
-              className="rounded-2xl border-2 border-dashed border-gray-200 p-6 text-center text-xs font-semibold uppercase tracking-wider text-gray-400"
+              className="rounded-2xl border-2 border-dashed border-gray-200 p-6 text-center text-xs font-semibold uppercase tracking-wider text-gray-500"
             />
           </div>
         </aside>
@@ -321,7 +321,7 @@ function PostCard({ post, labels }: { post: BlogPost; labels: Record<string, str
         {post.title}
       </h3>
       <p className="mt-2 text-[13px] leading-relaxed text-gray-500 line-clamp-3">{post.description}</p>
-      <div className="mt-4 flex items-center gap-2 border-t border-gray-100 pt-3 text-xs text-gray-400">
+      <div className="mt-4 flex items-center gap-2 border-t border-gray-100 pt-3 text-xs text-gray-500">
         <span>{formatShortDate(post.date)}</span>
         <span className="text-gray-300">·</span>
         <span>{postReadMinutes(post)} мин чтения</span>
@@ -363,7 +363,7 @@ function FeaturedCard({ post, labels, className }: { post: BlogPost; labels: Rec
         </h2>
         <p className="mt-3 line-clamp-3 text-sm leading-relaxed text-gray-500">{post.description}</p>
         <div className="mt-auto flex items-center gap-3 pt-5">
-          <div className="flex items-center gap-2 text-xs text-gray-400">
+          <div className="flex items-center gap-2 text-xs text-gray-500">
             <span>{formatShortDate(post.date)}</span>
             <span className="text-gray-300">·</span>
             <span>{postReadMinutes(post)} мин чтения</span>

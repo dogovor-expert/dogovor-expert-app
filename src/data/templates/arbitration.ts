@@ -523,6 +523,7 @@ export const TEMPLATES_ARBITRATION: LegalTemplate[] = [
   {
     id: "arbitration-evidence-request",
     name: "Ходатайство об истребовании доказательств (арбитражный суд)",
+    seoTitle: "Ходатайство об истребовании доказательств (арбитраж), 2026",
     category: "legal",
     kind: "statement",
     formKind: "free",

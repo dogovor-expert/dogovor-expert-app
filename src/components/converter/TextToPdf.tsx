@@ -88,7 +88,7 @@ export default function TextToPdf() {
             <X className="w-3.5 h-3.5" /> Очистить
           </button>
         )}
-        <span className="ml-auto text-[10px] text-gray-400">{text.length.toLocaleString("ru-RU")} / {MAX_CHARS.toLocaleString("ru-RU")} символов</span>
+        <span className="ml-auto text-[10px] text-gray-500">{text.length.toLocaleString("ru-RU")} / {MAX_CHARS.toLocaleString("ru-RU")} символов</span>
       </div>
 
       <textarea

@@ -91,11 +91,11 @@ export default function ConverterHub({ initialId }: { initialId?: string }) {
                   : "border-gray-200 bg-white hover:border-brand-300 hover:bg-gray-50"
               }`}
             >
-              <Icon className={`mb-2 h-5 w-5 ${isActive ? "text-brand-600" : "text-gray-400"}`} />
+              <Icon className={`mb-2 h-5 w-5 ${isActive ? "text-brand-600" : "text-gray-500"}`} />
               <p className={`text-xs font-semibold ${isActive ? "text-brand-700" : "text-gray-800"}`}>
                 {t.label}
               </p>
-              <p className="mt-0.5 text-[10px] leading-snug text-gray-400">{t.short}</p>
+              <p className="mt-0.5 text-[10px] leading-snug text-gray-600">{t.short}</p>
             </button>
           );
         })}
@@ -109,7 +109,7 @@ export default function ConverterHub({ initialId }: { initialId?: string }) {
         <ConverterRunner id={current.id} />
       </div>
 
-      <div className="text-xs leading-relaxed text-gray-400">
+      <div className="text-xs leading-relaxed text-gray-500">
         <p className="mb-1 font-semibold text-gray-500">Полезно при работе с договорами:</p>
         <p>
           • Объедините сканы страниц договора в один PDF для отправки или нотариуса

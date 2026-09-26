@@ -58,10 +58,10 @@ export function BlogToc({ items, className }: { items: TocItem[]; className?: st
   return (
     <aside ref={nodeRef} className={className}>
       <div className="sticky top-6">
-        <p className="text-[11px] font-semibold uppercase tracking-wider text-gray-400">
+        <p className="text-[11px] font-semibold uppercase tracking-wider text-gray-500">
           В этой статье
         </p>
-        <nav className="mt-3 border-l-2 border-gray-100">
+        <nav aria-label="Содержание статьи" className="mt-3 border-l-2 border-gray-100">
           {items.map((item) => (
             <a
               key={item.id}
@@ -77,7 +77,7 @@ export function BlogToc({ items, className }: { items: TocItem[]; className?: st
           ))}
         </nav>
         <div className="mt-6 flex items-center gap-1.5">
-          <span className="mr-1 text-[11px] font-semibold uppercase tracking-wider text-gray-400">
+          <span className="mr-1 text-[11px] font-semibold uppercase tracking-wider text-gray-500">
             Поделиться
           </span>
           <button

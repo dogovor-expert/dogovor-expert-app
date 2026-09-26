@@ -401,6 +401,7 @@ export const TEMPLATES_LEGAL: LegalTemplate[] = [
 {
     id: "inheritance-claim",
     name: "Исковое заявление о признании права собственности в порядке наследования",
+    seoTitle: "Иск о признании права собственности по наследству, 2026",
     category: "legal",
     actSource: "ст. 1111, 1152-1154 ГК РФ",
     lastUpdated: "Август 2026",
@@ -517,6 +518,7 @@ export const TEMPLATES_LEGAL: LegalTemplate[] = [
 {
     id: "housing-claim",
     name: "Исковое заявление о признании права пользования жилым помещением",
+    seoTitle: "Иск о признании права пользования жильём, 2026",
     category: "legal",
     actSource: "ст. 69, 70 ЖК РФ",
     lastUpdated: "Август 2026",

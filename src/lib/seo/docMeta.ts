@@ -23,6 +23,22 @@ export function truncateWord(text: string, max: number): string {
   return out.replace(/[\s,;:.!?–—-]+$/, "");
 }
 
+/**
+ * Итоговый <title> с брендом, гарантированно ≤ max (по умолчанию 60).
+ *
+ * Зачем: в корневом layout задан `title.template = "%s | Dogovor.expert"`, но он
+ * применяется не ко всем сегментам маршрута (под layout'ом с собственным title —
+ * documents/, utils/ — суффикс не добавляется). Чтобы длина была предсказуемой,
+ * собираем title сами и отдаём его как `absolute`: суффикс добавляется, только
+ * если помещается; иначе заголовок обрезается по словам без бренда.
+ */
+export function composeTitle(raw: string, brand = "Dogovor.expert", max = 60): string {
+  const t = raw.replace(/\s+/g, " ").trim();
+  const suffix = ` | ${brand}`;
+  if (t.length + suffix.length <= max) return `${t}${suffix}`;
+  return truncateWord(t, max);
+}
+
 /** Убирает хвостовые скобки-уточнения: «Договор … (без экипажа)» → «Договор …». */
 export function stripParenthetical(name: string): string {
   const cleaned = name.replace(/\s*\([^)]*\)\s*$/, "").trim();

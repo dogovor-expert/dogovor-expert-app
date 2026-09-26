@@ -5,7 +5,7 @@ export const BUILDER_CSS = `
 .rvb{
   --rvb-brand:#2563eb;--rvb-brand2:#1d4ed8;--rvb-brand50:#eff6ff;--rvb-brand100:#dbeafe;
   --rvb-purple:#7c3aed;--rvb-purple2:#6d28d9;
-  --rvb-bd:#e5e7eb;--rvb-bd2:#d1d5db;--rvb-ink:#0f172a;--rvb-mf:#6b7280;--rvb-mf2:#9ca3af;
+  --rvb-bd:#e5e7eb;--rvb-bd2:#d1d5db;--rvb-ink:#0f172a;--rvb-mf:#6b7280;--rvb-mf2:#64748b;
   --rvb-mut:#f9fafb;--rvb-em:#059669;--rvb-em50:#ecfdf5;--rvb-amb:#d97706;--rvb-amb50:#fffbeb;--rvb-red:#dc2626;
   --rvb-r:12px;--rvb-rl:16px;--rvb-rxl:24px;
   --rvb-soft:0 1px 3px rgba(0,0,0,.05),0 1px 2px rgba(0,0,0,.1);

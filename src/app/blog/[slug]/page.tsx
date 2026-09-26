@@ -216,7 +216,7 @@ export default async function BlogPostPage({
                     >
                       <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-[15px] font-semibold text-slate-900">
                         {f.q}
-                        <span className="relative flex h-5 w-5 shrink-0 items-center justify-center text-gray-400">
+                        <span className="relative flex h-5 w-5 shrink-0 items-center justify-center text-gray-500">
                           <Plus className="absolute h-4 w-4 transition group-open:rotate-90 group-open:opacity-0" />
                           <Minus className="absolute h-4 w-4 opacity-0 transition group-open:rotate-180 group-open:opacity-100" />
                         </span>
@@ -289,9 +289,20 @@ export default async function BlogPostPage({
                 <ChevronRight className="h-4 w-4" />
               </Link>
             </section>
+
+            <AdSlot
+              id="ARTICLE_FOOTER"
+              className="mt-8 rounded-2xl border-2 border-dashed border-gray-200 p-6 text-center text-xs font-semibold uppercase tracking-wider text-gray-500"
+            />
           </article>
 
-          <BlogToc items={toc} className="hidden lg:block" />
+          <div className="hidden lg:block">
+            <BlogToc items={toc} />
+            <AdSlot
+              id="ARTICLE_SIDEBAR"
+              className="mt-6 rounded-2xl border-2 border-dashed border-gray-200 p-4 text-center text-xs font-semibold uppercase tracking-wider text-gray-500"
+            />
+          </div>
         </div>
       </div>
     </div>
@@ -302,7 +313,7 @@ function ArticleInlineAd() {
   return (
     <AdSlot
       id="ARTICLE_INLINE"
-      className="mt-8 rounded-2xl border-2 border-dashed border-gray-200 p-6 text-center text-xs font-semibold uppercase tracking-wider text-gray-400"
+      className="mt-8 rounded-2xl border-2 border-dashed border-gray-200 p-6 text-center text-xs font-semibold uppercase tracking-wider text-gray-500"
     />
   );
 }

@@ -6,13 +6,16 @@ import Link from "next/link";
 import { Clock, FileCheck2, ShieldCheck } from "lucide-react";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { SITE_URL } from "@/lib/site";
+import { truncateWord, composeTitle } from "@/lib/seo/docMeta";
 
-const TITLE = "Выписка из ЭПТС онлайн — электронный документ в PDF за 800 ₽";
-const DESCRIPTION =
-  "Закажите выписку из электронного паспорта транспортного средства (ЭПТС): официальный электронный документ в PDF. VIN, характеристики ТС, статус паспорта, обременения, утильсбор, таможенные сведения. Онлайн-оплата картой сразу после заявки.";
+const TITLE = composeTitle("Выписка из ЭПТС онлайн — электронный документ в PDF за 800 ₽");
+const DESCRIPTION = truncateWord(
+  "Закажите выписку из электронного паспорта транспортного средства (ЭПТС): официальный электронный документ в PDF. VIN, характеристики ТС, статус паспорта, обременения, утильсбор, таможенные сведения. Онлайн-оплата картой сразу после заявки.",
+  160
+);
 
 export const metadata: Metadata = {
-  title: TITLE,
+  title: { absolute: TITLE },
   description: DESCRIPTION,
   keywords: [
     "выписка ЭПТС",
@@ -128,7 +131,7 @@ export default function EptsPage() {
             {INCLUDED.map((i) => (
               <li key={i.t} className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
                 <FileCheck2 className="mb-2 h-5 w-5 text-brand-600" aria-hidden />
-                <h3 className="text-sm font-semibold text-gray-900">{i.t}</h3>
+                <h2 className="text-sm font-semibold text-gray-900">{i.t}</h2>
                 <p className="mt-1 text-xs leading-relaxed text-gray-600">{i.d}</p>
               </li>
             ))}

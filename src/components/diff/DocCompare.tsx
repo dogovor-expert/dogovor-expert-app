@@ -127,7 +127,7 @@ function Editor({
         rows={10}
         className="mt-3 w-full rounded-xl border border-gray-200 p-3 text-xs leading-relaxed focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none resize-y"
       />
-      <p className="mt-1 text-[11px] text-gray-400">
+      <p className="mt-1 text-[11px] text-gray-500">
         {text.trim().length} символов
       </p>
     </div>
@@ -315,7 +315,7 @@ export default function DocCompare() {
                       {KIND_BADGE[b.kind].label}
                     </span>
                     {(b.a || b.b) && (
-                      <span className="text-[11px] text-gray-400">
+                      <span className="text-[11px] text-gray-500">
                         пункт{" "}
                         {b.aIndex !== null
                           ? b.aIndex + 1

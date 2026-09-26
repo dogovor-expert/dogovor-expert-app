@@ -74,8 +74,8 @@ export default function Alimony() {
         {mode === "share" ? (
           <>
             <div className="space-y-1">
-              <label className="text-[10px] font-mono text-gray-600">Доход плательщика в месяц (₽)</label>
-              <input type="number" min="0" value={income} onChange={(e) => setIncome(e.target.value)}
+              <label htmlFor="alimony-income" className="text-[10px] font-mono text-gray-600">Доход плательщика в месяц (₽)</label>
+              <input id="alimony-income" type="number" min="0" value={income} onChange={(e) => setIncome(e.target.value)}
                 placeholder="Например 100000"
                 className="w-full bg-gray-50 border border-gray-200 text-xs py-2.5 px-3 rounded-lg text-gray-900 outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500" />
             </div>
@@ -131,13 +131,13 @@ export default function Alimony() {
         )}
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-1">
-            <label className="text-[10px] font-mono text-gray-600">Задолженность по алиментам (₽, необязательно)</label>
-            <input type="number" min="0" value={debt} onChange={(e) => setDebt(e.target.value)}
+            <label htmlFor="alimony-debt" className="text-[10px] font-mono text-gray-600">Задолженность по алиментам (₽, необязательно)</label>
+            <input id="alimony-debt" type="number" min="0" value={debt} onChange={(e) => setDebt(e.target.value)}
               className="w-full bg-gray-50 border border-gray-200 text-xs py-2.5 px-3 rounded-lg text-gray-900 outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500" />
           </div>
           <div className="space-y-1">
-            <label className="text-[10px] font-mono text-gray-600">Дней просрочки (необязательно)</label>
-            <input type="number" min="0" value={penaltyDays} onChange={(e) => setPenaltyDays(e.target.value)}
+            <label htmlFor="alimony-days" className="text-[10px] font-mono text-gray-600">Дней просрочки (необязательно)</label>
+            <input id="alimony-days" type="number" min="0" value={penaltyDays} onChange={(e) => setPenaltyDays(e.target.value)}
               className="w-full bg-gray-50 border border-gray-200 text-xs py-2.5 px-3 rounded-lg text-gray-900 outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500" />
           </div>
         </div>

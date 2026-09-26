@@ -173,7 +173,7 @@ export default function UtilsTools() {
       {/* Панель управления */}
       <div className="flex flex-col gap-3 md:flex-row md:items-center">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
           <input
             type="search"
             value={q}
@@ -184,6 +184,7 @@ export default function UtilsTools() {
         </div>
         <div className="flex items-center gap-2">
           <select
+            aria-label="Сортировка инструментов"
             value={sort}
             onChange={(e) => setSort(e.target.value as "popular" | "az" | "new")}
             className="bg-gray-50 border border-gray-200 text-xs font-semibold text-gray-700 py-2.5 px-3 rounded-xl outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 cursor-pointer"
@@ -200,7 +201,7 @@ export default function UtilsTools() {
               favOnly ? "border-brand-500 bg-brand-50 text-brand-700" : "border-gray-200 bg-white text-gray-600 hover:border-brand-300"
             }`}
           >
-            <Star className={`w-3.5 h-3.5 ${favOnly ? "fill-brand-500 text-brand-500" : "text-gray-400"}`} />
+            <Star className={`w-3.5 h-3.5 ${favOnly ? "fill-brand-500 text-brand-500" : "text-gray-500"}`} />
             Избранное{favs.size > 0 ? ` · ${favs.size}` : ""}
           </button>
         </div>
@@ -220,11 +221,11 @@ export default function UtilsTools() {
               }`}
             >
               {c.label}
-              <span className={`text-[10px] font-mono ${is ? "text-brand-500" : "text-gray-400"}`}>{catCount(c.id)}</span>
+              <span className={`text-[10px] font-mono ${is ? "text-brand-500" : "text-gray-500"}`}>{catCount(c.id)}</span>
             </button>
           );
         })}
-        <span className="ml-auto text-[11px] font-mono text-gray-400">{visibleCount} из {ALL_TOOLS.length}</span>
+        <span className="ml-auto text-[11px] font-mono text-gray-500">{visibleCount} из {ALL_TOOLS.length}</span>
       </div>
 
       {/* Двухколоночная раскладка */}
@@ -262,7 +263,7 @@ export default function UtilsTools() {
                             </span>
                             <span className="min-w-0 flex-1">
                               <span className={`block text-xs font-semibold truncate ${isActive ? "text-brand-800" : "text-gray-800"}`}>{t.label}</span>
-                              <span className="block text-[10.5px] text-gray-500 truncate">{t.desc}</span>
+                              <span className="block text-[10.5px] text-gray-600 truncate">{t.desc}</span>
                             </span>
                           </button>
                           <button

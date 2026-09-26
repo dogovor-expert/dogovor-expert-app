@@ -114,7 +114,7 @@ export default function UtilsPage() {
           <p className="mt-1 text-sm text-gray-500">
             22 юридических и финансовых калькулятора: актуальные ставки, МРОТ, ключевая ставка ЦБ РФ, НДС 22%, шкала НДФЛ 13–22%.
           </p>
-          <p className="mt-2 text-[11px] font-mono uppercase tracking-wide text-gray-400">
+          <p className="mt-2 text-[11px] font-mono uppercase tracking-wide text-gray-500">
             22 инструмента · 3 категории · обновлено {today}
           </p>
         </div>
@@ -246,7 +246,7 @@ export default function UtilsPage() {
               <summary className="cursor-pointer text-sm font-semibold text-gray-900 flex items-start gap-2.5 list-none">
                 <span className="flex-shrink-0 w-5 h-5 rounded-full bg-brand-100 text-brand-700 flex items-center justify-center text-xs font-bold">{i + 1}</span>
                 <span className="flex-1">{item.q}</span>
-                <span className="text-gray-400 group-open:rotate-180 transition-transform">▾</span>
+                <span className="text-gray-500 group-open:rotate-180 transition-transform">▾</span>
               </summary>
               <div className="mt-2 pl-[30px] text-[13px] text-gray-600 leading-relaxed">
                 {item.a}

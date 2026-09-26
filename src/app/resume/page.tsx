@@ -5,15 +5,18 @@ import { FileText, LayoutTemplate, ShieldCheck, Sparkles } from "lucide-react";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { AdSlot } from "@/components/ads/AdSlot";
 import { SITE_URL } from "@/lib/site";
+import { truncateWord, composeTitle } from "@/lib/seo/docMeta";
 
 const YEAR = new Date().getFullYear();
 
-const TITLE = `Конструктор резюме онлайн — 10 шаблонов, экспорт в PDF (${YEAR})`;
-const DESCRIPTION =
-  "Бесплатный конструктор резюме онлайн: 10 профессиональных шаблонов, подсказки по формулировкам достижений, проверка совместимости с ATS и экспорт в PDF. Заполняете форму — резюме обновляется мгновенно, без регистрации.";
+const TITLE = composeTitle(`Конструктор резюме онлайн — 10 шаблонов, экспорт в PDF (${YEAR})`);
+const DESCRIPTION = truncateWord(
+  "Бесплатный конструктор резюме онлайн: 10 профессиональных шаблонов, подсказки по формулировкам достижений, проверка совместимости с ATS и экспорт в PDF. Заполняете форму — резюме обновляется мгновенно, без регистрации.",
+  160
+);
 
 export const metadata: Metadata = {
-  title: TITLE,
+  title: { absolute: TITLE },
   description: DESCRIPTION,
   keywords: [
     "конструктор резюме",
@@ -139,7 +142,7 @@ export default function ResumePage() {
           {PERKS.map((p) => (
             <div key={p.title} className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
               <p.icon className="mb-2 h-5 w-5 text-brand-600" aria-hidden />
-              <h3 className="text-sm font-semibold text-gray-900">{p.title}</h3>
+              <h2 className="text-sm font-semibold text-gray-900">{p.title}</h2>
               <p className="mt-1 text-xs text-gray-600">{p.text}</p>
             </div>
           ))}

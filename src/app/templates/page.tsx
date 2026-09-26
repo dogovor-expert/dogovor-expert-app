@@ -304,6 +304,7 @@ function TemplatesContent() {
         </div>
       </div>
 
+      <h2 className="sr-only">Список шаблонов документов</h2>
       {viewMode === "grid" ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 pb-12 items-stretch">
           {filtered.slice(0, visibleCount).map(({ t }) => {

@@ -2,14 +2,17 @@ import type { Metadata } from "next";
 import { AdSlot } from "@/components/ads/AdSlot";
 import Link from "next/link";
 import { Card } from "@/components/ui/Card";
+import { truncateWord, composeTitle } from "@/lib/seo/docMeta";
 
 export const revalidate = 3600;
 export const dynamic = "force-static"; // P0: явно включаем SSG (см. INVARIANTS.md).
 
 export const metadata: Metadata = {
-  title: "Тахограф СКЗИ 2026: кому нужен, установка, штрафы | Конструктор документов",
-  description:
+  title: { absolute: composeTitle("Тахограф СКЗИ 2026: кому нужен, установка, штрафы") },
+  description: truncateWord(
     "Тахографы СКЗИ в 2026: кому нужны, установка по Приказу Минтранса № 440, штрафы по ст. 11.23 КоАП, калибровка и опломбирование.",
+    160
+  ),
   alternates: { canonical: "/tahograph" },
 };
 

@@ -1,12 +1,15 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
+import { truncateWord, composeTitle } from "@/lib/seo/docMeta";
 import AiYuristClient from "./AiYuristClient";
 
 export const metadata: Metadata = {
-  title: "AI-юрист — ответ по закону за 10 секунд, от 14 ₽",
-  description:
+  title: { absolute: composeTitle("AI-юрист — ответ по закону за 10 секунд, от 14 ₽") },
+  description: truncateWord(
     "AI-юрист Dogovor: ответы со ссылками на статьи действующих редакций, разбор договоров, баланс без подписки. Первые 2 вопроса — бесплатно.",
+    160
+  ),
   robots: { index: true, follow: true },
   alternates: { canonical: "/ai-yurist" },
 };

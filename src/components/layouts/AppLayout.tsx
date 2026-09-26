@@ -210,7 +210,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
 
   const renderNav = (items: NavItem[], title?: string) => (
     <div className="mb-4">
-      {title && <p className={`text-[10px] font-bold uppercase tracking-widest px-3 mb-2 ${sidebarDark ? "text-slate-500" : "text-slate-600"}`}>{title}</p>}
+      {title && <p className={`text-[10px] font-bold uppercase tracking-widest px-3 mb-2 ${sidebarDark ? "text-dark-400" : "text-slate-600"}`}>{title}</p>}
       {items.map((item, i) => {
         const active = isActive(item.href);
         return (
@@ -249,7 +249,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   return (
     <div className="flex h-screen overflow-hidden bg-gray-50">
       {/* Sidebar: on mobile it is removed from DOM when closed (hidden) to avoid horizontal overflow; on desktop it is always in flow */}
-      <aside className={`z-30 w-64 flex flex-col border-r ${
+      <aside aria-label="Боковая панель" className={`z-30 w-64 flex flex-col border-r ${
         sidebarDark ? "bg-dark-900 border-dark-800" : "bg-white border-gray-100"
       } ${
         open
@@ -268,7 +268,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
           </button>
         </div>
 
-        <nav className="flex-1 overflow-y-auto p-4 scrollbar-hide">
+        <nav aria-label="Навигация по разделам" className="flex-1 overflow-y-auto p-4 scrollbar-hide">
           <Link
             href="/"
             onClick={() => setOpen(false)}
@@ -374,7 +374,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
               </Link>
             ))}
           </div>
-          <p className={`mt-2 px-1 text-[10px] leading-4 ${sidebarDark ? "text-slate-500" : "text-gray-500"}`}>
+          <p className={`mt-2 px-1 text-[10px] leading-4 ${sidebarDark ? "text-dark-400" : "text-gray-500"}`}>
             © 2024–{new Date().getFullYear()} Dogovor-Эксперт™. Все права защищены.
           </p>
         </div>

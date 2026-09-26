@@ -154,7 +154,7 @@ export default function EptsOrder() {
 
       <div className="mt-5 flex flex-wrap items-end justify-between gap-3 border-t border-dashed border-gray-200 pt-4">
         <div>
-          <div className="text-sm text-gray-400 line-through">1 200 ₽</div>
+          <div className="text-sm text-gray-500 line-through">1 200 ₽</div>
           <div className="text-2xl font-extrabold tracking-tight text-gray-900">
             800 <span className="text-base font-semibold text-gray-500">₽</span>
           </div>
@@ -172,7 +172,7 @@ export default function EptsOrder() {
       {serverError && <p className="mt-3 text-xs text-red-600">{serverError}</p>}
 
       <p className="mt-3 flex items-start gap-2 text-[11px] leading-relaxed text-gray-500">
-        <ShieldCheck className="mt-0.5 h-3.5 w-3.5 flex-none text-gray-400" aria-hidden />
+        <ShieldCheck className="mt-0.5 h-3.5 w-3.5 flex-none text-gray-500" aria-hidden />
         Оплата 800 ₽ проходит на защищённой странице ЮKassa сразу после отправки заявки. Отправляя
         заявку, вы соглашаетесь с обработкой персональных данных.
       </p>

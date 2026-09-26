@@ -33,7 +33,7 @@ export function generateMetadata({ params }: { params: Promise<{ slug: string }>
     const url = `/documents/${t.id}`;
     return withSeo({
       path: url,
-      title: docTitle(t.name),
+      title: t.seoTitle ?? docTitle(t.name),
       description: docDesc(t.description),
       ogType: "article",
       modifiedTime: t.lastUpdated,

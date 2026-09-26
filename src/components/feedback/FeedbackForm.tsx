@@ -217,7 +217,7 @@ export default function FeedbackForm({ defaultDocSlug, onSuccess, compact }: Pro
     <div className={compact ? "" : "max-w-2xl mx-auto"}>
       {!compact && (
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-slate-900">Сообщить о проблеме или предложить идею</h1>
+          <h2 className="text-2xl font-bold text-slate-900">Сообщить о проблеме или предложить идею</h2>
           <p className="text-sm text-slate-600 mt-1">
             Опишите суть — мы получим уведомление и ответим в течение 24 часов в рабочий день.
           </p>

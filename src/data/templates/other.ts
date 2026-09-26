@@ -622,6 +622,7 @@ export const TEMPLATES_OTHER: LegalTemplate[] = [
 {
     id: "resignation-letter",
     name: "Заявление об увольнении по собственному желанию",
+    seoTitle: "Заявление об увольнении по собственному желанию, 2026",
     category: "other",
     actSource: "ст. 80 ТК РФ",
     lastUpdated: "Август 2026",

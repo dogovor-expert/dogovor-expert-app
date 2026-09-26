@@ -42,7 +42,7 @@ export const RESUME_CSS = `
 .t-classic .ed-i{margin-bottom:10px}
 .t-classic .ed-i b{font-size:13px;color:#0f172a}
 .t-classic .ed-i .em{font-size:12px;color:#4b5563}
-.t-classic .ed-i .em span{color:#9ca3af}
+.t-classic .ed-i .em span{color:#6b7280}
 
 /* ============ 2. MODERN ============ */
 .t-modern .doc{padding:58px 60px}
