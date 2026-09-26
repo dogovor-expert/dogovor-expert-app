@@ -6,16 +6,20 @@ import {
   ArrowRight,
   Briefcase,
   Building2,
+  CalendarDays,
   Car,
   ChevronLeft,
   ChevronRight,
+  Clock,
   FileText,
+  Flame,
   Gavel,
   HardHat,
   Home,
   Landmark,
   Scale,
   Search,
+  Sparkles,
   Users,
   Wallet,
   type LucideIcon,
@@ -45,6 +49,19 @@ const CATEGORY_ICON: Record<string, LucideIcon> = {
   семья: Users,
   потребители: Gavel,
   налоги: Landmark,
+};
+
+const CATEGORY_GRADIENT: Record<string, string> = {
+  аренда: "from-sky-500 to-blue-600",
+  авто: "from-cyan-500 to-sky-600",
+  бизнес: "from-violet-500 to-purple-600",
+  финансы: "from-emerald-500 to-teal-600",
+  право: "from-blue-600 to-indigo-700",
+  недвижимость: "from-teal-500 to-emerald-600",
+  работа: "from-amber-500 to-orange-600",
+  семья: "from-pink-500 to-rose-600",
+  потребители: "from-rose-500 to-red-600",
+  налоги: "from-purple-500 to-indigo-600",
 };
 
 function norm(s: string): string {
@@ -220,6 +237,28 @@ export default function BlogList({ posts, labels, order, templatesCount }: BlogL
               </ol>
             </div>
 
+            <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-brand-600 via-brand-500 to-purple-600 p-5 text-white shadow-sm">
+              <div
+                aria-hidden="true"
+                className="pointer-events-none absolute -right-8 -top-10 h-28 w-28 rounded-full bg-white/10 blur-sm"
+              />
+              <div className="relative">
+                <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-white/15 backdrop-blur">
+                  <Sparkles className="h-5 w-5" />
+                </span>
+                <h3 className="mt-3 text-sm font-bold">Спросите AI-юриста</h3>
+                <p className="mt-1.5 text-[13px] leading-relaxed text-white/80">
+                  Ответ со ссылками на статьи за минуту. Первые 2 вопроса — бесплатно.
+                </p>
+                <Link
+                  href="/ai-yurist"
+                  className="mt-4 inline-flex items-center gap-1.5 rounded-xl bg-white px-4 py-2 text-[13px] font-bold text-brand-700 transition hover:gap-2.5"
+                >
+                  Задать вопрос <ArrowRight className="h-3.5 w-3.5" />
+                </Link>
+              </div>
+            </div>
+
             <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
               <h3 className="text-sm font-bold text-slate-900">Категории</h3>
               <ul className="mt-3 space-y-0.5">
@@ -302,77 +341,93 @@ function PagerButton({
   );
 }
 
+function CategoryCover({ category, className }: { category: string; className?: string }) {
+  const Icon = CATEGORY_ICON[category] ?? FileText;
+  const gradient = CATEGORY_GRADIENT[category] ?? "from-brand-600 to-purple-600";
+  return (
+    <div className={`relative overflow-hidden bg-gradient-to-br ${gradient} ${className ?? ""}`}>
+      <div aria-hidden="true" className="pointer-events-none absolute -right-6 -top-8 h-32 w-32 rounded-full bg-white/15" />
+      <div aria-hidden="true" className="pointer-events-none absolute -bottom-10 -left-6 h-28 w-28 rounded-full bg-black/10" />
+      <Icon aria-hidden="true" strokeWidth={1.5} className="absolute bottom-3 right-4 h-16 w-16 text-white/25" />
+    </div>
+  );
+}
+
 function PostCard({ post, labels }: { post: BlogPost; labels: Record<string, string> }) {
-  const Icon = CATEGORY_ICON[post.category] ?? FileText;
   return (
     <Link
       href={`/blog/${post.slug}`}
-      className="group flex flex-col rounded-2xl border border-gray-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-brand-200 hover:shadow-lg"
+      className="group flex flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:border-brand-200 hover:shadow-lg"
     >
-      <div className="flex items-center justify-between">
-        <span className="inline-flex items-center rounded-full bg-brand-50 px-2.5 py-1 text-[11px] font-semibold text-brand-700">
+      <div className="relative overflow-hidden">
+        <CategoryCover
+          category={post.category}
+          className="aspect-[16/10] w-full transition duration-300 group-hover:scale-[1.03]"
+        />
+        <span className="absolute left-3 top-3 inline-flex items-center rounded-full bg-white/95 px-2.5 py-1 text-[11px] font-semibold text-brand-700 shadow-sm backdrop-blur">
           {labels[post.category] ?? post.category}
         </span>
-        <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-50 text-brand-600">
-          <Icon className="h-4 w-4" />
-        </span>
       </div>
-      <h3 className="mt-4 text-[15px] font-bold leading-snug text-slate-900 transition group-hover:text-brand-700 line-clamp-2">
-        {post.title}
-      </h3>
-      <p className="mt-2 text-[13px] leading-relaxed text-gray-500 line-clamp-3">{post.description}</p>
-      <div className="mt-4 flex items-center gap-2 border-t border-gray-100 pt-3 text-xs text-gray-500">
-        <span>{formatShortDate(post.date)}</span>
-        <span className="text-gray-300">·</span>
-        <span>{postReadMinutes(post)} мин чтения</span>
+      <div className="flex flex-1 flex-col p-5">
+        <div className="flex items-center gap-2 text-xs text-gray-500">
+          <CalendarDays className="h-3.5 w-3.5" />
+          <span>{formatShortDate(post.date)}</span>
+          <span className="text-gray-300">·</span>
+          <Clock className="h-3.5 w-3.5" />
+          <span>{postReadMinutes(post)} мин</span>
+        </div>
+        <h3 className="mt-2.5 text-[15px] font-bold leading-snug text-slate-900 transition group-hover:text-brand-700 line-clamp-2">
+          {post.title}
+        </h3>
+        <p className="mt-2 text-[13px] leading-relaxed text-gray-500 line-clamp-3">{post.description}</p>
+        <div className="mt-auto flex items-center justify-end pt-4">
+          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-50 text-brand-600 transition group-hover:bg-brand-600 group-hover:text-white">
+            <ArrowRight className="h-4 w-4" />
+          </span>
+        </div>
       </div>
     </Link>
   );
 }
 
 function FeaturedCard({ post, labels, className }: { post: BlogPost; labels: Record<string, string>; className?: string }) {
-  const Icon = CATEGORY_ICON[post.category] ?? FileText;
   return (
     <Link
       href={`/blog/${post.slug}`}
-      className={`group grid overflow-hidden rounded-3xl border border-gray-200 bg-white shadow-sm transition hover:shadow-lg lg:grid-cols-[1.05fr_0.95fr] ${className ?? ""}`}
+      className={`group relative block overflow-hidden rounded-3xl border border-gray-200 shadow-sm transition hover:shadow-lg ${className ?? ""}`}
     >
-      <div className="relative min-h-[190px] overflow-hidden bg-gradient-to-br from-brand-600 via-brand-500 to-purple-600 p-7">
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute -right-12 -top-12 h-44 w-44 rounded-full bg-white/10 blur-sm"
-        />
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute -bottom-14 -left-8 h-40 w-40 rounded-full bg-purple-400/20 blur-md"
-        />
-        <div className="relative flex h-full flex-col justify-between">
-          <span className="inline-flex w-fit items-center gap-1.5 rounded-full border border-white/25 bg-white/15 px-3 py-1 text-[11px] font-semibold text-white backdrop-blur">
-            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-300" />
-            Новое · обновлено недавно
+      <CategoryCover category={post.category} className="min-h-[340px] w-full sm:min-h-[400px]" />
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/70 to-slate-950/10"
+      />
+      <div className="absolute inset-0 flex flex-col justify-between p-6 sm:p-8">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-400 px-3 py-1 text-[11px] font-bold text-slate-900">
+            <Flame className="h-3.5 w-3.5" /> Главное
           </span>
-          <Icon className="h-12 w-12 text-white/30" aria-hidden="true" />
+          <span className="inline-flex items-center rounded-full bg-white/15 px-3 py-1 text-[11px] font-semibold text-white backdrop-blur">
+            {labels[post.category] ?? post.category}
+          </span>
+        </div>
+        <div className="max-w-2xl">
+          <div className="flex items-center gap-2 text-xs font-medium text-white/75">
+            <Clock className="h-3.5 w-3.5" />
+            <span>{postReadMinutes(post)} мин чтения</span>
+            <span className="text-white/40">·</span>
+            <span>{formatShortDate(post.date)}</span>
+          </div>
+          <h2 className="mt-3 text-2xl font-extrabold leading-tight text-white sm:text-3xl">
+            {post.title}
+          </h2>
+          <p className="mt-3 line-clamp-2 max-w-xl text-sm leading-relaxed text-white/80">
+            {post.description}
+          </p>
+          <span className="mt-5 inline-flex items-center gap-2 rounded-xl bg-white px-5 py-2.5 text-sm font-bold text-slate-900 transition group-hover:gap-3">
+            Читать статью <ArrowRight className="h-4 w-4" />
+          </span>
         </div>
       </div>
-      <div className="flex flex-col p-7">
-        <p className="text-[11px] font-semibold uppercase tracking-wider text-brand-600">
-          {labels[post.category] ?? post.category}
-        </p>
-        <h2 className="mt-2 text-xl font-extrabold leading-snug text-slate-900 transition group-hover:text-brand-700 sm:text-2xl">
-          {post.title}
-        </h2>
-        <p className="mt-3 line-clamp-3 text-sm leading-relaxed text-gray-500">{post.description}</p>
-        <div className="mt-auto flex items-center gap-3 pt-5">
-          <div className="flex items-center gap-2 text-xs text-gray-500">
-            <span>{formatShortDate(post.date)}</span>
-            <span className="text-gray-300">·</span>
-            <span>{postReadMinutes(post)} мин чтения</span>
-          </div>
-          <span className="ml-auto inline-flex items-center gap-1 text-xs font-bold text-brand-600 transition group-hover:gap-2">
-            Читать <ArrowRight className="h-3.5 w-3.5" />
-          </span>
-        </div>
-        </div>
-      </Link>
+    </Link>
   );
 }
