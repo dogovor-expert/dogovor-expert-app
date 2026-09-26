@@ -97,7 +97,11 @@ function scrollToChat() {
   document.getElementById("ai-chat")?.scrollIntoView({ behavior: "smooth" });
 }
 
-export default function AiYuristClient() {
+export default function AiYuristClient({
+  initialAuthed = null,
+}: {
+  initialAuthed?: boolean | null;
+}) {
   const [balance, setBalance] = useState<number | null>(null);
   const [freeAsked, setFreeAsked] = useState(0);
   const [low, setLow] = useState(false);
@@ -111,7 +115,7 @@ export default function AiYuristClient() {
   const [topupOpen, setTopupOpen] = useState(false);
   const [topupSum, setTopupSum] = useState(300);
   const [topupBusy, setTopupBusy] = useState(false);
-  const [authed, setAuthed] = useState<boolean | null>(null);
+  const [authed, setAuthed] = useState<boolean | null>(initialAuthed);
   const [topupDone, setTopupDone] = useState(false);
   const [exporting, setExporting] = useState<"pdf" | "docx" | null>(null);
   const boxRef = useRef<HTMLDivElement>(null);
@@ -185,6 +189,9 @@ export default function AiYuristClient() {
   }, []);
 
   useEffect(() => {
+    // Аноним (по данным сервера): не дёргаем защищённые /api/ai/* — иначе в
+    // консоли появляются 401 на каждый заход, в т.ч. при рендере краулером.
+    if (initialAuthed === false) return;
     void loadBalance();
     void (async () => {
       const list = await loadThreads();
@@ -205,7 +212,7 @@ export default function AiYuristClient() {
       setTopupDone(true);
       window.history.replaceState(null, "", "/ai-yurist");
     }
-  }, [loadBalance, loadThreads, openThread, searchParams]);
+  }, [initialAuthed, loadBalance, loadThreads, openThread, searchParams]);
 
   useEffect(() => {
     boxRef.current?.scrollTo({ top: boxRef.current.scrollHeight, behavior: "smooth" });

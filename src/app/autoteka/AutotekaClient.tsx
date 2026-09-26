@@ -6,6 +6,7 @@ import {
   Banknote, ShieldCheck, History, Zap, Link2, X, ChevronLeft, ChevronRight,
 } from "lucide-react";
 import { track, goals } from "@/lib/analytics";
+import { createClient } from "@/lib/supabase/client";
 const STD_PRICE = 199;
 const PREM_PRICE = 299;
 
@@ -250,17 +251,15 @@ export default function AutotekaClient() {
   useEffect(() => {
     void (async () => {
       try {
-        const res = await fetch("/api/autoteka/check", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ vin: "X" }),
-        });
-        if (res.status === 401) {
-          setIsAuthed(false);
-          return;
-        }
-        setIsAuthed(true);
-        void loadHistory();
+        // Проверяем сессию локально (cookie), без сетевого пробного запроса:
+        // раньше здесь был POST /api/autoteka/check с vin:"X" ради статуса 401,
+        // из-за чего у анонимных посетителей и краулеров в консоли появлялась
+        // ошибка "Failed to load resource: 401".
+        const supabase = createClient();
+        const { data } = await supabase.auth.getSession();
+        const authed = !!data.session;
+        setIsAuthed(authed);
+        if (authed) void loadHistory();
       } catch {
         setIsAuthed(null);
       }

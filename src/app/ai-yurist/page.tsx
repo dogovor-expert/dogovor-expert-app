@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
+import { createClient } from "@/lib/supabase/server";
 import AiYuristClient from "./AiYuristClient";
 
 export const metadata: Metadata = {
@@ -15,11 +16,25 @@ export const metadata: Metadata = {
 // и лендинг появляется только после загрузки JS (пустой экран + нет SSR).
 export const dynamic = "force-dynamic";
 
-export default function AiYuristPage() {
+export default async function AiYuristPage() {
+  // Признак авторизации считаем на сервере: анонимные посетители (и краулеры)
+  // не должны дёргать /api/ai/balance и /api/ai/threads — иначе в консоли
+  // появляются 401 на каждый заход. Клиент использует это как стартовое значение.
+  let authed = false;
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    authed = !!user;
+  } catch {
+    authed = false;
+  }
+
   // Suspense обязателен: клиент использует useSearchParams (?topup=success).
   return (
     <Suspense>
-      <AiYuristClient />
+      <AiYuristClient initialAuthed={authed} />
     </Suspense>
   );
 }

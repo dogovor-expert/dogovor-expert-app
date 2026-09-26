@@ -87,17 +87,29 @@ export async function requireAdminApi(
 
 /** Базовая CSRF-защита: разрешаем только same-origin запросы. */
 export function isSameOrigin(req: Request): boolean {
+  const method = (req.method || "GET").toUpperCase();
+  const isSafeMethod = method === "GET" || method === "HEAD" || method === "OPTIONS";
+
   const origin = req.headers.get("origin");
-  // Раньше: if (!origin) return true. Это был гэп: атакующий через
-  // fetch с credentials:'omit' мог не слать Origin и пройти.
-  // Теперь: без Origin — отказ для мутирующих контекстов.
-  // Чтение/GET без Origin допустимо (браузер не шлёт Origin на GET same-origin),
-  // но конкретные API-роуты дополнительно используют withCsrf.
-  if (!origin) return false;
-  try {
-    const site = process.env.NEXT_PUBLIC_SITE_URL || "https://dogovor.expert";
-    return new URL(origin).origin === new URL(site).origin;
-  } catch {
-    return false;
+  if (origin) {
+    try {
+      const site = process.env.NEXT_PUBLIC_SITE_URL || "https://dogovor.expert";
+      return new URL(origin).origin === new URL(site).origin;
+    } catch {
+      return false;
+    }
   }
+
+  // Браузер НЕ шлёт Origin на same-origin GET/HEAD (например, fetch без тела),
+  // поэтому полагаться только на Origin нельзя — иначе легитимные GET получают 403.
+  // Опираемся на Sec-Fetch-Site (современные браузеры шлют его всегда).
+  const secFetchSite = req.headers.get("sec-fetch-site");
+  if (secFetchSite === "same-origin") return true;
+  if (secFetchSite === "none" && isSafeMethod) return true;
+  if (secFetchSite) return false;
+
+  // Нет ни Origin, ни Sec-Fetch-Site (старые клиенты/curl): безопасные методы
+  // (не мутируют состояние) допускаем; мутирующие — отказ (их дополнительно
+  // закрывает withCsrf/validateCsrf).
+  return isSafeMethod;
 }
