@@ -169,7 +169,7 @@ export const EVENT_CATALOG = {
   ai_message: {
     label: "Вопрос AI-юристу",
     group: "ai",
-    meta: { thread_id: null, free: null, confidence: null },
+    meta: { thread_id: null, free: null, via_quota: null, confidence: null },
   },
   ai_topup_created: {
     label: "Создано пополнение AI-баланса",
@@ -180,6 +180,11 @@ export const EVENT_CATALOG = {
     label: "Пополнен AI-баланс",
     group: "billing",
     meta: { amount_rub: null },
+  },
+  ai_plan_activated: {
+    label: "Активирован тариф AI-юрист",
+    group: "billing",
+    meta: { quota_total: null, quota_month: null },
   },
 } as const satisfies Record<string, EventSpec>;
 

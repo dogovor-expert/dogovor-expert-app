@@ -104,6 +104,7 @@ export default function AiYuristClient({
 }) {
   const [balance, setBalance] = useState<number | null>(null);
   const [freeAsked, setFreeAsked] = useState(0);
+  const [quota, setQuota] = useState<{ total: number; left: number } | null>(null);
   const [low, setLow] = useState(false);
   const [threads, setThreads] = useState<Thread[]>([]);
   const [threadId, setThreadId] = useState<string | null>(null);
@@ -131,10 +132,21 @@ export default function AiYuristClient({
       }
       setAuthed(true);
       if (!res.ok) return;
-      const d = (await res.json()) as { balance_kopeks: number; free_asked: number; low: boolean };
+      const d = (await res.json()) as {
+        balance_kopeks: number;
+        free_asked: number;
+        low: boolean;
+        quota_total?: number;
+        quota_left?: number;
+      };
       setBalance(d.balance_kopeks);
       setFreeAsked(d.free_asked);
       setLow(d.low);
+      setQuota(
+        Number(d.quota_total ?? 0) > 0
+          ? { total: Number(d.quota_total), left: Number(d.quota_left ?? 0) }
+          : null,
+      );
     } catch {
       /* ignore */
     }
@@ -485,8 +497,17 @@ export default function AiYuristClient({
                 </div>
               )}
               <div className="mt-3 rounded-xl bg-gradient-to-br from-brand-50 to-emerald-50 p-3 text-xs">
-                <p className="flex items-center gap-1 font-bold"><Gift size={15} weight="fill" /> {freeAsked < 2 ? `Осталось бесплатных: ${2 - freeAsked}` : "Бесплатные использованы"}</p>
-                <p className="mt-1 text-slate-600">Дальше 19 ₽/сообщение. Баланс не сгорает.</p>
+                {quota ? (
+                  <>
+                    <p className="flex items-center gap-1 font-bold"><Gift size={15} weight="fill" /> Тариф AI-юрист: осталось {quota.left} из {quota.total}</p>
+                    <p className="mt-1 text-slate-600">Неиспользованные вопросы сгорают в конце месяца. Дальше 19 ₽/сообщение.</p>
+                  </>
+                ) : (
+                  <>
+                    <p className="flex items-center gap-1 font-bold"><Gift size={15} weight="fill" /> {freeAsked < 2 ? `Осталось бесплатных: ${2 - freeAsked}` : "Бесплатные использованы"}</p>
+                    <p className="mt-1 text-slate-600">Дальше 19 ₽/сообщение. Баланс не сгорает.</p>
+                  </>
+                )}
               </div>
             </Card>
 

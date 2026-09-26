@@ -9,7 +9,9 @@ import {
   AI_FREE_QUESTIONS,
   AI_MODEL_CHAT,
   AI_PRICE_MESSAGE_KOPEKS,
+  currentQuotaMonth,
   estimateCostKopeks,
+  resolveQuestionSource,
 } from "@/lib/ai/pricing";
 import {
   chatCompletion,
@@ -27,6 +29,9 @@ import { logUserEvent } from "@/lib/userEvents";
 interface BalanceRow {
   balance_kopeks: number;
   free_asked: number;
+  quota_total: number;
+  quota_used: number;
+  quota_month: string;
 }
 
 /** RAG-поиск: расширение синонимов -> эмбеддинг -> match_law_chunks. Ошибка = пустой контекст (честный режим), не 500. */
@@ -97,28 +102,64 @@ async function postHandler(req: Request) {
   // Баланс: читаем, при отсутствии строки создаём нулевую.
   const balRes = await admin
     .from("ai_balances")
-    .select("balance_kopeks, free_asked")
+    .select("balance_kopeks, free_asked, quota_total, quota_used, quota_month")
     .eq("user_id", user.id)
     .limit(1)
     .maybeSingle();
-  const rawBal = balRes.data as { balance_kopeks?: unknown; free_asked?: unknown } | null;
+  const rawBal = balRes.data as {
+    balance_kopeks?: unknown;
+    free_asked?: unknown;
+    quota_total?: unknown;
+    quota_used?: unknown;
+    quota_month?: unknown;
+  } | null;
   let bal: BalanceRow | null = rawBal
-    ? { balance_kopeks: Number(rawBal.balance_kopeks ?? 0), free_asked: Number(rawBal.free_asked ?? 0) }
+    ? {
+        balance_kopeks: Number(rawBal.balance_kopeks ?? 0),
+        free_asked: Number(rawBal.free_asked ?? 0),
+        quota_total: Number(rawBal.quota_total ?? 0),
+        quota_used: Number(rawBal.quota_used ?? 0),
+        quota_month: typeof rawBal.quota_month === "string" ? rawBal.quota_month : "",
+      }
     : null;
   if (!bal) {
     const ins = await admin
       .from("ai_balances")
       .insert({ user_id: user.id, balance_kopeks: 0, free_asked: 0 })
-      .select("balance_kopeks, free_asked")
+      .select("balance_kopeks, free_asked, quota_total, quota_used, quota_month")
       .single();
     if (ins.error || !ins.data) return NextResponse.json({ error: "db_error" }, { status: 500 });
-    const rawIns = ins.data as { balance_kopeks?: unknown; free_asked?: unknown };
-    bal = { balance_kopeks: Number(rawIns.balance_kopeks ?? 0), free_asked: Number(rawIns.free_asked ?? 0) };
+    const rawIns = ins.data as {
+      balance_kopeks?: unknown;
+      free_asked?: unknown;
+      quota_total?: unknown;
+      quota_used?: unknown;
+      quota_month?: unknown;
+    };
+    bal = {
+      balance_kopeks: Number(rawIns.balance_kopeks ?? 0),
+      free_asked: Number(rawIns.free_asked ?? 0),
+      quota_total: Number(rawIns.quota_total ?? 0),
+      quota_used: Number(rawIns.quota_used ?? 0),
+      quota_month: typeof rawIns.quota_month === "string" ? rawIns.quota_month : "",
+    };
   }
 
-  const isFree = bal.free_asked < AI_FREE_QUESTIONS;
-  const price = isFree ? 0 : AI_PRICE_MESSAGE_KOPEKS;
-  if (!isFree && bal.balance_kopeks < price) {
+  // Квота тарифа «AI-юрист»: календарный месяц, неиспользованное сгорает.
+  // При смене месяца счётчик обнуляется кодом. Порядок списания: квота →
+  // бесплатные → баланс. Хранимое quota_used участвует в optimistic locking.
+  const quotaMonth = currentQuotaMonth();
+  const storedQuotaUsed = bal.quota_used;
+  const quotaUsed = bal.quota_month !== quotaMonth ? 0 : storedQuotaUsed;
+  const source = resolveQuestionSource({
+    quotaTotal: bal.quota_total,
+    quotaUsed,
+    freeAsked: bal.free_asked,
+  });
+  const useQuota = source === "quota";
+  const isFree = source === "free";
+  const price = useQuota || isFree ? 0 : AI_PRICE_MESSAGE_KOPEKS;
+  if (!useQuota && !isFree && bal.balance_kopeks < price) {
     return NextResponse.json({ error: "insufficient_funds", balance_kopeks: bal.balance_kopeks }, { status: 402 });
   }
 
@@ -209,12 +250,20 @@ async function postHandler(req: Request) {
   // с клиента при 409 ничего не списано.
   const newBalance = bal.balance_kopeks - price;
   const newFree = isFree ? bal.free_asked + 1 : bal.free_asked;
+  const newQuotaUsed = useQuota ? quotaUsed + 1 : quotaUsed;
   const upd = await admin
     .from("ai_balances")
-    .update({ balance_kopeks: newBalance, free_asked: newFree, updated_at: new Date().toISOString() })
+    .update({
+      balance_kopeks: newBalance,
+      free_asked: newFree,
+      quota_used: newQuotaUsed,
+      quota_month: quotaMonth,
+      updated_at: new Date().toISOString(),
+    })
     .eq("user_id", user.id)
     .eq("balance_kopeks", bal.balance_kopeks)
     .eq("free_asked", bal.free_asked)
+    .eq("quota_used", storedQuotaUsed)
     .select("balance_kopeks");
   if (!upd.data || upd.data.length === 0) {
     return NextResponse.json({ error: "balance_conflict_retry" }, { status: 409 });
@@ -235,8 +284,8 @@ async function postHandler(req: Request) {
   await admin.from("ai_ledger").insert({
     user_id: user.id,
     delta_kopeks: -price,
-    reason: isFree ? "free_question" : "chat_message",
-    meta: { thread_id: tid, tokens_in: tokensIn, tokens_out: tokensOut, cost_kopeks: costKopeks, confidence },
+    reason: useQuota ? "quota_question" : isFree ? "free_question" : "chat_message",
+    meta: { thread_id: tid, tokens_in: tokensIn, tokens_out: tokensOut, cost_kopeks: costKopeks, confidence, via_quota: useQuota },
   });
 
   await logUserEvent({
@@ -244,7 +293,7 @@ async function postHandler(req: Request) {
     userId: user.id,
     sessionId: `ai:${tid}`,
     path: "/ai-yurist",
-    meta: { thread_id: tid, free: isFree, confidence },
+    meta: { thread_id: tid, free: isFree, via_quota: useQuota, confidence },
   });
 
   return NextResponse.json({
@@ -253,6 +302,8 @@ async function postHandler(req: Request) {
     confidence,
     thread_id: tid,
     free: isFree,
+    via_quota: useQuota,
+    quota_left: useQuota ? bal.quota_total - newQuotaUsed : Math.max(0, bal.quota_total - quotaUsed),
     price_kopeks: price,
     cost_kopeks: costKopeks,
     balance_kopeks: newBalance,

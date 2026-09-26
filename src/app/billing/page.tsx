@@ -18,6 +18,7 @@ import {
   FileSearch,
 } from "lucide-react";
 import { currentProPrice, PRO_PRICE_OLD, PRO_PRICE, PROMO_LABEL, isPromoActive, formatRub } from "@/lib/pricing";
+import { AI_PLAN_PRICE_RUB, AI_PLAN_QUESTIONS } from "@/lib/ai/pricing";
 import { track, trackMetrikaOnly, goals } from "@/lib/analytics";
 
 interface PaymentRow {
@@ -70,7 +71,7 @@ const COMPARISON: { label: string; free: string; pro: string }[] = [
 const TRUST = [
   { icon: ShieldCheck, text: "Защита персональных данных по 152-ФЗ" },
   { icon: CreditCard, text: "Оплата ЮKassa: МИР, Visa, Mastercard, СБП" },
-  { icon: FileSearch, text: "369 проверенных шаблонов договоров" },
+  { icon: FileSearch, text: "570 проверенных шаблонов договоров" },
   { icon: RefreshCw, text: "Отмена подписки в любой момент" },
 ];
 
@@ -78,6 +79,14 @@ const FAQ = [
   {
     q: "Можно ли отменить подписку?",
     a: "Да, в любой момент в один клик. Доступ сохраняется до конца оплаченного периода.",
+  },
+  {
+    q: "Как работает тариф «AI-юрист»?",
+    a: "За 490 ₽ в месяц вы получаете 200 вопросов AI-юристу: ответы со ссылками на статьи законов, экспорт диалога в PDF и DOCX. Неиспользованные вопросы в конце месяца сгорают.",
+  },
+  {
+    q: "Что будет, если вопросы тарифа «AI-юрист» закончатся?",
+    a: "Дальнейшие вопросы оплачиваются из баланса кошелька AI-юриста по 19 ₽ за вопрос — так же, как без тарифа. Пополнить баланс можно на странице AI-юриста.",
   },
   {
     q: "Чем отличается DADATA в PRO?",
@@ -102,7 +111,8 @@ const FAQ = [
 ];
 
 export default function BillingPage() {
-  const [plan, setPlan] = useState("free");
+  const [, setPlan] = useState("free");
+  const [plans, setPlans] = useState<string[]>([]);
   const [active, setActive] = useState(false);
   const [periodEnd, setPeriodEnd] = useState<string | null>(null);
   const [autoRenewal, setAutoRenewal] = useState(false);
@@ -126,12 +136,14 @@ export default function BillingPage() {
     if (sRes?.ok) {
       const s = (await sRes.json()) as {
         plan?: string;
+        plans?: string[];
         subscription_active?: boolean;
         period_end?: string | null;
         auto_renewal?: boolean;
         has_payment_method?: boolean;
       };
       setPlan(s.plan ?? "free");
+      setPlans(Array.isArray(s.plans) ? s.plans : s.plan ? [s.plan] : []);
       setActive(!!s.subscription_active);
       setPeriodEnd(s.period_end ?? null);
       setAutoRenewal(!!s.auto_renewal);
@@ -199,10 +211,14 @@ export default function BillingPage() {
     }
   }, [load]);
 
-  const pay = async () => {
+  const pay = async (planArg: "pro" | "ai" = "pro") => {
     setPaying(true);
     try {
-      const res = await fetch("/api/billing/create-payment", { method: "POST" });
+      const res = await fetch("/api/billing/create-payment", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ plan: planArg }),
+      });
       if (res.status === 503) {
         showToast("Оплата станет доступна совсем скоро — модуль в разработке");
         setPaying(false);
@@ -277,7 +293,9 @@ export default function BillingPage() {
     }
   };
 
-  const activePlan = active && plan !== "free";
+  // PRO и AI-юрист — независимые планы: бейджи и кнопки считаем по каждому.
+  const activePro = active && plans.includes("pro");
+  const activeAi = active && plans.includes("ai");
   const promo = isPromoActive();
   const price = currentProPrice();
   const savings = PRO_PRICE_OLD - PRO_PRICE;
@@ -310,7 +328,7 @@ export default function BillingPage() {
         {justPaid && (
           <div className="mb-6 flex items-center gap-2 bg-emerald-50 border border-emerald-200 rounded-xl p-4">
             <CheckCircle2 className="w-5 h-5 text-emerald-500 flex-shrink-0" />
-            <p className="text-sm text-emerald-800">Оплата получена. Подписка PRO активируется после подтверждения платежа — обычно в течение пары минут.</p>
+            <p className="text-sm text-emerald-800">Оплата получена. Подписка активируется после подтверждения платежа — обычно в течение пары минут.</p>
           </div>
         )}
 
@@ -321,7 +339,7 @@ export default function BillingPage() {
           </div>
         )}
 
-        {activePlan && periodEnd && new Date(periodEnd).getTime() - Date.now() < 5 * 86400000 && new Date(periodEnd).getTime() >= Date.now() && (
+        {activePro && periodEnd && new Date(periodEnd).getTime() - Date.now() < 5 * 86400000 && new Date(periodEnd).getTime() >= Date.now() && (
           <div className="mb-6 flex items-center gap-2 bg-amber-50 border border-amber-200 rounded-xl p-4">
             <AlertCircle className="w-5 h-5 text-amber-700 flex-shrink-0" />
             <p className="text-sm text-amber-800">
@@ -332,7 +350,7 @@ export default function BillingPage() {
         )}
 
         {/* PRICING CARDS */}
-        <div className="grid md:grid-cols-2 gap-6 items-start">
+        <div className="grid md:grid-cols-3 gap-6 items-start">
           {/* FREE */}
           <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
             <div className="bg-gradient-to-br from-slate-100 to-slate-200 p-6">
@@ -355,13 +373,73 @@ export default function BillingPage() {
             </div>
           </div>
 
+          {/* AI-ЮРИСТ */}
+          <div className="bg-white rounded-2xl border-2 border-violet-400 shadow-lg overflow-hidden relative">
+            <div className="absolute top-4 right-4 px-2.5 py-1 rounded-full bg-violet-100 text-violet-900 text-[10px] font-bold">НОВОЕ</div>
+            <div className="bg-gradient-to-br from-violet-500 to-indigo-600 p-6 text-white">
+              <div className="flex items-center justify-between">
+                <h3 className="font-semibold opacity-90">AI-юрист</h3>
+                {activeAi && (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/20 text-[11px] font-semibold">
+                    <CheckCircle2 className="w-3 h-3" /> Активна
+                  </span>
+                )}
+              </div>
+              <p className="text-4xl font-bold mt-2">
+                {formatRub(AI_PLAN_PRICE_RUB)}
+                <span className="text-base font-normal opacity-80"> / месяц</span>
+              </p>
+              <p className="text-sm opacity-90 mt-1">{AI_PLAN_QUESTIONS} вопросов в месяц со ссылками на статьи</p>
+            </div>
+            <div className="p-6">
+              <ul className="space-y-3 text-sm text-slate-700">
+                <li className="flex gap-2">
+                  <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0" />
+                  <><b>{AI_PLAN_QUESTIONS} вопросов в месяц</b> — ответы со ссылками на статьи НПА</>
+                </li>
+                <li className="flex gap-2">
+                  <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0" />
+                  Экспорт диалога в PDF и DOCX
+                </li>
+                <li className="flex gap-2">
+                  <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0" />
+                  Приоритетная поддержка
+                </li>
+                <li className="flex gap-2">
+                  <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0" />
+                  Неиспользованные вопросы сгорают в конце месяца
+                </li>
+              </ul>
+
+              {activeAi ? (
+                <div className="mt-6 p-4 rounded-xl border border-gray-200 bg-gray-50">
+                  <p className="text-xs text-gray-600">
+                    Тариф активен. Остаток вопросов на этот месяц смотрите на странице{" "}
+                    <a href="/ai-yurist" className="text-brand-600 font-medium underline">AI-юриста</a>.
+                    Вопросы сверх квоты — по 19 ₽ из баланса.
+                  </p>
+                </div>
+              ) : (
+                <Button variant="primary" size="lg" className="w-full mt-6" onClick={() => { void pay("ai"); }} disabled={paying}>
+                  <Sparkles className="w-4 h-4" />
+                  {paying ? "Создаём платёж…" : `Оформить за ${formatRub(AI_PLAN_PRICE_RUB)}`}
+                </Button>
+              )}
+
+              <p className="text-[11px] text-slate-500 mt-3 flex items-start gap-1.5">
+                <Lock className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
+                Оплата через ЮKassa: МИР, Visa, Mastercard, СБП. Отмена в любой момент.
+              </p>
+            </div>
+          </div>
+
           {/* PRO */}
           <div className="bg-white rounded-2xl border-2 border-brand-500 shadow-lg overflow-hidden relative">
             <div className="absolute top-4 right-4 px-2.5 py-1 rounded-full bg-amber-400 text-amber-950 text-[10px] font-bold">ПОПУЛЯРНО</div>
             <div className="bg-gradient-to-br from-brand-500 to-brand-600 p-6 text-white">
               <div className="flex items-center justify-between">
                 <h3 className="font-semibold opacity-90">PRO</h3>
-                {activePlan && (
+                {activePro && (
                   <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/20 text-[11px] font-semibold">
                     <CheckCircle2 className="w-3 h-3" /> Активна
                   </span>
@@ -390,7 +468,7 @@ export default function BillingPage() {
                 ))}
               </ul>
 
-              {activePlan ? (
+              {activePro ? (
                 <div className="mt-6 p-4 rounded-xl border border-gray-200 bg-gray-50 space-y-3">
                   <div className="flex items-center justify-between gap-3">
                     <div className="flex items-center gap-2 text-sm text-gray-700">

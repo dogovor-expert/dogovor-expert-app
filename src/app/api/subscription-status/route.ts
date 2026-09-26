@@ -48,9 +48,10 @@ export async function GET() {
   }
 
   const now = new Date();
-  const active = (subs ?? []).find(
+  const actives = (subs ?? []).filter(
     (s) => s.status === "active" && s.period_end && new Date(String(s.period_end)) >= now
   );
+  const active = actives[0];
 
   // Ленивое автопродление при заходе (работает и без cron, напр. на Hobby-тарифе Vercel).
   if (active?.auto_renewal && active?.yookassa_payment_method_id && active?.period_end) {
@@ -75,6 +76,8 @@ export async function GET() {
   return NextResponse.json({
     subscription_active: !!active,
     plan: active?.plan ?? (subs?.[0]?.plan ?? "free"),
+    // Все активные планы (pro и ai независимы) — для корректных бейджей в UI.
+    plans: [...new Set(actives.map((s) => s.plan))],
     period_end: active?.period_end ?? null,
     auto_renewal: active?.auto_renewal ?? false,
     has_payment_method: !!active?.yookassa_payment_method_id,

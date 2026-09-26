@@ -6,7 +6,7 @@ import { limiters, checkRateLimit, rateLimitResponse } from "@/lib/ratelimit";
 import { yookassaWebhookSchema, validateBody } from "@/lib/validations/api";
 import { logUserEvent, SERVER_SESSION_PREFIX } from "@/lib/userEvents";
 import { sendEmail, sendTelegram, SUPPORT_EMAIL } from "@/lib/mail";
-import { creditForTopup } from "@/lib/ai/pricing";
+import { creditForTopup, AI_PLAN_QUESTIONS, currentQuotaMonth } from "@/lib/ai/pricing";
 
 const EPTS_PRICE = 800;
 
@@ -548,10 +548,12 @@ export async function POST(req: Request) {
 
     // Если подписка с автопродлением ещё активна — продлеваем период,
     // иначе проверяем, есть ли уже активная подписка (предотвращаем дубликаты).
+    // Поиск СТРОГО по плану: иначе оплата AI-тарифа продлила бы PRO и наоборот.
     const { data: subs } = await admin
       .from("subscriptions")
       .select("id, period_end, auto_renewal, yookassa_payment_method_id")
       .eq("user_id", row.user_id)
+      .eq("plan", plan)
       .eq("status", "active")
       .order("period_end", { ascending: false })
       .limit(1);
@@ -585,6 +587,44 @@ export async function POST(req: Request) {
         period_end: end.toISOString(),
         yookassa_payment_method_id: paymentMethodId,
         auto_renewal: false,
+      });
+    }
+
+    // Тариф «AI-юрист»: при активации выставляем месячную квоту вопросов.
+    // Квота сгорает в конце календарного месяца (ролловер — кодом в гейте чата).
+    if (plan === "ai") {
+      const quotaMonth = currentQuotaMonth();
+      const balRes = await admin
+        .from("ai_balances")
+        .select("user_id")
+        .eq("user_id", row.user_id)
+        .limit(1)
+        .maybeSingle();
+      if (!balRes.data) {
+        await admin.from("ai_balances").insert({
+          user_id: row.user_id,
+          balance_kopeks: 0,
+          free_asked: 0,
+          quota_total: AI_PLAN_QUESTIONS,
+          quota_used: 0,
+          quota_month: quotaMonth,
+        });
+      } else {
+        await admin
+          .from("ai_balances")
+          .update({
+            quota_total: AI_PLAN_QUESTIONS,
+            quota_used: 0,
+            quota_month: quotaMonth,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("user_id", row.user_id);
+      }
+      await logUserEvent({
+        event: "ai_plan_activated",
+        userId: row.user_id,
+        sessionId: `${SERVER_SESSION_PREFIX}${payment.id}`,
+        meta: { quota_total: AI_PLAN_QUESTIONS, quota_month: quotaMonth },
       });
     }
   }

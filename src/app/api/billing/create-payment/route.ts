@@ -3,6 +3,7 @@ import { createHash } from "crypto";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { currentProPrice } from "@/lib/pricing";
+import { AI_PLAN_PRICE_RUB, AI_PLAN_QUESTIONS, AI_PLAN_PERIOD_DAYS } from "@/lib/ai/pricing";
 import { withCsrf } from "@/lib/csrf";
 import { isSameOrigin } from "@/lib/admin-auth";
 import { limiters, checkRateLimit, rateLimitResponse } from "@/lib/ratelimit";
@@ -30,13 +31,30 @@ async function postHandler(req: Request) {
 
   const host = req.headers.get("host") ?? "dogovor.expert";
   const proto = host.includes("localhost") || host.includes("127.0.0.1") ? "http" : "https";
-  const price = currentProPrice();
+
+  // План: "pro" (по умолчанию) или "ai" (тариф «AI-юрист»: 490 ₽/мес,
+  // 200 вопросов, квота выставляется вебхуком при активации).
+  let plan: "pro" | "ai" = "pro";
+  try {
+    const parsed = (await req.json()) as { plan?: unknown };
+    if (parsed?.plan === "ai") plan = "ai";
+    else if (parsed?.plan !== undefined && parsed?.plan !== "pro") {
+      return NextResponse.json({ error: "unknown_plan" }, { status: 400 });
+    }
+  } catch {
+    plan = "pro";
+  }
+  const price = plan === "ai" ? AI_PLAN_PRICE_RUB : currentProPrice();
+  const description =
+    plan === "ai"
+      ? `AI-юрист · ${AI_PLAN_QUESTIONS} вопросов · ${AI_PLAN_PERIOD_DAYS} дней`
+      : "PRO-подписка · 30 дней";
 
   // Идемпотентность (аудитор 2026-09-12): бакет 5 минут — двойной клик
   // создаёт ОДИН платёж в YooKassa; повтор позже (после отмены/истечения
   // pending) получает свежий счёт, как и нужно пользователю.
   const idempotenceKey = createHash("sha256")
-    .update(`first-pay:${user.id}:${Math.floor(Date.now() / 300000)}`)
+    .update(`first-pay:${plan}:${user.id}:${Math.floor(Date.now() / 300000)}`)
     .digest("hex");
 
   const res = await fetch("https://api.yookassa.ru/v3/payments", {
@@ -53,8 +71,8 @@ async function postHandler(req: Request) {
         type: "redirect",
         return_url: `${proto}://${host}/billing?success=1`,
       },
-      description: "PRO-подписка · 30 дней",
-      metadata: { user_id: user.id, plan: "pro" },
+      description,
+      metadata: { user_id: user.id, plan },
       save_payment_method: true,
     }),
   });
@@ -85,7 +103,7 @@ async function postHandler(req: Request) {
       provider: "yookassa",
       provider_id: payment.id,
       status: "pending",
-      meta: { plan: "pro" },
+      meta: { plan },
     })
     .select()
     .single();
@@ -101,7 +119,7 @@ async function postHandler(req: Request) {
     userId: user.id,
     sessionId: `${SERVER_SESSION_PREFIX}${payment.id}`,
     path: "/billing",
-    meta: { plan: "pro" },
+    meta: { plan },
   });
 
   return NextResponse.json({

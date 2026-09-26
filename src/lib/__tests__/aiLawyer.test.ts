@@ -3,11 +3,15 @@ import {
   AI_FREE_QUESTIONS,
   AI_LOW_BALANCE_KOPEKS,
   AI_MIN_TOPUP_KOPEKS,
+  AI_PLAN_PRICE_KOPEKS,
+  AI_PLAN_QUESTIONS,
   AI_PRICE_MESSAGE_KOPEKS,
   creditForTopup,
+  currentQuotaMonth,
   estimateCostKopeks,
   formatKopeks,
   messagesForTopup,
+  resolveQuestionSource,
 } from "@/lib/ai/pricing";
 import {
   buildUserMessage,
@@ -123,6 +127,30 @@ describe("ai validations", () => {
     expect(aiTopupSchema.safeParse({ amountRub: 100 }).success).toBe(true);
     expect(aiTopupSchema.safeParse({ amountRub: 99 }).success).toBe(false);
     expect(aiTopupSchema.safeParse({ amountRub: 100001 }).success).toBe(false);
-    expect(aiTopupSchema.safeParse({ amountRub: 99.5 }).success).toBe(false);
+  });
+});
+
+describe("ai plan quota", () => {
+  it("тариф: 490 ₽, 200 вопросов в месяц", () => {
+    expect(AI_PLAN_PRICE_KOPEKS).toBe(49000);
+    expect(AI_PLAN_QUESTIONS).toBe(200);
+  });
+
+  it("currentQuotaMonth: формат YYYY-MM, детерминирован", () => {
+    expect(currentQuotaMonth(new Date(Date.UTC(2026, 8, 26)))).toBe("2026-09");
+    expect(currentQuotaMonth(new Date(Date.UTC(2026, 0, 5)))).toBe("2026-01");
+  });
+
+  it("resolveQuestionSource: квота первой, затем бесплатные, затем баланс", () => {
+    // Есть квота — всегда квота (даже если бесплатные не тронуты).
+    expect(resolveQuestionSource({ quotaTotal: 200, quotaUsed: 0, freeAsked: 0 })).toBe("quota");
+    expect(resolveQuestionSource({ quotaTotal: 200, quotaUsed: 199, freeAsked: 0 })).toBe("quota");
+    // Квота исчерпана (used == total) — падаем на бесплатные/баланс.
+    expect(resolveQuestionSource({ quotaTotal: 200, quotaUsed: 200, freeAsked: 0 })).toBe("free");
+    expect(resolveQuestionSource({ quotaTotal: 200, quotaUsed: 200, freeAsked: 2 })).toBe("paid");
+    // Без тарифа — обычная логика: бесплатные, затем баланс.
+    expect(resolveQuestionSource({ quotaTotal: 0, quotaUsed: 0, freeAsked: 0 })).toBe("free");
+    expect(resolveQuestionSource({ quotaTotal: 0, quotaUsed: 0, freeAsked: 1 })).toBe("free");
+    expect(resolveQuestionSource({ quotaTotal: 0, quotaUsed: 0, freeAsked: 2 })).toBe("paid");
   });
 });

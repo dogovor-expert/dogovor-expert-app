@@ -11,6 +11,30 @@ export const AI_FREE_QUESTIONS = 2; // первые N вопросов — бе�
 export const AI_MIN_TOPUP_KOPEKS = 10000; // 100 ₽ — мин. пополнение
 export const AI_LOW_BALANCE_KOPEKS = 2000; // 20 ₽ — порог «низкий баланс»
 
+// --- Тариф «AI-юрист» (подписка, квоты) ---
+export const AI_PLAN_PRICE_RUB = 490; // 490 ₽/мес
+export const AI_PLAN_PRICE_KOPEKS = 49000;
+export const AI_PLAN_QUESTIONS = 200; // вопросов в месяц, сгорают
+export const AI_PLAN_PERIOD_DAYS = 30;
+
+/** Календарный месяц квоты 'YYYY-MM' (UTC — детерминированно для всех). */
+export function currentQuotaMonth(date = new Date()): string {
+  const m = date.getUTCMonth() + 1;
+  return `${date.getUTCFullYear()}-${m < 10 ? "0" + m : m}`;
+}
+
+/** Источник оплаты вопроса: квота тарифа → бесплатные → баланс. */
+export type QuestionSource = "quota" | "free" | "paid";
+export function resolveQuestionSource(args: {
+  quotaTotal: number;
+  quotaUsed: number;
+  freeAsked: number;
+}): QuestionSource {
+  if (args.quotaTotal > 0 && args.quotaUsed < args.quotaTotal) return "quota";
+  if (args.freeAsked < AI_FREE_QUESTIONS) return "free";
+  return "paid";
+}
+
 // --- Движок (ProxyAPI, цены ₽/1M токенов с НДС) ---
 export const AI_MODEL_CHAT = "deepseek/deepseek-v4-flash";
 export const AI_MODEL_VISION = "deepseek/deepseek-v4.1-flash";
