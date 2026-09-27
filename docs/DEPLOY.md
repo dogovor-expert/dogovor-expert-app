@@ -53,6 +53,31 @@ git push origin master:production
 
 **Ручной фолбэк** (если вебхук недоступен): панель CapRover → Apps → приложение → **Deploy** → сборка из репозитория (repo/branch), либо `caprover deploy` из папки с Dockerfile.
 
+### Ветка `deploy` — стабильная сборка без тяжёлого клона (2026-09-27)
+
+**Проблема:** CapRover клонирует ветку `production` целиком, а история репозитория
+раздута (в прошлом — tesseract-core, старые `blank-previews/*.jpg`, десятки версий
+`package-lock.json`). Полный пак ~150–205 МБ, VDS тянет его на КАЖДОЙ сборке по
+флапающему каналу → периодические обрывы `git clone` (`fetch-pack: unexpected
+disconnect`, `fatal: early EOF`) и «зависшие» сборки (лог стоит на `Build started`).
+
+**Решение:** CapRover собирает ветку **`deploy`**, которая создаётся автоматически
+workflow **`.github/workflows/deploy-branch.yml`**: на каждый пуш в `production`
+он делает orphan-снапшот текущего дерева (один коммит, без истории) и
+force-push'ит в `deploy`. Clone `deploy` = один коммит → ~40–60 МБ, без обхода
+истории. Историю `master`/`production` НЕ трогаем.
+
+- Поток остаётся прежним: правки в `master` → `git push origin master:production`.
+- `deploy` обновляется автоматически; CapRover (настроен на ветку `deploy`) собирает.
+- Проверка: `git ls-tree -r --name-only origin/deploy` — те же файлы, что в `master`.
+- Откат: в панели вернуть ветку `production` — деплой снова пойдёт напрямую.
+
+**Дополнительно (2026-09-27):** из истории вычищены мёртвые блобы
+(`public/workers/tesseract-core/*` кроме текущего `-simd.wasm.js`, старые
+`public/blank-previews/*.jpg`) через `git filter-repo --invert-paths` — пак
+205→151 МБ, дерево HEAD побайтово не изменилось. Резервная копия до операции:
+`D:\Мои сайты\_backups\dogovor-preslim-20260927.git`.
+
 ### Сколько ждать и как понять, что деплой доехал (2026-09-22)
 
 Замерено на истории `dogovor-prod` (версии 7–54): пуш → вебхук срабатывает за секунды,
