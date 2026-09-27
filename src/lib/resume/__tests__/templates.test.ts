@@ -1,4 +1,4 @@
-/** Паритет 12 шаблонов резюме: каждый шаблон покрыт HTML-превью, DOC-HTML и CSS. */
+/** Паритет 22 шаблонов резюме: каждый шаблон покрыт HTML-превью, DOC-HTML и CSS. */
 import { describe, expect, it } from "vitest";
 import { SAMPLE_RESUME, TEMPLATES } from "../data";
 import { buildResumeDocHtml, buildResumeHtml, fullName } from "../render";
@@ -8,6 +8,8 @@ import type { ResumeData, TemplateId } from "../types";
 const ALL: TemplateId[] = [
   "classic", "modern", "minimal", "executive", "gradient", "compact",
   "fresher", "timeline", "twocol", "academic", "expert", "creative",
+  "corporate", "techpro", "legal", "nordic", "sidebarpro",
+  "ocean", "terracotta", "graphite", "forest", "wine",
 ];
 
 const WITH_PHOTO: ResumeData = {
@@ -16,9 +18,9 @@ const WITH_PHOTO: ResumeData = {
 };
 
 describe("resume templates parity", () => {
-  it("каталог содержит 12 уникальных шаблонов", () => {
+  it("каталог содержит 22 уникальных шаблона", () => {
     expect(TEMPLATES.map((t) => t.id)).toEqual(ALL);
-    expect(new Set(TEMPLATES.map((t) => t.id)).size).toBe(12);
+    expect(new Set(TEMPLATES.map((t) => t.id)).size).toBe(22);
   });
 
   it("мета новых шаблонов: expert — двухколоночный для руководителей, creative — одноколоночный", () => {
@@ -54,6 +56,48 @@ describe("resume templates parity", () => {
     expect(html).toContain("lg inline");
   });
 
+  it("corporate: баннер, таймлайн, рейл с иконками", () => {
+    const html = buildResumeHtml(SAMPLE_RESUME, "corporate");
+    expect(html).toContain("band");
+    expect(html).toContain("xp2-grid");
+    expect(html).toContain("sec-t ic");
+    expect(html).toContain("Ключевые навыки");
+  });
+
+  it("sidebarpro: тёмный сайдбар с подписью, forest: светлый сайдбар", () => {
+    const dark = buildResumeHtml(SAMPLE_RESUME, "sidebarpro");
+    expect(dark).toContain("ex-side");
+    expect(dark).toContain("по стандартам 2026");
+    const light = buildResumeHtml(SAMPLE_RESUME, "forest");
+    expect(light).toContain("cp-side");
+    expect(light).not.toContain("по стандартам 2026");
+  });
+
+  it("techpro/legal: контактная полоса; ocean/wine: баннер; terracotta/graphite/nordic: свои маркеры", () => {
+    expect(buildResumeHtml(SAMPLE_RESUME, "techpro")).toContain("cbar");
+    expect(buildResumeHtml(SAMPLE_RESUME, "legal")).toContain("cbar");
+    expect(buildResumeHtml(SAMPLE_RESUME, "ocean")).toContain("band");
+    expect(buildResumeHtml(SAMPLE_RESUME, "wine")).toContain("band");
+    expect(buildResumeHtml(SAMPLE_RESUME, "terracotta")).toContain("strip");
+    expect(buildResumeHtml(SAMPLE_RESUME, "nordic")).toContain("doc-hd");
+    expect(buildResumeHtml(SAMPLE_RESUME, "graphite")).toContain("doc-hd");
+  });
+
+  it("buildResumeDocHtml: акценты и флаги новых шаблонов", () => {
+    const dots: Array<[TemplateId, string]> = [
+      ["corporate", "#1e293b"], ["techpro", "#4f46e5"], ["legal", "#0f172a"],
+      ["nordic", "#0d9488"], ["ocean", "#0369a1"], ["terracotta", "#9a3412"],
+      ["graphite", "#3f3f46"], ["wine", "#881337"],
+    ];
+    for (const [id, accent] of dots) {
+      const doc = buildResumeDocHtml(SAMPLE_RESUME, id);
+      expect(doc, id).toContain(accent);
+    }
+    expect(buildResumeDocHtml(SAMPLE_RESUME, "corporate")).toContain("border-left");
+    expect(buildResumeDocHtml(SAMPLE_RESUME, "sidebarpro")).toContain("по стандартам 2026");
+    expect(buildResumeDocHtml(SAMPLE_RESUME, "forest")).toContain("#f0fdf4");
+  });
+
   it("buildResumeDocHtml: A4, акцент и полоса у новых шаблонов", () => {
     const expert = buildResumeDocHtml(SAMPLE_RESUME, "expert");
     expect(expert).toContain("@page");
@@ -73,7 +117,7 @@ describe("resume templates parity", () => {
     }
   });
 
-  it("RESUME_CSS покрывает все 12 шаблонов", () => {
+  it("RESUME_CSS покрывает все 22 шаблона", () => {
     for (const id of ALL) {
       expect(RESUME_CSS, id).toContain(`.t-${id}`);
     }
@@ -98,7 +142,7 @@ describe("resume templates parity", () => {
         ...SAMPLE_RESUME,
         personal: { ...SAMPLE_RESUME.personal, photo: tinyPng },
       };
-      for (const id of ["expert", "creative"] as TemplateId[]) {
+      for (const id of ["expert", "creative", "corporate", "sidebarpro", "legal", "techpro"] as TemplateId[]) {
         const blob = await renderResumePdf(withRealPhoto, id);
         expect(blob.size, id).toBeGreaterThan(5000);
         expect(await blob.slice(0, 5).text(), id).toBe("%PDF-");

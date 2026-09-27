@@ -1,6 +1,6 @@
 import type { PhraseHint, ProfessionPreset, ResumeData, TemplateMeta } from "./types";
 
-/** 12 шаблонов резюме: метаданные для каталога и переключателя. */
+/** 22 шаблона резюме: метаданные для каталога и переключателя. */
 export const TEMPLATES: TemplateMeta[] = [
   { id: "classic", name: "Классический", desc: "Строгий одноколоночный макет с линиями", ats: "safe", parse: 96, tags: [] },
   { id: "modern", name: "Современный", desc: "Чистая вёрстка с индиго-акцентами", ats: "safe", parse: 94, tags: [] },
@@ -14,6 +14,16 @@ export const TEMPLATES: TemplateMeta[] = [
   { id: "academic", name: "Академический", desc: "Строгий шрифт с засечками", ats: "safe", parse: 95, tags: [] },
   { id: "expert", name: "Эксперт", desc: "Индиго-акцент, две колонки, шапка без фото", ats: "creative", parse: 80, tags: ["exec"] },
   { id: "creative", name: "Креатив", desc: "Оранжевый акцент, фото, одна колонка", ats: "safe", parse: 90, tags: ["creative"] },
+  { id: "corporate", name: "Executive Corporate", desc: "Тёмная шапка-баннер, таймлайн опыта, рейл с иконками", ats: "creative", parse: 76, tags: ["exec"] },
+  { id: "techpro", name: "Tech Pro", desc: "Сплит с фото, контактная полоса, таймлайн", ats: "creative", parse: 78, tags: ["creative"] },
+  { id: "legal", name: "Classic Legal", desc: "Строгий бланк с засечками, линейка, таймлайн", ats: "safe", parse: 93, tags: [] },
+  { id: "nordic", name: "Nordic Minimalist", desc: "Скандинавский минимализм, бирюзовый акцент", ats: "safe", parse: 94, tags: [] },
+  { id: "sidebarpro", name: "Modern Sidebar", desc: "Тёмный изумрудный сайдбар, светлая основа", ats: "creative", parse: 74, tags: ["creative"] },
+  { id: "ocean", name: "Океан", desc: "Синяя шапка-баннер, фото, спокойная сетка", ats: "safe", parse: 90, tags: [] },
+  { id: "terracotta", name: "Терракота", desc: "Тёплая полоса, компактные секции", ats: "safe", parse: 90, tags: ["creative"] },
+  { id: "graphite", name: "Графит", desc: "Графитовые линейки, строгая типографика", ats: "safe", parse: 92, tags: [] },
+  { id: "forest", name: "Лес", desc: "Зелёный светлый сайдбар, живое превью", ats: "creative", parse: 78, tags: ["creative"] },
+  { id: "wine", name: "Бордо", desc: "Винная шапка-баннер с засечками", ats: "safe", parse: 88, tags: ["exec"] },
 ];
 
 export const TEMPLATE_META: Record<string, TemplateMeta> = Object.fromEntries(

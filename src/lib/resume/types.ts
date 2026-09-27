@@ -60,7 +60,17 @@ export type TemplateId =
   | "twocol"
   | "academic"
   | "expert"
-  | "creative";
+  | "creative"
+  | "corporate"
+  | "techpro"
+  | "legal"
+  | "nordic"
+  | "sidebarpro"
+  | "ocean"
+  | "terracotta"
+  | "graphite"
+  | "forest"
+  | "wine";
 
 export type TemplateAts = "safe" | "creative";
 

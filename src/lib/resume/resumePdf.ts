@@ -3,7 +3,7 @@
  * фирменный акцент и раскладка, повторяющая превью шаблона.
  *
  * Отдельный от exportPdf.ts рендер, потому что тот парсит HTML по классам
- * документов (doc-title/doc-sides/…), а у резюме своя семантика и 12 макетов.
+ * документов (doc-title/doc-sides/…), а у резюме своя семантика и 22 макета.
  */
 import { PDFDocument, rgb, type Color, type PDFFont, type PDFPage } from "pdf-lib";
 import fontkit from "@pdf-lib/fontkit";
@@ -31,6 +31,12 @@ interface TemplateStyle {
   topStrip?: RGB;
   /** Фото справа в шапке (шаблон «Креатив»). */
   photoInHeader?: boolean;
+  /** Таймлайн опыта: акцентная точка перед каждой записью. */
+  expDots?: boolean;
+  /** Квадрат-маркер перед заголовком секции (рейл Executive Corporate). */
+  railIcons?: boolean;
+  /** Подпись внизу сайдбара (Modern Sidebar). */
+  sideFoot?: string;
 }
 
 const hex = (h: string): RGB => {
@@ -51,6 +57,16 @@ const STYLES: Record<TemplateId, TemplateStyle> = {
   academic: { accent: hex("#111827"), layout: "single", serif: true, centerHeader: true },
   expert: { accent: hex("#4f46e5"), layout: "columns", topStrip: hex("#4f46e5") },
   creative: { accent: hex("#ea580c"), layout: "single", topStrip: hex("#ea580c"), photoInHeader: true },
+  corporate: { accent: hex("#1e293b"), layout: "single", headerBand: hex("#1e293b"), expDots: true, railIcons: true },
+  techpro: { accent: hex("#4f46e5"), layout: "columns", expDots: true },
+  legal: { accent: hex("#0f172a"), layout: "single", serif: true, expDots: true },
+  nordic: { accent: hex("#0d9488"), layout: "single" },
+  sidebarpro: { accent: hex("#047857"), layout: "sidebar", sideBg: hex("#065f46"), sideFg: hex("#ecfdf5"), sideAccent: hex("#6ee7b7"), sideDark: true, sideFoot: "Dogovor.expert · резюме по стандартам 2026" },
+  ocean: { accent: hex("#0369a1"), layout: "single", headerBand: hex("#0369a1") },
+  terracotta: { accent: hex("#9a3412"), layout: "single", topStrip: hex("#9a3412") },
+  graphite: { accent: hex("#3f3f46"), layout: "single" },
+  forest: { accent: hex("#166534"), layout: "sidebar", sideBg: hex("#f0fdf4"), sideFg: hex("#14532d"), sideAccent: hex("#166534") },
+  wine: { accent: hex("#881337"), layout: "single", headerBand: hex("#881337"), serif: true },
 };
 
 const FONT_CACHE = new Map<string, ArrayBuffer>();
@@ -134,7 +150,11 @@ function sectionTitle(d: Doc, ctx: Ctx, title: string) {
   d.ensure(26, ctx.margins);
   d.gap(6);
   const size = 10.5;
-  d.page.drawText(title.toUpperCase(), { x: d.left, y: d.y - size, size, font: d.bold, color: ctx.style.accent });
+  const tx = ctx.style.railIcons ? d.left + 11 : d.left;
+  if (ctx.style.railIcons) {
+    d.page.drawRectangle({ x: d.left, y: d.y - size - 1, width: size - 3, height: size - 3, color: ctx.style.accent });
+  }
+  d.page.drawText(title.toUpperCase(), { x: tx, y: d.y - size, size, font: d.bold, color: ctx.style.accent });
   d.gap(size + 4);
   d.page.drawLine({ start: { x: d.left, y: d.y }, end: { x: d.right, y: d.y }, thickness: 0.8, color: LIGHT });
   d.gap(6);
@@ -245,14 +265,19 @@ function drawExperience(d: Doc, ctx: Ctx) {
   sectionTitle(d, ctx, "Опыт работы");
   for (const e of ctx.data.experience) {
     d.ensure(40, ctx.margins);
-    d.text(e.position || "Должность", { size: 11, font: d.bold, color: BLACK });
+    const ix = ctx.style.expDots ? d.left + 12 : d.left;
+    const iw = ctx.style.expDots ? d.width - 12 : d.width;
+    if (ctx.style.expDots) {
+      d.page.drawCircle({ x: d.left + 3, y: d.y - 5, size: 2.2, color: ctx.style.accent });
+    }
+    d.text(e.position || "Должность", { size: 11, font: d.bold, color: BLACK, x: ix, maxWidth: iw });
     const meta = [e.company, e.period].filter(Boolean).join("  ·  ");
-    if (meta) d.text(meta, { size: 9.5, color: ctx.style.accent });
+    if (meta) d.text(meta, { size: 9.5, color: ctx.style.accent, x: ix, maxWidth: iw });
     if (e.bullets?.length) {
       for (const b of e.bullets) {
         d.ensure(16, ctx.margins);
-        d.page.drawCircle({ x: d.left + 2.5, y: d.y - 4, size: 1.6, color: GRAY });
-        d.text(b, { size: 9.5, color: hex("#4b5563"), x: d.left + 12, maxWidth: d.width - 12, lineHeight: 13 });
+        d.page.drawCircle({ x: ix + 2.5, y: d.y - 4, size: 1.6, color: GRAY });
+        d.text(b, { size: 9.5, color: hex("#4b5563"), x: ix + 12, maxWidth: iw - 12, lineHeight: 13 });
       }
     }
     d.gap(6);
@@ -349,6 +374,11 @@ function drawSidebar(d: Doc, ctx: Ctx) {
   block("Навыки", hardSkills(data), true);
   block("Качества", data.skills.soft, true);
   block("Языки", data.languages.map((l) => `${l.name} — ${l.level}`), false);
+
+  if (style.sideFoot) {
+    d.page.drawLine({ start: { x: sx, y: 44 }, end: { x: sx + sw, y: 44 }, thickness: 0.6, color: ac });
+    d.page.drawText(style.sideFoot, { x: sx, y: 30, size: 7.5, font: d.regular, color: fg });
+  }
 
   // Правая колонка
   d.left = sideW + 28;

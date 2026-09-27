@@ -286,4 +286,234 @@ export const RESUME_CSS = `
 .t-creative .lg.inline{align-items:center;gap:8px 14px;font-size:12px}
 .t-creative .lg.inline .cap{display:inline-flex;color:#ea580c}
 .t-creative .lg.inline .cap svg{width:15px;height:15px}
+
+/* ============ 13. CORPORATE (макет Executive Corporate: баннер, таймлайн, рейл с иконками) ============ */
+.t-corporate .doc{padding:0 56px 52px}
+.t-corporate .band{background:#1e293b;margin:0 -56px 30px;padding:34px 56px 30px;color:#fff}
+.t-corporate .band .doc-name{font-size:30px;font-weight:850;color:#fff}
+.t-corporate .band .doc-role{font-size:13px;font-weight:650;color:#cbd5e1;margin:5px 0 0}
+.t-corporate .band-ct{display:flex;flex-wrap:wrap;gap:8px 16px;margin-top:14px;font-size:11.5px;color:#cbd5e1}
+.t-corporate .band-ct .cont svg{width:13px;height:13px}
+.t-corporate .sec-t{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.14em;color:#1e293b;margin-bottom:10px}
+.t-corporate .sec-t.ic{display:flex;align-items:center;gap:7px}
+.t-corporate .sec-t .ic{display:inline-flex;color:#1e293b}
+.t-corporate .sec-t .ic svg{width:13px;height:13px}
+.t-corporate .xp2-grid{display:grid;grid-template-columns:1.35fr 1fr;gap:30px;margin-top:26px}
+.t-corporate .xp2-grid>*{min-width:0}
+.t-corporate .xp2-main .sec{margin-bottom:22px}
+.t-corporate .xp-i{position:relative;border-left:2px solid #e2e8f0;padding-left:16px;margin-bottom:15px}
+.t-corporate .xp-i::before{content:'';position:absolute;left:-5px;top:5px;width:8px;height:8px;border-radius:50%;background:#1e293b}
+.t-corporate .xp-top{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+.t-corporate .xp-t{font-size:13.5px;font-weight:700;color:#0f172a}
+.t-corporate .xp-d{font-size:11px;color:#9ca3af;font-weight:600;white-space:nowrap}
+.t-corporate .xp-c{font-size:12px;color:#475569;font-weight:600;margin:1px 0 3px}
+.t-corporate .ed-i{margin-bottom:11px}
+.t-corporate .ed-i b{font-size:13px;color:#0f172a}
+.t-corporate .ed-i .em{font-size:11.5px;color:#64748b}
+.t-corporate .rail-card{margin-bottom:20px}
+.t-corporate .tag{background:#f1f5f9;border-color:#e2e8f0;color:#334155}
+.t-corporate .lg.dots{flex-direction:column;gap:8px;font-size:11.5px}
+.t-corporate .lg.dots>span{display:flex;align-items:center;gap:8px}
+.t-corporate .lg.dots>span::before{content:'';width:6px;height:6px;flex-shrink:0;border-radius:50%;background:#1e293b}
+.t-corporate .lg.dots .lv{color:#64748b}
+
+/* ============ 14. TECHPRO (макет Tech Pro: сплит, фото, контактная полоса) ============ */
+.t-techpro .doc{padding:0 56px 52px}
+.t-techpro .doc-hd{margin-bottom:18px}
+.t-techpro .doc-name{font-size:30px;font-weight:850;color:#0f172a}
+.t-techpro .doc-role{font-size:13px;font-weight:700;color:#4f46e5;text-transform:uppercase;letter-spacing:.1em;margin:5px 0 12px}
+.t-techpro .doc-ph{width:76px;height:76px;border-radius:14px;border:2px solid #c7d2fe;flex-shrink:0}
+.t-techpro .cbar{display:flex;flex-wrap:wrap;gap:8px 18px;border-top:1px solid #e0e7ff;border-bottom:1px solid #e0e7ff;padding:10px 0;margin-bottom:24px;font-size:11.5px;color:#4b5563}
+.t-techpro .cbar .cont svg{width:13px;height:13px;color:#4f46e5}
+.t-techpro .sec-t{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.14em;color:#4338ca;margin-bottom:10px}
+.t-techpro .xp2-grid{display:grid;grid-template-columns:1.35fr 1fr;gap:30px;margin-top:26px}
+.t-techpro .xp2-grid>*{min-width:0}
+.t-techpro .xp2-main .sec{margin-bottom:22px}
+.t-techpro .xp-i{position:relative;border-left:2px solid #e0e7ff;padding-left:16px;margin-bottom:15px}
+.t-techpro .xp-i::before{content:'';position:absolute;left:-5px;top:5px;width:8px;height:8px;border-radius:50%;background:#4f46e5}
+.t-techpro .xp-top{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+.t-techpro .xp-t{font-size:13.5px;font-weight:700;color:#0f172a}
+.t-techpro .xp-d{font-size:11px;color:#9ca3af;font-weight:600;white-space:nowrap}
+.t-techpro .xp-c{font-size:12px;color:#4f46e5;font-weight:600;margin:1px 0 3px}
+.t-techpro .ed-i{margin-bottom:11px}
+.t-techpro .ed-i b{font-size:13px;color:#0f172a}
+.t-techpro .ed-i .em{font-size:11.5px;color:#6b7280}
+.t-techpro .rail-card{margin-bottom:20px}
+.t-techpro .tag{background:#eef2ff;border-color:#e0e7ff;color:#4338ca}
+.t-techpro .lg.dots{flex-direction:column;gap:8px;font-size:11.5px}
+.t-techpro .lg.dots>span{display:flex;align-items:center;gap:8px}
+.t-techpro .lg.dots>span::before{content:'';width:6px;height:6px;flex-shrink:0;border-radius:50%;background:#4f46e5}
+.t-techpro .lg.dots .lv{color:#6b7280}
+
+/* ============ 15. LEGAL (макет Classic Legal: засечки, линейка, таймлайн) ============ */
+.t-legal .doc{padding:0 56px 52px;font-family:Georgia,'Times New Roman',serif}
+.t-legal .doc-hd{margin-bottom:16px}
+.t-legal .doc-name{font-size:30px;font-weight:700;color:#0f172a}
+.t-legal .doc-role{font-size:13px;font-weight:700;color:#0f172a;margin:5px 0 12px}
+.t-legal .cbar{display:flex;flex-wrap:wrap;gap:8px 18px;border-top:1px solid #cbd5e1;border-bottom:1px solid #cbd5e1;padding:10px 0;margin-bottom:24px;font-size:11.5px;color:#475569;font-family:'Inter',system-ui,sans-serif}
+.t-legal .cbar .cont svg{width:13px;height:13px;color:#0f172a}
+.t-legal .sec-t{font-size:15px;font-weight:700;color:#0f172a;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid #e2e8f0}
+.t-legal .sum{color:#334155;line-height:1.7;font-size:13px}
+.t-legal .xp-i{position:relative;border-left:2px solid #cbd5e1;padding-left:16px;margin-bottom:15px;font-family:'Inter',system-ui,sans-serif}
+.t-legal .xp-i::before{content:'';position:absolute;left:-5px;top:5px;width:8px;height:8px;border-radius:50%;background:#0f172a}
+.t-legal .xp-t{font-size:13.5px;font-weight:700;color:#0f172a}
+.t-legal .xp-c{font-size:12px;color:#475569;font-weight:600;margin:1px 0 3px}
+.t-legal .xp-d{font-size:11px;color:#64748b}
+.t-legal .xp-b{font-size:12.5px;color:#334155}
+.t-legal .ed-i{margin-bottom:11px;font-family:'Inter',system-ui,sans-serif}
+.t-legal .ed-i b{font-size:13px;color:#0f172a}
+.t-legal .ed-i .em{font-size:11.5px;color:#64748b}
+.t-legal .tag{background:none;border:1px solid #cbd5e1;border-radius:4px;color:#334155;font-family:'Inter',system-ui,sans-serif}
+.t-legal .sk,.t-legal .lg{font-family:'Inter',system-ui,sans-serif}
+
+/* ============ 16. NORDIC (макет Nordic Minimalist: воздух, бирюза) ============ */
+.t-nordic .doc{padding:8px 60px 56px}
+.t-nordic .doc-hd{margin-bottom:28px}
+.t-nordic .doc-name{font-size:30px;font-weight:800;color:#0f172a;letter-spacing:-.01em}
+.t-nordic .doc-role{font-size:12px;font-weight:700;color:#0d9488;text-transform:uppercase;letter-spacing:.16em;margin:7px 0 12px}
+.t-nordic .doc-ct{font-size:11.5px;color:#6b7280}
+.t-nordic .doc-ph{width:72px;height:72px;border-radius:50%;flex-shrink:0}
+.t-nordic .sec{margin-bottom:26px}
+.t-nordic .sec-t{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.18em;color:#0d9488;margin-bottom:12px}
+.t-nordic .sum{color:#4b5563;line-height:1.75}
+.t-nordic .xp-i{margin-bottom:17px}
+.t-nordic .xp-t{font-size:14px;font-weight:700;color:#0f172a}
+.t-nordic .xp-c{font-size:12.5px;color:#0d9488;font-weight:600;margin:2px 0 4px}
+.t-nordic .xp-d{font-size:11px;color:#9ca3af}
+.t-nordic .xp-b{color:#4b5563}
+.t-nordic .ed-i{margin-bottom:12px}
+.t-nordic .ed-i b{font-size:13px;color:#0f172a;font-weight:650}
+.t-nordic .ed-i .em{font-size:11.5px;color:#6b7280}
+.t-nordic .tag{background:#f0fdfa;border-color:#ccfbf1;color:#0f766e}
+.t-nordic .lg{font-size:12px;color:#4b5563}
+.t-nordic .lg .lv{color:#6b7280}
+
+/* ============ 17. SIDEBARPRO (макет Modern Sidebar: тёмный изумруд) ============ */
+.t-sidebarpro{display:flex;min-height:1123px}
+.t-sidebarpro .ex-side{width:280px;flex-shrink:0;background:linear-gradient(180deg,#065f46 0%,#064e3b 100%);color:#ecfdf5;padding:48px 30px 40px}
+.t-sidebarpro .ex-side .doc-ph{width:100px;height:100px;border-radius:50%;margin-bottom:20px;object-fit:cover;border:3px solid rgba(255,255,255,.25)}
+.t-sidebarpro .ex-side .doc-name{font-size:24px;font-weight:850;color:#fff;line-height:1.2;margin-bottom:6px}
+.t-sidebarpro .ex-side .doc-role{font-size:11px;color:#6ee7b7;text-transform:uppercase;letter-spacing:.13em;font-weight:700;margin-bottom:26px}
+.t-sidebarpro .ex-ct{display:flex;flex-direction:column;gap:10px;font-size:11.5px;color:#a7f3d0;margin-bottom:28px}
+.t-sidebarpro .ex-ct .cont svg{width:13px;height:13px;opacity:.8}
+.t-sidebarpro .ex-block{margin-bottom:24px}
+.t-sidebarpro .ex-block-t{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.16em;color:#6ee7b7;margin-bottom:12px;padding-bottom:7px;border-bottom:1px solid rgba(255,255,255,.16)}
+.t-sidebarpro .ex-block .sk{flex-direction:column;gap:7px}
+.t-sidebarpro .ex-block .tag{background:rgba(255,255,255,.12);border:none;color:#ecfdf5;font-size:11px;padding:6px 12px;border-radius:8px}
+.t-sidebarpro .ex-block .lg{flex-direction:column;gap:7px;color:#d1fae5;font-size:11.5px}
+.t-sidebarpro .ex-block-foot{margin-top:26px;padding-top:12px;border-top:1px solid rgba(255,255,255,.18);font-size:9.5px;color:rgba(236,253,245,.55)}
+.t-sidebarpro .ex-main{flex:1;padding:50px 46px 44px;background:#fff}
+.t-sidebarpro .sec-t{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.14em;color:#065f46;margin-bottom:10px}
+.t-sidebarpro .sum{color:#4b5563;line-height:1.7}
+.t-sidebarpro .xp-i{margin-bottom:15px}
+.t-sidebarpro .xp-t{font-size:14px;font-weight:700;color:#0f172a}
+.t-sidebarpro .xp-c{font-size:12.5px;color:#047857;font-weight:600;margin:1px 0 3px}
+.t-sidebarpro .xp-d{font-size:11px;color:#9ca3af;font-weight:600}
+.t-sidebarpro .ed-i{margin-bottom:11px}
+.t-sidebarpro .ed-i b{font-size:13px;color:#0f172a}
+.t-sidebarpro .ed-i .em{font-size:11.5px;color:#6b7280}
+
+/* ============ 18. OCEAN (синий баннер) ============ */
+.t-ocean .doc{padding:0 56px 52px}
+.t-ocean .band{background:linear-gradient(120deg,#075985 0%,#0369a1 100%);margin:0 -56px 28px;padding:32px 56px 30px;color:#fff}
+.t-ocean .band .doc-name{font-size:30px;font-weight:850;color:#fff}
+.t-ocean .band .doc-role{font-size:13px;font-weight:650;color:#bae6fd;margin:5px 0 0}
+.t-ocean .band-ct{display:flex;flex-wrap:wrap;gap:8px 16px;margin-top:14px;font-size:11.5px;color:#e0f2fe}
+.t-ocean .band-ct .cont svg{width:13px;height:13px}
+.t-ocean .band .doc-ph{width:84px;height:84px;border-radius:16px;object-fit:cover;flex-shrink:0;border:2px solid rgba(255,255,255,.35)}
+.t-ocean .sec-t{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.14em;color:#0369a1;margin-bottom:10px}
+.t-ocean .sum{color:#4b5563;line-height:1.7}
+.t-ocean .xp-i{margin-bottom:15px}
+.t-ocean .xp-top{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+.t-ocean .xp-t{font-size:14px;font-weight:700;color:#0f172a}
+.t-ocean .xp-d{font-size:11px;color:#9ca3af;font-weight:600;white-space:nowrap}
+.t-ocean .xp-c{font-size:12.5px;color:#0369a1;font-weight:600;margin:1px 0 3px}
+.t-ocean .ed-i{margin-bottom:11px}
+.t-ocean .ed-i b{font-size:13px;color:#0f172a}
+.t-ocean .ed-i .em{font-size:11.5px;color:#6b7280}
+.t-ocean .tag{background:#f0f9ff;border-color:#bae6fd;color:#0369a1}
+
+/* ============ 19. TERRACOTTA (тёплая полоса) ============ */
+.t-terracotta .doc{padding:0 56px 52px}
+.t-terracotta .strip{height:6px;background:#9a3412;margin:0 -56px 34px}
+.t-terracotta .doc-hd{margin-bottom:24px}
+.t-terracotta .doc-name{font-size:30px;font-weight:850;color:#9a3412}
+.t-terracotta .doc-role{font-size:14px;font-weight:650;color:#44403c;margin:5px 0 12px}
+.t-terracotta .doc-ct{font-size:11.5px;color:#78716c}
+.t-terracotta .sec-t{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.14em;color:#9a3412;margin-bottom:10px}
+.t-terracotta .sum{color:#57534e;line-height:1.7}
+.t-terracotta .xp-i{margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid #f5f5f4}
+.t-terracotta .xp-i:last-child{border-bottom:none}
+.t-terracotta .xp-t{font-size:14px;font-weight:700;color:#1c1917}
+.t-terracotta .xp-c{font-size:12.5px;color:#9a3412;font-weight:600;margin:1px 0 3px}
+.t-terracotta .xp-d{font-size:11px;color:#a8a29e}
+.t-terracotta .xp-b{color:#57534e}
+.t-terracotta .ed-i{margin-bottom:11px}
+.t-terracotta .ed-i b{font-size:13px;color:#1c1917}
+.t-terracotta .ed-i .em{font-size:11.5px;color:#78716c}
+.t-terracotta .tag{background:#fff7ed;border-color:#fed7aa;color:#9a3412}
+
+/* ============ 20. GRAPHITE (графитовые линейки) ============ */
+.t-graphite .doc{padding:0 56px 52px}
+.t-graphite .doc-hd{margin-bottom:22px;padding-bottom:18px;border-bottom:3px solid #3f3f46}
+.t-graphite .doc-name{font-size:30px;font-weight:850;color:#18181b;letter-spacing:-.01em}
+.t-graphite .doc-role{font-size:13px;font-weight:700;color:#52525b;text-transform:uppercase;letter-spacing:.12em;margin:6px 0 12px}
+.t-graphite .doc-ct{font-size:11.5px;color:#71717a}
+.t-graphite .doc-ph{width:72px;height:72px;border-radius:8px;object-fit:cover;flex-shrink:0;filter:grayscale(1)}
+.t-graphite .sec-t{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.12em;color:#18181b;margin-bottom:10px;padding-bottom:6px;border-bottom:3px solid #3f3f46}
+.t-graphite .sum{color:#3f3f46;line-height:1.7}
+.t-graphite .xp-i{margin-bottom:15px}
+.t-graphite .xp-top{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+.t-graphite .xp-t{font-size:14px;font-weight:800;color:#18181b}
+.t-graphite .xp-d{font-size:11px;color:#71717a;font-weight:600;white-space:nowrap}
+.t-graphite .xp-c{font-size:12.5px;color:#52525b;font-weight:700;margin:1px 0 3px}
+.t-graphite .xp-b{color:#3f3f46}
+.t-graphite .ed-i{margin-bottom:11px}
+.t-graphite .ed-i b{font-size:13px;color:#18181b}
+.t-graphite .ed-i .em{font-size:11.5px;color:#71717a}
+.t-graphite .tag{background:#f4f4f5;border-color:#e4e4e7;color:#3f3f46;border-radius:4px}
+
+/* ============ 21. FOREST (светлый зелёный сайдбар) ============ */
+.t-forest{display:flex;min-height:1123px}
+.t-forest .cp-side{width:256px;flex-shrink:0;background:#f0fdf4;border-right:1px solid #bbf7d0;padding:46px 26px 40px}
+.t-forest .cp-side .doc-ph{width:104px;height:104px;border-radius:50%;margin-bottom:18px;object-fit:cover;border:3px solid #bbf7d0}
+.t-forest .cp-side .doc-name{font-size:23px;font-weight:850;color:#14532d;line-height:1.15}
+.t-forest .cp-side .doc-role{color:#166534;font-size:12px;font-weight:700;margin:5px 0 20px}
+.t-forest .cp-ct{display:flex;flex-direction:column;gap:9px;font-size:11px;color:#3f6212;margin-bottom:24px}
+.t-forest .cp-ct .cont svg{width:13px;height:13px;color:#166534}
+.t-forest .cp-block{margin-bottom:22px}
+.t-forest .cp-block-t{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.13em;color:#65a30d;margin-bottom:10px}
+.t-forest .cp-block .sk{flex-direction:column;gap:6px;align-items:flex-start}
+.t-forest .cp-block .tag{background:#fff;border-color:#bbf7d0;color:#14532d}
+.t-forest .cp-block .lg{flex-direction:column;gap:6px;font-size:11.5px;color:#3f6212}
+.t-forest .cp-main{flex:1;padding:50px 46px 44px;background:#fff}
+.t-forest .sec-t{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.14em;color:#166534;margin-bottom:10px}
+.t-forest .sum{color:#4b5563;line-height:1.7}
+.t-forest .xp-i{margin-bottom:15px}
+.t-forest .xp-t{font-size:14px;font-weight:700;color:#0f172a}
+.t-forest .xp-c{font-size:12.5px;color:#166534;font-weight:600;margin:1px 0 3px}
+.t-forest .xp-d{font-size:11px;color:#9ca3af;font-weight:600}
+.t-forest .ed-i{margin-bottom:11px}
+.t-forest .ed-i b{font-size:13px;color:#0f172a}
+.t-forest .ed-i .em{font-size:11.5px;color:#6b7280}
+
+/* ============ 22. WINE (винный баннер с засечками) ============ */
+.t-wine .doc{padding:0 56px 52px;font-family:Georgia,'Times New Roman',serif}
+.t-wine .band{background:#581c26;margin:0 -56px 28px;padding:32px 56px 30px;color:#fff}
+.t-wine .band .doc-name{font-size:30px;font-weight:700;color:#fff}
+.t-wine .band .doc-role{font-size:13px;font-weight:700;color:#fecdd3;margin:5px 0 0}
+.t-wine .band-ct{display:flex;flex-wrap:wrap;gap:8px 16px;margin-top:14px;font-size:11.5px;color:#ffe4e6;font-family:'Inter',system-ui,sans-serif}
+.t-wine .band-ct .cont svg{width:13px;height:13px}
+.t-wine .sec-t{font-size:15px;font-weight:700;color:#581c26;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid #fecdd3}
+.t-wine .sum{color:#44403c;line-height:1.7;font-size:13px}
+.t-wine .xp-i{margin-bottom:14px;font-family:'Inter',system-ui,sans-serif}
+.t-wine .xp-t{font-size:14px;font-weight:700;color:#1c1917}
+.t-wine .xp-c{font-size:12.5px;color:#881337;font-weight:600;margin:1px 0 3px}
+.t-wine .xp-d{font-size:11px;color:#a8a29e}
+.t-wine .xp-b{color:#44403c}
+.t-wine .ed-i{margin-bottom:11px;font-family:'Inter',system-ui,sans-serif}
+.t-wine .ed-i b{font-size:13px;color:#1c1917}
+.t-wine .ed-i .em{font-size:11.5px;color:#78716c}
+.t-wine .tag{background:#fff1f2;border-color:#fecdd3;color:#881337;border-radius:4px;font-family:'Inter',system-ui,sans-serif}
+.t-wine .sk,.t-wine .lg{font-family:'Inter',system-ui,sans-serif}
 `;

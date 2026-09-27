@@ -7,6 +7,9 @@ const IC = {
   mail: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 7 10 6 10-6"/></svg>',
   link: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1"/><path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"/></svg>',
   cap: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 10 12 5 2 10l10 5 10-5z"/><path d="M6 12v5c0 1.7 2.7 3 6 3s6-1.3 6-3v-5"/><path d="M22 10v6"/></svg>',
+  wrench: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>',
+  book: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>',
+  globe: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>',
 } as const;
 
 type IconKey = keyof typeof IC;
@@ -57,7 +60,18 @@ function contactsV(data: ResumeData): string {
 }
 
 function secT(t: string): string { return `<h2 class="sec-t">${t}</h2>`; }
+function secTI(t: string, icon: IconKey): string { return `<h2 class="sec-t ic"><span class="ic">${IC[icon]}</span>${t}</h2>`; }
 function sec(t: string, b: string): string { return `<section class="sec">${secT(t)}${b}</section>`; }
+/** Контактная полоса под шапкой (шаблоны Tech Pro / Classic Legal). */
+function contactBar(data: ResumeData): string {
+  const a = contactItems(data);
+  if (!a.length) return "";
+  return `<div class="cbar">${a.map(([k, v]) => `<span class="cont">${IC[k]}<span>${escapeHtml(v)}</span></span>`).join("")}</div>`;
+}
+/** Карточка рейла с иконкой заголовка (шаблон Executive Corporate). */
+function railCardI(icon: IconKey, title: string, body: string): string {
+  return `<div class="rail-card">${secTI(title, icon)}${body}</div>`;
+}
 function tags(arr: string[]): string { return (arr ?? []).map((x) => `<span class="tag">${escapeHtml(x)}</span>`).join(""); }
 function bullets(a: string[]): string {
   return a && a.length ? `<ul class="xp-b">${a.map((x) => `<li>${escapeHtml(x)}</li>`).join("")}</ul>` : "";
@@ -131,12 +145,13 @@ function langsSec(data: ResumeData): string {
   return data.languages.length ? sec("Языки", langsInline(data)) : "";
 }
 
-function sideBlocks(data: ResumeData, cls: string, title: string, titleSoft: string): string {
+function sideBlocks(data: ResumeData, cls: string, title: string, titleSoft: string, foot?: string): string {
   const hard = hardSkills(data);
   return (
     (hard.length ? `<div class="${cls}"><div class="${cls}-t">${title}</div><div class="sk">${tags(hard)}</div></div>` : "") +
     (data.skills.soft.length ? `<div class="${cls}"><div class="${cls}-t">${titleSoft}</div><div class="sk">${tags(data.skills.soft)}</div></div>` : "") +
-    (data.languages.length ? `<div class="${cls}"><div class="${cls}-t">Языки</div><div class="lg">${langSpans(data)}</div></div>` : "")
+    (data.languages.length ? `<div class="${cls}"><div class="${cls}-t">Языки</div><div class="lg">${langSpans(data)}</div></div>` : "") +
+    (foot ? `<div class="${cls}-foot">${foot}</div>` : "")
   );
 }
 
@@ -171,6 +186,26 @@ export function buildResumeHtml(data: ResumeData, tpl: TemplateId): string {
       return `<div class="doc"><div class="strip" aria-hidden="true"></div><header class="doc-hd"><div class="doc-name">${name}</div><div class="doc-role">${role}</div>${contacts(data)}</header>${sumSec(data)}<div class="xp2-grid"><div class="xp2-main">${expSec(data, "modern")}${eduSec(data, "expert")}</div><aside class="xp2-rail">${hardSkills(data).length ? `<div class="rail-card">${secT("Навыки")}<div class="sk">${tags(hardSkills(data))}</div></div>` : ""}${data.skills.soft.length ? `<div class="rail-card">${secT("Личные качества")}<div class="sk">${tags(data.skills.soft)}</div></div>` : ""}${data.languages.length ? `<div class="rail-card">${secT("Языки")}<div class="lg dots">${langSpans(data)}</div></div>` : ""}</aside></div></div>`;
     case "creative":
       return `<div class="doc"><div class="strip" aria-hidden="true"></div><header class="doc-hd hd"><div class="hd-t"><div class="doc-name">${name}</div><div class="doc-role">${role}</div>${contacts(data)}</div>${photo}</header>${sumSec(data)}${expSec(data, "modern")}${skillsSec(data)}${eduSec(data, "creative")}${data.languages.length ? sec("Языки", `<div class="lg inline"><span class="cap">${IC.cap}</span>${langSpans(data)}</div>`) : ""}</div>`;
+    case "corporate":
+      return `<div class="doc"><header class="band"><div class="doc-name">${name}</div><div class="doc-role">${role}</div><div class="band-ct">${contactsV(data)}</div></header>${sumSec(data)}<div class="xp2-grid"><div class="xp2-main">${expSec(data, "modern")}${eduSec(data, "corporate")}</div><aside class="xp2-rail">${hardSkills(data).length ? railCardI("wrench", "Ключевые навыки", `<div class="sk">${tags(hardSkills(data))}</div>`) : ""}${data.education.length ? railCardI("book", "Образование", eduRows(data, "corporate")) : ""}${data.languages.length ? railCardI("globe", "Языки", `<div class="lg dots">${langSpans(data)}</div>`) : ""}</aside></div></div>`;
+    case "techpro":
+      return `<div class="doc"><header class="doc-hd hd"><div class="hd-t"><div class="doc-name">${name}</div><div class="doc-role">${role}</div></div>${photo}</header>${contactBar(data)}${sumSec(data)}<div class="xp2-grid"><div class="xp2-main">${expSec(data, "modern")}${eduSec(data, "techpro")}</div><aside class="xp2-rail">${hardSkills(data).length ? `<div class="rail-card">${secT("Навыки")}<div class="sk">${tags(hardSkills(data))}</div></div>` : ""}${data.skills.soft.length ? `<div class="rail-card">${secT("Качества")}<div class="sk">${tags(data.skills.soft)}</div></div>` : ""}${data.languages.length ? `<div class="rail-card">${secT("Языки")}<div class="lg dots">${langSpans(data)}</div></div>` : ""}</aside></div></div>`;
+    case "legal":
+      return `<div class="doc"><header class="doc-hd"><div class="doc-name">${name}</div><div class="doc-role">${role}</div></header>${contactBar(data)}${sumSec(data)}${expSec(data, "modern")}${eduSec(data, "legal")}${skillsSec(data)}${langsSec(data)}</div>`;
+    case "nordic":
+      return `<div class="doc"><header class="doc-hd hd"><div class="hd-t"><div class="doc-name">${name}</div><div class="doc-role">${role}</div>${contacts(data)}</div>${photo}</header>${sumSec(data)}${expSec(data, "nordic")}${eduSec(data, "nordic")}${skillsSec(data)}${langsSec(data)}</div>`;
+    case "sidebarpro":
+      return `<aside class="ex-side">${photo}<div class="doc-name">${name}</div><div class="doc-role">${role}</div><div class="ex-ct">${contactsV(data)}</div>${sideBlocks(data, "ex-block", "Навыки", "Личные качества", "Dogovor.expert · резюме по стандартам 2026")}</aside><div class="ex-main">${sumSec(data)}${expSec(data, "sidebarpro")}${eduSec(data, "sidebarpro")}</div>`;
+    case "ocean":
+      return `<div class="doc"><header class="band hd"><div class="hd-t"><div class="doc-name">${name}</div><div class="doc-role">${role}</div><div class="band-ct">${contactsV(data)}</div></div>${photo}</header>${sumSec(data)}${expSec(data, "ocean")}${eduSec(data, "ocean")}${skillsSec(data)}${langsSec(data)}</div>`;
+    case "terracotta":
+      return `<div class="doc"><div class="strip" aria-hidden="true"></div><header class="doc-hd"><div class="doc-name">${name}</div><div class="doc-role">${role}</div>${contacts(data)}</header>${sumSec(data)}${expSec(data, "terracotta")}${eduSec(data, "terracotta")}${skillsSec(data)}${langsSec(data)}</div>`;
+    case "graphite":
+      return `<div class="doc"><header class="doc-hd hd"><div class="hd-t"><div class="doc-name">${name}</div><div class="doc-role">${role}</div>${contacts(data)}</div>${photo}</header>${sumSec(data)}${expSec(data, "graphite")}${eduSec(data, "graphite")}${skillsSec(data)}${langsSec(data)}</div>`;
+    case "forest":
+      return `<aside class="cp-side">${photo}<div class="doc-name">${name}</div><div class="doc-role">${role}</div><div class="cp-ct">${contactsV(data)}</div>${sideBlocks(data, "cp-block", "Навыки", "Качества")}</aside><div class="cp-main">${sumSec(data)}${expSec(data, "forest")}${eduSec(data, "forest")}</div>`;
+    case "wine":
+      return `<div class="doc"><header class="band"><div class="doc-name">${name}</div><div class="doc-role">${role}</div><div class="band-ct">${contactsV(data)}</div></header>${sumSec(data)}${expSec(data, "wine")}${eduSec(data, "wine")}${skillsSec(data)}${langsSec(data)}</div>`;
     default:
       return "";
   }
@@ -188,6 +223,10 @@ interface DocTemplateStyle {
   sideAccent?: string;
   /** Тонкая акцентная полоса сверху документа (как в мокапах «Эксперт»/«Креатив»). */
   strip?: boolean;
+  /** Таймлайн опыта: левая акцентная линейка у каждой записи (макеты Corporate/Tech/Legal). */
+  expDots?: boolean;
+  /** Подпись внизу боковой колонки (макет Modern Sidebar). */
+  sideFoot?: string;
 }
 
 const DOC_TEMPLATES: Record<TemplateId, DocTemplateStyle> = {
@@ -203,6 +242,16 @@ const DOC_TEMPLATES: Record<TemplateId, DocTemplateStyle> = {
   academic: { accent: "#111827", layout: "single", center: true, serif: true },
   expert: { accent: "#4f46e5", layout: "columns", strip: true },
   creative: { accent: "#ea580c", layout: "single", strip: true },
+  corporate: { accent: "#1e293b", layout: "single", headerBg: "#1e293b", headerFg: "#ffffff", expDots: true },
+  techpro: { accent: "#4f46e5", layout: "columns", expDots: true },
+  legal: { accent: "#0f172a", layout: "single", serif: true, expDots: true },
+  nordic: { accent: "#0d9488", layout: "single" },
+  sidebarpro: { accent: "#047857", layout: "sidebar", sideBg: "#065f46", sideFg: "#ecfdf5", sideAccent: "#6ee7b7", sideFoot: "Dogovor.expert · резюме по стандартам 2026" },
+  ocean: { accent: "#0369a1", layout: "single", headerBg: "#0369a1", headerFg: "#ffffff" },
+  terracotta: { accent: "#9a3412", layout: "single", strip: true },
+  graphite: { accent: "#3f3f46", layout: "single" },
+  forest: { accent: "#166534", layout: "sidebar", sideBg: "#f0fdf4", sideFg: "#14532d", sideAccent: "#166534" },
+  wine: { accent: "#881337", layout: "single", headerBg: "#881337", headerFg: "#ffffff", serif: true },
 };
 
 /**
@@ -232,7 +281,10 @@ export function buildResumeDocHtml(data: ResumeData, tpl: TemplateId): string {
           const bl = e.bullets.length
             ? `<ul style="margin:2pt 0 7pt 16pt;padding:0;">${e.bullets.map((b) => `<li style="margin:0 0 1pt;">${escapeHtml(b)}</li>`).join("")}</ul>`
             : `<p style="margin:0 0 6pt;"></p>`;
-          return head + bl;
+          const body = head + bl;
+          return cfg.expDots
+            ? `<div style="border-left:2pt solid ${cfg.accent};padding-left:8pt;margin:0 0 6pt;">${body}</div>`
+            : body;
         })
         .join("")
     : "";
@@ -301,7 +353,8 @@ export function buildResumeDocHtml(data: ResumeData, tpl: TemplateId): string {
       (contacts.length ? `<p style="margin:0 0 8pt;color:${sideFg};font-size:9.5pt;line-height:1.5;">${contacts.join("<br>")}</p>` : "") +
       (hard ? `<p style="margin:0 0 2pt;color:${sideAccent};font-weight:bold;font-size:9.5pt;">НАВЫКИ</p><p style="margin:0 0 8pt;color:${sideFg};font-size:9.5pt;">${hard}</p>` : "") +
       (soft ? `<p style="margin:0 0 2pt;color:${sideAccent};font-weight:bold;font-size:9.5pt;">КАЧЕСТВА</p><p style="margin:0 0 8pt;color:${sideFg};font-size:9.5pt;">${soft}</p>` : "") +
-      (langs ? `<p style="margin:0 0 2pt;color:${sideAccent};font-weight:bold;font-size:9.5pt;">ЯЗЫКИ</p><p style="margin:0;color:${sideFg};font-size:9.5pt;">${langs}</p>` : "");
+      (langs ? `<p style="margin:0 0 2pt;color:${sideAccent};font-weight:bold;font-size:9.5pt;">ЯЗЫКИ</p><p style="margin:0;color:${sideFg};font-size:9.5pt;">${langs}</p>` : "") +
+      (cfg.sideFoot ? `<p style="margin:10pt 0 0;color:${sideFg};font-size:8pt;border-top:1pt solid ${sideAccent};padding-top:6pt;">${escapeHtml(cfg.sideFoot)}</p>` : "");
     const bandHeader = cfg.headerBg
       ? `<table width="100%" cellpadding="12" cellspacing="0" style="border-collapse:collapse;margin:0 0 10pt;"><tr><td bgcolor="${cfg.headerBg}"><h1 style="color:${cfg.headerFg};font-size:20pt;margin:0;">${name}</h1>${role ? `<p style="margin:2pt 0 0;color:${cfg.headerFg};">${role}</p>` : ""}${contacts.length ? `<p style="margin:3pt 0 0;font-size:9.5pt;color:${cfg.headerFg};">${contacts.join(" · ")}</p>` : ""}</td></tr></table>`
       : "";
