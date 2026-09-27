@@ -7,6 +7,7 @@ import { limiters, checkRateLimit, rateLimitResponse } from "@/lib/ratelimit";
 import { aiChatSchema, validateBody } from "@/lib/validations/api";
 import {
   AI_MODEL_CHAT,
+  AI_MODEL_CHAT_FALLBACK,
   AI_PRICE_MESSAGE_KOPEKS,
   currentQuotaMonth,
   estimateCostKopeks,
@@ -17,6 +18,7 @@ import {
   createEmbedding,
   isProxyApiConfigured,
 } from "@/lib/ai/proxyapi";
+import { chatCompletion as provodChatCompletion, isProvodConfigured } from "@/lib/ai/provod";
 import {
   AI_AUDIT_SYSTEM_PROMPT,
   AI_SYSTEM_PROMPT,
@@ -54,20 +56,28 @@ async function findChunks(
     }
     const vectors = await createEmbedding(expanded);
     const vec = vectors[0];
-    if (!vec) return [];
+    if (!vec) {
+      console.warn("[ai/chat] RAG DEGRADED: пустой эмбеддинг — ответ без цитат");
+      return [];
+    }
     const rpcRes: { data: unknown; error: { message: string } | null } = await admin.rpc("match_law_chunks", {
       query_embedding: `[${vec.join(",")}]`,
       match_count: 5,
       query_text: expanded,
     });
     if (rpcRes.error) {
-      console.error("[ai/chat] match_law_chunks failed:", rpcRes.error.message);
+      console.warn("[ai/chat] RAG DEGRADED: match_law_chunks failed:", rpcRes.error.message);
       return [];
     }
     const rows = rpcRes.data as LawChunk[] | null;
     return rows ?? [];
   } catch (e) {
-    console.error("[ai/chat] RAG search failed:", e instanceof Error ? e.message : e);
+    const msg = e instanceof Error ? e.message : String(e);
+    if (msg === "PROXYAPI_NO_FUNDS" || msg === "PROXYAPI_UNAUTHORIZED") {
+      console.warn(`[ai/chat] RAG DEGRADED: эмбеддинги недоступны (${msg}) — ответ без цитат`);
+    } else {
+      console.warn("[ai/chat] RAG DEGRADED:", msg);
+    }
     return [];
   }
 }
@@ -101,7 +111,7 @@ async function postHandler(req: Request) {
     return NextResponse.json({ error: "audit_text_too_short" }, { status: 400 });
   }
 
-  if (!isProxyApiConfigured()) {
+  if (!isProvodConfigured() && !isProxyApiConfigured()) {
     return NextResponse.json({ error: "ai_unavailable" }, { status: 503 });
   }
 
@@ -222,12 +232,15 @@ async function postHandler(req: Request) {
   // Запрос к модели. Ошибка провайдера = 502, деньги НЕ списаны.
   // maxTokens 3000 (чат) / 4000 (аудит: JSON-отчёт с находками длиннее ответа).
   // reasoning-модель тратит ~500-700 токенов на внутренние рассуждения.
+  // Основной провайдер — Provod (mimo-v2.6-pro), fallback — ProxyAPI.
   let answer: string;
   let tokensIn = 0;
   let tokensOut = 0;
   try {
-    const result = await chatCompletion(
-      AI_MODEL_CHAT,
+    const runChat = isProvodConfigured() ? provodChatCompletion : chatCompletion;
+    const chatModel = isProvodConfigured() ? AI_MODEL_CHAT : AI_MODEL_CHAT_FALLBACK;
+    const result = await runChat(
+      chatModel,
       isAudit
         ? [
             { role: "system", content: AI_AUDIT_SYSTEM_PROMPT },
@@ -246,7 +259,7 @@ async function postHandler(req: Request) {
   } catch (e) {
     const msg = e instanceof Error ? e.message : "";
     console.error("[ai/chat] provider failed:", msg);
-    if (msg === "PROXYAPI_NO_FUNDS") {
+    if (msg === "PROXYAPI_NO_FUNDS" || msg === "PROVOD_NO_FUNDS") {
       return NextResponse.json({ error: "ai_provider_no_funds" }, { status: 503 });
     }
     return NextResponse.json({ error: "ai_provider_error" }, { status: 502 });

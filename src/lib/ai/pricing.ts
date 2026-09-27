@@ -35,16 +35,17 @@ export function resolveQuestionSource(args: {
   return "paid";
 }
 
-// --- Движок (ProxyAPI, цены ₽/1M токенов с НДС) ---
-export const AI_MODEL_CHAT = "deepseek/deepseek-v4-flash";
+// --- Движок (Provod AI, fallback ProxyAPI, цены ₽/1M токенов с НДС) ---
+export const AI_MODEL_CHAT = "mimo-v2.6-pro";
+export const AI_MODEL_CHAT_FALLBACK = "deepseek/deepseek-v4-flash";
 export const AI_MODEL_VISION = "deepseek/deepseek-v4.1-flash";
 export const AI_MODEL_EMBEDDING = "openai/text-embedding-3-small";
 export const AI_MODEL_STT = "openai/whisper-1";
 
-// Себестоимость ProxyAPI в копейках за 1K токенов (для расчёта маржи в логах).
-// V4 Flash: 20/40 ₽/1M → 2/4 коп за 1K.
-export const AI_COST_CHAT_IN_KOPEKS_PER_1K = 2;
-export const AI_COST_CHAT_OUT_KOPEKS_PER_1K = 4;
+// Себестоимость в копейках за 1K токенов (для расчёта маржи в логах).
+// MiMo v2.6 Pro (Provod): 36.71/73.43 ₽/1M → 3.67/7.34 коп за 1K, с запасом 4/8.
+export const AI_COST_CHAT_IN_KOPEKS_PER_1K = 4;
+export const AI_COST_CHAT_OUT_KOPEKS_PER_1K = 8;
 export const AI_COST_VISION_IN_KOPEKS_PER_1K = 5; // 41/1M с запасом
 export const AI_COST_VISION_OUT_KOPEKS_PER_1K = 17; // 168/1M с запасом
 export const AI_COST_EMBED_KOPEKS_PER_1K = 1; // 5.16 ₽/1M с запасом

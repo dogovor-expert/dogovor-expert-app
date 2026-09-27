@@ -37,12 +37,12 @@ describe("ai pricing", () => {
     expect(formatKopeks(AI_PRICE_MESSAGE_KOPEKS)).toBe("19 ₽");
   });
 
-  it("себестоимость V4 Flash: 3000 вх + 1000 исх = 10 копеек", () => {
-    expect(estimateCostKopeks(3000, 1000)).toBe(10);
+  it("себестоимость MiMo v2.6 Pro: 3000 вх + 1000 исх = 20 копеек", () => {
+    expect(estimateCostKopeks(3000, 1000)).toBe(20);
   });
 
   it("округление вверх защищает от ухода в минус", () => {
-    expect(estimateCostKopeks(1, 1)).toBe(6);
+    expect(estimateCostKopeks(1, 1)).toBe(12);
     expect(estimateCostKopeks(0, 0)).toBe(0);
   });
 
