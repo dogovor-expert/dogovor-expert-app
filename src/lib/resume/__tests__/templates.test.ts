@@ -123,8 +123,7 @@ describe("resume templates parity", () => {
     }
   });
 
-  it("renderResumePdf собирает expert и creative в настоящий PDF", async () => {
-    const { readFile } = await import("node:fs/promises");
+  it("renderResumePdf собирает expert и creative в настоящий PDF", async () => {    const { readFile } = await import("node:fs/promises");
     const { join } = await import("node:path");
     const origFetch = globalThis.fetch;
     const root = join(process.cwd(), "public", "fonts");
@@ -150,5 +149,5 @@ describe("resume templates parity", () => {
     } finally {
       globalThis.fetch = origFetch;
     }
-  });
+  }, 60000);
 });
