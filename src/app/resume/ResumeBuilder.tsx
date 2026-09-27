@@ -531,13 +531,13 @@ export default function ResumeBuilder() {
         <div className="rvb-drawer-h">
           <div>
             <h3>Шаблоны резюме</h3>
-            <p>10 макетов: от строгого ATS до современного дизайна. Превью — на ваших данных.</p>
+            <p>{TEMPLATES.length} макетов: от строгого ATS до современного дизайна. Превью — на ваших данных.</p>
           </div>
           <button type="button" className="rvb-ico" onClick={() => setDrawer(false)} aria-label="Закрыть"><X className="h-4 w-4" aria-hidden /></button>
         </div>
         <div className="rvb-fchips">
           {[
-            ["all", "Все (10)"],
+            ["all", `Все (${TEMPLATES.length})`],
             ["safe", "✓ ATS-safe"],
             ["creative", "⚠ Креативные"],
             ["exec", "Для руководства"],
