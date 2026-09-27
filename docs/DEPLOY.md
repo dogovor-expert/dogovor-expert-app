@@ -69,6 +69,11 @@ force-push'ит в `deploy`. Clone `deploy` = один коммит → ~40–60
 
 - Поток остаётся прежним: правки в `master` → `git push origin master:production`.
 - `deploy` обновляется автоматически; CapRover (настроен на ветку `deploy`) собирает.
+- ⚠️ Требование: repo → **Settings → Actions → General → Workflow permissions →
+  «Read and write permissions»** (иначе Action не сможет запушить `deploy`).
+  Проверка: `git ls-remote origin deploy` — SHA меняется после каждого пуша
+  в `production`; дерево `origin/deploy` обязано совпадать с `master`
+  (`git rev-parse origin/deploy^{tree}` == `git rev-parse master^{tree}`).
 - Проверка: `git ls-tree -r --name-only origin/deploy` — те же файлы, что в `master`.
 - Откат: в панели вернуть ветку `production` — деплой снова пойдёт напрямую.
 
