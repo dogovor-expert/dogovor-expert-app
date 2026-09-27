@@ -24,11 +24,24 @@ import {
   FileDoc,
   MagnifyingGlass,
   Clock,
+  UploadSimple,
+  FileArrowUp,
+  SpinnerGap,
 } from "@phosphor-icons/react";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { messagesForTopup } from "@/lib/ai/pricing";
+import {
+  AUDIT_FILE_ACCEPT,
+  AUDIT_FILE_MAX_BYTES,
+  extractAuditText,
+  unsupportedFileHint,
+  type AuditExtractProgress,
+} from "@/lib/ai/auditFile";
+
+/** Лимит текста аудита (синхронно с aiChatSchema). ~10 страниц договора. */
+const AUDIT_MAX = 20000;
 
 interface Source {
   code: string;
@@ -163,7 +176,14 @@ export default function AiYuristClient({
   const [auditReport, setAuditReport] = useState<AuditReport | null>(null);
   const [auditSources, setAuditSources] = useState<Source[]>([]);
   const [auditError, setAuditError] = useState<string | null>(null);
+  const [auditFile, setAuditFile] = useState<{ name: string; size: number } | null>(null);
+  const [auditFileBusy, setAuditFileBusy] = useState(false);
+  const [auditFileStage, setAuditFileStage] = useState<string | null>(null);
+  const [auditFileError, setAuditFileError] = useState<string | null>(null);
+  const [auditFileNote, setAuditFileNote] = useState<string | null>(null);
+  const [auditDragOver, setAuditDragOver] = useState(false);
   const boxRef = useRef<HTMLDivElement>(null);
+  const auditFileRef = useRef<HTMLInputElement>(null);
   const restoredRef = useRef(false);
   const searchParams = useSearchParams();
 
@@ -358,6 +378,63 @@ export default function AiYuristClient({
       }
     },
     [consent, sending, threadId, loadBalance, loadThreads]
+  );
+
+  /** Загрузка договора: текст извлекается в браузере и попадает в поле аудита. */
+  const handleAuditFile = useCallback(
+    async (file: File) => {
+      if (auditFileBusy) return;
+      setAuditFileError(null);
+      setAuditFileNote(null);
+      if (file.size > AUDIT_FILE_MAX_BYTES) {
+        setAuditFileError(
+          `Файл больше ${Math.round(AUDIT_FILE_MAX_BYTES / (1024 * 1024))} МБ — уменьшите его и попробуйте снова.`
+        );
+        return;
+      }
+      setAuditFileBusy(true);
+      setAuditFileStage("Готовим документ…");
+      setAuditReport(null);
+      try {
+        const text = await extractAuditText(file, (p: AuditExtractProgress) =>
+          setAuditFileStage(p.label)
+        );
+        if (text.trim().length < 200) {
+          setAuditFileError(
+            "Из документа извлечено слишком мало текста. Если это скан низкого качества — вставьте текст вручную."
+          );
+          setAuditFile(null);
+          return;
+        }
+        const truncated = text.length > AUDIT_MAX;
+        setAuditText(truncated ? text.slice(0, AUDIT_MAX) : text);
+        setAuditPreset("");
+        setAuditError(null);
+        setAuditFile({ name: file.name, size: file.size });
+        if (truncated) {
+          setAuditFileNote(
+            `Документ длиннее ${AUDIT_MAX.toLocaleString("ru-RU")} символов — в проверку взят первый фрагмент. Для полного разбора загрузите договор частями.`
+          );
+        }
+      } catch (e) {
+        const code = e instanceof Error ? e.message : "";
+        if (code === "IMAGE_DECODE") {
+          setAuditFileError("Не удалось открыть изображение. Сохраните скан как JPG/PNG или PDF.");
+        } else if (code === "OCR_FAILED") {
+          setAuditFileError(
+            "Не удалось распознать текст на скане. Загрузите PDF/DOCX с текстом или вставьте текст вручную."
+          );
+        } else {
+          setAuditFileError(unsupportedFileHint(file.name));
+        }
+        setAuditFile(null);
+      } finally {
+        setAuditFileBusy(false);
+        setAuditFileStage(null);
+        if (auditFileRef.current) auditFileRef.current.value = "";
+      }
+    },
+    [auditFileBusy]
   );
 
   /** Настоящий аудит договора: mode=audit, отчёт JSON парсится сервером. */
@@ -767,7 +844,7 @@ export default function AiYuristClient({
       {/* Проверка договора */}
       <div id="ai-audit" className="scroll-mt-4 pt-8">
         <h2 className="text-xl font-extrabold">Проверка договора — найдём риски до подписания</h2>
-        <p className="mb-3 mt-1 max-w-3xl text-sm text-slate-500">Вставьте текст договора — AI-юрист сверит пункты с действующими законами, выставит индекс безопасности и предложит безопасные формулировки. Требуется вход: 1 проверка = 19 ₽ или из бесплатных вопросов.</p>
+        <p className="mb-3 mt-1 max-w-3xl text-sm text-slate-500">Загрузите договор (PDF, DOCX, фото скана или текстовый файл) либо вставьте текст — AI-юрист сверит пункты с действующими законами, выставит индекс безопасности и предложит безопасные формулировки. Файл обрабатывается прямо в браузере и никуда не отправляется. Требуется вход: 1 проверка = 19 ₽ или из бесплатных вопросов.</p>
         <Card className="overflow-hidden p-0">
           <div className="flex flex-col gap-3 border-b border-slate-100 bg-slate-50/70 p-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-3">
@@ -784,7 +861,7 @@ export default function AiYuristClient({
               {AUDIT_PRESETS.map((p) => (
                 <button
                   key={p.id}
-                  onClick={() => { setAuditPreset(p.id); setAuditText(p.text); setAuditReport(null); setAuditError(null); }}
+                  onClick={() => { setAuditPreset(p.id); setAuditText(p.text); setAuditReport(null); setAuditError(null); setAuditFile(null); setAuditFileNote(null); setAuditFileError(null); }}
                   className={`rounded-xl border px-3.5 py-2 text-xs font-bold ${auditPreset === p.id ? "border-brand-600 bg-brand-50 text-brand-700" : "border-slate-200 bg-white text-slate-700"}`}
                 >
                   {p.label}
@@ -794,20 +871,78 @@ export default function AiYuristClient({
           </div>
           <div className="grid gap-5 p-4 sm:p-5 lg:grid-cols-2">
             <div className="flex flex-col">
-              <div className="flex items-center justify-between pb-2">
-                <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Текст договора (до 8000 символов)</span>
+              <div className="pb-2">
+                <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Загрузить документ</span>
+                <p className="mt-0.5 text-[11px] text-slate-400">PDF, DOCX, фото/скан или текстовый файл · до 20 МБ · обрабатывается в браузере</p>
+              </div>
+
+              <div
+                onDragOver={(e) => { e.preventDefault(); if (!auditFileBusy) setAuditDragOver(true); }}
+                onDragLeave={() => setAuditDragOver(false)}
+                onDrop={(e) => { e.preventDefault(); setAuditDragOver(false); const f = e.dataTransfer.files?.[0]; if (f) void handleAuditFile(f); }}
+                className={`rounded-2xl border-2 border-dashed p-4 text-center transition-colors ${auditDragOver ? "border-brand-500 bg-brand-50" : "border-slate-300 bg-slate-50/60"}`}
+              >
+                {auditFileBusy ? (
+                  <div className="flex flex-col items-center gap-2 text-brand-700" role="status">
+                    <SpinnerGap size={26} className="animate-spin" />
+                    <span className="text-xs font-semibold">{auditFileStage ?? "Обрабатываем документ…"}</span>
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center gap-1.5">
+                    <UploadSimple size={26} weight="bold" className="text-brand-600" />
+                    <p className="text-[13px] font-semibold text-slate-700">Перетащите договор сюда</p>
+                    <p className="text-[11px] text-slate-500">или выберите файл — PDF, DOCX, фото скана, TXT</p>
+                    <Button size="sm" variant="outline" className="mt-1" onClick={() => auditFileRef.current?.click()}>
+                      <FileArrowUp size={15} weight="bold" /> Выбрать файл
+                    </Button>
+                    <input
+                      ref={auditFileRef}
+                      type="file"
+                      accept={AUDIT_FILE_ACCEPT}
+                      className="hidden"
+                      onChange={(e) => { const f = e.target.files?.[0]; if (f) void handleAuditFile(f); }}
+                    />
+                  </div>
+                )}
+              </div>
+
+              {auditFile && !auditFileBusy && (
+                <div className="mt-2 flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs">
+                  <CheckCircle size={16} weight="fill" className="shrink-0 text-emerald-600" />
+                  <span className="min-w-0 flex-1 truncate font-semibold text-emerald-800" title={auditFile.name}>{auditFile.name}</span>
+                  <span className="shrink-0 text-emerald-700">{Math.max(1, Math.round(auditFile.size / 1024))} КБ</span>
+                  <button type="button" aria-label="Убрать файл" onClick={() => { setAuditFile(null); setAuditFileNote(null); }} className="shrink-0 text-emerald-700 transition-colors hover:text-emerald-900">
+                    <X size={15} />
+                  </button>
+                </div>
+              )}
+
+              {auditFileError && (
+                <p className="mt-2 flex items-start gap-2 rounded-lg bg-red-50 px-3 py-2 text-[12px] text-red-700">
+                  <Warning size={15} weight="fill" className="mt-0.5 shrink-0" /> {auditFileError}
+                </p>
+              )}
+              {auditFileNote && (
+                <p className="mt-2 flex items-start gap-2 rounded-lg bg-amber-50 px-3 py-2 text-[12px] text-amber-800">
+                  <Warning size={15} weight="fill" className="mt-0.5 shrink-0" /> {auditFileNote}
+                </p>
+              )}
+
+              <div className="flex items-center justify-between pb-2 pt-4">
+                <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Текст договора (до {AUDIT_MAX.toLocaleString("ru-RU")} символов)</span>
                 <span className="flex items-center gap-1 text-[11px] text-slate-400"><ShieldCheck size={13} /> Данные в РФ</span>
               </div>
               <textarea
                 value={auditText}
                 onChange={(e) => setAuditText(e.target.value)}
                 rows={9}
-                maxLength={8000}
-                placeholder="Вставьте сюда пункты договора для проверки…"
+                maxLength={AUDIT_MAX}
+                aria-label="Текст договора для проверки"
+                placeholder="Вставьте сюда пункты договора или загрузите файл выше…"
                 className="w-full flex-1 rounded-2xl border border-slate-200 bg-slate-50/50 p-4 font-mono text-xs leading-relaxed outline-none placeholder:text-slate-400 focus:border-brand-500 focus:bg-white"
               />
               <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                <span className="text-[11px] text-slate-400">Символов: {auditText.length} / 8000 · минимум 200</span>
+                <span className="text-[11px] text-slate-400">Символов: {auditText.length} / {AUDIT_MAX.toLocaleString("ru-RU")} · минимум 200</span>
                 <Button onClick={() => void sendAudit()} disabled={auditSending} className="bg-gradient-to-br from-brand-600 to-indigo-600">
                   <MagnifyingGlass size={16} weight="bold" /> {auditSending ? "Проверяем…" : "Проверить договор — 19 ₽"}
                 </Button>
@@ -1033,7 +1168,7 @@ export default function AiYuristClient({
 
       <p className="mt-6 flex items-center gap-2 text-sm text-slate-500">
         <Clock size={17} weight="fill" className="text-slate-400" />
-        Аудит договоров уже работает ↑ · разбор фото, голосовые и видео — следите за обновлениями.
+        Аудит договоров: текст, PDF, DOCX и фото сканов уже работают ↑ · голосовые и видео — следите за обновлениями.
       </p>
 
       {topupOpen && (

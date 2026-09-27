@@ -6,7 +6,6 @@ import { isSameOrigin } from "@/lib/admin-auth";
 import { limiters, checkRateLimit, rateLimitResponse } from "@/lib/ratelimit";
 import { aiChatSchema, validateBody } from "@/lib/validations/api";
 import {
-  AI_FREE_QUESTIONS,
   AI_MODEL_CHAT,
   AI_PRICE_MESSAGE_KOPEKS,
   currentQuotaMonth,
@@ -191,7 +190,12 @@ async function postHandler(req: Request) {
   }
 
   // RAG-контекст (деградация к честному режиму при сбое).
-  const chunks = await findChunks(admin, text);
+  // Аудит: текст договора может занимать до 20 000 символов — это больше
+  // лимита модели эмбеддингов (~8191 токен). В поиск отправляем первый
+  // фрагмент (тип договора, стороны, ключевые условия), а полный текст
+  // уходит в модель отдельно.
+  const ragQuery = isAudit ? text.slice(0, 6000) : text;
+  const chunks = await findChunks(admin, ragQuery);
 
   // История диалога для follow-up («а если…?», «а подробнее?»).
   // Лимит: последние 6 сообщений, каждое до 1000 символов — иначе длинные

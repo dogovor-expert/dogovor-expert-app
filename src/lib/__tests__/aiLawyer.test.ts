@@ -123,8 +123,8 @@ describe("ai validations", () => {
 
   it("aiChatSchema: пустой и слишком длинный — отказ", () => {
     expect(aiChatSchema.safeParse({ text: "x", consent: true }).success).toBe(false);
-    expect(aiChatSchema.safeParse({ text: "x".repeat(8001), consent: true }).success).toBe(false);
-    expect(aiChatSchema.safeParse({ text: "x".repeat(8000), consent: true }).success).toBe(true);
+    expect(aiChatSchema.safeParse({ text: "x".repeat(20001), consent: true }).success).toBe(false);
+    expect(aiChatSchema.safeParse({ text: "x".repeat(20000), consent: true }).success).toBe(true);
   });
 
   it("aiChatSchema: mode по умолчанию chat, audit проходит явно", () => {
