@@ -1,10 +1,12 @@
-/** CSS 10 шаблонов резюме (scoped под .a4). Палитра приведена к фирменной
+/** CSS 12 шаблонов резюме (scoped под .a4). Палитра приведена к фирменной
  *  палитре сайта (brand-500 #2563eb / purple-600 #6d28d9 / gray-*), радиусы и
  *  тени — из globals.css. Executive и Academic намеренно сохраняют собственную
  *  типографику (золото/тёмный, серифы) как узнаваемые индустриальные коды. */
 export const RESUME_CSS = `
-.a4{font-family:'Inter',system-ui,sans-serif;font-size:13px;line-height:1.6;color:#374151;background:#fff;position:relative}
+.a4{font-family:'Inter',system-ui,sans-serif;font-size:13px;line-height:1.6;color:#374151;background:#fff;position:relative;overflow-wrap:break-word}
 .a4 *{box-sizing:border-box}
+.a4 img{max-width:100%}
+.a4 .doc,.a4 .xp2-grid,.a4 .hd-t,.a4 .tc-main,.a4 .ex-main,.a4 .cp-main{min-width:0}
 .a4 .doc{padding:54px 56px}
 .a4 .doc-name{font-weight:800;letter-spacing:-.02em;line-height:1.08;color:#0f172a}
 .a4 .doc-role{font-weight:650;color:#1d4ed8}
@@ -234,4 +236,54 @@ export const RESUME_CSS = `
 .t-academic .ed-i b{font-size:13px;color:#111827}
 .t-academic .ed-i .em{font-size:12px;color:#4b5563}
 .t-academic .tag{background:none;border:1px solid #d1d5db;border-radius:4px;color:#374151}
+
+/* ============ 11. EXPERT (мокап «Эксперт»: индиго, без фото, две колонки) ============ */
+.t-expert .doc{padding:0 56px 52px}
+.t-expert .strip{height:6px;background:#4f46e5;margin:0 -56px 34px}
+.t-expert .doc-hd{margin-bottom:24px}
+.t-expert .doc-name{font-size:32px;font-weight:850;color:#4f46e5}
+.t-expert .doc-role{font-size:14px;font-weight:650;color:#374151;margin:5px 0 12px}
+.t-expert .doc-ct{font-size:11.5px;color:#6b7280}
+.t-expert .sec-t{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.14em;color:#4338ca;margin-bottom:10px}
+.t-expert .sum{color:#4b5563;line-height:1.7}
+.t-expert .xp2-grid{display:grid;grid-template-columns:1.35fr 1fr;gap:30px;margin-top:26px}
+.t-expert .xp2-grid>*{min-width:0}
+.t-expert .xp2-main .sec{margin-bottom:22px}
+.t-expert .xp-top{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+.t-expert .xp-t{font-size:13.5px;font-weight:700;color:#0f172a}
+.t-expert .xp-d{font-size:11px;color:#9ca3af;font-weight:600;white-space:nowrap}
+.t-expert .xp-c{font-size:12px;color:#4f46e5;font-weight:600;margin:1px 0 3px}
+.t-expert .xp-i{margin-bottom:15px}
+.t-expert .ed-i{margin-bottom:11px}
+.t-expert .ed-i b{font-size:13px;color:#0f172a}
+.t-expert .ed-i .em{font-size:11.5px;color:#6b7280}
+.t-expert .rail-card{margin-bottom:20px}
+.t-expert .tag{background:#eef2ff;border-color:#e0e7ff;color:#4338ca}
+.t-expert .lg.dots{flex-direction:column;gap:8px;font-size:11.5px}
+.t-expert .lg.dots>span{display:flex;align-items:center;gap:8px}
+.t-expert .lg.dots>span::before{content:'';width:6px;height:6px;flex-shrink:0;border-radius:50%;background:#4f46e5}
+.t-expert .lg.dots .lv{color:#6b7280}
+
+/* ============ 12. CREATIVE (мокап «Креатив»: оранжевый, фото, одна колонка) ============ */
+.t-creative .doc{padding:0 56px 52px}
+.t-creative .strip{height:6px;background:#ea580c;margin:0 -56px 32px}
+.t-creative .doc-hd{margin-bottom:24px}
+.t-creative .doc-name{font-size:32px;font-weight:850;color:#ea580c}
+.t-creative .doc-role{font-size:14px;font-weight:650;color:#374151;margin:5px 0 12px}
+.t-creative .doc-ct{font-size:11.5px;color:#6b7280}
+.t-creative .doc-ph{width:76px;height:76px;border-radius:14px;border:2px solid #fed7aa;flex-shrink:0}
+.t-creative .sec-t{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.14em;color:#c2410c;margin-bottom:10px}
+.t-creative .sum{color:#4b5563;line-height:1.7}
+.t-creative .xp-top{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+.t-creative .xp-t{font-size:14px;font-weight:700;color:#0f172a}
+.t-creative .xp-d{font-size:11px;color:#9ca3af;font-weight:600;white-space:nowrap}
+.t-creative .xp-c{font-size:12.5px;color:#ea580c;font-weight:600;margin:1px 0 3px}
+.t-creative .xp-i{margin-bottom:15px}
+.t-creative .tag{background:#fff7ed;border-color:#fed7aa;color:#c2410c}
+.t-creative .ed-i{margin-bottom:11px}
+.t-creative .ed-i b{font-size:13px;color:#0f172a}
+.t-creative .ed-i .em{font-size:11.5px;color:#6b7280}
+.t-creative .lg.inline{align-items:center;gap:8px 14px;font-size:12px}
+.t-creative .lg.inline .cap{display:inline-flex;color:#ea580c}
+.t-creative .lg.inline .cap svg{width:15px;height:15px}
 `;

@@ -3,7 +3,7 @@
  * фирменный акцент и раскладка, повторяющая превью шаблона.
  *
  * Отдельный от exportPdf.ts рендер, потому что тот парсит HTML по классам
- * документов (doc-title/doc-sides/…), а у резюме своя семантика и 10 макетов.
+ * документов (doc-title/doc-sides/…), а у резюме своя семантика и 12 макетов.
  */
 import { PDFDocument, rgb, type Color, type PDFFont, type PDFPage } from "pdf-lib";
 import fontkit from "@pdf-lib/fontkit";
@@ -19,7 +19,7 @@ const LIGHT: RGB = rgb(0.85, 0.87, 0.9);
 
 interface TemplateStyle {
   accent: RGB;
-  layout: "single" | "sidebar";
+  layout: "single" | "sidebar" | "columns";
   serif?: boolean;
   headerBand?: RGB;
   sideBg?: RGB;
@@ -27,6 +27,10 @@ interface TemplateStyle {
   sideAccent?: RGB;
   sideDark?: boolean;
   centerHeader?: boolean;
+  /** Акцентная полоса сверху страницы (мокапы «Эксперт»/«Креатив»). */
+  topStrip?: RGB;
+  /** Фото справа в шапке (шаблон «Креатив»). */
+  photoInHeader?: boolean;
 }
 
 const hex = (h: string): RGB => {
@@ -45,6 +49,8 @@ const STYLES: Record<TemplateId, TemplateStyle> = {
   timeline: { accent: hex("#2563eb"), layout: "single" },
   twocol: { accent: hex("#2563eb"), layout: "single", headerBand: hex("#0f172a") },
   academic: { accent: hex("#111827"), layout: "single", serif: true, centerHeader: true },
+  expert: { accent: hex("#4f46e5"), layout: "columns", topStrip: hex("#4f46e5") },
+  creative: { accent: hex("#ea580c"), layout: "single", topStrip: hex("#ea580c"), photoInHeader: true },
 };
 
 const FONT_CACHE = new Map<string, ArrayBuffer>();
@@ -122,7 +128,7 @@ class Doc {
   gap(v: number) { this.y -= v; }
 }
 
-interface Ctx { data: ResumeData; style: TemplateStyle; margins: { left: number; right: number; top: number; bottom: number } }
+interface Ctx { data: ResumeData; style: TemplateStyle; margins: { left: number; right: number; top: number; bottom: number }; pdf: PDFDocument }
 
 function sectionTitle(d: Doc, ctx: Ctx, title: string) {
   d.ensure(26, ctx.margins);
@@ -139,9 +145,42 @@ function contactsLine(data: ResumeData): string {
   return [p.city, p.phone, p.email, p.link].filter(Boolean).join("   ·   ");
 }
 
-function drawHeader(d: Doc, ctx: Ctx) {
+async function drawHeader(d: Doc, ctx: Ctx) {
   const { data, style } = ctx;
   const name = fullName(data) || "Ваше имя";
+  if (style.topStrip) {
+    // Шапка мокапов «Эксперт»/«Креатив»: полоса + имя акцентным цветом.
+    d.page.drawRectangle({ x: 0, y: A4.h - 5, width: A4.w, height: 5, color: style.topStrip });
+    d.y = A4.h - 5 - 32;
+    const photoTop = d.y;
+    let textW = d.width;
+    let photoBox = 0;
+    const photoUrl = style.photoInHeader ? data.personal.photo : "";
+    if (photoUrl && photoUrl.startsWith("data:image/")) {
+      try {
+        const bytes = await (await fetch(photoUrl)).arrayBuffer();
+        const img = photoUrl.includes("png") ? await ctx.pdf.embedPng(bytes) : await ctx.pdf.embedJpg(bytes);
+        const box = 62;
+        const s = box / Math.max(img.width, img.height);
+        const w = img.width * s;
+        const h = img.height * s;
+        const px = d.right - box;
+        d.page.drawRectangle({ x: px, y: d.y - box, width: box, height: box, borderColor: style.accent, borderWidth: 1.5 });
+        d.page.drawImage(img, { x: px + (box - w) / 2, y: d.y - box + (box - h) / 2, width: w, height: h });
+        textW = d.width - box - 16;
+        photoBox = box;
+      } catch {
+        // Неподдерживаемый формат фото — шапка без фото, как заглушка мокапа.
+      }
+    }
+    d.page.drawText(name, { x: d.left, y: d.y - 24, size: 24, font: d.bold, color: style.accent, maxWidth: textW });
+    d.y -= 30;
+    if (data.personal.role) d.text(data.personal.role, { size: 11, font: d.bold, color: hex("#374151"), maxWidth: textW });
+    const c = contactsLine(data);
+    if (c) d.text(c, { size: 9, color: GRAY, maxWidth: textW });
+    d.y = Math.min(d.y, photoTop - photoBox - 12);
+    return;
+  }
   if (style.headerBand) {
     const bandH = 92;
     d.page.drawRectangle({ x: 0, y: A4.h - bandH, width: A4.w, height: bandH, color: style.headerBand });
@@ -232,8 +271,11 @@ function drawEducation(d: Doc, ctx: Ctx) {
   }
 }
 
-function drawChips(d: Doc, ctx: Ctx, items: string[]) {
+function drawChips(d: Doc, ctx: Ctx, items: string[], tone?: { bg: RGB; border: RGB; fg: RGB }) {
   if (!items.length) return;
+  const bg = tone?.bg ?? hex("#f3f4f6");
+  const border = tone?.border ?? LIGHT;
+  const fg = tone?.fg ?? hex("#374151");
   const size = 9;
   const padX = 6;
   const h = size + 8;
@@ -242,8 +284,8 @@ function drawChips(d: Doc, ctx: Ctx, items: string[]) {
   for (const item of items) {
     const w = d.regular.widthOfTextAtSize(item, size) + padX * 2;
     if (x + w > d.right) { x = d.left; d.y -= h + 5; d.ensure(h + 4, ctx.margins); }
-    d.page.drawRectangle({ x, y: d.y - h, width: w, height: h, color: hex("#f3f4f6"), borderColor: LIGHT, borderWidth: 0.6 });
-    d.page.drawText(item, { x: x + padX, y: d.y - h + 4, size, font: d.regular, color: hex("#374151") });
+    d.page.drawRectangle({ x, y: d.y - h, width: w, height: h, color: bg, borderColor: border, borderWidth: 0.6 });
+    d.page.drawText(item, { x: x + padX, y: d.y - h + 4, size, font: d.regular, color: fg });
     x += w + 5;
   }
   d.y -= h + 4;
@@ -318,6 +360,44 @@ function drawSidebar(d: Doc, ctx: Ctx) {
   drawEducation(d, ctx);
 }
 
+/**
+ * Две колонки в основной области (шаблон «Эксперт»: слева опыт+образование,
+ * справа рейл с навыками и языками). Колонки рисуются строго на одной странице:
+ * перед стартом требуем запас места, иначе уходим на новую страницу целиком.
+ */
+function drawColumns(d: Doc, ctx: Ctx) {
+  d.ensure(380, ctx.margins);
+  const y0 = d.y;
+  const gap = 28;
+  const leftW = (d.width - gap) * (1.35 / 2.35);
+  const savedL = d.left;
+  const savedR = d.right;
+  const scope = (left: number, right: number) => { d.left = left; d.right = right; d.width = right - left; };
+
+  scope(savedL, savedL + leftW);
+  drawExperience(d, ctx);
+  drawEducation(d, ctx);
+  const yLeft = d.y;
+
+  d.y = y0;
+  scope(savedL + leftW + gap, savedR);
+  const tone = { bg: hex("#eef2ff"), border: hex("#e0e7ff"), fg: hex("#4338ca") };
+  const hard = hardSkills(ctx.data);
+  if (hard.length) { sectionTitle(d, ctx, "Навыки"); drawChips(d, ctx, hard, tone); }
+  if (ctx.data.skills.soft.length) { sectionTitle(d, ctx, "Личные качества"); drawChips(d, ctx, ctx.data.skills.soft, tone); }
+  if (ctx.data.languages.length) {
+    sectionTitle(d, ctx, "Языки");
+    for (const l of ctx.data.languages) {
+      d.ensure(15, ctx.margins);
+      d.page.drawCircle({ x: d.left + 2.5, y: d.y - 4, size: 1.8, color: ctx.style.accent });
+      d.text(`${l.name} — ${l.level}`, { size: 9.5, color: hex("#4b5563"), x: d.left + 12, maxWidth: d.width - 12, lineHeight: 13 });
+    }
+  }
+
+  scope(savedL, savedR);
+  d.y = Math.min(yLeft, d.y);
+}
+
 export async function renderResumePdf(data: ResumeData, tpl: TemplateId): Promise<Blob> {
   const style = STYLES[tpl] ?? STYLES.classic;
   const family = style.serif ? "pt-serif" : "inter";
@@ -343,11 +423,15 @@ export async function renderResumePdf(data: ResumeData, tpl: TemplateId): Promis
   d.bottom = margins.bottom;
   d.y = A4.h - margins.top;
 
-  const ctx: Ctx = { data, style, margins };
+  const ctx: Ctx = { data, style, margins, pdf };
   if (style.layout === "sidebar") {
     drawSidebar(d, ctx);
+  } else if (style.layout === "columns") {
+    await drawHeader(d, ctx);
+    drawSummary(d, ctx);
+    drawColumns(d, ctx);
   } else {
-    drawHeader(d, ctx);
+    await drawHeader(d, ctx);
     drawSummary(d, ctx);
     drawExperience(d, ctx);
     drawEducation(d, ctx);

@@ -52,6 +52,10 @@ function plural(n: number, a: string, b: string, c: string): string {
 
 function computeQuality(data: ResumeData): QualityCheck[] {
   const p = data.personal;
+  const volume =
+    (data.summary || "").length +
+    data.experience.reduce((n, e) => n + (e.position || "").length + (e.company || "").length + (e.bullets ?? []).join(" ").length, 0) +
+    data.education.reduce((n, e) => n + (e.institution || "").length + (e.field || "").length, 0);
   return [
     { label: "Указаны ФИО", ok: Boolean(fullName(data)) },
     { label: "Указана должность", ok: Boolean(p.role) },
@@ -62,6 +66,7 @@ function computeQuality(data: ResumeData): QualityCheck[] {
     { label: "Навыков 5 и больше", ok: hardSkills(data).length >= 5 },
     { label: "Образование заполнено", ok: data.education.some((e) => e.institution) },
     { label: "Языки указаны", ok: data.languages.some((l) => l.name) },
+    { label: "Объём — 1–2 страницы (не переполнено)", ok: volume < 6000 },
   ];
 }
 
@@ -220,9 +225,36 @@ export default function ResumeBuilder() {
   const onPhoto = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => { const r = reader.result; if (typeof r === "string") patchPersonal("photo", r); };
-    reader.readAsDataURL(file);
+    // Сжимаем фото до 512px (JPEG 0.85): иначе сырой dataURL на мегабайты
+    // переполняет localStorage и ломает превью/экспорт.
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      try {
+        const max = 512;
+        const s = Math.min(1, max / Math.max(img.width, img.height));
+        const w = Math.max(1, Math.round(img.width * s));
+        const h = Math.max(1, Math.round(img.height * s));
+        const cv = document.createElement("canvas");
+        cv.width = w;
+        cv.height = h;
+        cv.getContext("2d")?.drawImage(img, 0, 0, w, h);
+        patchPersonal("photo", cv.toDataURL("image/jpeg", 0.85));
+      } catch {
+        const reader = new FileReader();
+        reader.onload = () => { const r = reader.result; if (typeof r === "string") patchPersonal("photo", r); };
+        reader.readAsDataURL(file);
+      } finally {
+        URL.revokeObjectURL(url);
+      }
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      const reader = new FileReader();
+      reader.onload = () => { const r = reader.result; if (typeof r === "string") patchPersonal("photo", r); };
+      reader.readAsDataURL(file);
+    };
+    img.src = url;
   };
 
   const updateExp = (i: number, key: keyof ResumeExperience, value: string) =>
@@ -578,11 +610,11 @@ export default function ResumeBuilder() {
         return (
           <>
             <div className="rvb-row3">
-              <div className="rvb-fld"><label>Фамилия<input value={p.surname} onChange={(e) => patchPersonal("surname", e.target.value)} /></label></div>
-              <div className="rvb-fld"><label>Имя<input value={p.name} onChange={(e) => patchPersonal("name", e.target.value)} /></label></div>
-              <div className="rvb-fld"><label>Отчество<input value={p.patronymic} onChange={(e) => patchPersonal("patronymic", e.target.value)} /></label></div>
+              <div className="rvb-fld"><label>Фамилия<input value={p.surname} maxLength={40} onChange={(e) => patchPersonal("surname", e.target.value)} /></label></div>
+              <div className="rvb-fld"><label>Имя<input value={p.name} maxLength={40} onChange={(e) => patchPersonal("name", e.target.value)} /></label></div>
+              <div className="rvb-fld"><label>Отчество<input value={p.patronymic} maxLength={40} onChange={(e) => patchPersonal("patronymic", e.target.value)} /></label></div>
             </div>
-            <div className="rvb-fld"><label>Желаемая должность<input value={p.role} onChange={(e) => patchPersonal("role", e.target.value)} /></label></div>
+            <div className="rvb-fld"><label>Желаемая должность<input value={p.role} maxLength={80} onChange={(e) => patchPersonal("role", e.target.value)} /></label></div>
             <div className="rvb-fld">
               <label>Фото <span className="hint">необязательно</span></label>
               <div className="rvb-photo-row">
@@ -604,12 +636,12 @@ export default function ResumeBuilder() {
               <div className="rvb-tip">Деловое фото на светлом фоне, лицо крупно. Для руководящих и клиентских позиций фото — плюс; для ATS-шаблонов лучше отключить.</div>
             </div>
             <div className="rvb-row">
-              <div className="rvb-fld"><label>Город<input value={p.city} onChange={(e) => patchPersonal("city", e.target.value)} /></label></div>
-              <div className="rvb-fld"><label>Телефон<input value={p.phone} onChange={(e) => patchPersonal("phone", e.target.value)} /></label></div>
+              <div className="rvb-fld"><label>Город<input value={p.city} maxLength={40} onChange={(e) => patchPersonal("city", e.target.value)} /></label></div>
+              <div className="rvb-fld"><label>Телефон<input value={p.phone} maxLength={25} onChange={(e) => patchPersonal("phone", e.target.value)} /></label></div>
             </div>
             <div className="rvb-row">
-              <div className="rvb-fld"><label>Email<input value={p.email} onChange={(e) => patchPersonal("email", e.target.value)} /></label></div>
-              <div className="rvb-fld"><label>Ссылка<input value={p.link} onChange={(e) => patchPersonal("link", e.target.value)} /></label></div>
+              <div className="rvb-fld"><label>Email<input value={p.email} maxLength={80} onChange={(e) => patchPersonal("email", e.target.value)} /></label></div>
+              <div className="rvb-fld"><label>Ссылка<input value={p.link} maxLength={120} onChange={(e) => patchPersonal("link", e.target.value)} /></label></div>
             </div>
           </>
         );
@@ -619,6 +651,7 @@ export default function ResumeBuilder() {
             <label>Кратко о себе</label>
             <textarea
               value={data.summary}
+              maxLength={700}
               placeholder="Кто вы, сколько лет опыта, ключевые сильные стороны и измеримый результат."
               onChange={(e) => setData((d) => ({ ...d, summary: e.target.value }))}
             />
@@ -636,14 +669,14 @@ export default function ResumeBuilder() {
                     <b>Опыт {i + 1}</b>
                     <button type="button" className="rvb-del" onClick={() => deleteExp(i)}>Удалить</button>
                   </div>
-                  <div className="rvb-fld"><label>Должность<input value={e.position} onChange={(ev) => updateExp(i, "position", ev.target.value)} /></label></div>
+                  <div className="rvb-fld"><label>Должность<input value={e.position} maxLength={80} onChange={(ev) => updateExp(i, "position", ev.target.value)} /></label></div>
                   <div className="rvb-row">
-                    <div className="rvb-fld"><label>Компания<input value={e.company} onChange={(ev) => updateExp(i, "company", ev.target.value)} /></label></div>
-                    <div className="rvb-fld"><label>Период<input value={e.period} onChange={(ev) => updateExp(i, "period", ev.target.value)} placeholder="03.2021 — н.в." /></label></div>
+                    <div className="rvb-fld"><label>Компания<input value={e.company} maxLength={80} onChange={(ev) => updateExp(i, "company", ev.target.value)} /></label></div>
+                    <div className="rvb-fld"><label>Период<input value={e.period} maxLength={30} onChange={(ev) => updateExp(i, "period", ev.target.value)} placeholder="03.2021 — н.в." /></label></div>
                   </div>
                   <div className="rvb-fld">
                     <label>Обязанности и достижения <span className="hint">— по одному в строке</span></label>
-                    <textarea value={e.bullets.join("\n")} onChange={(ev) => updateBullets(i, ev.target.value)} />
+                    <textarea value={e.bullets.join("\n")} maxLength={2000} onChange={(ev) => updateBullets(i, ev.target.value)} />
                     {baTip}
                   </div>
                 </div>
@@ -665,14 +698,14 @@ export default function ResumeBuilder() {
                     <b>Образование {i + 1}</b>
                     <button type="button" className="rvb-del" onClick={() => deleteEdu(i)}>Удалить</button>
                   </div>
-                  <div className="rvb-fld"><label>Учебное заведение<input value={e.institution} onChange={(ev) => updateEdu(i, "institution", ev.target.value)} /></label></div>
+                  <div className="rvb-fld"><label>Учебное заведение<input value={e.institution} maxLength={100} onChange={(ev) => updateEdu(i, "institution", ev.target.value)} /></label></div>
                   <div className="rvb-row">
-                    <div className="rvb-fld"><label>Специальность<input value={e.field} onChange={(ev) => updateEdu(i, "field", ev.target.value)} /></label></div>
-                    <div className="rvb-fld"><label>Степень<input value={e.degree} onChange={(ev) => updateEdu(i, "degree", ev.target.value)} /></label></div>
+                    <div className="rvb-fld"><label>Специальность<input value={e.field} maxLength={100} onChange={(ev) => updateEdu(i, "field", ev.target.value)} /></label></div>
+                    <div className="rvb-fld"><label>Степень<input value={e.degree} maxLength={60} onChange={(ev) => updateEdu(i, "degree", ev.target.value)} /></label></div>
                   </div>
                   <div className="rvb-row">
-                    <div className="rvb-fld"><label>Год начала<input value={e.start} onChange={(ev) => updateEdu(i, "start", ev.target.value)} /></label></div>
-                    <div className="rvb-fld"><label>Год окончания<input value={e.end} onChange={(ev) => updateEdu(i, "end", ev.target.value)} /></label></div>
+                    <div className="rvb-fld"><label>Год начала<input value={e.start} maxLength={12} onChange={(ev) => updateEdu(i, "start", ev.target.value)} /></label></div>
+                    <div className="rvb-fld"><label>Год окончания<input value={e.end} maxLength={12} onChange={(ev) => updateEdu(i, "end", ev.target.value)} /></label></div>
                   </div>
                 </div>
               </div>
@@ -702,6 +735,7 @@ export default function ResumeBuilder() {
                   <input
                     className="rvb-chadd"
                     aria-label="Добавить навык"
+                    maxLength={40}
                     placeholder="Добавить и нажать Enter"
                     onKeyDown={(e) => {
                       if (e.key === "Enter") {
@@ -728,7 +762,7 @@ export default function ResumeBuilder() {
                     <button type="button" className="rvb-del" onClick={() => deleteLang(i)}>Удалить</button>
                   </div>
                   <div className="rvb-row">
-                    <div className="rvb-fld"><label>Язык<input value={l.name} onChange={(ev) => updateLang(i, "name", ev.target.value)} /></label></div>
+                    <div className="rvb-fld"><label>Язык<input value={l.name} maxLength={40} onChange={(ev) => updateLang(i, "name", ev.target.value)} /></label></div>
                     <div className="rvb-fld">
                       <label>
                         Уровень

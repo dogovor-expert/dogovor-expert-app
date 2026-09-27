@@ -1,6 +1,6 @@
 import type { PhraseHint, ProfessionPreset, ResumeData, TemplateMeta } from "./types";
 
-/** 10 шаблонов резюме: метаданные для каталога и переключателя. */
+/** 12 шаблонов резюме: метаданные для каталога и переключателя. */
 export const TEMPLATES: TemplateMeta[] = [
   { id: "classic", name: "Классический", desc: "Строгий одноколоночный макет с линиями", ats: "safe", parse: 96, tags: [] },
   { id: "modern", name: "Современный", desc: "Чистая вёрстка с индиго-акцентами", ats: "safe", parse: 94, tags: [] },
@@ -12,6 +12,8 @@ export const TEMPLATES: TemplateMeta[] = [
   { id: "timeline", name: "Timeline", desc: "Хронология с вертикальной линией", ats: "creative", parse: 78, tags: [] },
   { id: "twocol", name: "Боковая панель", desc: "Две колонки и карточки-блоки", ats: "creative", parse: 76, tags: ["creative", "exec"] },
   { id: "academic", name: "Академический", desc: "Строгий шрифт с засечками", ats: "safe", parse: 95, tags: [] },
+  { id: "expert", name: "Эксперт", desc: "Индиго-акцент, две колонки, шапка без фото", ats: "creative", parse: 80, tags: ["exec"] },
+  { id: "creative", name: "Креатив", desc: "Оранжевый акцент, фото, одна колонка", ats: "safe", parse: 90, tags: ["creative"] },
 ];
 
 export const TEMPLATE_META: Record<string, TemplateMeta> = Object.fromEntries(

@@ -6,6 +6,7 @@ const IC = {
     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.7 2z"/></svg>',
   mail: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 7 10 6 10-6"/></svg>',
   link: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1"/><path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"/></svg>',
+  cap: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 10 12 5 2 10l10 5 10-5z"/><path d="M6 12v5c0 1.7 2.7 3 6 3s6-1.3 6-3v-5"/><path d="M22 10v6"/></svg>',
 } as const;
 
 type IconKey = keyof typeof IC;
@@ -166,6 +167,10 @@ export function buildResumeHtml(data: ResumeData, tpl: TemplateId): string {
       return `<header class="tc-hd hd"><div class="hd-t"><div class="doc-name">${name}</div><div class="doc-role">${role}</div>${contacts(data)}</div>${photo}</header><div class="tc-body"><div class="tc-main">${sumSec(data)}${expSec(data, "twocol")}</div><aside class="tc-rail">${hardSkills(data).length ? `<div class="rail-card">${secT("Навыки")}<div class="sk">${tags(hardSkills(data))}</div></div>` : ""}${data.skills.soft.length ? `<div class="rail-card">${secT("Качества")}<div class="sk">${tags(data.skills.soft)}</div></div>` : ""}${data.languages.length ? `<div class="rail-card">${secT("Языки")}${langsInline(data)}</div>` : ""}${data.education.length ? `<div class="rail-card">${secT("Образование")}${eduRows(data, "twocol")}</div>` : ""}</aside></div>`;
     case "academic":
       return `<div class="doc"><header class="doc-hd">${photo}<div class="doc-name">${name}</div><div class="doc-role">${role}</div>${contacts(data)}</header>${sumSec(data)}${eduSec(data, "academic")}${expSec(data, "academic")}${skillsSec(data)}${langsSec(data)}</div>`;
+    case "expert":
+      return `<div class="doc"><div class="strip" aria-hidden="true"></div><header class="doc-hd"><div class="doc-name">${name}</div><div class="doc-role">${role}</div>${contacts(data)}</header>${sumSec(data)}<div class="xp2-grid"><div class="xp2-main">${expSec(data, "modern")}${eduSec(data, "expert")}</div><aside class="xp2-rail">${hardSkills(data).length ? `<div class="rail-card">${secT("Навыки")}<div class="sk">${tags(hardSkills(data))}</div></div>` : ""}${data.skills.soft.length ? `<div class="rail-card">${secT("Личные качества")}<div class="sk">${tags(data.skills.soft)}</div></div>` : ""}${data.languages.length ? `<div class="rail-card">${secT("Языки")}<div class="lg dots">${langSpans(data)}</div></div>` : ""}</aside></div></div>`;
+    case "creative":
+      return `<div class="doc"><div class="strip" aria-hidden="true"></div><header class="doc-hd hd"><div class="hd-t"><div class="doc-name">${name}</div><div class="doc-role">${role}</div>${contacts(data)}</div>${photo}</header>${sumSec(data)}${expSec(data, "modern")}${skillsSec(data)}${eduSec(data, "creative")}${data.languages.length ? sec("Языки", `<div class="lg inline"><span class="cap">${IC.cap}</span>${langSpans(data)}</div>`) : ""}</div>`;
     default:
       return "";
   }
@@ -173,7 +178,7 @@ export function buildResumeHtml(data: ResumeData, tpl: TemplateId): string {
 
 interface DocTemplateStyle {
   accent: string;
-  layout: "single" | "sidebar";
+  layout: "single" | "sidebar" | "columns";
   center?: boolean;
   serif?: boolean;
   headerBg?: string;
@@ -181,6 +186,8 @@ interface DocTemplateStyle {
   sideBg?: string;
   sideFg?: string;
   sideAccent?: string;
+  /** Тонкая акцентная полоса сверху документа (как в мокапах «Эксперт»/«Креатив»). */
+  strip?: boolean;
 }
 
 const DOC_TEMPLATES: Record<TemplateId, DocTemplateStyle> = {
@@ -194,6 +201,8 @@ const DOC_TEMPLATES: Record<TemplateId, DocTemplateStyle> = {
   timeline: { accent: "#4F46E5", layout: "single" },
   twocol: { accent: "#0f172a", layout: "sidebar", headerBg: "#0f172a", headerFg: "#ffffff", sideBg: "#F8FAFC", sideFg: "#334155", sideAccent: "#4F46E5" },
   academic: { accent: "#111827", layout: "single", center: true, serif: true },
+  expert: { accent: "#4f46e5", layout: "columns", strip: true },
+  creative: { accent: "#ea580c", layout: "single", strip: true },
 };
 
 /**
@@ -244,6 +253,9 @@ export function buildResumeDocHtml(data: ResumeData, tpl: TemplateId): string {
   const langs = data.languages.map((l) => `${escapeHtml(l.name)} — ${escapeHtml(l.level)}`).join(", ");
 
   const title = escapeHtml("Резюме — " + (fullName(data) || "без имени"));
+  const strip = cfg.strip
+    ? `<table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;margin:0 0 10pt;"><tr><td bgcolor="${cfg.accent}" style="font-size:1pt;line-height:1pt;">&nbsp;</td></tr></table>`
+    : "";
   const head =
     `<head><meta charset="utf-8"><title>${title}</title><style>` +
     `@page{size:A4;margin:1.6cm}` +
@@ -258,6 +270,23 @@ export function buildResumeDocHtml(data: ResumeData, tpl: TemplateId): string {
     `<h1 style="color:${cfg.accent};font-size:20pt;${cfg.center ? "text-align:center;" : ""}">${name}</h1>` +
     (role ? `<p style="margin:3pt 0 0;color:#6b7280;${cfg.center ? "text-align:center;" : ""};">${role}</p>` : "") +
     (contacts.length ? `<p style="margin:2pt 0 0;color:#6b7280;font-size:9.5pt;${cfg.center ? "text-align:center;" : ""};">${contacts.join(" · ")}</p>` : "");
+
+  if (cfg.layout === "columns") {
+    const colSide =
+      (hard ? `<p style="margin:0 0 2pt;color:${cfg.accent};font-weight:bold;font-size:9.5pt;">НАВЫКИ</p><p style="margin:0 0 8pt;font-size:9.5pt;">${hard}</p>` : "") +
+      (soft ? `<p style="margin:0 0 2pt;color:${cfg.accent};font-weight:bold;font-size:9.5pt;">ЛИЧНЫЕ КАЧЕСТВА</p><p style="margin:0 0 8pt;font-size:9.5pt;">${soft}</p>` : "") +
+      (langs ? `<p style="margin:0 0 2pt;color:${cfg.accent};font-weight:bold;font-size:9.5pt;">ЯЗЫКИ</p><p style="margin:0;font-size:9.5pt;">${langs}</p>` : "");
+    const colHeader =
+      `<h1 style="color:${cfg.accent};font-size:20pt;">${name}</h1>` +
+      (role ? `<p style="margin:3pt 0 0;color:#4b5563;font-weight:bold;">${role}</p>` : "") +
+      (contacts.length ? `<p style="margin:2pt 0 0;color:#6b7280;font-size:9.5pt;">${contacts.join(" · ")}</p>` : "");
+    const table =
+      `<table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;"><tr>` +
+      `<td width="64%" valign="top" style="padding:2pt 14pt 10pt 0;">${summary}${exp}${edu}</td>` +
+      `<td width="36%" valign="top" style="padding:2pt 0 10pt 0;">${colSide}</td>` +
+      `</tr></table>`;
+    return open + strip + colHeader + table + close;
+  }
 
   if (cfg.layout === "sidebar") {
     const sideBg = cfg.sideBg ?? "#F8FAFC";
@@ -291,5 +320,5 @@ export function buildResumeDocHtml(data: ResumeData, tpl: TemplateId): string {
   const headerBand = cfg.headerBg
     ? `<table width="100%" cellpadding="14" cellspacing="0" style="border-collapse:collapse;margin:0 0 8pt;"><tr><td bgcolor="${cfg.headerBg}"><h1 style="color:${cfg.headerFg};font-size:22pt;margin:0;">${name}</h1>${role ? `<p style="margin:3pt 0 0;color:${cfg.headerFg};">${role}</p>` : ""}${contacts.length ? `<p style="margin:4pt 0 0;font-size:9.5pt;color:${cfg.headerFg};">${contacts.join(" · ")}</p>` : ""}</td></tr></table>`
     : singleHeader;
-  return open + headerBand + summary + exp + edu + skillsBlock + close;
+  return open + strip + headerBand + summary + exp + edu + skillsBlock + close;
 }

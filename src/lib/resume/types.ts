@@ -58,7 +58,9 @@ export type TemplateId =
   | "fresher"
   | "timeline"
   | "twocol"
-  | "academic";
+  | "academic"
+  | "expert"
+  | "creative";
 
 export type TemplateAts = "safe" | "creative";
 
