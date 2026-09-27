@@ -38,6 +38,10 @@ async function api(path) {
 }
 
 const defs = await api("/api/v2/user/apps/appDefinitions/");
+if (defs.status !== 100 || !defs.data?.appDefinitions) {
+  console.error(`CapRover API error: status=${defs.status} desc=${defs.description || "?"}`);
+  process.exit(2);
+}
 const app = defs.data.appDefinitions.find((a) => a.appName === APP);
 if (!app) {
   console.error(`App "${APP}" not found`);
