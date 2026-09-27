@@ -35,4 +35,4 @@
 ### Помни
 - `npm run verify` перед коммитом
 - `git commit --no-verify` ТОЛЬКО для экстренных hotfix (задокументировать в CHANGELOG)
-- Деплой: `git push origin master:production` → CapRover-вебхук собирает и деплоит прод (см. `docs/DEPLOY.md`; НЕ Vercel)
+- Деплой: `git push origin master:production` → Action обновляет ветку `deploy` → CapRover собирает `deploy` и деплоит прод (см. `docs/DEPLOY.md`; НЕ Vercel, ветку в CapRover на `production` не возвращать)

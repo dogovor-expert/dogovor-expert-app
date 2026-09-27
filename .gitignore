@@ -96,3 +96,9 @@ fix-shortcut.ps1
 check-prod.mjs
 add-bt-sels.py
 next3100.log
+
+# Локальные скриншот-дампы (не коммитить — иначе попадут в срез ветки deploy)
+.ai-shots/
+.blanks-shots/
+.blog-shots/
+*.shots/
