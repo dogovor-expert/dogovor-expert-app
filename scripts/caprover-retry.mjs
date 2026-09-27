@@ -17,7 +17,13 @@ const APP = args[0] && !args[0].startsWith("-") ? args[0] : "dogovor-prod";
 const shaIdx = process.argv.indexOf("--sha");
 let sha = shaIdx >= 0 ? process.argv[shaIdx + 1] : "";
 if (!sha) {
-  sha = execFileSync("git", ["ls-remote", "origin", "production"], { encoding: "utf8" }).split(/\s/)[0];
+  // Сначала локальный tracking-ref (без сети — важно при флапающем прокси),
+  // затем живой запрос к origin.
+  try {
+    sha = execFileSync("git", ["rev-parse", "origin/production"], { encoding: "utf8" }).trim();
+  } catch {
+    sha = execFileSync("git", ["ls-remote", "origin", "production"], { encoding: "utf8" }).split(/\s/)[0];
+  }
 }
 if (!/^[0-9a-f]{40}$/.test(sha)) {
   console.error(`Cannot resolve production sha (got: ${sha})`);
@@ -31,6 +37,15 @@ if (!machine?.authToken) {
   process.exit(2);
 }
 const base = machine.baseUrl.replace(/\/+$/, "");
+// См. caprover-status.mjs: панель на хосте прокси — ходим напрямую.
+{
+  const host = new URL(base).hostname;
+  const no = (process.env.NO_PROXY || process.env.no_proxy || "").split(",").map((s) => s.trim()).filter(Boolean);
+  if (!no.includes(host)) {
+    process.env.NO_PROXY = [...no, host].join(",");
+    process.env.no_proxy = process.env.NO_PROXY;
+  }
+}
 const headers = { "x-captain-auth": machine.authToken, "Content-Type": "application/json" };
 
 const defsRes = await fetch(base + "/api/v2/user/apps/appDefinitions/", { headers, signal: AbortSignal.timeout(30000) });

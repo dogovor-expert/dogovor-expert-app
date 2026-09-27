@@ -19,6 +19,16 @@ if (!machine?.authToken) {
   process.exit(2);
 }
 const base = machine.baseUrl.replace(/\/+$/, "");
+// Панель живёт на том же хосте, что и прокси из HTTPS_PROXY — прямой коннект,
+// иначе запросы ходят в proxy-loop и флапают с таймаутами.
+{
+  const host = new URL(base).hostname;
+  const no = (process.env.NO_PROXY || process.env.no_proxy || "").split(",").map((s) => s.trim()).filter(Boolean);
+  if (!no.includes(host)) {
+    process.env.NO_PROXY = [...no, host].join(",");
+    process.env.no_proxy = process.env.NO_PROXY;
+  }
+}
 const headers = { "x-captain-auth": machine.authToken, "Content-Type": "application/json" };
 
 async function api(path) {
