@@ -70,6 +70,8 @@ git push origin master:production
 
 ### Если деплой не доезжает (runbook)
 
+0. Быстрая диагностика без панели: `node scripts/caprover-status.mjs`
+   (`isAppBuilding` / `isBuildFailed` / `deployedVersion` + хвост лога сборки).
 1. Панель → Apps → `dogovor-prod` → вкладка Deployment: смотреть лог текущей сборки
    и список версий (каждый пуш создаёт запись; пустая `deployedImageName` = сборка идёт).
 2. Сборка висит >60 мин (`isAppBuilding` завис): сначала проверить диск (п. ниже),
@@ -85,8 +87,8 @@ git push origin master:production
    «ошибку развертывания», запись версии остаётся пустой (без образа и gitHash).
    Коварство: локально сборка может пройти из тёплого `.next`-кэша и не поймать ошибку.
    Правило: серверные экспорты — только в `layout.tsx` сегмента, клиентская `page.tsx`
-   их не дублирует. Перед пушем проверять:
-   `git grep -n -E "export const (metadata|revalidate|dynamic)"` по файлам с `"use client"`.
+   их не дублирует. Проверка автоматизирована: `npm run check:exports`
+   (`scripts/check-client-exports.mjs`) — в `verify` и pre-commit хуке.
    Случай: `af2af70` (`/zayavleniya` → `"use client"` + забытые `metadata/revalidate`,
    мета уже была в `layout.tsx`), фикс `bcb3d36`.
 2. **OOM при сборке (exit code 134, SIGABRT).** На VDS 3.8 ГБ RAM дефолтный heap Node
@@ -98,10 +100,26 @@ git push origin master:production
 3. **Забит диск.** Симптомы: долгие/падающие сборки, таймауты SSH. Чистка:
    `docker rmi img-captain-dogovor-prod:<старые>` (оставить рабочий + 1 резерв) +
    `docker builder prune -f`. 2026-09-24: было 84% (47G/59G) → стало 31%.
+4. **Обрыв git clone (инцидент 2026-09-27).** Симптом: в логе сборки сразу после
+   `Build started` — `Error: Cloning into ... fetch-pack: unexpected disconnect
+   while reading sideband packet / fatal: early EOF`, `isBuildFailed=true`,
+   прод продолжает отдавать старую сборку. Код НЕ виноват — это сетевой сбой
+   при клонировании. Усугубляется размером репозитория: пак ~205 МБ, в истории
+   лежат удалённые тяжёлые файлы (`public/workers/tesseract-core/*.wasm.js`,
+   `public/workers/tessdata/*` — в дереве их уже нет с `9038109`, но clone
+   тянет всю историю). Лечение БЕЗ нового пуша:
+   `node scripts/caprover-retry.mjs` — эмулирует GitHub push-webhook для
+   текущего типа `origin/production` (лишние пуши «для ускорения» запрещены —
+   каждый = ещё один полный цикл сборки в очереди, см. п. 3 выше).
+   Стратегически: вынести OCR-бинарники из git-истории (filter-repo + force-push,
+   только по согласованию — в репозитории параллельная работа) либо смириться
+   с ~205 МБ и ретраить clone-сбои ретраем выше.
 
 ⚠️ `deploy-watch` (и workflow `deploy-watch.yml`) проверяет только HTTP 200,
 а НЕ содержимое — зелёный статус не означает, что новый код реально на проде.
-После каждого деплоя сверять контент: `/zayavleniya` содержит «Группы заявлений»,
+После каждого деплоя сверять контент скриптом (пример для фичи из коммита):
+`node scripts/deploy-content.mjs "/ai-yurist|Перетащите договор сюда"`.
+Ручные маркеры: `/zayavleniya` содержит «Группы заявлений»,
 главная — актуальное число шаблонов, `/builder` — новый селектор.
 
 ### Диск на VDS (главный кандидат при «внезапных» долгих/падающих сборках)

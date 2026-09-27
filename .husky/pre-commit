@@ -23,6 +23,10 @@ npx tsc --noEmit
 echo "  • lint..."
 npm run lint
 
+# 2b. Client-exports gate (причина №1 падений деплоя, ~1s)
+echo "  • client-exports..."
+node scripts/check-client-exports.mjs
+
 # 3. Blast radius для staged файлов
 echo "  • blast radius (staged files)..."
 node scripts/check-blast-radius.mjs --staged || true
