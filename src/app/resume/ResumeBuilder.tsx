@@ -138,8 +138,11 @@ export default function ResumeBuilder() {
     const el = scrollRef.current;
     if (!el || typeof ResizeObserver === "undefined") return;
     const compute = () => {
-      const avail = el.clientWidth - 48;
-      const fit = Math.max(0.25, Math.min(1, avail / 794));
+      const availW = el.clientWidth - 48;
+      const availH = el.clientHeight - 32;
+      const docH1 = a4Ref.current?.offsetHeight || 1123;
+      // Авто-подгон: документ целиком вписывается и по ширине, и по высоте (без прокрутки).
+      const fit = Math.max(0.2, Math.min(1.2, Math.min(availW / 794, availH / docH1)));
       fitRef.current = fit;
       if (!manual) setScale(fit);
     };
@@ -147,7 +150,7 @@ export default function ResumeBuilder() {
     const ro = new ResizeObserver(compute);
     ro.observe(el);
     return () => ro.disconnect();
-  }, [manual]);
+  }, [manual, docH, openSec, tab]);
 
   const zoomBy = (d: number) => {
     setManual(true);
@@ -178,7 +181,7 @@ export default function ResumeBuilder() {
       const el = appRef.current;
       if (!el) return;
       const absoluteTop = el.getBoundingClientRect().top + window.scrollY;
-      setAppH(`${Math.max(420, Math.round(window.innerHeight - absoluteTop))}px`);
+      setAppH(`${Math.max(680, Math.round(window.innerHeight - absoluteTop))}px`);
     };
     const timer = window.setTimeout(compute, 60);
     window.addEventListener("resize", compute);
@@ -281,6 +284,10 @@ export default function ResumeBuilder() {
 
   const applyPreset = (key: string) => {
     setPresetKey(key);
+    if (key === "custom") {
+      // Остаёмся в разделе «Профессия» — ниже показано поле для своей должности.
+      return;
+    }
     const p = PRESETS[key];
     if (!p) return;
     setData((d) => ({
@@ -371,7 +378,11 @@ export default function ResumeBuilder() {
   const subtitle = (id: SectionId): string => {
     switch (id) {
       case "prof":
-        return presetKey ? PRESETS[presetKey].label : "Выберите — подставим подсказки";
+        return presetKey === "custom"
+          ? data.personal.role || "Свой вариант"
+          : presetKey
+            ? PRESETS[presetKey].label
+            : "Выберите — подставим подсказки";
       case "user":
         return fullName(data) || "ФИО, телефон, email";
       case "sum":
@@ -601,9 +612,25 @@ export default function ResumeBuilder() {
                 {Object.entries(PRESETS).map(([k, v]) => (
                   <option key={k} value={k}>{v.label}</option>
                 ))}
+                <option value="custom">Свой вариант — впишу сам</option>
               </select>
             </label>
-            <div className="rvb-tip">Подставим типовые навыки, «О себе» и готовые формулировки достижений. Всё можно изменить.</div>
+            {presetKey === "custom" && (
+              <label style={{ marginTop: 10 }}>
+                Ваша профессия / должность
+                <input
+                  value={p.role}
+                  maxLength={80}
+                  placeholder="Например: Product-дизайнер"
+                  onChange={(e) => patchPersonal("role", e.target.value)}
+                />
+              </label>
+            )}
+            <div className="rvb-tip">
+              {presetKey === "custom"
+                ? "Впишите должность — остальные разделы заполните вручную. Подсказки по формулировкам доступны в блоках ниже."
+                : "Подставим типовые навыки, «О себе» и готовые формулировки достижений. Всё можно изменить."}
+            </div>
           </div>
         );
       case "user":
@@ -618,20 +645,23 @@ export default function ResumeBuilder() {
             <div className="rvb-fld">
               <label>Фото <span className="hint">необязательно</span></label>
               <div className="rvb-photo-row">
-                <span className="rvb-photo-thumb" style={p.photo ? { backgroundImage: `url(${p.photo})` } : undefined}>
+                <span className="rvb-photo-thumb" aria-hidden="true" style={p.photo ? { backgroundImage: `url(${p.photo})` } : undefined}>
                   {p.photo ? null : <ImageIcon className="h-5 w-5" aria-hidden />}
                 </span>
-                <label className="rvb-btn-chip" style={{ cursor: "pointer" }}>
-                  Загрузить
-                  <input type="file" accept="image/*" onChange={onPhoto} className="sr-only" />
-                </label>
-                {p.photo ? (
-                  <button type="button" className="rvb-btn-chip danger" onClick={() => patchPersonal("photo", "")}>Убрать</button>
-                ) : null}
+                <div className="rvb-photo-actions">
+                  <label className="rvb-btn-chip" style={{ cursor: "pointer" }}>
+                    {p.photo ? "Заменить фото" : "Загрузить фото"}
+                    <input type="file" accept="image/*" onChange={onPhoto} className="sr-only" />
+                  </label>
+                  {p.photo ? (
+                    <button type="button" className="rvb-btn-chip danger" onClick={() => patchPersonal("photo", "")}>Убрать</button>
+                  ) : null}
+                </div>
               </div>
-              <label className="flex items-center gap-2 mt-2 text-[12.5px] font-medium cursor-pointer">
-                <input type="checkbox" className="w-auto" checked={p.showPhoto !== false} onChange={(e) => patchPersonal("showPhoto", e.target.checked)} />
-                Показывать фото в резюме
+              <label className="rvb-switch">
+                <input type="checkbox" checked={p.showPhoto !== false} onChange={(e) => patchPersonal("showPhoto", e.target.checked)} />
+                <span className="rvb-switch-track" aria-hidden="true"><span className="rvb-switch-dot" /></span>
+                <span>Показывать фото в резюме</span>
               </label>
               <div className="rvb-tip">Деловое фото на светлом фоне, лицо крупно. Для руководящих и клиентских позиций фото — плюс; для ATS-шаблонов лучше отключить.</div>
             </div>

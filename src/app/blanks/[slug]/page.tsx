@@ -7,6 +7,7 @@ import { Clock, Download, FileText, ShieldCheck, ChevronRight, Check, Sparkles }
 import { LEGAL_TEMPLATES } from "@/data/templates";
 import type { LegalTemplate } from "@/data/types";
 import { JsonLd } from "@/components/seo/JsonLd";
+import { AdSlot } from "@/components/ads/AdSlot";
 import { faqForDocument, faqJsonLd, breadcrumbJsonLd } from "@/lib/seo/faq";
 import { fieldsSummary } from "@/lib/seo/intro";
 import { renderTemplateDocument } from "@/lib/renderDocument";
@@ -280,6 +281,7 @@ export default async function BlankPage({ params }: { params: Promise<{ slug: st
           <ChevronRight className="w-4 h-4" />
         </Link>
       </section>
+      <div className="mx-auto max-w-3xl px-6 pb-10"><AdSlot id="DOC_TEMPLATE_FOOTER" /></div>
     </div>
   );
 }

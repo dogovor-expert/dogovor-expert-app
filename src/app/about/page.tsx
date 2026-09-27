@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { SITE_NAME } from "@/lib/site";
+import { AdSlot } from "@/components/ads/AdSlot";
 
 export const revalidate = 3600;
 export const dynamic = "force-static"; // P0: явно включаем SSG, иначе Next 15 обходит ISR (см. INVARIANTS.md).
@@ -64,6 +65,7 @@ export default function AboutPage() {
           С вопросами и предложениями шаблонов пишите на странице <a href="/contacts" className="text-brand-600 hover:underline">«Контакты»</a>.
         </p>
       </Card>
+      <div className="mx-auto max-w-3xl px-6 pb-10"><AdSlot id="ARTICLE_FOOTER" /></div>
     </div>
   );
 }

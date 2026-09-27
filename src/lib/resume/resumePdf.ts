@@ -165,6 +165,34 @@ function contactsLine(data: ResumeData): string {
   return [p.city, p.phone, p.email, p.link].filter(Boolean).join("   ·   ");
 }
 
+/** Показывать ли фото (учитывает галочку). */
+function pdfShowPhoto(data: ResumeData): boolean {
+  return Boolean(data.personal.photo && data.personal.showPhoto !== false);
+}
+
+/**
+ * Рисует фото в правом верхнем углу шапки/баннера и возвращает занятую ширину,
+ * чтобы текст не наезжал. Возвращает 0, если фото нет или формат не поддержан.
+ */
+async function drawCornerPhoto(d: Doc, ctx: Ctx, box: number, topY: number, onBand: boolean): Promise<number> {
+  const url = pdfShowPhoto(ctx.data) ? ctx.data.personal.photo : "";
+  if (!url || !url.startsWith("data:image/")) return 0;
+  try {
+    const bytes = await (await fetch(url)).arrayBuffer();
+    const img = url.includes("png") ? await ctx.pdf.embedPng(bytes) : await ctx.pdf.embedJpg(bytes);
+    const s = box / Math.max(img.width, img.height);
+    const w = img.width * s;
+    const h = img.height * s;
+    const px = d.right - box;
+    const py = topY - box;
+    d.page.drawRectangle({ x: px - 2, y: py - 2, width: box + 4, height: box + 4, borderColor: onBand ? rgb(1, 1, 1) : LIGHT, borderWidth: 1.5 });
+    d.page.drawImage(img, { x: px + (box - w) / 2, y: py + (box - h) / 2, width: w, height: h });
+    return box + 14;
+  } catch {
+    return 0;
+  }
+}
+
 async function drawHeader(d: Doc, ctx: Ctx) {
   const { data, style } = ctx;
   const name = fullName(data) || "Ваше имя";
@@ -205,12 +233,14 @@ async function drawHeader(d: Doc, ctx: Ctx) {
     const bandH = 92;
     d.page.drawRectangle({ x: 0, y: A4.h - bandH, width: A4.w, height: bandH, color: style.headerBand });
     d.y = A4.h - 34;
-    d.page.drawText(name, { x: d.left, y: d.y - 24, size: 24, font: d.bold, color: rgb(1, 1, 1) });
+    const used = await drawCornerPhoto(d, ctx, 62, A4.h - 14, true);
+    const tw = d.width - used;
+    d.page.drawText(name, { x: d.left, y: d.y - 24, size: 24, font: d.bold, color: rgb(1, 1, 1), maxWidth: tw });
     d.y -= 30;
-    if (data.personal.role) d.text(data.personal.role, { size: 11.5, color: rgb(0.88, 0.9, 1), maxWidth: d.width });
+    if (data.personal.role) d.text(data.personal.role, { size: 11.5, color: rgb(0.88, 0.9, 1), maxWidth: tw });
     d.gap(3);
     const c = contactsLine(data);
-    if (c) d.text(c, { size: 9, color: rgb(0.82, 0.85, 0.95), maxWidth: d.width });
+    if (c) d.text(c, { size: 9, color: rgb(0.82, 0.85, 0.95), maxWidth: tw });
     d.y = A4.h - bandH - 16;
     return;
   }
@@ -221,6 +251,7 @@ async function drawHeader(d: Doc, ctx: Ctx) {
   }
   // Single-column
   if (style.centerHeader) {
+    await drawCornerPhoto(d, ctx, 70, d.y, false);
     const cx = A4.w / 2;
     const nameSize = 22;
     const nw = d.bold.widthOfTextAtSize(name, nameSize);
@@ -245,12 +276,13 @@ async function drawHeader(d: Doc, ctx: Ctx) {
     return;
   }
   // modern / minimal / timeline / fresher
+  const usedW = await drawCornerPhoto(d, ctx, 70, d.y, false);
   d.page.drawRectangle({ x: d.left, y: d.y - 30, width: 3, height: 30, color: style.accent });
-  d.page.drawText(name, { x: d.left + 12, y: d.y - 22, size: 22, font: d.bold, color: BLACK });
+  d.page.drawText(name, { x: d.left + 12, y: d.y - 22, size: 22, font: d.bold, color: BLACK, maxWidth: d.width - 12 - usedW });
   d.y -= 28;
-  if (data.personal.role) d.text(data.personal.role, { size: 11, color: style.accent, x: d.left + 12, maxWidth: d.width - 12 });
+  if (data.personal.role) d.text(data.personal.role, { size: 11, color: style.accent, x: d.left + 12, maxWidth: d.width - 12 - usedW });
   const c = contactsLine(data);
-  if (c) d.text(c, { size: 9, color: GRAY, x: d.left + 12, maxWidth: d.width - 12 });
+  if (c) d.text(c, { size: 9, color: GRAY, x: d.left + 12, maxWidth: d.width - 12 - usedW });
   d.gap(10);
 }
 

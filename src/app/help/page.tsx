@@ -6,6 +6,7 @@ import { Search, ChevronDown, ChevronRight, MessageCircle, Mail, HelpCircle, Sta
 import { tokenGroups, textMatchesTokens } from "@/lib/search";
 import { openChat } from "@/components/support/ChatWidget";
 import { SUPPORT_EMAIL } from "@/lib/site";
+import { AdSlot } from "@/components/ads/AdSlot";
 
 const faqItems = [
   {
@@ -186,6 +187,7 @@ export default function HelpPage() {
           </Card>
         </div>
       </div>
+      <div className="mx-auto max-w-3xl px-6 pb-10"><AdSlot id="ARTICLE_FOOTER" /></div>
       {toast && (
         <div className="fixed bottom-6 right-6 bg-gray-900 text-white px-5 py-3 rounded-xl shadow-lg text-sm font-medium z-50 animate-fade-in">
           {toast}

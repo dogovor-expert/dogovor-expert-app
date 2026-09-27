@@ -10,6 +10,7 @@ import {
 import { LEGAL_TEMPLATES } from "@/data/templates";
 import StatementsSelector from "@/components/statements/StatementsSelector";
 import { JsonLd } from "@/components/seo/JsonLd";
+import { AdSlot } from "@/components/ads/AdSlot";
 import { breadcrumbJsonLd } from "@/lib/seo/faq";
 import { SITE_URL } from "@/lib/site";
 
@@ -298,6 +299,8 @@ export default function StatementsHubPage() {
           ))}
         </div>
       </section>
+
+      <div className="mx-auto max-w-3xl px-6 pb-8"><AdSlot id="ARTICLE_FOOTER" /></div>
 
       <p className="text-center text-xs text-gray-500">
         Ищете договор, а не заявление? <Link href="/templates" className="text-brand-600 underline underline-offset-2">Каталог шаблонов договоров</Link>

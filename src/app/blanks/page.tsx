@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { AdSlot } from "@/components/ads/AdSlot";
 import {
   ArrowRight,
   BadgeCheck,
@@ -615,6 +616,7 @@ function CtaBand({ itemsCount }: { itemsCount: number }) {
           </div>
         </div>
       </div>
+      <div className="mx-auto max-w-5xl px-6 pb-12"><AdSlot id="LANDING_INFEED" /></div>
     </section>
   );
 }

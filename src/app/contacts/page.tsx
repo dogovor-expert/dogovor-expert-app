@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import nextDynamic from "next/dynamic";
 import { Card } from "@/components/ui/Card";
 import { SUPPORT_EMAIL, PARTNERS_EMAIL, PRESS_EMAIL, SITE_NAME, SITE_LEGAL_INN } from "@/lib/site";
+import { AdSlot } from "@/components/ads/AdSlot";
 
 // Форма (с зависимостями) — отдельным чанком, вне основного бандла страницы.
 const FeedbackForm = nextDynamic(() => import("@/components/feedback/FeedbackForm"));
@@ -62,6 +63,7 @@ export default function ContactsPage() {
           <FeedbackForm />
         </Card>
       </section>
+      <div className="mx-auto max-w-3xl px-6 pb-10"><AdSlot id="ARTICLE_FOOTER" /></div>
     </div>
   );
 }

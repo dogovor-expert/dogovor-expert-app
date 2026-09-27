@@ -10,6 +10,9 @@ const IC = {
   wrench: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>',
   book: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>',
   globe: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>',
+  sparkles: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9.9 15.5A2 2 0 0 0 8.5 14.1l-6.1-1.6a.5.5 0 0 1 0-1L8.5 9.9A2 2 0 0 0 9.9 8.5l1.6-6.1a.5.5 0 0 1 1 0l1.6 6.1a2 2 0 0 0 1.4 1.4l6.1 1.6a.5.5 0 0 1 0 1l-6.1 1.6a2 2 0 0 0-1.4 1.4l-1.6 6.1a.5.5 0 0 1-1 0z"/></svg>',
+  briefcase: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>',
+  star: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m12 2 3.1 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.8 21l1.2-6.8-5-4.9 6.9-1z"/></svg>',
 } as const;
 
 type IconKey = keyof typeof IC;
@@ -155,8 +158,151 @@ function sideBlocks(data: ResumeData, cls: string, title: string, titleSoft: str
   );
 }
 
+/* ===== Эталонные макеты (по образцу РЕЗЮМЕ 3): exec / side / base ===== */
+
+type SampleLayout = "exec" | "side" | "base";
+interface SampleCfg { layout: SampleLayout; accent: string; serif?: boolean; tech?: boolean; light?: boolean }
+
+/** Каждый шаблон отрисован одной из трёх эталонных раскладок с собственным акцентом. */
+const SAMPLE_MAP: Record<TemplateId, SampleCfg> = {
+  classic: { layout: "base", accent: "#0f172a", serif: true },
+  modern: { layout: "base", accent: "#4f46e5" },
+  minimal: { layout: "base", accent: "#64748b" },
+  executive: { layout: "side", accent: "#0b1220" },
+  gradient: { layout: "exec", accent: "#6d28d9" },
+  compact: { layout: "side", accent: "#4f46e5", light: true },
+  fresher: { layout: "base", accent: "#e11d48" },
+  timeline: { layout: "base", accent: "#4f46e5" },
+  twocol: { layout: "side", accent: "#0f172a", light: true },
+  academic: { layout: "base", accent: "#111827", serif: true },
+  expert: { layout: "base", accent: "#4f46e5" },
+  creative: { layout: "base", accent: "#ea580c" },
+  corporate: { layout: "exec", accent: "#1e293b" },
+  techpro: { layout: "base", accent: "#4f46e5", tech: true },
+  legal: { layout: "base", accent: "#0f172a", serif: true },
+  nordic: { layout: "base", accent: "#0d9488" },
+  sidebarpro: { layout: "side", accent: "#065f46" },
+  ocean: { layout: "exec", accent: "#0369a1" },
+  terracotta: { layout: "base", accent: "#9a3412" },
+  graphite: { layout: "base", accent: "#3f3f46" },
+  forest: { layout: "side", accent: "#166534", light: true },
+  wine: { layout: "exec", accent: "#881337", serif: true },
+};
+
+function smpChips(arr: string[]): string {
+  return `<div class="smp-chips">${(arr ?? []).map((x) => `<span class="smp-chip">${escapeHtml(x)}</span>`).join("")}</div>`;
+}
+
+function smpContacts(data: ResumeData, mode: "pills" | "rows" | "inline"): string {
+  const a = contactItems(data);
+  if (!a.length) return "";
+  const cls = mode === "pills" ? "smp-pills" : mode === "inline" ? "smp-cbar" : "smp-cont-list";
+  const items = a.map(([k, v]) => `<span class="smp-cont">${IC[k]}<span>${escapeHtml(v)}</span></span>`).join("");
+  return `<div class="${cls}">${items}</div>`;
+}
+
+function smpExpRows(data: ResumeData, plain: boolean): string {
+  return data.experience.map((e) => {
+    const t = escapeHtml(e.position || "Должность");
+    const c = escapeHtml(e.company || "Компания");
+    const d = escapeHtml(e.period || "");
+    const b = e.bullets?.length ? `<ul class="smp-xp-b">${e.bullets.map((x) => `<li>${escapeHtml(x)}</li>`).join("")}</ul>` : "";
+    return (
+      `<div class="${plain ? "smp-x2" : "smp-xp-i"}">` +
+      (plain ? "" : '<span class="smp-dot"></span>') +
+      `<div class="smp-xp-top"><b>${t}</b><i>${d}</i></div>` +
+      `<div class="smp-xp-c">${c}</div>${b}</div>`
+    );
+  }).join("");
+}
+
+function smpEdu(data: ResumeData): string {
+  return data.education.map((e) => {
+    const line = [escapeHtml(e.field), escapeHtml(e.degree)].filter(Boolean).join(", ");
+    const range = [escapeHtml(e.start), escapeHtml(e.end)].filter(Boolean).join(" — ");
+    return `<div class="smp-ed"><b>${escapeHtml(e.institution || "Учебное заведение")}</b>${line ? `<span>${line}</span>` : ""}${range ? `<i>${range}</i>` : ""}</div>`;
+  }).join("");
+}
+
+function smpLangs(data: ResumeData): string {
+  return data.languages.map((l) => `<div class="smp-lg-row"><b>${escapeHtml(l.name)}</b><span>${escapeHtml(l.level)}</span></div>`).join("");
+}
+
+function samplePhoto(data: ResumeData, variant: "block" | "circle" | "top"): string {
+  if (!showPh(data)) return "";
+  const src = escapeHtml(data.personal.photo);
+  if (variant === "block") return `<div class="smp-ph"><img src="${src}" alt="Фото кандидата"><span class="chk">✓</span></div>`;
+  if (variant === "circle") return `<div class="smp-bar-ph"><img src="${src}" alt="Фото кандидата"></div>`;
+  return `<div class="smp-top-ph"><img src="${src}" alt="Фото кандидата"></div>`;
+}
+
+function buildSampleHtml(data: ResumeData, cfg: SampleCfg): string {
+  const name = escapeHtml(fullName(data)) || "Ваше имя";
+  const role = escapeHtml(data.personal.role) || "Должность";
+  const summary = data.summary ? escapeHtml(data.summary) : "";
+  const hard = hardSkills(data);
+  const cls = (extra: string) => `doc smp ${extra}${cfg.serif ? " smp-serif" : ""}${cfg.tech ? " smp-tech" : ""}`;
+
+  if (cfg.layout === "exec") {
+    return (
+      `<div class="${cls("smp-exec")}" style="--ac:${cfg.accent}">` +
+      `<header class="smp-hd">${samplePhoto(data, "block")}<div class="smp-hd-t">` +
+      `<h1>${name}</h1><div class="smp-role">${role}</div>${smpContacts(data, "pills")}</div></header>` +
+      `<div class="smp-body"><div class="smp-main">` +
+      (summary ? `<section><h2 class="smp-sec">${IC.sparkles}<span>О себе и ключевые результаты</span></h2><p class="smp-sum">${summary}</p></section>` : "") +
+      (data.experience.length ? `<section><h2 class="smp-sec">${IC.briefcase}<span>Опыт работы</span></h2><div class="smp-xp">${smpExpRows(data, false)}</div></section>` : "") +
+      `</div><aside class="smp-rail">` +
+      (hard.length ? `<div><h3 class="smp-sec">${IC.wrench}<span>Ключевые навыки</span></h3>${smpChips(hard)}</div>` : "") +
+      (data.skills.soft.length ? `<div><h3 class="smp-sec">${IC.star}<span>Личные качества</span></h3>${smpChips(data.skills.soft)}</div>` : "") +
+      (data.education.length ? `<div><h3 class="smp-sec">${IC.book}<span>Образование</span></h3>${smpEdu(data)}</div>` : "") +
+      (data.languages.length ? `<div><h3 class="smp-sec">${IC.globe}<span>Языки</span></h3>${smpLangs(data)}</div>` : "") +
+      `</aside></div></div>`
+    );
+  }
+
+  if (cfg.layout === "side") {
+    return (
+      `<div class="${cls(`smp-side${cfg.light ? " smp-light" : ""}`)}" style="--ac:${cfg.accent}"><div class="smp-inner">` +
+      `<aside class="smp-bar"><div>` +
+      samplePhoto(data, "circle") +
+      (contactItems(data).length ? `<div class="smp-bar-sec"><div class="smp-bar-lbl">Контакты</div>${smpContacts(data, "rows")}</div>` : "") +
+      (hard.length ? `<div class="smp-bar-sec"><div class="smp-bar-lbl">Навыки</div>${smpChips(hard)}</div>` : "") +
+      (data.languages.length ? `<div class="smp-bar-sec"><div class="smp-bar-lbl">Языки</div>${smpLangs(data)}</div>` : "") +
+      `</div><div class="smp-bar-foot">Dogovor.expert · резюме по стандартам 2026</div></aside>` +
+      `<div class="smp-page"><h1>${name}</h1><div class="smp-role">${role}</div>` +
+      (summary ? `<section><h3 class="smp-lbl">Профессиональный профиль</h3><p class="smp-sum">${summary}</p></section>` : "") +
+      (data.experience.length ? `<section><h3 class="smp-lbl">Опыт работы</h3><div class="smp-xp2">${smpExpRows(data, true)}</div></section>` : "") +
+      (data.education.length ? `<section><h3 class="smp-lbl">Образование</h3>${smpEdu(data)}</section>` : "") +
+      `</div></div></div>`
+    );
+  }
+
+  const inline = smpContacts(data, "inline");
+  return (
+    `<div class="${cls("smp-base")}" style="--ac:${cfg.accent}">` +
+    `<header class="smp-top"><div class="smp-top-t"><h1>${name}</h1><div class="smp-role">${role}</div>` +
+    (summary ? `<p class="smp-lead">${summary}</p>` : "") +
+    `</div>${samplePhoto(data, "top")}</header>` +
+    inline +
+    `<div class="smp-cols"><div class="smp-main">` +
+    (data.experience.length ? `<section><h2 class="smp-sec"><span class="smp-bullet"></span><span>Опыт работы</span></h2><div class="smp-xp2">${smpExpRows(data, true)}</div></section>` : "") +
+    `</div><aside class="smp-rail">` +
+    (hard.length ? `<div><h3 class="smp-h3">Навыки</h3>${smpChips(hard)}</div>` : "") +
+    (data.skills.soft.length ? `<div><h3 class="smp-h3">Личные качества</h3>${smpChips(data.skills.soft)}</div>` : "") +
+    (data.education.length ? `<div><h3 class="smp-h3">Образование</h3>${smpEdu(data)}</div>` : "") +
+    (data.languages.length ? `<div><h3 class="smp-h3">Языки</h3>${smpLangs(data)}</div>` : "") +
+    `</aside></div></div>`
+  );
+}
+
 /** Собирает HTML документа резюме для выбранного шаблона. */
 export function buildResumeHtml(data: ResumeData, tpl: TemplateId): string {
+  const sc = SAMPLE_MAP[tpl];
+  if (sc) return buildSampleHtml(data, sc);
+  return buildLegacyHtml(data, tpl);
+}
+
+function buildLegacyHtml(data: ResumeData, tpl: TemplateId): string {
   const p = data.personal;
   const name = escapeHtml(fullName(data)) || "Ваше имя";
   const role = escapeHtml(p.role) || "Должность";

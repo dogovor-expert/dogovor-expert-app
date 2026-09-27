@@ -1,4 +1,6 @@
-/** CSS 12 шаблонов резюме (scoped под .a4). Палитра приведена к фирменной
+import { SAMPLE_CSS } from "./sampleCss";
+
+/** CSS резюме (scoped под .a4). Палитра приведена к фирменной
  *  палитре сайта (brand-500 #2563eb / purple-600 #6d28d9 / gray-*), радиусы и
  *  тени — из globals.css. Executive и Academic намеренно сохраняют собственную
  *  типографику (золото/тёмный, серифы) как узнаваемые индустриальные коды. */
@@ -516,4 +518,4 @@ export const RESUME_CSS = `
 .t-wine .ed-i .em{font-size:11.5px;color:#78716c}
 .t-wine .tag{background:#fff1f2;border-color:#fecdd3;color:#881337;border-radius:4px;font-family:'Inter',system-ui,sans-serif}
 .t-wine .sk,.t-wine .lg{font-family:'Inter',system-ui,sans-serif}
-`;
+` + SAMPLE_CSS;

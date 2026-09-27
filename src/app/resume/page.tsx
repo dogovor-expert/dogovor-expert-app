@@ -8,6 +8,7 @@ import { SITE_URL } from "@/lib/site";
 import { truncateWord, composeTitle } from "@/lib/seo/docMeta";
 import { PRESETS, PHRASES, SAMPLE_RESUME, TEMPLATES } from "@/lib/resume/data";
 import { buildResumeHtml } from "@/lib/resume/render";
+import type { TemplateId } from "@/lib/resume/types";
 import { RESUME_CSS } from "@/lib/resume/resumeCss";
 import { ResumeCatalog, PhraseTabs, type CatalogItem } from "./catalog";
 
@@ -126,10 +127,10 @@ const PAGE_CSS = `
 .rs-stats{display:flex;flex-wrap:wrap;gap:16px 40px;margin-top:36px;padding-top:28px;border-top:1px solid #f1f5f9}
 .rs-stats b{display:block;font-size:24px;font-weight:800;color:#0f172a}
 .rs-stats span{font-size:12px;color:#64748b}
-.rs-sheets{position:relative;display:none;height:26rem}
+.rs-sheets{position:relative;display:none;height:35rem}
 @media(min-width:1024px){.rs-sheets{display:block}}
-.rs-sheet{position:absolute;top:0;width:224px;height:317px;overflow:hidden;border-radius:4px;background:#fff}
-.rs-sheet-in{display:block;width:794px;transform:scale(.2822);transform-origin:top left}
+.rs-sheet{position:absolute;top:0;width:300px;height:424px;overflow:hidden;border-radius:6px;background:#fff;box-shadow:0 30px 60px -25px rgba(15,23,42,.35)}
+.rs-sheet-in{display:block;width:794px;transform:scale(.3778);transform-origin:top left}
 .rs-h2{margin:8px 0 0;font-size:30px;font-weight:800;letter-spacing:-.01em;color:#0f172a}
 @media(min-width:640px){.rs-h2{font-size:36px}}
 .rs-lead{margin:12px 0 0;max-width:44rem;color:#64748b;font-size:16px;line-height:1.6}
@@ -137,11 +138,11 @@ const PAGE_CSS = `
 .rs-chips{display:flex;flex-wrap:wrap;gap:8px;margin:22px 0}
 .rs-chip{border:1px solid #e2e8f0;background:#fff;color:#334155;font-size:13px;font-weight:600;border-radius:999px;padding:8px 16px;cursor:pointer}
 .rs-chip.on{background:#0f172a;border-color:#0f172a;color:#fff}
-.rs-grid{display:grid;gap:20px;grid-template-columns:repeat(auto-fill,minmax(230px,1fr))}
+.rs-grid{display:grid;gap:22px;grid-template-columns:repeat(auto-fill,minmax(280px,1fr))}
 .rs-card{border:1px solid #e2e8f0;border-radius:16px;overflow:hidden;background:#fff;transition:transform .2s,box-shadow .2s}
 .rs-card:hover{transform:translateY(-4px);box-shadow:0 18px 40px -18px rgba(15,23,42,.25)}
-.rs-shot{position:relative;display:block;height:303px;overflow:hidden;background:#f1f5f9;text-decoration:none}
-.rs-shot-in{display:block;width:794px;transform:scale(.27);transform-origin:top left;pointer-events:none}
+.rs-shot{position:relative;display:block;height:366px;overflow:hidden;background:#f1f5f9;text-decoration:none}
+.rs-shot-in{display:block;width:794px;transform:scale(.337);transform-origin:top left;pointer-events:none}
 .rs-go{position:absolute;inset:auto 0 0 0;display:flex;align-items:center;justify-content:center;padding:10px;background:rgba(15,23,42,.55);color:#fff;font-size:13px;font-weight:700;opacity:0;transition:opacity .2s}
 .rs-card:hover .rs-go{opacity:1}
 .rs-meta{padding:16px}
@@ -179,7 +180,7 @@ const PAGE_CSS = `
 .rs-dark .rs-cta{margin-top:28px}
 `;
 
-function SheetPreview({ tpl, label }: { tpl: "creative" | "expert"; label: string }) {
+function SheetPreview({ tpl, label }: { tpl: TemplateId; label: string }) {
   return (
     <div className="rs-sheet" role="img" aria-label={label}>
       <span className="rs-sheet-in" aria-hidden="true">
@@ -267,14 +268,14 @@ export default function ResumePage() {
             </div>
           </div>
           <div className="rs-sheets" aria-hidden="true">
-            <div style={{ position: "absolute", left: "8%", top: 0, transform: "rotate(-6deg)" }}>
-              <SheetPreview tpl="creative" label="Шаблон Креатив" />
+            <div style={{ position: "absolute", left: "2%", top: 0, transform: "rotate(-6deg)" }}>
+              <SheetPreview tpl="corporate" label="Шаблон Executive Corporate" />
             </div>
-            <div style={{ position: "absolute", left: "46%", top: 32, transform: "rotate(5deg)" }}>
-              <SheetPreview tpl="expert" label="Шаблон Эксперт" />
+            <div style={{ position: "absolute", left: "42%", top: 46, transform: "rotate(5deg)" }}>
+              <SheetPreview tpl="nordic" label="Шаблон Nordic Minimalist" />
             </div>
-            <div style={{ position: "absolute", left: "62%", top: 220, width: 88, height: 88, borderRadius: 16, background: "#fff", border: "1px solid #fde68a", display: "grid", placeItems: "center", boxShadow: "0 12px 30px -12px rgba(217,119,6,.4)" }}>
-              <MousePointer2 style={{ width: 26, height: 26, color: "#d97706" }} />
+            <div style={{ position: "absolute", left: "76%", top: 300, width: 92, height: 92, borderRadius: 18, background: "#fff", border: "1px solid #fde68a", display: "grid", placeItems: "center", boxShadow: "0 12px 30px -12px rgba(217,119,6,.4)" }}>
+              <MousePointer2 style={{ width: 28, height: 28, color: "#d97706" }} />
             </div>
           </div>
         </div>

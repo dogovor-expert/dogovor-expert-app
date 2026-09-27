@@ -3,6 +3,7 @@ import TermsIcon from "./TermsIcon";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { SITE_CONTACT_EMAIL, SITE_NAME, SITE_LEGAL_NAME, SITE_LEGAL_INN } from "@/lib/site";
+import { AdSlot } from "@/components/ads/AdSlot";
 
 export const metadata: Metadata = {
   title: "Пользовательское соглашение",
@@ -134,6 +135,7 @@ export default function TermsPage() {
           </Card>
         ))}
       </div>
+      <div className="mx-auto max-w-3xl px-6 pb-10"><AdSlot id="ARTICLE_FOOTER" /></div>
     </div>
   );
 }

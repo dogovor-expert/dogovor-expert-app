@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { truncateWord, composeTitle } from "@/lib/seo/docMeta";
 import AiYuristClient from "./AiYuristClient";
+import { AdSlot } from "@/components/ads/AdSlot";
 
 export const metadata: Metadata = {
   title: { absolute: composeTitle("AI-юрист — ответ по закону за 10 секунд, от 14 ₽") },
@@ -36,8 +37,11 @@ export default async function AiYuristPage() {
 
   // Suspense обязателен: клиент использует useSearchParams (?topup=success).
   return (
-    <Suspense>
-      <AiYuristClient initialAuthed={authed} />
-    </Suspense>
+    <>
+      <Suspense>
+        <AiYuristClient initialAuthed={authed} />
+      </Suspense>
+      <div className="mx-auto max-w-3xl px-6 py-10"><AdSlot id="LANDING_INFEED" /></div>
+    </>
   );
 }

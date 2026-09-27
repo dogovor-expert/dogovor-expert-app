@@ -40,47 +40,59 @@ describe("resume templates parity", () => {
     }
   });
 
-  it("expert: две колонки, акцентная полоса, без фото даже если оно загружено", () => {
-    const html = buildResumeHtml(WITH_PHOTO, "expert");
-    expect(html).toContain("xp2-grid");
-    expect(html).toContain("strip");
-    expect(html).not.toContain("doc-ph");
-    expect(html).toContain("Навыки");
-    expect(html).toContain("Языки");
+  it("эталонные раскладки: exec/side/base присутствуют и содержат имя", () => {
+    expect(buildResumeHtml(SAMPLE_RESUME, "corporate")).toContain("smp-exec");
+    expect(buildResumeHtml(SAMPLE_RESUME, "sidebarpro")).toContain("smp-side");
+    expect(buildResumeHtml(SAMPLE_RESUME, "techpro")).toContain("smp-base");
   });
 
-  it("creative: полоса, фото и языки инлайн", () => {
-    const html = buildResumeHtml(WITH_PHOTO, "creative");
-    expect(html).toContain("strip");
-    expect(html).toContain("doc-ph");
-    expect(html).toContain("lg inline");
+  it("фото показывается во ВСЕХ шаблонах, если загружено", () => {
+    for (const id of ALL) {
+      const html = buildResumeHtml(WITH_PHOTO, id);
+      expect(html, id).toMatch(/smp-ph|smp-top-ph|smp-bar-ph/);
+      expect(html, id).toContain("data:image/png;base64,iVBORw0KGgo=");
+    }
   });
 
-  it("corporate: баннер, таймлайн, рейл с иконками", () => {
-    const html = buildResumeHtml(SAMPLE_RESUME, "corporate");
-    expect(html).toContain("band");
-    expect(html).toContain("xp2-grid");
-    expect(html).toContain("sec-t ic");
+  it("фото скрыто во всех шаблонах при showPhoto=false", () => {
+    const noPhoto: ResumeData = { ...WITH_PHOTO, personal: { ...WITH_PHOTO.personal, showPhoto: false } };
+    for (const id of ALL) {
+      const html = buildResumeHtml(noPhoto, id);
+      expect(html, id).not.toMatch(/smp-ph|smp-top-ph|smp-bar-ph/);
+    }
+  });
+
+  it("exec (corporate): баннер, пилюли контактов, рейл с иконками", () => {
+    const html = buildResumeHtml(WITH_PHOTO, "corporate");
+    expect(html).toContain("smp-hd");
+    expect(html).toContain("smp-pills");
+    expect(html).toContain("smp-rail");
     expect(html).toContain("Ключевые навыки");
+    expect(html).toContain("smp-ph");
   });
 
-  it("sidebarpro: тёмный сайдбар с подписью, forest: светлый сайдбар", () => {
+  it("side (sidebarpro тёмный, forest светлый): сайдбар, подпись", () => {
     const dark = buildResumeHtml(SAMPLE_RESUME, "sidebarpro");
-    expect(dark).toContain("ex-side");
+    expect(dark).toContain("smp-bar");
     expect(dark).toContain("по стандартам 2026");
+    expect(dark).not.toContain("smp-light");
     const light = buildResumeHtml(SAMPLE_RESUME, "forest");
-    expect(light).toContain("cp-side");
-    expect(light).not.toContain("по стандартам 2026");
+    expect(light).toContain("smp-side");
+    expect(light).toContain("smp-light");
   });
 
-  it("techpro/legal: контактная полоса; ocean/wine: баннер; terracotta/graphite/nordic: свои маркеры", () => {
-    expect(buildResumeHtml(SAMPLE_RESUME, "techpro")).toContain("cbar");
-    expect(buildResumeHtml(SAMPLE_RESUME, "legal")).toContain("cbar");
-    expect(buildResumeHtml(SAMPLE_RESUME, "ocean")).toContain("band");
-    expect(buildResumeHtml(SAMPLE_RESUME, "wine")).toContain("band");
-    expect(buildResumeHtml(SAMPLE_RESUME, "terracotta")).toContain("strip");
-    expect(buildResumeHtml(SAMPLE_RESUME, "nordic")).toContain("doc-hd");
-    expect(buildResumeHtml(SAMPLE_RESUME, "graphite")).toContain("doc-hd");
+  it("base (techpro/legal/nordic): шапка, контактная полоса, две колонки", () => {
+    for (const id of ["techpro", "legal", "nordic", "expert", "creative", "terracotta", "graphite"] as TemplateId[]) {
+      const html = buildResumeHtml(SAMPLE_RESUME, id);
+      expect(html, id).toContain("smp-base");
+      expect(html, id).toContain("smp-cbar");
+      expect(html, id).toContain("smp-cols");
+    }
+  });
+
+  it("techpro помечен как tech (моно-чипы), legal — serif", () => {
+    expect(buildResumeHtml(SAMPLE_RESUME, "techpro")).toContain("smp-tech");
+    expect(buildResumeHtml(SAMPLE_RESUME, "legal")).toContain("smp-serif");
   });
 
   it("buildResumeDocHtml: акценты и флаги новых шаблонов", () => {
@@ -123,7 +135,7 @@ describe("resume templates parity", () => {
     }
   });
 
-  it("renderResumePdf собирает expert и creative в настоящий PDF", async () => {    const { readFile } = await import("node:fs/promises");
+  it("renderResumePdf: все 22 шаблона собираются в одностраничный A4-PDF", async () => {    const { readFile } = await import("node:fs/promises");
     const { join } = await import("node:path");
     const origFetch = globalThis.fetch;
     const root = join(process.cwd(), "public", "fonts");
@@ -134,20 +146,26 @@ describe("resume templates parity", () => {
     }) as typeof fetch;
     try {
       const { renderResumePdf } = await import("../resumePdf");
-      // PNG 1x1 — проверяет ветку встраивания фото в шапку creative.
+      const { PDFDocument } = await import("pdf-lib");
+      // PNG 1x1 — проверяет ветку встраивания фото во все шапки.
       const tinyPng =
         "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==";
       const withRealPhoto: ResumeData = {
         ...SAMPLE_RESUME,
         personal: { ...SAMPLE_RESUME.personal, photo: tinyPng },
       };
-      for (const id of ["expert", "creative", "corporate", "sidebarpro", "legal", "techpro"] as TemplateId[]) {
+      for (const id of ALL) {
         const blob = await renderResumePdf(withRealPhoto, id);
         expect(blob.size, id).toBeGreaterThan(5000);
         expect(await blob.slice(0, 5).text(), id).toBe("%PDF-");
+        const pdf = await PDFDocument.load(await blob.arrayBuffer());
+        expect(pdf.getPageCount(), `страниц PDF ${id}`).toBe(1);
+        const { width, height } = pdf.getPage(0).getSize();
+        expect(Math.round(width), `ширина A4 ${id}`).toBe(595);
+        expect(Math.round(height), `высота A4 ${id}`).toBe(842);
       }
     } finally {
       globalThis.fetch = origFetch;
     }
-  }, 60000);
+  }, 180000);
 });

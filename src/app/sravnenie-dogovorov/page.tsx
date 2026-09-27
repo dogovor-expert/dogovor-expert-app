@@ -5,6 +5,7 @@ import { withSeo } from "@/lib/seo/withSeo";
 import { breadcrumbJsonLd, faqJsonLd } from "@/lib/seo/faq";
 import { JsonLd } from "@/components/seo/JsonLd";
 import DocCompare from "@/components/diff/DocCompare";
+import { AdSlot } from "@/components/ads/AdSlot";
 import {
   COMPARE_FAQ,
   COMPARE_FEATURES,
@@ -220,6 +221,7 @@ export default function CompareDocumentsPage() {
             <ChevronRight className="w-4 h-4" />
           </Link>
         </section>
+        <div className="mx-auto max-w-3xl px-6 pb-10"><AdSlot id="ARTICLE_FOOTER" /></div>
       </div>
     </>
   );

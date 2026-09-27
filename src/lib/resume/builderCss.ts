@@ -57,6 +57,14 @@ export const BUILDER_CSS = `
 .rvb-btn-chip{font-size:12px;font-weight:650;padding:7px 12px;border-radius:8px;border:1.5px solid var(--rvb-bd);background:#fff;color:#374151;cursor:pointer}
 .rvb-btn-chip:hover{border-color:var(--rvb-brand);color:var(--rvb-brand2)}
 .rvb-btn-chip.danger:hover{border-color:var(--rvb-red);color:var(--rvb-red)}
+.rvb-photo-actions{display:flex;flex-wrap:wrap;gap:8px}
+.rvb-switch{display:flex;align-items:center;gap:9px;margin-top:12px;font-size:12.5px;font-weight:600;color:#374151;cursor:pointer;user-select:none}
+.rvb-switch input{position:absolute;opacity:0;width:0;height:0;pointer-events:none}
+.rvb-switch-track{position:relative;width:38px;height:22px;border-radius:999px;background:#cbd5e1;transition:background .18s ease;flex-shrink:0}
+.rvb-switch-dot{position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(15,23,42,.25);transition:transform .18s ease}
+.rvb-switch input:checked + .rvb-switch-track{background:var(--rvb-brand)}
+.rvb-switch input:checked + .rvb-switch-track .rvb-switch-dot{transform:translateX(16px)}
+.rvb-switch input:focus-visible + .rvb-switch-track{outline:2px solid var(--rvb-brand);outline-offset:2px}
 .rvb-rep{border:1.5px solid var(--rvb-bd);border-radius:var(--rvb-rl);padding:14px 14px 14px 10px;margin-bottom:12px;background:var(--rvb-mut);display:flex;gap:8px}
 .rvb-rep-drag{width:20px;flex-shrink:0;display:flex;align-items:center;justify-content:center;color:var(--rvb-bd2);cursor:grab}
 .rvb-rep-body{flex:1;min-width:0}
