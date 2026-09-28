@@ -76,7 +76,7 @@ async function redeploy() {
     log("  Запустите вручную: Dokploy UI → Applications → dogovor-prod → Deploy");
     return;
   }
-  const r = await fetch(`${DOKPLOY_URL}/api/deployment.request`, {
+  const r = await fetch(`${DOKPLOY_URL}/api/application.deploy`, {
     method: "POST",
     headers: { "Content-Type": "application/json", "x-api-key": KEY },
     body: JSON.stringify({ applicationId: DOKPLOY_APP_ID }),
