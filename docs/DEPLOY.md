@@ -123,6 +123,15 @@ npm run deploy:dry        # показать план, ничего не дел�
    `Dockerfile` перед `npm run build`:
    `ENV NODE_OPTIONS="--max-old-space-size=3072"`. Симптом в логе:
    `process "/bin/sh -c npm run build" did not complete successfully: exit code: 134`.
+   ⚠️ Этот же лимит нужен и в **runtime-стадии** (ENV из build не наследуется —
+   без него рантайм жил с heap ~2 ГБ и падал 2026-09-28, см. п. 9).
+9. **Рантайм-краш с рестартами (exit 139, снаружи 502).** `docker service ps`
+   показывает задачи `Failed "task: non-zero exit (139)"`, в логах
+   `FATAL ERROR: Ineffective mark-compacts near heap limit`. Причина 28.09:
+   полный parse+verify 12MB TSL (`/api/cron/tsl-refresh` без `?action=status`)
+   ≈ 400MB transient heap при heap ~2 ГБ. Лечение: тяжёлые эндпоинты не дёргать
+   вручную днём; `?action=status` лёгкий (metadata-only, без парсинга XML);
+   heap рантайма — `NODE_OPTIONS` в runtime-стадии Dockerfile.
 6. **Забит диск.** Симптомы: долгие/падающие сборки, таймауты SSH:
    ```bash
    docker system df
@@ -152,8 +161,9 @@ npm run deploy:dry        # показать план, ничего не дел�
 3. **Забит диск** — см. runbook п. 6.
 
 ⚠️ `deploy-watch` проверяет только HTTP 200, а НЕ содержимое — зелёный статус
-не означает, что новый код реально на проде. После каждого деплоя сверять контент
-скриптом (пример для фичи из коммита):
+не означает, что новый код реально на проде. После каждого деплоя гнать
+`npm run deploy:content` (дефолтные маркеры нового кода; в CI — шаг после
+`deploy-watch`). Для фичи из коммита — точечно:
 `node scripts/deploy-content.mjs "/ai-yurist|Перетащите договор сюда"`.
 
 ### Диск на VDS
@@ -191,13 +201,20 @@ docker image prune -f                            # висячие образы
 5 3 * * * curl -fsS -H "Authorization: Bearer $CRON_SECRET" https://dogovor.expert/api/cron/daily-maintenance
 ```
 
-`CRON_SECRET` берётся из **Environment** приложения в Dokploy. Секрет не должен
-лежать в репозитории; в crontab его подставляют из защищённого файла
-(`/etc/dogovor/cron.env`, права 600) либо из окружения сессии.
+`CRON_SECRET` берётся из **Environment** приложения в Dokploy (канонический
+источник). Секрет не должен лежать в репозитории; в crontab его подставляют
+из защищённого файла (`/etc/dogovor/cron.env`, права 600, server-side копия
+секрета контейнера) либо из окружения сессии.
+
+Мониторинг без риска: `GET /api/cron/tsl-refresh?action=status` — лёгкий
+(metadata-only, без парсинга XML; полный parse+verify 12MB TSL стоил ~400MB
+heap и ронял прод — инцидент 2026-09-28, runbook п. 9).
 
 > ⚠️ Статус на 2026-09-28: этих задач в crontab на VDS **нет** (там только
-> docker-уборка). Их нужно донастроить, иначе TSL-сертификаты для проверки
-> цепочки УКЭП не будут обновляться, а ежедневное обслуживание — выполняться.
+> docker-уборка). Ставить только ПОСЛЕ деплоя коммитов `dff9861`+`506b31d`
+> (лёгкий статус + runtime heap), иначе ночной refresh уронит прод.
+> TSL-кэш протух (last_sync 2026-09-14) — после деплоя дёрнуть refresh вручную
+> и проверить metadata через `?action=status`.
 
 
 ## Проверка прода (базовое)
