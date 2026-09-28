@@ -226,11 +226,13 @@ export async function verifyTslXmlSignature(xmlContent: string): Promise<XmlDsig
     const referenceEl = descendantElement(signedInfoEl, "Reference", XMLDSIG_NS);
     const digestValueEl = referenceEl ? childElement(referenceEl, "DigestValue") : null;
     const expectedDigestB64 = elementText(digestValueEl);
+    // Удаляем подпись из исходного DOM вместо cloneNode(true): doc локален
+    // для этой функции, а полный deep clone 12MB TSL стоил +300-600MB heap
+    // и вносил вклад в OOM прода (2026-09-28, exit 139).
     const docRoot = doc.documentElement;
-    const docClone = docRoot.cloneNode(true) as Element;
-    removeSignatureSubtree(docClone);
+    removeSignatureSubtree(docRoot);
     const exc = new ExclusiveCanonicalization();
-    const canonicalDoc = exc.process(docClone, { signatureNode });
+    const canonicalDoc = exc.process(docRoot, { signatureNode });
     const docDigest = await gostDigestBytes(Buffer.from(canonicalDoc, "utf8"));
     const docDigestB64 = Buffer.from(docDigest).toString("base64");
     documentDigestMatch = !!expectedDigestB64 && bases64Equal(docDigestB64, expectedDigestB64);

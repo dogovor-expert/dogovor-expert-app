@@ -347,6 +347,10 @@ export async function checkOcsp(
     const ttl = result.nextUpdate
       ? Math.max(1_000, result.nextUpdate.getTime() - now)
       : OCSP_CACHE_TTL_MS;
+    // Чистим протухшие записи при записи — иначе Map растёт бесконечно (утечка heap).
+    for (const [k, v] of ocspCache) {
+      if (v.expires <= now) ocspCache.delete(k);
+    }
     ocspCache.set(key, { result, expires: now + Math.min(ttl, OCSP_CACHE_TTL_MS) });
   }
 

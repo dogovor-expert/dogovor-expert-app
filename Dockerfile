@@ -71,10 +71,13 @@ RUN --mount=type=cache,target=/root/.npm \
 # под непривилегированным пользователем (аудит 2026-09-12: не root).
 FROM node:22-bookworm-slim AS run
 
+# NODE_OPTIONS нужен и в рантайме: ENV из build-стадии сюда не наследуется,
+# без него heap ~2 ГБ и TSL-verify (12MB XML, ~400MB transient) роняет прод OOM (2026-09-28).
 ENV NODE_ENV=production \
     PORT=3000 \
     HOSTNAME=0.0.0.0 \
-    NEXT_TELEMETRY_DISABLED=1
+    NEXT_TELEMETRY_DISABLED=1 \
+    NODE_OPTIONS="--max-old-space-size=3072"
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends tzdata ca-certificates curl \

@@ -179,25 +179,40 @@ async function handleStatus(req: Request): Promise<NextResponse> {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 
+  // Лёгкий статус БЕЗ парсинга XML: полный parse+verify 12MB TSL стоит
+  // ~400MB transient heap и ронял прод OOM (2026-09-28, exit 139).
+  // Актуальность кэша читаем из tsl_sync_metadata + count(*) — килобайты.
   try {
-    const cached =
-      (await loadTslFromDb({ verifySignature: true })) ??
-      (await loadTslFromCache({ verifySignature: true }));
-    if (!cached) {
-      return NextResponse.json({
-        cached: false,
-        message: "No TSL cache available",
-      });
-    }
-
+    const admin = createAdminClient();
+    const [metaRes, countRes] = await Promise.all([
+      admin
+        .from("tsl_sync_metadata")
+        .select("last_sync_at, last_version, last_date, total_certificates, root_certificates, last_error, last_error_at")
+        .eq("id", 1)
+        .maybeSingle(),
+      admin.from("tsl_certificates").select("thumbprint", { count: "exact", head: true }),
+    ]);
+    if (metaRes.error) throw metaRes.error;
+    if (countRes.error) throw countRes.error;
+    const meta = (metaRes.data ?? {}) as {
+      last_sync_at?: string;
+      last_version?: number;
+      last_date?: string;
+      total_certificates?: number;
+      root_certificates?: number;
+      last_error?: string | null;
+      last_error_at?: string | null;
+    };
     return NextResponse.json({
       cached: true,
-      metadata: cached.data.metadata,
+      last_sync_at: meta.last_sync_at ?? null,
+      metadata: { version: meta.last_version ?? null, date: meta.last_date ?? null },
       statistics: {
-        authorities_count: cached.data.authorities.length,
-        root_certificates_count: getRootCaCertificates(cached.data).length,
-        total_certificates_count: getAllValidCertificates(cached.data).length,
+        total_certificates_count: countRes.count ?? meta.total_certificates ?? null,
+        root_certificates_count: meta.root_certificates ?? null,
       },
+      last_error: meta.last_error ?? null,
+      last_error_at: meta.last_error_at ?? null,
     });
   } catch (e) {
     return NextResponse.json(

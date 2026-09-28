@@ -304,6 +304,10 @@ export async function checkCrl(
     const ttl = nextUpdate
       ? Math.max(1_000, nextUpdate.getTime() - now)
       : CRL_CACHE_TTL_MS;
+    // Чистим протухшие записи при записи — иначе Map растёт бесконечно (утечка heap).
+    for (const [k, v] of crlCache) {
+      if (v.expires <= now) crlCache.delete(k);
+    }
     crlCache.set(key, { result, expires: now + Math.min(ttl, CRL_CACHE_TTL_MS), raw: crlDer });
   }
 
