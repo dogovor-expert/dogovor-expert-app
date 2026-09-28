@@ -381,8 +381,8 @@ export default function AppLayout({ children }: { children: ReactNode }) {
 
       {/* Main */}
       <div className="flex-1 flex flex-col min-w-0 max-w-full">
-        <header className="h-16 bg-white border-b border-gray-100 flex items-center justify-between px-6 gap-4 flex-shrink-0 max-w-full">
-          <div className="flex items-center gap-3">
+        <header className="h-16 bg-white border-b border-gray-100 flex items-center justify-between px-3 sm:px-6 gap-2 sm:gap-4 flex-shrink-0 max-w-full">
+          <div className="flex min-w-0 items-center gap-2 sm:gap-3">
             <button onClick={() => setOpen(true)} className="lg:hidden p-2.5 hover:bg-gray-100 rounded-lg" aria-label="Открыть меню навигации">
               <Menu className="w-5 h-5 text-gray-600" />
             </button>
@@ -452,10 +452,11 @@ export default function AppLayout({ children }: { children: ReactNode }) {
                 )}
                 <Link
                   href="/login"
-                  className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-brand-500 hover:bg-brand-600 rounded-xl focus:ring-2 focus:ring-brand-400 focus:outline-none transition-colors"
+                  aria-label="Войти"
+                  className="inline-flex flex-shrink-0 items-center gap-1.5 px-3 sm:px-4 py-2 text-sm font-medium text-white bg-brand-500 hover:bg-brand-600 rounded-xl focus:ring-2 focus:ring-brand-400 focus:outline-none transition-colors"
                 >
                   <LogIn className="w-4 h-4" />
-                  Войти
+                  <span className="hidden sm:inline">Войти</span>
                 </Link>
                 <Link
                   href="/builder"

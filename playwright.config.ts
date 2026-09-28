@@ -30,7 +30,7 @@ const mobileDevices = [
 
 const mobileProjects = mobileDevices.map((d) => ({
   name: d.name,
-  testMatch: /responsive\.spec\.ts|overflow-diag\.spec\.ts/,
+  testMatch: /responsive\.spec\.ts|overflow-diag\.spec\.ts|no-horizontal-overflow\.spec\.ts/,
   use: d.use,
 }));
 

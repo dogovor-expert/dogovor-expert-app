@@ -419,7 +419,7 @@ function SheetStack() {
         <div className="text-center">
           <Download className="mx-auto h-7 w-7 text-brand-600" />
           <div className="mt-2 text-sm font-bold text-gray-900">Готово к скачиванию</div>
-          <div className="text-xs text-gray-400">PDF · Word</div>
+          <div className="text-xs text-gray-500">PDF · Word</div>
         </div>
       </div>
     </div>

@@ -14,7 +14,11 @@ interface LogoProps {
  */
 export default function Logo({ dark = false, tagline = true }: LogoProps) {
   return (
-    <Link href="/" className="flex items-center gap-2.5" aria-label="Dogovor.expert — на главную">
+    <Link
+      href="/"
+      className="flex min-w-0 items-center gap-2.5"
+      aria-label="Dogovor.expert — на главную"
+    >
       <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500 to-purple-600 text-white shadow-lg shadow-brand-600/25">
         <FileSignature className="h-5 w-5" strokeWidth={2.25} />
       </span>

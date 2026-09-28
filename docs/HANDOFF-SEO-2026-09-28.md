@@ -153,3 +153,65 @@ npm run audit:site          # повторный краул: Health Score дол
 ## 7. Откат
 
 Если прод не поехал: панель Dokploy → `dogovor-prod` → **Deployments** → выбрать предыдущий успешный `done` → **Redeploy**. Либо `git revert` на master + повторный `npm run deploy`.
+
+---
+
+# Дополнение: визуальная проверка и баги (28.09.2026, после деплоя `0db091b`)
+
+## Состояние на момент дополнения
+
+- Параллельные resume-изменения уже закоммичены как `9ac91c1` и запушены в `vds/master`.
+  Рабочее дерево чистое — «незакоммиченных кандидатов» больше нет.
+- `9ac91c1` провалидирован: `tsc` 0, ESLint 0, Vitest **837 passed / 1 skipped**.
+  Два падающих *файла* — `src/app/api/__integration__/*`: требуют `SUPABASE_SERVICE_ROLE_KEY`
+  и локальный Supabase. Это окружение, не регрессия.
+- Сиротский файл `D:\Мои саты\site Dogovor\src\app\ai-yurist\page.tsx` проверен
+  (битая копия без `import` для `AiYuristClient`/`AdSlot`) и удалён вместе с деревом.
+
+## Найдено визуальной проверкой (Playwright + Axe, WCAG 2.1 AA)
+
+| # | Баг | Причина |
+|---|---|---|
+| 1 | Подзаголовок логотипа вылезает из сайдбара на белый хедер — **на всех страницах** | `Logo.tsx`: у `<Link>` не было `min-w-0`, поэтому `truncate` не срабатывал. Текст 232px при `x=74` в сайдбаре 256px → правый край 306px |
+| 2 | `/resume` прокручивался по горизонтали на **248px** при 390px | `builderCss.ts`: `.rvb-fld input{width:100%}` — инлайновый `<style>` **вне `@layer`** сильнее Tailwind-утилиты `.sr-only`. Скрытый `<input type="file">` становился 390px шириной при `left:248` |
+| 3 | Кнопка «Войти» обрезалась правым краем на 390px | `AppLayout.tsx`: `px-6` + логотип + кнопка не влезали в 390px |
+| 4 | Axe `color-contrast` (serious): `/resume` 4 узла, `/blanks` 1 узел | `text-slate-400`/`text-gray-400` на мелком тексте (2.6:1) |
+
+Баг №2 **предсуществующий** (коммит `8fc40488` от 27.09), не внесён SEO-аудитом.
+Его не ловила диагностика: в `e2e/overflow-diag.spec.ts` маршрута `/resume` не было,
+а сам файл только печатал лог, но ничего не ассертил.
+
+## Исправлено в этом дополнении
+
+- `src/components/layout/Logo.tsx` — `min-w-0` на `<Link>`.
+- `src/lib/resume/builderCss.ts` — `:not([type="file"])` в правилах поля и фокуса.
+- `src/components/layouts/AppLayout.tsx` — `px-3 sm:px-6`, `min-w-0` левой группе,
+  «Войти» → иконка-only ниже `sm` (с `aria-label`).
+- `src/app/resume/page.tsx` — `text-slate-400` → `text-slate-500` (крошки + блок контактов).
+- `src/app/blanks/page.tsx` — `text-gray-400` → `text-gray-500`.
+- `e2e/no-horizontal-overflow.spec.ts` — **новый ассёртящий** тест (18 кейсов:
+  6 маршрутов × 360/390/768). Проверяет достижимый `scrollingElement.scrollLeft`,
+  а не только `scrollWidth`.
+- `e2e/overflow-diag.spec.ts` — добавлены `/resume`, `/converter`, `/ai-yurist`.
+- `playwright.config.ts` — новый тест включён в мобильные проекты.
+
+## Проверка на локальном production-билде (`next start -p 3100`)
+
+| Метрика | До | После |
+|---|---|---|
+| `/resume` достижимый `scrollLeft` при 390px | 248 | **0** ✅ |
+| `/resume` после реального `mouse.wheel(300,0)` | 248 | **0** ✅ |
+| Axe `/resume` | 4 узла | **0** ✅ |
+| Axe `/converter` | 0 | 0 ✅ |
+| Axe `/blanks` | 1 узел | **0** ✅ |
+| Axe `/ai-yurist` | 0 | 0 ✅ |
+| `no-horizontal-overflow` | — | **18 passed** ✅ |
+| `tsc` / ESLint / build | — | 0 / 0 / 1408 ✅ |
+
+## Не сделано
+
+- План редизайна `/converter` — в `docs/CONVERTER-REDESIGN-PLAN.md` (реализации нет).
+- Повторный краул и новый Health Score (`npm run audit:site`) — не запускался.
+- **Требуется действие владельца:** перевыпустить раскрытый в чате `DOKPLOY_API_KEY`.
+
+

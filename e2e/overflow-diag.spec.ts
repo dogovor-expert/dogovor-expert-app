@@ -3,6 +3,9 @@ import { test } from "@playwright/test";
 const PAGES = [
   "/", "/templates", "/login", "/blog", "/blanks", "/documents/receipt-cashless",
   "/dkp", "/autoteka", "/osago", "/techosmotr", "/tahograph", "/utils",
+  // 28.09.2026: /resume не был в списке — из-за этого горизонтальный скролл
+  // на 390px (248px) не отлавливался диагностикой.
+  "/resume", "/converter", "/ai-yurist",
 ];
 
 function describe(el: Element): string {

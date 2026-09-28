@@ -40,9 +40,9 @@ export const BUILDER_CSS = `
 .rvb-fld{margin-bottom:14px}
 .rvb-fld label{display:block;font-size:12.5px;font-weight:650;color:#374151;margin-bottom:6px}
 .rvb-fld .hint{font-weight:500;color:var(--rvb-mf2);font-size:11px}
-.rvb-fld input,.rvb-fld select,.rvb-fld textarea{width:100%;padding:10px 13px;border:1.5px solid var(--rvb-bd);border-radius:var(--rvb-r);font-size:13.5px;font-family:inherit;background:#fff;transition:.15s;color:inherit}
+.rvb-fld input:not([type="file"]),.rvb-fld select,.rvb-fld textarea{width:100%;padding:10px 13px;border:1.5px solid var(--rvb-bd);border-radius:var(--rvb-r);font-size:13.5px;font-family:inherit;background:#fff;transition:.15s;color:inherit}
 .rvb-fld textarea{resize:vertical;min-height:84px;line-height:1.55}
-.rvb-fld input:focus,.rvb-fld select:focus,.rvb-fld textarea:focus{outline:none;border-color:var(--rvb-brand);box-shadow:0 0 0 3px var(--rvb-brand100)}
+.rvb-fld input:not([type="file"]):focus,.rvb-fld select:focus,.rvb-fld textarea:focus{outline:none;border-color:var(--rvb-brand);box-shadow:0 0 0 3px var(--rvb-brand100)}
 .rvb-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .rvb-row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
 .rvb-tip{margin-top:6px;font-size:11.5px;color:var(--rvb-mf);line-height:1.5}
