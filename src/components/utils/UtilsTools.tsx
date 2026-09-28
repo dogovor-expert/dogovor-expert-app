@@ -179,6 +179,7 @@ export default function UtilsTools() {
             value={q}
             onChange={(e) => setQ(e.target.value)}
             placeholder="Поиск по 22 калькуляторам — НДС, алименты, госпошлина…"
+            aria-label="Поиск по калькуляторам"
             className="w-full bg-gray-50 border border-gray-200 text-sm py-2.5 pl-9 pr-3 rounded-xl text-gray-900 outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500"
           />
         </div>

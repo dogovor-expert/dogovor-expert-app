@@ -121,8 +121,8 @@ export const BUILDER_CSS = `
 /* Drawer шаблонов */
 .rvb-ov{position:fixed;inset:0;background:rgba(15,23,42,.45);backdrop-filter:blur(3px);z-index:80;opacity:0;pointer-events:none;transition:opacity .2s}
 .rvb-ov.on{opacity:1;pointer-events:auto}
-.rvb-drawer{position:fixed;top:0;right:0;bottom:0;width:min(560px,94vw);background:#fff;z-index:90;transform:translateX(102%);transition:transform .28s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column;box-shadow:-20px 0 60px -20px rgba(15,23,42,.35)}
-.rvb-drawer.on{transform:none}
+.rvb-drawer{position:fixed;top:0;right:0;bottom:0;width:min(560px,94vw);background:#fff;z-index:90;transform:translateX(102%);transition:transform .28s cubic-bezier(.4,0,.2,1),visibility .28s;display:flex;flex-direction:column;box-shadow:-20px 0 60px -20px rgba(15,23,42,.35);visibility:hidden}
+.rvb-drawer.on{transform:none;visibility:visible}
 .rvb-drawer-h{padding:20px 22px 16px;border-bottom:1px solid var(--rvb-bd);display:flex;align-items:flex-start;justify-content:space-between}
 .rvb-drawer-h h3{font-size:17px;font-weight:750;letter-spacing:-.01em;margin:0}
 .rvb-drawer-h p{font-size:12.5px;color:var(--rvb-mf);margin:3px 0 0}

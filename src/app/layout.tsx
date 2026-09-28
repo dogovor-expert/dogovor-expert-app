@@ -47,10 +47,15 @@ export const metadata: Metadata = {
   // иначе 404-страницы (not-found.tsx) наследуют canonical=/ и Googlebot видит
   // "soft-404" (404 + canonical=/ + noindex). Главная страница задаёт canonical
   // явно в src/app/page.tsx, остальные — в page/layout metadata.
+  //
+  // openGraph.url ТОЖЕ НЕ задан здесь (аудит 28.09.2026): значение SITE_URL
+  // наследовалось всеми страницами без собственного openGraph, и 7 страниц
+  // (/about, /autoteka, /help, /osago, /privacy, /terms, /ai-yurist) отдавали
+  // og:url главной — расхождение с canonical. Каждая страница задаёт url
+  // сама (withSeo подставляет его автоматически). Не возвращать url: SITE_URL.
   openGraph: {
     type: "website",
     locale: "ru_RU",
-    url: SITE_URL,
     siteName: "Dogovor.expert",
     title: SITE_NAME,
     description: SITE_DESCRIPTION,

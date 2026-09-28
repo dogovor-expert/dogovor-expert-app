@@ -124,6 +124,7 @@ function Editor({
         value={text}
         onChange={(e) => onChange(e.target.value)}
         placeholder="…или вставьте текст договора"
+        aria-label="Текст договора для сравнения"
         rows={10}
         className="mt-3 w-full rounded-xl border border-gray-200 p-3 text-xs leading-relaxed focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none resize-y"
       />

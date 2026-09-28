@@ -1,14 +1,18 @@
 import type { Metadata } from "next";
+import { withSeo } from "@/lib/seo/withSeo";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { SITE_CONTACT_EMAIL, SITE_NAME, SITE_LEGAL_NAME, SITE_LEGAL_INN } from "@/lib/site";
 import { AdSlot } from "@/components/ads/AdSlot";
 
-export const metadata: Metadata = {
-  title: "Политика конфиденциальности",
+// withSeo добавляет og:url = /privacy (в root layout openGraph.url намеренно
+// убран, иначе страница наследовала og:url главной — аудит 28.09.2026).
+export const metadata: Metadata = withSeo({
+  path: "/privacy",
+  title: "Политика конфиденциальности и обработки персональных данных",
   description: `Политика обработки персональных данных Dogovor.expert: данные документов в браузере (152-ФЗ), серверный OCR и передача партнёрам — только с вашего согласия.`,
-  alternates: { canonical: "/privacy" },
-};
+  robots: { index: true, follow: true },
+});
 
 const sections = [
   {

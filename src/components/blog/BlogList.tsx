@@ -154,6 +154,7 @@ export default function BlogList({ posts, labels, order, templatesCount }: BlogL
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Найти статью по названию или вопросу"
+              aria-label="Поиск по статьям блога"
               className="w-full rounded-2xl border border-gray-200 bg-white py-3.5 pl-11 pr-4 text-sm text-slate-900 shadow-sm outline-none transition placeholder:text-gray-500 focus:border-brand-500 focus:ring-4 focus:ring-brand-100"
             />
           </div>

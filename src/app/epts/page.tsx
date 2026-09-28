@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Clock, FileCheck2, ShieldCheck } from "lucide-react";
 import { JsonLd } from "@/components/seo/JsonLd";
+import { breadcrumbJsonLd } from "@/lib/seo/faq";
 import { SITE_URL } from "@/lib/site";
 import { truncateWord, composeTitle } from "@/lib/seo/docMeta";
 
@@ -88,6 +89,10 @@ export default function EptsPage() {
     <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
       <JsonLd
         data={[
+          breadcrumbJsonLd([
+            { name: "Главная", path: "/" },
+            { name: "Выписка из ЭПТС", path: "/epts" },
+          ]),
           {
             "@context": "https://schema.org",
             "@type": "Service",

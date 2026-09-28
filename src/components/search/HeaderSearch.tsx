@@ -186,8 +186,12 @@ export default function HeaderSearch() {
           type="text"
           role="combobox"
           aria-expanded={showList}
-          aria-controls={listboxId}
-          aria-activedescendant={active >= 0 ? optId(active) : undefined}
+          // aria-controls/aria-activedescendant указывают ТОЛЬКО на существующий
+          // элемент. Раньше aria-controls был всегда, хотя <SuggestionsList>
+          // рендерится лишь при showList — битая ссылка давала ошибку
+          // «Duplicate ID ARIA» на всех страницах сайта (аудит 28.09.2026).
+          aria-controls={showList ? listboxId : undefined}
+          aria-activedescendant={showList && active >= 0 ? optId(active) : undefined}
           aria-autocomplete="list"
           aria-label="Поиск документов и шаблонов"
           placeholder="Поиск документов, шаблонов..."
@@ -226,8 +230,10 @@ export default function HeaderSearch() {
               type="text"
               role="combobox"
               aria-expanded={showList}
-              aria-controls={listboxMobileId}
-              aria-activedescendant={active >= 0 ? optMobileId(active) : undefined}
+              // См. комментарий у десктопного поля: aria-controls только
+              // при showList, иначе ссылка ведёт на несуществующий элемент.
+              aria-controls={showList ? listboxMobileId : undefined}
+              aria-activedescendant={showList && active >= 0 ? optMobileId(active) : undefined}
               aria-autocomplete="list"
               aria-label="Поиск документов и шаблонов"
               placeholder="Поиск документов, шаблонов..."

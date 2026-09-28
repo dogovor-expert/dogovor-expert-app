@@ -24,7 +24,7 @@ import {
 import { RESUME_CSS } from "@/lib/resume/resumeCss";
 import { BUILDER_CSS } from "@/lib/resume/builderCss";
 import { ACCENT_PALETTES, PRESETS, PHRASES, SAMPLE_RESUME, TEMPLATES, TEMPLATE_META } from "@/lib/resume/data";
-import { buildResumeDocHtml, buildResumeHtml, countNumericBullets, fullName, hardSkills } from "@/lib/resume/render";
+import { buildResumeDocHtml, buildResumePreviewHtml, countNumericBullets, fullName, hardSkills } from "@/lib/resume/render";
 // pdf-lib подгружается лениво при экспорте (см. exportPdfFile) — чтобы не раздувать бандл страницы
 import { saveAs } from "file-saver";
 import type { ResumeData, ResumeExperience, ResumeLanguage, TemplateId } from "@/lib/resume/types";
@@ -224,7 +224,13 @@ export default function ResumeBuilder() {
     return () => cancelAnimationFrame(raf);
   }, [drawer, filter, data, tpl]);
 
-  const html = useMemo(() => buildResumeHtml(data, tpl, accent ?? undefined), [data, tpl, accent]);
+  // Предпросмотр — не сам документ: заголовки заменяются на div, иначе <h1>
+  // из резюме попадает в DOM страницы (аудит 28.09.2026 — 26 <h1> на /resume).
+  // Выгрузка PDF/DOC использует buildResumeHtml/buildResumeDocHtml без изменений.
+  const html = useMemo(
+    () => buildResumePreviewHtml(data, tpl, accent ?? undefined),
+    [data, tpl, accent]
+  );
   const quality = useMemo(() => computeQuality(data), [data]);
   const qPct = Math.round((quality.filter((c) => c.ok).length / quality.length) * 100);
 
@@ -606,7 +612,7 @@ export default function ResumeBuilder() {
               >
                 <div className="rvb-tcard-th" aria-hidden="true">
                   <div className="rvb-mini">
-                    <div className={`a4 t-${t.id}`} dangerouslySetInnerHTML={{ __html: buildResumeHtml(data, t.id) }} />
+                    <div className={`a4 t-${t.id}`} dangerouslySetInnerHTML={{ __html: buildResumePreviewHtml(data, t.id) }} />
                   </div>
                 </div>
                 <div className="rvb-tcard-m">

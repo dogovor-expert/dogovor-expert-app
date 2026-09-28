@@ -15,11 +15,12 @@ import {
   Zap,
 } from "lucide-react";
 import { JsonLd } from "@/components/seo/JsonLd";
+import { breadcrumbJsonLd } from "@/lib/seo/faq";
 import { AdSlot } from "@/components/ads/AdSlot";
 import { SITE_URL } from "@/lib/site";
 import { truncateWord, composeTitle } from "@/lib/seo/docMeta";
 import { TEMPLATES, demoForCategory } from "@/lib/resume/data";
-import { buildResumeHtml } from "@/lib/resume/render";
+import { buildResumePreviewHtml } from "@/lib/resume/render";
 import { RESUME_CSS } from "@/lib/resume/resumeCss";
 import { ResumeCatalog, type CatalogItem } from "./catalog";
 import { ResumeFaq } from "./faq";
@@ -285,7 +286,9 @@ export default function ResumePage() {
     ats: t.ats,
     parse: t.parse,
     cats: [...t.tags, t.ats],
-    html: buildResumeHtml(demoForCategory(t.category), t.id),
+    // Превью, а не документ: заголовки заменены на div, чтобы в DOM страницы
+    // не было десятков <h1> из карточек каталога (аудит 28.09.2026).
+    html: buildResumePreviewHtml(demoForCategory(t.category), t.id),
     category: t.category,
     rating: t.rating,
     downloads: t.downloads,
@@ -297,6 +300,10 @@ export default function ResumePage() {
       <style dangerouslySetInnerHTML={{ __html: RESUME_CSS }} />
       <JsonLd
         data={[
+          breadcrumbJsonLd([
+            { name: "Главная", path: "/" },
+            { name: "Резюме", path: "/resume" },
+          ]),
           {
             "@context": "https://schema.org",
             "@type": "WebApplication",

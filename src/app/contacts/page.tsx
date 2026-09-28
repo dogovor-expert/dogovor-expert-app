@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import nextDynamic from "next/dynamic";
+import { withSeo } from "@/lib/seo/withSeo";
 import { Card } from "@/components/ui/Card";
 import { SUPPORT_EMAIL, PARTNERS_EMAIL, PRESS_EMAIL, SITE_NAME, SITE_LEGAL_INN } from "@/lib/site";
 import { AdSlot } from "@/components/ads/AdSlot";
@@ -10,11 +11,14 @@ const FeedbackForm = nextDynamic(() => import("@/components/feedback/FeedbackFor
 export const revalidate = 3600;
 export const dynamic = "force-static"; // P0: явно включаем SSG, иначе Next 15 обходит ISR (см. INVARIANTS.md).
 
-export const metadata: Metadata = {
-  title: "Контакты",
+// title расширен до 60 символов: «Контакты | Dogovor.expert» (25) — слишком
+// короткий сниппет (аудит 28.09.2026). withSeo задаёт og:url = /contacts.
+export const metadata: Metadata = withSeo({
+  path: "/contacts",
+  title: "Контакты — поддержка, сотрудничество и реквизиты",
   description: `Контакты сервиса ${SITE_NAME}: поддержка, сотрудничество, юридический адрес и реквизиты.`,
-  alternates: { canonical: "/contacts" },
-};
+  robots: { index: true, follow: true },
+});
 
 const contactCards = [
   { title: "Поддержка пользователей", desc: "Вопросы по работе сервиса, ошибки, идеи по шаблонам", value: SUPPORT_EMAIL, href: `mailto:${SUPPORT_EMAIL}` },

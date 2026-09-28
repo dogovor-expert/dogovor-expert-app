@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { withSeo } from "@/lib/seo/withSeo";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { SITE_NAME } from "@/lib/site";
@@ -7,11 +8,15 @@ import { AdSlot } from "@/components/ads/AdSlot";
 export const revalidate = 3600;
 export const dynamic = "force-static"; // P0: явно включаем SSG, иначе Next 15 обходит ISR (см. INVARIANTS.md).
 
-export const metadata: Metadata = {
-  title: "О сервисе",
+// title расширен до 60 символов: «О сервисе | Dogovor.expert» (26) — слишком
+// короткий сниппет (аудит 28.09.2026). withSeo задаёт og:url = /about
+// (в root layout openGraph.url намеренно убран, чтобы не наследовался).
+export const metadata: Metadata = withSeo({
+  path: "/about",
+  title: "О сервисе — кто мы, как устроена работа и защита данных",
   description: `${SITE_NAME} — конструктор договоров в браузере: как устроен сервис, принципы приватности, планы развития.`,
-  alternates: { canonical: "/about" },
-};
+  robots: { index: true, follow: true },
+});
 
 const principles = [
   { icon: "🔒", title: "Данные в вашем браузере", desc: "Документы и черновики не покидают ваше устройство. Сервер не видит содержимое договоров — работает принцип privacy by design." },

@@ -29,8 +29,8 @@ export default function SumWords() {
     <div className="space-y-4">
       <div className="space-y-3">
         <div className="space-y-1">
-          <label className="text-[10px] font-mono text-gray-600">Сумма (₽)</label>
-          <input type="number" min="0" step="0.01" value={sum} onChange={(e) => setSum(e.target.value)}
+          <label htmlFor="sumwords-sum" className="text-[10px] font-mono text-gray-600">Сумма (₽)</label>
+          <input id="sumwords-sum" type="number" min="0" step="0.01" value={sum} onChange={(e) => setSum(e.target.value)}
             className="w-full bg-gray-50 border border-gray-200 text-xs py-2.5 px-3 rounded-lg text-gray-900 outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500" />
         </div>
         <button onClick={convert}

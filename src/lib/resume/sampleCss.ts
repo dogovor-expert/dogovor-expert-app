@@ -106,4 +106,16 @@ export const SAMPLE_CSS = `
 .smp-base .smp-rail{border-left:1px solid #eef2f7;padding-left:22px;display:flex;flex-direction:column;gap:20px}
 .smp-base.smp-tech .smp-chip{background:#eef2ff;color:#4338ca;font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
 .smp-base.smp-tech .smp-sec{border-bottom-color:var(--ac)}
+
+/* ===== Превью-режим (buildResumePreviewHtml) =====
+   Заголовки документа в превью заменены на div.rvh1/.rvh2/.rvh3, чтобы
+   каталог /resume не содержал десятки <h1> (аудит 28.09.2026). Правила ниже
+   дублируют стили h1/h2/h3, чтобы вёрстка превью не изменилась. */
+.smp h1,.smp .rvh1,.smp h2,.smp .rvh2,.smp h3,.smp .rvh3,.smp p,.smp ul{margin:0}
+.smp-serif .smp-hd h1,.smp-serif .smp-hd .rvh1{font-family:'Times New Roman',Georgia,serif}
+.smp-exec .smp-hd h1,.smp-exec .smp-hd .rvh1{font-size:23px;font-weight:800;letter-spacing:-.01em;line-height:1.1}
+.smp-side .smp-page h1,.smp-side .smp-page .rvh1{font-size:26px;font-weight:800;letter-spacing:-.01em;color:#0f172a}
+.smp-side.smp-serif .smp-page h1,.smp-side.smp-serif .smp-page .rvh1{font-family:'Times New Roman',Georgia,serif}
+.smp-base .smp-top h1,.smp-base .smp-top .rvh1{font-size:27px;font-weight:800;letter-spacing:-.015em;color:#0f172a;line-height:1.1}
+.smp-base.smp-serif .smp-top h1,.smp-base.smp-serif .smp-top .rvh1{font-family:'Times New Roman',Georgia,serif}
 `;

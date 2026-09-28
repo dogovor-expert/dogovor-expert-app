@@ -177,9 +177,19 @@ export default function BlanksBrowser({
     [categories]
   );
 
+  // Список для рендера. В «сгруппированном» режиме рендерились ВСЕ 570+ карточек
+  // одним SSR-документом (2.9 МБ HTML — выше лимита Googlebot в 2 МБ, контент
+  // обрезался при индексации). Поэтому группировка применяется к текущей
+  // странице, а не ко всему набору: визуально группировка сохранена, а вес
+  // документа ограничен PAGE_SIZE карточками.
+  const totalPages = Math.max(1, Math.ceil(sorted.length / PAGE_SIZE));
+  const safePage = Math.min(page, totalPages);
+  const flatStart = (safePage - 1) * PAGE_SIZE;
+  const paged = sorted.slice(flatStart, flatStart + PAGE_SIZE);
+
   const byCategory = useMemo(() => {
     const map = new Map<string, BlankItem[]>();
-    for (const it of sorted) {
+    for (const it of paged) {
       const arr = map.get(it.category) ?? [];
       arr.push(it);
       map.set(it.category, arr);
@@ -187,13 +197,9 @@ export default function BlanksBrowser({
     return visibleCategories
       .filter((c) => map.has(c.id))
       .map((c) => ({ ...c, items: map.get(c.id) ?? [] }));
-  }, [sorted, visibleCategories]);
+  }, [paged, visibleCategories]);
 
   const showGrouped = activeCat === "all" && !q && sort === "popular";
-  const totalFlatPages = Math.max(1, Math.ceil(sorted.length / PAGE_SIZE));
-  const safePage = Math.min(page, totalFlatPages);
-  const flatStart = (safePage - 1) * PAGE_SIZE;
-  const flatPaged = sorted.slice(flatStart, flatStart + PAGE_SIZE);
 
   const reset = () => {
     setQuery("");
@@ -334,33 +340,25 @@ export default function BlanksBrowser({
           </button>
         </div>
       ) : showGrouped ? (
-        byCategory.map((group) => (
-          <section key={group.id} className="space-y-4">
-            <h3 className="flex items-center gap-2 text-base font-bold text-gray-900">
-              {group.label}
-              <span className="rounded-full bg-brand-50 px-2.5 py-0.5 text-sm font-medium text-brand-600">
-                {group.items.length}
-              </span>
-            </h3>
-            <div className="grid gap-4 sm:grid-cols-2">
-              {group.items.map((t) => (
-                <BlankCard key={t.id} item={t} categoryLabel={labelById.get(t.category) ?? t.category} />
-              ))}
-            </div>
-          </section>
-        ))
-      ) : (
         <>
-          <div
-            className="grid gap-4 sm:grid-cols-2"
-            aria-live="polite"
-            aria-atomic="false"
-          >
-            {flatPaged.map((t) => (
-              <BlankCard key={t.id} item={t} categoryLabel={labelById.get(t.category) ?? t.category} />
+          <div className="space-y-8">
+            {byCategory.map((group) => (
+              <section key={group.id} className="space-y-4">
+                <h3 className="flex items-center gap-2 text-base font-bold text-gray-900">
+                  {group.label}
+                  <span className="rounded-full bg-brand-50 px-2.5 py-0.5 text-sm font-medium text-brand-600">
+                    {group.items.length}
+                  </span>
+                </h3>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  {group.items.map((t) => (
+                    <BlankCard key={t.id} item={t} categoryLabel={labelById.get(t.category) ?? t.category} />
+                  ))}
+                </div>
+              </section>
             ))}
           </div>
-          {totalFlatPages > 1 && (
+          {totalPages > 1 && (
             <nav
               className="flex items-center justify-center gap-2 pt-4"
               aria-label="Пагинация бланков"
@@ -371,11 +369,43 @@ export default function BlanksBrowser({
                 label="Назад"
               />
               <span className="px-3 text-sm text-gray-600">
-                {safePage} / {totalFlatPages}
+                {safePage} / {totalPages}
               </span>
               <PageBtn
-                disabled={safePage === totalFlatPages}
-                onClick={() => setPage((p) => Math.min(totalFlatPages, p + 1))}
+                disabled={safePage === totalPages}
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                label="Вперёд"
+              />
+            </nav>
+          )}
+        </>
+      ) : (
+        <>
+          <div
+            className="grid gap-4 sm:grid-cols-2"
+            aria-live="polite"
+            aria-atomic="false"
+          >
+            {paged.map((t) => (
+              <BlankCard key={t.id} item={t} categoryLabel={labelById.get(t.category) ?? t.category} />
+            ))}
+          </div>
+          {totalPages > 1 && (
+            <nav
+              className="flex items-center justify-center gap-2 pt-4"
+              aria-label="Пагинация бланков"
+            >
+              <PageBtn
+                disabled={safePage === 1}
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                label="Назад"
+              />
+              <span className="px-3 text-sm text-gray-600">
+                {safePage} / {totalPages}
+              </span>
+              <PageBtn
+                disabled={safePage === totalPages}
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                 label="Вперёд"
               />
             </nav>

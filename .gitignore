@@ -83,6 +83,11 @@ supabase/.temp/
 .lighthouseci/
 .squirrel*
 /reports/audit-*.md
+# Артефакты разового SEO-краула (squirrelscan + выгрузка по 770 URL) — большие
+# и воспроизводимые, в репозитории им не место. Итог лежит в docs/ и AGENTS.md.
+/reports/*.json
+/reports/*.log
+/reports/*.csv
 
 audit/fixtures/
 

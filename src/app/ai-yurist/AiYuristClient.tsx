@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
 import {
   Scales,
   Wallet,
@@ -148,11 +148,7 @@ function scrollToChat() {
   document.getElementById("ai-chat")?.scrollIntoView({ behavior: "smooth" });
 }
 
-export default function AiYuristClient({
-  initialAuthed = null,
-}: {
-  initialAuthed?: boolean | null;
-}) {
+export default function AiYuristClient() {
   const [balance, setBalance] = useState<number | null>(null);
   const [freeAsked, setFreeAsked] = useState(0);
   const [quota, setQuota] = useState<{ total: number; left: number } | null>(null);
@@ -167,7 +163,7 @@ export default function AiYuristClient({
   const [topupOpen, setTopupOpen] = useState(false);
   const [topupSum, setTopupSum] = useState(300);
   const [topupBusy, setTopupBusy] = useState(false);
-  const [authed, setAuthed] = useState<boolean | null>(initialAuthed);
+  const [authed, setAuthed] = useState<boolean | null>(null);
   const [topupDone, setTopupDone] = useState(false);
   const [exporting, setExporting] = useState<"pdf" | "docx" | null>(null);
   const [auditText, setAuditText] = useState(AUDIT_PRESETS[0].text);
@@ -185,7 +181,6 @@ export default function AiYuristClient({
   const boxRef = useRef<HTMLDivElement>(null);
   const auditFileRef = useRef<HTMLInputElement>(null);
   const restoredRef = useRef(false);
-  const searchParams = useSearchParams();
 
   const loadBalance = useCallback(async () => {
     try {
@@ -265,14 +260,46 @@ export default function AiYuristClient({
   }, []);
 
   useEffect(() => {
-    // Аноним (по данным сервера): не дёргаем защищённые /api/ai/* — иначе в
-    // консоли появляются 401 на каждый заход, в т.ч. при рендере краулером.
-    if (initialAuthed === false) return;
-    void loadBalance();
+    // Возврат с ЮKassa (?topup=success). Читаем прямо из window.location.search
+    // обычным useEffect, а НЕ через хук `useSearchParams` из next/navigation:
+    // хук требует обёртки <Suspense> и делает маршрут динамическим, из-за чего
+    // при корневом loading.tsx Next стримит шелл и весь блок metadata уезжает
+    // из <head> в конец <body> (аудит 28.09.2026 — 17 meta-тегов вне head).
+    // URL чистим, чтобы подтверждение не показывалось при перезагрузке.
+    try {
+      if (new URLSearchParams(window.location.search).get("topup") === "success") {
+        setTopupDone(true);
+        window.history.replaceState(null, "", "/ai-yurist");
+      }
+    } catch {
+      /* невалидный URL — просто не показываем подтверждение */
+    }
+  }, []);
+
+  useEffect(() => {
+    // Аноним: не дёргаем защищённые /api/ai/* — иначе в консоли появляется 401
+    // на каждый заход, в т.ч. при рендере краулером. Сессию определяем локально
+    // по cookie (тем же приёмом, что и AutotekaClient) — без сетевого запроса.
+    let cancelled = false;
     void (async () => {
+      let session: unknown = null;
+      try {
+        const supabase = createClient();
+        const { data } = await supabase.auth.getSession();
+        session = data.session;
+      } catch {
+        session = null;
+      }
+      if (cancelled) return;
+      if (!session) {
+        setAuthed(false);
+        return;
+      }
+      setAuthed(true);
+      void loadBalance();
       const list = await loadThreads();
       // Восстановление после перезагрузки: последний открытый диалог либо самый свежий.
-      if (restoredRef.current || list.length === 0) return;
+      if (cancelled || restoredRef.current || list.length === 0) return;
       restoredRef.current = true;
       let stored: string | null = null;
       try {
@@ -283,12 +310,10 @@ export default function AiYuristClient({
       const target = stored && list.some((t) => t.id === stored) ? stored : list[0].id;
       await openThread(target);
     })();
-    // Возврат с ЮKassa: показываем подтверждение один раз, чистим URL.
-    if (searchParams.get("topup") === "success") {
-      setTopupDone(true);
-      window.history.replaceState(null, "", "/ai-yurist");
-    }
-  }, [initialAuthed, loadBalance, loadThreads, openThread, searchParams]);
+    return () => {
+      cancelled = true;
+    };
+  }, [loadBalance, loadThreads, openThread]);
 
   useEffect(() => {
     boxRef.current?.scrollTo({ top: boxRef.current.scrollHeight, behavior: "smooth" });
@@ -899,6 +924,7 @@ export default function AiYuristClient({
                       ref={auditFileRef}
                       type="file"
                       accept={AUDIT_FILE_ACCEPT}
+                      aria-label="Загрузить договор для проверки AI-юристом"
                       className="hidden"
                       onChange={(e) => { const f = e.target.files?.[0]; if (f) void handleAuditFile(f); }}
                     />

@@ -1,6 +1,34 @@
 # SEO-инварианты (не ломать!)
 
 > Вынесено из AGENTS.md (20.08.2026). Причина: SEO-схема — высокостабильный контракт, заслуживает отдельного документа.
+> Обновлено 28.09.2026 по итогам полного краула 770 URL (см. `reports/AUDIT-2026-09-28.md`).
+
+## Open Graph / canonical (аудит 28.09.2026)
+
+- **`openGraph.url` в `src/app/layout.tsx` ЗАПРЕЩЁН.** Значение `SITE_URL` наследовалось всеми страницами без собственного `openGraph` — 7 страниц (`/about`, `/autoteka`, `/help`, `/osago`, `/privacy`, `/terms`, `/ai-yurist`) отдавали `og:url` главной. Главная задаёт его явно в `src/app/page.tsx`.
+- Остальные страницы переведены на `withSeo({ path, title, description })` — он сам ставит `canonical`, `og:url`, `title` (≤60) и `description` (≤160). Не писать `alternates: { canonical }` вручную там, где можно `withSeo`.
+- Проверка после правок метаданных: `og:url` страницы == её `canonical`.
+
+## Размер HTML (аудит 28.09.2026)
+
+- **Googlebot обрезает документ после 2 МБ.** `/blanks` отдавал 2.9 МБ (570+ карточек одним SSR-документом) — контент после обрезки не индексировался.
+- `BlanksBrowser` рендерит **только текущую страницу** (`PAGE_SIZE = 20`) в обоих режимах — сгруппированном и плоском. Не возвращать рендер полного набора: группировка применяется к `paged`, а не к `sorted`.
+- Новый каталог с сотнями карточек — пагинировать сразу.
+
+## Метаданные вне `<head>` (аудит 28.09.2026)
+
+- **`/ai-yurist` выдавал 17 meta-тегов в `<body>`.** Корень — **динамический рендер маршрута**, а не хуки. Страница читала `cookies()` и `searchParams` на сервере; при **корневом `src/app/loading.tsx`** Next стримит шелл, и весь блок metadata (description, robots, canonical, og:*, twitter:*) приходит уже в конце `<body>`.
+- Проверено экспериментально: удаления `useSearchParams` и `<Suspense>` **само по себе недостаточно**. Помогает только снятие динамичности.
+- **Диагностика:** если в HTML `<meta>` встречается после `<body>` — смотрите, не `ƒ` (Dynamic) ли маршрут в выводе `next build`. Лечится переводом в SSG/ISR.
+- **НЕ возвращать в `/ai-yurist`:** `cookies()`, чтение `searchParams`, `force-dynamic`, обёртку в `<Suspense>`, хук `useSearchParams`. `?topup=success` читается в клиенте из `window.location.search`; сессия — из cookie через `createClient().auth.getSession()` (паттерн `AutotekaClient`).
+- Публичные страницы, попадающие в sitemap, должны быть статическими. Динамические допустимы только для приватных (noindex) роутов.
+
+## Доступность (аудит 28.09.2026)
+
+- **ARIA-ссылки только на существующие элементы.** `aria-controls`/`aria-activedescendant` у `HeaderSearch` задаются только при `showList` — иначе 407 ошибок «Duplicate ID ARIA» на всех страницах сайта.
+- **Превью-графика не должна протекать семантикой.** `buildResumePreviewHtml()` заменяет `h1/h2/h3` на `div.rvh1/.rvh2/.rvh3` (стили продублированы в `sampleCss.ts`). Выгрузка PDF/DOC — через `buildResumeHtml`/`buildResumeDocHtml` без замены. На `/resume` должен быть **ровно один `<h1>`**.
+- **Скрытые панели — `visibility: hidden`**, а не только `transform` (`.rvb-drawer` в `builderCss.ts`): трансформ оставляет фокусируемые элементы в DOM и в a11y-дереве.
+- **Каждое поле формы** имеет `<label htmlFor>` или `aria-label`. Placeholder не считается подписью.
 
 ## Посадочные документов
 

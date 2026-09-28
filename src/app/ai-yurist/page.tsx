@@ -1,46 +1,69 @@
-import { Suspense } from "react";
 import type { Metadata } from "next";
-import { createClient } from "@/lib/supabase/server";
 import { truncateWord, composeTitle } from "@/lib/seo/docMeta";
+import { SITE_NAME, SITE_URL } from "@/lib/site";
 import AiYuristClient from "./AiYuristClient";
 import { AdSlot } from "@/components/ads/AdSlot";
 
-export const metadata: Metadata = {
-  title: { absolute: composeTitle("AI-юрист — ответ по закону за 10 секунд, от 14 ₽") },
-  description: truncateWord(
-    "AI-юрист Dogovor: ответы со ссылками на статьи действующих редакций, разбор договоров, баланс без подписки. Первые 2 вопроса — бесплатно.",
-    160
-  ),
-  robots: { index: true, follow: true },
-  alternates: { canonical: "/ai-yurist" },
-};
+const TITLE = composeTitle("AI-юрист — ответ по закону за 10 секунд, от 14 ₽");
+const DESCRIPTION = truncateWord(
+  "AI-юрист Dogovor: ответы со ссылками на статьи действующих редакций, разбор договоров, баланс без подписки. Первые 2 вопроса — бесплатно.",
+  160
+);
 
-// force-dynamic: страница использует useSearchParams (?topup=success) — без
-// этого прод отдаёт статически пререндеренный пустой Suspense-fallback,
-// и лендинг появляется только после загрузки JS (пустой экран + нет SSR).
-export const dynamic = "force-dynamic";
+// Страница намеренно СТАТИЧЕСКАЯ (SSG + ISR).
+//
+// Что было не так (аудит 28.09.2026): страница читала cookies Supabase и
+// `searchParams` на сервере, поэтому рендерилась динамически. Динамический
+// маршрут отдаётся потоком, и при корневом `src/app/loading.tsx` Next сначала
+// флашит шелл, а блок metadata приходит позже — description, robots, canonical,
+// og:* и twitter:* оказывались в конце <body> (17 meta-тегов вне <head>).
+//
+// Решение: убрать серверные динамические чтения. `?topup=success` клиент читает
+// из `window.location.search` обычным useEffect — без `useSearchParams`, который
+// потребовал бы <Suspense> и стриминга. Авторизацию клиент определяет локально по
+// cookie (createClient().auth.getSession()), как в AutotekaClient, поэтому анонимы
+// и краулеры не получают 401 на /api/ai/*.
+//
+// НЕ возвращать сюда: `cookies()`, чтение `searchParams`, `force-dynamic`
+// и обёртку в `<Suspense>` — любой из них вернёт metadata в <body>.
+export const revalidate = 3600;
+export const dynamic = "force-static";
 
-export default async function AiYuristPage() {
-  // Признак авторизации считаем на сервере: анонимные посетители (и краулеры)
-  // не должны дёргать /api/ai/balance и /api/ai/threads — иначе в консоли
-  // появляются 401 на каждый заход. Клиент использует это как стартовое значение.
-  let authed = false;
-  try {
-    const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    authed = !!user;
-  } catch {
-    authed = false;
-  }
+export function generateMetadata(): Metadata {
+  return {
+    title: { absolute: TITLE },
+    description: DESCRIPTION,
+    keywords: [
+      "AI-юрист онлайн",
+      "юридическая консультация онлайн",
+      "задать вопрос юристу",
+      "проверить договор онлайн",
+      "разбор договора",
+    ],
+    robots: { index: true, follow: true },
+    alternates: { canonical: "/ai-yurist" },
+    openGraph: {
+      type: "website",
+      locale: "ru_RU",
+      url: `${SITE_URL}/ai-yurist`,
+      siteName: SITE_NAME,
+      title: TITLE,
+      description: DESCRIPTION,
+      images: [{ url: "/og-image.png", width: 1200, height: 630, alt: "AI-юрист Dogovor" }],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: TITLE,
+      description: DESCRIPTION,
+      images: ["/og-image.png"],
+    },
+  };
+}
 
-  // Suspense обязателен: клиент использует useSearchParams (?topup=success).
+export default function AiYuristPage() {
   return (
     <>
-      <Suspense>
-        <AiYuristClient initialAuthed={authed} />
-      </Suspense>
+      <AiYuristClient />
       <div className="mx-auto max-w-3xl px-6 py-10"><AdSlot id="LANDING_INFEED" /></div>
     </>
   );

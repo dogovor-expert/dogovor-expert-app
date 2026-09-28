@@ -290,6 +290,27 @@ export function buildResumeHtml(data: ResumeData, tpl: TemplateId, accent?: stri
   return buildLegacyHtml(data, tpl);
 }
 
+/**
+ * HTML резюме для ПРЕВЬЮ-карточек каталога и миниатюр в конструкторе.
+ *
+ * Зачем: buildResumeHtml() содержит <h1> с именем — это корректно для
+ * выгружаемого документа, но в превью он попадал в DOM страницы /resume.
+ * На странице оказывалось 26 <h1> (1 настоящий + 25 из превью), что ломает
+ * иерархию заголовков и скринридеры (аудит 28.09.2026). Превью — декоративная
+ * графика: aria-hidden у контейнера, поэтому все h1/h2/h3 заменяем на div
+ * с теми же классами — вёрстка и стили сохраняются, семантика не протекает.
+ * Для выгрузки (PDF/DOC) по-прежнему используется buildResumeHtml.
+ */
+export function buildResumePreviewHtml(data: ResumeData, tpl: TemplateId, accent?: string): string {
+  return buildResumeHtml(data, tpl, accent)
+    .replace(/<h1(\s[^>]*)?>/g, "<div class=\"rvh1\"$1>")
+    .replace(/<\/h1>/g, "</div>")
+    .replace(/<h2(\s[^>]*)?>/g, "<div class=\"rvh2\"$1>")
+    .replace(/<\/h2>/g, "</div>")
+    .replace(/<h3(\s[^>]*)?>/g, "<div class=\"rvh3\"$1>")
+    .replace(/<\/h3>/g, "</div>");
+}
+
 function buildLegacyHtml(data: ResumeData, tpl: string): string {
   const p = data.personal;
   const name = escapeHtml(fullName(data)) || "Ваше имя";

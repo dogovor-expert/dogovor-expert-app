@@ -16,12 +16,33 @@ import HomeFooter from "@/components/home/HomeFooter";
 import { TEMPLATE_META_LITE } from "@/data/templatesMetaLite";
 import { CALCULATOR_TOOLS } from "@/data/calculator-tools";
 import { currentProPrice, PRO_PRICE_OLD, isPromoActive } from "@/lib/pricing";
+import { SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/site";
 
 export const revalidate = 3600;
 export const dynamic = "force-static"; // P0: явно включаем SSG, иначе Next 15 обходит ISR (см. INVARIANTS.md).
 
+// openGraph задан явно (аудит 28.09.2026): в root layout url намеренно убран,
+// чтобы страницы его не наследовали. Главная — единственная, где og:url
+// равен корню, поэтому прописываем его здесь вместе с OWN-картинкой/описанием.
 export const metadata: Metadata = {
   alternates: { canonical: "/" },
+  openGraph: {
+    type: "website",
+    locale: "ru_RU",
+    url: SITE_URL,
+    siteName: SITE_NAME,
+    title: `${SITE_NAME} — онлайн-конструктор договоров`,
+    description: SITE_DESCRIPTION,
+    images: [
+      { url: "/og-image.png", width: 1200, height: 630, alt: "Dogovor.expert — конструктор договоров онлайн" },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: `${SITE_NAME} — онлайн-конструктор договоров`,
+    description: SITE_DESCRIPTION,
+    images: ["/og-image.png"],
+  },
 };
 
 const TOTAL = TEMPLATE_META_LITE.length;
