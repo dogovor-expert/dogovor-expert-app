@@ -149,6 +149,32 @@ describe("resume templates parity (РЕЗЮМЕ 3)", () => {
     expect(RESUME_CSS).toContain(".rc-base");
   });
 
+  it("превью карточек: нет горизонтального переполнения и разрывов слов", () => {
+    for (const id of ALL) {
+      const html = buildResumeCardHtml(SAMPLE_RESUME, id);
+      // Подписи чипов обрезаются по границе слова: длинный навык больше не
+      // вылезал за край листа (замер 28.09.2026 — до 61px) и не налезал
+      // на соседнюю колонку.
+      for (const m of html.matchAll(/<span class="rc-chip">([^<]*)<\/span>/g)) {
+        expect(m[1].length, `${id}: «${m[1]}»`).toBeLessThanOrEqual(15);
+      }
+      // Период места работы без хвоста в скобках — иначе перекрывал колонку.
+      expect(html, id).not.toMatch(/\(\d+\s*год/);
+      // Одна колонка: рельс 74px оставлял чипам 65px и ломал вёрстку.
+      expect(html, id).not.toContain("rc-rail");
+      expect(html, id).not.toContain("rc-cols");
+    }
+  });
+
+  it("превью карточек гасят подчёркивание ссылки-обёртки", () => {
+    // Карточка-превью лежит внутри <a>. text-decoration не наследуется в
+    // computed, но красится по потомкам, и без этого весь лист подчёркивался.
+    expect(RESUME_CSS).toMatch(/\.rc,\.rc \*\{text-decoration:none\}/);
+    // Запасная страховка: у листа есть обрезка по ширине и запрет разрыва слов.
+    expect(RESUME_CSS).toMatch(/\.rc\{[^}]*overflow-wrap|overflow:hidden/);
+    expect(RESUME_CSS).toContain("aspect-ratio:1/1.414");
+  });
+
   it("renderResumePdf: все шаблоны собираются в одностраничный A4-PDF", async () => {
     const { readFile } = await import("node:fs/promises");
     const { join } = await import("node:path");

@@ -166,7 +166,7 @@ function SheetContent({ spec, tpl }: { spec: Spec; tpl: HeroTemplate }) {
           <div className="min-w-0 flex-1">
             <h4 className={["text-base font-extrabold leading-tight", tpl.text].join(" ")}>{spec.name}</h4>
             <p className="mt-0.5 text-xs font-semibold text-slate-600">{spec.title}</p>
-            <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] text-slate-400">
+            <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] text-slate-500">
               <span className="flex items-center gap-1">
                 <Mail className="h-3 w-3" /> example@mail.ru
               </span>
@@ -189,7 +189,7 @@ function SheetContent({ spec, tpl }: { spec: Spec; tpl: HeroTemplate }) {
                 <div>
                   <div className="flex items-center justify-between text-xs font-bold text-slate-800">
                     <span>{spec.experience.role}</span>
-                    <span className="text-[10px] font-semibold text-slate-400">{spec.experience.period}</span>
+                    <span className="text-[10px] font-semibold text-slate-500">{spec.experience.period}</span>
                   </div>
                   <div className="text-[10px] font-medium text-slate-600">{spec.experience.place}</div>
                   <p className="mt-1 text-[10px] leading-relaxed text-slate-500">{spec.experience.desc}</p>
@@ -197,8 +197,8 @@ function SheetContent({ spec, tpl }: { spec: Spec; tpl: HeroTemplate }) {
                 <Line h="h-px" className="bg-slate-100" />
                 <div>
                   <div className="flex items-center justify-between text-xs font-bold text-slate-800">
-                    <span className="text-slate-400">Вакансия (предыдущая)</span>
-                    <span className="text-[10px] font-semibold text-slate-400">4 года</span>
+                    <span className="text-slate-500">Вакансия (предыдущая)</span>
+                    <span className="text-[10px] font-semibold text-slate-500">4 года</span>
                   </div>
                   <Line className="mt-1.5 h-1.5 w-2/3" />
                   <Line className="mt-1 h-1.5 w-1/2" />
@@ -286,7 +286,7 @@ export default function ResumePage() {
     ats: t.ats,
     parse: t.parse,
     cats: [...t.tags, t.ats],
-    // Компактное превью карточки (rc-*): сразу в размере ~220px, без scale.
+    // Компактное превью карточки (rc-*): рисуется сразу в размере ~220px, без scale.
     // Заголовков h1-h3 внутри нет — только div (аудит 28.09.2026).
     html: buildResumeCardHtml(demoForCategory(t.category), t.id),
     category: t.category,
@@ -352,7 +352,7 @@ export default function ResumePage() {
 
         <div className="mx-auto grid max-w-7xl grid-cols-1 items-center gap-12 px-6 lg:grid-cols-[1.45fr_1fr]">
           <div>
-            <nav className="flex items-center gap-2 text-xs font-medium text-slate-400" aria-label="Хлебные крошки">
+            <nav className="flex items-center gap-2 text-xs font-medium text-slate-500" aria-label="Хлебные крошки">
               <Link href="/" className="flex items-center gap-1 transition hover:text-slate-700">
                 <Home className="h-3.5 w-3.5" />
                 Главная

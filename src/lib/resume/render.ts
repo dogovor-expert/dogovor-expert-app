@@ -343,8 +343,31 @@ function rcDisplayName(data: ResumeData): string {
   return [p.name, p.surname].filter(Boolean).join(" ").trim() || fullName(data);
 }
 
+/** Обрезка подписи чипа под рельс карточки. Замер 28.09.2026: «Переговоры с
+ *  первыми лицами» при nowrap вылезал за край листа на 61px и налезал на
+ *  соседнюю колонку. В превью достаточно корня слова — длинный хвост только
+ *  шумит. Обрезка по границе слова, чтобы не рвать «компан|ию». */
+function rcShort(value: string, n = 14): string {
+  const s = (value ?? "").trim();
+  if (s.length <= n) return s;
+  const cut = s.slice(0, n);
+  const sp = cut.lastIndexOf(" ");
+  return (sp > n * 0.45 ? cut.slice(0, sp) : cut) + "…";
+}
+
+/** Период без хвоста в скобках: «2021 — настоящее время (4 года)» в карточке
+ *  не помещается в колонку и перекрывал рельс на 21px. */
+function rcPeriod(value: string): string {
+  return (value ?? "").replace(/\s*\([^)]*\)\s*$/, "").trim();
+}
+
+/** Уровень языка до кода: «C1 — Advanced» → «C1» (полная подпись уезжала на 20px). */
+function rcLangLevel(value: string): string {
+  return (value ?? "").split("—")[0].trim();
+}
+
 function rcChips(arr: string[], n = 6): string {
-  return `<div class="rc-chips">${(arr ?? []).slice(0, n).map((x) => `<span class="rc-chip">${escapeHtml(x)}</span>`).join("")}</div>`;
+  return `<div class="rc-chips">${(arr ?? []).slice(0, n).map((x) => `<span class="rc-chip">${escapeHtml(rcShort(x))}</span>`).join("")}</div>`;
 }
 
 function rcContactSpans(data: ResumeData, n: number): string {
@@ -359,7 +382,7 @@ function rcExp1(data: ResumeData): string {
   const b = (e.bullets ?? []).slice(0, 2).map((x) => `<li>${escapeHtml(x)}</li>`).join("");
   return (
     `<div class="rc-xp-t">${escapeHtml(e.position || "Должность")}</div>` +
-    `<div style="display:flex;justify-content:space-between;gap:6px"><span class="rc-xp-c" style="margin:0">${escapeHtml(e.company || "")}</span><span class="rc-xp-d">${escapeHtml(e.period || "")}</span></div>` +
+    `<div class="rc-xp-row"><span class="rc-xp-c">${escapeHtml(e.company || "")}</span><span class="rc-xp-d">${escapeHtml(rcPeriod(e.period || ""))}</span></div>` +
     (b ? `<ul class="rc-xp-b">${b}</ul>` : "")
   );
 }
@@ -373,7 +396,7 @@ function rcEdu(data: ResumeData, n = 1): string {
 
 function rcLangs(data: ResumeData, n = 2): string {
   return data.languages.slice(0, n).map((l) =>
-    `<div class="rc-lg"><b>${escapeHtml(l.name)}</b><span>${escapeHtml(l.level)}</span></div>`
+    `<div class="rc-lg"><b>${escapeHtml(l.name)}</b><span>${escapeHtml(rcLangLevel(l.level))}</span></div>`
   ).join("");
 }
 
@@ -400,11 +423,11 @@ export function buildResumeCardHtml(data: ResumeData, tpl: TemplateId, accent?: 
       `<div class="rc-hd">${showPh(data) ? `<div class="rc-ph">${rcPhotoImg(data, "")}<span class="chk">✓</span></div>` : ""}` +
       `<div style="flex:1;min-width:0"><div class="rc-name">${name}</div><div class="rc-role">${role}</div>` +
       `<div class="rc-pills">${rcContactSpans(data, 2)}</div></div></div>` +
-      `<div class="rc-body"><div><div class="rc-sec">${IC.briefcase}<span>Опыт работы</span></div><div class="rc-xp">${rcExp1(data)}</div></div>` +
-      `<div class="rc-rail">` +
-      (hard.length ? `<div class="rc-sec">${IC.wrench}<span>Навыки</span></div>${rcChips(hard, 5)}` : "") +
-      (data.education.length ? `<div class="rc-sec" style="margin-top:7px">${IC.book}<span>Образование</span></div>${rcEdu(data)}` : "") +
-      `</div></div></div>`
+      `<div class="rc-body">` +
+      `<div><div class="rc-sec">${IC.briefcase}<span>Опыт работы</span></div><div class="rc-xp">${rcExp1(data)}</div></div>` +
+      (hard.length ? `<div class="rc-sec-block"><div class="rc-sec">${IC.wrench}<span>Навыки</span></div>${rcChips(hard, 7)}</div>` : "") +
+      (data.education.length ? `<div class="rc-sec-block"><div class="rc-sec">${IC.book}<span>Образование</span></div>${rcEdu(data)}</div>` : "") +
+      `</div></div>`
     );
   }
 
@@ -425,13 +448,12 @@ export function buildResumeCardHtml(data: ResumeData, tpl: TemplateId, accent?: 
   }
 
   // BASE-семейство: белая шапка + контактная полоса + две колонки.
-  const isClassic = mod.includes("rc-classic");
   const isCorporate = mod.includes("rc-corporate");
   const isCreative = mod.includes("rc-creative");
   const isJunior = mod.includes("rc-junior");
-  const photo = showPh(data) && !isClassic
-    ? rcPhotoImg(data, "rc-mini-ph")
-    : "";
+  // Фото во всех base-шаблонах: документ (buildSampleHtml) рисует его во всех
+  // base-раскладках, и карточка не должна обещать меньше, чем отдаёт PDF/DOC.
+  const photo = showPh(data) ? rcPhotoImg(data, "rc-mini-ph") : "";
   const headCore =
     `<div class="rc-name">${name}</div><div class="rc-role">${role}</div>`;
   const head = isCorporate
@@ -445,16 +467,26 @@ export function buildResumeCardHtml(data: ResumeData, tpl: TemplateId, accent?: 
     ? `<div class="rc-sec-block"><div class="rc-sec">${IC.book}<span>Образование</span></div>${rcEdu(data, isJunior ? 2 : 1)}</div>`
     : "";
   // Junior: образование выше опыта — структура для студентов без стажа.
-  const main = isJunior ? eduBlock + expBlock : expBlock + eduBlock;
-  const rail =
-    (hard.length ? `<div><div class="rc-sec">${IC.wrench}<span>Навыки</span></div>${rcChips(hard, isCreative ? 4 : 6)}</div>` : "") +
-    (data.skills.soft.length ? `<div class="rc-sec-block"><div class="rc-sec">${IC.star}<span>Качества</span></div>${rcChips(data.skills.soft, 3)}</div>` : "") +
-    (data.languages.length ? `<div class="rc-sec-block"><div class="rc-sec">${IC.globe}<span>Языки</span></div>${rcLangs(data)}</div>` : "");
+  // Замер 28.09.2026: рельс 74px оставлял чипам 65px, и подписи вроде
+  // «Переговоры с первыми лицами» вылезали за край листа на 61px. Поэтому
+  // навыки/качества/языки идут общей строкой под опытом — на всю ширину.
+  const skillsBlock = hard.length
+    ? `<div class="rc-sec-block"><div class="rc-sec">${IC.wrench}<span>Навыки</span></div>${rcChips(hard, isCreative ? 5 : 8)}</div>`
+    : "";
+  const softBlock = data.skills.soft.length
+    ? `<div class="rc-sec-block"><div class="rc-sec">${IC.star}<span>Качества</span></div>${rcChips(data.skills.soft, 4)}</div>`
+    : "";
+  const langBlock = data.languages.length
+    ? `<div class="rc-sec-block"><div class="rc-sec">${IC.globe}<span>Языки</span></div><div class="rc-langs">${rcLangs(data, 3)}</div></div>`
+    : "";
+  const main = isJunior
+    ? eduBlock + expBlock + skillsBlock + softBlock + langBlock
+    : expBlock + skillsBlock + eduBlock + softBlock + langBlock;
   return (
     `<div class="rc ${mod}" style="--ac:${ac}">` +
     (isCreative ? `<div class="rc-strip"></div>` : "") +
     `<div class="rc-top">${head}</div>` +
-    `<div class="rc-cols"><div>${main}</div><div class="rc-rail">${rail}</div></div></div>`
+    `<div class="rc-flow">${main}</div></div>`
   );
 }
 

@@ -66,7 +66,7 @@ function TemplateCard({ item }: { item: CatalogItem }) {
       <a
         href={`/resume?tpl=${item.id}#studio`}
         aria-label={`Выбрать шаблон ${item.name}`}
-        className="relative block h-64 cursor-pointer overflow-hidden bg-slate-100/90 p-4"
+        className="no-underline relative block h-64 cursor-pointer overflow-hidden bg-slate-100/90 p-4"
       >
         <div
           className="absolute inset-0 opacity-[0.35]"
@@ -81,6 +81,13 @@ function TemplateCard({ item }: { item: CatalogItem }) {
             без scale — текст читается, каждый шаблон со своей раскладкой */}
         <div className="relative mx-auto h-full w-[220px] overflow-hidden rounded-[3px] border border-slate-200 bg-white drop-shadow-lg transition-transform duration-500 group-hover:scale-105">
           <div aria-hidden="true" dangerouslySetInnerHTML={{ __html: item.html }} />
+          {/* Мягкий низ: лист документа длиннее карточки и раньше обрезался
+              ровно посреди строки — выглядело как недоделка. Градиент читается
+              как «документ продолжается». */}
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-x-0 bottom-0 h-7 bg-gradient-to-t from-white via-white/80 to-transparent"
+          />
         </div>
 
         {/* Hover overlay hint */}
