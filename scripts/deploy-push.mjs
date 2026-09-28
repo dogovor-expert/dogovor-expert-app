@@ -15,7 +15,8 @@
  *   node scripts/deploy-push.mjs --dry-run  # показать план, ничего не делать
  *
  * Env:
- *   DOKPLOY_URL     — http://127.0.0.1:3000 на VDS (по умолчанию для SSH-режима)
+ *   DOKPLOY_URL     — URL панели Dokploy. При запуске ЛОКАЛЬНО: http://82.146.35.220:3000;
+ *                     на самом VDS: http://127.0.0.1:3000 (дефолт)
  *   DOKPLOY_API_KEY — API-ключ Dokploy (Settings → API Access). Нужен для
  *                     автоматического редеплоя; без него скрипт только пушит
  *                     и печатает инструкцию.
@@ -102,5 +103,4 @@ if (!NO_PUSH) push();
 await redeploy();
 log("");
 log("Следить за сборкой: Dokploy UI → dogovor-prod → Deployments");
-log("Проверка прода:     node scripts/deploy-watch.mjs");
-log("Проверка контента:  node scripts/deploy-content.mjs \"/path|маркер\"");
+log("Проверка прода:     node scripts/deploy-watch.mjs && npm run deploy:content");

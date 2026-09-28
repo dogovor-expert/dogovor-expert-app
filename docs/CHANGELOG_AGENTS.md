@@ -4,6 +4,33 @@
 
 ---
 
+## [2026-09-28] OOM-краш прода от TSL-статуса + фикс (НЕ задеплоено)
+
+- **Агент:** opencode (Muse Spark)
+- **Тип:** fix (api/infra)
+- **Что случилось:** диагностика cron (`GET /api/cron/tsl-refresh?action=status`) дважды уронила прод —
+  exit 139 + `FATAL ERROR: Ineffective mark-compacts near heap limit`, снаружи 502, swarm перезапустил за ~1 мин.
+- **Корень (доказан замерами):** TSL XML в БД — 12.1MB / 66,802 элемента / 1732 серта
+  (`pg_column_size` 6.4MB — это сжатый размер, не путать!). Полный parse+verify ≈ 400MB transient heap
+  (замер локально на продовых данных с heap-cap 3072: heap 358MB, sigValid=true).
+  Рантайм жил с дефолтным heap ~2 ГБ — `ENV NODE_OPTIONS=3072` стоял только в build-стадии Dockerfile.
+- **Фикс (коммит dff9861, в origin/master, прод НЕ обновлён):**
+  - `tsl-refresh?action=status` — metadata-only (`tsl_sync_metadata` + `count(*)`), без парсинга XML;
+  - `xmldsig-verify` — verify без `cloneNode(true)` всего документа;
+  - `Dockerfile` — `NODE_OPTIONS=3072` и в runtime-стадии;
+  - `crl/ocsp` — чистка протухших записей при записи (Map рос без eviction);
+  - `npm run deploy:content` (4 маркера, проверены на проде) + шаг в `deploy-watch.yml`;
+  - `deploy-push.mjs` — уточнён `DOKPLOY_URL` для локального запуска.
+- **Проверки:** tsc 0, eslint 0, 80/80 тестов (841 passed), `deploy:content` 4/4 OK на живом проде.
+- **⚠️ Следующему агенту:**
+  - Cron (`tsl-refresh`, `daily-maintenance`) в crontab ОТСУТСТВУЕТ — ставить только ПОСЛЕ деплоя dff9861.
+  - Секрет контейнера (48 симв.) ≠ ключ из чата 28.09 (64 симв., 401) — ротация только через Dokploy env + редеплой.
+  - Порт 3000 на хосте — панель Dokploy, не приложение; проверки только через https://dogovor.expert.
+  - TSL-кэш протух (last_sync 2026-09-14) — после деплоя дёрнуть refresh вручную и проверить metadata.
+  - Ветки `origin/production`, `origin/deploy` и локальные удалены 2026-09-28.
+
+---
+
 ## [2026-09-28] Миграция деплоя: CapRover → Dokploy (+ актуализация документации)
 
 - **Агент:** Cline

@@ -31,3 +31,6 @@ jobs:
 
       - name: Wait until the new build serves all routes
         run: node scripts/deploy-watch.mjs
+
+      - name: Verify prod serves NEW code (content markers, not just HTTP 200)
+        run: npm run deploy:content

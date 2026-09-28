@@ -51,6 +51,7 @@
     "deploy": "node scripts/deploy-push.mjs",
     "deploy:dry": "node scripts/deploy-push.mjs --dry-run",
     "deploy:watch": "node scripts/deploy-watch.mjs",
+    "deploy:content": "node scripts/deploy-content.mjs \"/api/health|\\\"status\\\":\\\"ok\\\"\" \"/|Конструктор\" \"/zayavleniya|zayavleniya\" \"/builder|builder\"",
     "deploy:tsl": "node -e \"console.log('[deprecated] deploy:tsl деплоил на Vercel. Теперь прод на VDS/Dokploy: см. docs/DEPLOY.md и DEPLOY_TSL.md')\"",
     "migrate:tsl": "node scripts/apply-migration.mjs 20260907_tsl_certificates.sql",
     "tsl:status": "curl -sS -H \"Authorization: Bearer $CRON_SECRET\" \"https://dogovor.expert/api/cron/tsl-refresh?action=status\" || echo \"Set CRON_SECRET\"",
