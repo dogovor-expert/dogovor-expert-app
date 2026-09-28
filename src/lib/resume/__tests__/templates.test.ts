@@ -1,7 +1,7 @@
 /** Паритет шаблонов резюме (эталон РЕЗЮМЕ 3): HTML-превью, DOC-HTML, CSS и PDF. */
 import { describe, expect, it } from "vitest";
 import { SAMPLE_RESUME, TEMPLATES } from "../data";
-import { buildResumeDocHtml, buildResumeHtml, fullName } from "../render";
+import { buildResumeCardHtml, buildResumeDocHtml, buildResumeHtml, fullName } from "../render";
 import { RESUME_CSS } from "../resumeCss";
 import type { ResumeData, TemplateId } from "../types";
 
@@ -111,6 +111,42 @@ describe("resume templates parity (РЕЗЮМЕ 3)", () => {
     expect(RESUME_CSS).toContain(".smp-side");
     expect(RESUME_CSS).toContain(".smp-serif");
     expect(RESUME_CSS).toContain(".smp-tech");
+  });
+
+  it("buildResumeCardHtml: компактные превью без scale и без h-тегов", () => {
+    const mods = new Set<string>();
+    for (const id of ALL) {
+      const html = buildResumeCardHtml(SAMPLE_RESUME, id);
+      expect(html.length, id).toBeGreaterThan(100);
+      // короткое имя «имя + фамилия» без отчества (как в макете)
+      expect(html, id).toContain("Александр Смирнов");
+      expect(html, id).not.toContain("Игоревич");
+      expect(html, id).toMatch(/class="rc /);
+      expect(html, id).not.toMatch(/<h[123][\s>]/);
+      const m = html.match(/class="rc ([^"]+)"/);
+      expect(m, id).toBeTruthy();
+      mods.add(m![1]);
+      // акцент шаблона зашит в CSS-переменную
+      expect(html, id).toContain("--ac:");
+    }
+    // все 10 карточек визуально разные
+    expect(mods.size, [...mods].join(",")).toBe(10);
+    // переопределение акцента (палитра студии)
+    expect(buildResumeCardHtml(SAMPLE_RESUME, "tech-indigo", "#ff0000")).toContain("--ac:#ff0000");
+    // фото: показывается при наличии, скрыто при showPhoto=false
+    expect(buildResumeCardHtml(WITH_PHOTO, "executive-navy")).toContain("data:image/png;base64,iVBORw0KGgo=");
+    const noPhoto: ResumeData = {
+      ...WITH_PHOTO,
+      personal: { ...WITH_PHOTO.personal, showPhoto: false },
+    };
+    expect(buildResumeCardHtml(noPhoto, "executive-navy")).not.toContain("<img");
+  });
+
+  it("RESUME_CSS покрывает компактные карточки", () => {
+    expect(RESUME_CSS).toContain(".rc-exec");
+    expect(RESUME_CSS).toContain(".rc-side");
+    expect(RESUME_CSS).toContain(".rc-legal");
+    expect(RESUME_CSS).toContain(".rc-base");
   });
 
   it("renderResumePdf: все шаблоны собираются в одностраничный A4-PDF", async () => {

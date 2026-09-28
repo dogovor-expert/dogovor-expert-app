@@ -24,7 +24,7 @@ import {
 import { RESUME_CSS } from "@/lib/resume/resumeCss";
 import { BUILDER_CSS } from "@/lib/resume/builderCss";
 import { ACCENT_PALETTES, PRESETS, PHRASES, SAMPLE_RESUME, TEMPLATES, TEMPLATE_META } from "@/lib/resume/data";
-import { buildResumeDocHtml, buildResumePreviewHtml, countNumericBullets, fullName, hardSkills } from "@/lib/resume/render";
+import { buildResumeCardHtml, buildResumeDocHtml, buildResumePreviewHtml, countNumericBullets, fullName, hardSkills } from "@/lib/resume/render";
 // pdf-lib подгружается лениво при экспорте (см. exportPdfFile) — чтобы не раздувать бандл страницы
 import { saveAs } from "file-saver";
 import type { ResumeData, ResumeExperience, ResumeLanguage, TemplateId } from "@/lib/resume/types";
@@ -215,6 +215,12 @@ export default function ResumeBuilder() {
       document.querySelectorAll<HTMLElement>(".rvb-tcard-th").forEach((th) => {
         const mini = th.querySelector<HTMLElement>(".rvb-mini");
         if (!mini) return;
+        // Компактные превью (rc-*) уже в размере миниатюры — scale не нужен.
+        if (mini.querySelector(".rc")) {
+          mini.style.transform = "";
+          mini.style.width = "100%";
+          return;
+        }
         const s = th.clientWidth / 794;
         mini.style.transformOrigin = "top left";
         mini.style.transform = `scale(${s})`;
@@ -612,7 +618,7 @@ export default function ResumeBuilder() {
               >
                 <div className="rvb-tcard-th" aria-hidden="true">
                   <div className="rvb-mini">
-                    <div className={`a4 t-${t.id}`} dangerouslySetInnerHTML={{ __html: buildResumePreviewHtml(data, t.id) }} />
+                    <div dangerouslySetInnerHTML={{ __html: buildResumeCardHtml(data, t.id, accent ?? undefined) }} />
                   </div>
                 </div>
                 <div className="rvb-tcard-m">

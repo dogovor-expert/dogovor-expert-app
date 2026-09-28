@@ -311,6 +311,153 @@ export function buildResumePreviewHtml(data: ResumeData, tpl: TemplateId, accent
     .replace(/<\/h3>/g, "</div>");
 }
 
+/* ===== Компактные превью карточек каталога (по эталону РЕЗЮМЕ 3) =====
+   Полный документ в карточке не читается (scale 0.28 → каша), поэтому каждая
+   карточка рисуется СРАЗУ в размере ~220px: крупное имя, 1 место работы,
+   5–6 чипов. Только div (аудит 28.09.2026 — без <h1> в DOM страницы). */
+
+type CardMod =
+  | "rc-exec" | "rc-side" | "rc-legal" | "rc-base rc-tech" | "rc-base rc-data"
+  | "rc-base rc-classic" | "rc-base rc-corporate" | "rc-base rc-clean"
+  | "rc-base rc-creative" | "rc-base rc-junior";
+
+/** Каждому шаблону — свой визуальный вариант карточки (10 разных). */
+const CARD_MOD: Record<TemplateId, CardMod> = {
+  "executive-navy": "rc-exec",
+  "modern-emerald": "rc-side",
+  "legal-counsel": "rc-legal",
+  "tech-indigo": "rc-base rc-tech",
+  "data-mono": "rc-base rc-data",
+  "classic-legal": "rc-base rc-classic",
+  "corporate-slate": "rc-base rc-corporate",
+  "nordic-minimal": "rc-base rc-clean",
+  "creative-coral": "rc-base rc-creative",
+  "junior-launch": "rc-base rc-junior",
+};
+
+/** Имя для карточки: имя + фамилия без отчества (как в макете РЕЗЮМЕ 3:
+ * «Дмитрий Савельев» — короче официального «Савельев Дмитрий Отчество»,
+ * помещается в 220px без обрезки посреди слова). */
+function rcDisplayName(data: ResumeData): string {
+  const p = data.personal;
+  return [p.name, p.surname].filter(Boolean).join(" ").trim() || fullName(data);
+}
+
+function rcChips(arr: string[], n = 6): string {
+  return `<div class="rc-chips">${(arr ?? []).slice(0, n).map((x) => `<span class="rc-chip">${escapeHtml(x)}</span>`).join("")}</div>`;
+}
+
+function rcContactSpans(data: ResumeData, n: number): string {
+  return contactItems(data).slice(0, n)
+    .map(([k, v]) => `<span class="rc-cont">${IC[k]}<span>${escapeHtml(v)}</span></span>`).join("");
+}
+
+/** Первое место работы + до 2 буллетов (для карточки больше не нужно). */
+function rcExp1(data: ResumeData): string {
+  const e = data.experience[0];
+  if (!e) return "";
+  const b = (e.bullets ?? []).slice(0, 2).map((x) => `<li>${escapeHtml(x)}</li>`).join("");
+  return (
+    `<div class="rc-xp-t">${escapeHtml(e.position || "Должность")}</div>` +
+    `<div style="display:flex;justify-content:space-between;gap:6px"><span class="rc-xp-c" style="margin:0">${escapeHtml(e.company || "")}</span><span class="rc-xp-d">${escapeHtml(e.period || "")}</span></div>` +
+    (b ? `<ul class="rc-xp-b">${b}</ul>` : "")
+  );
+}
+
+function rcEdu(data: ResumeData, n = 1): string {
+  return data.education.slice(0, n).map((e) =>
+    `<div class="rc-ed"><b>${escapeHtml(e.institution || "Учебное заведение")}</b>` +
+    `<span>${[escapeHtml(e.field), escapeHtml(e.degree)].filter(Boolean).join(", ")}</span></div>`
+  ).join("");
+}
+
+function rcLangs(data: ResumeData, n = 2): string {
+  return data.languages.slice(0, n).map((l) =>
+    `<div class="rc-lg"><b>${escapeHtml(l.name)}</b><span>${escapeHtml(l.level)}</span></div>`
+  ).join("");
+}
+
+function rcPhotoImg(data: ResumeData, cls: string): string {
+  if (!showPh(data)) return "";
+  return `<img class="${cls}" src="${escapeHtml(data.personal.photo)}" alt="">`;
+}
+
+/**
+ * Компактное превью шаблона для карточки каталога и миниатюр drawer.
+ * accent переопределяет цвет оформления (палитра студии).
+ */
+export function buildResumeCardHtml(data: ResumeData, tpl: TemplateId, accent?: string): string {
+  const base = SAMPLE_MAP[tpl] ?? { layout: "base" as const, accent: "#4f46e5" };
+  const ac = accent ?? base.accent;
+  const mod = CARD_MOD[tpl];
+  const name = escapeHtml(rcDisplayName(data));
+  const role = escapeHtml(data.personal.role) || "Должность";
+  const hard = hardSkills(data);
+
+  if (mod === "rc-exec") {
+    return (
+      `<div class="rc ${mod}" style="--ac:${ac}">` +
+      `<div class="rc-hd">${showPh(data) ? `<div class="rc-ph">${rcPhotoImg(data, "")}<span class="chk">✓</span></div>` : ""}` +
+      `<div style="flex:1;min-width:0"><div class="rc-name">${name}</div><div class="rc-role">${role}</div>` +
+      `<div class="rc-pills">${rcContactSpans(data, 2)}</div></div></div>` +
+      `<div class="rc-body"><div><div class="rc-sec">${IC.briefcase}<span>Опыт работы</span></div><div class="rc-xp">${rcExp1(data)}</div></div>` +
+      `<div class="rc-rail">` +
+      (hard.length ? `<div class="rc-sec">${IC.wrench}<span>Навыки</span></div>${rcChips(hard, 5)}` : "") +
+      (data.education.length ? `<div class="rc-sec" style="margin-top:7px">${IC.book}<span>Образование</span></div>${rcEdu(data)}` : "") +
+      `</div></div></div>`
+    );
+  }
+
+  if (mod === "rc-side" || mod === "rc-legal") {
+    const serifName = mod === "rc-legal" ? ` style="font-family:'Times New Roman',Georgia,serif"` : "";
+    return (
+      `<div class="rc ${mod}" style="--ac:${ac}">` +
+      `<div class="rc-bar"><div>${showPh(data) ? rcPhotoImg(data, "") : ""}` +
+      `<div class="rc-lbl">Контакты</div>${rcContactSpans(data, 3)}` +
+      (hard.length ? `<div class="rc-lbl">Навыки</div>${rcChips(hard, 5)}` : "") +
+      (data.languages.length ? `<div class="rc-lbl">Языки</div>${rcLangs(data)}` : "") +
+      `</div><div class="rc-foot">Dogovor.expert · 2026</div></div>` +
+      `<div class="rc-page"><div class="rc-name"${serifName}>${name}</div><div class="rc-role">${role}</div>` +
+      (data.experience.length ? `<div class="rc-sec">Опыт работы</div><div class="rc-xp-t">${escapeHtml(data.experience[0].position || "Должность")}</div><div class="rc-xp-c">${escapeHtml(data.experience[0].company || "")}</div>` : "") +
+      (data.education.length ? `<div class="rc-sec">Образование</div>${rcEdu(data)}` : "") +
+      `</div></div>`
+    );
+  }
+
+  // BASE-семейство: белая шапка + контактная полоса + две колонки.
+  const isClassic = mod.includes("rc-classic");
+  const isCorporate = mod.includes("rc-corporate");
+  const isCreative = mod.includes("rc-creative");
+  const isJunior = mod.includes("rc-junior");
+  const photo = showPh(data) && !isClassic
+    ? rcPhotoImg(data, "rc-mini-ph")
+    : "";
+  const headCore =
+    `<div class="rc-name">${name}</div><div class="rc-role">${role}</div>`;
+  const head = isCorporate
+    ? `<div class="rc-band">${headCore}<div class="rc-cbar">${rcContactSpans(data, 3)}</div></div>`
+    : `<div class="rc-topline"><div class="rc-toprow"><div style="flex:1;min-width:0">${headCore}</div>${photo}</div></div>` +
+      `<div class="rc-cbar">${rcContactSpans(data, 3)}</div>`;
+  const expBlock = data.experience.length
+    ? `<div><div class="rc-sec">${IC.briefcase}<span>Опыт работы</span></div><div class="rc-xp">${rcExp1(data)}</div></div>`
+    : "";
+  const eduBlock = data.education.length
+    ? `<div class="rc-sec-block"><div class="rc-sec">${IC.book}<span>Образование</span></div>${rcEdu(data, isJunior ? 2 : 1)}</div>`
+    : "";
+  // Junior: образование выше опыта — структура для студентов без стажа.
+  const main = isJunior ? eduBlock + expBlock : expBlock + eduBlock;
+  const rail =
+    (hard.length ? `<div><div class="rc-sec">${IC.wrench}<span>Навыки</span></div>${rcChips(hard, isCreative ? 4 : 6)}</div>` : "") +
+    (data.skills.soft.length ? `<div class="rc-sec-block"><div class="rc-sec">${IC.star}<span>Качества</span></div>${rcChips(data.skills.soft, 3)}</div>` : "") +
+    (data.languages.length ? `<div class="rc-sec-block"><div class="rc-sec">${IC.globe}<span>Языки</span></div>${rcLangs(data)}</div>` : "");
+  return (
+    `<div class="rc ${mod}" style="--ac:${ac}">` +
+    (isCreative ? `<div class="rc-strip"></div>` : "") +
+    `<div class="rc-top">${head}</div>` +
+    `<div class="rc-cols"><div>${main}</div><div class="rc-rail">${rail}</div></div></div>`
+  );
+}
+
 function buildLegacyHtml(data: ResumeData, tpl: string): string {
   const p = data.personal;
   const name = escapeHtml(fullName(data)) || "Ваше имя";

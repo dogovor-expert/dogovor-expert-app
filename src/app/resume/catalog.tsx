@@ -77,14 +77,10 @@ function TemplateCard({ item }: { item: CatalogItem }) {
           }}
         />
 
-        {/* Scaled real A4 template preview */}
+        {/* Компактное превью: рисуется сразу в размере карточки (rc-*),
+            без scale — текст читается, каждый шаблон со своей раскладкой */}
         <div className="relative mx-auto h-full w-[220px] overflow-hidden rounded-[3px] border border-slate-200 bg-white drop-shadow-lg transition-transform duration-500 group-hover:scale-105">
-          <div
-            aria-hidden="true"
-            className={cn("a4", `t-${item.id}`)}
-            style={{ width: 794, transform: "scale(0.2771)", transformOrigin: "top left", pointerEvents: "none" }}
-            dangerouslySetInnerHTML={{ __html: item.html }}
-          />
+          <div aria-hidden="true" dangerouslySetInnerHTML={{ __html: item.html }} />
         </div>
 
         {/* Hover overlay hint */}

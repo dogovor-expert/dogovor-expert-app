@@ -20,7 +20,7 @@ import { AdSlot } from "@/components/ads/AdSlot";
 import { SITE_URL } from "@/lib/site";
 import { truncateWord, composeTitle } from "@/lib/seo/docMeta";
 import { TEMPLATES, demoForCategory } from "@/lib/resume/data";
-import { buildResumePreviewHtml } from "@/lib/resume/render";
+import { buildResumeCardHtml } from "@/lib/resume/render";
 import { RESUME_CSS } from "@/lib/resume/resumeCss";
 import { ResumeCatalog, type CatalogItem } from "./catalog";
 import { ResumeFaq } from "./faq";
@@ -286,9 +286,9 @@ export default function ResumePage() {
     ats: t.ats,
     parse: t.parse,
     cats: [...t.tags, t.ats],
-    // Превью, а не документ: заголовки заменены на div, чтобы в DOM страницы
-    // не было десятков <h1> из карточек каталога (аудит 28.09.2026).
-    html: buildResumePreviewHtml(demoForCategory(t.category), t.id),
+    // Компактное превью карточки (rc-*): сразу в размере ~220px, без scale.
+    // Заголовков h1-h3 внутри нет — только div (аудит 28.09.2026).
+    html: buildResumeCardHtml(demoForCategory(t.category), t.id),
     category: t.category,
     rating: t.rating,
     downloads: t.downloads,
