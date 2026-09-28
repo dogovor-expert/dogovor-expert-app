@@ -45,28 +45,16 @@ const hex = (h: string): RGB => {
 };
 
 const STYLES: Record<TemplateId, TemplateStyle> = {
-  classic: { accent: hex("#0f172a"), layout: "single", serif: true, centerHeader: true },
-  modern: { accent: hex("#2563eb"), layout: "single" },
-  minimal: { accent: hex("#9ca3af"), layout: "single" },
-  executive: { accent: hex("#c9a227"), layout: "sidebar", serif: true, sideBg: hex("#0b1220"), sideFg: hex("#e2e8f0"), sideAccent: hex("#e7c55a"), sideDark: true },
-  gradient: { accent: hex("#6d28d9"), layout: "single", headerBand: hex("#4c1d95") },
-  compact: { accent: hex("#2563eb"), layout: "sidebar", sideBg: hex("#f9fafb"), sideFg: hex("#334155"), sideAccent: hex("#2563eb") },
-  fresher: { accent: hex("#6d28d9"), layout: "single" },
-  timeline: { accent: hex("#2563eb"), layout: "single" },
-  twocol: { accent: hex("#2563eb"), layout: "single", headerBand: hex("#0f172a") },
-  academic: { accent: hex("#111827"), layout: "single", serif: true, centerHeader: true },
-  expert: { accent: hex("#4f46e5"), layout: "columns", topStrip: hex("#4f46e5") },
-  creative: { accent: hex("#ea580c"), layout: "single", topStrip: hex("#ea580c"), photoInHeader: true },
-  corporate: { accent: hex("#1e293b"), layout: "single", headerBand: hex("#1e293b"), expDots: true, railIcons: true },
-  techpro: { accent: hex("#4f46e5"), layout: "columns", expDots: true },
-  legal: { accent: hex("#0f172a"), layout: "single", serif: true, expDots: true },
-  nordic: { accent: hex("#0d9488"), layout: "single" },
-  sidebarpro: { accent: hex("#047857"), layout: "sidebar", sideBg: hex("#065f46"), sideFg: hex("#ecfdf5"), sideAccent: hex("#6ee7b7"), sideDark: true, sideFoot: "Dogovor.expert · резюме по стандартам 2026" },
-  ocean: { accent: hex("#0369a1"), layout: "single", headerBand: hex("#0369a1") },
-  terracotta: { accent: hex("#9a3412"), layout: "single", topStrip: hex("#9a3412") },
-  graphite: { accent: hex("#3f3f46"), layout: "single" },
-  forest: { accent: hex("#166534"), layout: "sidebar", sideBg: hex("#f0fdf4"), sideFg: hex("#14532d"), sideAccent: hex("#166534") },
-  wine: { accent: hex("#881337"), layout: "single", headerBand: hex("#881337"), serif: true },
+  "executive-navy": { accent: hex("#1e293b"), layout: "columns", headerBand: hex("#1e293b"), photoInHeader: true, expDots: true, railIcons: true },
+  "tech-indigo": { accent: hex("#4f46e5"), layout: "columns", expDots: true },
+  "classic-legal": { accent: hex("#0f172a"), layout: "single", serif: true, centerHeader: true },
+  "nordic-minimal": { accent: hex("#0d9488"), layout: "single" },
+  "modern-emerald": { accent: hex("#059669"), layout: "sidebar", sideBg: hex("#059669"), sideFg: hex("#ffffff"), sideAccent: hex("#a7f3d0"), sideDark: true, sideFoot: "Dogovor.expert · резюме по стандартам 2026" },
+  "creative-coral": { accent: hex("#ea580c"), layout: "single", topStrip: hex("#ea580c"), photoInHeader: true },
+  "junior-launch": { accent: hex("#2563eb"), layout: "single" },
+  "corporate-slate": { accent: hex("#334155"), layout: "single", serif: true, centerHeader: true },
+  "data-mono": { accent: hex("#7c3aed"), layout: "columns", expDots: true },
+  "legal-counsel": { accent: hex("#1e3a8a"), layout: "sidebar", sideBg: hex("#1e3a8a"), sideFg: hex("#ffffff"), sideAccent: hex("#93c5fd"), sideDark: true, sideFoot: "Dogovor.expert · резюме по стандартам 2026" },
 };
 
 const FONT_CACHE = new Map<string, ArrayBuffer>();
@@ -461,7 +449,7 @@ function drawColumns(d: Doc, ctx: Ctx) {
 }
 
 export async function renderResumePdf(data: ResumeData, tpl: TemplateId): Promise<Blob> {
-  const style = STYLES[tpl] ?? STYLES.classic;
+  const style = STYLES[tpl] ?? STYLES["classic-legal"];
   const family = style.serif ? "pt-serif" : "inter";
   const [regBytes, boldBytes] = await Promise.all([
     loadFontBytes(`/fonts/${family}-regular.ttf`),

@@ -1,16 +1,29 @@
 import type { Metadata } from "next";
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { ArrowRight, CheckCircle2, Download, MousePointer2, ShieldCheck, Sparkles, Zap } from "lucide-react";
+import type { ReactNode } from "react";
+import {
+  ArrowRight,
+  Check,
+  ChevronRight,
+  FileText,
+  Home,
+  Mail,
+  MousePointer2,
+  PenLine,
+  Phone,
+  Zap,
+} from "lucide-react";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { AdSlot } from "@/components/ads/AdSlot";
 import { SITE_URL } from "@/lib/site";
 import { truncateWord, composeTitle } from "@/lib/seo/docMeta";
-import { PRESETS, PHRASES, SAMPLE_RESUME, TEMPLATES } from "@/lib/resume/data";
+import { TEMPLATES, SAMPLE_RESUME } from "@/lib/resume/data";
 import { buildResumeHtml } from "@/lib/resume/render";
-import type { TemplateId } from "@/lib/resume/types";
 import { RESUME_CSS } from "@/lib/resume/resumeCss";
-import { ResumeCatalog, PhraseTabs, type CatalogItem } from "./catalog";
+import { ResumeCatalog, type CatalogItem } from "./catalog";
+import { ResumeFaq } from "./faq";
+import ResumeAtsChecker from "./ResumeAtsChecker";
 
 const YEAR = new Date().getFullYear();
 const COUNT = TEMPLATES.length;
@@ -32,21 +45,6 @@ const ResumeBuilder = dynamic(() => import("./ResumeBuilder"), {
     </div>
   ),
 });
-
-const ATS_RULES = [
-  { t: "Одна колонка для откликов", d: "ATS-парсеры читают сверху вниз. Одноколоночные шаблоны с меткой ✓ распознаются корректно в hh.ru и ATS." },
-  { t: "Стандартные шрифты", d: "Никаких декоративных гарнитур: системы отбора могут не распознать текст и отбросить резюме до просмотра." },
-  { t: "Без таблиц и графики", d: "Таблицы, диаграммы и текст внутри картинок — главная причина отсева: до 75% резюме фильтруются автоматически." },
-  { t: "Обычные названия разделов", d: "«Опыт работы», «Образование», «Навыки» — робот ищет привычные заголовки, а не креативные." },
-  { t: "Ключевые слова из вакансии", d: "Навыки и формулировки один в один как в описании вакансии повышают релевантность в выдаче ATS." },
-];
-
-const HR_TIPS = [
-  { t: "Цифры в каждом достижении", d: "«Увеличил продажи на 30%», а не «занимался продажами». Рекрутер тратит 7 секунд на первый просмотр — цифры цепляют взгляд." },
-  { t: "Одна страница — золотой стандарт", d: "Опыт до 10 лет умещается на один лист A4. Конструктор предупредит, если текст переполняет страницу." },
-  { t: "Фото — только где уместно", d: "Для руководящих и клиентских позиций фото — плюс; для ATS-откликов и IT лучше отключить: в конструкторе это один чекбокс." },
-  { t: "Хронология наоборот", d: "Сначала последнее место работы. Учебные проекты, курсы и стажировки вынесите в начало, если нет опыта — поможет шаблон «Резюме выпускника»." },
-];
 
 const FAQ = [
   {
@@ -74,8 +72,6 @@ const FAQ = [
     a: "Только в вашем браузере. Мы не собираем персональные данные и не требуем регистрацию. Черновик сохраняется автоматически.",
   },
 ];
-
-const PHRASE_KEYS = ["programmer", "sales", "lawyer"] as const;
 
 export const metadata: Metadata = {
   title: { absolute: TITLE },
@@ -108,87 +104,178 @@ export const metadata: Metadata = {
   },
 };
 
-const PAGE_CSS = `
-.rs-hero{position:relative;overflow:hidden;background:#fff}
-.rs-dots{position:absolute;inset:0;pointer-events:none;opacity:.5;background-image:radial-gradient(#e2e8f0 1.2px,transparent 1.2px);background-size:22px 22px}
-.rs-badge{display:inline-flex;align-items:center;gap:8px;border:1px solid #fde68a;background:#fffbeb;color:#b45309;font-weight:600;font-size:13px;border-radius:999px;padding:6px 16px}
-.rs-badge svg{width:15px;height:15px}
-.rs-h1{margin:20px 0 0;font-size:40px;line-height:1.08;font-weight:800;letter-spacing:-.02em;color:#0f172a}
-@media(min-width:640px){.rs-h1{font-size:52px}}
-.rs-sub{margin:16px 0 0;max-width:36rem;font-size:18px;line-height:1.6;color:#64748b}
-.rs-cta{display:flex;flex-direction:column;gap:12px;margin-top:32px}
-@media(min-width:640px){.rs-cta{flex-direction:row}}
-.rs-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border-radius:12px;padding:14px 28px;font-size:16px;font-weight:600;text-decoration:none;transition:filter .15s}
-.rs-btn-p{color:#fff;background:linear-gradient(135deg,#d97706,#ea580c);box-shadow:0 12px 30px -8px rgba(217,119,6,.45)}
-.rs-btn-p:hover{filter:brightness(1.08)}
-.rs-btn-o{color:#334155;background:#fff;border:1px solid #e2e8f0}
-.rs-btn-o:hover{background:#f8fafc}
-.rs-btn svg{width:16px;height:16px}
-.rs-stats{display:flex;flex-wrap:wrap;gap:16px 40px;margin-top:36px;padding-top:28px;border-top:1px solid #f1f5f9}
-.rs-stats b{display:block;font-size:24px;font-weight:800;color:#0f172a}
-.rs-stats span{font-size:12px;color:#64748b}
-.rs-sheets{position:relative;display:none;height:35rem}
-@media(min-width:1024px){.rs-sheets{display:block}}
-.rs-sheet{position:absolute;top:0;width:300px;height:424px;overflow:hidden;border-radius:6px;background:#fff;box-shadow:0 30px 60px -25px rgba(15,23,42,.35)}
-.rs-sheet-in{display:block;width:794px;transform:scale(.3778);transform-origin:top left}
-.rs-h2{margin:8px 0 0;font-size:30px;font-weight:800;letter-spacing:-.01em;color:#0f172a}
-@media(min-width:640px){.rs-h2{font-size:36px}}
-.rs-lead{margin:12px 0 0;max-width:44rem;color:#64748b;font-size:16px;line-height:1.6}
-.rs-kicker{display:inline-block;font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#d97706}
-.rs-chips{display:flex;flex-wrap:wrap;gap:8px;margin:22px 0}
-.rs-chip{border:1px solid #e2e8f0;background:#fff;color:#334155;font-size:13px;font-weight:600;border-radius:999px;padding:8px 16px;cursor:pointer}
-.rs-chip.on{background:#0f172a;border-color:#0f172a;color:#fff}
-.rs-grid{display:grid;gap:22px;grid-template-columns:repeat(auto-fill,minmax(280px,1fr))}
-.rs-card{border:1px solid #e2e8f0;border-radius:16px;overflow:hidden;background:#fff;transition:transform .2s,box-shadow .2s}
-.rs-card:hover{transform:translateY(-4px);box-shadow:0 18px 40px -18px rgba(15,23,42,.25)}
-.rs-shot{position:relative;display:block;height:366px;overflow:hidden;background:#f1f5f9;text-decoration:none}
-.rs-shot-in{display:block;width:794px;transform:scale(.337);transform-origin:top left;pointer-events:none}
-.rs-go{position:absolute;inset:auto 0 0 0;display:flex;align-items:center;justify-content:center;padding:10px;background:rgba(15,23,42,.55);color:#fff;font-size:13px;font-weight:700;opacity:0;transition:opacity .2s}
-.rs-card:hover .rs-go{opacity:1}
-.rs-meta{padding:16px}
-.rs-name{display:flex;align-items:center;justify-content:space-between;gap:8px}
-.rs-name b{font-size:15px;color:#0f172a}
-.rs-badge{font-size:11px;font-weight:700;border-radius:999px;padding:3px 10px;white-space:nowrap}
-.rs-badge.safe{background:#ecfdf5;color:#047857}
-.rs-badge.cre{background:#fff7ed;color:#c2410c}
-.rs-meta p{margin:8px 0 0;font-size:12.5px;color:#64748b;line-height:1.55}
-.rs-ba{margin-top:16px;border:1px solid #e2e8f0;border-radius:16px;overflow:hidden;background:#fff}
-.rs-ba-r{display:flex;gap:10px;padding:16px;font-size:14px;line-height:1.6}
-.rs-ba-r .b{flex-shrink:0;width:22px;height:22px;border-radius:999px;display:grid;place-items:center;font-size:12px;font-weight:800}
-.rs-ba-r.bad{background:#fef2f2;color:#7f1d1d}
-.rs-ba-r.bad .b{background:#fecaca;color:#991b1b}
-.rs-ba-r.good{background:#f0fdf4;color:#14532d;border-top:1px solid #e2e8f0}
-.rs-ba-r.good .b{background:#bbf7d0;color:#166534}
-.rs-ba-foot{padding:12px 16px;border-top:1px solid #e2e8f0;background:#f8fafc}
-.rs-copy{font-size:13px;font-weight:600;color:#0f172a;background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:8px 16px;cursor:pointer}
-.rs-copy:hover{background:#f1f5f9}
-.rs-rule{display:flex;gap:12px;padding:16px;border:1px solid #e2e8f0;border-radius:14px;background:#fff}
-.rs-rule svg{flex-shrink:0;width:18px;height:18px;color:#047857;margin-top:2px}
-.rs-rule b{display:block;font-size:14px;color:#0f172a}
-.rs-rule p{margin:4px 0 0;font-size:13px;color:#64748b;line-height:1.55}
-.rs-tip{border:1px solid #e2e8f0;border-radius:14px;padding:18px;background:#fff}
-.rs-tip b{display:block;font-size:14.5px;color:#0f172a}
-.rs-tip p{margin:6px 0 0;font-size:13.5px;color:#64748b;line-height:1.6}
-.rs-faq{border:1px solid #e2e8f0;border-radius:14px;background:#fff;padding:18px}
-.rs-faq h3{margin:0;font-size:15px;color:#0f172a}
-.rs-faq p{margin:8px 0 0;font-size:14px;color:#64748b;line-height:1.6}
-.rs-dark{background:#020617;color:#e2e8f0;border-radius:24px;padding:40px 28px}
-@media(min-width:640px){.rs-dark{padding:52px}}
-.rs-dark h2{margin:0;color:#fff;font-size:26px;font-weight:800}
-@media(min-width:640px){.rs-dark h2{font-size:32px}}
-.rs-dark p{color:#94a3b8}
-.rs-dark .rs-cta{margin-top:28px}
-`;
+/* ─── Мини-листы для hero-визуала ─────────────────────────────────────────── */
 
-function SheetPreview({ tpl, label }: { tpl: TemplateId; label: string }) {
+interface Spec {
+  initials: string;
+  name: string;
+  title: string;
+  summary: string;
+  experience: {
+    role: string;
+    place: string;
+    period: string;
+    desc: string;
+  };
+  skills: string[];
+  languages: string[];
+}
+
+interface HeroTemplate {
+  name: string;
+  accent: string;
+  text: string;
+}
+
+const heroTplExpert: HeroTemplate = {
+  name: "Эксперт",
+  accent: "border-t-4 border-indigo-600",
+  text: "text-indigo-700",
+};
+
+const heroTplCreative: HeroTemplate = {
+  name: "Креатив",
+  accent: "border-t-4 border-violet-600",
+  text: "text-violet-700",
+};
+
+function Line({ className, w = "w-full", h = "h-1.5" }: { className?: string; w?: string; h?: string }) {
+  return <div className={["rounded-full bg-slate-200", w, h, className].filter(Boolean).join(" ")} />;
+}
+
+function SheetCol({ className, children }: { className?: string; children: ReactNode }) {
+  return <div className={["grid grid-cols-1", className].filter(Boolean).join(" ")}>{children}</div>;
+}
+
+function SheetContent({ spec, tpl }: { spec: Spec; tpl: HeroTemplate }) {
+  const isColumn = tpl.name === "Эксперт";
+  const showPhoto = tpl.name !== "Эксперт";
+
   return (
-    <div className="rs-sheet" role="img" aria-label={label}>
-      <span className="rs-sheet-in" aria-hidden="true">
-        <span className={`a4 t-${tpl}`} dangerouslySetInnerHTML={{ __html: buildResumeHtml(SAMPLE_RESUME, tpl) }} />
-      </span>
+    <div className="aspect-[1/1.414] w-full rounded-[3px] border border-slate-200 bg-white shadow-lg shadow-slate-900/10">
+      <div className={["border-t-4", tpl.accent].join(" ")} />
+      <div className="p-5">
+        {/* Header */}
+        <div className={["flex gap-4", !showPhoto && "items-center"].filter(Boolean).join(" ")}>
+          {showPhoto && (
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-slate-200 text-sm font-bold text-slate-500">
+              {spec.initials}
+            </div>
+          )}
+          <div className="min-w-0 flex-1">
+            <h4 className={["text-base font-extrabold leading-tight", tpl.text].join(" ")}>{spec.name}</h4>
+            <p className="mt-0.5 text-xs font-semibold text-slate-600">{spec.title}</p>
+            <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] text-slate-400">
+              <span className="flex items-center gap-1">
+                <Mail className="h-3 w-3" /> example@mail.ru
+              </span>
+              <span className="flex items-center gap-1">
+                <Phone className="h-3 w-3" /> +7 (999) 000-00-00
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Summary */}
+        <p className="mt-4 text-[10px] leading-relaxed text-slate-500">{spec.summary}</p>
+
+        {/* Two-column */}
+        <div className={["mt-5 grid gap-5", isColumn ? "grid-cols-[1.35fr_1fr]" : "grid-cols-1"].join(" ")}>
+          <SheetCol className="space-y-5">
+            <div>
+              <div className={["text-[11px] font-bold uppercase tracking-widest", tpl.text].join(" ")}>Опыт работы</div>
+              <div className="mt-2.5 space-y-4">
+                <div>
+                  <div className="flex items-center justify-between text-xs font-bold text-slate-800">
+                    <span>{spec.experience.role}</span>
+                    <span className="text-[10px] font-semibold text-slate-400">{spec.experience.period}</span>
+                  </div>
+                  <div className="text-[10px] font-medium text-slate-600">{spec.experience.place}</div>
+                  <p className="mt-1 text-[10px] leading-relaxed text-slate-500">{spec.experience.desc}</p>
+                </div>
+                <Line h="h-px" className="bg-slate-100" />
+                <div>
+                  <div className="flex items-center justify-between text-xs font-bold text-slate-800">
+                    <span className="text-slate-400">Вакансия (предыдущая)</span>
+                    <span className="text-[10px] font-semibold text-slate-400">4 года</span>
+                  </div>
+                  <Line className="mt-1.5 h-1.5 w-2/3" />
+                  <Line className="mt-1 h-1.5 w-1/2" />
+                  <Line className="mt-1 h-1.5 w-3/4" />
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <div className={["text-[11px] font-bold uppercase tracking-widest", tpl.text].join(" ")}>Образование</div>
+              <div className="mt-2.5 space-y-1.5">
+                <Line className="h-1.5 w-3/4" />
+                <Line className="h-1.5 w-1/2" />
+                <Line className="h-1.5 w-2/3" />
+              </div>
+            </div>
+          </SheetCol>
+
+          <SheetCol className="space-y-5">
+            <div>
+              <div className={["text-[11px] font-bold uppercase tracking-widest", tpl.text].join(" ")}>Навыки</div>
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {spec.skills.map((s) => (
+                  <span key={s} className="rounded bg-slate-100 px-2 py-0.5 text-[9px] font-medium text-slate-600">
+                    {s}
+                  </span>
+                ))}
+              </div>
+            </div>
+            <div>
+              <div className={["text-[11px] font-bold uppercase tracking-widest", tpl.text].join(" ")}>Языки</div>
+              <div className="mt-2 space-y-1.5 text-[10px] text-slate-600">
+                {spec.languages.map((l) => (
+                  <div key={l} className="flex items-center gap-2">
+                    <span className="h-1.5 w-1.5 rounded-full bg-slate-300" />
+                    {l}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </SheetCol>
+        </div>
+      </div>
     </div>
   );
 }
+
+const heroSpecElena: Spec = {
+  initials: "Е",
+  name: "Елена Марченко",
+  title: "Старший юрист",
+  summary:
+    "Судебный юрист корпорации с 8-летним стажем. В арбитраже и защите компании в налоговых и корпоративных спорах — 85% дел закрыто в пользу доверителя.",
+  experience: {
+    role: "Старший юрист",
+    place: "АО «Трайд»",
+    period: "09.2018 – настоящее время",
+    desc: "Ведение корпоративных споров, защита по госзаказам, подписание соглашений на 250+ млн ₽.",
+  },
+  skills: ["Арбитраж", "ГПХ", "ГК РФ", "НК РФ", "409 проверка"],
+  languages: ["Русский", "Английский", "Немецкий"],
+};
+
+const heroSpecDesign: Spec = {
+  initials: "А",
+  name: "Алёна Петровская",
+  title: "Арт-директор / Графический дизайнер",
+  summary:
+    "7 лет в дизайне интернет-агентств, работала с банками и ритейлом. Моя задача — привести ваш продукт к понятной визуальной логике.",
+  experience: {
+    role: "Арт-директор",
+    place: "Digital-агентство «Перебежка»",
+    period: "02.2019 – настоящее время",
+    desc: "Руководство командой из 4 дизайнеров, переработка UI 12 кейсов, увеличение конверсии на 22%.",
+  },
+  skills: ["Figma", "Design-system", "Branding", "Print", "UX"],
+  languages: ["Русский", "Английский"],
+};
 
 export default function ResumePage() {
   const items: CatalogItem[] = TEMPLATES.map((t) => ({
@@ -199,17 +286,15 @@ export default function ResumePage() {
     parse: t.parse,
     cats: [...t.tags, t.ats],
     html: buildResumeHtml(SAMPLE_RESUME, t.id),
-  }));
-  const phrases = PHRASE_KEYS.map((k) => ({
-    key: k,
-    label: PRESETS[k]?.label ?? k,
-    bad: PHRASES[k]?.b ?? "",
-    good: PHRASES[k]?.g ?? "",
+    category: t.category,
+    rating: t.rating,
+    downloads: t.downloads,
+    badge: t.badge,
   }));
 
   return (
-    <div>
-      <style dangerouslySetInnerHTML={{ __html: RESUME_CSS + PAGE_CSS }} />
+    <div className="bg-white">
+      <style dangerouslySetInnerHTML={{ __html: RESUME_CSS }} />
       <JsonLd
         data={[
           {
@@ -247,137 +332,327 @@ export default function ResumePage() {
       />
 
       {/* 1. HERO */}
-      <section className="rs-hero">
-        <div className="rs-dots" aria-hidden="true" />
-        <div className="mx-auto grid max-w-7xl grid-cols-1 items-center gap-12 px-6 pb-16 pt-24 lg:grid-cols-2">
+      <section className="relative overflow-hidden bg-white pb-16 pt-36">
+        <div className="pointer-events-none absolute inset-0 -z-10">
+          <div className="absolute inset-0 bg-gradient-to-br from-amber-50 via-orange-50/30 to-transparent" />
+          <svg className="absolute inset-0 h-full w-full opacity-[0.28]" aria-hidden="true">
+            <pattern id="dots" width="48" height="48" patternUnits="userSpaceOnUse">
+              <path d="M 48 0 L 0 0 0 48" fill="none" stroke="rgba(226,189,140,0.5)" strokeWidth="1" />
+            </pattern>
+            <rect width="100%" height="100%" fill="url(#dots)" />
+          </svg>
+        </div>
+
+        <div className="mx-auto grid max-w-7xl grid-cols-1 items-center gap-12 px-6 lg:grid-cols-[1.45fr_1fr]">
           <div>
-            <span className="rs-badge"><Zap />{COUNT} шаблона · PDF и DOC · бесплатно</span>
-            <h1 className="rs-h1">Конструктор резюме онлайн</h1>
-            <p className="rs-sub">
+            <nav className="flex items-center gap-2 text-xs font-medium text-slate-400" aria-label="Хлебные крошки">
+              <Link href="/" className="flex items-center gap-1 transition hover:text-slate-700">
+                <Home className="h-3.5 w-3.5" />
+                Главная
+              </Link>
+              <ChevronRight className="h-3 w-3" />
+              <span className="text-slate-700">Конструктор резюме</span>
+            </nav>
+
+            <div className="mt-6 inline-flex items-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-4 py-1.5 text-sm font-semibold text-amber-700">
+              <Zap className="h-4 w-4" />
+              {COUNT} шаблонов · PDF и Word · бесплатно
+            </div>
+
+            <h1 className="mt-5 text-4xl font-extrabold tracking-tight text-slate-900 sm:text-5xl">
+              Конструктор резюме онлайн
+            </h1>
+            <p className="mt-4 max-w-xl text-lg leading-relaxed text-slate-500">
               Выберите один из {COUNT} профессиональных шаблонов, заполните поля и получите PDF за 5 минут.
               Сделайте резюме, которое прочтут до конца.
             </p>
-            <div className="rs-cta">
-              <a href="#templates" className="rs-btn rs-btn-p">Выбрать шаблон<ArrowRight /></a>
-              <a href="#studio" className="rs-btn rs-btn-o">Собрать за 5 минут</a>
+
+            <div className="mt-9 flex flex-col gap-3 sm:flex-row">
+              <a
+                href="#templates"
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-br from-amber-600 to-orange-600 px-7 py-3.5 text-base font-semibold text-white shadow-xl shadow-amber-600/25 transition hover:brightness-110"
+              >
+                Выбрать шаблон
+                <ArrowRight className="h-4 w-4" />
+              </a>
+              <a
+                href="#studio"
+                className="inline-flex items-center justify-center rounded-xl border border-slate-200 px-7 py-3.5 text-base font-semibold text-slate-700 transition hover:bg-slate-50"
+              >
+                Как составить за 5 минут
+              </a>
             </div>
-            <div className="rs-stats">
-              {[[COUNT, "стилей резюме"], ["5 мин", "на сборку"], ["0 ₽", "без регистрации"], ["PDF и DOC", "два формата"]].map(([v, l]) => (
-                <div key={l}><b>{v}</b><span>{l}</span></div>
+
+            <div className="mt-10 flex flex-wrap gap-x-8 gap-y-4 border-t border-slate-100 pt-7">
+              {[
+                { v: String(COUNT), l: "стилей резюме" },
+                { v: "5 мин", l: "на сборку" },
+                { v: "0 ₽", l: "без регистрации" },
+                { v: "2", l: "формата: PDF и DOCX" },
+              ].map((s) => (
+                <div key={s.l}>
+                  <div className="text-2xl font-extrabold text-slate-900">{s.v}</div>
+                  <div className="mt-0.5 text-xs font-medium text-slate-500">{s.l}</div>
+                </div>
               ))}
             </div>
           </div>
-          <div className="rs-sheets" aria-hidden="true">
-            <div style={{ position: "absolute", left: "2%", top: 0, transform: "rotate(-6deg)" }}>
-              <SheetPreview tpl="corporate" label="Шаблон Executive Corporate" />
+
+          {/* Visual: overlapping preview cards */}
+          <div className="relative hidden h-[26rem] lg:block">
+            <div className="absolute inset-x-8 top-8 h-72 rounded-3xl bg-gradient-to-br from-amber-200/60 to-orange-200/40 blur-2xl" />
+            <div
+              className="absolute left-1/2 top-0 h-72 w-56 rounded-[3px] border border-amber-300/60 bg-white/95 shadow-2xl shadow-amber-900/15"
+              style={{ transform: "translateX(-58%) rotate(-6deg)" }}
+            >
+              <SheetContent
+                spec={heroSpecDesign}
+                tpl={{ ...heroTplCreative, accent: "border-amber-500", text: "text-amber-700" }}
+              />
             </div>
-            <div style={{ position: "absolute", left: "42%", top: 46, transform: "rotate(5deg)" }}>
-              <SheetPreview tpl="nordic" label="Шаблон Nordic Minimalist" />
+            <div
+              className="absolute left-1/2 top-8 h-72 w-56 rounded-[3px] border border-indigo-200 bg-white/95 shadow-2xl shadow-indigo-900/15"
+              style={{ transform: "translateX(-42%) rotate(5deg)" }}
+            >
+              <SheetContent
+                spec={heroSpecElena}
+                tpl={{ ...heroTplExpert, accent: "border-indigo-600", text: "text-indigo-700" }}
+              />
             </div>
-            <div style={{ position: "absolute", left: "76%", top: 300, width: 92, height: 92, borderRadius: 18, background: "#fff", border: "1px solid #fde68a", display: "grid", placeItems: "center", boxShadow: "0 12px 30px -12px rgba(217,119,6,.4)" }}>
-              <MousePointer2 style={{ width: 28, height: 28, color: "#d97706" }} />
+            <div
+              className="absolute left-1/2 top-20 flex h-[5.5rem] w-[5.5rem] items-center justify-center rounded-2xl border border-amber-200 bg-white shadow-xl shadow-amber-100"
+              style={{ transform: "translateX(8%)" }}
+            >
+              <MousePointer2 className="h-6 w-6 text-amber-600" />
             </div>
           </div>
         </div>
       </section>
 
-      {/* 2. STUDIO */}
-      <section id="studio" className="mx-auto max-w-7xl scroll-mt-4 px-6 pb-4">
-        <div style={{ border: "1px solid #e2e8f0", borderRadius: 24, background: "#fff", boxShadow: "0 24px 60px -30px rgba(15,23,42,.25)", overflow: "hidden" }}>
-          <ResumeBuilder />
-        </div>
+      {/* 2. INTERACTIVE BUILDER STUDIO */}
+      <section id="studio" className="mx-auto max-w-7xl scroll-mt-4 px-6 py-12">
+        <ResumeBuilder />
       </section>
 
-      {/* 3. CATALOG */}
-      <section id="templates" className="scroll-mt-4 border-t border-slate-100 bg-slate-50/60 py-20">
+      {/* 3. CATALOG OF RESUME TEMPLATES */}
+      <section id="templates" className="scroll-mt-4 border-t border-slate-100 bg-slate-50/60 py-24">
         <div className="mx-auto max-w-7xl px-6">
-          <span className="rs-kicker">Каталог</span>
-          <h2 className="rs-h2">{COUNT} готовых бланка резюме для любых профессий</h2>
-          <p className="rs-lead">Живое превью на ваших данных: выберите шаблон — конструктор выше сразу переключится. ATS-safe бланки с ✓ читаются роботами hh.ru, креативные с ⚠ — для прямого письма рекрутеру.</p>
           <ResumeCatalog items={items} />
         </div>
       </section>
 
-      {/* 4. ATS */}
-      <section className="bg-white py-20">
+      {/* 4. ATS COMPLIANCE & AI ENHANCER */}
+      <section className="bg-white py-24">
         <div className="mx-auto max-w-7xl px-6">
-          <span className="rs-kicker">ATS-проверка</span>
-          <h2 className="rs-h2">Ваше резюме точно прочитает робот и заметит HR</h2>
-          <p className="rs-lead">До 75% резюме отсеиваются автоматически, а 98% компаний из Fortune 500 используют ATS. Хуже всего распознаются таблицы, графики, колонки и текст внутри картинок — поэтому в одноколоночных шаблонах мы используем стандартные шрифты, обычные списки и привычные названия разделов.</p>
-          <div className="mt-8 grid gap-4 md:grid-cols-2">
-            <div className="grid gap-4" style={{ alignContent: "start" }}>
-              {ATS_RULES.map((r) => (
-                <div key={r.t} className="rs-rule"><CheckCircle2 /><div><b>{r.t}</b><p>{r.d}</p></div></div>
-              ))}
+          <div className="mx-auto max-w-2xl text-center">
+            <span className="text-sm font-bold uppercase tracking-widest text-indigo-600">Технологии и стандарты</span>
+            <h2 className="mt-2 text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl">
+              Ваше резюме точно прочитает робот и заметит HR
+            </h2>
+            <p className="mt-4 text-base text-slate-500 sm:text-lg">
+              В 2026 году до 75% откликов отсеиваются автоматическими фильтрами ATS. Мы проектируем бланки так,
+              чтобы они гарантированно проходили первичный машинный скрининг.
+            </p>
+          </div>
+
+          <div className="mt-14">
+            <ResumeAtsChecker />
+          </div>
+        </div>
+      </section>
+
+      {/* 5. BLANK VS CONSTRUCTOR COMPARISON */}
+      <section className="bg-slate-950 py-24 text-white">
+        <div className="mx-auto max-w-7xl px-6">
+          <div className="mx-auto max-w-2xl text-center">
+            <span className="text-sm font-bold uppercase tracking-widest text-indigo-400">
+              Два способа составить резюме
+            </span>
+            <h2 className="mt-3 text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
+              Скачать пустой бланк или собрать в онлайн-конструкторе
+            </h2>
+          </div>
+
+          <div className="mt-14 grid grid-cols-1 gap-8 lg:grid-cols-2">
+            <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-8 backdrop-blur">
+              <div className="flex items-center justify-between">
+                <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/10 text-white">
+                  <FileText className="h-6 w-6" />
+                </span>
+                <span className="rounded-full bg-emerald-500/20 px-3 py-1 text-xs font-bold text-emerald-400">
+                  Мгновенно
+                </span>
+              </div>
+              <h3 className="mt-6 text-xl font-bold text-white">Скачать образец бланка резюме</h3>
+              <p className="mt-2 text-xs text-slate-400 sm:text-sm">
+                Готовые образцы в форматах DOCX (Word) и PDF с разметкой полей, блоками опыта и навыков.
+              </p>
+              <ul className="mt-6 space-y-3 text-xs text-slate-300 sm:text-sm">
+                {[
+                  "Файлы совместимы с Microsoft Word, Apple Pages, Google Docs",
+                  "Соблюдены стандартные отступы и размеры шрифтов по ГОСТ",
+                  "Заполняйте в удобном редакторе офлайн на компьютере",
+                  "100% бесплатно и без регистрации",
+                ].map((item) => (
+                  <li key={item} className="flex items-start gap-2.5">
+                    <Check className="mt-0.5 h-4 w-4 shrink-0 text-emerald-400" />
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
+              <a
+                href="#templates"
+                className="mt-8 inline-flex items-center gap-2 rounded-xl border border-white/20 bg-white/10 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/20"
+              >
+                Выбрать бланк в каталоге
+                <ArrowRight className="h-4 w-4" />
+              </a>
             </div>
-            <div>
-              <PhraseTabs items={phrases} />
-              <p className="mt-3 text-[13px] text-slate-500">Конструктор считает цифры в достижениях автоматически: метрика «Достижения с цифрами» в панели качества.</p>
+
+            <div className="relative overflow-hidden rounded-3xl border border-indigo-400/30 bg-gradient-to-br from-indigo-600 to-blue-700 p-8 shadow-2xl shadow-indigo-600/30">
+              <span className="absolute right-6 top-6 rounded-full bg-white/20 px-3 py-1 text-xs font-bold text-white">
+                Рекомендуем
+              </span>
+              <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/20 text-white">
+                <PenLine className="h-6 w-6" />
+              </span>
+              <h3 className="mt-6 text-xl font-bold text-white">Онлайн-конструктор Dogovor.expert</h3>
+              <p className="mt-2 text-xs text-indigo-100 sm:text-sm">
+                Пошаговый мастер составления с подсказками HR-алгоритма, проверкой ошибок и автоформатированием.
+              </p>
+              <ul className="mt-6 space-y-3 text-xs text-indigo-50 sm:text-sm">
+                {[
+                  "Автоматическая вёрстка идеального одностраничного формата А4",
+                  "Подсказки правильных формулировок достижений по методу STAR",
+                  "Смена дизайна и цветовой палитры в 1 клик без потери введённых данных",
+                  "Экспорт в резкий векторный PDF (300 DPI) без водяных знаков",
+                ].map((item) => (
+                  <li key={item} className="flex items-start gap-2.5">
+                    <Check className="mt-0.5 h-4 w-4 shrink-0 text-amber-300" />
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
+              <a
+                href="#studio"
+                className="mt-8 inline-flex items-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-semibold text-indigo-700 shadow-lg transition hover:bg-indigo-50"
+              >
+                Попробовать онлайн-конструктор
+                <ArrowRight className="h-4 w-4" />
+              </a>
             </div>
           </div>
         </div>
       </section>
 
-      {/* 5. DARK: blank or studio */}
-      <section className="mx-auto max-w-7xl px-6 py-4">
-        <div className="rs-dark">
-          <span className="rs-kicker" style={{ color: "#fbbf24" }}>Быстрый старт</span>
-          <h2>Соберите резюме в конструкторе за 5 минут</h2>
-          <p className="mt-3 max-w-2xl">14 профессий с готовыми навыками и формулировками, живое превью, проверка качества и экспорт в PDF и DOC — всё в браузере, без регистрации.</p>
-          <div className="rs-cta">
-            <a href="#studio" className="rs-btn rs-btn-p"><Download />Открыть конструктор</a>
-            <a href="#templates" className="rs-btn rs-btn-o" style={{ background: "transparent", color: "#fff", borderColor: "#334155" }}>Выбрать шаблон</a>
-          </div>
-        </div>
-      </section>
-
-      {/* 6. HR TIPS */}
-      <section className="bg-slate-50/60 py-20">
+      {/* 6. HR GUIDE & TRENDS */}
+      <section className="border-t border-slate-100 bg-slate-50/60 py-24">
         <div className="mx-auto max-w-7xl px-6">
-          <span className="rs-kicker">Практика {YEAR}</span>
-          <h2 className="rs-h2">Что ищут HR-директора в резюме в {YEAR} году</h2>
-          <div className="mt-8 grid gap-4 sm:grid-cols-2">
-            {HR_TIPS.map((t) => (
-              <div key={t.t} className="rs-tip"><b>{t.t}</b><p>{t.d}</p></div>
+          <div className="mx-auto max-w-2xl text-center">
+            <span className="text-sm font-bold uppercase tracking-widest text-indigo-600">Советы экспертов</span>
+            <h2 className="mt-2 text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl">
+              Что ищут HR-директора в резюме в {YEAR} году
+            </h2>
+          </div>
+
+          <div className="mt-14 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            {[
+              {
+                num: "01",
+                title: "Оцифрованные результаты",
+                desc: "Замените список обязанностей на глаголы действия с цифрами: «сократил на 30%», «привлек 15 млн руб», «внедрил за 2 месяца».",
+              },
+              {
+                num: "02",
+                title: "Правило одной страницы",
+                desc: "Рекрутер тратит всего 6–8 секунд на первый скрининг резюме. Всё самое важное должно помещаться на первом экране.",
+              },
+              {
+                num: "03",
+                title: "Ключевые слова вакансии",
+                desc: "Укажите технологии, стандарты и термины точно так, как они написаны в требованиях работодателя для идеального совпадения в ATS.",
+              },
+              {
+                num: "04",
+                title: "Актуальные контакты",
+                desc: "Обязательно добавьте Telegram и ссылку на портфолио/GitHub — сегодня это самый быстрый канал связи с кандидатом.",
+              },
+            ].map((tip) => (
+              <div
+                key={tip.num}
+                className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-md"
+              >
+                <span className="text-2xl font-black text-indigo-600/30">{tip.num}</span>
+                <h3 className="mt-3 text-base font-bold text-slate-900">{tip.title}</h3>
+                <p className="mt-2 text-xs leading-relaxed text-slate-500 sm:text-sm">{tip.desc}</p>
+              </div>
             ))}
           </div>
-          <p className="mt-6 max-w-3xl text-[15px] leading-relaxed text-slate-600">
-            Если вы только начинаете карьеру — выберите шаблон «Резюме выпускника» и пресет профессии.
-            Ставка делается на образование, учебные проекты, курсы, стажировки и soft skills. Опыт
-            можно усилить за счёт волонтёрства, фриланса и участия в олимпиадах и хакатонах.
+
+          <p className="mx-auto mt-10 max-w-3xl text-center text-[15px] leading-relaxed text-slate-600">
+            Если вы только начинаете карьеру — выберите шаблон «Резюме выпускника» и пресет профессии. Ставка
+            делается на образование, учебные проекты, курсы, стажировки и soft skills. Опыт можно усилить за счёт
+            волонтёрства, фриланса и участия в олимпиадах и хакатонах.
           </p>
         </div>
       </section>
 
-      {/* 7. FAQ */}
-      <section className="bg-white py-20">
+      {/* 7. FAQ ACCORDION */}
+      <section className="bg-white py-24">
         <div className="mx-auto max-w-3xl px-6">
-          <span className="rs-kicker">FAQ</span>
-          <h2 className="rs-h2">Часто задаваемые вопросы о резюме</h2>
-          <div className="mt-8 grid gap-4">
-            {FAQ.map((f) => (
-              <div key={f.q} className="rs-faq"><h3>{f.q}</h3><p>{f.a}</p></div>
-            ))}
+          <div className="text-center">
+            <span className="text-sm font-bold uppercase tracking-widest text-indigo-600">Вопросы и ответы</span>
+            <h2 className="mt-2 text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl">
+              Часто задаваемые вопросы о резюме
+            </h2>
           </div>
+
+          <ResumeFaq items={FAQ} />
+
           <AdSlot id="RESUME_INFEED" />
           <p className="mt-6 text-sm text-gray-500">
-            Смотрите также: <Link href="/documents" className="text-brand-600 hover:underline">шаблоны документов</Link> и{" "}
-            <Link href="/builder" className="text-brand-600 hover:underline">конструктор договоров</Link>.
+            Смотрите также:{" "}
+            <Link href="/documents" className="text-brand-600 hover:underline">
+              шаблоны документов
+            </Link>{" "}
+            и{" "}
+            <Link href="/builder" className="text-brand-600 hover:underline">
+              конструктор договоров
+            </Link>
+            .
           </p>
         </div>
       </section>
 
-      {/* 8. CTA */}
+      {/* 8. FINAL CTA BANNER */}
       <section className="relative overflow-hidden bg-slate-950 py-20 text-white">
-        <div className="mx-auto max-w-3xl px-6 text-center">
-          <h2 className="text-3xl font-extrabold tracking-tight sm:text-4xl">Создайте резюме своей мечты прямо сейчас</h2>
-          <p className="mx-auto mt-4 max-w-xl text-slate-400">{COUNT} шаблона, проверка ATS, экспорт в PDF и DOC — бесплатно и без регистрации.</p>
-          <div className="rs-cta" style={{ justifyContent: "center", flexDirection: "row" }}>
-            <a href="#studio" className="rs-btn rs-btn-p"><Sparkles />Начать бесплатно</a>
+        <div className="pointer-events-none absolute inset-0 -z-10">
+          <div className="absolute left-1/2 top-0 h-72 w-[50rem] -translate-x-1/2 rounded-full bg-indigo-600/25 blur-3xl" />
+        </div>
+        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-8 px-6 lg:flex-row">
+          <div className="max-w-xl text-center lg:text-left">
+            <h2 className="text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
+              Создайте резюме своей мечты прямо сейчас
+            </h2>
+            <p className="mt-4 text-base text-slate-400 sm:text-lg">
+              {COUNT} профессиональных шаблонов, экспорт в PDF и Word. Бесплатно и без водяных знаков.
+            </p>
           </div>
-          <p className="mt-6 flex items-center justify-center gap-2 text-[13px] text-slate-500">
-            <ShieldCheck style={{ width: 15, height: 15 }} />Данные хранятся только в вашем браузере
-          </p>
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <a
+              href="#studio"
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-white px-7 py-3.5 text-base font-semibold text-slate-900 shadow-xl transition hover:bg-slate-100"
+            >
+              Собрать резюме онлайн
+              <ArrowRight className="h-4 w-4" />
+            </a>
+            <a
+              href="#templates"
+              className="inline-flex items-center justify-center rounded-xl border border-white/15 px-7 py-3.5 text-base font-semibold text-white transition hover:bg-white/5"
+            >
+              Каталог шаблонов
+            </a>
+          </div>
         </div>
       </section>
     </div>

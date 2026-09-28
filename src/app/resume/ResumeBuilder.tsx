@@ -82,7 +82,7 @@ const ACCORDION: Array<{ id: SectionId; title: string; icon: typeof User }> = [
 
 export default function ResumeBuilder() {
   const [data, setData] = useState<ResumeData>(SAMPLE_RESUME);
-  const [tpl, setTpl] = useState<TemplateId>("classic");
+  const [tpl, setTpl] = useState<TemplateId>("executive-navy");
   const [presetKey, setPresetKey] = useState("");
   const [openSec, setOpenSec] = useState<SectionId | null>("user");
   const [undo, setUndo] = useState<{ label: string; restore: () => void } | null>(null);

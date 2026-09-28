@@ -163,30 +163,18 @@ function sideBlocks(data: ResumeData, cls: string, title: string, titleSoft: str
 type SampleLayout = "exec" | "side" | "base";
 interface SampleCfg { layout: SampleLayout; accent: string; serif?: boolean; tech?: boolean; light?: boolean }
 
-/** Каждый шаблон отрисован одной из трёх эталонных раскладок с собственным акцентом. */
+/** Каждый шаблон отрисован одной из трёх эталонных раскладок РЕЗЮМЕ 3 с собственным акцентом. */
 const SAMPLE_MAP: Record<TemplateId, SampleCfg> = {
-  classic: { layout: "base", accent: "#0f172a", serif: true },
-  modern: { layout: "base", accent: "#4f46e5" },
-  minimal: { layout: "base", accent: "#64748b" },
-  executive: { layout: "side", accent: "#0b1220" },
-  gradient: { layout: "exec", accent: "#6d28d9" },
-  compact: { layout: "side", accent: "#4f46e5", light: true },
-  fresher: { layout: "base", accent: "#e11d48" },
-  timeline: { layout: "base", accent: "#4f46e5" },
-  twocol: { layout: "side", accent: "#0f172a", light: true },
-  academic: { layout: "base", accent: "#111827", serif: true },
-  expert: { layout: "base", accent: "#4f46e5" },
-  creative: { layout: "base", accent: "#ea580c" },
-  corporate: { layout: "exec", accent: "#1e293b" },
-  techpro: { layout: "base", accent: "#4f46e5", tech: true },
-  legal: { layout: "base", accent: "#0f172a", serif: true },
-  nordic: { layout: "base", accent: "#0d9488" },
-  sidebarpro: { layout: "side", accent: "#065f46" },
-  ocean: { layout: "exec", accent: "#0369a1" },
-  terracotta: { layout: "base", accent: "#9a3412" },
-  graphite: { layout: "base", accent: "#3f3f46" },
-  forest: { layout: "side", accent: "#166534", light: true },
-  wine: { layout: "exec", accent: "#881337", serif: true },
+  "executive-navy": { layout: "exec", accent: "#1e293b" },
+  "tech-indigo": { layout: "base", accent: "#4f46e5", tech: true },
+  "classic-legal": { layout: "base", accent: "#0f172a", serif: true },
+  "nordic-minimal": { layout: "base", accent: "#0d9488" },
+  "modern-emerald": { layout: "side", accent: "#059669" },
+  "creative-coral": { layout: "base", accent: "#ea580c" },
+  "junior-launch": { layout: "base", accent: "#2563eb" },
+  "corporate-slate": { layout: "base", accent: "#334155", serif: true },
+  "data-mono": { layout: "base", accent: "#7c3aed", tech: true },
+  "legal-counsel": { layout: "side", accent: "#1e3a8a" },
 };
 
 function smpChips(arr: string[]): string {
@@ -302,7 +290,7 @@ export function buildResumeHtml(data: ResumeData, tpl: TemplateId): string {
   return buildLegacyHtml(data, tpl);
 }
 
-function buildLegacyHtml(data: ResumeData, tpl: TemplateId): string {
+function buildLegacyHtml(data: ResumeData, tpl: string): string {
   const p = data.personal;
   const name = escapeHtml(fullName(data)) || "Ваше имя";
   const role = escapeHtml(p.role) || "Должность";
@@ -376,28 +364,16 @@ interface DocTemplateStyle {
 }
 
 const DOC_TEMPLATES: Record<TemplateId, DocTemplateStyle> = {
-  classic: { accent: "#0f172a", layout: "single", center: true },
-  modern: { accent: "#4F46E5", layout: "single" },
-  minimal: { accent: "#9ca3af", layout: "single" },
-  executive: { accent: "#C9A227", layout: "sidebar", serif: true, sideBg: "#0b1220", sideFg: "#e2e8f0", sideAccent: "#E7C55A" },
-  gradient: { accent: "#6D28D9", layout: "single", headerBg: "#5b21b6", headerFg: "#ffffff" },
-  compact: { accent: "#4F46E5", layout: "sidebar", sideBg: "#F8FAFC", sideFg: "#334155", sideAccent: "#4F46E5" },
-  fresher: { accent: "#E11D48", layout: "single" },
-  timeline: { accent: "#4F46E5", layout: "single" },
-  twocol: { accent: "#0f172a", layout: "sidebar", headerBg: "#0f172a", headerFg: "#ffffff", sideBg: "#F8FAFC", sideFg: "#334155", sideAccent: "#4F46E5" },
-  academic: { accent: "#111827", layout: "single", center: true, serif: true },
-  expert: { accent: "#4f46e5", layout: "columns", strip: true },
-  creative: { accent: "#ea580c", layout: "single", strip: true },
-  corporate: { accent: "#1e293b", layout: "single", headerBg: "#1e293b", headerFg: "#ffffff", expDots: true },
-  techpro: { accent: "#4f46e5", layout: "columns", expDots: true },
-  legal: { accent: "#0f172a", layout: "single", serif: true, expDots: true },
-  nordic: { accent: "#0d9488", layout: "single" },
-  sidebarpro: { accent: "#047857", layout: "sidebar", sideBg: "#065f46", sideFg: "#ecfdf5", sideAccent: "#6ee7b7", sideFoot: "Dogovor.expert · резюме по стандартам 2026" },
-  ocean: { accent: "#0369a1", layout: "single", headerBg: "#0369a1", headerFg: "#ffffff" },
-  terracotta: { accent: "#9a3412", layout: "single", strip: true },
-  graphite: { accent: "#3f3f46", layout: "single" },
-  forest: { accent: "#166534", layout: "sidebar", sideBg: "#f0fdf4", sideFg: "#14532d", sideAccent: "#166534" },
-  wine: { accent: "#881337", layout: "single", headerBg: "#881337", headerFg: "#ffffff", serif: true },
+  "executive-navy": { accent: "#1e293b", layout: "columns", headerBg: "#1e293b", headerFg: "#ffffff", expDots: true },
+  "tech-indigo": { accent: "#4f46e5", layout: "columns", expDots: true },
+  "classic-legal": { accent: "#0f172a", layout: "single", center: true, serif: true },
+  "nordic-minimal": { accent: "#0d9488", layout: "single" },
+  "modern-emerald": { accent: "#059669", layout: "sidebar", sideBg: "#059669", sideFg: "#ffffff", sideAccent: "#a7f3d0", sideFoot: "Dogovor.expert · резюме по стандартам 2026" },
+  "creative-coral": { accent: "#ea580c", layout: "single", strip: true },
+  "junior-launch": { accent: "#2563eb", layout: "single" },
+  "corporate-slate": { accent: "#334155", layout: "single", center: true, serif: true },
+  "data-mono": { accent: "#7c3aed", layout: "columns", expDots: true },
+  "legal-counsel": { accent: "#1e3a8a", layout: "sidebar", sideBg: "#1e3a8a", sideFg: "#ffffff", sideAccent: "#93c5fd", sideFoot: "Dogovor.expert · резюме по стандартам 2026" },
 };
 
 /**

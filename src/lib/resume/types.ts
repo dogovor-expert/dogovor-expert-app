@@ -48,31 +48,29 @@ export interface ResumeData {
   languages: ResumeLanguage[];
 }
 
+/** Идентификаторы шаблонов — как в эталонном макете РЕЗЮМЕ 3. */
 export type TemplateId =
-  | "classic"
-  | "modern"
-  | "minimal"
-  | "executive"
-  | "gradient"
-  | "compact"
-  | "fresher"
-  | "timeline"
-  | "twocol"
-  | "academic"
-  | "expert"
-  | "creative"
-  | "corporate"
-  | "techpro"
-  | "legal"
-  | "nordic"
-  | "sidebarpro"
-  | "ocean"
-  | "terracotta"
-  | "graphite"
-  | "forest"
-  | "wine";
+  | "executive-navy"
+  | "tech-indigo"
+  | "classic-legal"
+  | "nordic-minimal"
+  | "modern-emerald"
+  | "creative-coral"
+  | "junior-launch"
+  | "corporate-slate"
+  | "data-mono"
+  | "legal-counsel";
 
 export type TemplateAts = "safe" | "creative";
+
+/** Раскладки шаблонов из макета РЕЗЮМЕ 3. */
+export type TemplateLayout =
+  | "executive-header"
+  | "tech-split"
+  | "classic-serif"
+  | "clean-minimal"
+  | "modern-sidebar"
+  | "creative-accent";
 
 export interface TemplateMeta {
   id: TemplateId;
@@ -81,6 +79,13 @@ export interface TemplateMeta {
   ats: TemplateAts;
   parse: number;
   tags: string[];
+  category: string;
+  layout: TemplateLayout;
+  color: string;
+  badge?: string;
+  downloads: string;
+  rating: number;
+  pages: number;
 }
 
 export interface ProfessionPreset {

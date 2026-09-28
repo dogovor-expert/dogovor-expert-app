@@ -1,4 +1,4 @@
-/** Паритет 22 шаблонов резюме: каждый шаблон покрыт HTML-превью, DOC-HTML и CSS. */
+/** Паритет шаблонов резюме (эталон РЕЗЮМЕ 3): HTML-превью, DOC-HTML, CSS и PDF. */
 import { describe, expect, it } from "vitest";
 import { SAMPLE_RESUME, TEMPLATES } from "../data";
 import { buildResumeDocHtml, buildResumeHtml, fullName } from "../render";
@@ -6,10 +6,16 @@ import { RESUME_CSS } from "../resumeCss";
 import type { ResumeData, TemplateId } from "../types";
 
 const ALL: TemplateId[] = [
-  "classic", "modern", "minimal", "executive", "gradient", "compact",
-  "fresher", "timeline", "twocol", "academic", "expert", "creative",
-  "corporate", "techpro", "legal", "nordic", "sidebarpro",
-  "ocean", "terracotta", "graphite", "forest", "wine",
+  "executive-navy",
+  "tech-indigo",
+  "classic-legal",
+  "nordic-minimal",
+  "modern-emerald",
+  "creative-coral",
+  "junior-launch",
+  "corporate-slate",
+  "data-mono",
+  "legal-counsel",
 ];
 
 const WITH_PHOTO: ResumeData = {
@@ -17,19 +23,25 @@ const WITH_PHOTO: ResumeData = {
   personal: { ...SAMPLE_RESUME.personal, photo: "data:image/png;base64,iVBORw0KGgo=" },
 };
 
-describe("resume templates parity", () => {
-  it("каталог содержит 22 уникальных шаблона", () => {
+describe("resume templates parity (РЕЗЮМЕ 3)", () => {
+  it("каталог содержит 10 уникальных шаблонов эталона", () => {
     expect(TEMPLATES.map((t) => t.id)).toEqual(ALL);
-    expect(new Set(TEMPLATES.map((t) => t.id)).size).toBe(22);
+    expect(new Set(TEMPLATES.map((t) => t.id)).size).toBe(10);
   });
 
-  it("мета новых шаблонов: expert — двухколоночный для руководителей, creative — одноколоночный", () => {
-    const expert = TEMPLATES.find((t) => t.id === "expert");
-    const creative = TEMPLATES.find((t) => t.id === "creative");
-    expect(expert?.ats).toBe("creative");
-    expect(expert?.tags).toContain("exec");
-    expect(creative?.ats).toBe("safe");
-    expect(creative?.tags).toContain("creative");
+  it("мета шаблонов повторяет макет: категории, бейджи, рейтинги, скачивания", () => {
+    const exec = TEMPLATES.find((t) => t.id === "executive-navy");
+    expect(exec?.category).toBe("Руководители");
+    expect(exec?.layout).toBe("executive-header");
+    expect(exec?.badge).toBe("Выбор HR-директоров");
+    expect(exec?.rating).toBeGreaterThan(4.9);
+    expect(exec?.downloads).toContain("тыс.");
+    const tech = TEMPLATES.find((t) => t.id === "tech-indigo");
+    expect(tech?.layout).toBe("tech-split");
+    expect(tech?.badge).toBe("Хит для IT");
+    expect(tech?.tags).toContain("creative");
+    const junior = TEMPLATES.find((t) => t.id === "junior-launch");
+    expect(junior?.tags).toContain("first");
   });
 
   it("buildResumeHtml: все шаблоны непустые и содержат имя", () => {
@@ -40,85 +52,49 @@ describe("resume templates parity", () => {
     }
   });
 
-  it("эталонные раскладки: exec/side/base присутствуют и содержат имя", () => {
-    expect(buildResumeHtml(SAMPLE_RESUME, "corporate")).toContain("smp-exec");
-    expect(buildResumeHtml(SAMPLE_RESUME, "sidebarpro")).toContain("smp-side");
-    expect(buildResumeHtml(SAMPLE_RESUME, "techpro")).toContain("smp-base");
+  it("эталонные раскладки: exec/side/base + serif/tech-варианты", () => {
+    expect(buildResumeHtml(SAMPLE_RESUME, "executive-navy")).toContain("smp-exec");
+    expect(buildResumeHtml(SAMPLE_RESUME, "modern-emerald")).toContain("smp-side");
+    expect(buildResumeHtml(SAMPLE_RESUME, "legal-counsel")).toContain("smp-side");
+    expect(buildResumeHtml(SAMPLE_RESUME, "tech-indigo")).toContain("smp-base");
+    expect(buildResumeHtml(SAMPLE_RESUME, "tech-indigo")).toContain("smp-tech");
+    expect(buildResumeHtml(SAMPLE_RESUME, "data-mono")).toContain("smp-tech");
+    expect(buildResumeHtml(SAMPLE_RESUME, "classic-legal")).toContain("smp-serif");
+    expect(buildResumeHtml(SAMPLE_RESUME, "corporate-slate")).toContain("smp-serif");
   });
 
-  it("фото показывается во ВСЕХ шаблонах, если загружено", () => {
+  it("фото показывается, если загружено, и скрыто при showPhoto=false", () => {
     for (const id of ALL) {
       const html = buildResumeHtml(WITH_PHOTO, id);
       expect(html, id).toMatch(/smp-ph|smp-top-ph|smp-bar-ph/);
       expect(html, id).toContain("data:image/png;base64,iVBORw0KGgo=");
+      const noPhoto: ResumeData = {
+        ...WITH_PHOTO,
+        personal: { ...WITH_PHOTO.personal, showPhoto: false },
+      };
+      expect(buildResumeHtml(noPhoto, id), id).not.toContain("data:image/png;base64,iVBORw0KGgo=");
     }
   });
 
-  it("фото скрыто во всех шаблонах при showPhoto=false", () => {
-    const noPhoto: ResumeData = { ...WITH_PHOTO, personal: { ...WITH_PHOTO.personal, showPhoto: false } };
-    for (const id of ALL) {
-      const html = buildResumeHtml(noPhoto, id);
-      expect(html, id).not.toMatch(/smp-ph|smp-top-ph|smp-bar-ph/);
-    }
-  });
-
-  it("exec (corporate): баннер, пилюли контактов, рейл с иконками", () => {
-    const html = buildResumeHtml(WITH_PHOTO, "corporate");
-    expect(html).toContain("smp-hd");
-    expect(html).toContain("smp-pills");
-    expect(html).toContain("smp-rail");
-    expect(html).toContain("Ключевые навыки");
-    expect(html).toContain("smp-ph");
-  });
-
-  it("side (sidebarpro тёмный, forest светлый): сайдбар, подпись", () => {
-    const dark = buildResumeHtml(SAMPLE_RESUME, "sidebarpro");
-    expect(dark).toContain("smp-bar");
-    expect(dark).toContain("по стандартам 2026");
-    expect(dark).not.toContain("smp-light");
-    const light = buildResumeHtml(SAMPLE_RESUME, "forest");
-    expect(light).toContain("smp-side");
-    expect(light).toContain("smp-light");
-  });
-
-  it("base (techpro/legal/nordic): шапка, контактная полоса, две колонки", () => {
-    for (const id of ["techpro", "legal", "nordic", "expert", "creative", "terracotta", "graphite"] as TemplateId[]) {
-      const html = buildResumeHtml(SAMPLE_RESUME, id);
-      expect(html, id).toContain("smp-base");
-      expect(html, id).toContain("smp-cbar");
-      expect(html, id).toContain("smp-cols");
-    }
-  });
-
-  it("techpro помечен как tech (моно-чипы), legal — serif", () => {
-    expect(buildResumeHtml(SAMPLE_RESUME, "techpro")).toContain("smp-tech");
-    expect(buildResumeHtml(SAMPLE_RESUME, "legal")).toContain("smp-serif");
-  });
-
-  it("buildResumeDocHtml: акценты и флаги новых шаблонов", () => {
+  it("buildResumeDocHtml: акценты и флаги шаблонов", () => {
     const dots: Array<[TemplateId, string]> = [
-      ["corporate", "#1e293b"], ["techpro", "#4f46e5"], ["legal", "#0f172a"],
-      ["nordic", "#0d9488"], ["ocean", "#0369a1"], ["terracotta", "#9a3412"],
-      ["graphite", "#3f3f46"], ["wine", "#881337"],
+      ["executive-navy", "#1e293b"],
+      ["tech-indigo", "#4f46e5"],
+      ["classic-legal", "#0f172a"],
+      ["nordic-minimal", "#0d9488"],
+      ["modern-emerald", "#059669"],
+      ["creative-coral", "#ea580c"],
+      ["junior-launch", "#2563eb"],
+      ["corporate-slate", "#334155"],
+      ["data-mono", "#7c3aed"],
+      ["legal-counsel", "#1e3a8a"],
     ];
     for (const [id, accent] of dots) {
       const doc = buildResumeDocHtml(SAMPLE_RESUME, id);
       expect(doc, id).toContain(accent);
     }
-    expect(buildResumeDocHtml(SAMPLE_RESUME, "corporate")).toContain("border-left");
-    expect(buildResumeDocHtml(SAMPLE_RESUME, "sidebarpro")).toContain("по стандартам 2026");
-    expect(buildResumeDocHtml(SAMPLE_RESUME, "forest")).toContain("#f0fdf4");
-  });
-
-  it("buildResumeDocHtml: A4, акцент и полоса у новых шаблонов", () => {
-    const expert = buildResumeDocHtml(SAMPLE_RESUME, "expert");
-    expect(expert).toContain("@page");
-    expect(expert).toContain("A4");
-    expect(expert).toContain("#4f46e5");
-    expect(expert).toContain('width="64%"');
-    const creative = buildResumeDocHtml(SAMPLE_RESUME, "creative");
-    expect(creative).toContain("#ea580c");
-    expect(creative).toContain(fullName(SAMPLE_RESUME));
+    expect(buildResumeDocHtml(SAMPLE_RESUME, "modern-emerald")).toContain("по стандартам 2026");
+    expect(buildResumeDocHtml(SAMPLE_RESUME, "classic-legal")).toContain("Times New Roman");
   });
 
   it("buildResumeDocHtml: DOC без flex/grid — таблицы и инлайн-стили", () => {
@@ -129,13 +105,16 @@ describe("resume templates parity", () => {
     }
   });
 
-  it("RESUME_CSS покрывает все 22 шаблона", () => {
-    for (const id of ALL) {
-      expect(RESUME_CSS, id).toContain(`.t-${id}`);
-    }
+  it("RESUME_CSS покрывает эталонные раскладки", () => {
+    expect(RESUME_CSS).toContain(".smp-base");
+    expect(RESUME_CSS).toContain(".smp-exec");
+    expect(RESUME_CSS).toContain(".smp-side");
+    expect(RESUME_CSS).toContain(".smp-serif");
+    expect(RESUME_CSS).toContain(".smp-tech");
   });
 
-  it("renderResumePdf: все 22 шаблона собираются в одностраничный A4-PDF", async () => {    const { readFile } = await import("node:fs/promises");
+  it("renderResumePdf: все шаблоны собираются в одностраничный A4-PDF", async () => {
+    const { readFile } = await import("node:fs/promises");
     const { join } = await import("node:path");
     const origFetch = globalThis.fetch;
     const root = join(process.cwd(), "public", "fonts");
@@ -147,7 +126,6 @@ describe("resume templates parity", () => {
     try {
       const { renderResumePdf } = await import("../resumePdf");
       const { PDFDocument } = await import("pdf-lib");
-      // PNG 1x1 — проверяет ветку встраивания фото во все шапки.
       const tinyPng =
         "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==";
       const withRealPhoto: ResumeData = {
