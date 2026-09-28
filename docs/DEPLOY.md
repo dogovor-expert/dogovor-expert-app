@@ -132,6 +132,15 @@ npm run deploy:dry        # показать план, ничего не дел�
    ≈ 400MB transient heap при heap ~2 ГБ. Лечение: тяжёлые эндпоинты не дёргать
    вручную днём; `?action=status` лёгкий (metadata-only, без парсинга XML);
    heap рантайма — `NODE_OPTIONS` в runtime-стадии Dockerfile.
+   ⚠️ Environment приложения в Dokploy **перекрывает** ENV из Dockerfile:
+   2026-09-28 в Environment лежал `NODE_OPTIONS=--max-old-space-size=384`
+   (наследство CapRover-эпохи) — рантайм жил с heap 384MB при Dockerfile 3072.
+   Правило: heap задаём в ОБОИХ местах (Dockerfile — канон, Environment —
+   явный дубликат 3072). Проверка живого значения:
+   `docker inspect <cid> --format '{{range .Config.Env}}{{println .}}{{end}}' | grep NODE_OPTIONS`.
+   Срочный фикс без пересборки: `docker service update --env-add
+   'NODE_OPTIONS=--max-old-space-size=3072' dogovor-prod-dlpedm`
+   (потом обязательно Save в Environment панели, иначе следующий деплой откатит).
 6. **Забит диск.** Симптомы: долгие/падающие сборки, таймауты SSH:
    ```bash
    docker system df
