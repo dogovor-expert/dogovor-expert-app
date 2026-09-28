@@ -21,13 +21,7 @@ export interface CatalogItem {
   badge?: string;
 }
 
-const FILTERS: Array<[string, string]> = [
-  ["all", "Все шаблоны"],
-  ["safe", "ATS-safe"],
-  ["creative", "Креативные"],
-  ["exec", "Для руководства"],
-  ["first", "Без опыта"],
-];
+const ALL_LABEL = "Все шаблоны";
 
 function saveBlob(blob: Blob, filename: string): void {
   const url = URL.createObjectURL(blob);
@@ -56,7 +50,7 @@ function TemplateCard({ item }: { item: CatalogItem }) {
         const html = buildResumeDocHtml(SAMPLE_RESUME, item.id);
         saveBlob(new Blob(["\ufeff", html], { type: "application/msword" }), `Резюме — ${item.name} (образец).doc`);
       }
-      setMsg(`Образец ${fmt} скачан`);
+      setMsg(`Бланк ${fmt} скачан`);
       window.setTimeout(() => setMsg(null), 2500);
     } catch {
       setMsg("Не удалось скачать, попробуйте ещё раз");
@@ -96,7 +90,7 @@ function TemplateCard({ item }: { item: CatalogItem }) {
         {/* Hover overlay hint */}
         <div className="absolute inset-0 flex items-center justify-center bg-slate-900/40 opacity-0 backdrop-blur-sm transition group-hover:opacity-100">
           <span className="rounded-xl bg-white px-4 py-2 text-xs font-bold text-slate-900 shadow-lg">
-            Открыть в конструкторе →
+            Открыть в студии резюме →
           </span>
         </div>
 
@@ -134,14 +128,7 @@ function TemplateCard({ item }: { item: CatalogItem }) {
         <div className="mt-4 flex flex-wrap items-center gap-2 text-[11px] font-medium text-slate-400">
           <span className="rounded bg-slate-100 px-2 py-0.5 text-slate-600">PDF (300 DPI)</span>
           <span className="rounded bg-slate-100 px-2 py-0.5 text-slate-600">DOCX Word</span>
-          <span
-            className={cn(
-              "ml-auto font-semibold",
-              item.ats === "safe" ? "text-emerald-700" : "text-amber-700",
-            )}
-          >
-            {item.ats === "safe" ? "ATS ОК" : "Креативная вёрстка"}
-          </span>
+          <span className="ml-auto font-semibold text-emerald-700">ATS ОК</span>
         </div>
 
         {/* Download Buttons */}
@@ -161,8 +148,8 @@ function TemplateCard({ item }: { item: CatalogItem }) {
             disabled={busy !== null}
             className="flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 disabled:opacity-50"
           >
-            {busy === "DOC" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FileText className="h-3.5 w-3.5" />}
-            DOC
+            {busy === "DOC" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FileDown className="h-3.5 w-3.5" />}
+            DOCX
           </button>
         </div>
 
@@ -176,20 +163,26 @@ function TemplateCard({ item }: { item: CatalogItem }) {
 
 /** Каталог шаблонов: поиск, категории и карточки с живыми превью реальных макетов. */
 export function ResumeCatalog({ items }: { items: CatalogItem[] }) {
-  const [filter, setFilter] = useState("all");
+  const [filter, setFilter] = useState(ALL_LABEL);
   const [query, setQuery] = useState("");
+
+  const categories = useMemo(() => {
+    const seen: string[] = [];
+    for (const t of items) if (!seen.includes(t.category)) seen.push(t.category);
+    return [ALL_LABEL, ...seen];
+  }, [items]);
 
   const shown = useMemo(() => {
     const q = query.trim().toLowerCase();
     return items.filter((t) => {
-      const matchCat = filter === "all" || t.cats.includes(filter);
-      const matchQuery = !q || t.name.toLowerCase().includes(q) || t.desc.toLowerCase().includes(q);
+      const matchCat = filter === ALL_LABEL || t.category === filter;
+      const matchQuery = !q || t.name.toLowerCase().includes(q) || t.desc.toLowerCase().includes(q) || t.category.toLowerCase().includes(q);
       return matchCat && matchQuery;
     });
   }, [items, filter, query]);
 
   const countOf = (key: string) =>
-    key === "all" ? items.length : items.filter((t) => t.cats.includes(key)).length;
+    key === ALL_LABEL ? items.length : items.filter((t) => t.category === key).length;
 
   return (
     <div>
@@ -219,14 +212,14 @@ export function ResumeCatalog({ items }: { items: CatalogItem[] }) {
 
       <div className="-mx-6 mt-8 overflow-x-auto px-6 pb-2 [scrollbar-width:none]">
         <div className="flex gap-2" role="group" aria-label="Категории шаблонов">
-          {FILTERS.map(([k, label]) => {
-            const active = filter === k;
+          {categories.map((label) => {
+            const active = filter === label;
             return (
               <button
-                key={k}
+                key={label}
                 type="button"
                 aria-pressed={active}
-                onClick={() => setFilter(k)}
+                onClick={() => setFilter(label)}
                 className={cn(
                   "flex shrink-0 items-center gap-2 rounded-full border px-4 py-2 text-xs font-semibold transition sm:text-sm",
                   active
@@ -241,7 +234,7 @@ export function ResumeCatalog({ items }: { items: CatalogItem[] }) {
                     active ? "bg-white/20 text-white" : "bg-slate-100 text-slate-500",
                   )}
                 >
-                  {countOf(k)}
+                  {countOf(label)}
                 </span>
               </button>
             );
@@ -266,7 +259,7 @@ export function ResumeCatalog({ items }: { items: CatalogItem[] }) {
             type="button"
             onClick={() => {
               setQuery("");
-              setFilter("all");
+              setFilter(ALL_LABEL);
             }}
             className="mt-4 rounded-xl bg-slate-900 px-4 py-2 text-xs font-semibold text-white"
           >

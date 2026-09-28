@@ -448,8 +448,17 @@ function drawColumns(d: Doc, ctx: Ctx) {
   d.y = Math.min(yLeft, d.y);
 }
 
-export async function renderResumePdf(data: ResumeData, tpl: TemplateId): Promise<Blob> {
-  const style = STYLES[tpl] ?? STYLES["classic-legal"];
+export async function renderResumePdf(data: ResumeData, tpl: TemplateId, accent?: string): Promise<Blob> {
+  const baseStyle = STYLES[tpl] ?? STYLES["classic-legal"];
+  const style: TemplateStyle = accent
+    ? {
+        ...baseStyle,
+        accent: hex(accent),
+        ...(baseStyle.headerBand ? { headerBand: hex(accent) } : {}),
+        ...(baseStyle.topStrip ? { topStrip: hex(accent) } : {}),
+        ...(baseStyle.sideBg ? { sideBg: hex(accent) } : {}),
+      }
+    : baseStyle;
   const family = style.serif ? "pt-serif" : "inter";
   const [regBytes, boldBytes] = await Promise.all([
     loadFontBytes(`/fonts/${family}-regular.ttf`),

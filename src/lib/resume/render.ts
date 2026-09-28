@@ -283,10 +283,10 @@ function buildSampleHtml(data: ResumeData, cfg: SampleCfg): string {
   );
 }
 
-/** Собирает HTML документа резюме для выбранного шаблона. */
-export function buildResumeHtml(data: ResumeData, tpl: TemplateId): string {
+/** Собирает HTML документа резюме для выбранного шаблона. accent переопределяет цвет оформления. */
+export function buildResumeHtml(data: ResumeData, tpl: TemplateId, accent?: string): string {
   const sc = SAMPLE_MAP[tpl];
-  if (sc) return buildSampleHtml(data, sc);
+  if (sc) return buildSampleHtml(data, accent ? { ...sc, accent } : sc);
   return buildLegacyHtml(data, tpl);
 }
 
@@ -381,9 +381,17 @@ const DOC_TEMPLATES: Record<TemplateId, DocTemplateStyle> = {
  * Повторяет выбранный шаблон: акцентный цвет, шапка или боковая колонка (таблицей),
  * линейные секции — без flex/grid, чтобы документ корректно открывался и редактировался в Word.
  */
-export function buildResumeDocHtml(data: ResumeData, tpl: TemplateId): string {
+export function buildResumeDocHtml(data: ResumeData, tpl: TemplateId, accent?: string): string {
   const p = data.personal;
-  const cfg: DocTemplateStyle = DOC_TEMPLATES[tpl];
+  const baseCfg = DOC_TEMPLATES[tpl];
+  const cfg: DocTemplateStyle = accent
+    ? {
+        ...baseCfg,
+        accent,
+        ...(baseCfg.headerBg ? { headerBg: accent } : {}),
+        ...(baseCfg.sideBg ? { sideBg: accent } : {}),
+      }
+    : baseCfg;
   const font = cfg.serif ? "'Times New Roman',Georgia,serif" : "Arial,Helvetica,sans-serif";
   const name = escapeHtml(fullName(data)) || "Ваше имя";
   const role = escapeHtml(p.role);

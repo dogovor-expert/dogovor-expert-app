@@ -164,4 +164,18 @@ export const BUILDER_CSS = `
   .rvb-dgrid{grid-template-columns:1fr}
   .rvb-qpop{position:fixed;left:12px;right:12px;width:auto;top:calc(env(safe-area-inset-top,0px) + 68px)}
 }
+
+/* Палитра акцентов оформления (студия РЕЗЮМЕ 3) */
+.rvb-accent-box{margin-top:14px;padding:12px 14px;border:1px solid var(--rvb-bd);border-radius:14px;background:var(--rvb-soft)}
+.rvb-accent-h{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.09em;color:var(--rvb-mut);margin-bottom:10px}
+.rvb-accent-row{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.rvb-accent-dot{width:30px;height:30px;border-radius:50%;border:2px solid var(--rvb-elev);box-shadow:0 1px 3px rgba(15,23,42,.25);cursor:pointer;display:grid;place-items:center;color:#fff;font-size:13px;font-weight:800;transition:transform .15s}
+.rvb-accent-dot:hover{transform:scale(1.12)}
+.rvb-accent-dot.on{border-color:var(--rvb-ink);transform:scale(1.12)}
+.rvb-accent-auto{margin-left:auto;font-size:11.5px;font-weight:700;color:var(--rvb-ink);background:var(--rvb-elev);border:1px solid var(--rvb-bd);border-radius:999px;padding:6px 12px;cursor:pointer}
+.rvb-accent-auto.on{background:var(--rvb-brand);color:#fff;border-color:var(--rvb-brand)}
+.rvb-tcard .rvb-tname{display:flex;align-items:center;gap:7px}
+.rvb-tcard .rvb-dot{width:10px;height:10px;border-radius:50%;flex:none}
+.rvb-tcard-cat{display:block;font-size:10.5px;font-weight:700;color:var(--rvb-mut);text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px}
+.rvb-tcard-badge{display:inline-block;margin-top:4px;font-size:10px;font-weight:800;font-style:normal;color:#92400e;background:#fef3c7;border-radius:6px;padding:2px 7px}
 `;

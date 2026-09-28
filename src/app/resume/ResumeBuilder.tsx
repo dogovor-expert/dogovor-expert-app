@@ -23,7 +23,7 @@ import {
 } from "lucide-react";
 import { RESUME_CSS } from "@/lib/resume/resumeCss";
 import { BUILDER_CSS } from "@/lib/resume/builderCss";
-import { PRESETS, PHRASES, SAMPLE_RESUME, TEMPLATES, TEMPLATE_META } from "@/lib/resume/data";
+import { ACCENT_PALETTES, PRESETS, PHRASES, SAMPLE_RESUME, TEMPLATES, TEMPLATE_META } from "@/lib/resume/data";
 import { buildResumeDocHtml, buildResumeHtml, countNumericBullets, fullName, hardSkills } from "@/lib/resume/render";
 // pdf-lib подгружается лениво при экспорте (см. exportPdfFile) — чтобы не раздувать бандл страницы
 import { saveAs } from "file-saver";
@@ -31,6 +31,7 @@ import type { ResumeData, ResumeExperience, ResumeLanguage, TemplateId } from "@
 
 const LS_DATA = "dogovorResumeData";
 const LS_TPL = "dogovorResumeTpl";
+const LS_ACCENT = "dogovorResumeAccent";
 const LEVELS = ["Родной", "C2", "C1", "B2", "B1", "A2", "A1"] as const;
 
 type SectionId = "prof" | "user" | "sum" | "exp" | "edu" | "sk" | "lg";
@@ -83,6 +84,7 @@ const ACCORDION: Array<{ id: SectionId; title: string; icon: typeof User }> = [
 export default function ResumeBuilder() {
   const [data, setData] = useState<ResumeData>(SAMPLE_RESUME);
   const [tpl, setTpl] = useState<TemplateId>("executive-navy");
+  const [accent, setAccent] = useState<string | null>(null);
   const [presetKey, setPresetKey] = useState("");
   const [openSec, setOpenSec] = useState<SectionId | null>("user");
   const [undo, setUndo] = useState<{ label: string; restore: () => void } | null>(null);
@@ -111,6 +113,8 @@ export default function ResumeBuilder() {
       if (raw) setData(JSON.parse(raw) as ResumeData);
       const t = localStorage.getItem(LS_TPL) as TemplateId | null;
       if (t && TEMPLATE_META[t]) setTpl(t);
+      const acc = localStorage.getItem(LS_ACCENT);
+      if (acc) setAccent(acc);
       const urlTpl = new URLSearchParams(window.location.search).get("tpl") as TemplateId | null;
       if (urlTpl && TEMPLATE_META[urlTpl]) setTpl(urlTpl);
     } catch {
@@ -126,12 +130,14 @@ export default function ResumeBuilder() {
       try {
         localStorage.setItem(LS_DATA, JSON.stringify(data));
         localStorage.setItem(LS_TPL, tpl);
+        if (accent) localStorage.setItem(LS_ACCENT, accent);
+        else localStorage.removeItem(LS_ACCENT);
       } catch {
         /* ignore */
       }
     }, 400);
     return () => window.clearTimeout(id);
-  }, [data, tpl, loaded]);
+  }, [data, tpl, loaded, accent]);
 
   // Масштаб превью: подгоняем под ширину сцены (ResizeObserver), пока пользователь не задал зум вручную.
   useEffect(() => {
@@ -218,7 +224,7 @@ export default function ResumeBuilder() {
     return () => cancelAnimationFrame(raf);
   }, [drawer, filter, data, tpl]);
 
-  const html = useMemo(() => buildResumeHtml(data, tpl), [data, tpl]);
+  const html = useMemo(() => buildResumeHtml(data, tpl, accent ?? undefined), [data, tpl, accent]);
   const quality = useMemo(() => computeQuality(data), [data]);
   const qPct = Math.round((quality.filter((c) => c.ok).length / quality.length) * 100);
 
@@ -304,7 +310,7 @@ export default function ResumeBuilder() {
     setPdfBusy(true);
     try {
       const { renderResumePdf } = await import("@/lib/resume/resumePdf");
-      const blob = await renderResumePdf(data, tpl);
+      const blob = await renderResumePdf(data, tpl, accent ?? undefined);
       saveAs(blob, `Резюме — ${fullName(data) || "без имени"}.pdf`);
     } catch (err) {
       console.error("[resume] pdf", err);
@@ -343,7 +349,7 @@ export default function ResumeBuilder() {
 
   // Скачивание в DOC (Word-совместимый HTML): редактируемый документ.
   const exportDoc = () => {
-    const html = buildResumeDocHtml(data, tpl);
+    const html = buildResumeDocHtml(data, tpl, accent ?? undefined);
     const blob = new Blob(["\ufeff", html], { type: "application/msword" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -559,6 +565,33 @@ export default function ResumeBuilder() {
             </button>
           ))}
         </div>
+        <div className="rvb-accent-box">
+          <div className="rvb-accent-h">Акцент оформления</div>
+          <div className="rvb-accent-row">
+            {ACCENT_PALETTES.map((c) => (
+              <button
+                key={c.hex}
+                type="button"
+                className={`rvb-accent-dot ${accent === c.hex ? "on" : ""}`}
+                style={{ background: c.hex }}
+                title={c.name}
+                aria-label={`Акцент: ${c.name}`}
+                aria-pressed={accent === c.hex}
+                onClick={() => setAccent(accent === c.hex ? null : c.hex)}
+              >
+                {accent === c.hex ? "✓" : ""}
+              </button>
+            ))}
+            <button
+              type="button"
+              className={`rvb-accent-auto ${accent === null ? "on" : ""}`}
+              aria-pressed={accent === null}
+              onClick={() => setAccent(null)}
+            >
+              Цвет шаблона
+            </button>
+          </div>
+        </div>
         <div className="rvb-dgrid" ref={gridRef} role="group" aria-label="Шаблоны резюме" tabIndex={0}>
           {drawer &&
             filtered.map((t) => (
@@ -578,8 +611,15 @@ export default function ResumeBuilder() {
                 </div>
                 <div className="rvb-tcard-m">
                   <div>
-                    <b>{t.name}</b>
-                    <small>{t.desc}</small>
+                    <b className="rvb-tname">
+                      <i className="rvb-dot" style={{ background: t.color }} aria-hidden />
+                      {t.name}
+                    </b>
+                    <small>
+                      <span className="rvb-tcard-cat">{t.category}</span>
+                      {t.desc}
+                      {t.badge ? <em className="rvb-tcard-badge">{t.badge}</em> : null}
+                    </small>
                   </div>
                   <span className={`rvb-badge ${t.ats === "safe" ? "safe" : "cre"}`}>
                     {t.ats === "safe" ? `✓ ${t.parse}%` : `⚠ ${t.parse}%`}
