@@ -1,6 +1,6 @@
 ---
 name: deploy-safety
-description: Безопасный деплой Dogovor на прод (CapRover). Проверяет предусловия, выполняет деплой и верифицирует результат. Используй перед каждым деплоем на прод.
+description: Безопасный деплой Dogovor на прод (VDS/Dokploy). Проверяет предусловия, выполняет деплой и верифицирует результат. Используй перед каждым деплоем на прод.
 ---
 
 # Deploy Safety
@@ -8,8 +8,8 @@ description: Безопасный деплой Dogovor на прод (CapRover).
 ## Когда использовать
 
 Этот skill ОБЯЗАН использоваться при:
-- Деплое на прод через `git push origin master:production` (CapRover-вебхук)
-- Любых изменениях в `captain-definition`, `next.config.mjs`, `middleware.ts`
+- Деплое на прод (`git push vds master` + Deploy в панели Dokploy)
+- Любых изменениях в `Dockerfile`, `next.config.mjs`, `middleware.ts`
 - Обновлении зависимостей, влияющих на сборку
 - После исправления багов, требующих проверки на проде
 
@@ -22,13 +22,16 @@ description: Безопасный деплой Dogovor на прод (CapRover).
 ## Деплой
 
 ```powershell
-git push origin master:production
+npm run deploy          # = git push vds master + запуск сборки в Dokploy (нужен DOKPLOY_API_KEY)
+# без API-ключа: git push vds master, затем Deploy в панели вручную
 ```
-Канон — `docs/DEPLOY.md`; `production` обязана быть fast-forward от `master`.
+Канон — `docs/DEPLOY.md`. Ветка `master` — единственная деплой-ветка.
 
 ### Критические правила (из AGENTS.md)
 - **НЕ исключать `*.png`** — `og-image.png` (1200x630) и `apple-icon.png` (180x180) обязаны попасть в деплой
 - **НЕ заливать `.next/cache`** — build-кэш может уронить загрузку
+- **НЕ переключать Dokploy на GitHub** — с VDS идёт троттлинг, код берётся из локального зеркала
+- **НЕ пушить повторно «для ускорения»** — каждый лишний push = ещё один цикл сборки в очереди
 
 ## Пост-деплой верификация (ОБЯЗАТЕЛЬНА)
 
@@ -72,6 +75,6 @@ Disallow: /documents/$
 
 ## Известные ловушки
 
-- Статус «deployed» в панели CapRover НЕ означает доставку кода — проверять фактически (HTTP-коды + smoke)
+- Статус `done` в панели Dokploy НЕ означает доставку кода — проверять фактически (HTTP-коды + smoke + `deploy-content.mjs`)
 - `package.json` в `.next` — служебный `{"type":"module"}`, подменять sha в манифесте
 - Кириллица в PowerShell: `[Console]::OutputEncoding = [System.Text.Encoding]::UTF8`

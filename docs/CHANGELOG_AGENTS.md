@@ -4,6 +4,48 @@
 
 ---
 
+## [2026-09-28] Миграция деплоя: CapRover → Dokploy (+ актуализация документации)
+
+- **Агент:** Cline
+- **Тип:** chore (infra/docs)
+- **Что произошло на сервере:** прод мигрирован с CapRover на **Dokploy**.
+  CapRover (панель, образы `img-captain-*`, каталог `/captain`) удалён с VDS.
+- **Почему:** с VDS до GitHub канал ~1 КБ/с — `git clone` рвался
+  (`fetch-pack: unexpected disconnect`), сборки падали/висели часами.
+- **Решение:** локальное git-зеркало на самом сервере —
+  `/etc/dokploy/git/dogovor.git`; Dokploy (`buildType: dockerfile`,
+  `sourceType: git`) клонирует его по SSH, ветка **`master`**.
+- **Проверено на проде:** 47 env-переменных побайтово совпадают со старым
+  `.env`; Upstash/Supabase работают; `/api/health` 200; TLS валиден до 26.12.2026.
+- **Файлы:**
+  - Удалены (только для CapRover): `captain-definition`,
+    `scripts/caprover-retry.mjs`, `scripts/caprover-status.mjs`,
+    `.github/workflows/deploy-branch.yml`, `.github/workflows/branch-sync.yml`.
+  - Добавлен `scripts/deploy-push.mjs` (+ `npm run deploy`, `deploy:dry`,
+    `deploy:watch`) — push в зеркало + запуск сборки через Dokploy API.
+  - `docs/DEPLOY.md` переписан: новая схема, runbook, таблица истории миграций.
+  - Обновлены `AGENTS.md`, `CLAUDE.md`, `.clinerules`, `.windsurfrules`,
+    `.github/copilot-instructions.md`, `.opencode/**`, `docs/ARCHITECTURE.md`,
+    `docs/ENV_RULES.md`, `docs/SITE_AUDIT.md`, `docs/TASKS.md`, `DEPLOY_TSL.md`,
+    `Dockerfile` (комментарии Coolify→Dokploy).
+  - `package.json`: `engines.node` `24.x` → `>=22` (в Dockerfile `node:22`,
+    иначе `npm warn EBADENGINE` на каждой сборке).
+  - `deploy-watch.yml`: триггер с удалённой ветки `production` → `master` +
+    `workflow_dispatch`.
+- **⚠️ Внимание следующему агенту:**
+  - **Push не запускает сборку автоматически.** `git push vds master` только
+    обновляет зеркало; Deploy нужно нажать в панели
+    (`http://82.146.35.220:3000` → `dogovor-prod` → Deploy) либо использовать
+    `npm run deploy` с `DOKPLOY_API_KEY`.
+  - **Cron на VDS не настроен:** задачи `tsl-refresh` и `daily-maintenance`
+    отсутствуют в root-crontab (там только docker-уборка). Dokploy не является
+    планировщиком cron. Нужно донастроить, иначе TSL-сертификаты для УКЭП
+    не обновляются.
+  - Ветки `production`/`deploy` на сервере отсутствуют; в GitHub остаются как
+    бэкап, но деплоем не используются.
+  - `deploy-watch`/`deploy-content` проверяют HTTP 200, а не содержимое —
+    зелёный статус ≠ новый код.
+
 ## [2026-09-23] Журнал действий: человеко-читаемый вид + форматтер с тестами
 
 - **Агент:** big-pickle (opencode)

@@ -8,8 +8,8 @@
 - Server Components first
 - API: Zod + CSRF + rate limit
 - Verify: `npm run verify` перед коммитом
-- Deploy: VDS/CapRover — см. docs/DEPLOY.md
+- Deploy: VDS/Dokploy — см. docs/DEPLOY.md
 - Blast Radius: `node scripts/check-blast-radius.mjs <file>`
 
 ## Стек
-Next.js 15.5 · React 19 · TS strict · Supabase · VDS/CapRover · Sentry
+Next.js 15.5 · React 19 · TS strict · Supabase · VDS/Dokploy · Sentry

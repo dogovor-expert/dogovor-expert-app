@@ -1,18 +1,21 @@
 ---
-description: Безопасный деплой Dogovor на прод (CapRover) по регламенту AGENTS.md
+description: Безопасный деплой Dogovor на прод (VDS/Dokploy) по регламенту AGENTS.md
 ---
 
-## Безопасный деплой на прод (CapRover)
+## Безопасный деплой на прод (Dokploy)
 
-Канон — `AGENTS.md` + `docs/DEPLOY.md`. Vercel НЕ используется.
+Канон — `AGENTS.md` + `docs/DEPLOY.md`. Vercel НЕ используется, GitHub как
+источник кода НЕ используется (троттлинг с VDS — код берётся из локального зеркала).
 
 ### Предварительная проверка
 1. `npx tsc --noEmit` — 0 ошибок.
 2. `npm run test:unit` — все зелёные.
-3. `git status` — без критичных незакоммиченных изменений; `production` обязана быть fast-forward от `master`.
+3. `git status` — без критичных незакоммиченных изменений; ветка `master`.
 
 ### Деплой
-4. `git push origin master:production` → CapRover-вебхук сам собирает и деплоит прод.
+4. `npm run deploy` (= `git push vds master`) → затем **Deploy в панели Dokploy**
+   (Applications → `dogovor-prod` → Deploy), либо одной командой, если задан
+   `DOKPLOY_API_KEY`.
 
 ### Пост-деплой проверка (ОБЯЗАТЕЛЬНА)
 5. `og-image.png` и `apple-icon.png` отдают 200 (НЕ исключать `*.png`).

@@ -5,7 +5,7 @@
 ## Project context
 - Next.js 15.5 App Router + React 19 + TypeScript strict
 - Supabase (PostgreSQL + RLS) для БД (self-hosted на VDS)
-- VDS/CapRover deployment (док. — docs/DEPLOY.md)
+- VDS/Dokploy deployment (док. — docs/DEPLOY.md)
 - Юридические документы на русском (369 шаблонов)
 - PRO-подписка через YooKassa
 - Аналитика: Яндекс.Метрика (consent-gated)

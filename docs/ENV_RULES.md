@@ -29,7 +29,7 @@
 
 - `.dockerignore` исключает: `node_modules`, `.next`, `.git`, `.vercel`, `playwright-report`, `test-results`, `visual-report`, `audit-shots`, `audit`, `reports`, `.lighthouseci`, `coverage`, `.env*`, `*.log`, `.nx`, `.storybook`. Если в образ случайно попадают `docs/`, IDE-правила (`.clinerules`, `.windsurfrules`, `.github/copilot-instructions.md`) и т.п. — дополнить `.dockerignore` (билд-контекст должен быть минимальным).
 - `.gitattributes` и `.editorconfig` — НЕ исключаем: они служат Git и редакторам, в bundle Next.js не попадают.
-- `.vercelignore` — легаси-артефакт (актуальный деплой — Docker на CapRover); можно удалить вместе с `vercel.json` и `.vercel/`.
+- `.vercelignore` — легаси-артефакт (актуальный деплой — Docker на Dokploy); можно удалить вместе с `vercel.json` и `.vercel/`.
 
 ## 6. OpenCode shell — PowerShell (НЕ переключаем на Git Bash)
 

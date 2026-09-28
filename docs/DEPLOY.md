@@ -1,174 +1,178 @@
 # Deploy и проверка продакшена
 
-> Вынесено из AGENTS.md (19.08.2026). Актуализировано под VDS 2026-09-18: прод переехал с Vercel на VDS/CapRover.
+> Вынесено из AGENTS.md (19.08.2026). Актуализировано 2026-09-28: прод переехал
+> с Vercel → VDS/CapRover → **VDS/Dokploy**. GitHub для деплоя больше не используется.
 
-## ⚠️ Инвариант веток (master ↔ production)
+## Актуальный флоу (2026-09-28)
 
-Деплой идёт из ветки `production`, но **источник правды — `master`**. Соблюдайте правило:
+**Прод живёт на VDS, деплоит Dokploy:**
 
-- Все правки вносите в **`master`**; PR не используются.
-- Деплой — только fast-forward: `git push origin master:production`.
-- Ветка `production` **никогда не должна опережать `master`**. Если `production` ушла вперёд — значит кто-то коммитил напрямую в `production`; это ошибка.
-- Проверка: `git fetch && git rev-list --left-right --count origin/master...origin/production` → должно быть `0  N` (master не позади; `master` впереди — это нормально, «деплой ещё не выкачен»).
+- Сервер: **82.146.35.220**
+- Панель Dokploy: `http://82.146.35.220:3000`
+- Приложение: `dogovor-prod` (внутреннее имя `dogovor-prod-dlpedm`) — Next.js
+  standalone-контейнер из `Dockerfile`, порт 3000, healthcheck `/api/health`.
+  Перед контейнером — Traefik (управляет Dokploy), сертификаты Let's Encrypt.
+- Домены: `https://dogovor.expert` и `https://www.dogovor.expert` (оба в Traefik;
+  отдельный редирект www→apex настраивается в приложении, если нужен).
+- БД: self-hosted Supabase на том же VDS,
+  `NEXT_PUBLIC_SUPABASE_URL = https://supabase.vds.dogovor.expert`.
+- Секреты/окружение прода: **Environment** приложения в Dokploy
+  (не `.env*` файлы и не Vercel Dashboard). Значения в БД Dokploy хранятся
+  зашифрованными (`enc:v1:…`).
 
-Если ветки разошлись:
+### ⚠️ Почему не GitHub (главное, не откатывать)
 
-```bash
-git fetch origin
-# master — предок production → безопасный fast-forward default-ветки:
-git push origin origin/production:master
-# если у master есть уникальные коммиты — слить production в master:
-# git checkout master && git merge origin/production
+С VDS до GitHub канал **~1 КБ/с** и он нестабилен: `git clone` репозитория
+(≈150 МБ) идёт десятки минут и регулярно рвётся
+(`fetch-pack: unexpected disconnect`, `fatal: early EOF`).
+
+**Решение — локальное git-зеркало на самом сервере:**
+
+```
+ssh://root@82.146.35.220/etc/dokploy/git/dogovor.git
 ```
 
-Автоматически это чинит workflow **`.github/workflows/branch-sync.yml`**: на каждый push в `production` он fast-forward-ит `master`, а при реальном расхождении падает с понятной ошибкой.
+Dokploy (`sourceType: git`, `buildType: dockerfile`) клонирует **это** зеркало,
+ветку **`master`**, и собирает Dockerfile из репозитория. Скорость клона —
+десятки МБ/с, обрывы исчезли. Сборка целиком занимает ~10 минут.
 
-**Важно для агентов и инструментов:** резюме и другие новые разделы живут в `production`; если работаете из `master`, сначала синхронизируйте его (`git pull`), иначе файлов не увидите.
+Зеркало — обычный bare-репозиторий; в нём **только `master`**. Веток `production`
+и `deploy` на сервере нет, и они больше не нужны (см. «История миграции» в конце).
 
-## Актуальный флоу (2026-09)
-
-**Прод живёт на VDS:**
-
-- Сервер: **82.146.35.220**, панель CapRover: `https://captain.vds.dogovor.expert`.
-- Приложение: Next.js standalone-контейнер (реализуется Dockerfile репозитория) за nginx CapRover, порт 3000, healthcheck `/api/health`.
-- Домен: `https://dogovor.expert` (www → apex редирект в приложении).
-- БД: self-hosted Supabase на том же VDS, `NEXT_PUBLIC_SUPABASE_URL = https://supabase.vds.dogovor.expert` (для прода это build-arg/среда приложения; НЕ значение из `.env.production.local` — там локальная dev-конфигурация на облачный Supabase).
-- Секреты/окружение прода: **environment variables приложения CapRover** (а не `.env*` файлы и не Vercel Dashboard).
+> Если GitHub-троттлинг с VDS уйдёт, приложение в Dokploy можно переключить
+> обратно на `https://github.com/dogovor-expert/dogovor-expert-app.git` (ветка
+> `master`) в настройках `Git → Repository URL`.
 
 ### Как деплоить
 
-**Прод обновляется автоматически через push-webhook CapRover.**
-
-Приложение `dogovor-prod` в CapRover подписано на GitHub-вебхук: репозиторий `dogovor-expert/dogovor-expert-app`, ветка **`production`**. Пуш в эту ветку → CapRover сам собирает Dockerfile из репозитория (образ `img-captain-dogovor-prod:<n>`) и перезапускает сервис. GitHub Actions для деплоя НЕ используются.
-
 ```bash
-git push origin master:production
+git push vds master
 ```
 
-- `NEXT_PUBLIC_*` инлайнятся при **БИЛДЕ** (а не в рантайме). CapRover при сборке передаёт environment variables приложения как build-args, поэтому значения обязаны быть корректны в **environment variables приложения CapRover** (не в `.env*` файлах).
-- **Правило ARG (аудит 2026-09-22):** каждый `NEXT_PUBLIC_*`, используемый в клиентском коде, обязан быть объявлен `ARG`+`ENV` в `Dockerfile` — иначе в бандл запекается пусто (на Vercel это работало из коробки, на CapRover — нет). Проверено: в бандл НЕ попадают `NEXT_PUBLIC_RTB_*` (14 шт), `NEXT_PUBLIC_ADS_ENABLED`, `NEXT_PUBLIC_REPLAY_SAMPLE_RATE` — их нет и в env CapRover, реклама выключена кодом по умолчанию, это ок. `NEXT_PUBLIC_SITE_VERSION` добавлен в Dockerfile (2026-09-22). ⚠️ Не добавлять `ARG` без значения «про запас»: напр. пустой `NEXT_PUBLIC_REPLAY_SAMPLE_RATE` отключил бы запись сессий (`Number("")=0` вместо `Number(undefined)=NaN→1`).
+Далее — **Deploy в панели Dokploy** (Applications → `dogovor-prod` → Deploy).
+Автоматического вебхука нет: `git push` обновляет только зеркало, сборку
+нужно запустить вручную (или скриптом ниже).
+
+Ветка `master` — **источник правды и единственная деплой-ветка**. Отдельных
+`production`/`deploy` нет; правило fast-forward между ветками больше не
+применяется.
+
+Всё это одной командой (push + запуск сборки через Dokploy API):
+
+```bash
+npm run deploy            # = node scripts/deploy-push.mjs
+npm run deploy:dry        # показать план, ничего не делать
+```
+
+Для автоматического редеплоя нужен API-ключ Dokploy
+(панель → Settings → API Access) в переменной окружения `DOKPLOY_API_KEY`.
+Без ключа скрипт выполнит push и напомнит нажать Deploy вручную.
+
+- `NEXT_PUBLIC_*` инлайнятся в клиентский бандл во время **БИЛДА**. Dokploy
+  передаёт их как `--build-arg`, поэтому значения должны быть верными в
+  **Environment** приложения (не в `.env*` файлах репозитория).
+- **Правило ARG:** каждый `NEXT_PUBLIC_*`, используемый в клиентском коде,
+  обязан быть объявлен `ARG`+`ENV` в `Dockerfile` — иначе в бандл запекается
+  пусто. ⚠️ Не добавлять `ARG` без значения «про запас»: напр. пустой
+  `NEXT_PUBLIC_REPLAY_SAMPLE_RATE` отключил бы запись сессий
+  (`Number("")=0` вместо `Number(undefined)=NaN→1`).
 - Локальная проверка перед пушем (опционально): `npm run build`.
 
-**Staging** — отдельное приложение CapRover `dogovor` (домен `https://test.dogovor.expert`); пуш-вебхук на нём не настроен, деплой вручную из панели (или включить вебхук на ветку `master`).
+**Staging** — отдельного приложения на Dokploy сейчас нет. Прежний
+`https://test.dogovor.expert` (CapRover `dogovor`) не обслуживается; при
+необходимости — создать второе приложение в Dokploy из того же зеркала.
 
-**Ручной фолбэк** (если вебхук недоступен): панель CapRover → Apps → приложение → **Deploy** → сборка из репозитория (repo/branch), либо `caprover deploy` из папки с Dockerfile.
+**Ручной фолбэк:** панель Dokploy → Applications → `dogovor-prod` → **Deploy**.
 
-### Ветка `deploy` — стабильная сборка без тяжёлого клона (2026-09-27)
+### Как понять, что деплой доехал
 
-**Проблема:** CapRover клонирует ветку `production` целиком, а история репозитория
-раздута (в прошлом — tesseract-core, старые `blank-previews/*.jpg`, десятки версий
-`package-lock.json`). Полный пак ~150–205 МБ, VDS тянет его на КАЖДОЙ сборке по
-флапающему каналу → периодические обрывы `git clone` (`fetch-pack: unexpected
-disconnect`, `fatal: early EOF`) и «зависшие» сборки (лог стоит на `Build started`).
+Сборка занимает **~10 минут** (`npm ci` + `next build` на 1400+ страниц).
+В первые минуты прод ещё отдаёт СТАРУЮ сборку — новые страницы в это время
+отвечают 404 (это нормально, см. `NoFallbackError` ниже).
 
-**Решение:** CapRover собирает ветку **`deploy`**, которая создаётся автоматически
-workflow **`.github/workflows/deploy-branch.yml`**: на каждый пуш в `production`
-он делает orphan-снапшот текущего дерева (один коммит, без истории) и
-force-push'ит в `deploy`. Clone `deploy` = один коммит → ~40–60 МБ, без обхода
-истории. Историю `master`/`production` НЕ трогаем.
+- Панель: Applications → `dogovor-prod` → **Deployments** (список сборок, статус
+  `done`/`error`, лог сборки).
+- Без панели: `node scripts/deploy-watch.mjs` (ждёт, пока все маршруты отдадут
+  200), затем `node scripts/deploy-content.mjs "/path|маркер"` — сверка
+  содержимого, потому что зелёный HTTP ≠ новый код.
+- Логи контейнера: `docker logs <container> --since 5m`; логи сборок лежат в
+  `/etc/dokploy/logs/dogovor-prod-dlpedm/`.
 
-- Поток остаётся прежним: правки в `master` → `git push origin master:production`.
-- `deploy` обновляется автоматически; CapRover (настроен на ветку `deploy`) собирает.
-- ⚠️ Требование: repo → **Settings → Actions → General → Workflow permissions →
-  «Read and write permissions»** (иначе Action не сможет запушить `deploy`).
-  Проверка: `git ls-remote origin deploy` — SHA меняется после каждого пуша
-  в `production`; дерево `origin/deploy` обязано совпадать с `master`
-  (`git rev-parse origin/deploy^{tree}` == `git rev-parse master^{tree}`).
-- Проверка: `git ls-tree -r --name-only origin/deploy` — те же файлы, что в `master`.
-- Откат: в панели вернуть ветку `production` — деплой снова пойдёт напрямую.
-
-**Дополнительно (2026-09-27):** из истории вычищены мёртвые блобы
-(`public/workers/tesseract-core/*` кроме текущего `-simd.wasm.js`, старые
-`public/blank-previews/*.jpg`) через `git filter-repo --invert-paths` — пак
-205→151 МБ, дерево HEAD побайтово не изменилось. Резервная копия до операции:
-`D:\Мои сайты\_backups\dogovor-preslim-20260927.git`.
-
-### Сколько ждать и как понять, что деплой доехал (2026-09-22)
-
-Замерено на истории `dogovor-prod` (версии 7–54): пуш → вебхук срабатывает за секунды,
-но **сборка на VDS занимает 3–25 минут** (`npm ci` + `next build` на 955 страниц).
-Маленькие коммиты при тёплом кэше — ~2–3 мин, холодный кэш — 15–25 мин.
-«Деплой через раз» = в первые минуты после пуша прод ещё отдаёт СТАРУЮ сборку
-(новые страницы в это время отвечают 404 — это нормально, см. NoFallbackError ниже).
-
-Автоматический сторож: workflow **`.github/workflows/deploy-watch.yml`** запускается
-на каждый пуш в `production` и ждёт (до 40 мин), пока прод не начнёт отдавать 200
-по ВСЕМ маршрутам из этого коммита (`scripts/deploy-watch.mjs`, секретов не требует).
-Зелёный статус = новая сборка live. Красный = смотреть панель CapRover.
-
-Проверить вручную без панели: `node scripts/deploy-watch.mjs` (один круг = ~1 мин).
+⚠️ `deploy-watch` проверяет только HTTP 200, а НЕ содержимое. Маркеры не должны
+пересекать границу JSX-выражений: React рендерит `{N} текст` как
+`N<!-- --> текст`, поэтому маркер «22 готовых бланка» не сработает — используйте
+«готовых бланка» или статичный текст. Ручные маркеры: `/zayavleniya` содержит
+«Группы заявлений», главная — актуальное число шаблонов, `/builder` — новый
+селектор.
 
 ### Если деплой не доезжает (runbook)
 
-0. Быстрая диагностика без панели: `node scripts/caprover-status.mjs`
-   (`isAppBuilding` / `isBuildFailed` / `deployedVersion` + хвост лога сборки).
-1. Панель → Apps → `dogovor-prod` → вкладка Deployment: смотреть лог текущей сборки
-   и список версий (каждый пуш создаёт запись; пустая `deployedImageName` = сборка идёт).
-2. Сборка висит >60 мин (`isAppBuilding` завис): сначала проверить диск (п. ниже),
-   затем перезапустить сборку из панели (Deploy) — флаг сбросится.
-3. Не пушить повторно «для ускорения»: сборки идут последовательно, каждый лишний
-   пуш = ещё один полный цикл сборки (~20 мин) в очереди.
-4. Новые страницы 404, а старые работают = старая сборка ещё жива, ждать watch.
+0. Панель Dokploy → Applications → `dogovor-prod` → **Deployments**: статус
+   последней сборки и её лог. `error` → читать лог, чинить, запускать заново.
+1. Сборка идёт, но очень долго (>25 мин) — сначала проверить диск (п. ниже).
+2. Не пушить повторно «для ускорения»: сборки идут последовательно, каждый
+   лишний push = ещё один полный цикл (~10 мин) в очереди.
+3. Новые страницы 404, а старые работают = старая сборка ещё жива, ждать
+   `deploy-watch`.
+4. **Обрыв git clone.** В новой схеме источник — локальное зеркало, поэтому
+   проблемы с GitHub деплоя больше не касаются. Если клон зеркала падает —
+   проверить `ssh -T root@82.146.35.220` и состояние
+   `/etc/dokploy/git/dogovor.git`.
+5. **OOM при сборке (exit code 134, SIGABRT).** На VDS ~8 ГБ RAM (рядом живут
+   Supabase и Dokploy) дефолтный heap Node роняет `next build`. Фикс в
+   `Dockerfile` перед `npm run build`:
+   `ENV NODE_OPTIONS="--max-old-space-size=3072"`. Симптом в логе:
+   `process "/bin/sh -c npm run build" did not complete successfully: exit code: 134`.
+6. **Забит диск.** Симптомы: долгие/падающие сборки, таймауты SSH:
+   ```bash
+   docker system df
+   docker builder prune -f
+   docker image prune -f
+   ```
+   Сборки Dokploy переиспользуют теги (`dogovor-prod-dlpedm:latest`), старые
+   версии не копятся, как это делал CapRover.
+7. **Секреты не подхватились.** Проверить Environment приложения в Dokploy.
+   Runtime-переменные (Supabase/Upstash/YooKassa/Telegram) достаточно
+   «перезапустить» контейнер; `NEXT_PUBLIC_*` требуют **пересборки образа**.
+8. **`[ratelimit] UPSTASH_REDIS_* not configured` в логе сборки** — это ожидаемо:
+   `.env` исключён из Docker-контекста (`.dockerignore`), поэтому `next build`
+   его не видит. В рантайме Dokploy передаёт env отдельно, и лимитеры работают.
+   Проверка: `GET /api/ai/balance` без авторизации должен вернуть 401, а не 429.
 
-### Известные причины «ошибки развертывания» (2026-09-24, проверено на живых логах)
+### Известные причины «ошибки развертывания» (проверено на живых логах)
 
 1. **Client-страница с серверными экспортами (exit code 1).** `"use client"` + любой из
-   `export const metadata/revalidate/dynamic` → `next build` падает, CapRover показывает
-   «ошибку развертывания», запись версии остаётся пустой (без образа и gitHash).
-   Коварство: локально сборка может пройти из тёплого `.next`-кэша и не поймать ошибку.
-   Правило: серверные экспорты — только в `layout.tsx` сегмента, клиентская `page.tsx`
-   их не дублирует. Проверка автоматизирована: `npm run check:exports`
-   (`scripts/check-client-exports.mjs`) — в `verify` и pre-commit хуке.
-   Случай: `af2af70` (`/zayavleniya` → `"use client"` + забытые `metadata/revalidate`,
-   мета уже была в `layout.tsx`), фикс `bcb3d36`.
-2. **OOM при сборке (exit code 134, SIGABRT).** На VDS 3.8 ГБ RAM дефолтный heap Node
-   роняет `next build`, когда рядом живут Supabase-стек и CapRover. Фикс в `Dockerfile`
-   перед `npm run build`: `ENV NODE_OPTIONS="--max-old-space-size=3072"`
-   (коммит `81ae44e`). Симптом в логе капитана: `process "/bin/sh -c npm run build"
-   did not complete successfully: exit code: 134`. Тихий вариант: после `Building docker
-   image` — обрыв лога без ошибки (buildkit-процесс убит по памяти).
-3. **Забит диск.** Симптомы: долгие/падающие сборки, таймауты SSH. Чистка:
-   `docker rmi img-captain-dogovor-prod:<старые>` (оставить рабочий + 1 резерв) +
-   `docker builder prune -f`. 2026-09-24: было 84% (47G/59G) → стало 31%.
-4. **Обрыв git clone (инцидент 2026-09-27).** Симптом: в логе сборки сразу после
-   `Build started` — `Error: Cloning into ... fetch-pack: unexpected disconnect
-   while reading sideband packet / fatal: early EOF`, `isBuildFailed=true`,
-   прод продолжает отдавать старую сборку. Код НЕ виноват — это сетевой сбой
-   при клонировании. Усугубляется размером репозитория: пак ~205 МБ, в истории
-   лежат удалённые тяжёлые файлы (`public/workers/tesseract-core/*.wasm.js`,
-   `public/workers/tessdata/*` — в дереве их уже нет с `9038109`, но clone
-   тянет всю историю). Лечение БЕЗ нового пуша:
-   `node scripts/caprover-retry.mjs` — эмулирует GitHub push-webhook для
-   текущего типа `origin/production` (лишние пуши «для ускорения» запрещены —
-   каждый = ещё один полный цикл сборки в очереди, см. п. 3 выше).
-   Стратегически: вынести OCR-бинарники из git-истории (filter-repo + force-push,
-   только по согласованию — в репозитории параллельная работа) либо смириться
-   с ~205 МБ и ретраить clone-сбои ретраем выше.
+   `export const metadata/revalidate/dynamic` → `next build` падает, Dokploy показывает
+   ошибку сборки. Коварство: локально сборка может пройти из тёплого `.next`-кэша и не
+   поймать ошибку. Правило: серверные экспорты — только в `layout.tsx` сегмента,
+   клиентская `page.tsx` их не дублирует. Проверка автоматизирована:
+   `npm run check:exports` (`scripts/check-client-exports.mjs`) — в `verify` и
+   pre-commit хуке. Случай: `af2af70` (`/zayavleniya`), фикс `bcb3d36`.
+2. **OOM при сборке (exit code 134, SIGABRT)** — см. runbook п. 5.
+3. **Забит диск** — см. runbook п. 6.
 
-⚠️ `deploy-watch` (и workflow `deploy-watch.yml`) проверяет только HTTP 200,
-а НЕ содержимое — зелёный статус не означает, что новый код реально на проде.
-После каждого деплоя сверять контент скриптом (пример для фичи из коммита):
+⚠️ `deploy-watch` проверяет только HTTP 200, а НЕ содержимое — зелёный статус
+не означает, что новый код реально на проде. После каждого деплоя сверять контент
+скриптом (пример для фичи из коммита):
 `node scripts/deploy-content.mjs "/ai-yurist|Перетащите договор сюда"`.
-Маркеры не должны пересекать границу JSX-выражений: React рендерит `{N} текст`
-как `N<!-- --> текст`, поэтому маркер «22 готовых бланка» не сработает —
-используйте «готовых бланка» или статичный текст.
-Ручные маркеры: `/zayavleniya` содержит «Группы заявлений»,
-главная — актуальное число шаблонов, `/builder` — новый селектор.
 
-### Диск на VDS (главный кандидат при «внезапных» долгих/падающих сборках)
+### Диск на VDS
 
-Образы `img-captain-dogovor-prod:N` копятся, BuildKit-кэш вытесняется → сборки
-становятся холодными (долго) или падают (нет места). CapRover сам образы не чистит.
-Раз в 1–2 недели (или при симптомах) на VDS по SSH:
+Сборки Dokploy переиспользуют один тег (`dogovor-prod-dlpedm:latest`), поэтому
+старые образы не копятся, как это делал CapRover. Основной потребитель места —
+BuildKit-кэш. Уборка (на VDS по SSH):
 
 ```bash
-docker system df                      # сколько занято
-docker image prune -af --filter "until=240h"   # образы старше 10 дней
-docker builder prune -af --filter "until=168h" # кэш сборок старше 7 дней
+docker system df                                 # сколько занято
+docker builder prune -f                          # кэш сборок
+docker image prune -f                            # висячие образы
 ```
 
-`docker system prune -af` без фильтров тоже можно, но следующая сборка будет
-холодной (долгой) один раз. Текущие контейнеры/тома не трогать.
+Полная очистка по фильтрам (`--filter "until=…"`) тоже допустима, но следующая
+сборка один раз будет холодной (долгой). Текущие контейнеры/тома не трогать.
+На сервере также стоит cron-уборка (ежедневно `docker builder prune -a -f`,
+еженедельно `docker image prune -a` со старыми образами).
+
 
 ### Про ошибку `NoFallbackError` в логах (`/converter/[tool]`, `/utils/[tool]`)
 
@@ -179,20 +183,29 @@ docker builder prune -af --filter "until=168h" # кэш сборок старш�
 
 ### Cron на VDS
 
-Диспетчера cron Vercel больше нет. Cron выполняется **внешним crontab** на VDS:
+Диспетчера cron Vercel больше нет, и **Dokploy не является планировщиком cron**.
+Задачи выполняются **внешним crontab** на VDS (root):
 
 ```
 0 3 * * * curl -fsS -H "Authorization: Bearer $CRON_SECRET" https://dogovor.expert/api/cron/tsl-refresh
 5 3 * * * curl -fsS -H "Authorization: Bearer $CRON_SECRET" https://dogovor.expert/api/cron/daily-maintenance
 ```
 
-`CRON_SECRET` — среда приложения CapRover.
+`CRON_SECRET` берётся из **Environment** приложения в Dokploy. Секрет не должен
+лежать в репозитории; в crontab его подставляют из защищённого файла
+(`/etc/dogovor/cron.env`, права 600) либо из окружения сессии.
+
+> ⚠️ Статус на 2026-09-28: этих задач в crontab на VDS **нет** (там только
+> docker-уборка). Их нужно донастроить, иначе TSL-сертификаты для проверки
+> цепочки УКЭП не будут обновляться, а ежедневное обслуживание — выполняться.
+
 
 ## Проверка прода (базовое)
 
 - «Деплой прошёл» ≠ код на проде. Проверять фактически: скачивание PDF с прода через playwright (`%TEMP%\opencode\e2e-*.cjs` — chromium из ms-playwright; селекторы: кнопка по тексту «Скачать PDF», select по индексу; ждать гидрации: клик → появление «Генерация…») и программный анализ скачанного PDF через pdfjs-dist (`node_modules/pdfjs-dist/legacy/build/pdf.mjs`, polyfill DOMMatrix; скрипты `%TEMP%\opencode\check-gaps-file.cjs`, `dump-lines.cjs` — текст с y-координатами, зазоры, дубли страниц).
 - Кириллица в PowerShell: `[Console]::OutputEncoding = [System.Text.Encoding]::UTF8` перед запуском node-скриптов; чтение файлов — `ReadAllText(..., UTF8)`.
-- Прод отвечает с `x-nextjs-cache: HIT` и **без** `x-vercel-id` — маркер, что контейнер Next.js реально обслуживается nginx VDS, а не Vercel.
+- Прод отвечает **без** `x-vercel-id` — маркер, что сайт обслуживается
+  self-hosted контейнером (Traefik → Next.js), а не Vercel.
 
 ## E2E-скрипты с сессией (19.08.2026)
 
@@ -216,7 +229,28 @@ Playwright: `$env:NODE_PATH = "D:\Мои сайты\site Dogovor\node_modules"`,
 - Robocopy-флоу: синхронизация `%LOCALAPPDATA%\Temp\opencode\proj` → Vercel — **отменён**. Обязательные деплой-файлы OG-превью/иконки (`public/og-image.png`, `public/apple-icon.png`) теперь в образе, а не зависят от robocopy.
 - `vercel.json` в репозитории — исторический артефакт (cron-записи), на VDS cron идёт через внешний crontab. Не редактировать без необходимости, при желании можно удалить вместе с `.vercel/` и `.vercelignore`.
 - `.vercel/project.json` (projectId `prj_cABOmf2bYKyHIff0lHOAJFxzG943`) — легаси-артефакт.
+- В коде сохранены Vercel-совместимые ветки (`x-vercel-forwarded-for` в
+  `src/lib/ratelimit.ts`, `automaticVercelMonitors` в `next.config.mjs`,
+  `process.env.NEXT_PUBLIC_VERCEL_ENV` в `instrumentation.ts`) — это осознанная
+  совместимость с облачным хостингом, а не следствие текущего деплоя. Не удалять.
 
 ## Пост-деплой проверка (VDS)
 
-`/` 200 → `/login` 200 → вход+`/admin` (после MFA) → `/api/customs-rate` JSON с ЦБ → POST `/api/leads` без Origin = 403 → авто-продление 409 на повторном клике (окно 10 мин) → загрузка аватара (sharp!) → PDF-экспорт с УКЭП-подписью → `docker exec <ctn> id -u` ≠ 0 (не root). → `/api/health` 200 (healthcheck контейнера).
+`/` 200 → `/login` 200 → вход+`/admin` (после MFA) → `/api/customs-rate` JSON с ЦБ → POST `/api/leads` без Origin = 403 → авто-продление 409 на повторном клике (окно 10 мин) → загрузка аватара (sharp!) → PDF-экспорт с УКЭП-подписью → `docker exec <ctn> id -u` ≠ 0 (не root) → `/api/health` 200 (healthcheck контейнера).
+
+## История миграции (для контекста)
+
+| Дата | Платформа | Схема деплоя |
+|------|-----------|---------------|
+| до 19.08.2026 | Vercel | git push → Vercel CI |
+| 19.08 – 27.09.2026 | VDS / CapRover | push в `production` → CapRover-вебхук → образ `img-captain-dogovor-prod:<n>`; обход троттлинга GitHub через orphan-ветку `deploy` |
+| с 28.09.2026 | VDS / **Dokploy** | `git push vds master` → Deploy в Dokploy; код берётся из локального зеркала `/etc/dokploy/git/dogovor.git` |
+
+Ветки `production` и `deploy`, а также workflows `deploy-branch.yml` и
+`branch-sync.yml` удалены 2026-09-28 — они существовали только для CapRover.
+`origin` (GitHub) остаётся как бэкап-источник, но деплоем не используется.
+
+Полезные мелочи на сервере:
+- Рабочий env-бэкап (47 переменных, права 600): `/root/dogovor-env-backup.env`.
+- SSH-ключ для зеркала: `~/.ssh/id_ed25519_dokploy` на сервере и локально;
+  Dokploy использует его для `git clone` по SSH.

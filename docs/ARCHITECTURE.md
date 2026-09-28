@@ -15,7 +15,7 @@
 | OCR-сканер | tesseract.js, mrz, onnxruntime-web (client-side) |
 | Тесты | Vitest 4.1 (unit, integration), Playwright 1.62 (e2e, prod) |
 | Линт | ESLint 9 + eslint-config-next + Prettier |
-| CI/CD | CapRover push-webhook (ветка `production`) → сборка и деплой на VDS |
+| CI/CD | Dokploy на VDS: push в локальное git-зеркало → Deploy в панели (Traefik → Next.js standalone) |
 | Мониторинг | Sentry (@sentry/nextjs) |
 | Аналитика | Яндекс.Метрика |
 
@@ -293,8 +293,8 @@ PROTECTED_API_PREFIXES (по auth cookie) — все /api/* кроме /api/auth
 | Окружение | URL | Branch | Supabase | Инфраструктура |
 |-----------|-----|--------|----------|----------------|
 | Local dev | `http://localhost:3100` (Playwright) / 3000 (Next) | feature/* | облачный `.env.local` (`xkakhztknlpzqarklewq.supabase.co`) | `next dev` |
-| Production | `https://dogovor.expert` | `production` (CapRover-вебхук) | self-hosted `https://supabase.vds.dogovor.expert` (VDS 82.146.35.220) | VDS/CapRover (Docker standalone, порт 3000) |
-| Staging | `https://test.dogovor.expert` | `master` | self-hosted (та же БД) | VDS/CapRover, приложение `dogovor` (деплой вручную из панели) |
+| Production | `https://dogovor.expert` | `master` (локальное git-зеркало на VDS) | self-hosted `https://supabase.vds.dogovor.expert` (VDS 82.146.35.220) | VDS/Dokploy (Traefik → Docker standalone, порт 3000) |
+| Staging | — | — | — | отдельного staging-приложения сейчас нет (прежний `test.dogovor.expert` на CapRover выведен) |
 
 **Supabase:** self-hosted на VDS — `https://supabase.vds.dogovor.expert` (прод). Облачный проект `xkakhztknlpzqarklewq.supabase.co` — только локальный dev/.env`.
 

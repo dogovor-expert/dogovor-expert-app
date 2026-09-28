@@ -1,14 +1,18 @@
 name: Deploy watch (production)
 
-# Сторожевой контроль CapRover-деплоя: после пуша в `production`
-# ждёт, пока прод начнёт отдавать ВСЕ маршруты из этого коммита
-# (новые страницы 404, пока жив старый контейнер), затем завершается.
-# Красный статус = деплой не доехал за 40 минут, смотреть панель CapRover.
-# Секретов не требует.
+# Ручной сторожевой контроль деплоя: ждёт, пока прод начнёт отдавать ВСЕ
+# маршруты (новые страницы 404, пока жив старый контейнер), затем завершается.
+#
+# ВАЖНО: деплой теперь идёт через Dokploy и локальное git-зеркало на VDS
+# (`git push vds master` + Deploy в панели), а НЕ через GitHub-ветку `production`.
+# Поэтому автоматического триггера на push больше нет — запускайте вручную:
+#   node scripts/deploy-watch.mjs
+# или вручную через Actions. Секретов не требует.
 
 on:
+  workflow_dispatch:
   push:
-    branches: [production]
+    branches: [master]
 
 concurrency:
   group: prod-deploy-watch
@@ -20,8 +24,6 @@ jobs:
     timeout-minutes: 55
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: ${{ github.sha }}
 
       - uses: actions/setup-node@v4
         with:

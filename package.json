@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "engines": {
-    "node": "24.x"
+    "node": ">=22"
   },
   "scripts": {
     "dev": "next dev",
@@ -48,7 +48,10 @@
     "audit:full": "node scripts/run-full-audit.mjs",
     "audit:quick": "node scripts/run-full-audit.mjs --quick",
     "audit:site": "node scripts/run-full-audit.mjs --site-only",
-    "deploy:tsl": "node -e \"console.log('[deprecated] deploy:tsl деплоил на Vercel. Теперь прод на VDS/CapRover: см. docs/DEPLOY.md и DEPLOY_TSL.md')\"",
+    "deploy": "node scripts/deploy-push.mjs",
+    "deploy:dry": "node scripts/deploy-push.mjs --dry-run",
+    "deploy:watch": "node scripts/deploy-watch.mjs",
+    "deploy:tsl": "node -e \"console.log('[deprecated] deploy:tsl деплоил на Vercel. Теперь прод на VDS/Dokploy: см. docs/DEPLOY.md и DEPLOY_TSL.md')\"",
     "migrate:tsl": "node scripts/apply-migration.mjs 20260907_tsl_certificates.sql",
     "tsl:status": "curl -sS -H \"Authorization: Bearer $CRON_SECRET\" \"https://dogovor.expert/api/cron/tsl-refresh?action=status\" || echo \"Set CRON_SECRET\"",
     "tsl:refresh": "curl -sS -X POST -H \"Authorization: Bearer $CRON_SECRET\" \"https://dogovor.expert/api/cron/tsl-refresh\" || echo \"Set CRON_SECRET\""

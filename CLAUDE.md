@@ -35,4 +35,4 @@
 ### Помни
 - `npm run verify` перед коммитом
 - `git commit --no-verify` ТОЛЬКО для экстренных hotfix (задокументировать в CHANGELOG)
-- Деплой: `git push origin master:production` → Action обновляет ветку `deploy` → CapRover собирает `deploy` и деплоит прод (см. `docs/DEPLOY.md`; НЕ Vercel, ветку в CapRover на `production` не возвращать)
+- Деплой: `git push vds master` (в локальное git-зеркало на VDS) → **Deploy в панели Dokploy**; прод https://dogovor.expert (см. `docs/DEPLOY.md`; НЕ Vercel и НЕ GitHub как источник — Dokploy не возвращать на GitHub, пока идёт троттлинг)

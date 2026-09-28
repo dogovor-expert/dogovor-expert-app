@@ -10,7 +10,7 @@ ENV NEXT_TELEMETRY_DISABLED=1 \
     SENTRY_PROJECT=""
 
 # NEXT_PUBLIC_* инлайнятся в клиентский бандл во время БИЛДА (не в рантайме!).
-# Coolify/docker build передаёт их как --build-arg; без этого клиент получает
+# Dokploy передаёт их как --build-arg; без этого клиент получает
 # пустые ключи и сайт «оживает» только после пересборки (классика переездов).
 ARG NEXT_PUBLIC_SUPABASE_URL=""
 ARG NEXT_PUBLIC_SUPABASE_ANON_KEY=""
@@ -58,8 +58,8 @@ RUN --mount=type=cache,target=/root/.npm \
 COPY . .
 
 # .next/cache кэшируется между сборками (партиальный Webpack/Turbopack инкремент)
-# NODE_OPTIONS: на VDS всего 3.8 ГБ RAM — дефолтный heap Node (~2 ГБ на 64-бит)
-# роняет next build с exit 134 (SIGABRT) когда рядом живут Supabase/CapRover.
+# NODE_OPTIONS: на VDS ~8 ГБ RAM, но рядом живут Supabase и Dokploy —
+# дефолтный heap Node (~2 ГБ на 64-бит) роняет next build с exit 134 (SIGABRT).
 # 3072 МБ — потолок, при котором сборка стабильна и не душит соседей.
 ENV NODE_OPTIONS="--max-old-space-size=3072"
 RUN --mount=type=cache,target=/root/.npm \
@@ -67,7 +67,7 @@ RUN --mount=type=cache,target=/root/.npm \
     npm run build
 
 # ---- runtime stage ----
-# Self-hosted (Coolify/VDS): минимальный standalone-сервер Next без dev-зависимостей,
+# Self-hosted (Dokploy/VDS): минимальный standalone-сервер Next без dev-зависимостей,
 # под непривилегированным пользователем (аудит 2026-09-12: не root).
 FROM node:22-bookworm-slim AS run
 
@@ -96,6 +96,6 @@ EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
     CMD curl -fsS "http://127.0.0.1:${PORT:-3000}/api/health" || exit 1
 
-# node как PID 1: корректная передача SIGTERM (graceful stop в Coolify),
+# node как PID 1: корректная передача SIGTERM (graceful stop в Dokploy),
 # без лишнего npm-процесса-прослойки.
 CMD ["node", "server.js"]

@@ -70,7 +70,7 @@
 - Изменение политики CSP, заголовков кэширования, конфигурации SEO/метаданных
 - Оптимизация шрифтов, изображений, списков; рефакторинг тяжёлых компонентов
 - Массовые правки a11y или удаление неиспользуемого CSS/JS
-- Изменение `next.config.mjs`, `Dockerfile`, `vercel.json` (легаси), `sentry.*.config.ts`, deploy-настройки CapRover (вебхук ветки `production`)
+- Изменение `next.config.mjs`, `Dockerfile`, `vercel.json` (легаси), `sentry.*.config.ts`, deploy-настройки Dokploy (источник git, ветка, Environment)
 - Правка AGENTS.md / commitlint / husky / CI workflows
 
 **Формат обязательного вопроса** в конце отчёта о крупной задаче:

@@ -1,6 +1,6 @@
 # 🚀 TSL интеграция (Trust Service List Минцифры) на VDS
 
-Актуализировано 2026-09-18 под self-hosted стек: **прод на VDS** (CapRover + self-hosted Supabase), Vercel больше не используется.
+Актуализировано 2026-09-28 под self-hosted стек: **прод на VDS** (Dokploy + self-hosted Supabase), Vercel больше не используется.
 
 ## ⚠️ БЕЗОПАСНОСТЬ
 
@@ -10,7 +10,7 @@
 - Доступ к Storage, Auth
 - Должен использоваться **ТОЛЬКО** для миграций и админ-задач
 - **НЕ отправляйте** его в чатах, issues, email
-- **НЕ храните** в коде/репо; на проде он живёт в environment variables приложения CapRover (или в контейнере БД — для миграций)
+- **НЕ храните** в коде/репо; на проде он живёт в Environment приложения в Dokploy (или в контейнере БД — для миграций)
 - **Сбрасывайте** после каждого использования (Supabase панель self-hosted → Settings → API Keys)
 
 ---
@@ -42,9 +42,9 @@ npx supabase db push --db-url "postgresql://postgres:<пароль>@supabase.vds
 
 ---
 
-## ENV на проде (CapRover)
+## ENV на проде (Dokploy)
 
-Среда приложения CapRover уже содержит (или должна содержать):
+Environment приложения `dogovor-prod` в Dokploy уже содержит (или должна содержать):
 
 ```env
 CRON_SECRET=<случайные_32_символа>
@@ -134,7 +134,7 @@ SELECT * FROM tsl_sync_metadata;
 
 ## Мониторинг
 
-### Логи (контейнер CapRover → App Logs):
+### Логи (контейнер в Dokploy → Logs, либо `docker logs <ctn>`):
 - `[tsl-refresh] Completed in Xms` — успешный sync.
 - `[tsl-refresh] Failed:` — ошибка (алерт в Sentry).
 - `[trusted-roots] TSL loaded (from cache/fresh)` — кэш работает.

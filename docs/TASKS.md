@@ -38,7 +38,7 @@
 - Тоннель к прод-БД (умирает при длинных прогонах — перезапускать):
   `Start-Process ssh -i ~/.ssh/firstvds_migr -o ServerAliveInterval=30 -N -L 127.0.0.1:55433:172.18.0.6:5432 root@82.146.35.220`
 - Секреты (локально, НЕ в git): `pgpass` прод-БД, ключ `PROXYAPI_API_KEY`
-  (локальный `.env.local`-ключ мёртв → 401, брать из CapRover env).
+  (локальный `.env.local`-ключ мёртв → 401, брать из env приложения в Dokploy).
 - Миграции корпуса уже применены на проде (4 шт., см. `supabase/migrations/20260925_law_corpus*.sql`).
 
 ### Runbook (один акт)

@@ -8,7 +8,7 @@
 1. **Проверка PDF-экспорта** — нельзя писать «PDF-баг исправлен» без прогона skill `pdf-export-verify`.
 2. **Связанные элементы при наполнении контентом** — изменение шаблона/поля/раздела/модуля = НЕ изолированная правка. Карта связей: [`docs/CONTENT_RULES.md`](docs/CONTENT_RULES.md).
 3. **Качественный барьер (Quality Gate)** — blast radius + vitest related + tsc + smoke. Регламент: [`docs/QUALITY_GATE.md`](docs/QUALITY_GATE.md).
-4. **Деплой и проверка прода** — флоу: [`docs/DEPLOY.md`](docs/DEPLOY.md). Канонично: `git push origin master:production` → GitHub Action `deploy-branch.yml` обновляет лёгкую ветку **`deploy`** → CapRover собирает `deploy`. «Деплой прошёл» ≠ код на проде: проверять контент (`node scripts/deploy-content.mjs "/path|маркер"`), а не только HTTP 200.
+4. **Деплой и проверка прода** — флоу: [`docs/DEPLOY.md`](docs/DEPLOY.md). Канонично: `git push vds master` (push в локальное git-зеркало на VDS) → **Deploy в панели Dokploy** (`http://82.146.35.220:3000`, приложение `dogovor-prod`). Ветка `master` — единственная деплой-ветка. «Деплой прошёл» ≠ код на проде: проверять контент (`node scripts/deploy-content.mjs "/path|маркер"`), а не только HTTP 200.
 5. **SEO-инварианты** — не ломать robots/sitemap/canonical/JSON-LD: [`docs/SEO_INVARIANTS.md`](docs/SEO_INVARIANTS.md).
 6. **Аудит-фиксы 20.08.2026** — YooKassa webhook, RLS write-lock, rate limit, Next 15 API: [`docs/AUDIT_FIXES.md`](docs/AUDIT_FIXES.md).
 7. **Site audit protocol** — команда `npm run audit:full`: [`docs/SITE_AUDIT.md`](docs/SITE_AUDIT.md).
@@ -33,35 +33,41 @@
 
 - Стек: Next.js 15.5 + React 19 + TypeScript strict + Tailwind + lucide-react
 - БД: Supabase self-hosted — `https://supabase.vds.dogovor.expert` (VDS `82.146.35.220`)
-- Деплой: CapRover собирает ветку **`deploy`** (её автообновляет Action `.github/workflows/deploy-branch.yml` из `production`), прод https://dogovor.expert. `master` — источник правды; `production` — только деплой, обязана быть fast-forward от `master` (`.github/workflows/branch-sync.yml`)
-- Шаблонов: 369, PRO-подписка через YooKassa. Секреты — только env CapRover, `.env*` не коммитить
+- Деплой: **Dokploy** (self-hosted, VDS `82.146.35.220`) собирает ветку **`master`** из локального git-зеркала `ssh://root@82.146.35.220/etc/dokploy/git/dogovor.git`; прод https://dogovor.expert за Traefik. `master` — источник правды и единственная деплой-ветка (веток `production`/`deploy` больше нет).
+- Шаблонов: 369, PRO-подписка через YooKassa. Секреты — только env приложения в Dokploy, `.env*` не коммитить
 
 ## Setup commands
 
 - Install: `npm install` · Dev: `npm run dev` · Verify: `npm run verify` (typecheck+lint+exports+test)
-- Build: `npm run build` · Deploy: `git push origin master:production` (далее Action+CapRover автоматически)
+- Build: `npm run build` · Deploy: `npm run deploy` (= `git push vds master` + запуск сборки в Dokploy; без `DOKPLOY_API_KEY` — только push, сборку запустить в панели)
 - Smoke (prod): `npm run check:smoke:prod` · Аудит: `npm run audit:full`
 
-## 🚢 Деплой-надёжность (инциденты 2026-09-27, не наступать повторно)
+## 🚢 Деплой-надёжность (инциденты 2026-09-27/28, не наступать повторно)
 
-- **Сборка идёт из ветки `deploy`** (1 коммит, без истории) — полный клон истории
-  (десятки МБ) по каналу VDS→GitHub периодически рвётся (`fetch-pack: unexpected
-  disconnect`), давая «зависшие» сборки. НЕ переключать CapRover обратно на `production`.
-- **`deploy` обновляет только Action `deploy-branch.yml`** (на пуш в `production`).
-  Если Actions выключены/нет минут/нет прав — `deploy` устаревает молча, деплой
-  собирает старый код. Проверка: `git rev-parse origin/deploy^{tree}` == `master^{tree}`.
-  Права: Settings → Actions → General → Workflow permissions = **Read and write**.
+- **Код берётся НЕ с GitHub.** С VDS до GitHub ~1 КБ/с и обрывы `git clone`
+  (`fetch-pack: unexpected disconnect`, `fatal: early EOF`) — сборки падали или
+  висели часами. Поэтому репозиторий зеркалится локально на сервере
+  (`/etc/dokploy/git/dogovor.git`, ветка `master`), и Dokploy клонирует его по SSH.
+  НЕ переключать Dokploy обратно на GitHub, пока троттлинг не уйдёт.
+- **Push обновляет только зеркало** — сборку надо запускать в панели Dokploy
+  (Applications → `dogovor-prod` → Deploy) либо через `npm run deploy` с
+  `DOKPLOY_API_KEY`. Автоматического вебхука нет.
+- **`origin` (GitHub) — бэкап-источник, не деплой.** Ветки `production`/`deploy`
+  и workflows `deploy-branch.yml`/`branch-sync.yml` удалены 2026-09-28.
 - **История похудела** (`git filter-repo`, 205→151 МБ, 2026-09-27; тогда же
   перезаписаны SHA `master`/`production`). Старые клоны несовместимы — свежий `git clone`.
 - **НЕ коммитить крупные бинарники** (`public/workers/tesseract-core/*`, `tessdata/*`,
-  `public/blank-previews/*.jpg`): они раздувают историю и ломают clone. Ассеты —
-  через `.avif`/сборку, не в git-историю.
-- **Гейт «client-exports»**: `"use client"` + серверный экспорт (`metadata`/`revalidate`/
+  `public/blank-previews/*.jpg`): они раздувают историю. Ассеты — через `.avif`/сборку.
+- **OOM при сборке (exit 134):** на VDS ~8 ГБ RAM рядом живут Supabase и Dokploy —
+  в `Dockerfile` стоит `ENV NODE_OPTIONS="--max-old-space-size=3072"`. Не убирать.
+- **Гейт «client-exports»:** `"use client"` + серверный экспорт (`metadata`/`revalidate`/
   `dynamic`/…) роняет `next build` (exit 1). Автопроверка: `npm run check:exports`
   (в `verify` и pre-commit).
-- Инструменты без панели: `node scripts/caprover-status.mjs` (диагностика),
-  `node scripts/caprover-retry.mjs` (перезапуск сборки без пуша),
-  `node scripts/deploy-content.mjs "/path|маркер"` (проверка содержимого прода).
+- **Cron задачи живут во внешнем crontab на VDS**, а не в Dokploy (он не планировщик):
+  `tsl-refresh` и `daily-maintenance` требуют `CRON_SECRET` из env Dokploy.
+- Инструменты без панели: `node scripts/deploy-watch.mjs` (ожидание выката),
+  `node scripts/deploy-content.mjs "/path|маркер"` (проверка содержимого прода),
+  `node scripts/deploy-push.mjs --dry-run` (план деплоя).
 
 ## Code style / Testing / Security (кратко)
 
@@ -71,7 +77,7 @@
 
 ## Things to avoid
 
-- `any`, хардкод русских строк, API route вместо Server Action, зависимости без обоснования, `ESLint disable` без reason, коммит `.env*`, крупные бинарники в git (см. «Деплой-надёжность»), переключение CapRover на ветку `production`.
+- `any`, хардкод русских строк, API route вместо Server Action, зависимости без обоснования, `ESLint disable` без reason, коммит `.env*`, крупные бинарники в git (см. «Деплой-надёжность»), переключение Dokploy на GitHub вместо локального зеркала.
 
 ## Commit conventions
 
