@@ -29,7 +29,7 @@
 - В `robots.txt` **обязательно** сохранять:
   - блок `User-agent: Yandex` с `Clean-param` для фильтров;
   - параметр `page` в `Clean-param` НЕ допускается (иначе Яндекс не индексирует 2+ страницу пагинации);
-  - точные `Disallow: /documents$` (НЕ `Disallow: /documents`, иначе убьёт 369 посадочных).
+  - точные `Disallow: /documents$` и `/documents/$` (НЕ `Disallow: /documents`, иначе убьёт 570 посадочных), плюс `Disallow: /preview`.
 - Sitemap (`src/app/sitemap.ts`, динамический) — единственный источник. Статический `public/sitemap.xml` **удалён** — не создавать заново.
 
 ## 4. Архитектура и SSR
@@ -51,7 +51,7 @@
 ## 6. Целостность тестирования
 
 - Если функционал меняется, тесты обновляются в соответствии с новыми требованиями. **Запрещено** удалять или "глушить" (`test.skip`, `it.skip`) упавшие тесты без согласования.
-- Шаблон `src/data/templates/*.ts` изменился → обновить счётчик в `src/lib/__tests__/templates.test.ts` (текущее значение 369).
+- Шаблон `src/data/templates/*.ts` изменился → обновить счётчик в `src/data/__tests__/templates.test.ts` (текущее значение 570) и `TEMPLATE_COUNT` в `src/lib/site.ts` — оба значения сверяются тестами.
 - Любое изменение в `src/components/builder/DocScanner.tsx`, `OcrScanner.tsx`, `src/lib/docOcr.ts`, `src/lib/docRequirements.ts` → прогнать `src/lib/__tests__/docScanner.test.ts`.
 - Любое изменение в `src/lib/docDesign.ts` → прогнать `src/lib/__tests__/docDesign.test.ts` (токены дизайна зафиксированы тестами).
 - Любое изменение в `src/lib/renderDocument.ts` → прогнать `src/lib/__tests__/renderDocument.test.ts` (escape, totals, _total_pretty).

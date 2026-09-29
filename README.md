@@ -38,7 +38,7 @@
 | Данные | Supabase (Postgres, RLS, аутентификация, storage) |
 | UI | Tailwind CSS, container queries, a11y по ARIA APG |
 | Документы | pdf-lib, mammoth, pdfjs, PAdES/CMS (pkijs) |
-| Тесты | 468 unit-тестов (Vitest), e2e (Playwright), security-invariants |
+| Тесты | 829 unit-тестов (Vitest), e2e (Playwright), security-invariants |
 | Безопасность | CSP с nonce, CSRF-гейты, Zod на всех API-границах, rate-limit (Upstash), magic-bytes валидация загрузок, gitleaks в pre-commit |
 
 Сервис обслуживает реальных пользователей: оплата, документы с юридической силой, персональные данные — под 152-ФЗ (password-protected шеринг, аудит-логи, шифрование нулевого разглашения для приватных данных).

@@ -27,7 +27,7 @@ src/
 │   ├── (admin)/                         # ❌ НЕ route group — папка admin/ (защищена middleware + is_admin)
 │   │   └── ...
 │   ├── admin/                           # /admin/users, /admin/subscriptions и т.д. (is_admin)
-│   ├── api/                             # Backend API Routes (39 роутов)
+│   ├── api/                             # Backend API Routes (61 роут)
 │   │   ├── auth/login/                  # POST: логин email+password (CSRF, rate-limit, Zod)
 │   │   ├── billing/                     # create-payment, auto-renew, auto-renewal, history, webhook
 │   │   ├── documents/                   # CRUD черновиков пользователя
@@ -44,7 +44,7 @@ src/
 │   │   ├── feedback/                    # Отзывы
 │   │   ├── approval/                    # Approve-токены для подписания
 │   │   ├── import/                      # Импорт черновиков
-│   │   ├── ocr-proxy/, ocr-status/      # ⚠️ ЗАБЛОКИРОВАНО владельцем (occular)
+│   │   ├── ocr-proxy/, ocr-status/      # Точный OCR через occular-прокси (включается по согласию 152-ФЗ)
 │   │   └── health/                      # GET: liveness check
 │   ├── approve/[token]/                 # /approve/:token — страница подписания
 │   ├── auth/confirm/                    # /auth/confirm — обработка PKCE / OTP
@@ -68,7 +68,7 @@ src/
 │   ├── templates/                       # /templates — каталог шаблонов
 │   ├── trash/                           # /trash — корзина
 │   ├── utils/                           # /utils — калькуляторы и проверки
-│   ├── utils/[tool]/                    # 22 SEO-страницы калькуляторов (SSG, /utils/nds и т.д.)
+│   ├── utils/[tool]/                    # 23 SEO-страницы калькуляторов (SSG, /utils/nds и т.д.)
 │   ├── sravnenie-dogovorov/             # /sravnenie-dogovorov — сравнение редакций + протокол разногласий
 │   ├── about/                           # /about
 │   ├── autoteka/, osago/, dkp/,         # Лендинги услуг
@@ -76,7 +76,7 @@ src/
 │   ├── layout.tsx                       # Корневой layout (Inter, JSON-LD Org+WebSite+SearchAction)
 │   ├── not-found.tsx                    # 404 fallback (явный noindex, без canonical)
 │   ├── page.tsx                         # Главная (canonical=/)
-│   ├── sitemap.ts                       # Динамический sitemap.xml (служебные + 369 документов + 36 вариаций + 14 конвертера + 22 калькулятора + блог)
+│   ├── sitemap.ts                       # Динамический sitemap.xml (служебные + 570 документов + 36 вариаций + 15 конвертеров + 23 калькулятора + блог)
 │   └── global-error.tsx                 # Error boundary
 │
 ├── components/                          # Переиспользуемые компоненты
@@ -117,7 +117,7 @@ src/
 │   └── __tests__/                       # Unit-тесты vitest (см. п.5)
 │
 ├── data/                                # Статические данные
-│   ├── templates/                       # 369 шаблонов (AUTO, FINANCE, REALTY, BUSINESS, RENTALS, SALES, CONTRACTS, HR, CLAIMS, FINANCE_ACTS, CORPORATE_WEB, FAMILY, OTHER, MIGRATION, LEGAL, POSTAL)
+│   ├── templates/                       # 570 шаблонов (AUTO, FINANCE, REALTY, BUSINESS, RENTALS, SALES, CONTRACTS, HR, CLAIMS, FINANCE_ACTS, CORPORATE_WEB, FAMILY, OTHER, MIGRATION, LEGAL, POSTAL)
 │   │   ├── parts.ts                     # Общие блоки (pageShell, pairIntro, sideFields, commonClauses, ...)
 │   │   ├── finance-act.ts               # repeating-таблицы для актов
 │   │   ├── corporate-web.ts             # foundersSign, operatorSign
@@ -160,7 +160,7 @@ User request
 [PostgreSQL]         — RLS политики, triggers, миграции (supabase/migrations/*.sql)
 ```
 
-## 4. Карта API-роутов (56 route-файлов в `src/app/api`)
+## 4. Карта API-роутов (61 route-файл в `src/app/api`)
 
 | Метод | Путь | Назначение | Auth | CSRF | Rate-limit | Zod |
 |-------|------|------------|------|------|-----------|-----|
@@ -200,7 +200,8 @@ User request
 | POST | `/api/profile/export` | Экспорт данных | ✓ | ✓ | – | – |
 | GET | `/api/templates/summary` | Сводка по шаблонам | – | – | – | – |
 | GET,POST | `/api/admin/export` | Админ-экспорт | admin | ✓ | – | – |
-| ❌ | `/api/ocr-proxy`, `/api/ocr-status` | **ЗАБЛОКИРОВАНО** | – | – | – | – |
+| GET,POST | `/api/ocr-proxy` | Прокси к occular (точный OCR), включается согласием | ✓ | ✓ | ✓ | ✓ |
+| GET | `/api/ocr-status` | Доступность occular-сервера | ✓ | – | – | – |
 
 ## 5. Карта тестов
 
@@ -210,7 +211,7 @@ src/lib/__tests__/
 ├── docDesign.test.ts             # Токены дизайна (3 стиля, диапазоны)
 ├── docScanner.test.ts            # Слоты сканера, regex-безопасность
 ├── renderDocument.test.ts        # escape, totals, _total_pretty
-├── templates.test.ts             # Счётчик 369 шаблонов, категории, имена
+├── templates.test.ts             # Счётчик 570 шаблонов, категории, имена
 ├── validation.test.ts            # isFieldVisible, dependsOn
 ├── gen-samples.test.ts           # (ИСКЛЮЧЁН из vitest.config.ts) — восстанавливать только вручную
 ├── gen-samples-docs.test.ts      # (ИСКЛЮЧЁН из vitest.config.ts)
@@ -252,7 +253,7 @@ e2e/                              # Playwright e2e
 | `/documents/[slug]` | **Публичные** посадочные документов | index,follow | – | SSG, canonical=self, JSON-LD FAQ |
 | `/documents` (без slug) | ЛК черновики | **Disallow /documents$** | auth-only | noindex |
 | `/utils` | Калькуляторы | index,follow | – | canonical=/utils |
-| `/utils/[tool]` | **22 калькулятора** (SSG) | index,follow | – | canonical=self, Breadcrumb+FAQ+WebApplication JSON-LD |
+| `/utils/[tool]` | **23 калькулятора** (SSG) | index,follow | – | canonical=self, Breadcrumb+FAQ+WebApplication JSON-LD |
 | `/sravnenie-dogovorov` | Сравнение редакций договора + протокол разногласий | index,follow | – | canonical=self, Breadcrumb+FAQ+WebApplication JSON-LD |
 | `/blog`, `/blog/[slug]` | Блог | index,follow | – | canonical=self, Article JSON-LD |
 | `/contacts`, `/about`, `/help` | Информационные | index,follow | – | – |

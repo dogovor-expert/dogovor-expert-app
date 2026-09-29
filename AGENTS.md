@@ -34,7 +34,7 @@
 - Стек: Next.js 15.5 + React 19 + TypeScript strict + Tailwind + lucide-react
 - БД: Supabase self-hosted — `https://supabase.vds.dogovor.expert` (VDS `82.146.35.220`)
 - Деплой: **Dokploy** (self-hosted, VDS `82.146.35.220`) собирает ветку **`master`** из локального git-зеркала `ssh://root@82.146.35.220/etc/dokploy/git/dogovor.git`; прод https://dogovor.expert за Traefik. `master` — источник правды и единственная деплой-ветка (веток `production`/`deploy` больше нет).
-- Шаблонов: 369, PRO-подписка через YooKassa. Секреты — только env приложения в Dokploy, `.env*` не коммитить
+- Шаблонов: 570 (UI-строки берут `TEMPLATE_COUNT` из `src/lib/site.ts`; значение сверяет тест), PRO-подписка через YooKassa. Секреты — только env приложения в Dokploy, `.env*` не коммитить
 
 ## Setup commands
 

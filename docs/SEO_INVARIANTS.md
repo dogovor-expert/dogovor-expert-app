@@ -9,7 +9,7 @@
 
 ## Robots
 
-- **Robots посадочных:** `documents/layout.tsx` не трогать — его `robots: {index:false, follow:false}` нужен личному кабинету `/documents`. В `generateMetadata` `[slug]/page.tsx` ОБЯЗАТЕЛЬНО `robots: {index:true, follow:true}` + `googleBot` — дочерние метаданные переопределяют layout; удаление вернёт noindex на все 369 посадочных.
+- **Robots посадочных:** `documents/layout.tsx` не трогать — его `robots: {index:false, follow:false}` нужен личному кабинету `/documents`. В `generateMetadata` `[slug]/page.tsx` ОБЯЗАТЕЛЬНО `robots: {index:true, follow:true}` + `googleBot` — дочерние метаданные переопределяют layout; удаление вернёт noindex на все 570 посадочных.
 - **robots.txt:** `Disallow: /documents$` и `/documents/$` (точные пути, НЕ `Disallow: /documents` — иначе убьёт посадочные). Приватные `/login /billing /dashboard /settings /trash /preview /api/` — в Disallow.
 
 ## Middleware
@@ -18,11 +18,12 @@
 
 ## Sitemap
 
-- `src/app/sitemap.ts` (динамический): статический `public/sitemap.xml` удалён — не создавать заново. sitemap = служебные (16) + документы (369, lastmod из `t.lastUpdated`) + блог (индекс + статьи, lastmod из `updatedAt`). Новый шаблон/статья автоматически попадают. Парсер lastmod понимает именительный И родительный падежи месяцев («Апрель»/«апреля»).
+- `src/app/sitemap.ts` (динамический): статический `public/sitemap.xml` удалён — не создавать заново. sitemap = служебные (24) + документы (570, lastmod из `t.lastUpdated`) + вариации (36) + конвертеры (15) + калькуляторы (23) + блог (индекс + 104 статьи, lastmod из `updatedAt`).
+- `robots.txt`: `Disallow: /documents$`, `/documents/$` (точные пути, НЕ `Disallow: /documents` — иначе убьёт посадочные) и `Disallow: /preview`. Приватные `/login /billing /dashboard /settings /trash /admin /debug /approve /api/ /auth/ /builder /connections` — в Disallow ОБОИХ блоков (`User-agent: Yandex` и `User-agent: *`). Новый шаблон/статья автоматически попадают. Парсер lastmod понимает именительный И родительный падежи месяцев («Апрель»/«апреля»).
 
 ## templatesMeta.ts
 
-- После ЛЮБОГО изменения `src/data/templates/*.ts` (имена, описания, новые шаблоны) перегенерировать: `npx tsx scripts/generate-templates-meta.mts` (369 записей). Не редактировать файл вручную.
+- После ЛЮБОГО изменения `src/data/templates/*.ts` (имена, описания, новые шаблоны) перегенерировать: `npx tsx scripts/generate-templates-meta.mts` (570 записей). Не редактировать файл вручную.
 
 ## Имена шаблонов уникальны (аудит 21.08.2026)
 
@@ -55,7 +56,7 @@
 
 ## Вариации шаблонов (programmatic)
 
-`/documents/v/[slug]` — programmatic-посадочные, порождаемые из `src/data/docVariations.ts` (единый источник, `DOC_VARIATIONS`). Пилот — 12 вариаций. SSG: `generateStaticParams` + `dynamicParams=false`, `revalidate=3600`, `dynamic="force-static"`, sitemap-группа с priority 0.6 / monthly.
+`/documents/v/[slug]` — programmatic-посадочные, порождаемые из `src/data/docVariations.ts` (единый источник, `DOC_VARIATIONS`). Сейчас 36 вариаций (пилот был 12). SSG: `generateStaticParams` + `dynamicParams=false`, `revalidate=3600`, `dynamic="force-static"`, sitemap-группа с priority 0.6 / monthly.
 
 **Порог уникальности** — вариация допустима ТОЛЬКО если выполнено ВСЁ:
 1. Свои H1 / title / description (title ≤ 60 симв., description 140–160) — не повторяют `name`/`description` родителя и друг друга;
