@@ -159,6 +159,15 @@ function pdfShowPhoto(data: ResumeData): boolean {
 }
 
 /**
+ * Есть ли фото, которое реально нарисуется: без попытки встраивания.
+ * Нужна, чтобы заранее знать ширину, которую фото отнимет у текста в шапке.
+ */
+function willDrawPhoto(data: ResumeData): boolean {
+  const url = data.personal.photo;
+  return pdfShowPhoto(data) && !!url && url.startsWith("data:image/");
+}
+
+/**
  * Рисует фото в правом верхнем углу шапки/баннера и возвращает занятую ширину,
  * чтобы текст не наезжал. Возвращает 0, если фото нет или формат не поддержан.
  */
@@ -218,17 +227,58 @@ async function drawHeader(d: Doc, ctx: Ctx) {
     return;
   }
   if (style.headerBand) {
-    const bandH = 92;
-    d.page.drawRectangle({ x: 0, y: A4.h - bandH, width: A4.w, height: bandH, color: style.headerBand });
-    d.y = A4.h - 34;
-    const used = await drawCornerPhoto(d, ctx, 62, A4.h - 14, true);
-    const tw = d.width - used;
-    d.page.drawText(name, { x: d.left, y: d.y - 24, size: 24, font: d.bold, color: rgb(1, 1, 1), maxWidth: tw });
-    d.y -= 30;
-    if (data.personal.role) d.text(data.personal.role, { size: 11.5, color: rgb(0.88, 0.9, 1), maxWidth: tw });
-    d.gap(3);
+    // Баннер рисуется по ДЕЙСТВИТЕЛЬНОЙ высоте текста: фиксированная высота
+    // срезала строку контактов, т.к. контакты рисуются последними и упирались
+    // в нижнюю границу полосы.
+    const photoBox = 62;
+    const photoW = willDrawPhoto(data) ? photoBox + 14 : 0;
+    const tw = d.width - photoW;
+    const nameSize = 24;
+    const roleSize = 11.5;
+    const ctSize = 9;
     const c = contactsLine(data);
-    if (c) d.text(c, { size: 9, color: rgb(0.82, 0.85, 0.95), maxWidth: tw });
+
+    const nameLines = d.wrap(name, d.bold, nameSize, tw);
+    const roleLines = data.personal.role ? d.wrap(data.personal.role, d.bold, roleSize, tw) : [];
+    const ctLines = c ? d.wrap(c, d.regular, ctSize, tw) : [];
+
+    const padTop = 26;
+    const padBottom = 22;
+    const textH =
+      padTop +
+      nameLines.length * 26 +
+      (roleLines.length ? 4 + roleLines.length * 15 : 0) +
+      (ctLines.length ? 4 + ctLines.length * 12 : 0) +
+      padBottom;
+    // Фото требует, чтобы полоса была не ниже его высоты плюс поля.
+    const bandH = Math.max(textH, photoW ? photoBox + 2 * 14 : 0, 78);
+
+    d.page.drawRectangle({ x: 0, y: A4.h - bandH, width: A4.w, height: bandH, color: style.headerBand });
+    if (photoW) await drawCornerPhoto(d, ctx, photoBox, A4.h - 14, true);
+
+    let ty = A4.h - padTop;
+    for (const line of nameLines) {
+      d.page.drawText(line, { x: d.left, y: ty - nameSize, size: nameSize, font: d.bold, color: rgb(1, 1, 1) });
+      ty -= 26;
+    }
+    ty -= 4;
+    for (const line of roleLines) {
+      d.page.drawText(line, { x: d.left, y: ty - roleSize, size: roleSize, font: d.bold, color: rgb(0.88, 0.9, 1) });
+      ty -= 15;
+    }
+    ty -= 4;
+    for (const line of ctLines) {
+      // font обязателен: без него pdf-lib подставляет Helvetica (WinAnsi)
+      // и кириллица падает с «WinAnsi cannot encode».
+      d.page.drawText(line, {
+        x: d.left,
+        y: ty - ctSize,
+        size: ctSize,
+        font: d.regular,
+        color: rgb(0.82, 0.85, 0.95),
+      });
+      ty -= 12;
+    }
     d.y = A4.h - bandH - 16;
     return;
   }
@@ -239,24 +289,28 @@ async function drawHeader(d: Doc, ctx: Ctx) {
   }
   // Single-column
   if (style.centerHeader) {
-    await drawCornerPhoto(d, ctx, 70, d.y, false);
-    const cx = A4.w / 2;
-    const nameSize = 22;
-    const nw = d.bold.widthOfTextAtSize(name, nameSize);
-    d.page.drawText(name, { x: cx - nw / 2, y: d.y - nameSize, size: nameSize, font: d.bold, color: style.accent });
-    d.y -= nameSize + 6;
-    if (data.personal.role) {
-      const rs = 10.5;
-      const rw = d.regular.widthOfTextAtSize(data.personal.role, rs);
-      d.page.drawText(data.personal.role, { x: cx - rw / 2, y: d.y - rs, size: rs, font: d.regular, color: GRAY });
-      d.y -= rs + 6;
-    }
+    // Фото занимает правый верхний угол, поэтому текст центрируем в
+    // ОСТАВШЕЙСЯ ширине. Раньше ширина фото игнорировалась и фото
+    // накладывалось поверх строки контактов.
+    const photoBox = 70;
+    const photoW = await drawCornerPhoto(d, ctx, photoBox, d.y, false);
+    const areaL = d.left;
+    const areaR = d.right - photoW;
+    const areaW = areaR - areaL;
+    const cx = (areaL + areaR) / 2;
+    const center = (value: string, size: number, font: PDFFont, color: RGB) => {
+      for (const line of d.wrap(value, font, size, areaW)) {
+        d.page.drawText(line, { x: cx - font.widthOfTextAtSize(line, size) / 2, y: d.y - size, size, font, color });
+        d.y -= size * 1.35;
+      }
+    };
+    center(name, 22, d.bold, style.accent);
+    d.y -= 6;
+    if (data.personal.role) center(data.personal.role, 10.5, d.regular, GRAY);
     const c = contactsLine(data);
     if (c) {
-      const cs = 9;
-      const cw = d.regular.widthOfTextAtSize(c, cs);
-      d.page.drawText(c, { x: cx - cw / 2, y: d.y - cs, size: cs, font: d.regular, color: GRAY });
-      d.y -= cs + 4;
+      d.y -= 4;
+      center(c, 9, d.regular, GRAY);
     }
     d.gap(4);
     d.page.drawLine({ start: { x: d.left, y: d.y }, end: { x: d.right, y: d.y }, thickness: 1.2, color: style.accent });
@@ -379,10 +433,16 @@ function drawSidebar(d: Doc, ctx: Ctx) {
       let x = sx;
       for (const it of items) {
         const w = d.regular.widthOfTextAtSize(it, 8.5) + 12;
-        if (x + w > sx + sw) { x = sx; sy -= 16; }
-        d.page.drawRectangle({ x, y: sy - 12, width: w, height: 14, color: hex("#ffffff"), borderColor: LIGHT, borderWidth: 0.5 });
-        d.page.drawText(it, { x: x + 6, y: sy - 9, size: 8.5, font: d.regular, color: fg });
-        x += w + 4;
+        // Ширина чипа ограничена шириной сайдбара: длинный навык иначе
+        // выходит за его край и ломает раскладку.
+        const cw = Math.min(w, sw);
+        if (x + cw > sx + sw) { x = sx; sy -= 16; }
+        d.page.drawRectangle({ x, y: sy - 12, width: cw, height: 14, color: hex("#ffffff"), borderColor: LIGHT, borderWidth: 0.5 });
+        // Фон чипа всегда белый, поэтому текст в нём должен быть тёмным.
+        // Иначе на тёмном сайдбаре (sideFg = белый) получается белый текст
+        // на белом фоне — навык выглядит пустым прямоугольником.
+        d.page.drawText(it, { x: x + 6, y: sy - 9, size: 8.5, font: d.regular, color: hex("#1f2937") });
+        x += cw + 4;
       }
       sy -= 20;
     } else {

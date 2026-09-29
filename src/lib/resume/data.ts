@@ -493,7 +493,7 @@ export const DEMO_PROFILES: Record<"it" | "legal" | "management", ResumeData> = 
     experience: [
       {
         company: "B2B Платформа «СмартЛогика»",
-        position: "Коммерческий директор (CCO)",
+        position: "Коммерческий директор (ССО)",
         period: "2021 — настоящее время (4 года)",
         bullets: [
           "Перестроил воронку продаж и внедрил сквозную аналитику, увеличив средний чек сделки на 64%.",

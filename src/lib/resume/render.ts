@@ -612,9 +612,11 @@ export function buildResumeDocHtml(data: ResumeData, tpl: TemplateId, accent?: s
             ? `<ul style="margin:2pt 0 7pt 16pt;padding:0;">${e.bullets.map((b) => `<li style="margin:0 0 1pt;">${escapeHtml(b)}</li>`).join("")}</ul>`
             : `<p style="margin:0 0 6pt;"></p>`;
           const body = head + bl;
+          // page-break-inside не даёт Word разорвать блок места работы
+          // и оставить заголовок без содержимого на другой странице.
           return cfg.expDots
-            ? `<div style="border-left:2pt solid ${cfg.accent};padding-left:8pt;margin:0 0 6pt;">${body}</div>`
-            : body;
+            ? `<div style="border-left:2pt solid ${cfg.accent};padding-left:8pt;margin:0 0 6pt;page-break-inside:avoid;">${body}</div>`
+            : `<div style="page-break-inside:avoid;">${body}</div>`;
         })
         .join("")
     : "";
@@ -644,6 +646,8 @@ export function buildResumeDocHtml(data: ResumeData, tpl: TemplateId, accent?: s
     `body{font-family:${font};font-size:10.5pt;color:#1f2937;line-height:1.45;margin:0}` +
     `h1{font-family:${font};margin:0}h2{font-family:${font}}` +
     `ul{margin:2pt 0 6pt 16pt;padding:0}li{margin:0 0 1pt}p{margin:0 0 3pt}` +
+    // Заголовок секции не должен оставаться в конце страницы без текста.
+    `h2{page-break-after:avoid}h1{page-break-after:avoid}li{page-break-inside:avoid}` +
     `</style></head>`;
   const open = `<!doctype html><html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">${head}<body>`;
   const close = `</body></html>`;
