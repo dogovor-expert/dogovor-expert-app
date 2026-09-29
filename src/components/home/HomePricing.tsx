@@ -1,7 +1,17 @@
+"use client";
+
+import { useCallback, useState } from "react";
 import Link from "next/link";
-import { Check } from "lucide-react";
+import { Check, Loader2, Lock } from "lucide-react";
 import { formatRub } from "@/lib/pricing";
 import { AI_PLAN_PRICE_RUB, AI_PLAN_QUESTIONS } from "@/lib/ai/pricing";
+
+/** CSRF-токен для POST-запросов (тот же контракт, что у /api/ai/topup). */
+async function fetchCsrf(): Promise<string> {
+  const res = await fetch("/api/csrf", { credentials: "same-origin" });
+  const data = (await res.json().catch(() => ({}))) as { token?: string };
+  return data.token ?? "";
+}
 
 interface HomePricingProps {
   totalTemplates: number;
@@ -9,21 +19,77 @@ interface HomePricingProps {
   proOldPrice: number | null;
 }
 
+type PlanKey = "free" | "pro" | "ai";
+
 function cn(...parts: Array<string | false>): string {
   return parts.filter(Boolean).join(" ");
 }
 
-/** Тарифы — только реальные планы: бесплатно, PRO, AI-юрист. */
+/**
+ * Тарифы на главной: бесплатно, PRO (299 ₽), AI-юрист (690 ₽).
+ *
+ * Раньше карточки были обычными <Link> на /billing и /ai-yurist, из-за чего
+ * у посетителя не было кнопки покупки: по клику его сначала выкидывало на
+ * страницу логина, а сам платёжный сценарий был спрятан на /billing.
+ * Теперь оплата запускается прямо отсюда, а гость без аккаунта получает
+ * понятный вход/регистрацию с возвратом обратно к тарифу.
+ */
 export default function HomePricing({ totalTemplates, proPrice, proOldPrice }: HomePricingProps) {
+  const [busy, setBusy] = useState<PlanKey | null>(null);
+  const [msg, setMsg] = useState<{ kind: "error" | "info"; text: string } | null>(null);
+
+  const buy = useCallback(async (plan: Exclude<PlanKey, "free">) => {
+    setMsg(null);
+    setBusy(plan);
+    try {
+      const token = await fetchCsrf();
+      const res = await fetch("/api/billing/create-payment", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json", "x-csrf-token": token },
+        body: JSON.stringify({ plan }),
+      });
+      const d = (await res.json().catch(() => null)) as
+        | { confirmation_url?: string; error?: string; detail?: string }
+        | null;
+      if (d?.confirmation_url) {
+        window.location.href = d.confirmation_url;
+        return;
+      }
+      if (res.status === 401 || d?.error === "unauthorized") {
+        // Гость: уводим на вход/регистрацию и возвращаем обратно к тарифам.
+        const back = encodeURIComponent("/#pricing");
+        setMsg({ kind: "info", text: "Войдите или зарегистрируйтесь, чтобы оформить подписку." });
+        window.setTimeout(() => {
+          window.location.href = `/login?next=${back}`;
+        }, 1200);
+      } else if (res.status === 503) {
+        setMsg({ kind: "error", text: "Оплата временно недоступна. Попробуйте позже." });
+      } else {
+        setMsg({
+          kind: "error",
+          text: d?.detail
+            ? `Не удалось создать платёж: ${d.detail}`
+            : "Не удалось создать платёж. Попробуйте позже.",
+        });
+      }
+    } catch {
+      setMsg({ kind: "error", text: "Сервис временно недоступен. Попробуйте ещё раз." });
+    } finally {
+      setBusy(null);
+    }
+  }, []);
+
   const plans = [
     {
+      key: "free" as const,
       name: "Бесплатно",
       price: "0 ₽",
       period: "навсегда",
       desc: "Чтобы попробовать конструктор и скачать первый документ.",
       features: [
         `${totalTemplates}+ шаблонов документов`,
-        "Экспорт в PDF и DOCX",
+        "Экспорт в PDF",
         "23 правовых калькулятора",
         "Без регистрации и карты",
       ],
@@ -32,12 +98,14 @@ export default function HomePricing({ totalTemplates, proPrice, proOldPrice }: H
       highlighted: false,
     },
     {
+      key: "pro" as const,
       name: "PRO",
       price: formatRub(proPrice),
       period: "в месяц",
       desc: "Для тех, кто регулярно работает с документами и подписью.",
       features: [
         `Все ${totalTemplates}+ шаблонов`,
+        "Экспорт в DOCX (Word)",
         "УКЭП-подписание в браузере",
         "OCR и конвертеры файлов",
         "DaData-автозаполнение",
@@ -49,6 +117,7 @@ export default function HomePricing({ totalTemplates, proPrice, proOldPrice }: H
       oldPrice: proOldPrice !== null ? formatRub(proOldPrice) : null,
     },
     {
+      key: "ai" as const,
       name: "AI-юрист",
       price: formatRub(AI_PLAN_PRICE_RUB),
       period: "в месяц",
@@ -56,10 +125,11 @@ export default function HomePricing({ totalTemplates, proPrice, proOldPrice }: H
       features: [
         `${AI_PLAN_QUESTIONS} вопросов в месяц`,
         "Цитаты статей НПА",
+        "Разбор договоров и документов",
         "Экспорт диалога в PDF и DOCX",
         "Приоритетная поддержка",
       ],
-      cta: "Попробовать AI-юриста",
+      cta: "Оформить AI-юриста",
       href: "/ai-yurist",
       highlighted: false,
     },
@@ -120,20 +190,84 @@ export default function HomePricing({ totalTemplates, proPrice, proOldPrice }: H
                 ))}
               </ul>
 
-              <Link
-                href={plan.href}
-                className={cn(
-                  "mt-8 inline-flex items-center justify-center rounded-xl px-5 py-3 text-sm font-semibold transition",
-                  plan.highlighted
-                    ? "bg-white text-indigo-700 shadow-lg hover:bg-indigo-50"
-                    : "border border-slate-200 text-slate-700 hover:border-slate-300 hover:bg-slate-50",
-                )}
-              >
-                {plan.cta}
-              </Link>
+              {plan.key === "free" ? (
+                <Link
+                  href={plan.href}
+                  className={cn(
+                    "mt-8 inline-flex items-center justify-center rounded-xl px-5 py-3 text-sm font-semibold transition",
+                    "border border-slate-200 text-slate-700 hover:border-slate-300 hover:bg-slate-50",
+                  )}
+                >
+                  {plan.cta}
+                </Link>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => { void buy(plan.key); }}
+                  disabled={busy !== null}
+                  aria-busy={busy === plan.key}
+                  className={cn(
+                    "mt-8 inline-flex w-full items-center justify-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold transition disabled:opacity-70",
+                    plan.highlighted
+                      ? "bg-white text-indigo-700 shadow-lg hover:bg-indigo-50"
+                      : "bg-indigo-600 text-white shadow-lg hover:bg-indigo-500",
+                  )}
+                >
+                  {busy === plan.key ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Создаём платёж…
+                    </>
+                  ) : (
+                    <>
+                      {plan.cta} · {plan.price}
+                    </>
+                  )}
+                </button>
+              )}
+
+              {plan.key !== "free" && (
+                <p
+                  className={cn(
+                    "mt-3 flex items-start justify-center gap-1.5 text-center text-[11px]",
+                    plan.highlighted ? "text-indigo-100" : "text-slate-500",
+                  )}
+                >
+                  <Lock className="mt-0.5 h-3 w-3 shrink-0" />
+                  Оплата картой МИР, Visa, Mastercard или СБП через ЮKassa. Отмена в любой момент.
+                </p>
+              )}
             </div>
           ))}
         </div>
+
+        {msg && (
+          <p
+            role="status"
+            aria-live="polite"
+            className={cn(
+              "mx-auto mt-6 max-w-2xl rounded-xl border px-4 py-3 text-center text-sm",
+              msg.kind === "error"
+                ? "border-red-200 bg-red-50 text-red-700"
+                : "border-indigo-200 bg-indigo-50 text-indigo-800",
+            )}
+          >
+            {msg.text}
+            {msg.kind === "info" && (
+              <>
+                {" "}
+                <Link href="/login?next=%2F%23pricing" className="font-semibold underline">
+                  Войти
+                </Link>{" "}
+                или{" "}
+                <Link href="/login?mode=register&next=%2F%23pricing" className="font-semibold underline">
+                  зарегистрироваться
+                </Link>
+                .
+              </>
+            )}
+          </p>
+        )}
       </div>
     </section>
   );

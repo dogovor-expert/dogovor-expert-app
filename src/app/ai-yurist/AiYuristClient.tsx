@@ -31,7 +31,8 @@ import {
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
-import { messagesForTopup } from "@/lib/ai/pricing";
+import { messagesForTopup, aiPriceFromLabel, AI_PRICE_AUDIT_LABEL, AI_PRICE_MESSAGE_RUB, AI_PLAN_PRICE_RUB, AI_PLAN_QUESTIONS } from "@/lib/ai/pricing";
+import { formatRub } from "@/lib/pricing";
 import {
   AUDIT_FILE_ACCEPT,
   AUDIT_FILE_MAX_BYTES,
@@ -164,6 +165,11 @@ export default function AiYuristClient() {
   const [topupSum, setTopupSum] = useState(300);
   const [topupBusy, setTopupBusy] = useState(false);
   const [authed, setAuthed] = useState<boolean | null>(null);
+  // Покупка подписки «AI-юрист» (690 ₽/мес) прямо с этой страницы.
+  // Раньше карточки тарифа здесь не было вовсе — был только блок пополнения
+  // баланса, поэтому кнопка «купить подписку» никуда не вела и выглядела как баг.
+  const [planBusy, setPlanBusy] = useState(false);
+  const [planMsg, setPlanMsg] = useState<{ kind: "error" | "info"; text: string } | null>(null);
   const [topupDone, setTopupDone] = useState(false);
   const [exporting, setExporting] = useState<"pdf" | "docx" | null>(null);
   const [auditText, setAuditText] = useState(AUDIT_PRESETS[0].text);
@@ -555,6 +561,52 @@ export default function AiYuristClient() {
     }
   }, [topupSum]);
 
+  /**
+   * Оплата подписки «AI-юрист» (690 ₽/мес, 200 вопросов).
+   *
+   * Тот же контракт, что у пополнения баланса: CSRF-токен, same-origin,
+   * редирект на подтверждение ЮKassa. Отличия — план "ai" и понятные
+   * сообщения об ошибках вместо молчаливого «не получилось».
+   */
+  const buyAiPlan = useCallback(async () => {
+    setPlanMsg(null);
+    if (authed === false) {
+      setPlanMsg({ kind: "info", text: "Войдите или зарегистрируйтесь, чтобы оформить подписку." });
+      return;
+    }
+    setPlanBusy(true);
+    try {
+      const token = await fetchCsrf();
+      const res = await fetch("/api/billing/create-payment", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json", "x-csrf-token": token },
+        body: JSON.stringify({ plan: "ai" }),
+      });
+      const d = (await res.json().catch(() => null)) as
+        | { confirmation_url?: string; error?: string; detail?: string }
+        | null;
+      if (d?.confirmation_url) {
+        window.location.href = d.confirmation_url;
+        return;
+      }
+      if (res.status === 401 || d?.error === "unauthorized") {
+        setPlanMsg({ kind: "info", text: "Войдите или зарегистрируйтесь, чтобы оформить подписку." });
+      } else if (res.status === 503) {
+        setPlanMsg({ kind: "error", text: "Оплата временно недоступна. Попробуйте позже." });
+      } else {
+        setPlanMsg({
+          kind: "error",
+          text: d?.detail ? `Не удалось создать платёж: ${d.detail}` : "Не удалось создать платёж. Попробуйте позже.",
+        });
+      }
+    } catch {
+      setPlanMsg({ kind: "error", text: "Сервис временно недоступен. Попробуйте ещё раз." });
+    } finally {
+      setPlanBusy(false);
+    }
+  }, [authed]);
+
   return (
     <div className="mx-auto max-w-6xl px-4 py-6">
       {/* Шапка */}
@@ -584,12 +636,12 @@ export default function AiYuristClient() {
           <p className="mt-3 max-w-xl text-slate-600">
             Проверьте договор, напишите претензию или соберите документ из простого описания ситуации.
             Каждый ответ — со <b className="text-slate-900">ссылками на статьи</b> действующих редакций 2026 года,
-            а не «из головы». Стоит <b className="text-slate-900">от 14 ₽</b> — в разы дешевле живого юриста.
+            а не «из головы». Стоит <b className="text-slate-900">{aiPriceFromLabel()}</b> — в разы дешевле живого юриста.
             И сразу превращает ответ в <b className="text-slate-900">готовый документ</b>.
           </p>
           <div className="mt-4 flex flex-wrap gap-2.5">
             <Button onClick={scrollToChat}>Задать вопрос — бесплатно <ArrowRight size={16} weight="bold" /></Button>
-            <Button variant="outline" onClick={scrollToAudit}>Проверить договор — 19 ₽</Button>
+            <Button variant="outline" onClick={scrollToAudit}>Проверить договор — {AI_PRICE_AUDIT_LABEL()}</Button>
             <Button variant="outline" onClick={() => document.getElementById("ai-tariffs")?.scrollIntoView({ behavior: "smooth" })}>Сколько стоит</Button>
           </div>
           <div className="mt-4 flex flex-wrap gap-2 text-xs font-medium text-slate-600">
@@ -658,8 +710,8 @@ export default function AiYuristClient() {
             <p className="mt-2 font-bold">Войдите, чтобы задавать вопросы</p>
             <p className="mx-auto mt-1 max-w-md text-sm text-slate-500">Баланс и история привязаны к аккаунту. Это минута.</p>
             <div className="mt-4 flex justify-center gap-2.5">
-              <Link href="/login"><Button>Войти</Button></Link>
-              <Link href="/register"><Button variant="outline">Регистрация</Button></Link>
+              <Link href="/login?mode=login"><Button>Войти</Button></Link>
+              <Link href="/login?mode=register"><Button variant="outline">Регистрация</Button></Link>
             </div>
           </Card>
         ) : (
@@ -724,12 +776,12 @@ export default function AiYuristClient() {
                 {quota ? (
                   <>
                     <p className="flex items-center gap-1 font-bold"><Gift size={15} weight="fill" /> Тариф AI-юрист: осталось {quota.left} из {quota.total}</p>
-                    <p className="mt-1 text-slate-600">Неиспользованные вопросы сгорают в конце месяца. Дальше 19 ₽/сообщение.</p>
+                    <p className="mt-1 text-slate-600">Неиспользованные вопросы сгорают в конце месяца. Дальше {AI_PRICE_MESSAGE_RUB} ₽/сообщение.</p>
                   </>
                 ) : (
                   <>
                     <p className="flex items-center gap-1 font-bold"><Gift size={15} weight="fill" /> {freeAsked < 2 ? `Осталось бесплатных: ${2 - freeAsked}` : "Бесплатные использованы"}</p>
-                    <p className="mt-1 text-slate-600">Дальше 19 ₽/сообщение. Баланс не сгорает.</p>
+                    <p className="mt-1 text-slate-600">Дальше {AI_PRICE_MESSAGE_RUB} ₽/сообщение. Баланс не сгорает.</p>
                   </>
                 )}
               </div>
@@ -855,7 +907,7 @@ export default function AiYuristClient() {
                 </div>
                 <label className="mt-2 flex cursor-pointer items-start gap-2 text-xs text-slate-500">
                   <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} className="mt-0.5" />
-                  Согласен на обработку вопроса (может содержать персональные данные). 1 сообщение = 19 ₽ · первые 2 — бесплатно.
+                  Согласен на обработку вопроса (может содержать персональные данные). 1 сообщение = {AI_PRICE_MESSAGE_RUB} ₽ · первые 2 — бесплатно.
                 </label>
                 <p className="mt-1.5 flex items-center gap-1.5 text-[11px] text-slate-400">
                   <ShieldCheck size={14} /> Информация общего характера, не юридическая консультация. Номера статей — только из проверенной базы.
@@ -869,7 +921,7 @@ export default function AiYuristClient() {
       {/* Проверка договора */}
       <div id="ai-audit" className="scroll-mt-4 pt-8">
         <h2 className="text-xl font-extrabold">Проверка договора — найдём риски до подписания</h2>
-        <p className="mb-3 mt-1 max-w-3xl text-sm text-slate-500">Загрузите договор (PDF, DOCX, фото скана или текстовый файл) либо вставьте текст — AI-юрист сверит пункты с действующими законами, выставит индекс безопасности и предложит безопасные формулировки. Файл обрабатывается прямо в браузере и никуда не отправляется. Требуется вход: 1 проверка = 19 ₽ или из бесплатных вопросов.</p>
+        <p className="mb-3 mt-1 max-w-3xl text-sm text-slate-500">Загрузите договор (PDF, DOCX, фото скана или текстовый файл) либо вставьте текст — AI-юрист сверит пункты с действующими законами, выставит индекс безопасности и предложит безопасные формулировки. Файл обрабатывается прямо в браузере и никуда не отправляется. Требуется вход: 1 проверка = {AI_PRICE_AUDIT_LABEL()} или из бесплатных вопросов.</p>
         <Card className="overflow-hidden p-0">
           <div className="flex flex-col gap-3 border-b border-slate-100 bg-slate-50/70 p-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-3">
@@ -970,7 +1022,7 @@ export default function AiYuristClient() {
               <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <span className="text-[11px] text-slate-400">Символов: {auditText.length} / {AUDIT_MAX.toLocaleString("ru-RU")} · минимум 200</span>
                 <Button onClick={() => void sendAudit()} disabled={auditSending} className="bg-gradient-to-br from-brand-600 to-indigo-600">
-                  <MagnifyingGlass size={16} weight="bold" /> {auditSending ? "Проверяем…" : "Проверить договор — 19 ₽"}
+                  <MagnifyingGlass size={16} weight="bold" /> {auditSending ? "Проверяем…" : "Проверить договор — {AI_PRICE_AUDIT_LABEL()}"}
                 </Button>
               </div>
               {auditSending && (
@@ -991,7 +1043,7 @@ export default function AiYuristClient() {
               {!auditReport && !auditSending && (
                 <div className="flex flex-1 flex-col items-center justify-center py-10 text-center text-slate-400">
                   <MagnifyingGlass size={36} weight="bold" className="text-slate-300" />
-                  <p className="mt-3 text-sm font-bold text-slate-600">Нажмите «Проверить договор — 19 ₽»</p>
+                  <p className="mt-3 text-sm font-bold text-slate-600">Нажмите «Проверить договор — {AI_PRICE_AUDIT_LABEL()}»</p>
                   <p className="mt-1 text-xs">Настоящий разбор: RAG-поиск статей, индекс риска, безопасные формулировки.</p>
                 </div>
               )}
@@ -1087,8 +1139,107 @@ export default function AiYuristClient() {
 
       {/* Тарифы */}
       <div id="ai-tariffs" className="scroll-mt-4 pt-8">
-        <h2 className="text-xl font-extrabold">Цены: баланс, без подписки</h2>
-        <p className="mb-3 mt-1 max-w-3xl text-sm text-slate-500">Пополнили от 100 ₽ — тратите, пока не закончится. Баланс не сгорает. Чем больше сумма, тем больше бонус. Оплата картой МИР, Visa, СБП через ЮKassa.</p>
+        <h2 className="text-xl font-extrabold">Тарифы AI-юриста</h2>
+        <p className="mb-4 mt-1 max-w-3xl text-sm text-slate-500">
+          Выберите подписку, если спрашиваете часто, или пополните баланс под разовые вопросы.
+          Баланс не сгорает. Оплата картой МИР, Visa, Mastercard или СБП через ЮKassa.
+        </p>
+
+        {/* ПОДПИСКА 690 ₽/мес — рабочая кнопка оплаты (раньше карточки не было) */}
+        <Card className="mb-5 overflow-hidden border-2 border-brand-500 p-0">
+          <div className="flex flex-col gap-4 bg-gradient-to-br from-brand-500 to-brand-600 p-6 text-white sm:flex-row sm:items-center sm:justify-between">
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <h3 className="text-lg font-extrabold">Подписка «AI-юрист»</h3>
+                <span className="rounded-full bg-amber-400 px-2 py-0.5 text-[10px] font-extrabold uppercase text-slate-900">
+                  Выгодно от 11 вопросов
+                </span>
+                {quota && (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-white/20 px-2 py-0.5 text-[11px] font-semibold">
+                    <CheckCircle size={13} weight="fill" /> Активна
+                  </span>
+                )}
+              </div>
+              <p className="mt-1 text-2xl font-extrabold">
+                {formatRub(AI_PLAN_PRICE_RUB)}
+                <span className="text-sm font-medium opacity-90"> / месяц</span>
+              </p>
+              <p className="mt-1 text-sm opacity-90">
+                {AI_PLAN_QUESTIONS} вопросов в месяц со ссылками на статьи НПА
+                {quota ? ` · осталось ${quota.left} из ${quota.total}` : ""}
+              </p>
+            </div>
+            <div className="shrink-0 sm:w-64">
+              {quota ? (
+                <div className="rounded-xl bg-white/15 p-3 text-sm">
+                  Тариф активен. Неиспользованные вопросы сгорают в конце месяца,
+                  дальше — {aiPriceFromLabel()} из баланса.
+                </div>
+              ) : (
+                <Button
+                  size="lg"
+                  className="w-full bg-white text-brand-700 shadow-lg hover:bg-white/90"
+                  onClick={() => { void buyAiPlan(); }}
+                  disabled={planBusy}
+                  aria-busy={planBusy}
+                >
+                  {planBusy ? "Создаём платёж…" : `Оформить за ${formatRub(AI_PLAN_PRICE_RUB)}`}
+                </Button>
+              )}
+            </div>
+          </div>
+          <ul className="grid gap-2.5 p-6 text-sm text-slate-700 sm:grid-cols-2">
+            {[
+              `${AI_PLAN_QUESTIONS} вопросов в месяц — по ${aiPriceFromLabel()} за вопрос`,
+              "Ответы со ссылками на статьи НПА и цитатами",
+              "Экспорт диалога в PDF и DOCX",
+              "Разбор договоров: индекс риска и безопасные формулировки",
+              "История вопросов сохраняется в аккаунте",
+              "Приоритетная поддержка",
+            ].map((f) => (
+              <li key={f} className="flex items-start gap-2">
+                <CheckCircle size={17} weight="fill" className="mt-0.5 shrink-0 text-emerald-500" />
+                <span>{f}</span>
+              </li>
+            ))}
+          </ul>
+          {planMsg && (
+            <p
+              role="status"
+              aria-live="polite"
+              className={`mx-6 mb-5 rounded-xl border px-4 py-3 text-sm ${
+                planMsg.kind === "error"
+                  ? "border-red-200 bg-red-50 text-red-700"
+                  : "border-brand-200 bg-brand-50 text-brand-800"
+              }`}
+            >
+              {planMsg.text}
+              {planMsg.kind === "info" && (
+                <>
+                  {" "}
+                  <Link href="/login?mode=login" className="font-semibold underline">
+                    Войти
+                  </Link>{" "}
+                  или{" "}
+                  <Link href="/login?mode=register" className="font-semibold underline">
+                    зарегистрироваться
+                  </Link>
+                  .
+                </>
+              )}
+            </p>
+          )}
+          <p className="px-6 pb-5 text-[11px] text-slate-500">
+            Неиспользованные вопросы в конце месяца сгорают. Отмена в любой момент —
+            в разделе «Биллинг». Цена и количество вопросов берутся из единого
+            источника истины, поэтому всегда совпадают с квитанцией.
+          </p>
+        </Card>
+
+        <h3 className="mb-3 mt-6 text-base font-bold text-slate-700">
+          Или пополните баланс — без подписки
+        </h3>
+        <p className="mb-3 max-w-3xl text-sm text-slate-500">Пополнили от 100 ₽ — тратите, пока не закончится. Чем больше сумма, тем больше бонус.</p>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {PACKS.map((p) => (
             p === 300 ? (
@@ -1152,7 +1303,7 @@ export default function AiYuristClient() {
             </tr></thead>
             <tbody>
               {[
-                ["Цена вопроса", "от 14 ₽", "от 89 ₽", "1 299 ₽", "от 1 000 ₽"],
+                ["Цена вопроса", aiPriceFromLabel(), "от 89 ₽", "1 299 ₽", "от 1 000 ₽"],
                 ["Скорость", "~10 секунд", "часы, иногда дни", "по записи", "по записи"],
                 ["Сразу в документ", "1 клик", "нет", "нет", "нет"],
                 ["Ночью и в выходные", "да", "очередь", "нет", "нет"],

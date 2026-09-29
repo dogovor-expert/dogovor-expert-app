@@ -1,12 +1,17 @@
 import type { Metadata } from "next";
 import { truncateWord, composeTitle } from "@/lib/seo/docMeta";
 import { SITE_NAME, SITE_URL } from "@/lib/site";
+import { aiPriceFromLabel, AI_FREE_QUESTIONS } from "@/lib/ai/pricing";
 import AiYuristClient from "./AiYuristClient";
 import { AdSlot } from "@/components/ads/AdSlot";
 
-const TITLE = composeTitle("AI-юрист — ответ по закону за 10 секунд, от 14 ₽");
+// Цена и число бесплатных вопросов — из единого источника истины
+// (`src/lib/ai/pricing.ts`). Раньше здесь было зашито «от 14 ₽», хотя фактически
+// вопрос стоит 19 ₽: несуществующая цена утекала в <title>, OG и Twitter,
+// то есть прямо в сниппет поиска.
+const TITLE = composeTitle(`AI-юрист — ответ по закону за 10 секунд, ${aiPriceFromLabel()}`);
 const DESCRIPTION = truncateWord(
-  "AI-юрист Dogovor: ответы со ссылками на статьи действующих редакций, разбор договоров, баланс без подписки. Первые 2 вопроса — бесплатно.",
+  `AI-юрист Dogovor: ответы со ссылками на статьи действующих редакций, разбор договоров, баланс без подписки. Первые ${AI_FREE_QUESTIONS} вопроса — бесплатно.`,
   160
 );
 

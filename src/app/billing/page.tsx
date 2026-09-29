@@ -17,7 +17,7 @@ import {
   Sparkles,
   FileSearch,
 } from "lucide-react";
-import { currentProPrice, PRO_PRICE_OLD, PRO_PRICE, PROMO_LABEL, isPromoActive, formatRub } from "@/lib/pricing";
+import { currentProPrice, PRO_PRICE_OLD, PRO_PRICE, PROMO_LABEL, PROMO_ENDS_AT, isPromoActive, formatRub } from "@/lib/pricing";
 import { AI_PLAN_PRICE_RUB, AI_PLAN_QUESTIONS } from "@/lib/ai/pricing";
 import { track, trackMetrikaOnly, goals } from "@/lib/analytics";
 
@@ -82,7 +82,7 @@ const FAQ = [
   },
   {
     q: "Как работает тариф «AI-юрист»?",
-    a: "За 690 ₽ в месяц вы получаете 200 вопросов AI-юристу: ответы со ссылками на статьи законов, экспорт диалога в PDF и DOCX. Неиспользованные вопросы в конце месяца сгорают.",
+    a: `За ${formatRub(AI_PLAN_PRICE_RUB)} в месяц вы получаете ${AI_PLAN_QUESTIONS} вопросов AI-юристу: ответы со ссылками на статьи законов, экспорт диалога в PDF и DOCX. Неиспользованные вопросы в конце месяца сгорают.`,
   },
   {
     q: "Что будет, если вопросы тарифа «AI-юрист» закончатся?",
@@ -314,7 +314,14 @@ export default function BillingPage() {
           {promo && (
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-100 text-amber-800 text-xs font-bold">
               <Flame className="w-3.5 h-3.5" />
-              Акция {PROMO_LABEL} — успевайте до 20 сентября
+              {/* Дата берётся из PROMO_ENDS_AT, а не пишется руками: раньше здесь
+                  было зашито «до 20 сентября», и после этой даты бейдж обещал
+                  акцию, которой уже нет. */}
+              Акция {PROMO_LABEL} — до{" "}
+              {new Date(PROMO_ENDS_AT).toLocaleDateString("ru-RU", {
+                day: "numeric",
+                month: "long",
+              })}
             </span>
           )}
           <h1 className="text-display-xl font-bold mt-5 text-gray-900">

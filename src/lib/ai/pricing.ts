@@ -11,6 +11,26 @@ export const AI_FREE_QUESTIONS = 2; // первые N вопросов — бе�
 export const AI_MIN_TOPUP_KOPEKS = 10000; // 100 ₽ — мин. пополнение
 export const AI_LOW_BALANCE_KOPEKS = 2000; // 20 ₽ — порог «низкий баланс»
 
+/**
+ * Фактическая цена одного вопроса в рублях.
+ *
+ * ⚠️ ВАЖНО: `AI_PRICE_DOC_KOPEKS` и `AI_PRICE_VIDEO_KOPEKS` сейчас НЕ
+ * используются движком: `src/app/api/ai/chat/route.ts` списывает
+ * `AI_PRICE_MESSAGE_KOPEKS` и для режима `chat`, и для `audit` (разбор
+ * документа), а загрузки видео/аудио в продукте нет. Поэтому в текстах
+ * и сравнениях с конкурентами показываем ИМЕННО это значение — иначе мы
+ * обещаем клиенту цену, которой не существует (был баг: «от 14 ₽»
+ * при фактических 19 ₽). Если разбор документов станет отдельным тарифом —
+ * переключить одну константу и тексты поедут за ней.
+ */
+export const AI_PRICE_MESSAGE_RUB = AI_PRICE_MESSAGE_KOPEKS / 100;
+
+/** Подпись для UI/SEO: «от 19 ₽». */
+export const aiPriceFromLabel = (): string => `от ${AI_PRICE_MESSAGE_RUB} ₽`;
+
+/** Подпись цены разбора документа (сейчас = цена вопроса, см. комментарий выше). */
+export const AI_PRICE_AUDIT_LABEL = aiPriceFromLabel;
+
 // --- Тариф «AI-юрист» (подписка, квоты) ---
 export const AI_PLAN_PRICE_RUB = 690; // 690 ₽/мес
 export const AI_PLAN_PRICE_KOPEKS = 69000;

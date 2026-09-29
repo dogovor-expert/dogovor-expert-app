@@ -87,7 +87,13 @@ function LoginForm() {
   const [password, setPassword] = useState("");
   const [passwordConfirm, setPasswordConfirm] = useState("");
   const [code, setCode] = useState("");
-  const [mode, setMode] = useState<"register" | "login">("register");
+  // Стартовый режим берётся из ?mode=login|register, чтобы ссылка «Войти» и
+  // ссылка «Регистрация» вели в разные состояния формы. Раньше параметр
+  // игнорировался, и оба клика открывали одно и то же окно — из-за этого
+  // «регистрация» выглядела как неработающая.
+  const [mode, setMode] = useState<"register" | "login">(
+    searchParams.get("mode") === "login" ? "login" : "register"
+  );
   const [step, setStep] = useState<"email" | "password" | "confirm" | "mfa">("email");
   const [mfaFactor, setMfaFactor] = useState<string | null>(null);
   const [mfaChecking, setMfaChecking] = useState(false);

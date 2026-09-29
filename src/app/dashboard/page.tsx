@@ -200,7 +200,12 @@ export default function DashboardPage() {
                 </span>
               )}
               Тариф Pro за {formatRub(price)}
-              <span className="text-sm font-normal text-gray-600 line-through"> {formatRub(PRO_PRICE_OLD)}</span>
+              {/* Зачёркнутая старая цена — только пока действует акция. Раньше она
+                  выводилась всегда, и после окончания акции пользователь видел
+                  «990 ₽ 990 ₽/мес» и «Выгода 0 ₽». */}
+              {promo && (
+                <span className="text-sm font-normal text-gray-600 line-through"> {formatRub(PRO_PRICE_OLD)}</span>
+              )}
               /мес
             </h3>
             <p className="text-sm text-gray-600 mt-1">
