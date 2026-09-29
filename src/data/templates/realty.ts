@@ -971,7 +971,7 @@ export const TEMPLATES_REALTY: LegalTemplate[] = [
     actSource: "ст. 671-688 ГК РФ",
     lastUpdated: "Август 2026",
     description: "Договор найма жилого помещения между физическими лицами (наймодатель и наниматель).",
-    suggestedDocs: ["Договор аренды квартиры", "Акт приёма-передачи квартиры", "Расписка"],
+    suggestedDocs: ["rental-flat", "akt-priema-kvartiry", "raspiska-generic"],
     fields: [
 
       { id: "date", label: "Дата составления", type: "date", defaultValue: "", category: "contract" },
@@ -993,7 +993,7 @@ export const TEMPLATES_REALTY: LegalTemplate[] = [
     actSource: "ст. 971-979 ГК РФ",
     lastUpdated: "Август 2026",
     description: "Договор поручения, по которому поверенный обязуется совершить сделки по продаже недвижимости доверителя.",
-    suggestedDocs: ["Агентский договор", "Договор оказания риэлторских услуг", "Доверенность"],
+    suggestedDocs: ["agency-contract", "realty-services", "power-attorney"],
     fields: [
 
       { id: "date", label: "Дата составления", type: "date", defaultValue: "", category: "contract" },
@@ -1013,7 +1013,7 @@ export const TEMPLATES_REALTY: LegalTemplate[] = [
     actSource: "ст. 556 ГК РФ",
     lastUpdated: "Август 2026",
     description: "Акт приёма-передачи земельного участка к договору купли-продажи.",
-    suggestedDocs: ["ДКП земельного участка", "Акт приёма-передачи квартиры"],
+    suggestedDocs: ["dkp-land"],
     fields: [
 
       { id: "date", label: "Дата составления", type: "date", defaultValue: "", category: "contract" },
@@ -1032,7 +1032,7 @@ export const TEMPLATES_REALTY: LegalTemplate[] = [
     actSource: "ст. 450, 614 ГК РФ",
     lastUpdated: "Август 2026",
     description: "Дополнительное соглашение к договору аренды (изменение арендной платы, срока, площади).",
-    suggestedDocs: ["Договор аренды квартиры", "Договор аренды нежилого помещения"],
+    suggestedDocs: ["rental-flat", "rental-commercial"],
     fields: [
 
       { id: "date", label: "Дата составления", type: "date", defaultValue: "", category: "contract" },
@@ -1051,7 +1051,7 @@ export const TEMPLATES_REALTY: LegalTemplate[] = [
     actSource: "ст. 450, 452 ГК РФ",
     lastUpdated: "Август 2026",
     description: "Соглашение о расторжении договора аренды по соглашению сторон.",
-    suggestedDocs: ["Договор аренды квартиры", "Договор аренды нежилого помещения", "Акт приёма-передачи"],
+    suggestedDocs: ["rental-flat", "rental-commercial"],
     fields: [
 
       { id: "date", label: "Дата составления", type: "date", defaultValue: "", category: "contract" },
@@ -1070,7 +1070,7 @@ export const TEMPLATES_REALTY: LegalTemplate[] = [
     actSource: "ст. 450, 452, 615 ГК РФ",
     lastUpdated: "Август 2026",
     description: "Соглашение о расторжении договора субаренды нежилого помещения по соглашению сторон.",
-    suggestedDocs: ["Договор субаренды нежилого помещения", "Договор аренды нежилого помещения"],
+    suggestedDocs: ["sublease", "rental-commercial"],
     fields: [
 
       { id: "date", label: "Дата составления", type: "date", defaultValue: "", category: "contract" },
@@ -1290,7 +1290,7 @@ export const TEMPLATES_REALTY: LegalTemplate[] = [
     actSource: "ст. 606-625 ГК РФ",
     lastUpdated: "Август 2026",
     description: "Аренда торгового места на рынке или в торговом центре: описание места, целевое использование, арендная плата и коммунальные платежи, срок аренды, порядок возврата.",
-    suggestedDocs: ["lease-contract", "act-services"],
+    suggestedDocs: ["rental-general", "act-services"],
     printInstruction: "Печать на листе А4; схема и площадь торгового места оформляются приложением к договору",
     fields: [
       { id: "city", label: "Город", type: "text", defaultValue: "", category: "contract" },
@@ -1469,7 +1469,7 @@ export const TEMPLATES_REALTY: LegalTemplate[] = [
     actSource: "ст. 380 ГК РФ",
     lastUpdated: "Август 2026",
     description: "Соглашение о передаче аванса (в отличие от задатка аванс всегда возвращается). Обычно используется как предварительный договор с авансовым платежом.",
-    suggestedDocs: ["dogovor-zadatka","raspiska"],
+    suggestedDocs: ["dogovor-zadatka","raspiska-money"],
     supportsOcr: true,
     printInstruction: "Печать на одном листе А4",
     fields: [
@@ -1706,7 +1706,7 @@ export const TEMPLATES_REALTY: LegalTemplate[] = [
     actSource: "ст. 610, 450.1 ГК РФ",
     lastUpdated: "Август 2026",
     description: "Уведомление арендатора или арендодателя о расторжении договора аренды с указанием срока освобождения помещения.",
-    suggestedDocs: ["rental-agreement","apartment-rental","claim-generic"],
+    suggestedDocs: ["rental-general","rental-flat","claim-generic"],
     supportsOcr: true,
     printInstruction: "Печать на одном листе А4",
     fields: [

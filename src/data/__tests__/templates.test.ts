@@ -1,5 +1,8 @@
 import { describe, it, expect } from "vitest";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { LEGAL_TEMPLATES } from "@/data/legalTemplates";
+import { TEMPLATE_COUNT, templateWord } from "@/data/templateCount";
 import { buildTemplateDefaults } from "@/lib/format";
 
 describe("каталог шаблонов", () => {
@@ -45,5 +48,30 @@ describe("каталог шаблонов", () => {
         ).toBe(true);
       }
     }
+  });
+
+  it("TEMPLATE_COUNT синхронен с LEGAL_TEMPLATES (аудит 29.09.2026: был хардкод 369)", () => {
+    expect(TEMPLATE_COUNT).toBe(LEGAL_TEMPLATES.length);
+    expect(templateWord(1)).toBe("шаблон");
+    expect(templateWord(3)).toBe("шаблона");
+    expect(templateWord(570)).toBe("шаблонов");
+    expect(templateWord(11)).toBe("шаблонов");
+  });
+
+  it("public/llms.txt не врёт про число шаблонов", () => {
+    const llms = readFileSync(join(process.cwd(), "public", "llms.txt"), "utf8");
+    expect(llms).toContain(`— ${TEMPLATE_COUNT} `);
+    expect(llms).not.toContain("369");
+  });
+
+  it("все suggestedDocs резолвятся в id шаблонов (аудит 29.09.2026: было 88 битых)", () => {
+    const ids = new Set(LEGAL_TEMPLATES.map((t) => t.id));
+    const broken: string[] = [];
+    for (const t of LEGAL_TEMPLATES) {
+      for (const l of t.suggestedDocs ?? []) {
+        if (!ids.has(l)) broken.push(`${t.id} -> ${l}`);
+      }
+    }
+    expect(broken).toEqual([]);
   });
 });

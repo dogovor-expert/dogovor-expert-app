@@ -168,7 +168,7 @@ export const TEMPLATES_HR: LegalTemplate[] = [
     lastUpdated: "Август 2026",
     description:
       "Трудовой договор с иностранным работником: патент или разрешение на работу, медосмотр, полис ДМС, уведомление МВД о заключении договора.",
-    suggestedDocs: ["employment-contract", "foreign-employee-reg", "pdn-policy"],
+    suggestedDocs: ["employment-contract", "pdn-policy"],
     printInstruction:
       "Уведомить МВД о заключении трудового договора с иностранцем — в течение 3 рабочих дней (ст. 13 115-ФЗ). Обязательны медосмотр (ст. 327.3 ТК РФ) и полис ДМС или договор с медорганизацией (ст. 327.2 ТК РФ).",
     fields: [

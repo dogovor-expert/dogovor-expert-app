@@ -159,7 +159,7 @@ export const TEMPLATES_LEGAL: LegalTemplate[] = [
     actSource: "ст. 149 АПК РФ, ст. 131-132 ГПК РФ",
     lastUpdated: "Август 2026",
     description: "Возражения ответчика на исковое заявление о взыскании задолженности по договору.",
-    suggestedDocs: ["Исковое заявление о взыскании задолженности", "Исковое заявление о взыскании долга"],
+    suggestedDocs: ["lawsuit-statement", "lawsuit-statement"],
     fields: [
 
       { id: "date", label: "Дата составления", type: "date", defaultValue: "", category: "contract" },
@@ -406,7 +406,7 @@ export const TEMPLATES_LEGAL: LegalTemplate[] = [
     actSource: "ст. 1111, 1152-1154 ГК РФ",
     lastUpdated: "Август 2026",
     description: "Иск наследника о признании права собственности на наследственное имущество, включении имущества в наследственную массу.",
-    suggestedDocs: ["claim-generic","notary-power-of-attorney"],
+    suggestedDocs: ["claim-generic"],
     supportsOcr: true,
     printInstruction: "Печать на одном листе А4",
     fields: [
@@ -657,7 +657,7 @@ export const TEMPLATES_LEGAL: LegalTemplate[] = [
     actSource: "ст. 65 СК РФ",
     lastUpdated: "Август 2026",
     description: "Иск об определении места жительства несовершеннолетнего ребёнка при раздельном проживании родителей.",
-    suggestedDocs: ["divorce-lawsuit","parenting-plan"],
+    suggestedDocs: ["divorce-lawsuit"],
     supportsOcr: true,
     printInstruction: "Печать на одном листе А4",
     fields: [
