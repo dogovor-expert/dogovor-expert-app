@@ -24,6 +24,7 @@ import { RESUME_CSS } from "@/lib/resume/resumeCss";
 import { BUILDER_CSS } from "@/lib/resume/builderCss";
 import { ACCENT_PALETTES, PRESETS, PHRASES, SAMPLE_RESUME, TEMPLATES, TEMPLATE_META } from "@/lib/resume/data";
 import { buildResumeCardHtml, buildResumeDocHtml, buildResumePreviewHtml, countNumericBullets, fullName, hardSkills } from "@/lib/resume/render";
+import { downloadResumeDocx } from "@/lib/resume/resumeDocx";
 // pdf-lib подгружается лениво при экспорте (см. exportPdfFile) — чтобы не раздувать бандл страницы
 import { saveAs } from "file-saver";
 import type { ResumeData, ResumeExperience, ResumeLanguage, TemplateId } from "@/lib/resume/types";
@@ -420,17 +421,15 @@ export default function ResumeBuilder() {
   };
 
   // Скачивание в DOC (Word-совместимый HTML): редактируемый документ.
-  const exportDoc = () => {
+  // Настоящий .docx (OOXML), а не HTML с расширением .doc.
+  // Раньше здесь был Blob(["\ufeff", html], {type:"application/msword"}) —
+  // это не документ Word: Word открывал его как HTML, но и .doc, и .docx
+  // файл не являлись, а обещание "PDF и DOCX" на сайте не выполнялось.
+  // Шапка/подвал с брендом сайта намеренно не добавляются — документ
+  // получает кандидат, а не мы. Подробности в src/lib/resume/resumeDocx.ts.
+  const exportDoc = async () => {
     const html = buildResumeDocHtml(data, tpl, accent ?? undefined);
-    const blob = new Blob(["\ufeff", html], { type: "application/msword" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `Резюме — ${fullName(data) || "без имени"}.doc`;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    window.setTimeout(() => URL.revokeObjectURL(url), 2000);
+    await downloadResumeDocx(html, `Резюме — ${fullName(data) || "без имени"}`);
   };
 
   const doneState = (id: SectionId): Done => {
@@ -575,9 +574,14 @@ export default function ResumeBuilder() {
               <Palette className="h-4 w-4" aria-hidden />
               <span className="hidden sm:inline">Шаблоны</span>
             </button>
-            <button type="button" className="rvb-btn rvb-btn-o" onClick={exportDoc} title="Скачать в DOC (Word)">
+            <button
+              type="button"
+              className="rvb-btn rvb-btn-o"
+              onClick={() => void exportDoc()}
+              title="Скачать в DOCX (Word)"
+            >
               <FileText className="h-4 w-4" aria-hidden />
-              <span className="hidden sm:inline">DOC</span>
+              <span className="hidden sm:inline">DOCX</span>
             </button>
             <button type="button" className="rvb-btn rvb-btn-p" onClick={() => { void exportPdfFile(); }} title="Скачать резюме в PDF" disabled={pdfBusy}>
               {pdfBusy ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <FileDown className="h-4 w-4" aria-hidden />}
