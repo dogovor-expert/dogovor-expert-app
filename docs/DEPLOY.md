@@ -179,18 +179,33 @@ npm run deploy:dry        # показать план, ничего не дел�
 
 Сборки Dokploy переиспользуют один тег (`dogovor-prod-dlpedm:latest`), поэтому
 старые образы не копятся, как это делал CapRover. Основной потребитель места —
-BuildKit-кэш. Уборка (на VDS по SSH):
+**build cache**: каждый билд клонирует репозиторий целиком в снапшот, и это
+~3 ГБ на деплой.
 
-```bash
-docker system df                                 # сколько занято
-docker builder prune -f                          # кэш сборок
-docker image prune -f                            # висячие образы
+> Инцидент 2026-09-29: за сутки прошло 5+ деплоев ⇒ build cache вырос до
+> **34 ГБ**, диск до **74%**. Уборка раз в 7 дней (`until=168h`) не успевала.
+
+**Автоматическая уборка настроена в crontab** (файл `/var/spool/cron/crontabs/root`):
+
+```
+23 4 * * *  docker builder prune -af --filter "until=6h"        # ежедневно, свежий кэш сохраняем
+7  3 * * 0  docker image prune -af --filter "until=168h"        # образы раз в неделю
+47 5 * * 0  git gc --prune=now в /etc/dokploy/git/dogovor.git   # компактизация зеркала
 ```
 
-Полная очистка по фильтрам (`--filter "until=…"`) тоже допустима, но следующая
-сборка один раз будет холодной (долгой). Текущие контейнеры/тома не трогать.
-На сервере также стоит cron-уборка (ежедневно `docker builder prune -a -f`,
-еженедельно `docker image prune -a` со старыми образами).
+Фильтр `until=6h` — компромисс: старый кэш удаляется ежедневно, но кэш текущего
+дня остаётся, поэтому сборка не становится холодной.
+
+Ручная уборка (когда диск кончится до расписания):
+
+```bash
+docker builder prune -af          # полная очистка кэша (следующая сборка будет холодной)
+docker system df                  # что занято
+```
+
+⚠️ **Не чистить кэш во время активной сборки.** Проверить можно так:
+`docker exec dokploy-postgres psql -U dokploy -d dokploy -c "select count(*) from deployment where \"finishedAt\" is null;"` — должно быть `0`.
+
 
 
 ### Про ошибку `NoFallbackError` в логах (`/converter/[tool]`, `/utils/[tool]`)
@@ -219,11 +234,21 @@ docker image prune -f                            # висячие образы
 (metadata-only, без парсинга XML; полный parse+verify 12MB TSL стоил ~400MB
 heap и ронял прод — инцидент 2026-09-28, runbook п. 9).
 
-> ⚠️ Статус на 2026-09-28: этих задач в crontab на VDS **нет** (там только
-> docker-уборка). Ставить только ПОСЛЕ деплоя коммитов `dff9861`+`506b31d`
-> (лёгкий статус + runtime heap), иначе ночной refresh уронит прод.
-> TSL-кэш протух (last_sync 2026-09-14) — после деплоя дёрнуть refresh вручную
-> и проверить metadata через `?action=status`.
+> ✅ **Статус на 2026-09-29: задачи установлены и проверены фактическим прогоном.**
+> Предусловие из инцидента 2026-09-28 выполнено — коммиты `dff9861`+`506b31d`
+> (лёгкий статус + runtime heap) задеплоены, после чего ночной refresh отработал
+> без падения прода:
+> - `tsl-refresh` → `{"success":true,...,"total_certificates_count":1698}`
+> - `daily-maintenance` → `{"ok":true,"renew":{"processed":0},...}`
+>
+> Секрет лежит в `/etc/dogovor/cron.env` (права `600`, root) — в самом crontab
+> его нет. Лог: `/var/log/dogovor-cron.log`, ротация настроена
+> (`/etc/logrotate.d/dogovor-cron`).
+>
+> ⚠️ Не отключать задачи без причины: без refresh TSL-кэш протухает, и подпись
+> УКЭП начнёт получать «unknown issuer». Если прогон упал — сначала
+> `?action=status` (metadata-only), полный parse+verify 12 МБ TSL тяжелён.
+
 
 
 ## Проверка прода (базовое)
