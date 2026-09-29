@@ -13,7 +13,6 @@ import {
   Plus,
   ZoomIn,
   ZoomOut,
-  Maximize2,
   Check,
   FileDown,
   Loader2,
@@ -542,7 +541,6 @@ export default function ResumeBuilder() {
         {/* Просмотр */}
         <section className={`rvb-stage ${tab === "view" ? "mobile-on" : ""}`}>
           <div className="rvb-stagebar">
-            <div className="tn">Шаблон: <span>{TEMPLATE_META[tpl]?.name}</span></div>
             <div className="rvb-qwrap" ref={qWrapRef}>
               <button type="button" className="rvb-qbtn" onClick={() => setQOpen((v) => !v)} aria-expanded={qOpen}>
                 <span className="rvb-ring">
@@ -596,9 +594,6 @@ export default function ResumeBuilder() {
                 <span className="zv" aria-live="off">{Math.round(scale * 100)}%</span>
                 <button type="button" onClick={() => stepZoom(1)} aria-label="Увеличить масштаб"><ZoomIn className="h-4 w-4" aria-hidden /></button>
               </div>
-              <button type="button" className="rvb-zoomfit" onClick={fitZoom} aria-label="Вписать лист целиком" title="Вписать лист целиком">
-                <Maximize2 className="h-4 w-4" aria-hidden />
-              </button>
             </div>
           </div>
           <div className="rvb-scroll" ref={scrollRef} role="region" aria-label="Предпросмотр резюме" tabIndex={0}>

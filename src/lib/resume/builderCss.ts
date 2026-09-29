@@ -1,4 +1,4 @@
-/** Стили интерфейса конструктора резюме. Scoped под .rvb.
+﻿/** Стили интерфейса конструктора резюме. Scoped под .rvb.
  *  Токены (цвета, радиусы, тени) — из фирменной палитры сайта
  *  (tailwind.config.ts / globals.css): brand-500 #2563eb и т.д. */
 export const BUILDER_CSS = `
@@ -88,8 +88,10 @@ export const BUILDER_CSS = `
 .rvb-chadd{flex:1;min-width:120px;border:none;outline:none;font-size:12.5px;font-family:inherit;background:none;padding:5px}
 .rvb-stage{position:relative;background:var(--rvb-mut);display:flex;flex-direction:column;min-height:0;min-width:0;background-image:radial-gradient(rgba(15,23,42,.05) 1px,transparent 1px);background-size:22px 22px}
 .rvb-stagebar{position:relative;z-index:20;height:56px;display:flex;align-items:center;gap:10px;padding:0 18px;background:rgba(255,255,255,.9);backdrop-filter:blur(10px);border-bottom:1px solid var(--rvb-bd);flex-shrink:0}
-.rvb-stagebar .tn{font-size:13px;font-weight:650}
-.rvb-stagebar .tn span{color:var(--rvb-mf);font-weight:500}
+/* Имя шаблона переехало в .rvb-pagelabel под листом (там же формат и число
+   страниц), поэтому в тулбаре оно больше не дублируется — иначе панель не
+   помещалась в сцену 812px (замер 29.09.2026: barOverflow). */
+.rvb-stagebar .rvb-btn,.rvb-stagebar .rvb-qwrap,.rvb-zoom{flex-shrink:0}
 /* Сцена листа. overflow:auto + независимый скролл, align-items:center —
    лист центрируется по вертикали, когда помещается целиком, и не «прилипает»
    к верху при прокрутке. overscroll-behavior:contain не даёт скроллу превью
@@ -102,16 +104,14 @@ export const BUILDER_CSS = `
 .rvb-zoom{margin-left:auto;display:flex;align-items:center;gap:8px}
 /* Сегментированный переключатель режимов: Лист / Ширина / 100% */
 .rvb-zoomset{display:flex;background:#f3f4f6;border-radius:9px;padding:2px;gap:2px}
-.rvb-zoomset button{padding:5px 10px;border:0;border-radius:7px;background:none;font:inherit;font-size:12px;font-weight:600;color:var(--rvb-mf2);cursor:pointer;white-space:nowrap;transition:.12s}
+.rvb-zoomset button{padding:5px 8px;border:0;border-radius:7px;background:none;font:inherit;font-size:12px;font-weight:600;color:var(--rvb-mf2);cursor:pointer;white-space:nowrap;transition:.12s}
 .rvb-zoomset button:hover{color:var(--rvb-ink)}
 .rvb-zoomset button[aria-pressed="true"]{background:#fff;color:var(--rvb-brand2);box-shadow:0 1px 2px rgba(15,23,42,.10)}
 .rvb-zoomstep{display:flex;align-items:center;gap:2px;background:#f3f4f6;border-radius:9px;padding:2px}
 .rvb-zoomstep button{width:28px;height:28px;border-radius:7px;border:0;background:none;display:grid;place-items:center;color:#374151;cursor:pointer;transition:.12s}
 .rvb-zoomstep button:hover{background:#fff;color:var(--rvb-brand2);box-shadow:0 1px 2px rgba(15,23,42,.10)}
 .rvb-zoomstep .zv{min-width:46px;text-align:center;font-size:12px;font-weight:700;color:var(--rvb-ink);font-variant-numeric:tabular-nums}
-.rvb-zoomfit{width:32px;height:32px;border-radius:9px;border:1.5px solid var(--rvb-bd);background:#fff;display:grid;place-items:center;color:var(--rvb-mf);cursor:pointer;transition:.12s}
-.rvb-zoomfit:hover{border-color:var(--rvb-brand);color:var(--rvb-brand2)}
-.rvb-zoomset button:focus-visible,.rvb-zoomstep button:focus-visible,.rvb-zoomfit:focus-visible{outline:2px solid var(--rvb-brand);outline-offset:2px}
+.rvb-zoomset button:focus-visible,.rvb-zoomstep button:focus-visible{outline:2px solid var(--rvb-brand);outline-offset:2px}
 /* Подпись листа под превью: имя шаблона + реальный формат и число страниц */
 .rvb-pagelabel{flex-shrink:0;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:7px 18px;border-top:1px solid var(--rvb-bd);background:rgba(255,255,255,.92);backdrop-filter:blur(10px);font-size:11.5px;color:var(--rvb-mf2)}
 .rvb-sheetname{font-weight:650;color:#374151;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
