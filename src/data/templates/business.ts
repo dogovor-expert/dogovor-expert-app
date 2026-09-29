@@ -1546,7 +1546,7 @@ export const TEMPLATES_BUSINESS: LegalTemplate[] = [
     actSource: "ст. 198-208 ТК РФ",
     lastUpdated: "Август 2026",
     description: "Договор профессионального обучения сотрудника за счёт работодателя с обязанностью отработать после обучения.",
-    suggestedDocs: ["Трудовой договор", "Договор оказания услуг"],
+    suggestedDocs: ["employment-contract", "service-agreement"],
     fields: [
       { id: "employer_org", label: "Работодатель", type: "text", defaultValue: "", category: "employer" },
       { id: "pupil_fio", label: "Обучающийся (ФИО)", type: "text", defaultValue: "", category: "employee" },
@@ -1566,7 +1566,7 @@ export const TEMPLATES_BUSINESS: LegalTemplate[] = [
     actSource: "ст. 72.1 ТК РФ",
     lastUpdated: "Август 2026",
     description: "Дополнительное соглашение к трудовому договору о переводе сотрудника на другую должность или в другое подразделение.",
-    suggestedDocs: ["Трудовой договор", "Допсоглашение к трудовому договору", "Приказ о переводе"],
+    suggestedDocs: ["employment-contract", "labour-addendum", "transfer-order-t5"],
     fields: [
 
       { id: "date", label: "Дата составления", type: "date", defaultValue: "", category: "contract" },
@@ -1587,7 +1587,7 @@ export const TEMPLATES_BUSINESS: LegalTemplate[] = [
     actSource: "ст. 506-524 ГК РФ",
     lastUpdated: "Август 2026",
     description: "Договор поставки автозапчастей и комплектующих для техники и автомобилей.",
-    suggestedDocs: ["Договор поставки товара", "Спецификация", "ТОРГ-12", "Акт приёма-передачи товара"],
+    suggestedDocs: ["supply-contract", "specification-supply", "torg-12", "goods-acceptance-act"],
     fields: [
 
       { id: "date", label: "Дата составления", type: "date", defaultValue: "", category: "contract" },
@@ -1608,7 +1608,7 @@ export const TEMPLATES_BUSINESS: LegalTemplate[] = [
     actSource: "ст. 506-524 ГК РФ",
     lastUpdated: "Август 2026",
     description: "Договор поставки товара между двумя юридическими лицами (ООО) с учётом НДС.",
-    suggestedDocs: ["Договор поставки товара", "Спецификация", "ТОРГ-12"],
+    suggestedDocs: ["supply-contract", "specification-supply", "torg-12"],
     fields: [
 
       { id: "date", label: "Дата составления", type: "date", defaultValue: "", category: "contract" },
@@ -1630,7 +1630,7 @@ export const TEMPLATES_BUSINESS: LegalTemplate[] = [
     actSource: "ст. 506-524 ГК РФ",
     lastUpdated: "Август 2026",
     description: "Договор поставки партий продукции с ежемесячными отгрузками по заявкам покупателя.",
-    suggestedDocs: ["Договор поставки товара", "Спецификация", "ТОРГ-12"],
+    suggestedDocs: ["supply-contract", "specification-supply", "torg-12"],
     fields: [
 
       { id: "date", label: "Дата составления", type: "date", defaultValue: "", category: "contract" },
@@ -1651,7 +1651,7 @@ export const TEMPLATES_BUSINESS: LegalTemplate[] = [
     actSource: "ст. 779-783 ГК РФ",
     lastUpdated: "Август 2026",
     description: "Договор оказания услуг между двумя организациями с актом сдачи-приёмки.",
-    suggestedDocs: ["Договор оказания услуг", "Акт оказанных услуг"],
+    suggestedDocs: ["service-agreement", "act-services"],
     fields: [
 
       { id: "date", label: "Дата составления", type: "date", defaultValue: "", category: "contract" },
@@ -1672,7 +1672,7 @@ export const TEMPLATES_BUSINESS: LegalTemplate[] = [
     actSource: "ст. 990-1004 ГК РФ",
     lastUpdated: "Август 2026",
     description: "Договор комиссии, по которому комиссионер обязуется продать товар комитента за вознаграждение.",
-    suggestedDocs: ["Договор комиссии", "Агентский договор", "Отчёт комиссионера"],
+    suggestedDocs: ["commission-contract", "agency-contract"],
     fields: [
 
       { id: "date", label: "Дата составления", type: "date", defaultValue: "", category: "contract" },
@@ -1693,7 +1693,7 @@ export const TEMPLATES_BUSINESS: LegalTemplate[] = [
     actSource: "ст. 1005-1011 ГК РФ",
     lastUpdated: "Август 2026",
     description: "Агентский договор, по которому агент обязуется найти покупателей и продать товар принципала.",
-    suggestedDocs: ["Агентский договор", "Договор комиссии", "Отчёт агента"],
+    suggestedDocs: ["agency-contract", "commission-contract"],
     fields: [
 
       { id: "date", label: "Дата составления", type: "date", defaultValue: "", category: "contract" },
@@ -1714,7 +1714,7 @@ export const TEMPLATES_BUSINESS: LegalTemplate[] = [
     actSource: "ст. 435, 437, 494 ГК РФ",
     lastUpdated: "Август 2026",
     description: "Публичная оферта о заключении договора на оказание услуг с неопределённым кругом лиц.",
-    suggestedDocs: ["Политика конфиденциальности", "Договор оказания услуг"],
+    suggestedDocs: ["privacy-policy", "service-agreement"],
     fields: [
 
       { id: "date", label: "Дата составления", type: "date", defaultValue: "", category: "contract" },
@@ -1734,7 +1734,7 @@ export const TEMPLATES_BUSINESS: LegalTemplate[] = [
     actSource: "ст. 12, 52 ГК РФ, ФЗ-14 «Об ООО»",
     lastUpdated: "Август 2026",
     description: "Устав общества с ограниченной ответственностью (типовой шаблон).",
-    suggestedDocs: ["Решение единственного участника", "Протокол собрания ООО", "Корпоративный договор"],
+    suggestedDocs: ["sole-member-decision", "llc-meeting-minutes", "corporate-agreement"],
     fields: [
 
       { id: "date", label: "Дата составления", type: "date", defaultValue: "", category: "contract" },
@@ -1754,7 +1754,7 @@ export const TEMPLATES_BUSINESS: LegalTemplate[] = [
     actSource: "ст. 67.2 ГК РФ",
     lastUpdated: "Август 2026",
     description: "Корпоративный договор участников ООО о порядке осуществления корпоративных прав.",
-    suggestedDocs: ["Устав ООО", "Протокол собрания ООО"],
+    suggestedDocs: ["charter-llc", "llc-meeting-minutes"],
     fields: [
 
       { id: "date", label: "Дата составления", type: "date", defaultValue: "", category: "contract" },
@@ -1774,7 +1774,7 @@ export const TEMPLATES_BUSINESS: LegalTemplate[] = [
     actSource: "ст. 39 ФЗ-14 «Об ООО»",
     lastUpdated: "Август 2026",
     description: "Решение единственного участника ООО (универсальное: утверждение результатов, распределение прибыли, назначение директора).",
-    suggestedDocs: ["Устав ООО", "Протокол собрания ООО"],
+    suggestedDocs: ["charter-llc", "llc-meeting-minutes"],
     fields: [
 
       { id: "date", label: "Дата составления", type: "date", defaultValue: "", category: "contract" },
@@ -1793,7 +1793,7 @@ export const TEMPLATES_BUSINESS: LegalTemplate[] = [
     actSource: "ст. 37, 39 ФЗ-14 «Об ООО»",
     lastUpdated: "Август 2026",
     description: "Протокол общего собрания участников ООО (универсальный: утверждение результатов, назначение директора, одобрение сделок).",
-    suggestedDocs: ["Устав ООО", "Решение единственного участника"],
+    suggestedDocs: ["charter-llc", "sole-member-decision"],
     fields: [
       { id: "company_name", label: "Общество", type: "text", defaultValue: "", category: "business" },
       { id: "members_list", label: "Список участников", type: "textarea", defaultValue: "", category: "business" },
@@ -1812,7 +1812,7 @@ export const TEMPLATES_BUSINESS: LegalTemplate[] = [
     actSource: "ст. 1234, 1285, 1388 ГК РФ",
     lastUpdated: "Август 2026",
     description: "Договор о передаче исключительного права на произведение или иной результат интеллектуальной деятельности.",
-    suggestedDocs: ["Лицензионный договор", "Договор авторского заказа"],
+    suggestedDocs: ["license-contract", "author-order"],
     fields: [
 
       { id: "date", label: "Дата составления", type: "date", defaultValue: "", category: "contract" },
@@ -1831,7 +1831,7 @@ export const TEMPLATES_BUSINESS: LegalTemplate[] = [
     actSource: "ст. 1238 ГК РФ",
     lastUpdated: "Август 2026",
     description: "Договор о предоставлении права использования РИД в пределах лицензии, полученной лицензиатом.",
-    suggestedDocs: ["Лицензионный договор", "Договор об отчуждении исключительного права"],
+    suggestedDocs: ["license-contract", "ip-assignment"],
     fields: [
 
       { id: "date", label: "Дата составления", type: "date", defaultValue: "", category: "contract" },
@@ -1851,7 +1851,7 @@ export const TEMPLATES_BUSINESS: LegalTemplate[] = [
     actSource: "ст. 506 ГК РФ (приложение к договору)",
     lastUpdated: "Август 2026",
     description: "Спецификация (приложение к договору поставки) с перечнем товара, количеством, ценой и сроками.",
-    suggestedDocs: ["Договор поставки товара", "ТОРГ-12"],
+    suggestedDocs: ["supply-contract", "torg-12"],
     fields: [
 
       { id: "date", label: "Дата составления", type: "date", defaultValue: "", category: "contract" },
@@ -1872,7 +1872,7 @@ export const TEMPLATES_BUSINESS: LegalTemplate[] = [
     actSource: "Постановление Госкомстата РФ № 132 от 25.12.1998",
     lastUpdated: "Август 2026",
     description: "Товарная накладная по унифицированной форме ТОРГ-12 для учёта операций по продаже товарно-материальных ценностей.",
-    suggestedDocs: ["Договор поставки товара", "Спецификация", "Акт приёма-передачи товара"],
+    suggestedDocs: ["supply-contract", "specification-supply", "goods-acceptance-act"],
     fields: [
 
       { id: "date", label: "Дата составления", type: "date", defaultValue: "", category: "contract" },      { id: "supplier_org", label: "Поставщик", type: "text", defaultValue: "", category: "seller" },
@@ -1891,7 +1891,7 @@ export const TEMPLATES_BUSINESS: LegalTemplate[] = [
     actSource: "ст. 506, 513 ГК РФ",
     lastUpdated: "Август 2026",
     description: "Акт приёма-передачи товара как приложение к договору поставки.",
-    suggestedDocs: ["Договор поставки товара", "ТОРГ-12"],
+    suggestedDocs: ["supply-contract", "torg-12"],
     fields: [
 
       { id: "date", label: "Дата составления", type: "date", defaultValue: "", category: "contract" },
@@ -1910,7 +1910,7 @@ export const TEMPLATES_BUSINESS: LegalTemplate[] = [
     actSource: "ст. 450 ГК РФ",
     lastUpdated: "Август 2026",
     description: "Дополнительное соглашение к договору купли-продажи (изменение цены, сроков, условий).",
-    suggestedDocs: ["Договор купли-продажи товара", "Дополнительное соглашение (универсальное)"],
+    suggestedDocs: ["goods-sale", "addendum-generic"],
     fields: [
 
       { id: "date", label: "Дата составления", type: "date", defaultValue: "", category: "contract" },
@@ -1928,7 +1928,7 @@ export const TEMPLATES_BUSINESS: LegalTemplate[] = [
     actSource: "ст. 450 ГК РФ",
     lastUpdated: "Август 2026",
     description: "Дополнительное соглашение к договору оказания услуг (изменение объёма, стоимости, сроков).",
-    suggestedDocs: ["Договор оказания услуг", "Акт оказанных услуг"],
+    suggestedDocs: ["service-agreement", "act-services"],
     fields: [
 
       { id: "date", label: "Дата составления", type: "date", defaultValue: "", category: "contract" },
@@ -1947,7 +1947,7 @@ export const TEMPLATES_BUSINESS: LegalTemplate[] = [
     actSource: "ст. 450, 452 ГК РФ",
     lastUpdated: "Август 2026",
     description: "Соглашение о расторжении договора поставки по соглашению сторон.",
-    suggestedDocs: ["Договор поставки товара", "Уведомление об отказе от договора"],
+    suggestedDocs: ["supply-contract", "refuse-notice"],
     fields: [
 
       { id: "date", label: "Дата составления", type: "date", defaultValue: "", category: "contract" },
@@ -2517,7 +2517,7 @@ export const TEMPLATES_BUSINESS: LegalTemplate[] = [
     actSource: "ст. 886-926 ГК РФ",
     lastUpdated: "Август 2026",
     description: "Договор хранения товара на складе: опись передаваемого имущества, место и срок хранения, вознаграждение, обязанности хранителя и ответственность за утрату или повреждение.",
-    suggestedDocs: ["act-services", "warehouse-rent"],
+    suggestedDocs: ["act-services", "rental-warehouse"],
     printInstruction: "Печать на листе А4; передача имущества оформляется описью (актом приёма-передачи) к договору",
     fields: [
       { id: "city", label: "Город", type: "text", defaultValue: "", category: "contract" },
@@ -3252,7 +3252,7 @@ export const TEMPLATES_BUSINESS: LegalTemplate[] = [
     lastUpdated: "Август 2026",
     description:
       "Договор купли-продажи предприятия как имущественного комплекса (ст. 560 ГК РФ). Обязательные приложения: акт инвентаризации, бухгалтерский баланс, перечень долгов, реестр претензий.",
-    suggestedDocs: ["act-inventory", "balance-sheet", "debt-register"],
+    suggestedDocs: ["property-list", "reconciliation-statement"],
     printInstruction:
       "Перед заключением продавец обязан письменно уведомить кредиторов (ст. 561 ГК РФ). Скрытые долги — основание для расторжения сделки по иску покупателя. Печатать в 2-х экземплярах.",
     fields: [

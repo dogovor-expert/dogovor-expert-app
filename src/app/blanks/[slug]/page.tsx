@@ -61,7 +61,7 @@ export function generateMetadata({ params }: { params: Promise<{ slug: string }>
       description: blankDesc(t.name),
       ogType: "article",
       // 8.3 (аудит): /blanks/{slug} и /documents/{slug} — близнецы по контенту
-      // (369×2). Каноническая — /documents (основная страница шаблона с формой).
+      // (570×2). Каноническая — /documents (основная страница шаблона с формой).
       // Страницу бланка оставляем жив для интента «скачать бланк», но вес
       // склеиваем на каноническую через cross-page canonical (рекомендация
       // Google для дублей; слабее 301, но сохраняет обе пользовательские

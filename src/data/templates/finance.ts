@@ -602,7 +602,7 @@ export const TEMPLATES_FINANCE: LegalTemplate[] = [
     actSource: "ст. 807-810 ГК РФ",
     lastUpdated: "Август 2026",
     description: "Договор займа денежных средств между двумя физическими лицами.",
-    suggestedDocs: ["Договор займа", "Расписка в получении денежных средств"],
+    suggestedDocs: ["loan-agreement", "raspiska-money"],
     fields: [
 
       { id: "date", label: "Дата составления", type: "date", defaultValue: "", category: "contract" },
@@ -624,7 +624,7 @@ export const TEMPLATES_FINANCE: LegalTemplate[] = [
     actSource: "ст. 450.1, 810 ГК РФ",
     lastUpdated: "Август 2026",
     description: "Уведомление займодавца об отказе от договора займа (досрочное истребование или отказ).",
-    suggestedDocs: ["Договор займа", "Уведомление об отказе от договора (универсальное)"],
+    suggestedDocs: ["loan-agreement", "refuse-notice"],
     fields: [
 
       { id: "date", label: "Дата составления", type: "date", defaultValue: "", category: "contract" },

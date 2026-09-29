@@ -474,7 +474,8 @@ export const TEMPLATE_META: TemplateMeta[] = [
     "actSource": "ст. 11 ФЗ-40 «Об ОСАГО», ст. 961 ГК РФ",
     "lastUpdated": "Август 2026",
     "suggestedDocs": [
-      "spravka-gibdd"
+      "auto-condition-act",
+      "stmt-auto-dtp-europrotocol"
     ],
     "fieldCount": 16
   },
@@ -675,8 +676,8 @@ export const TEMPLATE_META: TemplateMeta[] = [
     "actSource": "ст. 807-810 ГК РФ",
     "lastUpdated": "Август 2026",
     "suggestedDocs": [
-      "Договор займа",
-      "Расписка в получении денежных средств"
+      "loan-agreement",
+      "raspiska-money"
     ],
     "fieldCount": 10
   },
@@ -688,8 +689,8 @@ export const TEMPLATE_META: TemplateMeta[] = [
     "actSource": "ст. 450.1, 810 ГК РФ",
     "lastUpdated": "Август 2026",
     "suggestedDocs": [
-      "Договор займа",
-      "Уведомление об отказе от договора (универсальное)"
+      "loan-agreement",
+      "refuse-notice"
     ],
     "fieldCount": 8
   },
@@ -1140,9 +1141,9 @@ export const TEMPLATE_META: TemplateMeta[] = [
     "actSource": "ст. 671-688 ГК РФ",
     "lastUpdated": "Август 2026",
     "suggestedDocs": [
-      "Договор аренды квартиры",
-      "Акт приёма-передачи квартиры",
-      "Расписка"
+      "rental-flat",
+      "akt-priema-kvartiry",
+      "raspiska-money"
     ],
     "fieldCount": 10
   },
@@ -1154,9 +1155,9 @@ export const TEMPLATE_META: TemplateMeta[] = [
     "actSource": "ст. 971-979 ГК РФ",
     "lastUpdated": "Август 2026",
     "suggestedDocs": [
-      "Агентский договор",
-      "Договор оказания риэлторских услуг",
-      "Доверенность"
+      "agency-contract",
+      "realty-services",
+      "power-attorney"
     ],
     "fieldCount": 8
   },
@@ -1168,8 +1169,8 @@ export const TEMPLATE_META: TemplateMeta[] = [
     "actSource": "ст. 556 ГК РФ",
     "lastUpdated": "Август 2026",
     "suggestedDocs": [
-      "ДКП земельного участка",
-      "Акт приёма-передачи квартиры"
+      "dkp-land",
+      "akt-priema-kvartiry"
     ],
     "fieldCount": 7
   },
@@ -1181,8 +1182,8 @@ export const TEMPLATE_META: TemplateMeta[] = [
     "actSource": "ст. 450, 614 ГК РФ",
     "lastUpdated": "Август 2026",
     "suggestedDocs": [
-      "Договор аренды квартиры",
-      "Договор аренды нежилого помещения"
+      "rental-flat",
+      "rental-commercial"
     ],
     "fieldCount": 7
   },
@@ -1194,9 +1195,9 @@ export const TEMPLATE_META: TemplateMeta[] = [
     "actSource": "ст. 450, 452 ГК РФ",
     "lastUpdated": "Август 2026",
     "suggestedDocs": [
-      "Договор аренды квартиры",
-      "Договор аренды нежилого помещения",
-      "Акт приёма-передачи"
+      "rental-flat",
+      "rental-commercial",
+      "akt-priema-kvartiry"
     ],
     "fieldCount": 7
   },
@@ -1208,8 +1209,8 @@ export const TEMPLATE_META: TemplateMeta[] = [
     "actSource": "ст. 450, 452, 615 ГК РФ",
     "lastUpdated": "Август 2026",
     "suggestedDocs": [
-      "Договор субаренды нежилого помещения",
-      "Договор аренды нежилого помещения"
+      "sublease",
+      "rental-commercial"
     ],
     "fieldCount": 7
   },
@@ -1310,7 +1311,7 @@ export const TEMPLATE_META: TemplateMeta[] = [
     "actSource": "ст. 606-625 ГК РФ",
     "lastUpdated": "Август 2026",
     "suggestedDocs": [
-      "lease-contract",
+      "rental-commercial",
       "act-services"
     ],
     "fieldCount": 11
@@ -1386,7 +1387,7 @@ export const TEMPLATE_META: TemplateMeta[] = [
     "lastUpdated": "Август 2026",
     "suggestedDocs": [
       "dogovor-zadatka",
-      "raspiska"
+      "raspiska-money"
     ],
     "fieldCount": 14
   },
@@ -1488,8 +1489,8 @@ export const TEMPLATE_META: TemplateMeta[] = [
     "actSource": "ст. 610, 450.1 ГК РФ",
     "lastUpdated": "Август 2026",
     "suggestedDocs": [
-      "rental-agreement",
-      "apartment-rental",
+      "rental-flat",
+      "tenancy-flat",
       "claim-generic"
     ],
     "fieldCount": 10
@@ -1999,8 +2000,8 @@ export const TEMPLATE_META: TemplateMeta[] = [
     "actSource": "ст. 198-208 ТК РФ",
     "lastUpdated": "Август 2026",
     "suggestedDocs": [
-      "Трудовой договор",
-      "Договор оказания услуг"
+      "employment-contract",
+      "service-agreement"
     ],
     "fieldCount": 8
   },
@@ -2012,9 +2013,9 @@ export const TEMPLATE_META: TemplateMeta[] = [
     "actSource": "ст. 72.1 ТК РФ",
     "lastUpdated": "Август 2026",
     "suggestedDocs": [
-      "Трудовой договор",
-      "Допсоглашение к трудовому договору",
-      "Приказ о переводе"
+      "employment-contract",
+      "labour-addendum",
+      "transfer-order-t5"
     ],
     "fieldCount": 9
   },
@@ -2026,10 +2027,10 @@ export const TEMPLATE_META: TemplateMeta[] = [
     "actSource": "ст. 506-524 ГК РФ",
     "lastUpdated": "Август 2026",
     "suggestedDocs": [
-      "Договор поставки товара",
-      "Спецификация",
-      "ТОРГ-12",
-      "Акт приёма-передачи товара"
+      "supply-contract",
+      "specification-supply",
+      "torg-12",
+      "goods-acceptance-act"
     ],
     "fieldCount": 9
   },
@@ -2041,9 +2042,9 @@ export const TEMPLATE_META: TemplateMeta[] = [
     "actSource": "ст. 506-524 ГК РФ",
     "lastUpdated": "Август 2026",
     "suggestedDocs": [
-      "Договор поставки товара",
-      "Спецификация",
-      "ТОРГ-12"
+      "supply-contract",
+      "specification-supply",
+      "torg-12"
     ],
     "fieldCount": 10
   },
@@ -2055,9 +2056,9 @@ export const TEMPLATE_META: TemplateMeta[] = [
     "actSource": "ст. 506-524 ГК РФ",
     "lastUpdated": "Август 2026",
     "suggestedDocs": [
-      "Договор поставки товара",
-      "Спецификация",
-      "ТОРГ-12"
+      "supply-contract",
+      "specification-supply",
+      "torg-12"
     ],
     "fieldCount": 9
   },
@@ -2069,8 +2070,8 @@ export const TEMPLATE_META: TemplateMeta[] = [
     "actSource": "ст. 779-783 ГК РФ",
     "lastUpdated": "Август 2026",
     "suggestedDocs": [
-      "Договор оказания услуг",
-      "Акт оказанных услуг"
+      "service-agreement",
+      "act-services"
     ],
     "fieldCount": 9
   },
@@ -2082,9 +2083,8 @@ export const TEMPLATE_META: TemplateMeta[] = [
     "actSource": "ст. 990-1004 ГК РФ",
     "lastUpdated": "Август 2026",
     "suggestedDocs": [
-      "Договор комиссии",
-      "Агентский договор",
-      "Отчёт комиссионера"
+      "commission-contract",
+      "agency-contract"
     ],
     "fieldCount": 9
   },
@@ -2096,9 +2096,8 @@ export const TEMPLATE_META: TemplateMeta[] = [
     "actSource": "ст. 1005-1011 ГК РФ",
     "lastUpdated": "Август 2026",
     "suggestedDocs": [
-      "Агентский договор",
-      "Договор комиссии",
-      "Отчёт агента"
+      "agency-contract",
+      "commission-contract"
     ],
     "fieldCount": 9
   },
@@ -2110,8 +2109,8 @@ export const TEMPLATE_META: TemplateMeta[] = [
     "actSource": "ст. 435, 437, 494 ГК РФ",
     "lastUpdated": "Август 2026",
     "suggestedDocs": [
-      "Политика конфиденциальности",
-      "Договор оказания услуг"
+      "privacy-policy",
+      "service-agreement"
     ],
     "fieldCount": 8
   },
@@ -2123,9 +2122,9 @@ export const TEMPLATE_META: TemplateMeta[] = [
     "actSource": "ст. 12, 52 ГК РФ, ФЗ-14 «Об ООО»",
     "lastUpdated": "Август 2026",
     "suggestedDocs": [
-      "Решение единственного участника",
-      "Протокол собрания ООО",
-      "Корпоративный договор"
+      "sole-member-decision",
+      "llc-meeting-minutes",
+      "corporate-agreement"
     ],
     "fieldCount": 8
   },
@@ -2137,8 +2136,8 @@ export const TEMPLATE_META: TemplateMeta[] = [
     "actSource": "ст. 67.2 ГК РФ",
     "lastUpdated": "Август 2026",
     "suggestedDocs": [
-      "Устав ООО",
-      "Протокол собрания ООО"
+      "charter-llc",
+      "llc-meeting-minutes"
     ],
     "fieldCount": 8
   },
@@ -2150,8 +2149,8 @@ export const TEMPLATE_META: TemplateMeta[] = [
     "actSource": "ст. 39 ФЗ-14 «Об ООО»",
     "lastUpdated": "Август 2026",
     "suggestedDocs": [
-      "Устав ООО",
-      "Протокол собрания ООО"
+      "charter-llc",
+      "llc-meeting-minutes"
     ],
     "fieldCount": 7
   },
@@ -2163,8 +2162,8 @@ export const TEMPLATE_META: TemplateMeta[] = [
     "actSource": "ст. 37, 39 ФЗ-14 «Об ООО»",
     "lastUpdated": "Август 2026",
     "suggestedDocs": [
-      "Устав ООО",
-      "Решение единственного участника"
+      "charter-llc",
+      "sole-member-decision"
     ],
     "fieldCount": 7
   },
@@ -2176,8 +2175,8 @@ export const TEMPLATE_META: TemplateMeta[] = [
     "actSource": "ст. 1234, 1285, 1388 ГК РФ",
     "lastUpdated": "Август 2026",
     "suggestedDocs": [
-      "Лицензионный договор",
-      "Договор авторского заказа"
+      "license-contract",
+      "author-order"
     ],
     "fieldCount": 7
   },
@@ -2189,8 +2188,8 @@ export const TEMPLATE_META: TemplateMeta[] = [
     "actSource": "ст. 1238 ГК РФ",
     "lastUpdated": "Август 2026",
     "suggestedDocs": [
-      "Лицензионный договор",
-      "Договор об отчуждении исключительного права"
+      "license-contract",
+      "ip-assignment"
     ],
     "fieldCount": 8
   },
@@ -2202,8 +2201,8 @@ export const TEMPLATE_META: TemplateMeta[] = [
     "actSource": "ст. 506 ГК РФ (приложение к договору)",
     "lastUpdated": "Август 2026",
     "suggestedDocs": [
-      "Договор поставки товара",
-      "ТОРГ-12"
+      "supply-contract",
+      "torg-12"
     ],
     "fieldCount": 9
   },
@@ -2215,9 +2214,9 @@ export const TEMPLATE_META: TemplateMeta[] = [
     "actSource": "Постановление Госкомстата РФ № 132 от 25.12.1998",
     "lastUpdated": "Август 2026",
     "suggestedDocs": [
-      "Договор поставки товара",
-      "Спецификация",
-      "Акт приёма-передачи товара"
+      "supply-contract",
+      "specification-supply",
+      "goods-acceptance-act"
     ],
     "fieldCount": 7
   },
@@ -2229,8 +2228,8 @@ export const TEMPLATE_META: TemplateMeta[] = [
     "actSource": "ст. 506, 513 ГК РФ",
     "lastUpdated": "Август 2026",
     "suggestedDocs": [
-      "Договор поставки товара",
-      "ТОРГ-12"
+      "supply-contract",
+      "torg-12"
     ],
     "fieldCount": 7
   },
@@ -2242,8 +2241,8 @@ export const TEMPLATE_META: TemplateMeta[] = [
     "actSource": "ст. 450 ГК РФ",
     "lastUpdated": "Август 2026",
     "suggestedDocs": [
-      "Договор купли-продажи товара",
-      "Дополнительное соглашение (универсальное)"
+      "goods-sale",
+      "addendum-generic"
     ],
     "fieldCount": 6
   },
@@ -2255,8 +2254,8 @@ export const TEMPLATE_META: TemplateMeta[] = [
     "actSource": "ст. 450 ГК РФ",
     "lastUpdated": "Август 2026",
     "suggestedDocs": [
-      "Договор оказания услуг",
-      "Акт оказанных услуг"
+      "service-agreement",
+      "act-services"
     ],
     "fieldCount": 7
   },
@@ -2268,8 +2267,8 @@ export const TEMPLATE_META: TemplateMeta[] = [
     "actSource": "ст. 450, 452 ГК РФ",
     "lastUpdated": "Август 2026",
     "suggestedDocs": [
-      "Договор поставки товара",
-      "Уведомление об отказе от договора"
+      "supply-contract",
+      "refuse-notice"
     ],
     "fieldCount": 7
   },
@@ -2545,7 +2544,7 @@ export const TEMPLATE_META: TemplateMeta[] = [
     "lastUpdated": "Август 2026",
     "suggestedDocs": [
       "act-services",
-      "warehouse-rent"
+      "rental-warehouse"
     ],
     "fieldCount": 10
   },
@@ -2871,9 +2870,8 @@ export const TEMPLATE_META: TemplateMeta[] = [
     "actSource": "ст. 560–566 ГК РФ",
     "lastUpdated": "Август 2026",
     "suggestedDocs": [
-      "act-inventory",
-      "balance-sheet",
-      "debt-register"
+      "property-list",
+      "reconciliation-statement"
     ],
     "fieldCount": 16
   },
@@ -3277,7 +3275,6 @@ export const TEMPLATE_META: TemplateMeta[] = [
     "lastUpdated": "Август 2026",
     "suggestedDocs": [
       "employment-contract",
-      "foreign-employee-reg",
       "pdn-policy"
     ],
     "fieldCount": 27
@@ -4084,7 +4081,7 @@ export const TEMPLATE_META: TemplateMeta[] = [
     "actSource": "ФЗ-255, ФЗ-81 «О государственных пособиях»",
     "lastUpdated": "Август 2026",
     "suggestedDocs": [
-      "maternity-leave-app"
+      "stmt-hr-maternity"
     ],
     "fieldCount": 14
   },
@@ -4190,8 +4187,8 @@ export const TEMPLATE_META: TemplateMeta[] = [
     "actSource": "ст. 3, 9 ФЗ-152 «О персональных данных»",
     "lastUpdated": "Август 2026",
     "suggestedDocs": [
-      "Публичная оферта",
-      "Согласие на обработку персональных данных"
+      "public-offer",
+      "personal-data-consent"
     ],
     "fieldCount": 6
   },
@@ -4494,8 +4491,8 @@ export const TEMPLATE_META: TemplateMeta[] = [
     "actSource": "ст. 149 АПК РФ, ст. 131-132 ГПК РФ",
     "lastUpdated": "Август 2026",
     "suggestedDocs": [
-      "Исковое заявление о взыскании задолженности",
-      "Исковое заявление о взыскании долга"
+      "debt-lawsuit",
+      "lawsuit-statement"
     ],
     "fieldCount": 8
   },
@@ -4612,7 +4609,7 @@ export const TEMPLATE_META: TemplateMeta[] = [
     "lastUpdated": "Август 2026",
     "suggestedDocs": [
       "claim-generic",
-      "notary-power-of-attorney"
+      "power-attorney"
     ],
     "fieldCount": 16
   },
@@ -4728,8 +4725,7 @@ export const TEMPLATE_META: TemplateMeta[] = [
     "actSource": "ст. 65 СК РФ",
     "lastUpdated": "Август 2026",
     "suggestedDocs": [
-      "divorce-lawsuit",
-      "parenting-plan"
+      "divorce-lawsuit"
     ],
     "fieldCount": 14
   },
@@ -7622,8 +7618,7 @@ export const TEMPLATE_META: TemplateMeta[] = [
     "actSource": "гл. 24 ТК РФ (ст. 166–168); Постановление Правительства РФ от 13.10.2008 № 749",
     "lastUpdated": "Сентябрь 2026",
     "suggestedDocs": [
-      "business-trip-order",
-      "advance-report"
+      "business-trip-order"
     ],
     "fieldCount": 9
   },

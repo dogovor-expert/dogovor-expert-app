@@ -28,6 +28,7 @@
     "biome:fix": "biome check --write .",
     "biome:format": "biome format --write .",
     "generate:blank-previews": "tsx scripts/generate-blank-previews.mts",
+    "fix:suggested-docs": "node scripts/fix-suggested-doc-refs.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:unit": "vitest run --exclude=**/__integration__/**",

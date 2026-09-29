@@ -651,7 +651,7 @@ export const TEMPLATES_FAMILY: LegalTemplate[] = [
     actSource: "ФЗ-255, ФЗ-81 «О государственных пособиях»",
     lastUpdated: "Август 2026",
     description: "Заявление о назначении пособия по беременности и родам или единовременного пособия при рождении ребёнка.",
-    suggestedDocs: ["maternity-leave-app"],
+    suggestedDocs: ["stmt-hr-maternity"],
     supportsOcr: true,
     printInstruction: "Печать на одном листе А4",
     fields: [

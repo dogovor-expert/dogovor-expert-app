@@ -95,11 +95,11 @@ function report(name: string, box: Box, extra: string[]) {
 }
 
 test.describe("dogovor.expert audit", () => {
-  test("01-главная: счётчик 369 и логотип", async ({ page }) => {
+  test("01-главная: счётчик 570 и логотип", async ({ page }) => {
     const box = track(page);
     const extra: string[] = [];
     await nav(page, "/");
-    extra.push(`counter369: ${await isVisible(page, /369 шаблонов/)}`);
+    extra.push(`counter369: ${await isVisible(page, /570 шаблонов/)}`);
     extra.push(`logo: ${await isVisible(page, /Dogovor/i, 3000)}`);
     await shots(page, "01-home");
     report("01-home", box, extra);
