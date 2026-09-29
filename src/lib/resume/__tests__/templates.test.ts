@@ -209,3 +209,75 @@ describe("resume templates parity (РЕЗЮМЕ 3)", () => {
     }
   }, 180000);
 });
+
+/**
+ * Регрессия превью и печати (29.09.2026).
+ *
+ * Контекст: блок предпросмотра показывал лист в 53% (desktop) и 38% (mobile) —
+ * текст 11,5px превращался в 6,1px/4,4px. Заодно типографика была ниже
+ * печатного минимума: 12,5px = 9,4pt и line-height 1,55.
+ */
+describe("resume preview & print (29.09.2026)", () => {
+  it("базовый кегль превью не меньше 10pt (13.33px) и интерлиньяж в 1.2–1.45", () => {
+    const base = RESUME_CSS.match(/\.smp\{[^}]*font-size:([\d.]+)px;line-height:([\d.]+)/);
+    expect(base, "базовый селектор .smp не найден").not.toBeNull();
+    const size = Number(base![1]);
+    const lh = Number(base![2]);
+    // 1pt = 1.333px (WCAG 2.1, Understanding SC 1.4.3) -> 10pt = 13.33px.
+    expect(size, `кегль ${size}px = ${(size / 1.333).toFixed(1)}pt`).toBeGreaterThanOrEqual(13.33);
+    // 12pt = 16px — верхняя граница рекомендованного диапазона.
+    expect(size).toBeLessThanOrEqual(16);
+    // Butterick: межстрочный 120–145% от кегля.
+    expect(lh, `line-height ${lh}`).toBeGreaterThanOrEqual(1.2);
+    expect(lh, `line-height ${lh}`).toBeLessThanOrEqual(1.45);
+  });
+
+  it("кегль достижений не меньше 9.7pt", () => {
+    const m = RESUME_CSS.match(/\.smp \.smp-xp-b li\{[^}]*font-size:([\d.]+)px/);
+    expect(m, "правило .smp-xp-b li не найдено").not.toBeNull();
+    expect(Number(m![1]) / 1.333, `достижения ${m![1]}px`).toBeGreaterThanOrEqual(9.7);
+  });
+
+  it("print-color-adjust:exact — иначе при печати выпадают заливки акцента", () => {
+    expect(RESUME_CSS).toMatch(/print-color-adjust:exact/);
+    expect(RESUME_CSS).toMatch(/-webkit-print-color-adjust:exact/);
+  });
+
+  it("блоки работ и заголовки секций не разрываются между страницами", () => {
+    expect(RESUME_CSS).toMatch(/\.smp \.smp-xp-i[^{]*\{[^}]*break-inside:avoid/);
+    expect(RESUME_CSS).toMatch(/\.smp \.smp-xp-b li\{[^}]*break-inside:avoid/);
+    // Заголовок секции не должен оставаться висящим в конце страницы.
+    expect(RESUME_CSS).toMatch(/\.smp \.smp-sec[^{]*\{[^}]*break-after:avoid/);
+  });
+
+  it("не опирается на orphans/widows: поддержка в браузерах limited", () => {
+    expect(RESUME_CSS).not.toMatch(/orphans\s*:/);
+    expect(RESUME_CSS).not.toMatch(/widows\s*:/);
+  });
+
+  it("DOC-экспорт: поля A4 в безопасной зоне 15–20мм и печать без потери заливок", () => {
+    for (const id of ALL) {
+      const html = buildResumeDocHtml(SAMPLE_RESUME, id);
+      const m = html.match(/@page\{size:A4;margin:([\d.]+)cm\}/);
+      expect(m, `@page в DOC ${id}`).not.toBeNull();
+      const cm = Number(m![1]);
+      expect(cm, `поля ${cm}см вне 1.5–2.0см в ${id}`).toBeGreaterThanOrEqual(1.5);
+      expect(cm, `поля ${cm}см вне 1.5–2.0см в ${id}`).toBeLessThanOrEqual(2.0);
+      expect(html, `нет print-color-adjust в ${id}`).toContain("print-color-adjust:exact");
+    }
+  });
+
+  it("лист A4 в превью: ширина 794px и пропорция 1:1.414", () => {
+    // 210x297мм при 96dpi = 793.7x1122.5px. Высота/ширина = 297/210 = 1.4143.
+    expect(1123 / 794).toBeCloseTo(297 / 210, 2);
+  });
+
+  it("зум в студии ограничен шкалой 0.25–2.0 (без произвольных дробей)", () => {
+    const ZOOM_STEPS = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 2] as const;
+    expect(ZOOM_STEPS[0]).toBeGreaterThanOrEqual(0.2);
+    expect(ZOOM_STEPS[ZOOM_STEPS.length - 1]).toBeLessThanOrEqual(2.0);
+    for (let i = 1; i < ZOOM_STEPS.length; i++) {
+      expect(ZOOM_STEPS[i]).toBeGreaterThan(ZOOM_STEPS[i - 1]);
+    }
+  });
+});

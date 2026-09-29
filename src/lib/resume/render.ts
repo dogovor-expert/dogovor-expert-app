@@ -667,12 +667,19 @@ export function buildResumeDocHtml(data: ResumeData, tpl: TemplateId, accent?: s
     : "";
   const head =
     `<head><meta charset="utf-8"><title>${title}</title><style>` +
-    `@page{size:A4;margin:1.6cm}` +
-    `body{font-family:${font};font-size:10.5pt;color:#1f2937;line-height:1.45;margin:0}` +
+    // Поля 17мм (48pt) — те же, что в PDF-рендерере (resumePdf.ts margins),
+    // и внутри безопасной зоны A4 (15–20мм по зоне отсечки принтера).
+    `@page{size:A4;margin:1.7cm}` +
+    // print-color-adjust:exact — иначе Word/принтер в режиме economy выбрасывают
+    // все заливки акцента. Дизайн обязан читаться и без фона, но фон не должен
+    // исчезать там, где несёт смысл.
+    `body{-webkit-print-color-adjust:exact;print-color-adjust:exact;font-family:${font};font-size:10.5pt;color:#1f2937;line-height:1.3;margin:0}` +
     `h1{font-family:${font};margin:0}h2{font-family:${font}}` +
     `ul{margin:2pt 0 6pt 16pt;padding:0}li{margin:0 0 1pt}p{margin:0 0 3pt}` +
     // Заголовок секции не должен оставаться в конце страницы без текста.
     `h2{page-break-after:avoid}h1{page-break-after:avoid}li{page-break-inside:avoid}` +
+    // Таблица-колонка не рвётся между страницами.
+    `table{page-break-inside:avoid}` +
     `</style></head>`;
   const open = `<!doctype html><html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">${head}<body>`;
   const close = `</body></html>`;

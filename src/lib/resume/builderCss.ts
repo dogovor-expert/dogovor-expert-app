@@ -13,7 +13,12 @@ export const BUILDER_CSS = `
   color:#111827;
 }
 .rvb *{box-sizing:border-box}
-.rvb .a4{width:794px;min-height:1123px;background:#fff;box-shadow:0 25px 50px -12px rgba(15,23,42,.18),0 0 0 1px rgba(15,23,42,.04);border-radius:4px;overflow:hidden;position:relative}
+.rvb .a4{width:794px;min-height:1123px;background:#fff;overflow:hidden;position:relative;
+  /* Бумага: три слоя тени (контактная, мягкая, дальняя) + волосяная рамка.
+     Снят старый border-radius:4px — угол листа A4 должен быть прямым. */
+  box-shadow:0 1px 1px rgba(15,23,42,.10),0 10px 22px -8px rgba(15,23,42,.20),0 28px 56px -16px rgba(15,23,42,.16)}
+.rvb .a4::after{content:'';position:absolute;inset:0;pointer-events:none;
+  box-shadow:inset 0 0 0 1px rgba(15,23,42,.07)}
 .rvb-app{display:grid;grid-template-columns:420px 1fr;overflow:hidden}
 .rvb-panel{background:#fff;border-right:1px solid var(--rvb-bd);display:flex;flex-direction:column;min-height:0;min-width:0}
 .rvb-panel-head{padding:20px 22px 16px;border-bottom:1px solid #f3f4f6}
@@ -85,13 +90,32 @@ export const BUILDER_CSS = `
 .rvb-stagebar{position:relative;z-index:20;height:56px;display:flex;align-items:center;gap:10px;padding:0 18px;background:rgba(255,255,255,.9);backdrop-filter:blur(10px);border-bottom:1px solid var(--rvb-bd);flex-shrink:0}
 .rvb-stagebar .tn{font-size:13px;font-weight:650}
 .rvb-stagebar .tn span{color:var(--rvb-mf);font-weight:500}
-.rvb-scroll{position:relative;z-index:1;flex:1;min-width:0;overflow:auto;padding:36px 24px 60px;display:flex;justify-content:center;align-items:flex-start}
+/* Сцена листа. overflow:auto + независимый скролл, align-items:center —
+   лист центрируется по вертикали, когда помещается целиком, и не «прилипает»
+   к верху при прокрутке. overscroll-behavior:contain не даёт скроллу превью
+   утягивать за собой страницу (паттерн всех resume builders). */
+.rvb-scroll{position:relative;z-index:1;flex:1;min-width:0;overflow:auto;padding:28px 24px 40px;
+  display:flex;justify-content:center;align-items:center;overscroll-behavior:contain}
+.rvb-scroll:focus-visible{outline:2px solid var(--rvb-brand);outline-offset:-2px}
 .rvb-scaler{position:relative;flex:none}
 .rvb-tabs{display:none}
-.rvb-zoom{margin-left:auto;display:flex;align-items:center;gap:2px}
-.rvb-zoom button{width:30px;height:30px;border-radius:8px;border:0;background:none;display:grid;place-items:center;color:#374151;cursor:pointer}
-.rvb-zoom button:hover{background:#f3f4f6}
-.rvb-zoom .zv{min-width:44px;text-align:center;font-size:12.5px;font-weight:600;color:var(--rvb-mf)}
+.rvb-zoom{margin-left:auto;display:flex;align-items:center;gap:8px}
+/* Сегментированный переключатель режимов: Лист / Ширина / 100% */
+.rvb-zoomset{display:flex;background:#f3f4f6;border-radius:9px;padding:2px;gap:2px}
+.rvb-zoomset button{padding:5px 10px;border:0;border-radius:7px;background:none;font:inherit;font-size:12px;font-weight:600;color:var(--rvb-mf2);cursor:pointer;white-space:nowrap;transition:.12s}
+.rvb-zoomset button:hover{color:var(--rvb-ink)}
+.rvb-zoomset button[aria-pressed="true"]{background:#fff;color:var(--rvb-brand2);box-shadow:0 1px 2px rgba(15,23,42,.10)}
+.rvb-zoomstep{display:flex;align-items:center;gap:2px;background:#f3f4f6;border-radius:9px;padding:2px}
+.rvb-zoomstep button{width:28px;height:28px;border-radius:7px;border:0;background:none;display:grid;place-items:center;color:#374151;cursor:pointer;transition:.12s}
+.rvb-zoomstep button:hover{background:#fff;color:var(--rvb-brand2);box-shadow:0 1px 2px rgba(15,23,42,.10)}
+.rvb-zoomstep .zv{min-width:46px;text-align:center;font-size:12px;font-weight:700;color:var(--rvb-ink);font-variant-numeric:tabular-nums}
+.rvb-zoomfit{width:32px;height:32px;border-radius:9px;border:1.5px solid var(--rvb-bd);background:#fff;display:grid;place-items:center;color:var(--rvb-mf);cursor:pointer;transition:.12s}
+.rvb-zoomfit:hover{border-color:var(--rvb-brand);color:var(--rvb-brand2)}
+.rvb-zoomset button:focus-visible,.rvb-zoomstep button:focus-visible,.rvb-zoomfit:focus-visible{outline:2px solid var(--rvb-brand);outline-offset:2px}
+/* Подпись листа под превью: имя шаблона + реальный формат и число страниц */
+.rvb-pagelabel{flex-shrink:0;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:7px 18px;border-top:1px solid var(--rvb-bd);background:rgba(255,255,255,.92);backdrop-filter:blur(10px);font-size:11.5px;color:var(--rvb-mf2)}
+.rvb-sheetname{font-weight:650;color:#374151;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.rvb-dims{font-variant-numeric:tabular-nums;white-space:nowrap}
 .rvb-btn{display:inline-flex;align-items:center;gap:7px;padding:9px 15px;border-radius:var(--rvb-r);font-weight:650;font-size:13.5px;border:0;cursor:pointer;transition:.15s;white-space:nowrap;font-family:inherit}
 .rvb-btn-o{background:#fff;border:1.5px solid var(--rvb-bd);color:#374151}
 .rvb-btn-o:hover{border-color:var(--rvb-brand);color:var(--rvb-brand2)}
@@ -158,7 +182,14 @@ export const BUILDER_CSS = `
   .rvb-tabs button{flex:1;padding:11px;border-radius:11px;border:0;font-weight:650;font-size:13.5px;color:var(--rvb-mf);display:flex;align-items:center;justify-content:center;gap:7px;background:none;cursor:pointer}
   .rvb-tabs button.on{background:var(--rvb-brand);color:#fff}
   .rvb-scroll{padding:20px 10px 200px}
-  .rvb-zoom{display:none}
+  /* Зум на мобильном НЕ скрываем: без него пользователь не может прочитать
+     лист (42% = 5.5px на телефоне) и не может вернуть 100%. Показываем
+     компактно: сегменты «Лист/100%» + ступени, без подписи процента. */
+  .rvb-zoom{gap:6px}
+  .rvb-zoomset button{padding:5px 8px;font-size:11.5px}
+  .rvb-zoomstep .zv{min-width:40px;font-size:11.5px}
+  .rvb-zoomfit{display:none}
+  .rvb-pagelabel{padding:6px 12px;font-size:11px}
 }
 @media (max-width:640px){
   .rvb-dgrid{grid-template-columns:1fr}

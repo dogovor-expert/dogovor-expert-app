@@ -5,7 +5,12 @@
  * Акцент задаётся CSS-переменной --ac, один CSS обслуживает все шаблоны.
  */
 export const SAMPLE_CSS = `
-.smp{font-family:'Inter',system-ui,-apple-system,sans-serif;font-size:12.5px;line-height:1.55;color:#334155;background:#fff;--ac:#4f46e5;min-height:1123px;position:relative}
+/* Базовый кегль и интерлиньяж — по ATS/печатным нормам:
+   13.5px = 10.1pt (минимум 10pt у Butterick, верхняя граница 12pt),
+   line-height 1.3 = 130% (диапазон 120–145%).
+   Глифы стали крупнее на 8%, но высота строки 12.5x1.55=19.4px -> 13.5x1.3=17.6px,
+   то есть вертикальный бюджет листа НЕ вырос — контент по-прежнему влезает в A4. */
+.smp{font-family:'Inter',system-ui,-apple-system,sans-serif;font-size:13.5px;line-height:1.3;color:#334155;background:#fff;--ac:#4f46e5;min-height:1123px;position:relative}
 .smp *{box-sizing:border-box}
 .smp h1,.smp h2,.smp h3,.smp p,.smp ul{margin:0}
 .smp ul{list-style:none;padding:0}
@@ -31,7 +36,9 @@ export const SAMPLE_CSS = `
 .smp .smp-xp-top i{font-style:normal;font-size:10.5px;font-weight:600;color:#94a3b8;white-space:nowrap}
 .smp .smp-xp-c{font-size:11.5px;font-weight:600;color:var(--ac);margin:1px 0 4px}
 .smp .smp-xp-b{margin-top:5px}
-.smp .smp-xp-b li{position:relative;padding-left:13px;font-size:11.5px;color:#475569;margin-top:3px}
+/* Достижения — основной текст резюме: 12.5px = 9.4pt. Поднимаем до 13px = 9.75pt,
+   максимально близко к 10pt без риска вылезти за полосу набора A4. */
+.smp .smp-xp-b li{position:relative;padding-left:13px;font-size:13px;color:#475569;margin-top:3px}
 .smp .smp-xp-b li::before{content:'';position:absolute;left:2px;top:6px;width:3px;height:3px;border-radius:50%;background:#94a3b8}
 .smp .smp-ed+.smp-ed{margin-top:8px}
 .smp .smp-ed b{display:block;font-size:11.5px;font-weight:700;color:#1e293b}
@@ -118,4 +125,22 @@ export const SAMPLE_CSS = `
 .smp-side.smp-serif .smp-page h1,.smp-side.smp-serif .smp-page .rvh1{font-family:'Times New Roman',Georgia,serif}
 .smp-base .smp-top h1,.smp-base .smp-top .rvh1{font-size:27px;font-weight:800;letter-spacing:-.015em;color:#0f172a;line-height:1.1}
 .smp-base.smp-serif .smp-top h1,.smp-base.smp-serif .smp-top .rvh1{font-family:'Times New Roman',Georgia,serif}
+
+/* ===== Печать: стратегия по W3C CSS Paged Media 3 =====
+   1) print-color-adjust:exact — без него UA печатает в режиме economy и ВЫПАДАЕТ
+      все акцентные заливки (шапка, плашки, буллеты). Дизайн обязан читаться и без
+      фона, но фон не должен исчезать там, где он несёт смысл.
+   2) break-inside:avoid на блоках работ/образования — заголовок не остаётся
+      висящим в конце страницы. page-break-after:avoid на заголовках секций.
+   3) orphans/widows НЕ используем: поддержка в браузерах limited (MDN). */
+.smp{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.smp .smp-xp-i,.smp .smp-x2,.smp .smp-ed,.smp .smp-bar-sec{break-inside:avoid;page-break-inside:avoid}
+.smp .smp-xp-b li{break-inside:avoid;page-break-inside:avoid}
+.smp .smp-sec,.smp .smp-h3,.smp .smp-lbl,.smp .smp-bar-lbl{break-after:avoid;page-break-after:avoid}
+.smp .smp-hd,.smp .smp-top{break-after:avoid;page-break-after:avoid}
+@media print{
+  .smp{background:#fff;box-shadow:none;min-height:auto}
+  /* Печатаем реальный кегль: экранный preview масштабируется, а лист — нет. */
+  .smp .smp-xp-b li{font-size:13px}
+}
 `;

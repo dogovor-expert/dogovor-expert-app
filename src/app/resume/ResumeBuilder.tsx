@@ -95,6 +95,7 @@ export default function ResumeBuilder() {
   const [scale, setScale] = useState(0.62);
   const [manual, setManual] = useState(false);
   const fitRef = useRef(0.62);
+  const fitWRef = useRef(0.62);
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const a4Ref = useRef<HTMLDivElement | null>(null);
   const qWrapRef = useRef<HTMLDivElement | null>(null);
@@ -139,18 +140,45 @@ export default function ResumeBuilder() {
     return () => window.clearTimeout(id);
   }, [data, tpl, loaded, accent]);
 
-  // Масштаб превью: подгоняем под ширину сцены (ResizeObserver), пока пользователь не задал зум вручную.
+  // Масштаб превью. Не «вписать лист целиком по высоте»: A4 = 1:1.414, поэтому
+  // такая подгонка давала 53% на desktop и 38% на mobile — текст 11.5px
+  // превращался в 6px/4.4px и был нечитаем (замер 29.09.2026).
+  //
+  // Теперь три режима (по исследованию resume builders):
+  //   fit  — лист целиком, но с потолком 0.695 (=780/1123): на широком мониторе
+  //          «по ширине» дал бы 3.1x, что бессмысленно;
+  //   100  — пиксель-в-пиксель (793.7x1122.5px);
+  //   шаг  — фиксированные ступени 25/50/75/100/125/150/200%, без дробей.
+  const ZOOM_STEPS = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 2] as const;
   useEffect(() => {
     const el = scrollRef.current;
     if (!el || typeof ResizeObserver === "undefined") return;
     const compute = () => {
-      const availW = el.clientWidth - 48;
-      const availH = el.clientHeight - 32;
+      // Отступы .rvb-scroll. На мобильных padding-bottom:200px — это место ПОД
+      // фиксированную панель табов, а не полезная высота: вычитать его из
+      // clientHeight нельзя, иначе масштаб падал до 20% (замер 29.09.2026).
+      // Поэтому берём только верхний/боковой отступы, а нижний резерв
+      // отсекаем по факту: реальная высота = clientHeight минус «хвост» снизу.
+      const cs = getComputedStyle(el);
+      const padTop = parseFloat(cs.paddingTop) || 0;
+      const padX = (parseFloat(cs.paddingLeft) || 0) + (parseFloat(cs.paddingRight) || 0);
+      const padBottom = parseFloat(cs.paddingBottom) || 0;
+      // Мобильный резерв под табы: 200px в media-query, 56px — высота таб-бара.
+      const isNarrow = window.innerWidth <= 1080;
+      const reserve = isNarrow ? Math.min(padBottom, 200) : padBottom;
+      const availW = el.clientWidth - padX;
+      const availH = el.clientHeight - padTop - reserve;
       const docH1 = a4Ref.current?.offsetHeight || 1123;
-      // Авто-подгон: документ целиком вписывается и по ширине, и по высоте (без прокрутки).
-      const fit = Math.max(0.2, Math.min(1.2, Math.min(availW / 794, availH / docH1)));
+      // Потолок 0.695 — лист всегда виден целиком и не раздувается на 4K.
+      const fit = Math.max(0.2, Math.min(0.695, Math.min(availW / 794, availH / docH1)));
       fitRef.current = fit;
-      if (!manual) setScale(fit);
+      // Режим «по ширине»: лист занимает всю ширину сцены. Нужен на узких
+      // экранах: при 430px вся высота сцены за вычетом резерва под табы
+      // (445−20−200=225px) в лист A4 высотой 1123px физически не влезает —
+      // «целый лист» давал 20% и нечитаемый текст.
+      const byWidth = Math.max(0.2, Math.min(1.25, availW / 794));
+      fitWRef.current = byWidth;
+      if (!manual) setScale(isNarrow ? byWidth : fit);
     };
     compute();
     const ro = new ResizeObserver(compute);
@@ -158,13 +186,27 @@ export default function ResumeBuilder() {
     return () => ro.disconnect();
   }, [manual, docH, openSec, tab]);
 
-  const zoomBy = (d: number) => {
+  // Переход по шкале ступеней: вверх — ближайшая большая, вниз — меньшая.
+  const stepZoom = (dir: 1 | -1) => {
     setManual(true);
-    setScale((s) => Math.max(0.25, Math.min(1.5, s + d)));
+    setScale((s) => {
+      const next = dir > 0 ? ZOOM_STEPS.find((z) => z > s + 0.001) : [...ZOOM_STEPS].reverse().find((z) => z < s - 0.001);
+      return next ?? s;
+    });
   };
   const fitZoom = () => {
     setManual(false);
-    setScale(fitRef.current);
+    // На узких экранах «Лист» = по ширине: целиком A4 в 225px не влезает,
+    // и подгонка по высоте убивает читаемость (20%).
+    setScale(window.innerWidth <= 1080 ? fitWRef.current : fitRef.current);
+  };
+  const fitWidthZoom = () => {
+    setManual(true);
+    setScale(fitWRef.current);
+  };
+  const actualZoom = () => {
+    setManual(true);
+    setScale(1);
   };
 
   // Реальная высота документа — чтобы обёртка совпадала с визуальным размером
@@ -179,15 +221,34 @@ export default function ResumeBuilder() {
     return () => ro.disconnect();
   }, [data, tpl]);
 
-  // Высота рабочей области = окно минус фактическое смещение (заголовок сайта),
-  // чтобы не было лишней прокрутки страницы и «скачков» на мобильных.
+  // Высота рабочей области. Сайт — app-shell: <div class="flex h-screen overflow-hidden">
+  // c <main class="overflow-y-auto">, поэтому window.innerHeight НЕ равно высоте
+  // области просмотра #studio. Раньше считалось `window.innerHeight - absoluteTop`
+  // и давало 680px вместо доступных ~936px (замер 29.09.2026: main.clientHeight=936).
+  // Теперь ищем ближайший прокручиваемый предок и меряем его реальную высоту.
   useEffect(() => {
     const compute = () => {
       if (window.innerWidth <= 1080) { setAppH(null); return; }
       const el = appRef.current;
       if (!el) return;
-      const absoluteTop = el.getBoundingClientRect().top + window.scrollY;
-      setAppH(`${Math.max(680, Math.round(window.innerHeight - absoluteTop))}px`);
+      // Ближайший контейнер с вертикальным скроллом (в app-shell это <main>).
+      let host: HTMLElement | null = el.parentElement;
+      while (host) {
+        const oy = getComputedStyle(host).overflowY;
+        if (oy === "auto" || oy === "scroll") break;
+        host = host.parentElement;
+      }
+      const viewportH = host?.clientHeight || window.innerHeight;
+      // Прокрутка НЕ влияет на высоту: считаем в координатах содержимого.
+      // Высота студии = высота окна скроллера минус вертикальные отступы самой
+      // секции #studio (py-12 = 96px) и 24px «воздуха». Так при прокрутке
+      // секции к верху окна лист занимает ровно один экран.
+      const secPad = host ? (() => {
+        const cs = getComputedStyle(el.closest("section") || el);
+        return parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom);
+      })() : 0;
+      const avail = Math.round(viewportH - secPad - 24);
+      setAppH(`${Math.max(560, avail)}px`);
     };
     const timer = window.setTimeout(compute, 60);
     window.addEventListener("resize", compute);
@@ -524,11 +585,20 @@ export default function ResumeBuilder() {
               {pdfBusy ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <FileDown className="h-4 w-4" aria-hidden />}
               <span className="hidden sm:inline">{pdfBusy ? "Готовим…" : "Скачать PDF"}</span>
             </button>
-            <div className="rvb-zoom">
-              <button type="button" onClick={() => zoomBy(-0.08)} aria-label="Уменьшить"><ZoomOut className="h-4 w-4" aria-hidden /></button>
-              <span className="zv">{Math.round(scale * 100)}%</span>
-              <button type="button" onClick={() => zoomBy(0.08)} aria-label="Увеличить"><ZoomIn className="h-4 w-4" aria-hidden /></button>
-              <button type="button" onClick={fitZoom} aria-label="По размеру"><Maximize2 className="h-4 w-4" aria-hidden /></button>
+            <div className="rvb-zoom" role="group" aria-label="Масштаб предпросмотра">
+              <div className="rvb-zoomset">
+                <button type="button" onClick={fitZoom} aria-pressed={!manual} title="Целый лист A4">Лист</button>
+                <button type="button" onClick={fitWidthZoom} aria-pressed={manual && Math.abs(scale - fitWRef.current) < 0.001} title="По ширине окна">Ширина</button>
+                <button type="button" onClick={actualZoom} aria-pressed={manual && Math.abs(scale - 1) < 0.001} title="Реальный размер 100%">100%</button>
+              </div>
+              <div className="rvb-zoomstep">
+                <button type="button" onClick={() => stepZoom(-1)} aria-label="Уменьшить масштаб"><ZoomOut className="h-4 w-4" aria-hidden /></button>
+                <span className="zv" aria-live="off">{Math.round(scale * 100)}%</span>
+                <button type="button" onClick={() => stepZoom(1)} aria-label="Увеличить масштаб"><ZoomIn className="h-4 w-4" aria-hidden /></button>
+              </div>
+              <button type="button" className="rvb-zoomfit" onClick={fitZoom} aria-label="Вписать лист целиком" title="Вписать лист целиком">
+                <Maximize2 className="h-4 w-4" aria-hidden />
+              </button>
             </div>
           </div>
           <div className="rvb-scroll" ref={scrollRef} role="region" aria-label="Предпросмотр резюме" tabIndex={0}>
@@ -540,6 +610,10 @@ export default function ResumeBuilder() {
                 dangerouslySetInnerHTML={{ __html: html }}
               />
             </div>
+          </div>
+          <div className="rvb-pagelabel" aria-hidden>
+            <span className="rvb-sheetname">{TEMPLATE_META[tpl]?.name}</span>
+            <span className="rvb-dims">A4 · 210 × 297 мм{docH > 1123 ? ` · ${Math.max(2, Math.round(docH / 1123))} стр.` : " · 1 стр."}</span>
           </div>
         </section>
       </div>
