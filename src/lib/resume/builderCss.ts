@@ -182,12 +182,17 @@ export const BUILDER_CSS = `
   .rvb-tabs button{flex:1;padding:11px;border-radius:11px;border:0;font-weight:650;font-size:13.5px;color:var(--rvb-mf);display:flex;align-items:center;justify-content:center;gap:7px;background:none;cursor:pointer}
   .rvb-tabs button.on{background:var(--rvb-brand);color:#fff}
   .rvb-scroll{padding:20px 10px 200px}
-  /* Зум на мобильном НЕ скрываем: без него пользователь не может прочитать
-     лист (42% = 5.5px на телефоне) и не может вернуть 100%. Показываем
-     компактно: сегменты «Лист/100%» + ступени, без подписи процента. */
-  .rvb-zoom{gap:6px}
-  .rvb-zoomset button{padding:5px 8px;font-size:11.5px}
-  .rvb-zoomstep .zv{min-width:40px;font-size:11.5px}
+  /* Мобильный: тулбар не помещается в одну строку (Шаблон/Качество/DOC/PDF/зум).
+     Раньше зум выдавливался за правый край (443px при ширине 350px) и был
+     недоступен. Теперь переносим зум на вторую строку и прячем +/- :
+     на телефоне важны режимы «Лист / 100%», а не точная подстройка. */
+  .rvb-stagebar{flex-wrap:wrap;gap:6px;padding:8px 10px;height:auto;min-height:52px}
+  .rvb-stagebar .tn{display:none}
+  .rvb-stagebar .rvb-btn{padding:8px 10px}
+  .rvb-zoom{width:100%;margin-left:0;justify-content:space-between}
+  .rvb-zoomset{flex:1}
+  .rvb-zoomset button{flex:1;padding:7px 6px;font-size:11.5px}
+  .rvb-zoomstep .zv{min-width:38px;font-size:11.5px}
   .rvb-zoomfit{display:none}
   .rvb-pagelabel{padding:6px 12px;font-size:11px}
 }
