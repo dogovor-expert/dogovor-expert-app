@@ -17,7 +17,7 @@ import {
   Sparkles,
   FileSearch,
 } from "lucide-react";
-import { currentProPrice, PRO_PRICE_OLD, PRO_PRICE, PROMO_LABEL, isPromoActive, formatRub } from "@/lib/pricing";
+import { currentProPrice, PRO_PRICE_OLD, PRO_PRICE, PROMO_LABEL, isPromoActive, promoDeadlineLabel, formatRub } from "@/lib/pricing";
 import { AI_PLAN_PRICE_RUB, AI_PLAN_QUESTIONS } from "@/lib/ai/pricing";
 import { track, trackMetrikaOnly, goals } from "@/lib/analytics";
 
@@ -314,7 +314,7 @@ export default function BillingPage() {
           {promo && (
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-100 text-amber-800 text-xs font-bold">
               <Flame className="w-3.5 h-3.5" />
-              Акция {PROMO_LABEL} — успевайте до 20 сентября
+              Акция {PROMO_LABEL} — успевайте до {promoDeadlineLabel()}
             </span>
           )}
           <h1 className="text-display-xl font-bold mt-5 text-gray-900">

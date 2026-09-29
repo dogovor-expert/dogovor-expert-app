@@ -25,6 +25,17 @@ export const isPromoActive = (): boolean => Date.now() < PROMO_ENDS_AT;
 export const currentProPrice = (): number =>
   isPromoActive() ? PRO_PRICE : PRO_PRICE_OLD;
 
+/**
+ * Дедлайн акции словами для UI: «20 сентября».
+ *
+ * ЗАЧЕМ: в `/billing` был захардкожен текст «успевайте до 20 сентября» —
+ * при повторном включении акции с другой датой на странице появлялся бы ложный
+ * дедлайн. Единый источник — PROMO_ENDS_AT (env NEXT_PUBLIC_PROMO_ENDS_AT).
+ * Локаль фиксирована (ru-RU), чтобы SSR и клиент не расходились из-за таймзоны.
+ */
+export const promoDeadlineLabel = (date = new Date(PROMO_ENDS_AT)): string =>
+  date.toLocaleDateString("ru-RU", { day: "numeric", month: "long", timeZone: "UTC" });
+
 const PROMO_SLOT_MS = 12 * 3600 * 1000;
 const SLOT_ALIGN_MS = 9 * 3600 * 1000;
 
