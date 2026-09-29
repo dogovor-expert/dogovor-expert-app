@@ -291,7 +291,15 @@ export function buildResumeHtml(data: ResumeData, tpl: TemplateId, accent?: stri
 }
 
 /**
- * HTML резюме для ПРЕВЬЮ-карточек каталога и миниатюр в конструкторе.
+ * HTML резюме для ПРЕВЬЮ в конструкторе (страница /resume).
+ * Заголовки понижаются до div — см. demoteHeadings.
+ */
+export function buildResumePreviewHtml(data: ResumeData, tpl: TemplateId, accent?: string): string {
+  return demoteHeadings(buildResumeHtml(data, tpl, accent));
+}
+
+/**
+ * h1/h2/h3 → div.rvh1/rvh2/rvh3 С СОХРАНЕНИЕМ ИСХОДНОГО class.
  *
  * Зачем: buildResumeHtml() содержит <h1> с именем — это корректно для
  * выгружаемого документа, но в превью он попадал в DOM страницы /resume.
@@ -300,15 +308,28 @@ export function buildResumeHtml(data: ResumeData, tpl: TemplateId, accent?: stri
  * графика: aria-hidden у контейнера, поэтому все h1/h2/h3 заменяем на div
  * с теми же классами — вёрстка и стили сохраняются, семантика не протекает.
  * Для выгрузки (PDF/DOC) по-прежнему используется buildResumeHtml.
+ *
+ * Важно: класс ИЗ ТЕГА переносится внутрь rvhN. Раньше подстановка давала
+ * `<div class="rvh2" class="smp-sec">` — два атрибута class, браузер
+ * оставляет первый, `smp-sec` исчезал. Тогда терялись все стили заголовка
+ * секции, а вместе с ними `.smp .smp-sec svg{width:15px;height:15px}`:
+ * иконки лучились на всю колонку (замер 29.09.2026: svg 468×468px).
  */
-export function buildResumePreviewHtml(data: ResumeData, tpl: TemplateId, accent?: string): string {
-  return buildResumeHtml(data, tpl, accent)
-    .replace(/<h1(\s[^>]*)?>/g, "<div class=\"rvh1\"$1>")
-    .replace(/<\/h1>/g, "</div>")
-    .replace(/<h2(\s[^>]*)?>/g, "<div class=\"rvh2\"$1>")
-    .replace(/<\/h2>/g, "</div>")
-    .replace(/<h3(\s[^>]*)?>/g, "<div class=\"rvh3\"$1>")
-    .replace(/<\/h3>/g, "</div>");
+function demoteHeadings(html: string): string {
+  let out = html;
+  for (const tag of ["h1", "h2", "h3"] as const) {
+    const rv = `rv${tag}`;
+    // Функция-replacer (не строка с $1): класс может содержать «$».
+    out = out
+      .replace(new RegExp(`<${tag}(\\s[^>]*)?>`, "g"), (_full, attrs = "") => {
+        const m = /class="([^"]*)"/.exec(attrs as string);
+        if (!m) return `<div class="${rv}"${attrs}>`;
+        const merged = `${rv} ${m[1]}`.trim();
+        return `<div${(attrs as string).replace(m[0], `class="${merged}"`)}>`;
+      })
+      .replace(new RegExp(`</${tag}>`, "g"), "</div>");
+  }
+  return out;
 }
 
 /* ===== Компактные превью карточек каталога (по эталону РЕЗЮМЕ 3) =====
@@ -375,15 +396,19 @@ function rcContactSpans(data: ResumeData, n: number): string {
     .map(([k, v]) => `<span class="rc-cont">${IC[k]}<span>${escapeHtml(v)}</span></span>`).join("");
 }
 
-/** Первое место работы + до 2 буллетов (для карточки больше не нужно). */
+/** Первое место работы + 1 буллет. Два буллета давали 455px контента при
+ *  высоте листа 311px — низ уезжал под обрезку на 144px и строка рвалась
+ *  пополам (замер 29.09.2026). В превью одного буллета достаточно, чтобы
+ *  читалась структура. */
 function rcExp1(data: ResumeData): string {
   const e = data.experience[0];
   if (!e) return "";
-  const b = (e.bullets ?? []).slice(0, 2).map((x) => `<li>${escapeHtml(x)}</li>`).join("");
+  const x = (e.bullets ?? [])[0];
+  const b = x ? `<ul class="rc-xp-b"><li>${escapeHtml(rcShort(x, 58))}</li></ul>` : "";
   return (
     `<div class="rc-xp-t">${escapeHtml(e.position || "Должность")}</div>` +
     `<div class="rc-xp-row"><span class="rc-xp-c">${escapeHtml(e.company || "")}</span><span class="rc-xp-d">${escapeHtml(rcPeriod(e.period || ""))}</span></div>` +
-    (b ? `<ul class="rc-xp-b">${b}</ul>` : "")
+    b
   );
 }
 
@@ -464,24 +489,24 @@ export function buildResumeCardHtml(data: ResumeData, tpl: TemplateId, accent?: 
     ? `<div><div class="rc-sec">${IC.briefcase}<span>Опыт работы</span></div><div class="rc-xp">${rcExp1(data)}</div></div>`
     : "";
   const eduBlock = data.education.length
-    ? `<div class="rc-sec-block"><div class="rc-sec">${IC.book}<span>Образование</span></div>${rcEdu(data, isJunior ? 2 : 1)}</div>`
+    ? `<div class="rc-sec-block"><div class="rc-sec">${IC.book}<span>Образование</span></div>${rcEdu(data, 1)}</div>`
     : "";
   // Junior: образование выше опыта — структура для студентов без стажа.
   // Замер 28.09.2026: рельс 74px оставлял чипам 65px, и подписи вроде
   // «Переговоры с первыми лицами» вылезали за край листа на 61px. Поэтому
   // навыки/качества/языки идут общей строкой под опытом — на всю ширину.
+  // Второе место образования в junior уводило контент за низ листа на 24px
+  // (замер 29.09.2026) — в карточке достаточно одного.
   const skillsBlock = hard.length
-    ? `<div class="rc-sec-block"><div class="rc-sec">${IC.wrench}<span>Навыки</span></div>${rcChips(hard, isCreative ? 5 : 8)}</div>`
+    ? `<div class="rc-sec-block"><div class="rc-sec">${IC.wrench}<span>Навыки</span></div>${rcChips(hard, 5)}</div>`
     : "";
-  const softBlock = data.skills.soft.length
-    ? `<div class="rc-sec-block"><div class="rc-sec">${IC.star}<span>Качества</span></div>${rcChips(data.skills.soft, 4)}</div>`
-    : "";
-  const langBlock = data.languages.length
-    ? `<div class="rc-sec-block"><div class="rc-sec">${IC.globe}<span>Языки</span></div><div class="rc-langs">${rcLangs(data, 3)}</div></div>`
-    : "";
+  // В карточке опыт + навыки + образование. «Качества» и «Языки» в превью
+  // уводили контент на 418–455px при высоте листа 311px (замер 29.09.2026):
+  // обрезался блок посреди строки. В PDF/DOC они остаются — карточка лишь
+  // показывает структуру, а не пересказывает документ.
   const main = isJunior
-    ? eduBlock + expBlock + skillsBlock + softBlock + langBlock
-    : expBlock + skillsBlock + eduBlock + softBlock + langBlock;
+    ? eduBlock + expBlock + skillsBlock
+    : expBlock + skillsBlock + eduBlock;
   return (
     `<div class="rc ${mod}" style="--ac:${ac}">` +
     (isCreative ? `<div class="rc-strip"></div>` : "") +

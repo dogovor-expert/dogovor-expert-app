@@ -66,7 +66,7 @@ function TemplateCard({ item }: { item: CatalogItem }) {
       <a
         href={`/resume?tpl=${item.id}#studio`}
         aria-label={`Выбрать шаблон ${item.name}`}
-        className="no-underline relative block h-64 cursor-pointer overflow-hidden bg-slate-100/90 p-4"
+        className="no-underline relative block cursor-pointer overflow-hidden bg-slate-100/90 px-4 pb-4 pt-11"
       >
         <div
           className="absolute inset-0 opacity-[0.35]"
@@ -79,7 +79,11 @@ function TemplateCard({ item }: { item: CatalogItem }) {
 
         {/* Компактное превью: рисуется сразу в размере карточки (rc-*),
             без scale — текст читается, каждый шаблон со своей раскладкой */}
-        <div className="relative mx-auto h-full w-[220px] overflow-hidden rounded-[3px] border border-slate-200 bg-white drop-shadow-lg transition-transform duration-500 group-hover:scale-105">
+        {/* Лист A4 в пропорции 1:1.414. Ширина 236px (а не 220) — замер
+            29.09.2026: при 220px высота листа была 311px, и пять base-шаблонов
+            вылезали за низ на 12–38px. 236px даёт 334px по высоте, контент
+            помещается целиком, а текст в карточке ещё и крупнее. */}
+        <div className="relative mx-auto w-[236px] overflow-hidden rounded-[3px] border border-slate-200 bg-white drop-shadow-lg transition-transform duration-500 group-hover:scale-105">
           <div aria-hidden="true" dangerouslySetInnerHTML={{ __html: item.html }} />
           {/* Мягкий низ: лист документа длиннее карточки и раньше обрезался
               ровно посреди строки — выглядело как недоделка. Градиент читается
@@ -245,7 +249,10 @@ export function ResumeCatalog({ items }: { items: CatalogItem[] }) {
         </div>
       </div>
 
-      <div className="mt-10 grid grid-cols-1 gap-7 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+      {/* sm/lg — 2 колонки, xl — 3, 2xl — 4. Замер 29.09.2026: при
+          lg:grid-cols-3 карточка была 198px, а лист 236px вылезал из неё
+          на 53px (галстук-бейдж и имя уезжали на соседнюю карточку). */}
+      <div className="mt-10 grid grid-cols-1 gap-7 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
         {shown.map((t) => (
           <TemplateCard key={t.id} item={t} />
         ))}

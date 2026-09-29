@@ -75,7 +75,11 @@ export const RESUME_CARD_CSS = `
 .rc-side .rc-bar .rc-chip{background:rgba(255,255,255,.15);color:#fff}
 .rc-side .rc-bar .rc-lg b{color:rgba(255,255,255,.92)}
 .rc-side .rc-bar .rc-lg span{color:rgba(255,255,255,.6)}
-.rc-side .rc-foot{border-top:1px solid rgba(255,255,255,.22);margin-top:auto;padding-top:5px;font-size:5.5px;color:rgba(255,255,255,.5)}
+/* .rc-foot есть и в side, и в legal (один и тот же buildResumeCardHtml).
+   Без второй селекторной строки футер в legal остаётся неоформленным:
+   наследует 9px вместо 5.5px и не прижимается к низу рельса — колонка
+   вылезала за лист на 2px (замер 29.09.2026). */
+.rc-side .rc-foot,.rc-legal .rc-foot{border-top:1px solid rgba(255,255,255,.22);margin-top:auto;padding-top:5px;font-size:5.5px;color:rgba(255,255,255,.5)}
 .rc-side .rc-page{flex:1;min-width:0;padding:12px 11px}
 .rc-side .rc-page .rc-sec{border-bottom:0;color:#94a3b8;padding-bottom:0;margin:9px 0 4px}
 
@@ -93,10 +97,13 @@ export const RESUME_CARD_CSS = `
 /* ===== BASE: белая шапка + контактная полоса + поток контента =====
    Контент идёт одной колонкой (rc-flow), а не сеткой с рельсом: в рельсе
    74px чип «Переговоры с первыми лицами» вылезал за лист на 61px. */
-.rc-base{padding:12px 12px 0;display:flex;flex-direction:column}
+/* Вертикальный бюджет листа 236×334: base-раскладки уезжали за низ на
+   12–38px (замер 29.09.2026), поэтому шапка и полосы контактов ужаты на
+   несколько пикселей — на читаемость 8–9px это не влияет. */
+.rc-base{padding:10px 11px 0;display:flex;flex-direction:column}
 .rc-base .rc-top h1,.rc-base .rc-top .rc-name{font-size:18px}
-.rc-base .rc-flow{padding-top:9px;flex:1;min-width:0;display:flex;flex-direction:column}
-.rc-base .rc-cbar{display:flex;flex-wrap:wrap;gap:3px 9px;padding:6px 0;border-top:1px solid #eef2f7;border-bottom:1px solid #eef2f7;color:#64748b;font-size:7.5px;margin-top:7px;min-width:0}
+.rc-base .rc-flow{padding-top:7px;flex:1;min-width:0;display:flex;flex-direction:column}
+.rc-base .rc-cbar{display:flex;flex-wrap:wrap;gap:3px 9px;padding:5px 0;border-top:1px solid #eef2f7;border-bottom:1px solid #eef2f7;color:#64748b;font-size:7.5px;margin-top:5px;min-width:0}
 .rc-base .rc-cbar svg{color:#94a3b8}
 .rc-base .rc-topline{border-bottom:2px solid var(--ac);padding-bottom:7px}
 .rc-base.rc-classic .rc-top{text-align:center}
@@ -114,7 +121,9 @@ export const RESUME_CARD_CSS = `
 .rc-base.rc-creative .rc-chip{background:#fff2ec;color:#9a3412;border:1px solid #fed7aa}
 .rc-base.rc-data .rc-topline{border-bottom:0;border-left:4px solid var(--ac);padding-bottom:0;padding-left:8px}
 .rc-base.rc-data .rc-chip{font-family:ui-monospace,Menlo,monospace;background:#f5f3ff;color:var(--ac-ink)}
-.rc-base.rc-corporate .rc-band{background:var(--ac);color:#fff;margin:-12px -12px 0;padding:11px 12px}
+/* -10px/-11px — под новый padding базовой раскладки, иначе полоса
+   не доходит до краёв листа (полоса красится в обрезку родителя). */
+.rc-base.rc-corporate .rc-band{background:var(--ac);color:#fff;margin:-10px -11px 0;padding:10px 11px}
 .rc-base.rc-corporate .rc-name{color:#fff;font-family:'Times New Roman',Georgia,serif;font-size:17px}
 .rc-base.rc-corporate .rc-role{color:rgba(255,255,255,.9)}
 .rc-base.rc-corporate .rc-cbar{border:0;color:rgba(255,255,255,.9);margin-top:5px;padding:0}
