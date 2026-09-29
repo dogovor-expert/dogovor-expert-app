@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Check, Loader2, Lock } from "lucide-react";
 import { formatRub } from "@/lib/pricing";
 import { AI_PLAN_PRICE_RUB, AI_PLAN_QUESTIONS } from "@/lib/ai/pricing";
+import { cn } from "@/lib/utils";
 
 /** CSRF-токен для POST-запросов (тот же контракт, что у /api/ai/topup). */
 async function fetchCsrf(): Promise<string> {
@@ -21,9 +22,9 @@ interface HomePricingProps {
 
 type PlanKey = "free" | "pro" | "ai";
 
-function cn(...parts: Array<string | false>): string {
-  return parts.filter(Boolean).join(" ");
-}
+// Раньше здесь была локальная копия cn() без tailwind-merge, из-за чего
+// конфликтующие фоновые классы не вытесняли друг друга. Используем общий
+// помощник — он разрешает конфликты (см. src/lib/utils.ts).
 
 /**
  * Тарифы на главной: бесплатно, PRO (299 ₽), AI-юрист (690 ₽).

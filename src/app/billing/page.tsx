@@ -220,7 +220,10 @@ export default function BillingPage() {
         body: JSON.stringify({ plan: planArg }),
       });
       if (res.status === 503) {
-        showToast("Оплата станет доступна совсем скоро — модуль в разработке");
+        // Раньше здесь было «Оплата станет доступна совсем скоро — модуль в
+        // разработке», хотя биллинг уже работает. 503 означает, что на сервере
+        // не заданы ключи платёжной системы, а не то, что фичи нет.
+        showToast("Платёжная система временно недоступна. Попробуйте позже.");
         setPaying(false);
         return;
       }
@@ -477,20 +480,22 @@ export default function BillingPage() {
 
               {activePro ? (
                 <div className="mt-6 p-4 rounded-xl border border-gray-200 bg-gray-50 space-y-3">
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="flex items-center gap-2 text-sm text-gray-700">
-                      <RefreshCw className="w-4 h-4 text-brand-500" />
-                      Автопродление
-                    </div>
-                    <button
-                      onClick={() => { void toggleAutoRenewal(); }}
-                      disabled={togglingAuto}
-                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${autoRenewal ? "bg-emerald-500" : "bg-gray-300"} disabled:opacity-50`}
-                      title={autoRenewal ? "Выключить автопродление" : "Включить автопродление"}
-                    >
-                      <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${autoRenewal ? "translate-x-5" : "translate-x-0.5"}`} />
-                    </button>
-                  </div>
+                  {hasPaymentMethod ? (
+                    <>
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-2 text-sm text-gray-700">
+                          <RefreshCw className="w-4 h-4 text-brand-500" />
+                          Автопродление
+                        </div>
+                        <button
+                          onClick={() => { void toggleAutoRenewal(); }}
+                          disabled={togglingAuto}
+                          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${autoRenewal ? "bg-emerald-500" : "bg-gray-300"} disabled:opacity-50`}
+                          title={autoRenewal ? "Выключить автопродление" : "Включить автопродление"}
+                        >
+                          <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${autoRenewal ? "translate-x-5" : "translate-x-0.5"}`} />
+                        </button>
+                      </div>
                   {autoRenewal && hasPaymentMethod && (
                     <button
                       onClick={() => { void renewNow(); }}
@@ -501,6 +506,26 @@ export default function BillingPage() {
                       {renewing ? "Продлеваем…" : "Продлить сейчас (списание с сохранённой карты)"}
                     </button>
                   )}
+                    </>
+                  ) : (
+                    /* Честная заглушка. Раньше здесь стоял тумблер
+                       «Автопродление» с обещанием «Карта сохранится в ЮKassa»,
+                       но магазин не подключён к рекуррентным платежам: карта
+                       физически не сохраняется, и «продление в один клик»
+                       невозможно. Обещать неработающую функцию нельзя —
+                       показываем статус и объясняем, как продлить. */
+                    <div className="flex items-start gap-2 text-sm text-gray-700">
+                      <RefreshCw className="w-4 h-4 mt-0.5 shrink-0 text-gray-400" />
+                      <div>
+                        <p className="font-medium">Автопродление пока недоступно</p>
+                        <p className="mt-0.5 text-xs text-gray-600">
+                          Платёжная система ещё не поддерживает хранение карты на этом
+                          магазине, поэтому продлить в один клик нельзя. Оформите
+                          следующий период вручную — подписка не прервётся.
+                        </p>
+                      </div>
+                    </div>
+                  )}
                   {periodEnd && (
                     <p className="text-xs text-gray-600">
                       Действует до:{" "}
@@ -509,11 +534,13 @@ export default function BillingPage() {
                       </span>
                     </p>
                   )}
-                  <p className="text-[11px] text-gray-600">
-                    {autoRenewal
-                      ? "Карта сохранена в ЮKassa. Продление в один клик — без повторного ввода данных. Отключить можно в любой момент."
-                      : "Включите автопродление, чтобы продлевать PRO в один клик. Карта сохранится в ЮKassa."}
-                  </p>
+                  {hasPaymentMethod && (
+                    <p className="text-[11px] text-gray-600">
+                      {autoRenewal
+                        ? "Карта сохранена в ЮKassa. Продление в один клик — без повторного ввода данных. Отключить можно в любой момент."
+                        : "Включите автопродление, чтобы продлевать PRO в один клик. Карта уже сохранена в ЮKassa."}
+                    </p>
+                  )}
                 </div>
               ) : (
                 <Button variant="primary" size="lg" className="w-full mt-6" onClick={() => { void pay(); }} disabled={paying}>

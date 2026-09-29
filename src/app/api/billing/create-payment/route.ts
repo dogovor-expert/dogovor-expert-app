@@ -8,6 +8,7 @@ import { withCsrf } from "@/lib/csrf";
 import { isSameOrigin } from "@/lib/admin-auth";
 import { limiters, checkRateLimit, rateLimitResponse } from "@/lib/ratelimit";
 import { logUserEvent, SERVER_SESSION_PREFIX } from "@/lib/userEvents";
+import { isRecurringNotSupported, humanizeYookassaError } from "@/lib/yookassa-errors";
 
 async function postHandler(req: Request) {
   if (!isSameOrigin(req)) {
@@ -57,34 +58,68 @@ async function postHandler(req: Request) {
     .update(`first-pay:${plan}:${user.id}:${Math.floor(Date.now() / 300000)}`)
     .digest("hex");
 
-  const res = await fetch("https://api.yookassa.ru/v3/payments", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Idempotence-Key": idempotenceKey,
-      Authorization: "Basic " + Buffer.from(`${shopId}:${secretKey}`).toString("base64"),
+  const baseBody = {
+    amount: { value: price.toFixed(2), currency: "RUB" },
+    capture: true,
+    confirmation: {
+      type: "redirect",
+      return_url: `${proto}://${host}/billing?success=1`,
     },
-    body: JSON.stringify({
-      amount: { value: price.toFixed(2), currency: "RUB" },
-      capture: true,
-      confirmation: {
-        type: "redirect",
-        return_url: `${proto}://${host}/billing?success=1`,
-      },
-      description,
-      metadata: { user_id: user.id, plan },
-      save_payment_method: true,
-    }),
-  });
+    description,
+    metadata: { user_id: user.id, plan },
+  };
 
-  if (!res.ok) {
-    const detail = await res.text().catch(() => "");
-    console.error("[billing/create-payment] YooKassa create payment failed", res.status, detail);
-    let providerDetail = "";
-    try { const j = JSON.parse(detail) as { description?: string; code?: string }; providerDetail = j.description || j.code || detail; } catch { providerDetail = detail; }
-    return NextResponse.json({ error: "provider_error", yookassa_status: res.status, detail: providerDetail }, { status: 502 });
+  const callYookassa = async (saveMethod: boolean, key: string) => {
+    const r = await fetch("https://api.yookassa.ru/v3/payments", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Idempotence-Key": key,
+        Authorization: "Basic " + Buffer.from(`${shopId}:${secretKey}`).toString("base64"),
+      },
+      body: JSON.stringify(saveMethod ? { ...baseBody, save_payment_method: true } : baseBody),
+    });
+    // Тело читаем сразу: Response.body одноразовый, а разбирать ошибку
+    // и JSON успеха нужно из одного и того же ответа.
+    return { ok: r.ok, status: r.status, text: await r.text() };
+  };
+
+  let attempt = await callYookassa(true, idempotenceKey);
+  let paymentMethodSaved = true;
+
+  if (!attempt.ok && isRecurringNotSupported(attempt.text)) {
+    console.warn(
+      "[billing/create-payment] Магазин не поддерживает рекуррентные платежи — повторяем без save_payment_method",
+      attempt.text,
+    );
+    // Другой Idempotence-Key: с тем же ключом YooKassa вернёт КЭШИРОВАННЫЙ
+    // прежний ответ с ошибкой, и повтор не поможет.
+    attempt = await callYookassa(false, `${idempotenceKey}-nosave`);
+    paymentMethodSaved = false;
   }
-  const payment = (await res.json()) as { status?: string; id?: string; confirmation?: { confirmation_url?: string } };
+
+  if (!attempt.ok) {
+    console.error("[billing/create-payment] YooKassa create payment failed", attempt.status, attempt.text);
+    let providerDetail = "";
+    try { const j = JSON.parse(attempt.text) as { description?: string; code?: string }; providerDetail = j.description || j.code || attempt.text; } catch { providerDetail = attempt.text; }
+    return NextResponse.json(
+      {
+        error: "provider_error",
+        yookassa_status: attempt.status,
+        detail: humanizeYookassaError(providerDetail),
+        // Технический текст провайдера — только для логов на нашей стороне.
+        provider_raw: providerDetail,
+      },
+      { status: 502 },
+    );
+  }
+  let payment: { status?: string; id?: string; confirmation?: { confirmation_url?: string } };
+  try {
+    payment = JSON.parse(attempt.text) as typeof payment;
+  } catch {
+    console.error("[billing/create-payment] YooKassa returned non-JSON success", attempt.text.slice(0, 300));
+    return NextResponse.json({ error: "provider_unexpected" }, { status: 502 });
+  }
   if (payment.status !== "pending" || !payment.confirmation?.confirmation_url) {
     console.error("[billing/create-payment] YooKassa unexpected payment state", JSON.stringify(payment));
     return NextResponse.json({ error: "provider_unexpected" }, { status: 502 });
@@ -125,6 +160,9 @@ async function postHandler(req: Request) {
   return NextResponse.json({
     confirmation_url: payment.confirmation.confirmation_url,
     payment_id: data?.id ?? "",
+    // false = карта не привязана (магазин без рекуррентов). Фронт обязан
+    // честно сказать, что автопродление не сработает и продлить придётся вручную.
+    payment_method_saved: paymentMethodSaved,
   });
 }
 

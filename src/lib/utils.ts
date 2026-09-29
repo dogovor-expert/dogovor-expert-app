@@ -1,5 +1,19 @@
+import { twMerge } from "tailwind-merge";
+
+/**
+ * Объединение CSS-классов с разрешением конфликтов (tailwind-merge).
+ *
+ * ⚠️ Раньше здесь была наивная склейка `classes.filter(Boolean).join(" ")`,
+ * из-за чего конфликтующие утилиты Tailwind НЕ вытесняли друг друга: в HTML
+ * оставались и `bg-brand-500` (из variant="primary"), и `bg-white` (из
+ * className). Победителя определял порядок правил в собранном CSS, а не
+ * порядок в атрибуте class — поэтому кнопки с переопределением цвета
+ * выглядели по-разному в зависимости от бандла (напр. «Оформить за 690 ₽»
+ * теряла фирменный фон). twMerge решает конфликт по последнему аргументу,
+ * как и предполагает Tailwind.
+ */
 export function cn(...classes: (string | undefined | false | null)[]): string {
-  return classes.filter(Boolean).join(" ");
+  return twMerge(classes.filter(Boolean).join(" "));
 }
 
 export function escapeHtml(value: string): string {

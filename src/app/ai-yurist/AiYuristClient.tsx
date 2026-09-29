@@ -164,6 +164,10 @@ export default function AiYuristClient() {
   const [topupOpen, setTopupOpen] = useState(false);
   const [topupSum, setTopupSum] = useState(300);
   const [topupBusy, setTopupBusy] = useState(false);
+  // Ошибки/подсказки ИМЕННО пополнения. Раньше сюда писали в общий setError,
+  // который рендерится на 885 строке — вне модалки. Пользователь нажимал
+  // «Оплатить» и не видел НИЧЕГО: реакция происходила за пределами окна.
+  const [topupMsg, setTopupMsg] = useState<{ kind: "info" | "error"; text: string } | null>(null);
   const [authed, setAuthed] = useState<boolean | null>(null);
   // Покупка подписки «AI-юрист» (690 ₽/мес) прямо с этой страницы.
   // Раньше карточки тарифа здесь не было вовсе — был только блок пополнения
@@ -539,6 +543,20 @@ export default function AiYuristClient() {
   }, [auditText, auditSending, consent, threadId, loadBalance, loadThreads]);
 
   const doTopup = useCallback(async () => {
+    // Сбрасываем прошлую ошибку, чтобы при повторном клике не висела старая.
+    setTopupMsg(null);
+
+    // Гость не может оплачивать: подписка и баланс привязаны к аккаунту.
+    // Раньше проверки не было — уходил запрос, возвращался 401, а сообщение
+    // «Не удалось создать платёж» выводилось вне модалки и оставалось незамеченным.
+    if (authed === false) {
+      setTopupMsg({
+        kind: "info",
+        text: "Войдите или зарегистрируйтесь, чтобы пополнить баланс — деньги привязываются к аккаунту.",
+      });
+      return;
+    }
+
     setTopupBusy(true);
     try {
       const token = await fetchCsrf();
@@ -548,18 +566,31 @@ export default function AiYuristClient() {
         headers: { "Content-Type": "application/json", "x-csrf-token": token },
         body: JSON.stringify({ amountRub: topupSum }),
       });
-      const d = (await res.json().catch(() => null)) as { confirmation_url?: string; error?: string } | null;
+      const d = (await res.json().catch(() => null)) as
+        | { confirmation_url?: string; error?: string; detail?: string }
+        | null;
       if (d?.confirmation_url) {
         window.location.href = d.confirmation_url;
+        return;
+      }
+      if (res.status === 401 || d?.error === "unauthorized") {
+        setTopupMsg({ kind: "info", text: "Войдите или зарегистрируйтесь, чтобы пополнить баланс." });
+      } else if (res.status === 403) {
+        setTopupMsg({ kind: "error", text: "Сессия устарела. Обновите страницу и попробуйте снова." });
+      } else if (res.status === 503) {
+        setTopupMsg({ kind: "error", text: "Оплата временно недоступна. Попробуйте позже." });
       } else {
-        setError("Не удалось создать платёж. Попробуйте позже.");
+        setTopupMsg({
+          kind: "error",
+          text: d?.detail ? `Не удалось создать платёж: ${d.detail}` : "Не удалось создать платёж. Попробуйте позже.",
+        });
       }
     } catch {
-      setError("Не удалось создать платёж. Попробуйте позже.");
+      setTopupMsg({ kind: "error", text: "Нет связи с сервером. Проверьте интернет и попробуйте снова." });
     } finally {
       setTopupBusy(false);
     }
-  }, [topupSum]);
+  }, [topupSum, authed]);
 
   /**
    * Оплата подписки «AI-юрист» (690 ₽/мес, 200 вопросов).
@@ -619,7 +650,7 @@ export default function AiYuristClient() {
         <div className="ml-auto flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-sm font-bold">
           <Wallet size={17} weight="fill" className="text-amber-600" />
           {balance === null ? "…" : `${Math.floor(balance / 100)} ₽`}
-          <Button size="sm" onClick={() => setTopupOpen(true)}>Пополнить</Button>
+          <Button size="sm" onClick={() => { setTopupMsg(null); setTopupOpen(true); }}>Пополнить</Button>
         </div>
       </div>
 
@@ -700,7 +731,7 @@ export default function AiYuristClient() {
           <div className="mb-3 flex items-center gap-2 rounded-xl bg-amber-50 px-4 py-2.5 text-sm text-amber-800">
             <Warning size={18} weight="fill" />
             Баланс меньше 20 ₽ — хватит на 1 сообщение.
-            <button className="ml-auto font-bold text-brand-700 underline" onClick={() => setTopupOpen(true)}>Пополнить</button>
+            <button className="ml-auto font-bold text-brand-700 underline" onClick={() => { setTopupMsg(null); setTopupOpen(true); }}>Пополнить</button>
           </div>
         )}
 
@@ -1178,7 +1209,8 @@ export default function AiYuristClient() {
               ) : (
                 <Button
                   size="lg"
-                  className="w-full bg-white text-brand-700 shadow-lg hover:bg-white/90"
+                  variant="inverse"
+                  className="w-full"
                   onClick={() => { void buyAiPlan(); }}
                   disabled={planBusy}
                   aria-busy={planBusy}
@@ -1247,14 +1279,14 @@ export default function AiYuristClient() {
                 <p className="absolute -top-3 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-amber-400 px-3 py-0.5 text-[10.5px] font-extrabold uppercase text-slate-900">Берут чаще всего</p>
                 <p className="text-2xl font-extrabold">{p} ₽</p>
                 <p className="text-xl font-extrabold text-emerald-400">≈{messagesForTopup(p)} сообщений +10%</p>
-                <Button className="mt-3 w-full bg-white text-slate-900 hover:bg-slate-100" onClick={() => { setTopupSum(p); setTopupOpen(true); }}>Пополнить</Button>
+                <Button className="mt-3 w-full" variant="inverse" onClick={() => { setTopupSum(p); setTopupMsg(null); setTopupOpen(true); }}>Пополнить</Button>
               </div>
             ) : (
               <Card key={p} className="p-5 text-center">
                 <p className="text-2xl font-extrabold">{p} ₽</p>
                 <p className="text-xl font-extrabold text-emerald-600">≈{messagesForTopup(p)} сообщений{p >= 500 ? ` +${p >= 1000 ? "30" : "20"}%` : ""}</p>
                 <p className="text-xs text-slate-500">бонус {p >= 1000 ? "+30%" : p >= 500 ? "+20%" : "—"}</p>
-                <Button className="mt-3 w-full" variant="outline" onClick={() => { setTopupSum(p); setTopupOpen(true); }}>Пополнить</Button>
+                <Button className="mt-3 w-full" variant="outline" onClick={() => { setTopupSum(p); setTopupMsg(null); setTopupOpen(true); }}>Пополнить</Button>
               </Card>
             )
           ))}
@@ -1295,21 +1327,41 @@ export default function AiYuristClient() {
 
       {/* Дешевле платных */}
       <div className="pt-8">
-        <h2 className="text-xl font-extrabold">Дешевле всех платных</h2>
-        <Card className="mt-3 overflow-x-auto p-0">
-          <table className="w-full min-w-[560px] text-[13px]">
-            <thead><tr className="bg-slate-900 text-left text-white">
-              <th className="px-4 py-2.5 font-semibold"><span className="sr-only">Критерий</span></th><th className="px-4 py-2.5 font-semibold">Наш AI-юрист</th><th className="px-4 py-2.5 font-semibold">Правовед.ru</th><th className="px-4 py-2.5 font-semibold">СберПраво</th><th className="px-4 py-2.5 font-semibold">Живой юрист</th>
-            </tr></thead>
+        <h2 className="text-xl font-extrabold">Сколько стоит один вопрос</h2>
+        {/* Раньше здесь стояла таблица без единого слова пояснения: непонятно,
+            откуда взяты «от 89 ₽» и «1 299 ₽», почему у живого юриста «нет»,
+            а у Правоведа «очередь». Читатель не мог ни проверить, ни понять,
+            что именно сравнивается. */}
+        <p className="mb-4 mt-1 max-w-3xl text-sm text-slate-500">
+          Сравниваем <b>минимальную цену одного вопроса</b> — сколько нужно
+          заплатить, чтобы получить один развёрнутый ответ со ссылками на статьи.
+          У нас считается по факту: подписка 690 ₽ за 200 вопросов плюс пополнение
+          баланса от 100 ₽.
+        </p>
+        <Card className="overflow-x-auto p-0">
+          <table className="w-full min-w-[640px] text-[13px]">
+            <caption className="sr-only">
+              Сравнение минимальной цены одного вопроса у AI-юриста и у трёх
+              платных альтернатив
+            </caption>
+            <thead>
+              <tr className="bg-slate-900 text-left text-white">
+                <th scope="col" className="px-4 py-2.5 font-semibold">Критерий</th>
+                <th scope="col" className="bg-brand-600 px-4 py-2.5 font-semibold">Наш AI-юрист</th>
+                <th scope="col" className="px-4 py-2.5 font-semibold">Правовед.ru</th>
+                <th scope="col" className="px-4 py-2.5 font-semibold">СберПраво</th>
+                <th scope="col" className="px-4 py-2.5 font-semibold">Живой юрист</th>
+              </tr>
+            </thead>
             <tbody>
               {[
-                ["Цена вопроса", aiPriceFromLabel(), "от 89 ₽", "1 299 ₽", "от 1 000 ₽"],
-                ["Скорость", "~10 секунд", "часы, иногда дни", "по записи", "по записи"],
-                ["Сразу в документ", "1 клик", "нет", "нет", "нет"],
-                ["Ночью и в выходные", "да", "очередь", "нет", "нет"],
+                ["Цена одного вопроса", aiPriceFromLabel(), "от 89 ₽", "от 1 299 ₽", "от 1 000 ₽"],
+                ["Когда получите ответ", "около 10 секунд", "от нескольких часов", "по записи", "по записи"],
+                ["Вставка ответа в договор", "1 клик в конструкторе", "нет", "нет", "нет"],
+                ["Доступно ночью и в выходные", "круглосуточно", "через очередь", "нет, только по записи", "нет, только по записи"],
               ].map(([label, us, p, s, h]) => (
                 <tr key={label} className="border-b border-slate-100 last:border-0">
-                  <td className="px-4 py-2.5 text-slate-500">{label}</td>
+                  <th scope="row" className="px-4 py-2.5 text-left font-medium text-slate-500">{label}</th>
                   <td className="bg-brand-50/60 px-4 py-2.5 font-bold text-brand-800">{us}</td>
                   <td className="px-4 py-2.5 text-slate-500">{p}</td>
                   <td className="px-4 py-2.5 text-slate-500">{s}</td>
@@ -1319,6 +1371,11 @@ export default function AiYuristClient() {
             </tbody>
           </table>
         </Card>
+        <p className="mt-2.5 text-xs text-slate-400">
+          Цены конкурентов приведены по их публичным прайсам и могут измениться —
+          сверяйтесь перед покупкой. У нас действует именно та цена, которая
+          указана при оформлении платежа.
+        </p>
       </div>
 
       {/* В документ */}
@@ -1360,13 +1417,46 @@ export default function AiYuristClient() {
               {PACKS.map((p) => (
                 <button
                   key={p}
-                  onClick={() => setTopupSum(p)}
+                  onClick={() => { setTopupSum(p); setTopupMsg(null); }}
                   className={`flex justify-between rounded-xl border px-4 py-2.5 text-sm font-bold ${topupSum === p ? "border-brand-500 bg-brand-50 text-brand-700" : "border-slate-200"}`}
                 >
                   {p} ₽ <span className="font-normal text-emerald-600">≈{messagesForTopup(p)} сообщений{p >= 300 ? " с бонусом" : ""}</span>
                 </button>
               ))}
             </div>
+            {/* Ошибка/подсказка ВНУТРИ модалки — раньше всё уходило в общий
+                setError на 890-ю строку, и нажатие «Оплатить» выглядело
+                как «ничего не происходит». */}
+            {topupMsg && (
+              <p
+                role="alert"
+                className={`mt-3 rounded-xl px-3 py-2.5 text-[13px] font-medium ${
+                  topupMsg.kind === "error"
+                    ? "bg-red-50 text-red-700"
+                    : "bg-brand-50 text-brand-700"
+                }`}
+              >
+                {topupMsg.text}
+                {topupMsg.kind === "info" && (
+                  <>
+                    {" "}
+                    <Link
+                      href={`/login?mode=login&next=${encodeURIComponent("/ai-yurist")}`}
+                      className="font-bold underline underline-offset-2"
+                    >
+                      Войти
+                    </Link>
+                    {" или "}
+                    <Link
+                      href={`/login?mode=register&next=${encodeURIComponent("/ai-yurist")}`}
+                      className="font-bold underline underline-offset-2"
+                    >
+                      зарегистрироваться
+                    </Link>
+                  </>
+                )}
+              </p>
+            )}
             <Button className="mt-3 w-full" disabled={topupBusy} onClick={() => void doTopup()}>
               {topupBusy ? "Создаём платёж…" : `Оплатить ${topupSum} ₽ →`}
             </Button>

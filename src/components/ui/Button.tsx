@@ -2,7 +2,7 @@ import { cn } from "@/lib/utils";
 import { forwardRef, type ButtonHTMLAttributes } from "react";
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: "primary" | "secondary" | "ghost" | "danger" | "outline";
+  variant?: "primary" | "secondary" | "ghost" | "danger" | "outline" | "inverse";
   size?: "sm" | "md" | "lg";
 }
 
@@ -16,6 +16,13 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       ghost: "text-gray-600 hover:bg-gray-100 focus:ring-gray-400",
       danger: "bg-red-500 text-white hover:bg-red-600 focus:ring-red-400",
       outline: "border-2 border-gray-200 text-gray-700 hover:border-brand-500 hover:text-brand-600 focus:ring-brand-400",
+      /**
+       * Белая кнопка на фирменном/тёмном фоне (градиентные карточки тарифов).
+       * Раньше такие кнопки делались через className="bg-white …" поверх
+       * variant="primary", что без tailwind-merge давало неверный цвет —
+       * обе утилиты попадали в class и выигрывал порядок в CSS.
+       */
+      inverse: "bg-white text-brand-700 hover:bg-brand-50 focus:ring-white/70 shadow-soft",
     };
     return (
       <button ref={ref} className={cn(base, sizes[size], variants[variant], className)} {...props} />
