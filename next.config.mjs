@@ -1,6 +1,9 @@
 /** @type {import('next').NextConfig} */
 import bundleAnalyzer from '@next/bundle-analyzer';
-import { withSentryConfig } from '@sentry/nextjs';
+// Sentry 10: withSentryConfig переехал в подпуть '/config'. Импорт из корня
+// '@sentry/nextjs' помечен deprecated и перестанет работать в v11
+// (предупреждение было в каждой сборке).
+import { withSentryConfig } from '@sentry/nextjs/config';
 
 const withBundleAnalyzer =
   process.env.ANALYZE === 'true'
@@ -15,6 +18,11 @@ const supabaseHost = supabaseUrl.replace(/^https?:\/\//, '').split('/')[0] || ''
 
 const nextConfig = {
   output: 'standalone',
+  // ⚠️ Здесь НЕЛЬЗЯ отключать встроенный линт Next (опция ignoreDuringBuilds).
+  // Инвариант src/lib/__tests__/invariants/architecture.test.ts запрещает её
+  // прямым текстом: линт обязан блокировать сборку. Предупреждение Next «The
+  // Next.js plugin was not detected» — ложное (Next 15 не читает ESLint 9 flat
+  // config), но гейт отключать нельзя: это осознанное проектное решение.
   // sharp грузится динамическим import() внутри /api/avatar — file-tracing не всегда
   // включает нативные бинарники @img/*; для standalone/Docker добираем явно.
   outputFileTracingIncludes: {

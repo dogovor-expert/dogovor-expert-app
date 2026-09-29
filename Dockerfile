@@ -62,6 +62,10 @@ COPY . .
 # дефолтный heap Node (~2 ГБ на 64-бит) роняет next build с exit 134 (SIGABRT).
 # 3072 МБ — потолок, при котором сборка стабильна и не душит соседей.
 ENV NODE_OPTIONS="--max-old-space-size=3072"
+# husky во время сборки Docker не находит .git (он исключён .dockerignore) и
+# печатает «.git can't be found». Хуки в образе не нужны — они работают
+# локально на машине разработчика, поэтому гасим install-скрипт.
+ENV HUSKY=0
 RUN --mount=type=cache,target=/root/.npm \
     --mount=type=cache,target=/app/.next/cache \
     npm run build

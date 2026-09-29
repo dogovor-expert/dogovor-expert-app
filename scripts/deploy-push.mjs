@@ -69,7 +69,17 @@ function push() {
   }
 }
 
-/** 3. Заказать пересборку в Dokploy через API (если есть ключ). */
+/** 3. Заказать сборку в Dokploy через API (если есть ключ).
+ *
+ * ⚠️ ВАЖНО: используется именно `application.deploy` (тип job `deploy`),
+ * а НЕ `application.redeploy`. Разница критична:
+ *   - `application.deploy`    → git pull из зеркала + сборка. То, что нужно.
+ *   - `application.redeploy`  → пересборка УЖЕ лежащей копии кода, БЕЗ pull.
+ *     Dokploy держит рабочую копию в /etc/dokploy/applications/<app>/code и
+ *     сам её не обновляет. Redeploy после `git push vds master` собирает СТАРЫЙ
+ *     коммит, отчитывается «done» — и на сайте ничего не меняется. Молча,
+ *     без единой ошибки в логе.
+ */
 async function redeploy() {
   if (!KEY) {
     log("⚠ DOKPLOY_API_KEY не задан — автозапуск сборки пропущен.");

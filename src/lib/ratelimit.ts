@@ -6,6 +6,15 @@ import { Redis } from "@upstash/redis";
 const isDev = process.env.NODE_ENV === "development";
 const rateLimitDisabled = process.env.RATELIMIT_DISABLED === "1";
 
+// Во время `next build` переменных окружения прода ещё НЕТ в процессе сборки:
+// .env исключён из build-контекста (.dockerignore), а Environment приложения
+// Dokploy прокидывается в контейнер уже на этапе запуска. Модуль при этом
+// подтягивается статической генерацией по разу на каждый роут, из-за чего одно
+// и то же предупреждение печаталось десятки раз и выглядело как авария.
+// Поэтому на сборке — тихо, а в рантайме (где отсутствие Redis действительно
+// ломает fail-closed) — предупреждение остаётся.
+const isBuildPhase = process.env.NEXT_PHASE === "phase-production-build";
+
 const redis =
   process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN
     ? new Redis({
@@ -14,7 +23,7 @@ const redis =
       })
     : null;
 
-if (!redis && !isDev && !rateLimitDisabled) {
+if (!redis && !isDev && !rateLimitDisabled && !isBuildPhase) {
   console.warn("[ratelimit] UPSTASH_REDIS_* not configured — limiters are null and checkRateLimit() will FAIL-CLOSED (429) for every protected route. Set UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN for production.");
 }
 

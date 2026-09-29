@@ -2,6 +2,14 @@ import { Redis } from "@upstash/redis";
 
 // Распределённое хранилище истории чатов и маппинга visitorId <-> Telegram topic.
 // Используем тот же Upstash Redis, что и rate limiter (env UPSTASH_REDIS_*).
+//
+// На этапе `next build` переменных прода в процессе ещё нет (.env исключён из
+// build-контекста, Environment Dokploy приходит при запуске контейнера), а модуль
+// импортируется статической генерацией по разу на роут. Без этой проверки в лог
+// сборки попадало по предупреждению на каждый роут — читалось как авария, хотя
+// на проде Redis настроен. В рантайме предупреждение остаётся.
+const isBuildPhase = process.env.NEXT_PHASE === "phase-production-build";
+
 const redis =
   process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN
     ? new Redis({
@@ -10,7 +18,7 @@ const redis =
       })
     : null;
 
-if (!redis) {
+if (!redis && !isBuildPhase) {
   console.warn(
     "[chat-store] UPSTASH_REDIS_* не настроены — история чата не будет сохраняться (fail-open)."
   );
