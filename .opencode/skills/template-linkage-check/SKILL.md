@@ -29,7 +29,7 @@ grep -r "class_name" src/
 
 | Тип изменения | Затронутые модули | Тесты |
 |---|---|---|
-| Новый шаблон | `src/data/templates/*.ts`, `index.ts` | `templates.test.ts` (счётчик 369), `docScanner.test.ts` |
+| Новый шаблон | `src/data/templates/*.ts`, `index.ts` | `templates.test.ts` (счётчик 570 + валидность `suggestedDocs` + `TEMPLATE_COUNT`), `docScanner.test.ts` |
 | Новое поле | `format.ts`, `validation.ts`, `docRequirements.ts` | `format.test.ts`, `validation.test.ts` |
 | Изменение класса HTML | `renderDocument.ts`, `exportPdf.ts` | `renderDocument.test.ts`, `docDesign.test.ts` |
 | Изменение токена | `docDesign.ts` | `docDesign.test.ts` |
@@ -43,7 +43,7 @@ npx vitest run
 
 ### 4. Запрещённые действия
 - Менять классы HTML без сверки с рендерерами
-- Добавлять шаблон без обновления счётчика в `templates.test.ts`
+- Добавлять шаблон без обновления счётчика в `templates.test.ts` и `TEMPLATE_COUNT` (`src/lib/site.ts`)
 - Объявлять `field_is_*` флаги вручную (они генерируются автоматически)
 - Менять токены `docDesign.ts` без обновления тестов `docDesign.test.ts`
 - Использовать OTF-шрифты вместо TTF

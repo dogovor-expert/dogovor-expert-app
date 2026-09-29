@@ -8,11 +8,13 @@ Disallow: /trash
 Disallow: /admin
 Disallow: /debug
 Disallow: /approve
+Disallow: /preview
 Disallow: /api/
 Disallow: /auth/
 Disallow: /builder
 Disallow: /connections
 Disallow: /documents$
+Disallow: /documents/$
 # Clean-param: динамические фильтры/сортировки не меняют состав документов —
 # Яндекс склеит все варианты в основной URL.
 # ВАЖНО: параметр `page` НЕ включаем — он меняет состав (пагинация),
@@ -33,9 +35,12 @@ Disallow: /trash
 Disallow: /admin
 Disallow: /debug
 Disallow: /approve
+Disallow: /preview
 Disallow: /api/
 Disallow: /auth/
 Disallow: /builder
 Disallow: /connections
+Disallow: /documents$
+Disallow: /documents/$
 
 Sitemap: https://dogovor.expert/sitemap.xml

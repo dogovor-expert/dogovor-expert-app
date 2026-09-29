@@ -104,7 +104,7 @@ export default function TemplateSelector({
   onToggleFavorite,
   onSelectTemplate,
 }: TemplateSelectorProps) {
-  // P0.2: сетка из 369 карточек не рендерится на сервере (иначе раздувает
+  // P0.2: сетка из 570 карточек не рендерится на сервере (иначе раздувает
   // SSR-HTML /builder). mounted-гейт убирает hydration mismatch.
   const [mounted, setMounted] = useState(false);
   useEffect(() => {

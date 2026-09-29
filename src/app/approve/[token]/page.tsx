@@ -6,6 +6,7 @@ import type { LegalTemplate, TemplateField } from "@/data/types";
 import { normalizeOptions } from "@/lib/validation";
 import { createClient } from "@/lib/supabase/client";
 import { trackOwnOnly } from "@/lib/analytics";
+import { TEMPLATE_COUNT } from "@/lib/site";
 import { Check, Loader2, Shield, AlertTriangle, Clock, Lock, Eye, EyeOff, Sparkles } from "lucide-react";
 
 /* ── K-фактор: атрибуция регистрации по ссылке согласования ───────── */
@@ -434,7 +435,7 @@ export default function ApprovePage() {
             </div>
             <p className="text-sm font-semibold text-gray-900 mb-1">Нужен свой документ?</p>
             <p className="text-xs text-gray-600 mb-4">
-              Соберите договор бесплатно в конструкторе Dogovor.expert — 369 шаблонов, экспорт в PDF и Word.
+              Соберите договор бесплатно в конструкторе Dogovor.expert — {TEMPLATE_COUNT} шаблонов, экспорт в PDF и Word.
             </p>
             <Link
               href="/builder?ref=approval"

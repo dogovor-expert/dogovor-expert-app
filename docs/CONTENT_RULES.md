@@ -11,7 +11,7 @@
 - Каждый шаблон = объект LegalTemplate с полями (`src/data/types.ts`). Категория — из списка в `index.ts` (порядок важен: AUTO, FINANCE, REALTY, BUSINESS, RENTALS, SALES, CONTRACTS, HR, CLAIMS, FINANCE_ACTS, CORPORATE_WEB, FAMILY, OTHER, MIGRATION, LEGAL, POSTAL).
 - Общие блоки — из `parts.ts` (pageShell, pairIntro, pairSign, sideFields, sideBlock, commonClauses, saleSign, rentSign). Повторяющиеся блоки/таблицы — из своего файла (finance-act.ts: itemsRepeating+itemsTable; corporate-web.ts: partyFields, operatorSign, foundersSign, signPairLeft).
 - Обязательные поля типов: select/radio со значениями порождают флаги `field_is_<value>` (только ASCII-значения) в renderDocument; числовые поля автоматически получают `<id>_words` (прописью) — НЕ объявлять такие поля вручную.
-- Счётчик шаблонов: `src/lib/__tests__/templates.test.ts` ожидает точное число (сейчас 369). Добавил шаблон → обнови счётчик.
+- Счётчик шаблонов: `src/data/__tests__/templates.test.ts` ожидает точное число (сейчас 570). Добавил шаблон → обнови счётчик в тесте и `TEMPLATE_COUNT` в `src/lib/site.ts` (иначе UI-строки «N шаблонов» разойдутся с каталогом — баг 29.09.2026).
 
 ### B. Поля и валидация
 
@@ -35,7 +35,7 @@
 
 ### E. Образцы и debug
 
-- Папка `samples/` УДАЛЕНА 19.08.2026 (образцы больше не нужны пользователю). Тесты `src/lib/__tests__/gen-samples.test.ts` и `gen-samples-docs.test.ts` ИСКЛЮЧЕНЫ из vitest (см. vitest.config.ts) — при желании пересоздать образцы временно вернуть их в конфиг и прогнать вручную.
+- Папка `samples/` УДАЛЕНА 19.08.2026 (образцы больше не нужны пользователю). Исключение — `public/samples/primernaya-raspiska.pdf`, публикуется как пример готового документа. Тесты `src/lib/__tests__/gen-samples.test.ts` и `gen-samples-docs.test.ts` ИСКЛЮЧЕНЫ из vitest (см. vitest.config.ts) — при желании пересоздать образцы временно вернуть их в конфиг и прогнать вручную.
 - `src/app/debug/pdf/page.tsx` — SAMPLE обязан содержать флаги статусов (`seller_status`, `buyer_status`, `seller_data_mode`, `buyer_data_mode`, `claim_period` и т.п.), иначе условные секции рендерятся ПУСТЫМИ (реальный кейс: пропал блок «Стороны», 19.08.2026).
 - `_total_pretty` (итог repeating-таблиц) вычисляется в `src/lib/renderDocument.ts` для фиксированного списка id — новый табличный шаблон → добавить его id в этот список.
 

@@ -2720,7 +2720,7 @@ export const TEMPLATES_AUTO: LegalTemplate[] = [
     actSource: "ст. 11 ФЗ-40 «Об ОСАГО», ст. 961 ГК РФ",
     lastUpdated: "Август 2026",
     description: "Заявление в страховую компанию о наступлении страхового случая по ОСАГО или КАСКО (ДТП, ущерб, угон).",
-    suggestedDocs: ["spravka-gibdd"],
+    suggestedDocs: ["auto-condition-act","stmt-auto-dtp-europrotocol"],
     supportsOcr: true,
     printInstruction: "Печать на одном листе А4",
     fields: [

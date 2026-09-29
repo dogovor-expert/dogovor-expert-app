@@ -10,14 +10,19 @@
  * полностью статической (SEO, слабый интернет, без лишнего JS).
  *
  * Запуск:  npx tsx scripts/generate-blank-previews.mts
- *          LIMIT=5 npx tsx scripts/generate-blank-previews.mts   (для проверки)
+ *          LIMIT=5 npx tsx scripts/generate-blank-previews.mts          (проверка)
+ *          ONLY_MISSING=1 npx tsx scripts/generate-blank-previews.mts   (догенерация)
+ *
+ * ONLY_MISSING дополняет существующий index.json и не трогает уже
+ * сгенерированные бланки — иначе каждый новый шаблон перетирал бы все 570
+ * бинарников в диффе.
  */
 import { readFile, writeFile, mkdir, readdir } from "node:fs/promises";
 import { pathToFileURL, fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
 import { JSDOM } from "jsdom";
 import sharp from "sharp";
-import { createCanvas } from "@napi-rs/canvas";
+import { createCanvas, Path2D as NapiPath2D, DOMMatrix as NapiDOMMatrix } from "@napi-rs/canvas";
 
 // --- полифилы DOM, нужные buildPdf в Node ---
 const { window } = new JSDOM("");
@@ -43,6 +48,19 @@ const CLASSIC_FONTS = {
   italic: await readFont("pt-serif-italic.ttf"),
   bolditalic: await readFont("pt-serif-bolditalic.ttf"),
 };
+
+// --- Path2D/DOMMatrix: ЕДИНЫЙ экземпляр классов ---
+// pdfjs-dist при загрузке в Node сам полифиллит `globalThis.Path2D` /
+// `globalThis.DOMMatrix`, но делает это через CJS `require("@napi-rs/canvas")`.
+// Из-за dual-package hazard это ДРУГИЕ объекты классов, чем те, что отдаёт
+// ESM-импорт, из которого мы берём `createCanvas`. pdfjs рисует глифы
+// через `ctx.fill(path2D)`, @napi-rs/canvas проверяет `instanceof` и падает
+// с «Value is none of these types `String`, `Path`».
+// Поэтому назначаем глобали из ESM-импорта ДО загрузки pdf.mjs — его
+// `if (!globalThis.Path2D)` тогда просто ничего не перезаписывает.
+for (const [key, value] of [["Path2D", NapiPath2D], ["DOMMatrix", NapiDOMMatrix]] as const) {
+  if (!(globalThis as any)[key]) (globalThis as any)[key] = value;
+}
 
 // --- pdfjs (Node) + @napi-rs/canvas ---
 const pdfjs: any = await import("pdfjs-dist/legacy/build/pdf.mjs");
@@ -86,13 +104,30 @@ async function rasterizeFirstPages(pdfBytes: Uint8Array): Promise<Buffer[]> {
 
 async function main() {
   const LIMIT = process.env.LIMIT ? parseInt(process.env.LIMIT, 10) : Infinity;
+  // ONLY_MISSING=1 — догенерировать только шаблоны без превью.
+  // Полная перегенерация всех 570 бланков при добавлении одного шаблона
+  // даёт ~570 изменённых бинарников в диффе, поэтому по умолчанию
+  // пропускаем то, что уже сгенерировано.
+  const ONLY_MISSING = process.env.ONLY_MISSING === "1";
   await mkdir(OUT_DIR, { recursive: true });
 
-  const templates = LEGAL_TEMPLATES.slice(0, Math.min(LIMIT, LEGAL_TEMPLATES.length));
+  // Существующий манифест — база: скрипт дополняет его, а не перезаписывает.
   const manifest: Record<string, number> = {};
+  try {
+    const prev = JSON.parse(await readFile(resolve(OUT_DIR, "index.json"), "utf8"));
+    Object.assign(manifest, prev);
+  } catch {}
+
+  const existingFiles = new Set(await readdir(OUT_DIR));
+  const hasPreview = (id: string) => manifest[id] > 0 && existingFiles.has(`${id}-1.avif`);
+
+  const templates = ONLY_MISSING
+    ? LEGAL_TEMPLATES.filter((t) => !hasPreview(t.id))
+    : LEGAL_TEMPLATES;
 
   let done = 0;
   for (const t of templates) {
+    if (done >= LIMIT) break;
     const previewTemplate = TEMPLATE_PREVIEWS[t.id] ?? (t as any).previewTemplate;
     if (!previewTemplate) {
       console.warn(`! нет previewTemplate для ${t.id} — пропускаем`);
@@ -110,13 +145,16 @@ async function main() {
     }
     manifest[t.id] = pages.length;
     done++;
-    if (done % 25 === 0 || done === templates.length) {
-      console.log(`  ${done}/${templates.length} -> ${t.id} (${pages.length} стр.)`);
+    if (done % 25 === 0) {
+      console.log(`  ${done} сгенерировано... последний: ${t.id} (${pages.length} стр.)`);
     }
   }
 
   await writeFile(resolve(OUT_DIR, "index.json"), JSON.stringify(manifest, null, 2));
-  console.log(`Готово. Сгенерировано превью для ${done} шаблонов -> public/blank-previews/`);
+  console.log(
+    `Готово. Сгенерировано превью для ${done} шаблонов ` +
+      `(всего в манифесте ${Object.keys(manifest).length}) -> public/blank-previews/`,
+  );
 }
 
 main().catch((e) => {

@@ -1,4 +1,8 @@
-import { saveAs } from "file-saver";
+// ВАЖНО: именованный импорт `import { saveAs } from "file-saver"` ломает Node ESM
+// (скрипты scripts/*.mts импортируют этот модуль напрямую, а cjs-module-lexer
+// не выводит именованные экспорты из `module.exports = saveAs`).
+// В бандлере это работало, поэтому баг был скрыт. Бери default-импорт.
+import FileSaver from "file-saver";
 import {
   getDesign,
   pageMetrics,
@@ -7,6 +11,7 @@ import {
   type DesignTokens,
   type PageMetrics,
 } from "@/lib/docDesign";
+
 import {
   hasClass,
   nodeRuns,
@@ -14,6 +19,8 @@ import {
   sizeFromClass,
 } from "@/lib/html-parser";
 import type { PDFImage, PDFFont, PDFPage, RGB, PDFDocument } from "pdf-lib";
+// default-импорт + деструктуризация: см. комментарий у импорта file-saver выше.
+const { saveAs } = FileSaver;
 
 const A4 = { w: 595.28, h: 841.89 };
 

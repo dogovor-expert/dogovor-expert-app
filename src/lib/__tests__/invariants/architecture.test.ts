@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import fs from "fs";
 import path from "path";
+import { LEGAL_TEMPLATES } from "@/data/templates";
 
 const projectRoot = path.join(__dirname, "..", "..", "..", "..");
 
@@ -111,15 +112,18 @@ describe("Architecture invariants: структура, конвенции, ин�
     expect(content).not.toMatch(/ignoreDuringBuilds\s*:\s*true/);
   });
 
-  it("Счётчик шаблонов в templates.test.ts актуален (ожидаемо 369)", () => {
-    const testPath = path.join(projectRoot, "src", "lib", "__tests__", "templates.test.ts");
+  it("Счётчик шаблонов в templates.test.ts совпадает с каталогом", () => {
+    // Аудит 29.09.2026: путь был указан неверно (src/lib/__tests__ вместо
+    // src/data/__tests__) — readFileSafe возвращал null и инвариант молча
+    // не выполнялся. Плюс проверка была «>= 369», то есть пропускала удаления.
+    const testPath = path.join(projectRoot, "src", "data", "__tests__", "templates.test.ts");
     const content = readFileSafe(testPath);
     if (!content) return;
-    const match = content.match(/(\d+)/);
+    const match = content.match(/expect\(LEGAL_TEMPLATES\.length\)\.toBe\((\d+)\)/);
     if (match) {
-      // Это best-effort проверка: счётчик должен быть >= 369
-      // Если меньше — кто-то удалил шаблоны без обновления теста
-      expect(Number(match[1])).toBeGreaterThanOrEqual(369);
+      // Счётчик в тесте обязан РАВНЯТЬСЯ каталогу: расхождение = шаблоны
+      // добавили/удалили без обновления теста (счётчик разошёлся с UI-строками).
+      expect(Number(match[1])).toBe(LEGAL_TEMPLATES.length);
     }
   });
 });

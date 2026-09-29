@@ -26,7 +26,7 @@ import ConverterRunner from "@/components/converter/ConverterRunner";
 import { AdSlot } from "@/components/ads/AdSlot";
 import { breadcrumbJsonLd, faqJsonLd } from "@/lib/seo/faq";
 import { withSeo } from "@/lib/seo/withSeo";
-import { SITE_URL } from "@/lib/site";
+import { SITE_URL, TEMPLATE_COUNT } from "@/lib/site";
 import { CONVERTER_TOOLS, toolBySlug } from "@/data/converter-tools";
 
 export const dynamicParams = false;
@@ -209,7 +209,7 @@ export default async function ConverterToolPage({
       <section className="rounded-2xl border border-gray-200 bg-gray-50 p-6 text-center">
         <h2 className="text-lg font-semibold text-gray-900">Нужен готовый документ?</h2>
         <p className="mt-1 text-sm text-gray-600">
-          В конструкторе — 369 шаблонов договоров, заявлений и согласий с автоматическим заполнением.
+          В конструкторе — {TEMPLATE_COUNT} шаблонов договоров, заявлений и согласий с автоматическим заполнением.
         </p>
         <Link
           href="/builder"

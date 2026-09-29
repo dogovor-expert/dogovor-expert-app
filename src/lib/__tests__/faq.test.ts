@@ -22,7 +22,7 @@ describe("faqForDocument: пер-документный FAQ", () => {
     expect(faq[3].q).toContain(t.name);
   });
 
-  it("первые два ответа уникальны по всем 369 шаблонам (нет дублей категории)", () => {
+  it("первые два ответа уникальны по всем 570 шаблонам (нет дублей категории)", () => {
     const seenQ1 = new Set<string>();
     const seenA1 = new Set<string>();
     const seenA2 = new Set<string>();

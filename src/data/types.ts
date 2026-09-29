@@ -119,7 +119,7 @@ export interface TemplateSigning {
 /**
  * Вид шаблона: договор/сделка (contract) или заявление/обращение
  * в госорган, суд, работодателю, УК (statement). Отсутствие поля =
- * contract (обратная совместимость со всеми 369 существующими).
+ * contract (обратная совместимость со всеми 570 существующими).
  */
 export type TemplateKind = "contract" | "statement";
 

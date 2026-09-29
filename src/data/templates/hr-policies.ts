@@ -227,7 +227,7 @@ export const TEMPLATES_HR_POLICIES: LegalTemplate[] = [
     lastUpdated: "Сентябрь 2026",
     description:
       "Локальный нормативный акт о порядке направления работников в служебные командировки, размерах суточных, порядке возмещения расходов и отчётности.",
-    suggestedDocs: ["business-trip-order", "advance-report"],
+    suggestedDocs: ["business-trip-order"],
     printInstruction:
       "Положение регулирует командировки на территории РФ и за рубеж. Суточные в пределах норм не облагаются НДФЛ и страховыми взносами. Ознакомьте работников под роспись.",
     fields: [

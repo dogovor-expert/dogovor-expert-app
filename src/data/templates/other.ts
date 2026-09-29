@@ -366,7 +366,7 @@ export const TEMPLATES_OTHER: LegalTemplate[] = [
     actSource: "ст. 3, 9 ФЗ-152 «О персональных данных»",
     lastUpdated: "Август 2026",
     description: "Политика обработки персональных данных для сайта или интернет-сервиса.",
-    suggestedDocs: ["Публичная оферта", "Согласие на обработку персональных данных"],
+    suggestedDocs: ["public-offer", "personal-data-consent"],
     fields: [
 
       { id: "date", label: "Дата составления", type: "date", defaultValue: "", category: "contract" },
