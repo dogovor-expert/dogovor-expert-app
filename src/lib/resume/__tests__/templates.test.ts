@@ -93,7 +93,10 @@ describe("resume templates parity (РЕЗЮМЕ 3)", () => {
       const doc = buildResumeDocHtml(SAMPLE_RESUME, id);
       expect(doc, id).toContain(accent);
     }
-    expect(buildResumeDocHtml(SAMPLE_RESUME, "modern-emerald")).toContain("по стандартам 2026");
+    // Атрибуция в сайдбаре осталась, но без устаревшего «по стандартам 2026»:
+    // год в подписи превращался бы в ложь на 1 января 2027. Решение человека.
+    expect(buildResumeDocHtml(SAMPLE_RESUME, "modern-emerald")).toContain("Dogovor.expert");
+    expect(buildResumeDocHtml(SAMPLE_RESUME, "modern-emerald")).not.toContain("по стандартам 2026");
     expect(buildResumeDocHtml(SAMPLE_RESUME, "classic-legal")).toContain("Times New Roman");
   });
 

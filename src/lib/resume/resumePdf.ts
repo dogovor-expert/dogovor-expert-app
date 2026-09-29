@@ -49,12 +49,12 @@ const STYLES: Record<TemplateId, TemplateStyle> = {
   "tech-indigo": { accent: hex("#4f46e5"), layout: "columns", expDots: true },
   "classic-legal": { accent: hex("#0f172a"), layout: "single", serif: true, centerHeader: true },
   "nordic-minimal": { accent: hex("#0d9488"), layout: "single" },
-  "modern-emerald": { accent: hex("#059669"), layout: "sidebar", sideBg: hex("#059669"), sideFg: hex("#ffffff"), sideAccent: hex("#a7f3d0"), sideDark: true, sideFoot: "Dogovor.expert · резюме по стандартам 2026" },
+  "modern-emerald": { accent: hex("#059669"), layout: "sidebar", sideBg: hex("#059669"), sideFg: hex("#ffffff"), sideAccent: hex("#a7f3d0"), sideDark: true, sideFoot: "Dogovor.expert" },
   "creative-coral": { accent: hex("#ea580c"), layout: "single", topStrip: hex("#ea580c"), photoInHeader: true },
   "junior-launch": { accent: hex("#2563eb"), layout: "single" },
   "corporate-slate": { accent: hex("#334155"), layout: "single", serif: true, centerHeader: true },
   "data-mono": { accent: hex("#7c3aed"), layout: "columns", expDots: true },
-  "legal-counsel": { accent: hex("#1e3a8a"), layout: "sidebar", sideBg: hex("#1e3a8a"), sideFg: hex("#ffffff"), sideAccent: hex("#93c5fd"), sideDark: true, sideFoot: "Dogovor.expert · резюме по стандартам 2026" },
+  "legal-counsel": { accent: hex("#1e3a8a"), layout: "sidebar", sideBg: hex("#1e3a8a"), sideFg: hex("#ffffff"), sideAccent: hex("#93c5fd"), sideDark: true, sideFoot: "Dogovor.expert" },
 };
 
 const FONT_CACHE = new Map<string, ArrayBuffer>();

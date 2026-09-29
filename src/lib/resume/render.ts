@@ -256,7 +256,7 @@ function buildSampleHtml(data: ResumeData, cfg: SampleCfg): string {
       (contactItems(data).length ? `<div class="smp-bar-sec"><div class="smp-bar-lbl">Контакты</div>${smpContacts(data, "rows")}</div>` : "") +
       (hard.length ? `<div class="smp-bar-sec"><div class="smp-bar-lbl">Навыки</div>${smpChips(hard)}</div>` : "") +
       (data.languages.length ? `<div class="smp-bar-sec"><div class="smp-bar-lbl">Языки</div>${smpLangs(data)}</div>` : "") +
-      `</div><div class="smp-bar-foot">Dogovor.expert · резюме по стандартам 2026</div></aside>` +
+      `</div><div class="smp-bar-foot">Dogovor.expert</div></aside>` +
       `<div class="smp-page"><h1>${name}</h1><div class="smp-role">${role}</div>` +
       (summary ? `<section><h3 class="smp-lbl">Профессиональный профиль</h3><p class="smp-sum">${summary}</p></section>` : "") +
       (data.experience.length ? `<section><h3 class="smp-lbl">Опыт работы</h3><div class="smp-xp2">${smpExpRows(data, true)}</div></section>` : "") +
@@ -554,7 +554,7 @@ function buildLegacyHtml(data: ResumeData, tpl: string): string {
     case "nordic":
       return `<div class="doc"><header class="doc-hd hd"><div class="hd-t"><div class="doc-name">${name}</div><div class="doc-role">${role}</div>${contacts(data)}</div>${photo}</header>${sumSec(data)}${expSec(data, "nordic")}${eduSec(data, "nordic")}${skillsSec(data)}${langsSec(data)}</div>`;
     case "sidebarpro":
-      return `<aside class="ex-side">${photo}<div class="doc-name">${name}</div><div class="doc-role">${role}</div><div class="ex-ct">${contactsV(data)}</div>${sideBlocks(data, "ex-block", "Навыки", "Личные качества", "Dogovor.expert · резюме по стандартам 2026")}</aside><div class="ex-main">${sumSec(data)}${expSec(data, "sidebarpro")}${eduSec(data, "sidebarpro")}</div>`;
+      return `<aside class="ex-side">${photo}<div class="doc-name">${name}</div><div class="doc-role">${role}</div><div class="ex-ct">${contactsV(data)}</div>${sideBlocks(data, "ex-block", "Навыки", "Личные качества", "Dogovor.expert")}</aside><div class="ex-main">${sumSec(data)}${expSec(data, "sidebarpro")}${eduSec(data, "sidebarpro")}</div>`;
     case "ocean":
       return `<div class="doc"><header class="band hd"><div class="hd-t"><div class="doc-name">${name}</div><div class="doc-role">${role}</div><div class="band-ct">${contactsV(data)}</div></div>${photo}</header>${sumSec(data)}${expSec(data, "ocean")}${eduSec(data, "ocean")}${skillsSec(data)}${langsSec(data)}</div>`;
     case "terracotta":
@@ -593,12 +593,12 @@ const DOC_TEMPLATES: Record<TemplateId, DocTemplateStyle> = {
   "tech-indigo": { accent: "#4f46e5", layout: "columns", expDots: true },
   "classic-legal": { accent: "#0f172a", layout: "single", center: true, serif: true },
   "nordic-minimal": { accent: "#0d9488", layout: "single" },
-  "modern-emerald": { accent: "#059669", layout: "sidebar", sideBg: "#059669", sideFg: "#ffffff", sideAccent: "#a7f3d0", sideFoot: "Dogovor.expert · резюме по стандартам 2026" },
+  "modern-emerald": { accent: "#059669", layout: "sidebar", sideBg: "#059669", sideFg: "#ffffff", sideAccent: "#a7f3d0", sideFoot: "Dogovor.expert" },
   "creative-coral": { accent: "#ea580c", layout: "single", strip: true },
   "junior-launch": { accent: "#2563eb", layout: "single" },
   "corporate-slate": { accent: "#334155", layout: "single", center: true, serif: true },
   "data-mono": { accent: "#7c3aed", layout: "columns", expDots: true },
-  "legal-counsel": { accent: "#1e3a8a", layout: "sidebar", sideBg: "#1e3a8a", sideFg: "#ffffff", sideAccent: "#93c5fd", sideFoot: "Dogovor.expert · резюме по стандартам 2026" },
+  "legal-counsel": { accent: "#1e3a8a", layout: "sidebar", sideBg: "#1e3a8a", sideFg: "#ffffff", sideAccent: "#93c5fd", sideFoot: "Dogovor.expert" },
 };
 
 /**

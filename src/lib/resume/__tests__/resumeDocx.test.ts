@@ -113,20 +113,31 @@ describe("Экспорт DOCX: файл действительно OOXML, а н�
     }
   });
 
-  it("бренд в теле допускается только как атрибуция в сайдбаре (sideFoot)", async () => {
-    // Известное и осознанное поведение: в 2 шаблонах с layout:"sidebar"
-    // подпись "Dogovor.expert · резюме по стандартам 2026" печатается
-    // в ячейке сайдбара — ровно так же, как в PDF-экспорте (resumePdf.ts
-    // использует то же поле sideFoot). Это НЕ шапка документа: отдельных
-    // word/header1.xml/footer1.xml больше нет (проверяется выше).
-    // Задача этой проверки — зафиксировать текущее поведение, чтобы будущая
-    // правка шаблона не изменила бы это молча.
+  it("бренд в теле: только атрибуция Dogovor.expert, без устаревшего «по стандартам 2026»", async () => {
+    // Осознанное поведение: в 2 шаблонах с layout:"sidebar" в ячейке сайдбара
+    // печатается подпись "Dogovor.expert" — атрибуция бесплатного шаблона.
+    // Ровно так же, как в PDF-экспорте (resumePdf.ts использует то же поле
+    // sideFoot), поэтому PDF и DOCX согласованы.
+    // Это НЕ шапка документа: отдельных word/header1.xml/footer1.xml нет,
+    // что проверяется выше. Проверка существует, чтобы правка шаблона или
+    // дизайн-токена не изменила это молча.
     for (const t of TEMPLATES) {
       const entries = zipEntries(await docxOf(t.id));
       const xml = entries.find((e) => e.name === "word/document.xml")!.read();
       const hits = xml.match(/Dogovor\.expert/g) ?? [];
       const allowed = t.id === "legal-counsel" || t.id === "modern-emerald";
       expect(hits.length, `шаблон ${t.id}`).toBe(allowed ? 1 : 0);
+    }
+  });
+
+  it("устаревшая подпись «по стандартам 2026» не попадает ни в один документ", async () => {
+    // Год в подписи стал бы ложью с 1 января 2027. Проверяем и HTML-экспорт,
+    // и собранный DOCX, чтобы фраза не вернулась ни с одной стороны.
+    for (const t of TEMPLATES) {
+      expect(buildResumeDocHtml(SAMPLE_RESUME, t.id), `html ${t.id}`).not.toContain("по стандартам 2026");
+      const entries = zipEntries(await docxOf(t.id));
+      const xml = entries.find((e) => e.name === "word/document.xml")!.read();
+      expect(xml, `docx ${t.id}`).not.toContain("по стандартам");
     }
   });
 });
