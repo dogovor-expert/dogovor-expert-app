@@ -2,6 +2,33 @@ import type { DraftData, DraftVersion } from "@/lib/autosave";
 
 type DogovorWindow = Window & { __DOGOVOR_USER__?: boolean };
 
+/**
+ * ⛔ АВТОСИНХРОНИЗАЦИЯ НА СЕРВЕР ОТКЛЮЧЕНА (30.09.2026).
+ *
+ * Здесь был путь, который каждые ~30 секунд отправлял содержимое черновика
+ * на `/api/documents` методом POST/PATCH — автоматически, без кнопки и без
+ * согласия пользователя. В `fields` уезжали ФИО, ИНН, паспорт и адреса
+ * третьих лиц по договору, открытым текстом, в таблицу `documents`.
+ *
+ * Ручной импорт (`POST /api/import`) закрыли раньше, но эта автоматическая
+ * синхронизация осталась живой: закрытие одного эндпоинта не давало эффекта,
+ * потому что данные уходили другим путём. Ничто в сайте не требует её работы —
+ * заполнение, сохранение в локальный vault, экспорт в PDF и «Облачные диски»
+ * от неё не зависят, поэтому отключение ничего не ломает.
+ *
+ * Что осталось намеренно:
+ *   • `/api/documents` на ЧТЕНИЕ и УДАЛЕНИЕ — чтобы показать пользователю
+ *     баннер «N документов на сервере» и дать перенести их в зашифрованный
+ *     локальный vault, а затем удалить серверную копию. Это миграция
+ *     наследия, а не синхронизация.
+ *   • `setUserFlag`/`canSync` — чтобы UI корректно знал, что синхронизации нет.
+ *
+ * Синхронизация между устройствами теперь возможна только двумя способами,
+ * оба не оставляют содержимое у нас: локальный vault с переносом ключа
+ * (QR/файл) либо «Облачные диски», где файл уходит провайдеру
+ * (Яндекс.Диск / Google Drive / Dropbox) напрямую с устройства.
+ */
+
 interface ServerDocLite {
   id: string;
   template_id: string;
@@ -16,10 +43,12 @@ function enqueue<T>(fn: () => Promise<T>): Promise<T> {
   return next;
 }
 
+/**
+ * Всегда false: отправка содержимого на сервер отключена.
+ * Сигнатура сохранена, чтобы UI мог опрашивать состояние синхронизации.
+ */
 export function canSync(): boolean {
-  return typeof window !== "undefined" && Boolean(
-    (window as DogovorWindow).__DOGOVOR_USER__
-  );
+  return false;
 }
 
 function getDraftRecord(d: DraftData) {
@@ -44,69 +73,24 @@ function mergeFields(local: Record<string, string>, server: Record<string, strin
   return out;
 }
 
-export async function syncDraft(d: DraftData): Promise<boolean> {
-  if (!canSync()) return false;
-  return enqueue(async () => {
-    try {
-      const res = await fetch("/api/documents", {
-        method: "GET",
-      });
-      if (!res.ok) return false;
-      const { data } = (await res.json()) as { data?: ServerDocLite[] };
-      // Берём самый свежий draft по этому шаблону (sort by updated_at DESC уже на сервере)
-      const existing = (data ?? []).find(
-        (r) => r.template_id === d.templateId
-      );
-      if (existing) {
-        const upd = await fetch(`/api/documents/${existing.id}`, {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-            // Оптимистичная блокировка: сервер вернёт 409, если документ
-            // изменился с момента нашего GET (другая вкладка).
-            "If-Match": existing.updated_at || "",
-          },
-          body: JSON.stringify({
-            fields: d.values,
-            checklist: d.checklist,
-          }),
-        });
-        if (upd.status === 409) {
-          // Конфликт версий: мержим локальные данные поверх сервера и пробуем ещё раз
-          const body = (await upd.json().catch(() => null)) as {
-            current?: { fields?: Record<string, string>; updated_at?: string };
-          } | null;
-          const serverFields = body?.current?.fields ?? {};
-          const merged = mergeFields(d.values, serverFields);
-          const retry = await fetch(`/api/documents/${existing.id}`, {
-            method: "PATCH",
-            headers: {
-              "Content-Type": "application/json",
-              "If-Match": body?.current?.updated_at || "",
-            },
-            body: JSON.stringify({
-              fields: merged,
-              checklist: d.checklist,
-            }),
-          });
-          return retry.ok;
-        }
-        return upd.ok;
-      }
-      const created = await fetch("/api/documents", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(getDraftRecord(d)),
-      });
-      return created.ok;
-    } catch {
-      return false;
-    }
-  });
+/**
+ * Заглушка: раньше отправляла содержимое на сервер, теперь ничего не делает.
+ * Вызовы в builder/page.tsx оставлены как есть, чтобы не трогать горячий
+ * путь автосохранения; фактической отправки больше нет.
+ */
+export async function syncDraft(_d: DraftData): Promise<boolean> {
+  return false;
 }
 
+/**
+ * Удаление серверной копии документа.
+ *
+ * Это НЕ синхронизация: ничего не отправляет, только стирает наследие.
+ * Поэтому здесь намеренно нет гейта `canSync()` — иначе, после его
+ * отключения, пользователь не смог бы удалить старый документ с сервера,
+ * а баннер миграции так и остался бы вечно висимым.
+ */
 export async function syncDelete(templateId: string): Promise<boolean> {
-  if (!canSync()) return false;
   return enqueue(async () => {
     try {
       const res = await fetch("/api/documents");
