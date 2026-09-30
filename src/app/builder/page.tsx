@@ -77,6 +77,7 @@ const CostsPanel = dynamic(() => import("@/components/builder/CostsPanel"), { ss
 // (ssr: false), чтобы не раздувать SSR-HTML /builder и не тащить pdf-рендер.
 const PdfPreview = dynamic(() => import("@/components/PdfPreview"), { ssr: false });
 import PersonsPanel, { type PersonRow } from "@/components/builder/PersonsPanel";
+import { useVault } from "@/lib/vault/VaultProvider";
 import { roleToPerson, personToFields } from "@/lib/personMapping";
 import { getTemplateRoles } from "@/lib/docRequirements";
 
@@ -616,40 +617,116 @@ function HomeContent() {
   const [meFio, setMeFio] = useState<string | null>(null);
   const [persons, setPersons] = useState<PersonRow[] | null>(null);
   const [personsMsg, setPersonsMsg] = useState<string | null>(null);
+  const [migratedPersons, setMigratedPersons] = useState(0);
+  const { requireUnlock } = useVault();
 
-  const loadPersons = async () => {
+  /**
+   * Паспортные данные хранятся локально, в зашифрованном vault.
+   *
+   * Раньше они уходили на `/api/persons` открытым текстом. Специальная
+   * категория ПДн, и самое чувствительное в продукте. Теперь источник
+   * истины — IndexedDB, ключ на устройстве, сервер ничего не получает.
+   *
+   * При первом запуске выполняется одноразовая миграция: старые записи с
+   * сервера зашифровываются локально, и только после успешной записи
+   * серверная копия удаляется. Порядок важен — иначе при ошибке на середине
+   * данные пропали бы с обеих сторон.
+   */
+  const migratePersonsFromServer = async (): Promise<number> => {
+    // Разблокировка нужна до любой записи: хранилище заперто до ввода пароля.
+    if (!(await requireUnlock())) return 0;
+    let rows: Array<Record<string, string>> = [];
     try {
       const res = await fetch("/api/persons");
-      if (!res.ok) throw new Error(String(res.status));
-      const json = (await res.json()) as { data?: PersonRow[] };
-      setPersons(Array.isArray(json.data) ? json.data : []);
+      if (!res.ok) return 0;
+      const json = (await res.json()) as { data?: Array<Record<string, string>> };
+      rows = Array.isArray(json.data) ? json.data : [];
+    } catch {
+      return 0;
+    }
+    if (!rows.length) return 0;
+
+    const { savePerson, listPersonRecords } = await import("@/lib/vault/persons");
+    // Не дублируем: если запись с тем же ФИО уже есть локально, пропускаем.
+    const existing = new Set(
+      (await listPersonRecords()).map((r) => (r.title || "").trim().toLowerCase()),
+    );
+    let moved = 0;
+    for (const row of rows) {
+      const fio = (row.fio || "").trim();
+      if (!fio) continue;
+      if (existing.has(fio.toLowerCase())) continue;
+      try {
+        await savePerson(row as never);
+        moved++;
+      } catch {
+        // Не удалось зашифровать одну запись — не удаляем её с сервера.
+        continue;
+      }
+      // Копия легла в vault — теперь можно стирать с сервера.
+      const id = row.id;
+      if (id) {
+        await fetch(`/api/persons?id=${encodeURIComponent(id)}`, { method: "DELETE" })
+          .catch(() => {});
+      }
+    }
+    return moved;
+  };
+
+  const loadPersons = useCallback(async () => {
+    try {
+      if (!(await requireUnlock())) {
+        setPersons([]);
+        return;
+      }
+      const { listPersonsWithIds } = await import("@/lib/vault/persons");
+      const entries = await listPersonsWithIds();
+      setPersons(
+        entries.map((e) => ({
+          id: e.id,
+          fio: e.fields.fio,
+          passport_series: e.fields.passport_series,
+          passport_number: e.fields.passport_number,
+          passport_issued_by: e.fields.passport_issued_by,
+          passport_code: e.fields.passport_code,
+          address: e.fields.address,
+        })),
+      );
     } catch {
       setPersons([]);
     }
-  };
+  }, [requireUnlock]);
+
   useEffect(() => {
-    void loadPersons();
+    void (async () => {
+      const moved = await migratePersonsFromServer();
+      if (moved > 0) {
+        setMigratedPersons(moved);
+        setPersonsMsg(
+          `${moved} записей с паспортными данными перенесено в защищённое хранилище этого устройства и удалено с сервера`,
+        );
+      }
+      await loadPersons();
+    })();
+    // Один раз при монтировании: миграция нужна однократная.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const savePerson = async (prefix: string) => {
+    if (!(await requireUnlock())) {
+      setPersonsMsg("Хранилище заблокировано — данные не сохранены");
+      return;
+    }
     const data = roleToPerson(formValuesRef.current, prefix, template.fields);
     if (!data.fio) {
       setPersonsMsg("Заполните ФИО стороны в форме");
       return;
     }
     try {
-      const res = await fetch("/api/persons", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
-      if (!res.ok) {
-        const j = (await res.json().catch(() => null)) as { error?: string } | null;
-        setPersonsMsg(j?.error || "Не удалось сохранить");
-        return;
-      }
+      const { savePerson: put } = await import("@/lib/vault/persons");
+      await put(data as never);
       await loadPersons();
-      setPersonsMsg("Лицо сохранено");
+      setPersonsMsg("Лицо сохранено в защищённое хранилище этого устройства");
     } catch {
       setPersonsMsg("Ошибка сохранения");
     }
@@ -693,11 +770,15 @@ function HomeContent() {
   };
 
   const deletePerson = async (id: string) => {
+    if (!(await requireUnlock())) {
+      setPersonsMsg("Хранилище заблокировано");
+      return;
+    }
     try {
-      await fetch(`/api/persons?id=${encodeURIComponent(id)}`, {
-        method: "DELETE",
-      });
+      const { deletePerson: remove } = await import("@/lib/vault/persons");
+      await remove(id);
       await loadPersons();
+      setPersonsMsg("Запись удалена из защищённого хранилища");
     } catch { /* ошибка удаления игнорируется */ }
   };
 
