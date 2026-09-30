@@ -1,0 +1,268 @@
+/**
+ * Стили «Контроля оферт» (порт D:/Загрузки/Веб-нотариус/src/index.css).
+ *
+ * Правила изоляции (как .redactor-root):
+ * - НИКАКИХ глобальных селекторов: всё подвешено под .notary-root
+ *   (оригинал красил html/body/button/::selection/скроллбары всего сайта).
+ * - @import "tailwindcss" и @theme (Tailwind v4) выкинуты: утилиты даёт наш
+ *   Tailwind v3, токены переложены в обычные CSS-переменные --nt-*.
+ * - @keyframes marquee переименован в notary-marquee (не сталкивается
+ *   с чужими кейфреймами).
+ */
+.notary-root {
+  --nt-sans: "Inter Variable", "Inter", system-ui, sans-serif;
+  --nt-mono: "IBM Plex Mono", ui-monospace, monospace;
+
+  --color-paper: #f5f1e8;
+  --color-paper-sunk: #ece5d3;
+  --color-paper-raised: #fbf7ec;
+  --color-ink: #1b2438;
+  --color-ink-soft: #4a5468;
+  --color-ink-mute: #7a8399;
+  --color-line: rgba(27, 36, 56, 0.12);
+  --color-line-soft: rgba(27, 36, 56, 0.07);
+  --color-accent: #1f3d6b;
+  --color-accent-soft: #dde5f3;
+  --color-gold: #b28327;
+  --color-gold-soft: #f4e6c6;
+  --color-diff-add: #2f6b46;
+  --color-diff-add-bg: #d9eddc;
+  --color-diff-add-border: #a4d2ac;
+  --color-diff-remove: #8b2b2b;
+  --color-diff-remove-bg: #f6d9d3;
+  --color-diff-remove-border: #dfa39a;
+  --color-critical: #a13030;
+  --color-warning: #b26a1f;
+  --color-watch: #3b6bb2;
+  --color-safe: #2f6b46;
+
+  isolation: isolate;
+  color-scheme: light;
+  min-height: 100vh;
+  box-sizing: border-box;
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--nt-sans);
+  font-feature-settings: "ss01", "cv11", "tnum";
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  background-image:
+    radial-gradient(circle at 12% 6%, rgba(178, 131, 39, 0.08), transparent 45%),
+    radial-gradient(circle at 88% 92%, rgba(31, 61, 107, 0.07), transparent 55%);
+}
+
+.notary-root *,
+.notary-root *::before,
+.notary-root *::after {
+  box-sizing: border-box;
+}
+
+.notary-root button {
+  font-family: inherit;
+  color: inherit;
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 0;
+}
+
+.notary-root button:focus-visible,
+.notary-root a:focus-visible,
+.notary-root [role="button"]:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 3px;
+  border-radius: 6px;
+}
+
+.notary-root ::selection {
+  background: rgba(31, 61, 107, 0.18);
+}
+
+/* Utility styles used by the demo diff renderer. */
+.notary-root .chronoleaf-page mark[data-risk] {
+  padding: 0 3px;
+  border-radius: 3px;
+  background: rgba(178, 131, 39, 0.18);
+  color: inherit;
+  box-shadow: inset 0 -2px 0 rgba(178, 131, 39, 0.55);
+}
+.notary-root .chronoleaf-page mark[data-risk="critical"] {
+  background: rgba(161, 48, 48, 0.14);
+  box-shadow: inset 0 -2px 0 rgba(161, 48, 48, 0.5);
+}
+.notary-root .chronoleaf-page mark[data-risk="warning"] {
+  background: rgba(178, 106, 31, 0.16);
+  box-shadow: inset 0 -2px 0 rgba(178, 106, 31, 0.55);
+}
+.notary-root .chronoleaf-page mark[data-risk="watch"] {
+  background: rgba(59, 107, 178, 0.14);
+  box-shadow: inset 0 -2px 0 rgba(59, 107, 178, 0.5);
+}
+.notary-root .chronoleaf-page mark[data-risk="info"] {
+  background: rgba(47, 107, 70, 0.14);
+  box-shadow: inset 0 -2px 0 rgba(47, 107, 70, 0.45);
+}
+
+.notary-root .chronoleaf-page h2 {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--color-ink);
+  margin: 20px 0 8px;
+  letter-spacing: -0.01em;
+}
+.notary-root .chronoleaf-page h3 {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-ink);
+  margin: 16px 0 6px;
+  letter-spacing: -0.01em;
+}
+.notary-root .chronoleaf-page p {
+  font-size: 13px;
+  line-height: 1.65;
+  margin: 6px 0;
+  color: var(--color-ink-soft);
+}
+.notary-root .chronoleaf-page strong {
+  color: var(--color-ink);
+  font-weight: 600;
+}
+
+/* Diff-specific tweaks. */
+.notary-root .diff-block h2,
+.notary-root .diff-block h3 {
+  margin-top: 4px;
+}
+.notary-root .diff-block p {
+  margin: 4px 0;
+}
+
+.notary-root .diff-block--changed mark[data-risk],
+.notary-root .diff-block--add mark[data-risk] {
+  background: rgba(47, 107, 70, 0.18);
+  box-shadow: inset 0 -2px 0 rgba(47, 107, 70, 0.45);
+}
+
+/* Custom scrollbar — только внутри инструмента. */
+.notary-root ::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+.notary-root ::-webkit-scrollbar-track {
+  background: transparent;
+}
+.notary-root ::-webkit-scrollbar-thumb {
+  background: rgba(27, 36, 56, 0.18);
+  border-radius: 6px;
+  border: 2px solid var(--color-paper);
+}
+.notary-root ::-webkit-scrollbar-thumb:hover {
+  background: rgba(27, 36, 56, 0.32);
+}
+
+/* Small helpers reused across components. */
+.notary-root .hairline {
+  height: 1px;
+  background: var(--color-line);
+}
+.notary-root .hairline-soft {
+  height: 1px;
+  background: var(--color-line-soft);
+}
+
+.notary-root .paper-card {
+  background: var(--color-paper-raised);
+  border: 1px solid var(--color-line);
+  border-radius: 14px;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.6) inset, 0 12px 32px -22px rgba(27, 36, 56, 0.35);
+}
+
+.notary-root .paper-card--flat {
+  background: var(--color-paper);
+  border: 1px solid var(--color-line);
+  border-radius: 12px;
+}
+
+.notary-root .mono {
+  font-family: var(--nt-mono);
+  font-feature-settings: "zero", "ss01";
+}
+
+.notary-root .chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  border: 1px solid var(--color-line);
+  background: rgba(255, 255, 255, 0.4);
+  color: var(--color-ink-soft);
+}
+.notary-root .chip--critical {
+  background: rgba(161, 48, 48, 0.1);
+  color: var(--color-critical);
+  border-color: rgba(161, 48, 48, 0.3);
+}
+.notary-root .chip--warning {
+  background: rgba(178, 106, 31, 0.1);
+  color: var(--color-warning);
+  border-color: rgba(178, 106, 31, 0.28);
+}
+.notary-root .chip--watch {
+  background: rgba(59, 107, 178, 0.1);
+  color: var(--color-watch);
+  border-color: rgba(59, 107, 178, 0.28);
+}
+.notary-root .chip--safe {
+  background: rgba(47, 107, 70, 0.1);
+  color: var(--color-safe);
+  border-color: rgba(47, 107, 70, 0.28);
+}
+.notary-root .chip--ink {
+  background: var(--color-ink);
+  color: var(--color-paper);
+  border-color: var(--color-ink);
+}
+.notary-root .chip--gold {
+  background: var(--color-gold-soft);
+  color: var(--color-gold);
+  border-color: rgba(178, 131, 39, 0.4);
+}
+
+.notary-root .severity-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  flex-shrink: 0;
+}
+.notary-root .severity-dot--critical { background: var(--color-critical); }
+.notary-root .severity-dot--warning { background: var(--color-warning); }
+.notary-root .severity-dot--watch { background: var(--color-watch); }
+.notary-root .severity-dot--info { background: var(--color-safe); }
+.notary-root .severity-dot--muted { background: var(--color-ink-mute); }
+
+.notary-root .gold-underline {
+  background-image: linear-gradient(transparent 62%, rgba(178, 131, 39, 0.32) 62%);
+  background-repeat: no-repeat;
+  padding: 0 2px;
+}
+
+.notary-root .marquee {
+  display: flex;
+  gap: 40px;
+  animation: notary-marquee 40s linear infinite;
+}
+
+@keyframes notary-marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .notary-root .marquee {
+    animation: none;
+  }
+}

@@ -10,7 +10,7 @@ import {
   FileText, Calculator,
   FolderOpen, Files, Trash2, CreditCard,
   Settings, HelpCircle, Menu, X, ChevronDown, Shield, Home, LogIn, Shuffle, Newspaper, Car, GitCompare,
-  HardDrive, Download, Cookie, Moon, Sun, Scale, Eraser
+  HardDrive, Download, Cookie, Moon, Sun, Scale, Eraser, Fingerprint
 } from "lucide-react";
 import HeaderSearch from "@/components/search/HeaderSearch";
 import Logo from "@/components/layout/Logo";
@@ -69,6 +69,7 @@ const accountNav: NavItem[] = [
  */
 const extraNav: NavItem[] = [
   { icon: <Eraser className="w-5 h-5" />, label: "Обезличиватель", href: "/redactor", badge: "NEW" },
+  { icon: <Fingerprint className="w-5 h-5" />, label: "Контроль оферт", href: "/notary", badge: "NEW" },
 ];
 
 export default function AppLayout({ children }: { children: ReactNode }) {

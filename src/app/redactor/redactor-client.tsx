@@ -46,9 +46,11 @@ export default function RedactorClient() {
           использует собственный фиксированный сайдбар. Эта узкая полоса —
           единственная точка выхода обратно в dogovor.expert. */}
       <div className="redactor-return">
-        <Link href="/" aria-label="На главную dogovor.expert" className="redactor-return-logo">
+        {/* Logo рендерит собственную ссылку <a> — оборачивать его в <Link>
+            нельзя (вложенные <a> ломают гидратацию). */}
+        <span className="redactor-return-logo">
           <Logo />
-        </Link>
+        </span>
         <span className="redactor-return-label">Дополнительные инструменты</span>
         <Link href="/" className="redactor-return-link">
           На сайт

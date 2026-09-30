@@ -8,6 +8,9 @@ const config: Config = {
     "./src/app/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/data/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/lib/**/*.{js,ts,jsx,tsx,mdx}",
+    // Инструменты раздела «Дополнительные» (redactor, notary): их Tailwind-
+    // утилиты тоже должны генерироваться, иначе классы молча не сработают.
+    "./src/tools/**/*.{js,ts,jsx,tsx,mdx}",
   ],
   theme: {
     extend: {

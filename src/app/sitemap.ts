@@ -43,6 +43,9 @@ export default function sitemap(): MetadataRoute.Sitemap {
   // Высокий приоритет: запрос «закрасить личные данные в pdf» и «обезличить
   // документ» — частый и конверсионный, инструмент полностью бесплатный.
   { url: `${SITE_URL}/redactor`, changeFrequency: "monthly", priority: 0.8 },
+  // /notary — Контроль оферт (раздел «Дополнительные инструменты»).
+  // Фиксация версий документов и сравнение текстов, полностью бесплатно.
+  { url: `${SITE_URL}/notary`, changeFrequency: "monthly", priority: 0.7 },
   ];
 
   const documents: MetadataRoute.Sitemap = LEGAL_TEMPLATES.map((t) => ({
