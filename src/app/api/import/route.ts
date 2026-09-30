@@ -1,114 +1,42 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
 import { withCsrf } from "@/lib/csrf";
-import { isSameOrigin } from "@/lib/admin-auth";
-import { limiters, checkRateLimit, rateLimitResponse } from "@/lib/ratelimit";
-import { importSchema, validateBody } from "@/lib/validations/api";
 
 export const maxDuration = 60;
 
-// Whitelist пока hardcoded: 14 шаблонов. В будущем — динамическая проверка по
-// таблице legal_templates (см. master fix plan).
-const ALLOWED_TEMPLATE_IDS = [
-  "dkp-auto", "dkp-auto-short", "rental", "rental-short", "loan", "loan-short",
-  "gift", "gift-short", "act-transfer-auto", "act-transfer-auto-short",
-  "receipt", "receipt-short", "procuration", "procuration-short",
-];
-
-async function postHandler(req: Request) {
-  if (!isSameOrigin(req)) {
-    return NextResponse.json({ error: "forbidden" }, { status: 403 });
-  }
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-
-  // Rate-limit: импорт (дорогая операция)
-  const rl = await checkRateLimit(limiters.authAction, user.id);
-  if (!rl.ok) return rateLimitResponse(rl.retryAfter);
-
-  // P1: Zod-валидация (best practice 2026: safeParse + structured error)
-  const raw = await req.text();
-  if (raw.length > 2 * 1024 * 1024) {
-    return NextResponse.json({ error: "payload_too_large" }, { status: 413 });
-  }
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(raw);
-  } catch {
-    return NextResponse.json({ error: "invalid_json" }, { status: 400 });
-  }
-  const validated = validateBody(importSchema, parsed);
-  if (!validated.success) return validated.error;
-  const { drafts, force } = validated.data;
-
-  // Строим строки с валидацией; невалидный templateId — 400 (а не 500, как раньше)
-  const rows: Array<{
-    user_id: string;
-    template_id: string;
-    title: string;
-    fields: unknown;
-    checklist: unknown;
-    versions: unknown[];
-    status: string;
-  }> = [];
-  for (const d of drafts) {
-    try {
-      if (!ALLOWED_TEMPLATE_IDS.includes(d.templateId)) {
-        return NextResponse.json(
-          { error: `invalid template_id: ${d.templateId}` },
-          { status: 400 }
-        );
-      }
-      rows.push({
-        user_id: user.id,
-        template_id: d.templateId,
-        title: (d.title ?? "").slice(0, 200),
-        fields: d.values ?? {},
-        checklist: d.checklist ?? {},
-        versions: Array.isArray(d.versions) ? d.versions : [],
-        status: "draft",
-      });
-    } catch {
-      return NextResponse.json({ error: "draft processing failed" }, { status: 400 });
-    }
-  }
-
-  // Проверяем существующие документы с теми же (user_id, template_id) — без force
-  // возвращаем 409 Conflict со списком конфликтов. С force=true — обновляем.
-  if (!force) {
-    const templateIds = rows.map((r) => r.template_id);
-    const { data: existing } = await supabase
-      .from("documents")
-      .select("template_id")
-      .eq("user_id", user.id)
-      .in("template_id", templateIds)
-      .is("deleted_at", null);
-
-    if (existing && existing.length > 0) {
-      return NextResponse.json(
-        {
-          error: "conflict",
-          message: "Документы с такими template_id уже существуют. Передайте force=true для перезаписи.",
-          conflicts: existing.map((e: { template_id: string }) => e.template_id),
-        },
-        { status: 409 }
-      );
-    }
-  }
-
-  // С force=true (или без конфликтов) — upsert.
-  // ВАЖНО: .upsert() по умолчанию обновляет конфликтные строки. Семантика —
-  // "перезаписать черновик" (одна активная версия на шаблон).
-  const { data, error } = await supabase
-    .from("documents")
-    .upsert(rows, { onConflict: "user_id,template_id" })
-    .select("id, template_id");
-
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json({ imported: data?.length ?? 0 });
+/**
+ * ⛔ ЭНДПОИНТ ЗАКРЫТ (30.09.2026).
+ *
+ * Раньше здесь принимались черновики целиком и записывались в таблицу
+ * `documents` открытым текстом: заполненные поля, чек-лист и история версий.
+ * В них — ФИО, ИНН, паспорт и адреса третьих лиц по договорам, то есть
+ * персональные данные людей, которые о нашем сервисе ничего не знают.
+ * Шифрования на диске не было; доступ ограничивала только RLS-политика по
+ * user_id — это защищает от чтения чужих записей, но не от доступа к данным
+ * на стороне оператора. На момент закрытия в таблице было 30 записей
+ * у 5 пользователей, включая 3 с активной подпиской.
+ *
+ * Теперь содержимое документов не покидает устройство: перенос выполняется
+ * в браузере в зашифрованное хранилище (src/lib/vault/documents.ts,
+ * AES-256-GCM ключом устройства), и кнопка в интерфейсе на сервер
+ * не обращается.
+ *
+ * Эндпоинт оставлен намеренно: старые вкладки и закладки получают внятный
+ * отказ 410 Gone с объяснением, а не 404 Not Found. Обработчик ничего не
+ * меняет, но остаётся обёрнут в withCsrf — по инварианту безопасности все
+ * POST-роуты обязаны проходить эту проверку (tests/invariants/security-routes).
+ *
+ * Ранее загруженные документы освобождаются так: «Мои документы» → перенос
+ * в хранилище (копия шифруется локально) → DELETE /api/documents/:id.
+ */
+async function postHandler(_req: Request) {
+  return NextResponse.json(
+    {
+      error: "deprecated",
+      message:
+        "Загрузка содержимого документов на сервер отключена. Документы шифруются на вашем устройстве и хранятся в защищённом хранилище браузера.",
+    },
+    { status: 410 },
+  );
 }
 
 export const POST = withCsrf(postHandler);

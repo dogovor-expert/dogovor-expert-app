@@ -138,21 +138,9 @@ export const autotekaCheckSchema = z.object({
 
 export type AutotekaCheckInput = z.infer<typeof autotekaCheckSchema>;
 
-// Схема для импорта черновиков (/api/import)
-// body — JSON-сериализованный массив черновиков. Защита от переполнения: 1-50 черновиков.
-// NB: реальный клиент шлёт camelCase (templateId, values), это сохраняем для совместимости.
-export const importSchema = z.object({
-  drafts: z.array(z.object({
-    templateId: z.string().min(1, 'templateId обязателен').max(100),
-    title: z.string().max(200).optional(),
-    values: z.record(z.string(), z.unknown()).optional(),
-    checklist: z.record(z.string(), z.unknown()).optional(),
-    versions: z.array(z.unknown()).optional(),
-  })).min(1, 'Должен быть хотя бы один черновик').max(50, 'Максимум 50 черновиков за один импорт'),
-  force: z.boolean().optional().default(false),
-}).strict();
-
-export type ImportInput = z.infer<typeof importSchema>;
+// Схема importSchema и тип ImportInput удалены 30.09.2026 вместе с закрытием
+// POST /api/import: содержимое документов больше не загружается на сервер,
+// черновики переносятся локально в зашифрованное хранилище.
 
 // Схема для создания договора (пакет документов)
 export const createContractSchema = z.object({

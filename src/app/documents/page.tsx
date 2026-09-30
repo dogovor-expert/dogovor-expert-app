@@ -107,6 +107,10 @@ export default function DocumentsPage() {
   const [loadingMore, setLoadingMore] = useState(false);
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [importCount, setImportCount] = useState(0);
+  // Документы, оставшиеся на сервере после закрытия загрузки (30.09.2026).
+  // Их нужно показать и предложить перенести в локальное шифрованное хранилище.
+  const [serverDocCount, setServerDocCount] = useState(0);
+  const [migratingAll, setMigratingAll] = useState(false);
   const [importing, setImporting] = useState(false);
   const [importToast, setImportToast] = useState<string | null>(null);
   const [cloudProviders, setCloudProviders] = useState<Array<{id: string; name: string}>>([]);
@@ -188,6 +192,7 @@ export default function DocumentsPage() {
         if (resIds.ok) {
           const { data } = (await resIds.json()) as { data?: ServerDoc[] };
           serverIds = new Set((data ?? []).map((s: ServerDoc) => s.template_id));
+          setServerDocCount((data ?? []).length);
         }
       } catch {
         // offline
@@ -261,24 +266,48 @@ export default function DocumentsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [nextCursor, loadingMore, debouncedSearch, toDocItem]);
 
+  /**
+   * Перенос черновиков в защищённое хранилище устройства.
+   *
+   * ⚠️ ДО 30.09.2026 здесь был `POST /api/import`: все черновики целиком,
+   * вместе с историей версий, отправлялись в таблицу `documents` на сервере
+   * открытым текстом. В этих данных — ФИО, ИНН, паспорт и адреса третьих лиц
+   * (контрагентов по договору), то есть персональные данные людей, которые
+   * о нашем аккаунте ничего не знают. На сервере они хранились без
+   * шифрования; доступ закрывала только RLS-политика по user_id.
+   *
+   * Теперь перенос локальный: содержимое шифруется AES-256-GCM ключом
+   * устройства и уходит в IndexedDB. На сервер не отправляется ничего.
+   */
   const handleImport = async () => {
+    const ok = await requireUnlock();
+    if (!ok) {
+      setImportToast("Операция отменена — хранилище осталось заблокированным");
+      setTimeout(() => setImportToast(null), 4000);
+      return;
+    }
     setImporting(true);
     try {
-      const local = getAllDrafts();
-      const res = await fetch("/api/import", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ drafts: local }),
-      });
-      if (res.ok) {
-        const { imported } = (await res.json()) as { imported?: number };
-        setImportToast(`${imported} документов импортировано в аккаунт`);
-        setImportCount(0);
+      const drafts = getAllDrafts();
+      if (!drafts.length) {
+        setImportToast("Переносить нечего");
         setTimeout(() => setImportToast(null), 4000);
-      } else {
-        setImportToast("Не удалось импортировать. Попробуйте позже.");
-        setTimeout(() => setImportToast(null), 4000);
+        return;
       }
+      const { saveVaultDoc, draftToVaultPayload } = await import("@/lib/vault/documents");
+      let moved = 0;
+      for (const draft of drafts) {
+        await saveVaultDoc(draft.templateId, draftToVaultPayload(draft));
+        clearDraft(draft.templateId);
+        clearDraftVersions(draft.templateId);
+        moved++;
+      }
+      setImportCount(0);
+      setImportToast(`${moved} документов перенесено в защищённое хранилище этого устройства`);
+      setTimeout(() => setImportToast(null), 5000);
+    } catch (e) {
+      setImportToast("Не удалось перенести. Попробуйте позже.");
+      setTimeout(() => setImportToast(null), 4000);
     } finally {
       setImporting(false);
       void loadDocs(debouncedSearch);
@@ -384,6 +413,54 @@ export default function DocumentsPage() {
       setTimeout(() => setExportToast(null), 4000);
     } catch (e) {
       alert(`Ошибка миграции: ${(e as Error).message}`);
+    }
+  };
+
+  /**
+   * Массовый перенос документов с сервера в локальное шифрованное хранилище.
+   *
+   * Порядок важен: сначала читаем документ, шифруем и сохраняем в хранилище,
+   * и только после успешной записи удаляем серверную копию. Иначе при ошибке
+   * на середине данные потерялись бы с обеих сторон.
+   */
+  const handleMigrateAllToVault = async () => {
+    const ok = await requireUnlock();
+    if (!ok) {
+      setImportToast("Операция отменена — хранилище осталось заблокированным");
+      setTimeout(() => setImportToast(null), 4000);
+      return;
+    }
+    setMigratingAll(true);
+    try {
+      const res = await fetch("/api/documents");
+      const rows = ((await res.json().catch(() => null)) as { data?: ServerDoc[] } | null)?.data ?? [];
+      if (!rows.length) {
+        setImportToast("На сервере документов нет");
+        setTimeout(() => setImportToast(null), 4000);
+        return;
+      }
+      const { saveVaultDoc } = await import("@/lib/vault/documents");
+      let moved = 0;
+      for (const s of rows) {
+        await saveVaultDoc(s.template_id, {
+          values: (s.fields ?? {}) as Record<string, string>,
+          checklist: (s.checklist ?? {}) as Record<string, boolean>,
+          activeTab: "",
+          savedAt: s.updated_at,
+        });
+        // Удаляем с сервера только после того, как копия легла в хранилище.
+        await fetch(`/api/documents/${s.id}`, { method: "DELETE" });
+        moved++;
+      }
+      setServerDocCount(0);
+      setImportToast(`${moved} документов перенесено в хранилище и удалено с сервера`);
+      setTimeout(() => setImportToast(null), 5000);
+    } catch {
+      setImportToast("Не удалось перенести все документы. Попробуйте позже.");
+      setTimeout(() => setImportToast(null), 4000);
+    } finally {
+      setMigratingAll(false);
+      void loadDocs(debouncedSearch);
     }
   };
 
@@ -568,6 +645,36 @@ export default function DocumentsPage() {
         </Link>
       )}
 
+      {serverDocCount > 0 && (
+        <div className="mb-6 p-4 rounded-xl border border-amber-300 bg-amber-50 flex flex-col sm:flex-row sm:items-center gap-3">
+          <div className="flex items-start gap-3 flex-1">
+            <div className="w-9 h-9 rounded-lg bg-amber-100 flex items-center justify-center flex-shrink-0">
+              <Info className="w-4 h-4 text-amber-700" />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-gray-900">
+                {serverDocCount} {serverDocCount === 1 ? "документ хранится" : "документов хранятся"} на нашем сервере
+              </p>
+              <p className="text-xs text-gray-600">
+                Они попали сюда до 30 сентября 2026 — тогда существовала кнопка
+                «Импортировать в аккаунт». Содержимое лежит без шифрования.
+              </p>
+              <p className="mt-1.5 text-xs text-gray-700">
+                Загрузка отключена: новые документы остаются в зашифрованном хранилище
+                этого устройства. Перенесите старые — копия сначала зашифруется
+                локально, и только потом удалится с сервера.
+              </p>
+            </div>
+          </div>
+          <Button variant="primary" size="sm" disabled={migratingAll}
+            onClick={() => { void handleMigrateAllToVault(); }}
+            className="flex-shrink-0">
+            {migratingAll && <RefreshCw className="w-3.5 h-3.5 animate-spin" />}
+            Перенести и удалить
+          </Button>
+        </div>
+      )}
+
       {importCount > 0 && (
         <div className="mb-6 p-4 rounded-xl border border-brand-200 bg-brand-50/60 flex flex-col sm:flex-row sm:items-center gap-3">
           <div className="flex items-center gap-3 flex-1">
@@ -584,10 +691,10 @@ export default function DocumentsPage() {
               <p className="mt-1.5 text-xs text-gray-700 flex items-start gap-1.5">
                 <Info className="w-3.5 h-3.5 mt-0.5 flex-shrink-0 text-brand-600" aria-hidden />
                 <span>
-                  При переносе содержимое документов — заполненные поля и история версий —
-                  сохраняется <b>на нашем сервере</b> и становится доступно вашему аккаунту.
-                  Пока вы не нажали эту кнопку, черновики остаются только в этом браузере
-                  и никуда не отправляются.
+                  Содержимое <b>не уходит на сервер</b>: документы шифруются
+                  ключом этого устройства и остаются в защищённом хранилище
+                  браузера. В аккаунт при этом ничего не попадает — документы
+                  не синхронизируются между устройствами.
                 </span>
               </p>
             </div>
@@ -599,7 +706,7 @@ export default function DocumentsPage() {
             className="flex-shrink-0"
           >
             {importing && <RefreshCw className="w-3.5 h-3.5 animate-spin" />}
-            Импортировать в аккаунт
+            Перенести в хранилище
           </Button>
         </div>
       )}
