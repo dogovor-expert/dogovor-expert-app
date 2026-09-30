@@ -58,6 +58,8 @@
     "tsl:refresh": "curl -sS -X POST -H \"Authorization: Bearer $CRON_SECRET\" \"https://dogovor.expert/api/cron/tsl-refresh\" || echo \"Set CRON_SECRET\""
   },
   "dependencies": {
+    "@fontsource-variable/inter": "^5.3.0",
+    "@fontsource/ibm-plex-mono": "^5.3.0",
     "@hookform/resolvers": "^5.9.1",
     "@huggingface/transformers": "^4.2.0",
     "@li0ard/gost": "^0.2.3",
@@ -72,10 +74,12 @@
     "@upstash/ratelimit": "^2.0.8",
     "@upstash/redis": "^1.38.2",
     "asn1js": "^3.0.10",
+    "clsx": "^2.1.1",
     "docx": "^9.7.1",
     "dompurify": "^3.4.14",
     "fast-xml-parser": "^5.11.1",
     "file-saver": "^2.0.5",
+    "framer-motion": "^13.4.6",
     "linkedom": "^0.18.13",
     "lucide-react": "^0.417.0",
     "lz-string": "^1.5.0",

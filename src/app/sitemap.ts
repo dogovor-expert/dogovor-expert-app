@@ -39,6 +39,10 @@ export default function sitemap(): MetadataRoute.Sitemap {
     // /ai-yurist — публичный лендинг AI-юриста (robots index:true, canonical /ai-yurist).
     { url: `${SITE_URL}/ai-yurist`, changeFrequency: "weekly", priority: 0.7 },
     { url: `${SITE_URL}/epts`, changeFrequency: "monthly", priority: 0.6 },
+  // /redactor — обезличивание документов (раздел «Дополнительные инструменты»).
+  // Высокий приоритет: запрос «закрасить личные данные в pdf» и «обезличить
+  // документ» — частый и конверсионный, инструмент полностью бесплатный.
+  { url: `${SITE_URL}/redactor`, changeFrequency: "monthly", priority: 0.8 },
   ];
 
   const documents: MetadataRoute.Sitemap = LEGAL_TEMPLATES.map((t) => ({

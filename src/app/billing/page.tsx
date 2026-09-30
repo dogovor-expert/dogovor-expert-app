@@ -301,7 +301,6 @@ export default function BillingPage() {
   const activeAi = active && plans.includes("ai");
   const promo = isPromoActive();
   const price = currentProPrice();
-  const savings = PRO_PRICE_OLD - PRO_PRICE;
   const statusConfig: Record<string, { label: string; variant: "green" | "amber" | "red" | "gray"; icon: typeof CheckCircle2 }> = {
     paid: { label: "Оплачен", variant: "green", icon: CheckCircle2 },
     pending: { label: "Ожидает", variant: "amber", icon: Clock },

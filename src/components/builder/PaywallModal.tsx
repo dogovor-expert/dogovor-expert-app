@@ -1,6 +1,6 @@
 "use client";
 import { Download, Flame } from "lucide-react";
-import { currentProPrice, PRO_PRICE_OLD, PROMO_LABEL, isPromoActive, promoCountdownTarget, formatRub } from "@/lib/pricing";
+import { currentProPrice, PROMO_LABEL, isPromoActive, promoCountdownTarget, formatRub } from "@/lib/pricing";
 import CountdownTimer from "@/components/billing/CountdownTimer";
 import { Modal } from "@/components/ui/Modal";
 import { track, goals } from "@/lib/analytics";
