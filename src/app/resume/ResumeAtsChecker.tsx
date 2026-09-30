@@ -115,7 +115,7 @@ export default function ResumeAtsChecker() {
             <Check className="h-3.5 w-3.5" />
             Все шаблоны протестированы в HH.ru и Taleo
           </span>
-          <span className="text-[11px] text-slate-400">Проверка пройдена</span>
+          <span className="text-[11px] text-slate-500">Проверка пройдена</span>
         </div>
       </div>
 
@@ -140,7 +140,7 @@ export default function ResumeAtsChecker() {
 
         {/* Example tabs */}
         <div className="mt-5">
-          <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
+          <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
             Примеры трансформации по сферам:
           </span>
           <div className="mt-2 flex flex-wrap gap-2">
@@ -167,7 +167,7 @@ export default function ResumeAtsChecker() {
           <div className="rounded-xl border border-rose-200/80 bg-rose-50/50 p-3.5">
             <div className="flex items-center justify-between text-[11px] font-bold uppercase tracking-wider text-rose-700">
               <span>Было (слабое пассивное описание):</span>
-              <span className="text-rose-600">Отклоняется HR</span>
+              <span className="text-rose-700">Отклоняется HR</span>
             </div>
             <p className="mt-1.5 text-xs text-slate-700 line-through opacity-80">«{activeExample.weak}»</p>
           </div>
@@ -181,7 +181,7 @@ export default function ResumeAtsChecker() {
               <button
                 type="button"
                 onClick={() => handleCopy(activeExample.strong)}
-                className="flex items-center gap-1 text-xs font-semibold text-indigo-600 transition hover:text-indigo-800"
+                className="flex items-center gap-1 py-1 text-xs font-semibold text-indigo-600 transition hover:text-indigo-800"
               >
                 {copied ? (
                   <>

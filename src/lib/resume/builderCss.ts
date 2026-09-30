@@ -6,7 +6,9 @@ export const BUILDER_CSS = `
   --rvb-brand:#2563eb;--rvb-brand2:#1d4ed8;--rvb-brand50:#eff6ff;--rvb-brand100:#dbeafe;
   --rvb-purple:#7c3aed;--rvb-purple2:#6d28d9;
   --rvb-bd:#e5e7eb;--rvb-bd2:#d1d5db;--rvb-ink:#0f172a;--rvb-mf:#6b7280;--rvb-mf2:#64748b;
-  --rvb-mut:#f9fafb;--rvb-em:#059669;--rvb-em50:#ecfdf5;--rvb-amb:#d97706;--rvb-amb50:#fffbeb;--rvb-red:#dc2626;
+  /* emerald-600 (#047857), не 500: белая галочка 11px на нём даёт 5.5:1
+     (WCAG AA), на #059669 было 3.77:1 — замер аудита 30.09.2026. */
+  --rvb-mut:#f9fafb;--rvb-em:#047857;--rvb-em50:#ecfdf5;--rvb-amb:#d97706;--rvb-amb50:#fffbeb;--rvb-red:#dc2626;
   --rvb-r:12px;--rvb-rl:16px;--rvb-rxl:24px;
   --rvb-soft:0 1px 3px rgba(0,0,0,.05),0 1px 2px rgba(0,0,0,.1);
   --rvb-elev:0 10px 25px rgba(0,0,0,.08),0 4px 10px rgba(0,0,0,.05);
@@ -87,10 +89,14 @@ export const BUILDER_CSS = `
 .rvb-chip button:hover{background:var(--rvb-brand2);color:#fff}
 .rvb-chadd{flex:1;min-width:120px;border:none;outline:none;font-size:12.5px;font-family:inherit;background:none;padding:5px}
 .rvb-stage{position:relative;background:var(--rvb-mut);display:flex;flex-direction:column;min-height:0;min-width:0;background-image:radial-gradient(rgba(15,23,42,.05) 1px,transparent 1px);background-size:22px 22px}
-.rvb-stagebar{position:relative;z-index:20;height:56px;display:flex;align-items:center;gap:10px;padding:0 18px;background:rgba(255,255,255,.9);backdrop-filter:blur(10px);border-bottom:1px solid var(--rvb-bd);flex-shrink:0}
-/* Имя шаблона переехало в .rvb-pagelabel под листом (там же формат и число
-   страниц), поэтому в тулбаре оно больше не дублируется — иначе панель не
-   помещалась в сцену 812px (замер 29.09.2026: barOverflow). */
+/* Тулбар сцены. Раньше height:56px в одну строку обрезал зум-группу:
+   при 1440 контент 820px > сцены 652px, .rvb-app{overflow:hidden} резал
+   .rvb-zoom (правая часть была недоступна, замер 30.09.2026: barOverflow
+   на 1440/1280/1120). Теперь разрешаем перенос: строки упаковываются
+   естественно (на 1440 — действия в первой строке, зум второй строкой
+   справа), высота растёт от min-height:56px. Имя шаблона осталось в
+   .rvb-pagelabel, чтобы не раздувать первую строку. */
+.rvb-stagebar{position:relative;z-index:20;min-height:56px;display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;padding:8px 18px;background:rgba(255,255,255,.9);backdrop-filter:blur(10px);border-bottom:1px solid var(--rvb-bd);flex-shrink:0}
 .rvb-stagebar .rvb-btn,.rvb-stagebar .rvb-qwrap,.rvb-zoom{flex-shrink:0}
 /* Сцена листа. overflow:auto + независимый скролл, align-items:center —
    лист центрируется по вертикали, когда помещается целиком, и не «прилипает»
@@ -100,11 +106,20 @@ export const BUILDER_CSS = `
   display:flex;justify-content:center;align-items:center;overscroll-behavior:contain}
 .rvb-scroll:focus-visible{outline:2px solid var(--rvb-brand);outline-offset:-2px}
 .rvb-scaler{position:relative;flex:none}
+/* Многостраничное превью: каждая страница — отдельный лист .a4 с клоном
+   контента, сдвинутым на -1123px·N (окно-нарезка). Разрывы страниц видны
+   физически: между листами зазор 16px, как в PDF-вьюерах (заметка аудита
+   30.09.2026: при 6 страницах лента выглядела одним бесконечным листом).
+   Нарезка не меняет раскладку — тот же HTML, что и в одиночном .a4. */
+.rvb-pages{display:flex;flex-direction:column;gap:16px;transform-origin:top left}
+.rvb-slice{position:absolute;left:0;top:0;width:100%}
 .rvb-tabs{display:none}
 .rvb-zoom{margin-left:auto;display:flex;align-items:center;gap:8px}
 /* Сегментированный переключатель режимов: Лист / Ширина / 100% */
 .rvb-zoomset{display:flex;background:#f3f4f6;border-radius:9px;padding:2px;gap:2px}
-.rvb-zoomset button{padding:5px 8px;border:0;border-radius:7px;background:none;font:inherit;font-size:12px;font-weight:600;color:var(--rvb-mf2);cursor:pointer;white-space:nowrap;transition:.12s}
+/* #475563 вместо --rvb-mf2 (#64748b): 12px/600 на #f3f4f6 = 4.32:1 было,
+   нужно 4.5 (замер аудита 30.09.2026), #475563 даёт ~6.9:1. */
+.rvb-zoomset button{padding:5px 8px;border:0;border-radius:7px;background:none;font:inherit;font-size:12px;font-weight:600;color:#475563;cursor:pointer;white-space:nowrap;transition:.12s}
 .rvb-zoomset button:hover{color:var(--rvb-ink)}
 .rvb-zoomset button[aria-pressed="true"]{background:#fff;color:var(--rvb-brand2);box-shadow:0 1px 2px rgba(15,23,42,.10)}
 .rvb-zoomstep{display:flex;align-items:center;gap:2px;background:#f3f4f6;border-radius:9px;padding:2px}
@@ -121,7 +136,7 @@ export const BUILDER_CSS = `
 .rvb-btn-o:hover{border-color:var(--rvb-brand);color:var(--rvb-brand2)}
 .rvb-btn-p{background:var(--rvb-brand);color:#fff;box-shadow:0 4px 12px -3px rgba(37,99,235,.45)}
 .rvb-btn-p:hover{background:var(--rvb-brand2)}
-.rvb-ico{width:36px;height:36px;padding:0;justify-content:center;border-radius:var(--rvb-r);background:#fff;border:1.5px solid var(--rvb-bd);color:#374151;display:grid;place-items:center}
+.rvb-ico{width:36px;height:36px;padding:0;justify-content:center;border-radius:var(--rvb-r);background:#fff;border:1.5px solid var(--rvb-bd);color:#374151;display:grid;place-items:center;flex-shrink:0}
 .rvb-ico:hover{border-color:var(--rvb-brand);color:var(--rvb-brand2)}
 
 /* Поповер качества */
@@ -151,7 +166,7 @@ export const BUILDER_CSS = `
 .rvb-drawer-h h3{font-size:17px;font-weight:750;letter-spacing:-.01em;margin:0}
 .rvb-drawer-h p{font-size:12.5px;color:var(--rvb-mf);margin:3px 0 0}
 .rvb-fchips{padding:12px 22px;border-bottom:1px solid var(--rvb-bd);display:flex;gap:6px;flex-wrap:wrap}
-.rvb-fchip{padding:6px 12px;border-radius:99px;border:1.5px solid var(--rvb-bd);background:#fff;font-size:12px;font-weight:600;color:var(--rvb-mf);cursor:pointer}
+.rvb-fchip{padding:8px 13px;border-radius:99px;border:1.5px solid var(--rvb-bd);background:#fff;font-size:12px;font-weight:600;color:var(--rvb-mf);cursor:pointer}
 .rvb-fchip.on{background:var(--rvb-brand);border-color:var(--rvb-brand);color:#fff}
 .rvb-dgrid{flex:1;overflow-y:auto;padding:18px 22px 30px;display:grid;grid-template-columns:1fr 1fr;gap:14px}
 .rvb-tcard{border:1.5px solid var(--rvb-bd);border-radius:14px;overflow:hidden;text-align:left;transition:.15s;background:#fff;position:relative;cursor:pointer}
@@ -191,7 +206,10 @@ export const BUILDER_CSS = `
   .rvb-stagebar .rvb-btn{padding:8px 10px}
   .rvb-zoom{width:100%;margin-left:0;justify-content:space-between}
   .rvb-zoomset{flex:1}
-  .rvb-zoomset button{flex:1;padding:7px 6px;font-size:11.5px}
+  .rvb-zoomset button{flex:1;padding:7px 6px;font-size:11.5px;min-height:40px}
+  /* Тактильные цели iOS: 28px проходит WCAG 2.2 (24px), но на тач-экране
+     +/- должны быть 40px (замер аудита 30.09.2026: №5 tap-targets). */
+  .rvb-zoomstep button{width:40px;height:40px}
   .rvb-zoomstep .zv{min-width:38px;font-size:11.5px}
   .rvb-zoomfit{display:none}
   .rvb-pagelabel{padding:6px 12px;font-size:11px}
@@ -205,7 +223,7 @@ export const BUILDER_CSS = `
 .rvb-accent-box{margin-top:14px;padding:12px 14px;border:1px solid var(--rvb-bd);border-radius:14px;background:var(--rvb-soft)}
 .rvb-accent-h{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.09em;color:var(--rvb-mut);margin-bottom:10px}
 .rvb-accent-row{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
-.rvb-accent-dot{width:30px;height:30px;border-radius:50%;border:2px solid var(--rvb-elev);box-shadow:0 1px 3px rgba(15,23,42,.25);cursor:pointer;display:grid;place-items:center;color:#fff;font-size:13px;font-weight:800;transition:transform .15s}
+.rvb-accent-dot{width:36px;height:36px;border-radius:50%;border:2px solid var(--rvb-elev);box-shadow:0 1px 3px rgba(15,23,42,.25);cursor:pointer;display:grid;place-items:center;color:#fff;font-size:13px;font-weight:800;transition:transform .15s}
 .rvb-accent-dot:hover{transform:scale(1.12)}
 .rvb-accent-dot.on{border-color:var(--rvb-ink);transform:scale(1.12)}
 .rvb-accent-auto{margin-left:auto;font-size:11.5px;font-weight:700;color:var(--rvb-ink);background:var(--rvb-elev);border:1px solid var(--rvb-bd);border-radius:999px;padding:6px 12px;cursor:pointer}

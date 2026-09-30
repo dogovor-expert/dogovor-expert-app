@@ -124,7 +124,7 @@ function TemplateCard({ item }: { item: CatalogItem }) {
       <div className="flex flex-1 flex-col p-5">
         <div className="flex items-center justify-between gap-2">
           <h3 className="text-base font-bold text-slate-900 transition group-hover:text-indigo-600">{item.name}</h3>
-          <span className="flex shrink-0 items-center gap-1 text-xs font-bold text-amber-500">
+          <span className="flex shrink-0 items-center gap-1 text-xs font-bold text-amber-700">
             <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
             {item.rating}
           </span>
@@ -132,7 +132,7 @@ function TemplateCard({ item }: { item: CatalogItem }) {
 
         <p className="mt-2 line-clamp-2 text-xs leading-relaxed text-slate-500">{item.desc}</p>
 
-        <div className="mt-4 flex flex-wrap items-center gap-2 text-[11px] font-medium text-slate-400">
+        <div className="mt-4 flex flex-wrap items-center gap-2 text-[11px] font-medium text-slate-500">
           <span className="rounded bg-slate-100 px-2 py-0.5 text-slate-600">PDF (300 DPI)</span>
           <span className="rounded bg-slate-100 px-2 py-0.5 text-slate-600">DOCX Word</span>
           <span className="ml-auto font-semibold text-emerald-700">ATS ОК</span>
@@ -160,7 +160,7 @@ function TemplateCard({ item }: { item: CatalogItem }) {
           </button>
         </div>
 
-        <div className="mt-2 text-center text-[10px] text-slate-400">
+        <div className="mt-2 text-center text-[10px] text-slate-500">
           {msg ? <span className="font-bold text-emerald-600">✓ {msg}</span> : `Скачано ${item.downloads} раз · бесплатно`}
         </div>
       </div>
@@ -206,13 +206,13 @@ export function ResumeCatalog({ items }: { items: CatalogItem[] }) {
           </p>
         </div>
         <div className="relative w-full md:w-80">
-          <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+          <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
           <input
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Поиск шаблона: фото, сайдбар, минимализм…"
-            className="w-full rounded-xl border border-slate-200 bg-white py-3 pl-10 pr-4 text-sm text-slate-700 shadow-sm outline-none ring-indigo-500/20 transition placeholder:text-slate-400 focus:border-indigo-400 focus:ring-4"
+            className="w-full rounded-xl border border-slate-200 bg-white py-3 pl-10 pr-4 text-sm text-slate-700 shadow-sm outline-none ring-indigo-500/20 transition placeholder:text-slate-500 focus:border-indigo-400 focus:ring-4"
           />
         </div>
       </div>
@@ -238,7 +238,7 @@ export function ResumeCatalog({ items }: { items: CatalogItem[] }) {
                 <span
                   className={cn(
                     "rounded-full px-1.5 py-0.5 text-[10px] font-bold",
-                    active ? "bg-white/20 text-white" : "bg-slate-100 text-slate-500",
+                    active ? "bg-white/20 text-white" : "bg-slate-100 text-slate-600",
                   )}
                 >
                   {countOf(label)}

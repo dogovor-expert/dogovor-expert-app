@@ -159,7 +159,7 @@ function SheetContent({ spec, tpl }: { spec: Spec; tpl: HeroTemplate }) {
         {/* Header */}
         <div className={["flex gap-4", !showPhoto && "items-center"].filter(Boolean).join(" ")}>
           {showPhoto && (
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-slate-200 text-sm font-bold text-slate-500">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-slate-200 text-sm font-bold text-slate-700">
               {spec.initials}
             </div>
           )}
@@ -353,7 +353,7 @@ export default function ResumePage() {
         <div className="mx-auto grid max-w-7xl grid-cols-1 items-center gap-12 px-6 lg:grid-cols-[1.45fr_1fr]">
           <div>
             <nav className="flex items-center gap-2 text-xs font-medium text-slate-500" aria-label="Хлебные крошки">
-              <Link href="/" className="flex items-center gap-1 transition hover:text-slate-700">
+              <Link href="/" className="flex items-center gap-1 py-1 transition hover:text-slate-700">
                 <Home className="h-3.5 w-3.5" />
                 Главная
               </Link>
@@ -377,7 +377,7 @@ export default function ResumePage() {
             <div className="mt-9 flex flex-col gap-3 sm:flex-row">
               <a
                 href="#templates"
-                className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-br from-amber-600 to-orange-600 px-7 py-3.5 text-base font-semibold text-white shadow-xl shadow-amber-600/25 transition hover:brightness-110"
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-br from-amber-700 to-orange-600 px-7 py-3.5 text-base font-semibold text-white shadow-xl shadow-amber-600/25 transition hover:brightness-105"
               >
                 Выбрать шаблон
                 <ArrowRight className="h-4 w-4" />
@@ -405,8 +405,8 @@ export default function ResumePage() {
             </div>
           </div>
 
-          {/* Visual: overlapping preview cards */}
-          <div className="relative hidden h-[26rem] lg:block">
+          {/* Visual: overlapping preview cards (декоративная иллюстрация) */}
+          <div className="relative hidden h-[26rem] lg:block" aria-hidden="true">
             <div className="absolute inset-x-8 top-8 h-72 rounded-3xl bg-gradient-to-br from-amber-200/60 to-orange-200/40 blur-2xl" />
             <div
               className="absolute left-1/2 top-0 h-72 w-56 rounded-[3px] border border-amber-300/60 bg-white/95 shadow-2xl shadow-amber-900/15"
@@ -589,7 +589,7 @@ export default function ResumePage() {
                 key={tip.num}
                 className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-md"
               >
-                <span className="text-2xl font-black text-indigo-600/30">{tip.num}</span>
+                <span className="text-2xl font-black text-indigo-600/70">{tip.num}</span>
                 <h3 className="mt-3 text-base font-bold text-slate-900">{tip.title}</h3>
                 <p className="mt-2 text-xs leading-relaxed text-slate-500 sm:text-sm">{tip.desc}</p>
               </div>
@@ -619,11 +619,11 @@ export default function ResumePage() {
           <AdSlot id="RESUME_INFEED" />
           <p className="mt-6 text-sm text-gray-500">
             Смотрите также:{" "}
-            <Link href="/documents" className="text-brand-600 hover:underline">
+            <Link href="/documents" className="inline-block py-1 text-brand-600 hover:underline">
               шаблоны документов
             </Link>{" "}
             и{" "}
-            <Link href="/builder" className="text-brand-600 hover:underline">
+            <Link href="/builder" className="inline-block py-1 text-brand-600 hover:underline">
               конструктор договоров
             </Link>
             .

@@ -111,7 +111,7 @@ export const RESUME_CSS = `
 .t-executive .xp-i{margin-bottom:16px}
 .t-executive .xp-t{font-size:14.5px;font-weight:700;color:#0b1220}
 .t-executive .xp-c{font-size:12px;color:#8a6d1f;font-weight:600;margin:2px 0 4px}
-.t-executive .xp-d{font-size:11px;color:#94a3b8}
+.t-executive .xp-d{font-size:11px;color:#64748b}
 .t-executive .ed-i b{font-size:13px;color:#0b1220}
 .t-executive .ed-i .em{font-size:11.5px;color:#64748b}
 .t-executive .xp-b li::before{background:#c9a227;border-radius:0}
@@ -214,7 +214,7 @@ export const RESUME_CSS = `
 .t-twocol .xp-i{margin-bottom:15px}
 .t-twocol .xp-t{font-size:13.5px;font-weight:700;color:#0f172a}
 .t-twocol .xp-c{font-size:12.5px;color:#1d4ed8;font-weight:600;margin:1px 0 3px}
-.t-twocol .xp-d{font-size:11px;color:#94a3b8}
+.t-twocol .xp-d{font-size:11px;color:#64748b}
 .t-twocol .ed-i{margin-bottom:11px}
 .t-twocol .ed-i b{font-size:12.5px;color:#0f172a}
 .t-twocol .ed-i .em{font-size:11px;color:#64748b}

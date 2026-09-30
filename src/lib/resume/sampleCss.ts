@@ -18,7 +18,7 @@ export const SAMPLE_CSS = `
 .smp svg{display:block}
 .smp .smp-sec{display:flex;align-items:center;gap:7px;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.09em;color:#0f172a;border-bottom:1px solid #e2e8f0;padding-bottom:5px;margin-bottom:9px}
 .smp .smp-sec svg{width:15px;height:15px;color:var(--ac);flex:none}
-.smp .smp-lbl{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.09em;color:#94a3b8;margin-bottom:6px}
+.smp .smp-lbl{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.09em;color:#64748b;margin-bottom:6px}
 .smp .smp-h3{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.09em;color:#0f172a;margin-bottom:9px}
 .smp .smp-hd-t{flex:1;min-width:0}
 .smp .smp-top-t{min-width:0;flex:1}
@@ -33,7 +33,7 @@ export const SAMPLE_CSS = `
 .smp .smp-xp2 .smp-x2+.smp-x2{margin-top:15px}
 .smp .smp-xp-top{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
 .smp .smp-xp-top b{font-size:12.5px;font-weight:700;color:#0f172a}
-.smp .smp-xp-top i{font-style:normal;font-size:10.5px;font-weight:600;color:#94a3b8;white-space:nowrap}
+.smp .smp-xp-top i{font-style:normal;font-size:10.5px;font-weight:600;color:#64748b;white-space:nowrap}
 .smp .smp-xp-c{font-size:11.5px;font-weight:600;color:var(--ac);margin:1px 0 4px}
 .smp .smp-xp-b{margin-top:5px}
 /* Достижения — основной текст резюме: 12.5px = 9.4pt. Поднимаем до 13px = 9.75pt,
@@ -43,10 +43,10 @@ export const SAMPLE_CSS = `
 .smp .smp-ed+.smp-ed{margin-top:8px}
 .smp .smp-ed b{display:block;font-size:11.5px;font-weight:700;color:#1e293b}
 .smp .smp-ed span{display:block;font-size:10.5px;color:#64748b}
-.smp .smp-ed i{font-style:normal;font-size:10px;color:#94a3b8}
+.smp .smp-ed i{font-style:normal;font-size:10px;color:#64748b}
 .smp .smp-lg-row{display:flex;justify-content:space-between;gap:8px;font-size:11px;margin-top:3px}
 .smp .smp-lg-row b{font-weight:600;color:#334155}
-.smp .smp-lg-row span{color:#94a3b8;font-size:10px}
+.smp .smp-lg-row span{color:#64748b;font-size:10px}
 .smp .smp-cont{display:inline-flex;align-items:center;gap:6px;font-size:11px;min-width:0}
 .smp .smp-cont svg{width:13px;height:13px;flex:none;opacity:.78}
 .smp .smp-cont>span{min-width:0;overflow-wrap:anywhere}
@@ -80,16 +80,16 @@ export const SAMPLE_CSS = `
 .smp-side .smp-bar-ph{text-align:center;margin-bottom:18px}
 .smp-side .smp-bar-ph img{width:88px;height:88px;border-radius:50%;object-fit:cover;box-shadow:0 0 0 4px rgba(255,255,255,.2);margin:0 auto}
 .smp-side .smp-bar-lbl{font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.11em;color:rgba(255,255,255,.6);margin-bottom:9px}
-.smp-side.smp-light .smp-bar-lbl{color:#94a3b8}
+.smp-side.smp-light .smp-bar-lbl{color:#64748b}
 .smp-side .smp-bar-sec+.smp-bar-sec{margin-top:20px}
 .smp-side .smp-bar .smp-chip{background:rgba(255,255,255,.15);color:#fff}
 .smp-side.smp-light .smp-chip{background:#fff;color:#334155;border:1px solid #e2e8f0}
 .smp-side .smp-bar .smp-lg-row b{color:rgba(255,255,255,.92)}
 .smp-side .smp-bar .smp-lg-row span{color:rgba(255,255,255,.6)}
 .smp-side.smp-light .smp-lg-row b{color:#334155}
-.smp-side.smp-light .smp-lg-row span{color:#94a3b8}
+.smp-side.smp-light .smp-lg-row span{color:#64748b}
 .smp-side .smp-bar-foot{border-top:1px solid rgba(255,255,255,.22);margin-top:20px;padding-top:10px;font-size:9px;color:rgba(255,255,255,.5)}
-.smp-side.smp-light .smp-bar-foot{border-color:#e2e8f0;color:#94a3b8}
+.smp-side.smp-light .smp-bar-foot{border-color:#e2e8f0;color:#64748b}
 .smp-side .smp-page{padding:28px 30px 30px;min-width:0}
 .smp-side .smp-page h1{font-size:26px;font-weight:800;letter-spacing:-.01em;color:#0f172a}
 .smp-side.smp-serif .smp-page h1{font-family:'Times New Roman',Georgia,serif}
@@ -98,7 +98,10 @@ export const SAMPLE_CSS = `
 .smp-side .smp-page .smp-xp-b li::before{background:var(--ac)}
 
 /* ===== 3. BASE: шапка + контактная полоса + две колонки ===== */
-.smp-base{padding:34px 40px 40px;display:flex;flex-direction:column}
+/* Специфичность 0-2-0, а не 0-1-0: правило .smp.doc{padding:0} (строка 17)
+   иначе перебивает этот паддинг — 7 из 10 шаблонов рендерятся впритык к краю
+   листа (замер 30.09.2026: computed padding 0px, .smp-top x=0). */
+.smp.smp-base{padding:34px 40px 40px;display:flex;flex-direction:column}
 .smp-base .smp-top{display:flex;align-items:flex-start;justify-content:space-between;gap:20px;border-bottom:1px solid #cbd5e1;padding-bottom:18px}
 .smp-base:not(.smp-serif) .smp-top{border-bottom-color:var(--ac)}
 .smp-base .smp-top h1{font-size:27px;font-weight:800;letter-spacing:-.015em;color:#0f172a;line-height:1.1}

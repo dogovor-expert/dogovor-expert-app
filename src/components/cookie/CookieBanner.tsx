@@ -279,7 +279,7 @@ export function CookieBanner({ settingsOpenExternal, onSettingsClosed }: CookieB
             собственная обезличенная статистика сервиса. Без маркетинга.{" "}
             <Link
               href="/privacy"
-              className="text-brand-600 hover:underline"
+              className="inline-block py-1.5 text-brand-600 hover:underline"
             >
               Политика
             </Link>

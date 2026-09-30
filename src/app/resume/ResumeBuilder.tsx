@@ -93,11 +93,15 @@ export default function ResumeBuilder() {
   const [filter, setFilter] = useState("all");
   const [qOpen, setQOpen] = useState(false);
   const [scale, setScale] = useState(0.62);
-  const [manual, setManual] = useState(false);
+  // Режим зума: по умолчанию «по ширине» (~76% при сцене 652px), а не «лист»
+  // (50%): текст 13.5px→10px читаемее, чем 6.7px (замер аудита 30.09.2026, №7).
+  // aria-pressed на кнопках отражает mode, а не «нажат ли ручной зум».
+  type ZoomMode = "page" | "width" | "actual" | "custom";
+  const [mode, setMode] = useState<ZoomMode>("width");
   const fitRef = useRef(0.62);
   const fitWRef = useRef(0.62);
   const scrollRef = useRef<HTMLDivElement | null>(null);
-  const a4Ref = useRef<HTMLDivElement | null>(null);
+  const sliceRef = useRef<HTMLDivElement | null>(null);
   const qWrapRef = useRef<HTMLDivElement | null>(null);
   const [docH, setDocH] = useState(1123);
   const [pdfBusy, setPdfBusy] = useState(false);
@@ -168,9 +172,10 @@ export default function ResumeBuilder() {
       const reserve = isNarrow ? Math.min(padBottom, 200) : padBottom;
       const availW = el.clientWidth - padX;
       const availH = el.clientHeight - padTop - reserve;
-      const docH1 = a4Ref.current?.offsetHeight || 1123;
-      // Потолок 0.695 — лист всегда виден целиком и не раздувается на 4K.
-      const fit = Math.max(0.2, Math.min(0.695, Math.min(availW / 794, availH / docH1)));
+      // Лист A4 всегда одинаковой высоты (1123px): «Лист» вписывает ОДИН
+      // лист целиком. Раньше замер шёл по полной высоте контента, и на
+      // многостраничном документе масштаб падал до пола 0.2 (20%).
+      const fit = Math.max(0.2, Math.min(0.695, Math.min(availW / 794, availH / 1123)));
       fitRef.current = fit;
       // Режим «по ширине»: лист занимает всю ширину сцены. Нужен на узких
       // экранах: при 430px вся высота сцены за вычетом резерва под табы
@@ -178,41 +183,44 @@ export default function ResumeBuilder() {
       // «целый лист» давал 20% и нечитаемый текст.
       const byWidth = Math.max(0.2, Math.min(1.25, availW / 794));
       fitWRef.current = byWidth;
-      if (!manual) setScale(isNarrow ? byWidth : fit);
+      if (mode === "page") setScale(isNarrow ? byWidth : fit);
+      else if (mode === "width") setScale(byWidth);
+      // actual/custom: масштаб не трогаем — его задаёт пользователь.
     };
     compute();
     const ro = new ResizeObserver(compute);
     ro.observe(el);
     return () => ro.disconnect();
-  }, [manual, docH, openSec, tab]);
+  }, [mode, docH, openSec, tab]);
 
   // Переход по шкале ступеней: вверх — ближайшая большая, вниз — меньшая.
   const stepZoom = (dir: 1 | -1) => {
-    setManual(true);
+    setMode("custom");
     setScale((s) => {
       const next = dir > 0 ? ZOOM_STEPS.find((z) => z > s + 0.001) : [...ZOOM_STEPS].reverse().find((z) => z < s - 0.001);
       return next ?? s;
     });
   };
   const fitZoom = () => {
-    setManual(false);
+    setMode("page");
     // На узких экранах «Лист» = по ширине: целиком A4 в 225px не влезает,
     // и подгонка по высоте убивает читаемость (20%).
     setScale(window.innerWidth <= 1080 ? fitWRef.current : fitRef.current);
   };
   const fitWidthZoom = () => {
-    setManual(true);
+    setMode("width");
     setScale(fitWRef.current);
   };
   const actualZoom = () => {
-    setManual(true);
+    setMode("actual");
     setScale(1);
   };
 
   // Реальная высота документа — чтобы обёртка совпадала с визуальным размером
-  // (иначе масштабированный A4 вызывает лишнюю прокрутку).
+  // (иначе масштабированный A4 вызывает лишнюю прокрутку). Меряем первый
+  // .rvb-slice (absolute-клон контента): его offsetHeight = высота контента.
   useEffect(() => {
-    const el = a4Ref.current;
+    const el = sliceRef.current;
     if (!el) return;
     const measure = () => setDocH(el.offsetHeight || 1123);
     measure();
@@ -220,6 +228,11 @@ export default function ResumeBuilder() {
     ro.observe(el);
     return () => ro.disconnect();
   }, [data, tpl]);
+
+  // Число физических листов A4 в превью (разрывы страниц видны как зазоры
+  // между листами) и высота всей ленты в координатах листа (без масштаба).
+  const pages = Math.max(1, Math.ceil(docH / 1123));
+  const ribbonH = 1123 * pages + 16 * (pages - 1);
 
   // Высота рабочей области. Сайт — app-shell: <div class="flex h-screen overflow-hidden">
   // c <main class="overflow-y-auto">, поэтому window.innerHeight НЕ равно высоте
@@ -578,41 +591,47 @@ export default function ResumeBuilder() {
               type="button"
               className="rvb-btn rvb-btn-o"
               onClick={() => void exportDoc()}
-              title="Скачать в DOCX (Word)"
+              title="Скачать в DOCX (Word): офисная вёрстка макета — шрифты Arial/Times, без графики экранного превью"
             >
               <FileText className="h-4 w-4" aria-hidden />
               <span className="hidden sm:inline">DOCX</span>
             </button>
-            <button type="button" className="rvb-btn rvb-btn-p" onClick={() => { void exportPdfFile(); }} title="Скачать резюме в PDF" disabled={pdfBusy}>
+            <button type="button" className="rvb-btn rvb-btn-p" onClick={() => { void exportPdfFile(); }} title="Скачать резюме в PDF — печатное качество A4, вёрстка может незначительно отличаться от превью" disabled={pdfBusy}>
               {pdfBusy ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <FileDown className="h-4 w-4" aria-hidden />}
               <span className="hidden sm:inline">{pdfBusy ? "Готовим…" : "Скачать PDF"}</span>
             </button>
             <div className="rvb-zoom" role="group" aria-label="Масштаб предпросмотра">
               <div className="rvb-zoomset">
-                <button type="button" onClick={fitZoom} aria-pressed={!manual} title="Целый лист A4">Лист</button>
-                <button type="button" onClick={fitWidthZoom} aria-pressed={manual && Math.abs(scale - fitWRef.current) < 0.001} title="По ширине окна">Ширина</button>
-                <button type="button" onClick={actualZoom} aria-pressed={manual && Math.abs(scale - 1) < 0.001} title="Реальный размер 100%">100%</button>
+                <button type="button" onClick={fitZoom} aria-pressed={mode === "page"} title="Целый лист A4">Лист</button>
+                <button type="button" onClick={fitWidthZoom} aria-pressed={mode === "width"} title="По ширине окна">Ширина</button>
+                <button type="button" onClick={actualZoom} aria-pressed={mode === "actual"} title="Реальный размер 100%">100%</button>
               </div>
               <div className="rvb-zoomstep">
                 <button type="button" onClick={() => stepZoom(-1)} aria-label="Уменьшить масштаб"><ZoomOut className="h-4 w-4" aria-hidden /></button>
-                <span className="zv" aria-live="off">{Math.round(scale * 100)}%</span>
+                <span className="zv" aria-live="polite">{Math.round(scale * 100)}%</span>
                 <button type="button" onClick={() => stepZoom(1)} aria-label="Увеличить масштаб"><ZoomIn className="h-4 w-4" aria-hidden /></button>
               </div>
             </div>
           </div>
           <div className="rvb-scroll" ref={scrollRef} role="region" aria-label="Предпросмотр резюме" tabIndex={0}>
-            <div className="rvb-scaler" style={{ width: 794 * scale, height: docH * scale }}>
-              <div
-                ref={a4Ref}
-                className={`a4 t-${tpl}`}
-                style={{ transformOrigin: "top left", transform: `scale(${scale})` }}
-                dangerouslySetInnerHTML={{ __html: html }}
-              />
+            <div className="rvb-scaler" style={{ width: 794 * scale, height: ribbonH * scale }}>
+              <div className="rvb-pages" style={{ transform: `scale(${scale})` }}>
+                {Array.from({ length: pages }, (_, i) => (
+                  <div key={i} className={`a4 t-${tpl}`}>
+                    <div
+                      ref={i === 0 ? sliceRef : undefined}
+                      className="rvb-slice"
+                      style={{ top: -1123 * i }}
+                      dangerouslySetInnerHTML={{ __html: html }}
+                    />
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
           <div className="rvb-pagelabel" aria-hidden>
             <span className="rvb-sheetname">{TEMPLATE_META[tpl]?.name}</span>
-            <span className="rvb-dims">A4 · 210 × 297 мм{docH > 1123 ? ` · ${Math.max(2, Math.round(docH / 1123))} стр.` : " · 1 стр."}</span>
+            <span className="rvb-dims">A4 · 210 × 297 мм{pages > 1 ? ` · ${pages} стр.` : " · 1 стр."}</span>
           </div>
         </section>
       </div>
@@ -633,7 +652,7 @@ export default function ResumeBuilder() {
         <div className="rvb-drawer-h">
           <div>
             <h3>Шаблоны резюме</h3>
-            <p>{TEMPLATES.length} макетов: от строгого ATS до современного дизайна. Превью — на ваших данных.</p>
+            <p>{TEMPLATES.length} макетов: от строгого ATS до современного дизайна. Превью — на ваших данных. Файлы PDF и DOCX набираются офисными шрифтами (Arial/Times), поэтому вёрстка может незначительно отличаться от экранного превью.</p>
           </div>
           <button type="button" className="rvb-ico" onClick={() => setDrawer(false)} aria-label="Закрыть"><X className="h-4 w-4" aria-hidden /></button>
         </div>
