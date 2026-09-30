@@ -45,14 +45,21 @@ export default function RedactorClient() {
           рисуется (см. ConditionalShell) — инструмент занимает всё окно и
           использует собственный фиксированный сайдбар. Эта узкая полоса —
           единственная точка выхода обратно в dogovor.expert. */}
-      <div className="redactor-return">
+      <div className="sticky top-0 z-[60] flex items-center gap-3 border-b border-[#e4e8df] bg-[rgba(249,250,247,0.92)] px-4 py-2 backdrop-blur">
         {/* Logo рендерит собственную ссылку <a> — оборачивать его в <Link>
-            нельзя (вложенные <a> ломают гидратацию). */}
-        <span className="redactor-return-logo">
-          <Logo />
+            нельзя (вложенные <a> ломают гидратацию). Компакт без дескриптора
+            (tagline={false}), чтобы полоса была в одну строку и на 360px.
+            Раньше здесь стоял transform: scale(.66) с тегом «Дополнительные
+            инструменты» — логотип жался, а ссылка «На сайт» на мобильных
+            сжималась до вертикального текста. Полоса повторяет /notary. */}
+        <Logo tagline={false} />
+        <span className="hidden text-xs font-medium uppercase tracking-wider text-[#7b856f] sm:inline">
+          Дополнительные инструменты
         </span>
-        <span className="redactor-return-label">Дополнительные инструменты</span>
-        <Link href="/" className="redactor-return-link">
+        <Link
+          href="/"
+          className="ml-auto flex-shrink-0 whitespace-nowrap rounded-lg px-3 py-1.5 text-sm font-semibold text-[#385d45] hover:bg-[#eef2e8]"
+        >
           На сайт
         </Link>
       </div>

@@ -19,38 +19,6 @@
 /* Полоса возврата на сайт — единственный элемент dogovor.expert на странице:
    инструмент занимает всё окно и рисует собственный фиксированный сайдбар.
    Держим её компактной, чтобы она не спорила с интерфейсом инструмента. */
-.redactor-return {
-  position: sticky;
-  top: 0;
-  z-index: 60;
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 8px 16px;
-  background: #fff;
-  border-bottom: 1px solid #e3e7db;
-}
-.redactor-return-logo { display: inline-flex; align-items: center; transform: scale(.66); transform-origin: left center; }
-.redactor-return-label {
-  font-size: 12px;
-  color: #7b856f;
-  border-left: 1px solid #e3e7db;
-  padding-left: 14px;
-}
-.redactor-return-link {
-  margin-left: auto;
-  font-size: 12px;
-  font-weight: 600;
-  color: #385d45;
-  padding: 6px 12px;
-  border-radius: 8px;
-  transition: background-color .15s ease;
-}
-.redactor-return-link:hover { background: #eef2e8; }
-@media (max-width: 640px) {
-  .redactor-return-label { display: none; }
-}
-
 .redactor-root {
   --font-sans: 'Inter Variable', 'Inter', Arial, sans-serif;
   --font-mono: 'IBM Plex Mono', monospace;
@@ -784,186 +752,186 @@
 
 
 @media (min-width: 1500px) {
-  :root { --sidebar: 245px; }
-  .main-content { padding: 37px 46px 0; }
-  .topbar { padding: 0 46px; }
-  .editor-workspace, .secondary-workspace { grid-template-columns: minmax(0, 1fr) 300px; }
-  .editor-workspace { height: 688px; }
-  .page-heading h1 { font-size: 34px; }
-  .page-heading p { font-size: 12px; }
-  .document-sheet { width: 412px !important; }
-  .nav-item { font-size: 13px; }
-  .sidebar-manifesto { padding-bottom: 39px; }
+  .redactor-root{ --sidebar: 245px; }
+  .redactor-root .main-content{ padding: 37px 46px 0; }
+  .redactor-root .topbar{ padding: 0 46px; }
+  .redactor-root .editor-workspace, .redactor-root .secondary-workspace{ grid-template-columns: minmax(0, 1fr) 300px; }
+  .redactor-root .editor-workspace{ height: 688px; }
+  .redactor-root .page-heading h1{ font-size: 34px; }
+  .redactor-root .page-heading p{ font-size: 12px; }
+  .redactor-root .document-sheet{ width: 412px !important; }
+  .redactor-root .nav-item{ font-size: 13px; }
+  .redactor-root .sidebar-manifesto{ padding-bottom: 39px; }
 }
 
 @media (max-width: 1150px) and (min-width: 901px) {
-  :root { --sidebar: 204px; }
-  .sidebar { padding-left: 12px; padding-right: 12px; }
-  .brand { padding-left: 10px; }
-  .brand-word { font-size: 27px; }
-  .brand-tagline { font-size: 6.7px; }
-  .nav-item { font-size: 11px; padding: 0 10px; gap: 9px; }
-  .main-content { padding-left: 24px; padding-right: 24px; }
-  .topbar { padding-left: 24px; padding-right: 24px; }
-  .editor-workspace, .secondary-workspace { grid-template-columns: minmax(0, 1fr) 255px; }
-  .settings-body, .utility-settings-body { padding-left: 15px; padding-right: 15px; }
-  .export-section { padding-left: 15px; padding-right: 15px; }
-  .document-viewport { padding-left: 18px; padding-right: 18px; }
-  .canvas-local { display: none; }
-  .demo-hint { font-size: 6.4px; gap: 4px; }
-  .preview-control > span:not(.mini-switch) { display: none; }
-  .tiny-label { font-size: 5px; }
-  .waveform-content { padding-left: 20px; padding-right: 20px; }
+  .redactor-root{ --sidebar: 204px; }
+  .redactor-root .sidebar{ padding-left: 12px; padding-right: 12px; }
+  .redactor-root .brand{ padding-left: 10px; }
+  .redactor-root .brand-word{ font-size: 27px; }
+  .redactor-root .brand-tagline{ font-size: 6.7px; }
+  .redactor-root .nav-item{ font-size: 11px; padding: 0 10px; gap: 9px; }
+  .redactor-root .main-content{ padding-left: 24px; padding-right: 24px; }
+  .redactor-root .topbar{ padding-left: 24px; padding-right: 24px; }
+  .redactor-root .editor-workspace, .redactor-root .secondary-workspace{ grid-template-columns: minmax(0, 1fr) 255px; }
+  .redactor-root .settings-body, .redactor-root .utility-settings-body{ padding-left: 15px; padding-right: 15px; }
+  .redactor-root .export-section{ padding-left: 15px; padding-right: 15px; }
+  .redactor-root .document-viewport{ padding-left: 18px; padding-right: 18px; }
+  .redactor-root .canvas-local{ display: none; }
+  .redactor-root .demo-hint{ font-size: 6.4px; gap: 4px; }
+  .redactor-root .preview-control > span:not(.mini-switch){ display: none; }
+  .redactor-root .tiny-label{ font-size: 5px; }
+  .redactor-root .waveform-content{ padding-left: 20px; padding-right: 20px; }
 }
 
 @media (max-width: 900px) {
-  :root { --sidebar: 0px; }
-  .sidebar { width: 230px; transform: translateX(-100%); transition: transform 220ms ease; box-shadow: 5px 0 30px #354d2a15; }
-  .sidebar.is-open { transform: translateX(0); }
-  .nav-backdrop { position: fixed; inset: 0; display: block; z-index: 25; background: #34482c60; backdrop-filter: blur(2px); }
-  .main-shell { margin-left: 0; }
-  .topbar { padding: 0 25px; }
-  .mobile-menu { display: inline-flex; margin-left: -5px; margin-right: 3px; }
-  .main-content { padding: 28px 25px 0; }
-  .toast { left: 50%; }
+  .redactor-root{ --sidebar: 0px; }
+  .redactor-root .sidebar{ width: 230px; transform: translateX(-100%); transition: transform 220ms ease; box-shadow: 5px 0 30px #354d2a15; }
+  .redactor-root .sidebar.is-open{ transform: translateX(0); }
+  .redactor-root .nav-backdrop{ position: fixed; inset: 0; display: block; z-index: 25; background: #34482c60; backdrop-filter: blur(2px); }
+  .redactor-root .main-shell{ margin-left: 0; }
+  .redactor-root .topbar{ padding: 0 25px; }
+  .redactor-root .mobile-menu{ display: inline-flex; margin-left: -5px; margin-right: 3px; }
+  .redactor-root .main-content{ padding: 28px 25px 0; }
+  .redactor-root .toast{ left: 50%; }
 }
 
 @media (max-width: 650px) {
-  .topbar { height: 59px; padding: 0 18px; }
-  .breadcrumb { gap: 7px; font-size: 10px; }
-  .breadcrumb > span { display: none; }
-  .breadcrumb > svg { display: none; }
-  .breadcrumb > strong { display: none; }
-  .breadcrumb > .mobile-brand-name { display: block; font-size: 22px; font-weight: 650; letter-spacing: -1.15px; color: #38533b; margin-left: 4px; }
-  .topbar-actions { gap: 7px; }
-  .topbar-actions > .icon-button:first-of-type { display: none; }
-  .topbar-separator { margin-left: 6px; margin-right: 2px; }
-  .local-status { font-size: 9px; gap: 5px; }
-  .local-status > svg { display: none; }
-  .main-content { padding: 26px 17px 0; }
-  .page-heading { align-items: flex-start; gap: 10px; margin-bottom: 21px; }
-  .page-eyebrow { font-size: 7px; letter-spacing: 0.6px; }
-  .page-heading h1 { font-size: 25px; letter-spacing: -0.9px; }
-  .page-heading p { font-size: 10px; line-height: 1.7; max-width: 220px; }
-  .heading-upload { font-size: 10px; padding: 0 8px; min-height: 33px; margin-top: 22px; gap: 5px; }
-  .heading-upload > svg { width: 13px; height: 13px; }
-  .key-hint { display: none; }
-  .workspace-tabs { min-height: 36px; margin-bottom: 15px; }
-  .tab-buttons { gap: 23px; }
-  .tab-buttons > button, .static-tab { font-size: 10px; height: 37px; }
-  .how-link { font-size: 8px; gap: 4px; }
-  .how-link > svg { width: 11px; }
-  .editor-workspace { grid-template-columns: minmax(0, 1fr); height: auto; overflow: visible; }
-  .document-editor { height: 573px; overflow: hidden; border-radius: 6px 6px 0 0; }
-  .document-filebar { padding: 0 13px; gap: 8px; }
-  .replace-file { font-size: 7px; gap: 4px; }
-  .document-filebar > .file-icon { width: 27px; height: 31px; }
-  .document-filebar .file-name > strong { max-width: 160px; font-size: 10px; }
-  .file-name > span { font-size: 8px; }
-  .file-menu-wrap { margin-left: 0; }
-  .editor-toolbar { padding: 0 11px; }
-  .editor-tools { gap: 2px; }
-  .editor-tools > button { padding: 0 6px; font-size: 9px; }
-  .preview-control { font-size: 8px; gap: 4px; }
-  .document-viewport { padding: 16px 16px 25px; }
-  .demo-hint { font-size: 7px; gap: 4px; }
-  .redactor-settings { border-top: 1px solid #e2e7da; border-left: 0; border-radius: 0 0 6px 6px; overflow: hidden; }
-  .settings-header { padding: 0 20px; }
-  .settings-header h2 { font-size: 11px; }
-  .settings-body { overflow: visible; padding: 21px 22px 24px; }
-  .setting-section-title h3 { font-size: 12px; }
-  .settings-description { font-size: 9px; margin-top: 7px; }
-  .category-list { gap: 5px; margin-top: 15px; margin-bottom: 18px; }
-  .category-row { height: 39px; font-size: 12px; gap: 10px; }
-  .category-row > .category-count { font-size: 9px; margin-right: 12px; }
-  .toggle { width: 29px; height: 16px; }
-  .toggle > span { height: 12px; width: 12px; }
-  .toggle.on > span { transform: translateX(13px); }
-  .analyze-button { height: 38px; font-size: 10px; }
-  .analysis-result { height: 34px; font-size: 9px; }
-  .tiny-label { font-size: 6px; }
-  .settings-separator { margin: 17px 0 22px; }
-  .fill-options { margin-top: 15px; }
-  .fill-options > button { min-height: 72px; font-size: 9px; }
-  .metadata-checkbox { font-size: 10px; margin-top: 20px; }
-  .metadata-hint { font-size: 9px; margin-top: 8px; }
-  .metadata-hint br { display: none; }
-  .export-section { padding: 18px 22px; }
-  .export-summary { font-size: 9px; margin-bottom: 14px; }
-  .export-button { font-size: 11px; height: 42px; }
-  .export-section > p { font-size: 8px; margin-top: 12px; }
-  .format-select > select { font-size: 8px; width: 36px; }
-  .canvas-local { display: none; }
-  .workspace-assurance { height: auto; min-height: 47px; font-size: 7px; gap: 10px; line-height: 1.8; }
-  .workspace-assurance > span > svg { width: 11px; }
-  .workspace-assurance > button { display: none; }
-  .main-footer { font-size: 7px; gap: 16px; min-height: 52px; }
-  .main-footer > span:last-child { font-size: 5px; letter-spacing: 0.5px; text-align: right; }
-  .file-info-view { padding: 30px 20px; min-height: 570px; }
-  .file-info-view h2 { font-size: 18px; }
-  .file-info-view > p { font-size: 9px; line-height: 1.9; }
-  .file-info-view dl > div { font-size: 9px; gap: 14px; }
-  .editor-workspace:fullscreen { grid-template-columns: minmax(0, 1fr); overflow-y: auto; }
-  .editor-workspace:fullscreen .document-editor { height: 100vh; }
-  .editor-workspace:fullscreen .document-sheet { width: 100% !important; }
-  .secondary-workspace { grid-template-columns: minmax(0, 1fr); }
-  .upload-dropzone { min-height: 445px; padding: 40px 25px; }
-  .upload-art { width: 74px; height: 90px; margin-bottom: 25px; }
-  .upload-art > div { width: 60px; height: 75px; }
-  .upload-art > span:not(.upload-art-plus) > svg { width: 35px; }
-  .upload-dropzone h2 { font-size: 17px; }
-  .upload-dropzone p { font-size: 10px; }
-  .upload-supported { font-size: 7px; }
-  .utility-settings { border-top: 1px solid #e2e7da; border-left: 0; }
-  .utility-settings-body { padding: 25px 22px; }
-  .utility-settings-body > h3 { font-size: 12px; }
-  .select-wrap > select, .text-input { font-size: 11px; height: 39px; }
-  .select-wrap > svg { top: 13px; }
-  .range-label { font-size: 11px; }
-  .field-hint { font-size: 9px; }
-  .field-label { font-size: 10px; }
-  .dimension-inputs > label { font-size: 9px; width: 50%; }
-  .dimension-inputs > label > input { height: 39px; font-size: 11px; }
-  .scale-options > button { height: 30px; font-size: 9px; }
-  .rotate-button { font-size: 10px; }
-  .utility-note > p { font-size: 9px; }
-  .utility-settings .export-section > .button { font-size: 11px; height: 42px; }
-  .image-preview-surface { min-height: 360px; padding: 22px; }
-  .image-preview-surface > img { max-height: 320px; }
-  .waveform-content { padding: 34px 20px 26px; }
-  .waveform-heading { font-size: 6px; margin-bottom: 24px; }
-  .waveform-frame { height: 175px; }
-  .audio-transport .text-button { font-size: 7px; }
-  .audio-instructions { margin-top: 27px; }
-  .audio-instructions p { font-size: 8px; }
-  .operation-options { gap: 11px; }
-  .operation-options strong { font-size: 11px; }
-  .operation-options span { font-size: 8px; }
-  .pdf-list-heading { padding: 25px 17px 16px; }
-  .pdf-list-heading > h3 { font-size: 12px; }
-  .pdf-file-list { margin: 0 17px; }
-  .pdf-file-row { gap: 10px; padding: 17px 0; }
-  .pdf-file-details > strong { font-size: 9px; max-width: 145px; }
-  .pdf-order-buttons { gap: 0; }
-  .pdf-order-buttons .icon-button { width: 21px; }
-  .add-pdf-button { margin: 20px 17px 25px; }
-  .pdf-list-footnote { margin-bottom: 25px; font-size: 7px; }
-  .history-view, .history-empty { min-height: 525px; }
-  .history-table-heading, .history-row { grid-template-columns: minmax(0, 1fr) 70px; gap: 15px; padding-left: 5px; padding-right: 5px; }
-  .history-table-heading > span:nth-child(2), .history-table-heading > span:nth-child(3), .history-row > button, .history-row > span:nth-child(3) { display: none; }
-  .history-row strong { font-size: 9px; }
-  .history-row > span:last-child { text-align: right; }
-  .history-privacy { margin-left: 5px; margin-right: 5px; font-size: 7px; align-items: flex-start; }
-  .modal-backdrop { padding: 14px; }
-  .modal { padding: 32px 25px 0; max-height: calc(100dvh - 28px); border-radius: 9px; }
-  .modal h2 { font-size: 23px; }
-  .modal-intro { font-size: 11px; }
-  .principle p, .guide-step p { font-size: 10px; }
-  .shortcut-row { font-size: 10px; gap: 10px; }
-  kbd { font-size: 7px; }
-  .toast { bottom: 18px; font-size: 10px; gap: 9px; padding: 13px; }
+  .redactor-root .topbar{ height: 59px; padding: 0 18px; }
+  .redactor-root .breadcrumb{ gap: 7px; font-size: 10px; }
+  .redactor-root .breadcrumb > span{ display: none; }
+  .redactor-root .breadcrumb > svg{ display: none; }
+  .redactor-root .breadcrumb > strong{ display: none; }
+  .redactor-root .breadcrumb > .mobile-brand-name{ display: block; font-size: 22px; font-weight: 650; letter-spacing: -1.15px; color: #38533b; margin-left: 4px; }
+  .redactor-root .topbar-actions{ gap: 7px; }
+  .redactor-root .topbar-actions > .icon-button:first-of-type{ display: none; }
+  .redactor-root .topbar-separator{ margin-left: 6px; margin-right: 2px; }
+  .redactor-root .local-status{ font-size: 9px; gap: 5px; }
+  .redactor-root .local-status > svg{ display: none; }
+  .redactor-root .main-content{ padding: 26px 17px 0; }
+  .redactor-root .page-heading{ align-items: flex-start; gap: 10px; margin-bottom: 21px; }
+  .redactor-root .page-eyebrow{ font-size: 7px; letter-spacing: 0.6px; }
+  .redactor-root .page-heading h1{ font-size: 25px; letter-spacing: -0.9px; }
+  .redactor-root .page-heading p{ font-size: 10px; line-height: 1.7; max-width: 220px; }
+  .redactor-root .heading-upload{ font-size: 10px; padding: 0 8px; min-height: 33px; margin-top: 22px; gap: 5px; }
+  .redactor-root .heading-upload > svg{ width: 13px; height: 13px; }
+  .redactor-root .key-hint{ display: none; }
+  .redactor-root .workspace-tabs{ min-height: 36px; margin-bottom: 15px; }
+  .redactor-root .tab-buttons{ gap: 23px; }
+  .redactor-root .tab-buttons > button, .redactor-root .static-tab{ font-size: 10px; height: 37px; }
+  .redactor-root .how-link{ font-size: 8px; gap: 4px; }
+  .redactor-root .how-link > svg{ width: 11px; }
+  .redactor-root .editor-workspace{ grid-template-columns: minmax(0, 1fr); height: auto; overflow: visible; }
+  .redactor-root .document-editor{ height: 573px; overflow: hidden; border-radius: 6px 6px 0 0; }
+  .redactor-root .document-filebar{ padding: 0 13px; gap: 8px; }
+  .redactor-root .replace-file{ font-size: 7px; gap: 4px; }
+  .redactor-root .document-filebar > .file-icon{ width: 27px; height: 31px; }
+  .redactor-root .document-filebar .file-name > strong{ max-width: 160px; font-size: 10px; }
+  .redactor-root .file-name > span{ font-size: 8px; }
+  .redactor-root .file-menu-wrap{ margin-left: 0; }
+  .redactor-root .editor-toolbar{ padding: 0 11px; }
+  .redactor-root .editor-tools{ gap: 2px; }
+  .redactor-root .editor-tools > button{ padding: 0 6px; font-size: 9px; }
+  .redactor-root .preview-control{ font-size: 8px; gap: 4px; }
+  .redactor-root .document-viewport{ padding: 16px 16px 25px; }
+  .redactor-root .demo-hint{ font-size: 7px; gap: 4px; }
+  .redactor-root .redactor-settings{ border-top: 1px solid #e2e7da; border-left: 0; border-radius: 0 0 6px 6px; overflow: hidden; }
+  .redactor-root .settings-header{ padding: 0 20px; }
+  .redactor-root .settings-header h2{ font-size: 11px; }
+  .redactor-root .settings-body{ overflow: visible; padding: 21px 22px 24px; }
+  .redactor-root .setting-section-title h3{ font-size: 12px; }
+  .redactor-root .settings-description{ font-size: 9px; margin-top: 7px; }
+  .redactor-root .category-list{ gap: 5px; margin-top: 15px; margin-bottom: 18px; }
+  .redactor-root .category-row{ height: 39px; font-size: 12px; gap: 10px; }
+  .redactor-root .category-row > .category-count{ font-size: 9px; margin-right: 12px; }
+  .redactor-root .toggle{ width: 29px; height: 16px; }
+  .redactor-root .toggle > span{ height: 12px; width: 12px; }
+  .redactor-root .toggle.on > span{ transform: translateX(13px); }
+  .redactor-root .analyze-button{ height: 38px; font-size: 10px; }
+  .redactor-root .analysis-result{ height: 34px; font-size: 9px; }
+  .redactor-root .tiny-label{ font-size: 6px; }
+  .redactor-root .settings-separator{ margin: 17px 0 22px; }
+  .redactor-root .fill-options{ margin-top: 15px; }
+  .redactor-root .fill-options > button{ min-height: 72px; font-size: 9px; }
+  .redactor-root .metadata-checkbox{ font-size: 10px; margin-top: 20px; }
+  .redactor-root .metadata-hint{ font-size: 9px; margin-top: 8px; }
+  .redactor-root .metadata-hint br{ display: none; }
+  .redactor-root .export-section{ padding: 18px 22px; }
+  .redactor-root .export-summary{ font-size: 9px; margin-bottom: 14px; }
+  .redactor-root .export-button{ font-size: 11px; height: 42px; }
+  .redactor-root .export-section > p{ font-size: 8px; margin-top: 12px; }
+  .redactor-root .format-select > select{ font-size: 8px; width: 36px; }
+  .redactor-root .canvas-local{ display: none; }
+  .redactor-root .workspace-assurance{ height: auto; min-height: 47px; font-size: 7px; gap: 10px; line-height: 1.8; }
+  .redactor-root .workspace-assurance > span > svg{ width: 11px; }
+  .redactor-root .workspace-assurance > button{ display: none; }
+  .redactor-root .main-footer{ font-size: 7px; gap: 16px; min-height: 52px; }
+  .redactor-root .main-footer > span:last-child{ font-size: 5px; letter-spacing: 0.5px; text-align: right; }
+  .redactor-root .file-info-view{ padding: 30px 20px; min-height: 570px; }
+  .redactor-root .file-info-view h2{ font-size: 18px; }
+  .redactor-root .file-info-view > p{ font-size: 9px; line-height: 1.9; }
+  .redactor-root .file-info-view dl > div{ font-size: 9px; gap: 14px; }
+  .redactor-root .editor-workspace:fullscreen{ grid-template-columns: minmax(0, 1fr); overflow-y: auto; }
+  .redactor-root .editor-workspace:fullscreen .document-editor{ height: 100vh; }
+  .redactor-root .editor-workspace:fullscreen .document-sheet{ width: 100% !important; }
+  .redactor-root .secondary-workspace{ grid-template-columns: minmax(0, 1fr); }
+  .redactor-root .upload-dropzone{ min-height: 445px; padding: 40px 25px; }
+  .redactor-root .upload-art{ width: 74px; height: 90px; margin-bottom: 25px; }
+  .redactor-root .upload-art > div{ width: 60px; height: 75px; }
+  .redactor-root .upload-art > span:not(.upload-art-plus) > svg{ width: 35px; }
+  .redactor-root .upload-dropzone h2{ font-size: 17px; }
+  .redactor-root .upload-dropzone p{ font-size: 10px; }
+  .redactor-root .upload-supported{ font-size: 7px; }
+  .redactor-root .utility-settings{ border-top: 1px solid #e2e7da; border-left: 0; }
+  .redactor-root .utility-settings-body{ padding: 25px 22px; }
+  .redactor-root .utility-settings-body > h3{ font-size: 12px; }
+  .redactor-root .select-wrap > select, .redactor-root .text-input{ font-size: 11px; height: 39px; }
+  .redactor-root .select-wrap > svg{ top: 13px; }
+  .redactor-root .range-label{ font-size: 11px; }
+  .redactor-root .field-hint{ font-size: 9px; }
+  .redactor-root .field-label{ font-size: 10px; }
+  .redactor-root .dimension-inputs > label{ font-size: 9px; width: 50%; }
+  .redactor-root .dimension-inputs > label > input{ height: 39px; font-size: 11px; }
+  .redactor-root .scale-options > button{ height: 30px; font-size: 9px; }
+  .redactor-root .rotate-button{ font-size: 10px; }
+  .redactor-root .utility-note > p{ font-size: 9px; }
+  .redactor-root .utility-settings .export-section > .button{ font-size: 11px; height: 42px; }
+  .redactor-root .image-preview-surface{ min-height: 360px; padding: 22px; }
+  .redactor-root .image-preview-surface > img{ max-height: 320px; }
+  .redactor-root .waveform-content{ padding: 34px 20px 26px; }
+  .redactor-root .waveform-heading{ font-size: 6px; margin-bottom: 24px; }
+  .redactor-root .waveform-frame{ height: 175px; }
+  .redactor-root .audio-transport .text-button{ font-size: 7px; }
+  .redactor-root .audio-instructions{ margin-top: 27px; }
+  .redactor-root .audio-instructions p{ font-size: 8px; }
+  .redactor-root .operation-options{ gap: 11px; }
+  .redactor-root .operation-options strong{ font-size: 11px; }
+  .redactor-root .operation-options span{ font-size: 8px; }
+  .redactor-root .pdf-list-heading{ padding: 25px 17px 16px; }
+  .redactor-root .pdf-list-heading > h3{ font-size: 12px; }
+  .redactor-root .pdf-file-list{ margin: 0 17px; }
+  .redactor-root .pdf-file-row{ gap: 10px; padding: 17px 0; }
+  .redactor-root .pdf-file-details > strong{ font-size: 9px; max-width: 145px; }
+  .redactor-root .pdf-order-buttons{ gap: 0; }
+  .redactor-root .pdf-order-buttons .icon-button{ width: 21px; }
+  .redactor-root .add-pdf-button{ margin: 20px 17px 25px; }
+  .redactor-root .pdf-list-footnote{ margin-bottom: 25px; font-size: 7px; }
+  .redactor-root .history-view, .redactor-root .history-empty{ min-height: 525px; }
+  .redactor-root .history-table-heading, .redactor-root .history-row{ grid-template-columns: minmax(0, 1fr) 70px; gap: 15px; padding-left: 5px; padding-right: 5px; }
+  .redactor-root .history-table-heading > span:nth-child(2), .redactor-root .history-table-heading > span:nth-child(3), .redactor-root .history-row > button, .redactor-root .history-row > span:nth-child(3){ display: none; }
+  .redactor-root .history-row strong{ font-size: 9px; }
+  .redactor-root .history-row > span:last-child{ text-align: right; }
+  .redactor-root .history-privacy{ margin-left: 5px; margin-right: 5px; font-size: 7px; align-items: flex-start; }
+  .redactor-root .modal-backdrop{ padding: 14px; }
+  .redactor-root .modal{ padding: 32px 25px 0; max-height: calc(100dvh - 28px); border-radius: 9px; }
+  .redactor-root .modal h2{ font-size: 23px; }
+  .redactor-root .modal-intro{ font-size: 11px; }
+  .redactor-root .principle p, .redactor-root .guide-step p{ font-size: 10px; }
+  .redactor-root .shortcut-row{ font-size: 10px; gap: 10px; }
+  .redactor-root kbd{ font-size: 7px; }
+  .redactor-root .toast{ bottom: 18px; font-size: 10px; gap: 9px; padding: 13px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
+  .redactor-root *, .redactor-root *::before, .redactor-root *::after{ animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
 }
