@@ -34,10 +34,10 @@ export default function Nds() {
 
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-3 gap-1.5">
+      <div className="grid grid-cols-3 gap-2">
         {MODES.map((m) => (
           <button key={m.id} onClick={() => { setMode(m.id); setResult(null); }}
-            className={`py-2 rounded-lg border text-[11px] font-semibold transition-colors cursor-pointer ${
+            className={`inline-flex min-h-[40px] items-center justify-center py-2 rounded-lg border text-[11px] font-semibold transition-colors cursor-pointer ${
               mode === m.id ? "border-brand-500 bg-brand-50 text-brand-700" : "border-gray-200 text-gray-600 hover:border-brand-300 bg-white"
             }`}>
             {m.label}
@@ -54,11 +54,11 @@ export default function Nds() {
         </div>
         <div className="space-y-1">
           <label className="text-[10px] font-mono text-gray-600">Ставка НДС</label>
-          <div className="grid grid-cols-5 gap-1.5">
+          <div className="grid grid-cols-5 gap-2">
             {NDS_RATES.map((r) => (
               <button key={r.value} onClick={() => { setRate(r.value); setResult(null); }}
                 title={r.note}
-                className={`py-2 rounded-lg border text-[11px] font-semibold transition-colors cursor-pointer ${
+                className={`inline-flex min-h-[40px] items-center justify-center py-2 rounded-lg border text-[11px] font-semibold transition-colors cursor-pointer ${
                   rate === r.value ? "border-brand-500 bg-brand-50 text-brand-700" : "border-gray-200 text-gray-600 hover:border-brand-300 bg-white"
                 }`}>
                 {r.label}

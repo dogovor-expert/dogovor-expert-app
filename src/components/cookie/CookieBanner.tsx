@@ -151,7 +151,7 @@ export function CookieBanner({ settingsOpenExternal, onSettingsClosed }: CookieB
         aria-modal="true"
         aria-labelledby="cookie-settings-title"
         aria-describedby="cookie-settings-desc"
-        className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 motion-reduce:bg-black/60 p-4"
+        className="fixed inset-0 z-[70] flex items-end sm:items-center justify-center bg-black/40 motion-reduce:bg-black/60 p-4"
       >
         <div className="w-full max-w-md bg-white border border-gray-200 rounded-2xl shadow-2xl p-6 max-h-[90vh] overflow-y-auto">
           <div className="flex items-center justify-between mb-4">

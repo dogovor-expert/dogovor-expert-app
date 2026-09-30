@@ -1053,7 +1053,7 @@ export default function AiYuristClient() {
               <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <span className="text-[11px] text-slate-400">Символов: {auditText.length} / {AUDIT_MAX.toLocaleString("ru-RU")} · минимум 200</span>
                 <Button onClick={() => void sendAudit()} disabled={auditSending} className="bg-gradient-to-br from-brand-600 to-indigo-600">
-                  <MagnifyingGlass size={16} weight="bold" /> {auditSending ? "Проверяем…" : "Проверить договор — {AI_PRICE_AUDIT_LABEL()}"}
+                  <MagnifyingGlass size={16} weight="bold" /> {auditSending ? "Проверяем…" : `Проверить договор — ${AI_PRICE_AUDIT_LABEL()}`}
                 </Button>
               </div>
               {auditSending && (

@@ -248,7 +248,7 @@ export default function UtilsTools() {
                       return (
                         <div
                           key={t.id}
-                          className={`flex items-center gap-2 rounded-xl border px-2 py-1.5 transition ${
+                          className={`flex items-center gap-2 rounded-xl border px-2 py-2 transition ${
                             isActive ? "border-brand-500 bg-brand-50 shadow-soft" : "border-transparent hover:border-gray-200 hover:bg-white"
                           }`}
                         >
@@ -272,7 +272,7 @@ export default function UtilsTools() {
                             onClick={() => toggleFav(t.id)}
                             aria-label={fav ? `Убрать «${t.label}» из избранного` : `Добавить «${t.label}» в избранное`}
                             aria-pressed={fav}
-                            className="shrink-0 w-7 h-7 rounded-full grid place-items-center transition cursor-pointer hover:bg-brand-50"
+                            className="shrink-0 w-8 h-8 rounded-full grid place-items-center transition cursor-pointer hover:bg-brand-50"
                           >
                             <Star className={`w-3.5 h-3.5 ${fav ? "fill-brand-500 text-brand-500" : "text-gray-300"}`} />
                           </button>

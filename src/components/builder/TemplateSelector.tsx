@@ -246,7 +246,7 @@ export default function TemplateSelector({
             <Fire size={15} weight="fill" className="text-amber-600" />
             Выбирают чаще всего
           </p>
-          <div className="grid gap-2 [grid-auto-flow:column] [grid-auto-columns:minmax(220px,1fr)] overflow-x-auto pb-1 sm:[grid-auto-columns:minmax(240px,1fr)]">
+          <div className="grid gap-2 [grid-auto-flow:column] [grid-auto-columns:minmax(220px,1fr)] overflow-x-auto scrollbar-hide pb-1 sm:[grid-auto-columns:minmax(240px,1fr)]">
             {POPULAR_TEMPLATE_IDS.map((id) => {
               const t = TEMPLATE_META.find((m) => m.id === id);
               if (!t) return null;
@@ -312,7 +312,7 @@ export default function TemplateSelector({
 
         <div className="min-w-0">
           {/* Chips-категории (мобила/планшет) */}
-          <div className="mb-3 flex gap-2 overflow-x-auto pb-1 lg:hidden" aria-label="Разделы шаблонов">
+          <div className="mb-3 flex gap-2 overflow-x-auto scrollbar-hide pb-1 lg:hidden" aria-label="Разделы шаблонов">
             {TEMPLATE_CATEGORIES.map((cat) => {
               const active = templateCategory === cat.id;
               return (

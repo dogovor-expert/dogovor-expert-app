@@ -217,7 +217,7 @@ export function ResumeCatalog({ items }: { items: CatalogItem[] }) {
         </div>
       </div>
 
-      <div className="-mx-6 mt-8 overflow-x-auto px-6 pb-2 [scrollbar-width:none]">
+      <div className="-mx-6 mt-8 overflow-x-auto scrollbar-hide px-6 pb-2 [scrollbar-width:none]">
         <div className="flex gap-2" role="group" aria-label="Категории шаблонов">
           {categories.map((label) => {
             const active = filter === label;

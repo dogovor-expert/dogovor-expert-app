@@ -27,7 +27,7 @@ export default function Logo({ dark = false, tagline = true }: LogoProps) {
           Dogovor<span className={dark ? "text-brand-300" : "text-brand-600"}>.expert</span>
         </span>
         {tagline && (
-          <span className="mt-0.5 truncate text-[11px] font-medium uppercase tracking-wider text-slate-400">
+          <span className="mt-0.5 truncate text-[11px] font-medium uppercase tracking-wider text-slate-500">
             Юридические документы онлайн
           </span>
         )}

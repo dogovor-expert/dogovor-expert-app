@@ -266,14 +266,16 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   return (
     <div className="app-shell flex overflow-hidden bg-gray-50">
       {/* Sidebar: on mobile it is removed from DOM when closed (hidden) to avoid horizontal overflow; on desktop it is always in flow */}
-      <aside aria-label="Боковая панель" className={`z-30 w-64 flex flex-col border-r ${
+      {/* Sidebar: drawer поверх cookie-баннера (z-40) и таб-бара (z-30);
+          на десктопе обычная w-64-колонка. Модалка настроек cookie — z-[70]. */}
+      <aside aria-label="Боковая панель" className={`z-[60] lg:z-30 w-72 lg:w-64 flex flex-col border-r ${
         sidebarDark ? "bg-dark-900 border-dark-800" : "bg-white border-gray-100"
       } ${
         open
           ? "fixed inset-y-0 left-0 shadow-xl lg:static lg:shadow-none"
           : "hidden lg:flex lg:static"
       }`}>
-        <div className={`flex items-center justify-between h-16 px-6 border-b flex-shrink-0 ${sidebarDark ? "border-dark-800" : "border-gray-100"}`}>
+        <div className={`flex items-center justify-between h-16 px-4 lg:px-6 border-b flex-shrink-0 ${sidebarDark ? "border-dark-800" : "border-gray-100"}`}>
           <Logo dark={sidebarDark} />
           <button onClick={() => setOpen(false)} className={`lg:hidden p-2.5 rounded-lg ${sidebarDark ? "hover:bg-white/10" : "hover:bg-gray-100"}`} aria-label="Закрыть меню навигации">
             <X className={`w-5 h-5 ${sidebarDark ? "text-slate-300" : "text-gray-600"}`} />

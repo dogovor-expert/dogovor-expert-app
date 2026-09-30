@@ -2001,8 +2001,10 @@ function HomeContent() {
           </div>
 
           {/* Right Column: A2-рельса (мини-А4 + инструменты).
-              В фокус-режиме плавно схлопывается (max-width + fade, см. .a2-rail),
-              на мобиле — скрывается; выход всегда доступен из дока/плавающей кнопки. */}
+              В фокус-режиме плавно схлопывается (max-width + fade, см. .a2-rail).
+              Ниже xl скрыта: на мобиле/планшете только форма + липкий CTA
+              «Предпросмотр» (полноэкранный PreviewStage), иначе страница
+              превращается в бесконечную ленту. */}
           {viewMode === "form" && (
             <div
               id="builder-sidebar"
@@ -2011,7 +2013,7 @@ function HomeContent() {
               className={`a2-rail self-start xl:sticky xl:top-[74px] xl:overflow-hidden ${
                 focusMode
                   ? "hidden xl:block xl:max-w-0 xl:opacity-0 xl:translate-x-8 xl:pointer-events-none"
-                  : "xl:max-w-[370px] xl:opacity-100"
+                  : "hidden xl:block xl:max-w-[370px] xl:opacity-100"
               }`}
             >
             <div className="space-y-4 xl:w-[370px]">

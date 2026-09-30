@@ -34,7 +34,9 @@ export default function HomeHero({ totalTemplates }: HomeHeroProps) {
         </svg>
       </div>
 
-      <div className="relative mx-auto grid max-w-7xl grid-cols-1 items-center gap-16 px-4 sm:px-6 lg:grid-cols-2">
+      {/* Две колонки только с xl: на 1024–1280 текст (text-6xl) и карточка
+          не влезают рядом — карточка обрезалась правым краем. Ниже xl — стек. */}
+      <div className="relative mx-auto grid max-w-7xl grid-cols-1 items-center gap-16 px-4 sm:px-6 xl:grid-cols-2">
         <div>
           <div className="inline-flex items-center gap-2 rounded-full border border-indigo-100 bg-indigo-50 px-4 py-1.5 text-sm font-semibold text-indigo-700">
             <Sparkles className="h-4 w-4" />
@@ -100,9 +102,9 @@ export default function HomeHero({ totalTemplates }: HomeHeroProps) {
         </div>
 
         {/* Мокап конструктора */}
-        <div className="relative lg:justify-self-end">
+        <div className="relative xl:justify-self-end">
           <div className="absolute -inset-6 rounded-[2.5rem] bg-gradient-to-br from-indigo-200/60 via-blue-100/40 to-transparent blur-2xl" aria-hidden="true" />
-          <div className="relative w-full max-w-md rounded-2xl border border-slate-200/80 bg-white shadow-2xl shadow-slate-900/10 sm:max-w-lg">
+          <div className="relative mx-auto w-full max-w-md rounded-2xl border border-slate-200/80 bg-white shadow-2xl shadow-slate-900/10 sm:max-w-lg xl:mx-0">
             <div className="flex items-center gap-1.5 rounded-t-2xl border-b border-slate-100 bg-slate-50 px-4 py-3">
               <span className="h-2.5 w-2.5 rounded-full bg-red-400" />
               <span className="h-2.5 w-2.5 rounded-full bg-amber-400" />
@@ -128,7 +130,10 @@ export default function HomeHero({ totalTemplates }: HomeHeroProps) {
             </div>
           </div>
 
-          <div className="absolute -left-8 bottom-8 hidden w-52 rounded-2xl border border-slate-200 bg-white p-4 shadow-xl shadow-slate-900/10 sm:block">
+          {/* Бейдж 152-ФЗ: был слева внизу и наезжал на тёмную пилюлю
+              «Экспорт в PDF и Word», а на sm–lg наполовину обрезался краем
+              секции. Верхний правый угол свободен на всех ширинах. */}
+          <div className="absolute -right-3 top-6 hidden w-52 rounded-2xl border border-slate-200 bg-white p-4 shadow-xl shadow-slate-900/10 sm:block">
             <div className="flex items-center gap-2">
               <span className="flex h-9 w-9 items-center justify-center rounded-full bg-emerald-100">
                 <ShieldCheck className="h-4 w-4 text-emerald-600" />
