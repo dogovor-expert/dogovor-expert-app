@@ -44,8 +44,8 @@ export default function HomeFooter() {
   return (
     <footer className="bg-slate-950 pt-16 text-slate-400">
       <div className="mx-auto max-w-7xl px-4 sm:px-6">
-        <div className="grid grid-cols-1 gap-12 border-b border-white/10 pb-12 lg:grid-cols-[1.4fr_repeat(4,1fr)]">
-          <div>
+        <div className="grid grid-cols-1 gap-12 border-b border-white/10 pb-12 sm:grid-cols-2 xl:grid-cols-[1.4fr_repeat(4,1fr)]">
+          <div className="min-w-0">
             <Logo dark tagline={false} />
             <p className="mt-4 max-w-xs text-sm leading-relaxed text-slate-500">
               Онлайн-конструктор юридических документов: договоры, иски, заявления и калькуляторы для дома и бизнеса.
@@ -53,12 +53,12 @@ export default function HomeFooter() {
           </div>
 
           {COLUMNS.map((col) => (
-            <nav key={col.title} aria-label={col.title}>
+            <nav key={col.title} aria-label={col.title} className="min-w-0">
               <h3 className="text-sm font-bold text-white">{col.title}</h3>
               <ul className="mt-4 space-y-2.5">
                 {col.links.map((link) => (
                   <li key={link.href + link.label}>
-                    <Link href={link.href} className="text-sm text-slate-400 transition hover:text-white">
+                      <Link href={link.href} className="break-words text-sm text-slate-400 transition hover:text-white">
                       {link.label}
                     </Link>
                   </li>

@@ -248,7 +248,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   }
 
   return (
-    <div className="flex h-screen overflow-hidden bg-gray-50">
+    <div className="app-shell flex overflow-hidden bg-gray-50">
       {/* Sidebar: on mobile it is removed from DOM when closed (hidden) to avoid horizontal overflow; on desktop it is always in flow */}
       <aside aria-label="Боковая панель" className={`z-30 w-64 flex flex-col border-r ${
         sidebarDark ? "bg-dark-900 border-dark-800" : "bg-white border-gray-100"

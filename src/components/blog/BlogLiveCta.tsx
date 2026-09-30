@@ -37,7 +37,10 @@ export default function BlogLiveCta({ templatesCount }: { templatesCount: number
         aria-hidden="true"
         className="pointer-events-none absolute inset-0 bg-[radial-gradient(600px_220px_at_12%_0%,rgba(37,99,235,0.35),transparent_60%),radial-gradient(520px_200px_at_88%_100%,rgba(109,40,217,0.32),transparent_62%)]"
       />
-      <div className="relative grid gap-8 p-7 sm:p-10 lg:grid-cols-[1.15fr_0.85fr] lg:items-center">
+      {/* Две колонки только когда карточке хватает ширины: на /blog она живёт в
+          узкой колонке minmax(0,1fr), и lg-брейкпоинт срабатывал уже при ~334px,
+          сжимая текст в одну букву на строку. Ниже — аккуратный стекучий layout. */}
+      <div className="relative grid gap-8 p-7 sm:p-10 min-[1350px]:grid-cols-[1.15fr_0.85fr] min-[1350px]:items-center">
         <div>
           <span className="inline-flex items-center gap-2 rounded-full border border-emerald-400/30 bg-emerald-400/10 px-3 py-1 text-[11px] font-semibold text-emerald-300">
             <span className="relative flex h-2 w-2">

@@ -103,11 +103,14 @@ export default function MobileTabBar() {
     };
   }, [pathname]);
 
-  // Скрытие при скролле вниз.
+  // Скрытие при скролле вниз. Скролл живёт внутри main (app-shell),
+  // window.scrollY там всегда 0 — слушаем скроллер напрямую.
   useEffect(() => {
     if (typeof window === "undefined") return;
+    const scroller: Element | Window = document.querySelector("main") ?? window;
+    const getY = () => (scroller instanceof Window ? scroller.scrollY : scroller.scrollTop);
     const onScroll = () => {
-      const y = window.scrollY;
+      const y = getY();
       const delta = y - lastY.current;
       if (Math.abs(delta) > 8) {
         if (delta > 0 && y > 80) setHidden(true);
@@ -115,8 +118,8 @@ export default function MobileTabBar() {
         lastY.current = y;
       }
     };
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
+    scroller.addEventListener("scroll", onScroll, { passive: true });
+    return () => scroller.removeEventListener("scroll", onScroll);
   }, []);
 
   if (isHiddenRoute(pathname)) return null;

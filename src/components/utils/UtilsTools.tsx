@@ -230,9 +230,9 @@ export default function UtilsTools() {
       </div>
 
       {/* Двухколоночная раскладка */}
-      <div className="mt-4 grid lg:grid-cols-5 gap-4 items-start">
+      <div className="mt-4 grid grid-cols-[minmax(0,1fr)] lg:grid-cols-5 gap-4 items-start">
         {/* Список инструментов */}
-        <aside className="lg:col-span-2 lg:sticky lg:top-20">
+        <aside className="min-w-0 lg:col-span-2 lg:sticky lg:top-20">
           <div className="rounded-2xl border border-gray-200 bg-gray-50/60 p-2 max-h-[70vh] overflow-y-auto scrollbar-thin">
             {GROUPS.map((g) => {
               const tools = sortTools(g.tools.filter((t) => matches(t, g.id)));
@@ -290,7 +290,7 @@ export default function UtilsTools() {
         </aside>
 
         {/* Панель активного инструмента */}
-        <section ref={panelRef} className="lg:col-span-3 scroll-mt-20">
+        <section ref={panelRef} className="min-w-0 lg:col-span-3 scroll-mt-20">
           <div className="rounded-2xl bg-white border border-gray-200 shadow-soft overflow-hidden">
             <div className="flex items-center gap-3 px-4 sm:px-5 py-4 border-b border-gray-100">
               <span className="shrink-0 w-10 h-10 rounded-xl bg-brand-50 border border-brand-100 text-brand-600 grid place-items-center">
