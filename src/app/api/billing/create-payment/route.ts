@@ -94,7 +94,11 @@ async function postHandler(req: Request) {
     );
     // Другой Idempotence-Key: с тем же ключом YooKassa вернёт КЭШИРОВАННЫЙ
     // прежний ответ с ошибкой, и повтор не поможет.
-    attempt = await callYookassa(false, `${idempotenceKey}-nosave`);
+    // Ключ обязан быть ≤64 символов (иначе 400 invalid_request «Idempotence key
+    // is too long»): sha256-hex уже ровно 64, поэтому суффикс не дописываем,
+    // а хешируем заново — снова ровно 64.
+    const retryKey = createHash("sha256").update(`${idempotenceKey}:nosave`).digest("hex");
+    attempt = await callYookassa(false, retryKey);
     paymentMethodSaved = false;
   }
 

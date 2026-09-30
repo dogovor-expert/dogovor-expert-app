@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { randomUUID } from "crypto";
+import { randomUUID, createHash } from "crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -158,13 +158,18 @@ async function postHandler(req: Request) {
   // Idempotence-Key с 5-минутным тайм-бакетом (как в billing/create-payment):
   // двойной сабмит в пределах окна переиспользует ключ (нет двойного списания),
   // а после отмены/экспирации платежа спустя окно можно создать новый.
+  // YooKassa режет ключи длиннее 64 символов (400 invalid_request), поэтому
+  // ключ — всегда sha256-hex (ровно 64), а не base64 (он давал ~96).
   const idempotenceBucket = Math.floor(Date.now() / 300000);
+  const idempotenceKey = createHash("sha256")
+    .update(`autoteka:${user.id}:${vin}:${premium ? "prem" : "std"}:${idempotenceBucket}`)
+    .digest("hex");
 
   const res = await fetch("https://api.yookassa.ru/v3/payments", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "Idempotence-Key": Buffer.from(`${user.id}:${vin}:${premium ? "prem" : "std"}:${idempotenceBucket}`).toString("base64"),
+        "Idempotence-Key": idempotenceKey,
       Authorization: "Basic " + Buffer.from(`${shopId}:${secretKey}`).toString("base64"),
     },
     body: JSON.stringify({

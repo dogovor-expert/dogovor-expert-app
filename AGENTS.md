@@ -14,6 +14,12 @@
 7. **Site audit protocol** — команда `npm run audit:full`: [`docs/SITE_AUDIT.md`](docs/SITE_AUDIT.md).
 8. **Среда выполнения (Windows / OpenCode)** — LF, UTF-8 no-BOM: [`docs/ENV_RULES.md`](docs/ENV_RULES.md).
 9. **Адаптивность** — mobile-first, dvh/safe-area: [`docs/RESPONSIVE.md`](docs/RESPONSIVE.md). PWA/service worker — НЕ внедрять.
+10. **Вёрстка без переполнений (инциденты: футер@1024, /builder+/utils mobile, caption@ai-yurist, YooKassa-400)** — при создании/правке страниц проверять и не допускать:
+    - `document.scrollHeight` == высоте вьюпорта на любой странице (скроллится только `main` в app-shell). Проверка Playwright: `docSH/vh` + `main.sw/cw` на 390/1024/1440 после скролла вниз.
+    - `absolute` без `relative`-предка запрещён (кроме осознанных `fixed`-виджетов). `sr-only`, `caption`, декор — только внутри `relative`/`overflow-hidden`. `main` уже `relative` как системная страховка — не снимать.
+    - Grid-колонки: трек `minmax(0,1fr)` + `min-w-0` на детях; flex-ряды с nowrap — `min-w-0`+`truncate` или `overflow-x-auto`. Многоколоночные сетки (футер и т.п.) — ранняя перестройка брейкпоинтов, проверять на 1024.
+    - Декоративные вылеты (`-right-*`, `left-1/2`-блёбы) — только в секциях с `overflow-hidden`/`overflow-x-clip`.
+    - YooKassa `Idempotence-Key` — **строго ≤64 символов, только sha256-hex**. Никаких base64 и дописанных суффиксов (давали 400 `Idempotence key is too long` на подписке, автотеке и ЭПТС).
 
 ## 📌 Открытые задачи
 

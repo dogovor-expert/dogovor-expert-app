@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { createHash } from "crypto";
 import { z } from "zod";
 import { isSameOrigin } from "@/lib/admin-auth";
 import { limiters, clientIp, checkRateLimit, rateLimitResponse } from "@/lib/ratelimit";
@@ -104,13 +105,18 @@ async function postHandler(req: Request) {
   // Idempotence-Key с 5-минутным тайм-бакетом: защищает от двойного создания
   // платежа при повторной отправке формы, но позволяет оформить заявку заново
   // после отмены/экспирации платежа (раньше ключ был вечным и блокировал повтор).
+  // YooKassa режет ключи длиннее 64 символов (400 invalid_request), поэтому
+  // ключ — всегда sha256-hex (ровно 64), а не base64 (он давал ~76).
   const idempotenceBucket = Math.floor(Date.now() / 300000);
+  const idempotenceKey = createHash("sha256")
+    .update(`epts:${vin}:${epts}:${idempotenceBucket}`)
+    .digest("hex");
 
   const res = await fetch("https://api.yookassa.ru/v3/payments", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "Idempotence-Key": Buffer.from(`epts:${vin}:${epts}:${idempotenceBucket}`).toString("base64"),
+        "Idempotence-Key": idempotenceKey,
       Authorization: "Basic " + Buffer.from(`${shopId}:${secretKey}`).toString("base64"),
     },
     body: JSON.stringify({

@@ -48,5 +48,8 @@ export function humanizeYookassaError(raw: string): string {
   if (s.includes("timeout") || s.includes("503") || s.includes("unavailable")) {
     return "Платёжная система не отвечает. Попробуйте позже.";
   }
+  if (s.includes("idempotence") || s.includes("idempotent")) {
+    return "Техническая ошибка создания платежа. Подождите минуту и попробуйте ещё раз.";
+  }
   return "Платёжная система отклонила платёж. Попробуйте позже или выберите другой способ оплаты.";
 }
