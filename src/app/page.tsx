@@ -4,8 +4,10 @@ import { AdSlot } from "@/components/ads/AdSlot";
 import StickyCta from "@/components/home/StickyCta";
 import HomeHero from "@/components/home/HomeHero";
 import HomeTrustBar from "@/components/home/HomeTrustBar";
+import HomeMarketStrip from "@/components/home/HomeMarketStrip";
 import HomeHowItWorks from "@/components/home/HomeHowItWorks";
 import HomeFeatures from "@/components/home/HomeFeatures";
+import HomeTools from "@/components/home/HomeTools";
 import HomeTemplates, { type TemplateCategory } from "@/components/home/HomeTemplates";
 import HomeCalculators, { type HomeCalculator } from "@/components/home/HomeCalculators";
 import HomeSecurity from "@/components/home/HomeSecurity";
@@ -131,10 +133,12 @@ export default function HomePage() {
   return (
     <div className="min-h-full bg-white pb-10">
       <HomeHero totalTemplates={TOTAL} />
-      <HomeTrustBar />
-      <HomeHowItWorks totalTemplates={TOTAL} />
-      <HomeFeatures totalTemplates={TOTAL} />
-      <HomeTemplates categories={categories} totalTemplates={TOTAL} />
+<HomeTrustBar />
+        <HomeMarketStrip />
+        <HomeHowItWorks totalTemplates={TOTAL} />
+        <HomeFeatures totalTemplates={TOTAL} />
+        <HomeTools />
+        <HomeTemplates categories={categories} totalTemplates={TOTAL} />
       <HomeCalculators calculators={calculators} />
       <HomeSecurity />
       <HomeTestimonials />

@@ -13,6 +13,7 @@ import {
   HardDrive, Download, Cookie, Moon, Sun, Scale, Eraser, Fingerprint
 } from "lucide-react";
 import HeaderSearch from "@/components/search/HeaderSearch";
+import HeaderTools from "@/components/layout/HeaderTools";
 import Logo from "@/components/layout/Logo";
 import { CookieBanner } from "@/components/cookie/CookieBanner";
 import { useCookieConsent } from "@/hooks/useCookieConsent";
@@ -414,6 +415,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
             <PromoPill />
           </div>
           <div className="flex items-center gap-2">
+            <HeaderTools />
             {user ? (
               <>
                 {showCookieIcon && (

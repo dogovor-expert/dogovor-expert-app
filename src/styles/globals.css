@@ -540,8 +540,30 @@
 
 @media (prefers-reduced-motion: reduce) {
   .support-fab-pulse,
-  .support-panel-grow {
+  .support-panel-grow,
+  .hp-panel {
     animation: none;
+  }
+}
+
+/* ============================================================
+   Панели шапки (калькулятор, календарь, заметки): аккуратное
+   «выезжание» вниз на 6px + проявление. Чистый CSS — без JS,
+   поэтому безопасно для SSR и не блокирует первый рендер.
+   ============================================================ */
+.hp-panel {
+  animation: hp-panel-in 180ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  transform-origin: top right;
+}
+
+@keyframes hp-panel-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
   }
 }
 
