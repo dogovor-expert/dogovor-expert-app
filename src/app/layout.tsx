@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "@/styles/globals.css";
-import AppLayout from "@/components/layouts/AppLayout";
+import ConditionalShell from "@/components/layouts/ConditionalShell";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { YandexMetrika } from "@/components/analytics/YandexMetrika";
 import { YandexMetrikaPageView } from "@/components/analytics/YandexMetrikaPageView";
@@ -152,7 +152,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body className="font-sans">
         <VaultWrapper>
-          <AppLayout>{children}</AppLayout>
+          <ConditionalShell>{children}</ConditionalShell>
         </VaultWrapper>
         <YandexMetrika />
         <YandexMetrikaPageView />

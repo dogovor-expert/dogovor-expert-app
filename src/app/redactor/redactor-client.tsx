@@ -41,38 +41,21 @@ const RedactorApp = dynamic(() => import("@/tools/redactor/App"), {
 export default function RedactorClient() {
   return (
     <div className="redactor-root">
-      {/* Служебная полоса dogovor.expert. Сознательно узкая: дизайн
-          инструмента не должен выглядеть частью конструктора договоров,
-          но пользователь должен понимать, где он находится. */}
-      <div
-        className="flex items-center justify-between border-b border-[#dfe3d8] bg-white px-4 py-2"
-        style={{ borderColor: "#dfe3d8" }}
-      >
-        <div className="flex items-center gap-3">
-          <Link
-            href="/"
-            aria-label="На главную dogovor.expert"
-            className="inline-flex items-center gap-2"
-          >
-            <span className="scale-[0.72] origin-left">
-              <Logo />
-            </span>
-          </Link>
-          <span className="text-xs text-[#7b856f]">Дополнительные инструменты</span>
-        </div>
-        <Link
-          href="/"
-          className="rounded-lg px-3 py-1.5 text-xs font-medium text-[#385d45] transition-colors hover:bg-[#eef2e8]"
-        >
+      {/* Возврат на сайт. Основной каркас для /redactor намеренно не
+          рисуется (см. ConditionalShell) — инструмент занимает всё окно и
+          использует собственный фиксированный сайдбар. Эта узкая полоса —
+          единственная точка выхода обратно в dogovor.expert. */}
+      <div className="redactor-return">
+        <Link href="/" aria-label="На главную dogovor.expert" className="redactor-return-logo">
+          <Logo />
+        </Link>
+        <span className="redactor-return-label">Дополнительные инструменты</span>
+        <Link href="/" className="redactor-return-link">
           На сайт
         </Link>
       </div>
 
-      {/* Инструмент рассчитан на всю высоту окна, поэтому полосу
-          обслуживания уводим из потока. */}
-      <div style={{ marginTop: "-1px" }}>
-        <RedactorApp />
-      </div>
+      <RedactorApp />
     </div>
   );
 }

@@ -22,6 +22,7 @@ import {
   Copy,
   Calculator,
   FileSignature,
+  Info,
 } from "lucide-react";
 import { getAllDrafts, clearDraft, clearDraftVersions, getDraftVersions, restoreDraftVersion, type DraftData, type DraftVersion } from "@/lib/autosave";
 import { exportDocument, getConnectedProviders } from "@/lib/cloud/manager";
@@ -578,7 +579,16 @@ export default function DocumentsPage() {
                 В этом браузере найдено {importCount} {importCount === 1 ? "черновик" : importCount < 5 ? "черновика" : "черновиков"}
               </p>
               <p className="text-xs text-gray-600">
-                Созданные до входа в аккаунт. Перенесите их, чтобы они были всегда с вами.
+                Созданные до входа в аккаунт. Перенесите их, чтобы они были доступны на других устройствах.
+              </p>
+              <p className="mt-1.5 text-xs text-gray-700 flex items-start gap-1.5">
+                <Info className="w-3.5 h-3.5 mt-0.5 flex-shrink-0 text-brand-600" aria-hidden />
+                <span>
+                  При переносе содержимое документов — заполненные поля и история версий —
+                  сохраняется <b>на нашем сервере</b> и становится доступно вашему аккаунту.
+                  Пока вы не нажали эту кнопку, черновики остаются только в этом браузере
+                  и никуда не отправляются.
+                </span>
               </p>
             </div>
           </div>
