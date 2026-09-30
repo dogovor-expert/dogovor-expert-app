@@ -125,7 +125,7 @@ export default function DashboardPage() {
             {sub.subscription_active && sub.plan !== "free"
               ? "оплачен до конца периода"
               : promo
-                ? `${formatRub(price)}/мес вместо ${formatRub(PRO_PRICE_OLD)} — акция ${PROMO_LABEL}`
+                ? `${formatRub(price)}/мес — действует акция`
                 : `${formatRub(price)}/мес — без ограничений`}
           </p>
         </Card>
@@ -200,17 +200,15 @@ export default function DashboardPage() {
                 </span>
               )}
               Тариф Pro за {formatRub(price)}
-              {/* Зачёркнутая старая цена — только пока действует акция. Раньше она
-                  выводилась всегда, и после окончания акции пользователь видел
-                  «990 ₽ 990 ₽/мес» и «Выгода 0 ₽». */}
-              {promo && (
-                <span className="text-sm font-normal text-gray-600 line-through"> {formatRub(PRO_PRICE_OLD)}</span>
-              )}
+              {/* Зачёркнутая «старая цена» 990 ₽ убрана: её никогда не
+                  списывали (PRO_PRICE_OLD и PRO_PRICE добавлены одним коммитом),
+                  и зачёркивание выглядело как «вы платили 990 ₽». Показываем
+                  только реальную цену. */}
               /мес
             </h3>
             <p className="text-sm text-gray-600 mt-1">
               {promo && !(sub.subscription_active && sub.plan !== "free")
-                ? `Выгода ${formatRub(PRO_PRICE_OLD - price)} — цена вернётся к обычной через: `
+                ? `Акция закончится через: `
                 : "Неограниченные расчёты, экспорт в PDF, история, все калькуляторы без рекламы."}
               {promo && !(sub.subscription_active && sub.plan !== "free") && (
                 <CountdownTimer endsAt={promoCountdownTarget()} compact className="font-bold text-gray-800 tabular-nums" />

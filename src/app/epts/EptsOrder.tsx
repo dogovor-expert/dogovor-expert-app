@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { CheckCircle2, CreditCard, Loader2, ShieldCheck } from "lucide-react";
+import { EPTS_PRICE_RUB, formatRub } from "@/lib/pricing";
 
 interface FormState {
   vin: string;
@@ -154,9 +155,11 @@ export default function EptsOrder() {
 
       <div className="mt-5 flex flex-wrap items-end justify-between gap-3 border-t border-dashed border-gray-200 pt-4">
         <div>
-          <div className="text-sm text-gray-500 line-through">1 200 ₽</div>
+          {/* Раньше здесь была зачёркнутая «старая цена» 1 200 ₽. Такой цены
+              никогда не существовало (EPTS_PRICE = 800 появился в том же
+              коммите, что и зачёркивание), поэтому показываем реальную цену. */}
           <div className="text-2xl font-extrabold tracking-tight text-gray-900">
-            800 <span className="text-base font-semibold text-gray-500">₽</span>
+            {formatRub(EPTS_PRICE_RUB)}
           </div>
         </div>
         <button

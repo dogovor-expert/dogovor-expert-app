@@ -141,7 +141,9 @@ export default function HomePage() {
       <HomePricing
         totalTemplates={TOTAL}
         proPrice={proPrice}
-        proOldPrice={isPromoActive() ? PRO_PRICE_OLD : null}
+        // Раньше здесь передавалась зачёркнутая «старая цена» 990 ₽. Её никогда
+        // не списывали, поэтому карточка показывает только реальную цену.
+        proOldPrice={null}
       />
 
       {/* ======================= FAQ ======================= */}

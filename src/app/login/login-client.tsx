@@ -23,8 +23,7 @@ function RegisterPromo() {
       </span>
       <p className="text-xs text-gray-700 leading-snug">
         Акция для новых пользователей: PRO за{" "}
-        <span className="font-bold">{formatRub(currentProPrice())}</span>{" "}
-        <span className="text-gray-600 line-through">{formatRub(PRO_PRICE_OLD)}</span>/мес.
+        <span className="font-bold">{formatRub(currentProPrice())}</span>/мес.
         Скидка закончится через{" "}
         <CountdownTimer endsAt={promoCountdownTarget()} compact className="font-bold tabular-nums" />
       </p>

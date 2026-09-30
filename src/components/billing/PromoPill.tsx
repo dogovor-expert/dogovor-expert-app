@@ -32,7 +32,8 @@ export default function PromoPill() {
       <span className="text-xs font-semibold text-gray-800">
         PRO {formatRub(currentProPrice())}
       </span>
-      <span className="text-[11px] text-gray-600 line-through">{formatRub(PRO_PRICE_OLD)}</span>
+      {/* Раньше здесь была зачёркнутая «старая цена» 990 ₽, которой никогда
+          не существовало. Показываем только реальную цену и оставшееся время. */}
       <span className="text-[10px] text-gray-600 tabular-nums group-hover:text-brand-600 transition-colors">
         <CountdownTimer endsAt={promoCountdownTarget()} compact />
       </span>

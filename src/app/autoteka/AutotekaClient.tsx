@@ -644,12 +644,22 @@ function Marketing() {
     emerald: { bg: "bg-emerald-50", text: "text-emerald-600" },
   };
 
+  /**
+   * ⚠️ Раньше здесь был ряд «Другие сервисы — 499 ₽», а в таблице сравнения
+   * тарифов тот же конкурент стоил 179 ₽. Страница противоречила сама себе, а
+   * 179 ₽ делали конкурента ДЕШЕВЛЕ наших 199 ₽ — то есть в блоке «Почему мы
+   * выгоднее» мы выглядели хуже. Плюс обе цифры ничем не подтверждались.
+   *
+   * Сравнивать цены чужих сервисов, которые не проверяются и постоянно
+   * меняются, — некорректно. Поэтому в графике остались только наши тарифы
+   * (источник цен — /api/autoteka/pay/route.ts), а аргумент «выгоднее»
+   * держится на том, что мы берём данные напрямую у TRONK.
+   */
   const bars = [
-    { name: "Другие сервисы", price: 499, ours: false },
-    { name: "Наш Стандарт", price: 199, ours: true, accent: "brand" },
-    { name: "Наш Премиум", price: 299, ours: true, accent: "purple" },
+    { name: "Наш Премиум", price: PREM_PRICE, ours: true, accent: "purple" },
+    { name: "Наш Стандарт", price: STD_PRICE, ours: true, accent: "brand" },
   ];
-  const maxPrice = 499;
+  const maxPrice = PREM_PRICE;
 
   return (
     <section className="max-w-7xl mx-auto space-y-16">
@@ -708,7 +718,10 @@ function Marketing() {
               );
             })}
           </div>
-          <p className="mt-5 text-center text-sm text-gray-500">Наши тарифы дешевле типичных платных отчётов при сопоставимом объёме данных.</p>
+          <p className="mt-5 text-center text-sm text-gray-500">
+            Мы берём данные напрямую у TRONK и продаём два понятных тарифа — без скрытых
+            доплат и посреднических наценок.
+          </p>
         </div>
       </div>
 
@@ -741,7 +754,12 @@ function Marketing() {
               <tr className="border-t border-gray-100"><td className="py-3 px-4">Фото + история объявлений</td><td className="text-center text-gray-400">частично</td><td className="text-center text-gray-400">—</td><td className="text-center text-purple-600 font-semibold">✓</td></tr>
               <tr className="border-t border-gray-100 bg-gray-50"><td className="py-3 px-4">График пробега + скрутки</td><td className="text-center text-amber-600">базово</td><td className="text-center text-emerald-600">✓</td><td className="text-center text-purple-600 font-semibold">✓+</td></tr>
               <tr className="border-t border-gray-100"><td className="py-3 px-4">Брендированный PDF</td><td className="text-center text-gray-400">—</td><td className="text-center text-gray-400">—</td><td className="text-center text-purple-600 font-semibold">✓</td></tr>
-              <tr className="border-t border-gray-100"><td className="py-3 px-4 font-semibold text-gray-900">Цена</td><td className="text-center font-semibold">179 ₽</td><td className="text-center font-bold text-brand-700">199 ₽</td><td className="text-center font-bold text-purple-700">299 ₽</td></tr>
+              {/* Цена конкурентов удалена: в этом блоке стояло 179 ₽, в графике
+                  выше — 499 ₽, то есть страница называла одну и ту же цену двумя
+                  числами, и 179 ₽ делали «Другие сервисы» дешевле наших 199 ₽.
+                  Чужие цены не проверяются и меняются, поэтому сравниваем
+                  возможности, а не стоимость. */}
+              <tr className="border-t border-gray-100"><td className="py-3 px-4 font-semibold text-gray-900">Цена</td><td className="text-center text-gray-400">уточняйте у сервиса</td><td className="text-center font-bold text-brand-700">{STD_PRICE} ₽</td><td className="text-center font-bold text-purple-700">{PREM_PRICE} ₽</td></tr>
             </tbody>
           </table>
         </div>

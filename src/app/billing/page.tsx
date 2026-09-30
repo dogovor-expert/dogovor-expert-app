@@ -459,11 +459,17 @@ export default function BillingPage() {
                 {formatRub(price)}
                 <span className="text-base font-normal opacity-80"> / месяц</span>
                 {promo && (
-                  <span className="ml-2 text-lg font-semibold opacity-60 line-through">{formatRub(PRO_PRICE_OLD)}</span>
+                  // Раньше здесь стояла зачёркнутая «старая цена» 990 ₽. Такой
+                  // цены никогда не существовало (PRO_PRICE_OLD и PRO_PRICE
+                  // добавлены одним коммитом), поэтому показываем честную
+                  // пометку акции вместо выдуманной исходной суммы.
+                  <span className="ml-2 align-middle text-sm font-semibold opacity-90">
+                    {PROMO_LABEL}
+                  </span>
                 )}
               </p>
               {promo ? (
-                <p className="text-sm opacity-90 mt-1">Экономия {formatRub(savings)} при оформлении сегодня</p>
+                <p className="text-sm opacity-90 mt-1">Действует до конца акции — успейте оформить</p>
               ) : (
                 <p className="text-sm opacity-90 mt-1">Полный набор инструментов для договоров</p>
               )}

@@ -42,11 +42,15 @@ export default function NotificationsTab() {
   const [consentMsg, setConsentMsg] = useState<string | null>(null);
 
   useEffect(() => {
+    // ⚠️ Раньше здесь не было .catch(): при сетевой ошибке или битом JSON
+    // промис отклонялся, а `void` глушил исключение — пользователь молча
+    // видел вечную заглушку. Соседний запрос ниже .catch() имеет.
     void fetch("/api/profile")
       .then((r) => (r.ok ? (r.json() as Promise<{ data?: { notify_email?: boolean } }>) : null))
       .then((res) => {
         if (res?.data) setNotifyEmail(!!res.data.notify_email);
       })
+      .catch(() => null)
       .finally(() => setLoading(false));
     fetch("/api/marketing-consent", { cache: "no-store" })
       .then((r) => (r.ok ? (r.json() as Promise<{ pd_consent?: boolean; ad_consent?: boolean }>) : null))

@@ -18,7 +18,11 @@ import { createAdminClient } from "@/lib/supabase/admin";
  * оформлять документ.
  */
 
-const EPTS_PRICE = 800;
+import { EPTS_PRICE_RUB } from "@/lib/pricing";
+
+// Раньше здесь стоял литерал `const EPTS_PRICE = 800`, а в UI — другая копия
+// того же числа. Теперь цена одна: src/lib/pricing.ts.
+const EPTS_PRICE = EPTS_PRICE_RUB;
 
 const eptsSchema = z.object({
   vin: z.string().regex(/^[A-HJ-NPR-Z0-9]{17}$/, "VIN должен содержать 17 символов"),

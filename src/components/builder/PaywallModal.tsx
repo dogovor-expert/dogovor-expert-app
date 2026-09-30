@@ -41,13 +41,13 @@ export default function PaywallModal({ isOpen, onClose, title = "Эта возм
             </span>
             <span className="text-xs font-bold">
               {formatRub(price)}
-              <span className="ml-1.5 text-sm font-semibold opacity-60 line-through">
-                {formatRub(PRO_PRICE_OLD)}
+              <span className="ml-1.5 text-[11px] font-semibold opacity-90">
+                {PROMO_LABEL}
               </span>
             </span>
           </div>
           <div className="mt-2 flex items-center gap-2 text-[11px] opacity-90">
-            <span>Скидка до конца акции:</span>
+            <span>До конца акции:</span>
             <CountdownTimer endsAt={promoCountdownTarget()} compact className="font-bold tabular-nums" />
           </div>
         </div>
