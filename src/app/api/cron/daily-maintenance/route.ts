@@ -2,6 +2,7 @@ import crypto from "node:crypto";
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { initiateRecurringRenewal, type RenewResult } from "@/lib/billing/recurring";
+import { deleteExpiredChatFiles } from "@/lib/chat-files";
 
 const DAY_MS = 86400000;
 // Окно, за которое до истечения подписки мы инициируем автосписание.
@@ -112,6 +113,18 @@ async function purgeOldReplays(): Promise<{ ok: boolean; error?: string }> {
 }
 
 /**
+ * 152-ФЗ: удалить вложения чата старше 30 дней.
+ *
+ * ⚠️ Раньше в бакет chat-files попадали файлы посетителей, а удаляющей
+ * функции не существовало вовсе — объявленный TTL ничего не делал. Срок
+ * хранения ПДн должен быть не только указан в политике, но и соблюдаться.
+ */
+async function purgeExpiredChatFiles(): Promise<{ ok: boolean; deleted: number; error?: string }> {
+  const r = await deleteExpiredChatFiles();
+  return r.error ? { ok: false, deleted: r.deleted, error: r.error } : { ok: true, deleted: r.deleted };
+}
+
+/**
  * Ежедневное обслуживание: автосписание подписок + очистка корзины.
  * Объединяет прежние /api/cron/auto-renew и /api/cron/trash-cleanup
  * (лимит Vercel Hobby — 2 cron job).
@@ -126,10 +139,18 @@ export async function GET(req: Request) {
   const trash = await cleanupTrash();
   const events = await purgeOldEvents();
   const replays = await purgeOldReplays();
+  const chatFiles = await purgeExpiredChatFiles();
 
-  const ok = !renew.error && !trash.error && events.ok && replays.ok;
+  const ok = !renew.error && !trash.error && events.ok && replays.ok && chatFiles.ok;
   return NextResponse.json(
-    { ok, renew: { processed: renew.processed, results: renew.results, error: renew.error }, trash, events, replays },
+    {
+      ok,
+      renew: { processed: renew.processed, results: renew.results, error: renew.error },
+      trash,
+      events,
+      replays,
+      chatFiles,
+    },
     { status: ok ? 200 : 500 },
   );
 }

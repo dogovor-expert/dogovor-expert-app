@@ -70,3 +70,60 @@ export async function uploadChatFile(
     return null;
   }
 }
+
+/**
+ * 152-ФЗ: удалить вложения чата старше CHAT_FILE_TTL.
+ *
+ * ⚠️ До 30.09.2026 объявленный TTL ничем не поддерживался: файлы попадали в
+ * бакет `chat-files` и оставались там навсегда, потому что удаляющая функция
+ * просто не существовала. Из-за этого в политике нельзя было честно написать
+ * срок хранения (Рособрнадзор требует указывать сроки хранения ПДн).
+ *
+ * Функция вызывается из /api/cron/daily-maintenance.
+ */
+export async function deleteExpiredChatFiles(
+  now = Date.now()
+): Promise<{ deleted: number; error?: string }> {
+  try {
+    await ensureBucket();
+    const supabase = createAdminClient();
+    const cutoff = new Date(now - CHAT_FILE_TTL).toISOString();
+    const expired: string[] = [];
+
+    // Supabase Storage не умеет фильтровать по дате, поэтому обходим
+    // папки посетителей и отбираем объекты старше отсечки.
+    let queue: string[] = [""];
+    // Ограничение глубины: защита от бесконечного обхода при «плохом» бакете.
+    for (let depth = 0; depth < 3 && queue.length > 0; depth++) {
+      const next: string[] = [];
+      for (const prefix of queue) {
+        const { data, error } = await supabase.storage
+          .from(BUCKET)
+          .list(prefix, { limit: 1000 });
+        if (error) return { deleted: 0, error: error.message };
+        for (const obj of data ?? []) {
+          if (obj.id && obj.updated_at && new Date(obj.updated_at).getTime() < new Date(cutoff).getTime()) {
+            expired.push(obj.name ? (prefix ? `${prefix}/${obj.name}` : obj.name) : obj.name);
+          } else if (!obj.id) {
+            // Папка (visitorId) — спускаемся глубже.
+            next.push(obj.name);
+          }
+        }
+      }
+      queue = next;
+    }
+
+    if (expired.length === 0) return { deleted: 0 };
+    // Удаляем пачками: у Storage есть лимит на размер одного запроса.
+    let deleted = 0;
+    for (let i = 0; i < expired.length; i += 50) {
+      const chunk = expired.slice(i, i + 50);
+      const { error } = await supabase.storage.from(BUCKET).remove(chunk);
+      if (error) return { deleted, error: error.message };
+      deleted += chunk.length;
+    }
+    return { deleted };
+  } catch (e) {
+    return { deleted: 0, error: String(e) };
+  }
+}

@@ -13,9 +13,13 @@ import {
   INLINE_TAGS,
   sizeFromClass,
 } from "@/lib/html-parser";
+import { A4_PT } from "@/lib/page-geometry";
 import type { PDFImage, PDFFont, PDFPage, RGB, PDFDocument } from "pdf-lib";
 
-const A4 = { w: 595.28, h: 841.89 };
+// Размер листа A4 берём из единого источника (lib/page-geometry): раньше
+// константа 595.28×841.89 была продублирована в пяти файлах, и правка
+// одного места расходилась с остальными.
+const A4 = A4_PT;
 
 export interface ExportPdfOptions {
   /** Водяной знак для free-пользователя (рисуется над подвалом каждой страницы). */

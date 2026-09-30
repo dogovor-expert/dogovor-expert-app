@@ -4,6 +4,7 @@
  * Функциональность идентична exportDocx.ts, но библиотеки загружаются динамически.
  */
 
+import { A4_MM, mmToTwips } from "@/lib/page-geometry";
 import { saveAs } from 'file-saver';
 import {
   getDesign,
@@ -286,10 +287,9 @@ function buildParagraph(
 }
 
 function contentWidthTwips(design: DesignTokens): number {
-  const w = 595.28;
-  const left = design.marginLeft * 56.6929134;
-  const right = design.marginRight * 56.6929134;
-  return Math.round((w - left - right) * 20);
+  // Единый источник геометрии (см. exportDocx.ts) — вместо магических
+  // «595.28 * 20» и «56.6929134», продублированных в обоих DOCX-движках.
+  return mmToTwips(A4_MM.w) - mmToTwips(design.marginLeft) - mmToTwips(design.marginRight);
 }
 
 async function parseHtmlToDocx(

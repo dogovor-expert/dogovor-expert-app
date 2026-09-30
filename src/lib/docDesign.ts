@@ -1,4 +1,5 @@
-﻿/**
+import { A4_PT } from "@/lib/page-geometry";
+/**
  * Единая дизайн-система документа (design tokens).
  *
  * ЕДИНСТВЕННЫЙ источник значений типографики и оформления для всех
@@ -310,8 +311,10 @@ export interface PageMetrics {
 }
 
 export function pageMetrics(design: DesignTokens): PageMetrics {
-  const w = 595.28;
-  const h = 841.89;
+  // Геометрия листа — из единого источника (раньше 595.28/841.89 дублировались
+  // в пяти файлах, и метрики разъезжались с фактическим размером страницы).
+  const w = A4_PT.w;
+  const h = A4_PT.h;
   const headerHeight = design.logoWeight === "strong"
     ? 9 * MM_TO_PT
     : 8 * MM_TO_PT;

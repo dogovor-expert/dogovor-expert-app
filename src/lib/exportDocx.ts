@@ -1,4 +1,5 @@
 ﻿import { saveAs } from "file-saver";
+import { A4_MM, mmToTwips } from "@/lib/page-geometry";
 import { getDesign, type DesignId, type DesignTokens } from "@/lib/docDesign";
 import {
   hasClass,
@@ -226,10 +227,10 @@ function buildParagraph(
 }
 
 function contentWidthTwips(design: DesignTokens): number {
-  const w = 595.28;
-  const left = design.marginLeft * 56.6929134;
-  const right = design.marginRight * 56.6929134;
-  return Math.round((w - left - right) * 20);
+  // Единый источник геометрии. Раньше здесь стояли магические «595.28 * 20» и
+  // «56.6929134» — ручной перевод пунктов в твипы, продублированный ещё и в
+  // exportDocxLazy.ts. Теперь считаем от размера листа в миллиметрах.
+  return mmToTwips(A4_MM.w) - mmToTwips(design.marginLeft) - mmToTwips(design.marginRight);
 }
 
 export function parseHtmlToDocx(

@@ -5,12 +5,15 @@
  * Отдельный от exportPdf.ts рендер, потому что тот парсит HTML по классам
  * документов (doc-title/doc-sides/…), а у резюме своя семантика и 22 макета.
  */
+import { A4_PT } from "@/lib/page-geometry";
 import { PDFDocument, rgb, type Color, type PDFFont, type PDFPage } from "pdf-lib";
 import fontkit from "@pdf-lib/fontkit";
 import type { ResumeData, TemplateId } from "./types";
 import { fullName, hardSkills } from "./render";
 
-const A4 = { w: 595.28, h: 841.89 };
+// Единый источник геометрии страницы (lib/page-geometry) — раньше A4 был
+// продублирован в этом файле отдельно от остальных движков.
+const A4 = A4_PT;
 
 type RGB = Color;
 const BLACK: RGB = rgb(0.07, 0.07, 0.09);

@@ -15,7 +15,7 @@ import HomeCta from "@/components/home/HomeCta";
 import HomeFooter from "@/components/home/HomeFooter";
 import { TEMPLATE_META_LITE } from "@/data/templatesMetaLite";
 import { CALCULATOR_TOOLS } from "@/data/calculator-tools";
-import { currentProPrice, PRO_PRICE_OLD, isPromoActive } from "@/lib/pricing";
+import { currentProPrice } from "@/lib/pricing";
 import { SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/site";
 
 export const revalidate = 3600;

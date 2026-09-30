@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import DataFlowPanel from "@/components/privacy/DataFlowPanel";
 import {
   AlignLeft,
   Archive,
@@ -70,11 +71,17 @@ export default function ConverterHub({ initialId }: { initialId?: string }) {
       <div className="flex items-start gap-2.5 rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-xs text-emerald-800">
         <ShieldCheck className="mt-0.5 h-4 w-4 flex-shrink-0 text-emerald-500" />
         <span>
-          <b>Все конвертации выполняются прямо в вашем браузере.</b> Файлы никуда не
+          <b>Конвертация файлов выполняется прямо в вашем браузере.</b> Файлы никуда не
           загружаются и не передаются на сервер — это безопасно для договоров и персональных
-          данных (152-ФЗ).
+          данных (152-ФЗ). <b>Исключение — сканер документов:</b> базовое распознавание
+          локальное, а «точный режим» включает серверный OCR только по вашему явному
+          согласию, и файл удаляется сразу после распознавания.
         </span>
       </div>
+
+      {/* Раскрытие по запросу: пользователь видит полную картину, не перегружая
+          главный экран. Тот же источник данных, что и в политике. */}
+      <DataFlowPanel compact />
 
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
         {CONVERTER_TOOLS.map((t) => {

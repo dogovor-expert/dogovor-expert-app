@@ -9,7 +9,7 @@ import Link from "next/link";
 import dynamic from "next/dynamic";
 const SmartCaptchaWidget = dynamic(() => import("@/components/auth/SmartCaptcha"), { ssr: false });
 const CountdownTimer = dynamic(() => import("@/components/billing/CountdownTimer"), { ssr: false });
-import { currentProPrice, PRO_PRICE_OLD, PROMO_LABEL, isPromoActive, promoCountdownTarget, formatRub } from "@/lib/pricing";
+import { currentProPrice, PROMO_LABEL, isPromoActive, promoCountdownTarget, formatRub } from "@/lib/pricing";
 import { LoginForm as LoginFormComponent } from "@/components/auth/LoginForm";
 import { trackOwnOnly } from "@/lib/analytics";
 
