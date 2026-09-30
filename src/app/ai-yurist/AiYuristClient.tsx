@@ -1339,11 +1339,11 @@ export default function AiYuristClient() {
           баланса от 100 ₽.
         </p>
         <Card className="overflow-x-auto p-0">
-          <table className="w-full min-w-[640px] text-[13px]">
-            <caption className="sr-only">
-              Сравнение минимальной цены одного вопроса у AI-юриста и у трёх
-              платных альтернатив
-            </caption>
+          {/* Без <caption>: sr-only — это position:absolute, а выше по дереву
+              нет ни одного positioned-предка — подпись улетала к ICB и
+              растягивала document на ~2500px пустоты (прокрутка в никуда).
+              Контекст для скринридеров даёт aria-label + видимый абзац выше. */}
+          <table className="w-full min-w-[640px] text-[13px]" aria-label="Сравнение минимальной цены одного вопроса у AI-юриста и у трёх платных альтернатив">
             <thead>
               <tr className="bg-slate-900 text-left text-white">
                 <th scope="col" className="px-4 py-2.5 font-semibold">Критерий</th>

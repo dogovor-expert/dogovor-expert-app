@@ -10,7 +10,7 @@ import {
   FileText, Calculator,
   FolderOpen, Files, Trash2, CreditCard,
   Settings, HelpCircle, Menu, X, ChevronDown, Shield, Home, LogIn, Shuffle, Newspaper, Car, GitCompare,
-  HardDrive, Download, Cookie, Moon, Sun, Scale
+  HardDrive, Download, Cookie, Moon, Sun, Scale, Eraser
 } from "lucide-react";
 import HeaderSearch from "@/components/search/HeaderSearch";
 import Logo from "@/components/layout/Logo";
@@ -53,6 +53,22 @@ const accountNav: NavItem[] = [
   { icon: <Settings className="w-5 h-5" />, label: "Настройки", href: "/settings" },
   { icon: <HardDrive className="w-5 h-5" />, label: "Облачные диски", href: "/connections" },
   { icon: <HelpCircle className="w-5 h-5" />, label: "Помощь", href: "/help" },
+];
+
+/**
+ * Дополнительные инструменты — самостоятельные приложения внутри сайта.
+ *
+ * Их несколько: обезличиватель документов, веб-нотариус и будущие. У каждого
+ * свой дизайн и своя логика, поэтому они вынесены в отдельную группу под
+ * заголовком, а не смешаны с основными инструментами.
+ *
+ * Заголовок «Дополнительные» — не пункт меню, а подпись группы. Так длинное
+ * название не конкурирует за ширину сайдбара (пункт «Конвертер документов»
+ * уже занимает 20 символов — самый длинный в меню) и визуально отделяет эти
+ * приложения от основных инструментов.
+ */
+const extraNav: NavItem[] = [
+  { icon: <Eraser className="w-5 h-5" />, label: "Обезличиватель", href: "/redactor", badge: "NEW" },
 ];
 
 export default function AppLayout({ children }: { children: ReactNode }) {
@@ -303,6 +319,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
           </Link>
           <div className={`border-t pt-4 ${sidebarDark ? "border-dark-800" : "border-gray-100"}`} />
           {renderNav(toolNav, "Инструменты")}
+        {renderNav(extraNav, "Дополнительные")}
           <div className={`border-t pt-4 mb-4 ${sidebarDark ? "border-dark-800" : "border-gray-100"}`} />
           {renderNav(docNav, "Документы")}
           <div className={`border-t pt-4 mb-4 ${sidebarDark ? "border-dark-800" : "border-gray-100"}`} />
@@ -468,7 +485,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
             )}
           </div>
         </header>
-        <main className="flex-1 overflow-y-auto max-w-full px-4 sm:px-6 lg:px-8 pb-28 lg:pb-0" tabIndex={0}>
+        <main className="relative flex-1 overflow-y-auto max-w-full px-4 sm:px-6 lg:px-8 pb-28 lg:pb-0" tabIndex={0}>
   <div className="max-w-7xl mx-auto w-full">{children}</div>
 </main>
       </div>
