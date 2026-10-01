@@ -131,6 +131,24 @@ function fmtRate(n: number): string {
 }
 
 /**
+ * fetch с жёстким таймаутом.
+ *
+ * Без него запрос, который не отклоняется, а висит (частый случай — сеть,
+ * где домен просто не маршрутизируется), держит скелетон до TCP-таймаута
+ * браузера — это ~20–30 секунд. С abort пользователь сразу видит заглушку
+ * «Погода недоступна» / «Курсы временно недоступны» и может нажать «Обновить».
+ */
+async function fetchWithTimeout(url: string, ms: number): Promise<Response> {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), ms);
+  try {
+    return await fetch(url, { cache: "no-store", signal: ctrl.signal });
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+/**
  * Полоса «Погода и курсы» под hero главной.
  *
  * Загружается из браузера: Open-Meteo (погода) и cbr-xml-daily.ru (курсы ЦБ).
@@ -188,10 +206,10 @@ export default function HomeMarketStrip() {
 
       const weatherReq = (async () => {
         try {
-          const r = await fetch(
+          const r = await fetchWithTimeout(
             `https://api.open-meteo.com/v1/forecast?latitude=${city.lat}&longitude=${city.lon}` +
               "&current=temperature_2m,weather_code,wind_speed_10m,relative_humidity_2m&timezone=Europe/Moscow",
-            { cache: "no-store" },
+            7000,
           );
           if (!r.ok) throw new Error("wx");
           const d = (await r.json()) as OpenMeteoResponse;
@@ -211,7 +229,7 @@ export default function HomeMarketStrip() {
 
       const currencyReq = (async () => {
         try {
-          const r = await fetch("https://www.cbr-xml-daily.ru/daily_json.js", { cache: "no-store" });
+          const r = await fetchWithTimeout("https://www.cbr-xml-daily.ru/daily_json.js", 8000);
           if (!r.ok) throw new Error("fx");
           const d = (await r.json()) as CbrResponse;
           if (!d.Valute) throw new Error("fx");
